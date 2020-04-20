@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
+using Calamari.Common.Variables;
 
 namespace Calamari.Deployment.Journal
 {
@@ -10,13 +11,13 @@ namespace Calamari.Deployment.Journal
     {
         public JournalEntry(RunningDeployment deployment, bool wasSuccessful)
             : this(Guid.NewGuid().ToString(),
-                deployment.Variables.Get(SpecialVariables.Environment.Id),
-                deployment.Variables.Get(SpecialVariables.Deployment.Tenant.Id),
-                deployment.Variables.Get(SpecialVariables.Project.Id),
-                deployment.Variables.Get(SpecialVariables.RetentionPolicySet),
+                deployment.Variables.Get(Common.Variables.EnvironmentVariables.Id),
+                deployment.Variables.Get(DeploymentVariables.Tenant.Id),
+                deployment.Variables.Get(ProjectVariables.Id),
+                deployment.Variables.Get(Common.Variables.SpecialVariables.RetentionPolicySet),
                 DateTime.UtcNow,
-                deployment.Variables.Get(SpecialVariables.OriginalPackageDirectoryPath),
-                deployment.Variables.Get(SpecialVariables.Package.CustomInstallationDirectory),
+                deployment.Variables.Get(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath),
+                deployment.Variables.Get(PackageVariables.CustomInstallationDirectory),
                 wasSuccessful,
                 DeployedPackage.GetDeployedPackages(deployment)
             )

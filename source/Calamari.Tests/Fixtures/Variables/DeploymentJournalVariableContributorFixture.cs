@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using Calamari.Deployment;
+using Calamari.Common.Variables;
 using Calamari.Deployment.Journal;
 using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Variables
 {
@@ -30,7 +31,7 @@ namespace Calamari.Tests.Fixtures.Variables
             previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", false, 
                 new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
             DeploymentJournalVariableContributor.Previous(variables, journal, "123");
-            Assert.That(variables.Get(SpecialVariables.Tentacle.PreviousInstallation.OriginalInstalledPath), Is.EqualTo("C:\\App"));
+            Assert.That(variables.Get(TentacleVariables.PreviousInstallation.OriginalInstalledPath), Is.EqualTo("C:\\App"));
         }
 
         [Test]
@@ -38,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Variables
         {
             previous = null;
             DeploymentJournalVariableContributor.Previous(variables, journal, "123");
-            Assert.That(variables.Get(SpecialVariables.Tentacle.PreviousInstallation.OriginalInstalledPath), Is.EqualTo(""));
+            Assert.That(variables.Get(TentacleVariables.PreviousInstallation.OriginalInstalledPath), Is.EqualTo(""));
         }
         
         [Test]
@@ -47,7 +48,7 @@ namespace Calamari.Tests.Fixtures.Variables
             previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true, 
                 new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
             DeploymentJournalVariableContributor.PreviousSuccessful(variables, journal, "123");
-            Assert.That(variables.Get(SpecialVariables.Tentacle.PreviousSuccessfulInstallation.OriginalInstalledPath), Is.EqualTo("C:\\App"));
+            Assert.That(variables.Get(TentacleVariables.PreviousSuccessfulInstallation.OriginalInstalledPath), Is.EqualTo("C:\\App"));
         }
 
         [Test]
@@ -55,7 +56,7 @@ namespace Calamari.Tests.Fixtures.Variables
         {
             previous = null;
             DeploymentJournalVariableContributor.PreviousSuccessful(variables, journal, "123");
-            Assert.That(variables.Get(SpecialVariables.Tentacle.PreviousSuccessfulInstallation.OriginalInstalledPath), Is.EqualTo(""));
+            Assert.That(variables.Get(TentacleVariables.PreviousSuccessfulInstallation.OriginalInstalledPath), Is.EqualTo(""));
         }
     }
 }

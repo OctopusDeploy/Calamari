@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Nginx;
 using Calamari.Integration.Processes;
@@ -49,7 +50,7 @@ namespace Calamari.Deployment.Features
              */
             var virtualServerName =
                 string.IsNullOrWhiteSpace(variables.Get(SpecialVariables.Action.Nginx.Server.ConfigName))
-                    ? variables.Get(SpecialVariables.Package.PackageId)
+                    ? variables.Get(PackageVariables.PackageId)
                     : variables.Get(SpecialVariables.Action.Nginx.Server.ConfigName);
             
             nginxServer

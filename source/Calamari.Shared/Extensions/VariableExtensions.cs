@@ -1,7 +1,9 @@
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Extensions
 {
@@ -9,11 +11,11 @@ namespace Calamari.Extensions
     {
         public static PathToPackage GetPathToPrimaryPackage(this IVariables variables, ICalamariFileSystem fileSystem, bool required)
         {
-            var path = variables.Get(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath);
+            var path = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
 
             if(string.IsNullOrEmpty(path))
                 if (required)
-                    throw new CommandException($"The `{SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath}` was not specified or blank. This is likely a bug in Octopus, please contact Octopus support.");
+                    throw new CommandException($"The `{TentacleVariables.CurrentDeployment.PackageFilePath}` was not specified or blank. This is likely a bug in Octopus, please contact Octopus support.");
                 else
                     return null;
             

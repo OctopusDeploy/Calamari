@@ -35,19 +35,19 @@ namespace Calamari.Integration.FileSystem
                 return;
             }
 
-            if (variables.GetFlag(SpecialVariables.SkipFreeDiskSpaceCheck))
+            if (variables.GetFlag(Common.Variables.SpecialVariables.SkipFreeDiskSpaceCheck))
             {
-                Log.Verbose($"{SpecialVariables.SkipFreeDiskSpaceCheck} is enabled. The check to ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has enough free space will be skipped.");
+                Log.Verbose($"{Common.Variables.SpecialVariables.SkipFreeDiskSpaceCheck} is enabled. The check to ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has enough free space will be skipped.");
                 return;
             }
 
             ulong requiredSpaceInBytes = 500L * 1024 * 1024;
-            var freeSpaceOverrideInMegaBytes = variables.GetInt32(SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
+            var freeSpaceOverrideInMegaBytes = variables.GetInt32(Common.Variables.SpecialVariables.FreeDiskSpaceOverrideInMegaBytes);
 
             if (freeSpaceOverrideInMegaBytes.HasValue)
             {
                 requiredSpaceInBytes = (ulong) freeSpaceOverrideInMegaBytes * 1024 * 1024;
-                Log.Verbose($"{SpecialVariables.FreeDiskSpaceOverrideInMegaBytes} has been specified. We will check and ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has {((ulong) requiredSpaceInBytes).ToFileSizeString()} free disk space.");
+                Log.Verbose($"{Common.Variables.SpecialVariables.FreeDiskSpaceOverrideInMegaBytes} has been specified. We will check and ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has {((ulong) requiredSpaceInBytes).ToFileSizeString()} free disk space.");
             }
 
             var success = fileSystem.GetDiskFreeSpace(directoryPath, out ulong totalNumberOfFreeBytes);

@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Terraform
 {
@@ -37,9 +39,9 @@ namespace Calamari.Terraform
         {
             var pathToPrimaryPackage = variables.GetPathToPrimaryPackage(fileSystem, false);
             
-            var isEnableNoMatchWarningSet = variables.IsSet(SpecialVariables.Package.EnableNoMatchWarning);
+            var isEnableNoMatchWarningSet = variables.IsSet(PackageVariables.EnableNoMatchWarning);
             if (!isEnableNoMatchWarningSet && !string.IsNullOrEmpty(GetAdditionalFileSubstitutions()))
-                variables.Add(SpecialVariables.Package.EnableNoMatchWarning, "true");
+                variables.Add(PackageVariables.EnableNoMatchWarning, "true");
             
             var runningDeployment = new RunningDeployment(pathToPrimaryPackage, variables);
             

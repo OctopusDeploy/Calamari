@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
@@ -43,7 +44,7 @@ namespace Calamari.Deployment
             const string windowsRoot = "env:SystemDrive";
             const string linuxRoot = "env:HOME";
 
-            var root = variables.Get(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath);
+            var root = variables.Get(TentacleVariables.Agent.ApplicationDirectoryPath);
             if (root != null)
                 return root;
 
@@ -53,7 +54,7 @@ namespace Calamari.Deployment
                 root = variables.Get(linuxRoot);
                 if (root == null)
                 {
-                    throw new Exception(string.Format("Unable to determine the ApplicationRootDirectory. Please provide the {0} variable", SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath));
+                    throw new Exception(string.Format("Unable to determine the ApplicationRootDirectory. Please provide the {0} variable", TentacleVariables.Agent.ApplicationDirectoryPath));
                 }
             }
             return string.Format("{0}{1}Applications", root, Path.DirectorySeparatorChar);
@@ -62,7 +63,7 @@ namespace Calamari.Deployment
 
         static string AppendEnvironmentNameIfProvided(ICalamariFileSystem fileSystem, IVariables variables, string root)
         {
-            var environment = variables.Get(SpecialVariables.Environment.Name);
+            var environment = variables.Get(Common.Variables.EnvironmentVariables.Name);
             if (!string.IsNullOrWhiteSpace(environment))
             {
                 environment = fileSystem.RemoveInvalidFileNameChars(environment);
@@ -74,7 +75,7 @@ namespace Calamari.Deployment
 
         static string AppendTenantNameIfProvided(ICalamariFileSystem fileSystem, IVariables variables, string root)
         {
-            var tenant = variables.Get(SpecialVariables.Deployment.Tenant.Name);
+            var tenant = variables.Get(DeploymentVariables.Tenant.Name);
             if (!string.IsNullOrWhiteSpace(tenant))
             {
                 tenant = fileSystem.RemoveInvalidFileNameChars(tenant);

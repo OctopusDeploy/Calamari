@@ -4,9 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Security;
 using Calamari.Commands.Support;
-using Calamari.Deployment;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell
 {
@@ -28,8 +29,8 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             {
                 EnvironmentVars = environmentVars, 
                 WorkingDirectory = Path.GetDirectoryName(script.File), 
-                UserName = powerShellBootstrapper.AllowImpersonation() ? variables.Get(SpecialVariables.Action.PowerShell.UserName) : null,
-                Password = powerShellBootstrapper.AllowImpersonation() ? ToSecureString(variables.Get(SpecialVariables.Action.PowerShell.Password)) : null
+                UserName = powerShellBootstrapper.AllowImpersonation() ? variables.Get(PowershellVariables.Action.UserName) : null,
+                Password = powerShellBootstrapper.AllowImpersonation() ? ToSecureString(variables.Get(PowershellVariables.Action.Password)) : null
             };
 
             yield return new ScriptExecution(
@@ -43,7 +44,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 return new UnixLikePowerShellCoreBootstrapper();
             
-            var specifiedEdition = variables[SpecialVariables.Action.PowerShell.Edition];
+            var specifiedEdition = variables[PowershellVariables.Action.Edition];
             if (string.IsNullOrEmpty(specifiedEdition))
                 return new WindowsPowerShellBootstrapper();
             

@@ -35,7 +35,7 @@ namespace Calamari.Azure.CloudServices.Commands
                 throw new CommandException("Could not find package file: " + packageFile);    
 
             variables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, packageFile);
-            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, !string.IsNullOrWhiteSpace(destinationDirectory) ? destinationDirectory : Path.GetDirectoryName(packageFile));
+            variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, !string.IsNullOrWhiteSpace(destinationDirectory) ? destinationDirectory : Path.GetDirectoryName(packageFile));
 
             var fileSystem = new WindowsPhysicalFileSystem();
 

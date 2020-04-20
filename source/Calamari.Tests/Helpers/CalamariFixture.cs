@@ -8,6 +8,7 @@ using Calamari.Integration.ServiceMessages;
 using Octostache;
 using Autofac;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
@@ -104,9 +105,9 @@ namespace Calamari.Tests.Helpers
         {
             var variablesFile = Path.GetTempFileName();
             var variables = new CalamariVariables();
-            variables.Set(SpecialVariables.Action.Script.ScriptFileName, scriptName);
-            variables.Set(SpecialVariables.Action.Script.ScriptBody, File.ReadAllText(GetFixtureResouce("Scripts", scriptName)));
-            variables.Set(SpecialVariables.Action.Script.Syntax, scriptName.ToScriptType().ToString());
+            variables.Set(ScriptVariables.ScriptFileName, scriptName);
+            variables.Set(ScriptVariables.ScriptBody, File.ReadAllText(GetFixtureResouce("Scripts", scriptName)));
+            variables.Set(ScriptVariables.Syntax, scriptName.ToScriptType().ToString());
             
             additionalVariables?.ToList().ForEach(v => variables[v.Key] = v.Value);
 

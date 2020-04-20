@@ -4,7 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using Calamari.Commands.Java;
-using Calamari.Deployment;
+using Calamari.Common.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Hooks;
 using Calamari.Integration.FileSystem;
@@ -17,6 +17,7 @@ using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Java.Fixtures.Deployment
 {
@@ -44,7 +45,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(applicationDirectory, "DeploymentJournal.xml"));
 
             variables = new VariablesFactory(fileSystem).Create(new CommonOptions("test"));
-            variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, applicationDirectory);
+            variables.Set(TentacleVariables.Agent.ApplicationDirectoryPath, applicationDirectory);
         }
 
         [TearDown]
@@ -93,8 +94,8 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         public void CanTransformConfigInJar()
         {
             const string configFile = "config.properties";
-            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
-            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, configFile);
+            variables.Set(PackageVariables.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(PackageVariables.SubstituteInFilesTargets, configFile);
 
             DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
             Assert.AreEqual(0, returnCode);

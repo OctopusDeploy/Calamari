@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using Calamari.Deployment;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
@@ -13,6 +13,7 @@ using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.PowerShell
 {
@@ -50,7 +51,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var variables = new CalamariVariables();
             if (executeWithoutProfile != null)
-                variables.Set(SpecialVariables.Action.PowerShell.ExecuteWithoutProfile, executeWithoutProfile);
+                variables.Set(PowershellVariables.Action.ExecuteWithoutProfile, executeWithoutProfile);
             
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
@@ -71,7 +72,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldNotCallWithNoProfileWhenVariableNotSet()
         {
             var (output, _) = RunPowerShellScript(ProfileScript, new Dictionary<string, string>()
-            { [SpecialVariables.Action.PowerShell.ExecuteWithoutProfile] = "true" });
+            { [PowershellVariables.Action.ExecuteWithoutProfile] = "true" });
 
             output.AssertSuccess();
             output.AssertOutput("-NoProfile");
@@ -329,7 +330,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var (output, variables) = RunPowerShellScript("CanSetVariable.ps1", new Dictionary<string, string>
             {
-                [SpecialVariables.Action.Name] = "run-script"
+                [ActionVariables.Name] = "run-script"
             });
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output.TestA"));
             AssertPowerShellEdition(output);
@@ -340,8 +341,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var (output, variables) = RunPowerShellScript("CanSetVariable.ps1", new Dictionary<string, string>
             {
-                [SpecialVariables.Action.Name] = "run-script",
-                [SpecialVariables.Machine.Name] = "App01"
+                [ActionVariables.Name] = "run-script",
+                [MachineVariables.Name] = "App01"
             });
 
             Assert.AreEqual("World!", variables.Get("Octopus.Action[run-script].Output[App01].TestA"));
@@ -478,7 +479,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var variables = new CalamariVariables();
             variables.Set("Octopus.Environment.Name", "Production");
-            variables.Set(SpecialVariables.Action.Script.ScriptFileName, "Deploy.ps1");
+            variables.Set(ScriptVariables.ScriptFileName, "Deploy.ps1");
 
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
@@ -590,7 +591,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, CalamariVariables variables = null)
         {
             var variableDictionary = variables ?? new CalamariVariables();
-            variableDictionary.Add(SpecialVariables.Action.PowerShell.Edition, GetPowerShellEditionVariable());
+            variableDictionary.Add(PowershellVariables.Action.Edition, GetPowerShellEditionVariable());
             
             using (var variablesFile = CreateVariablesFile(variableDictionary))
             {
@@ -630,7 +631,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             string sensitiveVariablesPassword = null)
         {
             var variablesDictionary = additionalVariables ?? new Dictionary<string, string>();
-            variablesDictionary.Add(SpecialVariables.Action.PowerShell.Edition, GetPowerShellEditionVariable());
+            variablesDictionary.Add(PowershellVariables.Action.Edition, GetPowerShellEditionVariable());
             return RunScript(scriptName, variablesDictionary, additionalParameters, sensitiveVariablesPassword);
         }
         

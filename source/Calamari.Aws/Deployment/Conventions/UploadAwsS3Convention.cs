@@ -14,6 +14,7 @@ using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -21,6 +22,7 @@ using Calamari.Integration.Substitutions;
 using Calamari.Util;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
@@ -132,8 +134,8 @@ namespace Calamari.Aws.Deployment.Conventions
 
         private void SetOutputVariables(RunningDeployment deployment, IEnumerable<S3UploadResult> results) 
         {
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.FilePath, deployment.PackageFilePath);
+            log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
+            log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FilePath, deployment.PackageFilePath);
             foreach (var result in results)
             {
                 if (!result.IsSuccess()) continue;
@@ -261,9 +263,9 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public string GetNormalizedPackageFilename(RunningDeployment deployment)
         {
-            var id = deployment.Variables.Get(SpecialVariables.Packages.PackageId(null));
-            var version = deployment.Variables.Get(SpecialVariables.Packages.PackageVersion(null));
-            var extension = Path.GetExtension(deployment.Variables.Get(SpecialVariables.Packages.OriginalPath(null)));
+            var id = deployment.Variables.Get(PackageVariables.PackageIdWithKey(null));
+            var version = deployment.Variables.Get(PackageVariables.PackageVersionWithKey(null));
+            var extension = Path.GetExtension(deployment.Variables.Get(PackageVariables.OriginalPathWithKey(null)));
             return $"{id}.{version}{extension}";
         }
 

@@ -4,12 +4,13 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Commands.Support;
-using Calamari.Deployment;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Octostache;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Variables
 {
@@ -31,7 +32,7 @@ namespace Calamari.Variables
             ReadOutputVariablesFromOfflineDropPreviousSteps(options, variables);
 
             AddEnvironmentVariables(variables);
-            variables.Set(SpecialVariables.Tentacle.Agent.InstanceName, "#{env:TentacleInstanceName}");
+            variables.Set(TentacleVariables.Agent.InstanceName, "#{env:TentacleInstanceName}");
             ReadAdditionalVariablesFromFile(variables);
             DeploymentJournalVariableContributor.Contribute(fileSystem, variables);
             
@@ -101,13 +102,13 @@ namespace Calamari.Variables
 
         void ReadAdditionalVariablesFromFile(CalamariVariables variables)
         {
-            var path = variables.Get(SpecialVariables.AdditionalVariablesPath)
-                       ?? variables.Get(SpecialVariables.Environment.Prefix + SpecialVariables.AdditionalVariablesPath);
+            var path = variables.Get(Common.Variables.SpecialVariables.AdditionalVariablesPath)
+                       ?? variables.Get(Common.Variables.EnvironmentVariables.Prefix + Common.Variables.SpecialVariables.AdditionalVariablesPath);
 
             string BuildExceptionMessage(string reason)
                 => $"Could not read additional variables from JSON file at '{path}'. " +
                    $"{reason} Make sure the file can be read or remove the " +
-                   $"'{SpecialVariables.AdditionalVariablesPath}' environment variable. " +
+                   $"'{Common.Variables.SpecialVariables.AdditionalVariablesPath}' environment variable. " +
                    $"See inner exception for details.";
 
             if (string.IsNullOrEmpty(path))

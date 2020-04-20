@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using Calamari.Common.Variables;
 
 namespace Calamari.Deployment.Journal
 {
@@ -43,26 +44,26 @@ namespace Calamari.Deployment.Journal
         {
             var variables = deployment.Variables;
 
-            if (!string.IsNullOrWhiteSpace(variables.Get(SpecialVariables.Package.PackageId)))
+            if (!string.IsNullOrWhiteSpace(variables.Get(PackageVariables.PackageId)))
             {
                 yield return new DeployedPackage(
-                    variables.Get(SpecialVariables.Package.PackageId),
-                    variables.Get(SpecialVariables.Package.PackageVersion),
+                    variables.Get(PackageVariables.PackageId),
+                    variables.Get(PackageVariables.PackageVersion),
                     deployment.PackageFilePath
                 );
             }
 
-            foreach (var packageReferenceName in variables.GetIndexes(SpecialVariables.Packages.PackageCollection))
+            foreach (var packageReferenceName in variables.GetIndexes(PackageVariables.PackageCollection))
             {
-                if (string.IsNullOrEmpty(packageReferenceName) && variables.IsSet(SpecialVariables.Package.PackageId))
+                if (string.IsNullOrEmpty(packageReferenceName) && variables.IsSet(PackageVariables.PackageId))
                 {
                     continue;
                 }
                 
                 yield return new DeployedPackage(
-                    variables.Get(SpecialVariables.Packages.PackageId(packageReferenceName)),
-                    variables.Get(SpecialVariables.Packages.PackageVersion(packageReferenceName)),
-                    variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName))
+                    variables.Get(PackageVariables.PackageIdWithKey(packageReferenceName)),
+                    variables.Get(PackageVariables.PackageVersionWithKey(packageReferenceName)),
+                    variables.Get(PackageVariables.OriginalPathWithKey(packageReferenceName))
                 );
             }
         }

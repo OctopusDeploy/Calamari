@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes.Semaphores;
 
@@ -27,9 +28,9 @@ namespace Calamari.Deployment.Journal
             var journal = new DeploymentJournal(fileSystem, semaphore, deployment.Variables);
             
             var hasPackages = !String.IsNullOrWhiteSpace(packageFile) ||
-                              deployment.Variables.GetIndexes(SpecialVariables.Packages.PackageCollection).Any();
+                              deployment.Variables.GetIndexes(PackageVariables.PackageCollection).Any();
             
-            var canWrite = deployment.Variables.Get(SpecialVariables.Tentacle.Agent.JournalPath) != null;
+            var canWrite = deployment.Variables.Get(TentacleVariables.Agent.JournalPath) != null;
             
             if(canWrite && hasPackages && !deployment.SkipJournal)
                 journal.AddJournalEntry(new JournalEntry(deployment, wasSuccessful));

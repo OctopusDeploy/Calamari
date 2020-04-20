@@ -60,7 +60,7 @@ namespace Calamari
             var envInfo = string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation());
             log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
 
-            EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory, Environment.CurrentDirectory);
+            EnvironmentHelper.SetEnvironmentVariable(Common.Variables.SpecialVariables.CalamariWorkingDirectory, Environment.CurrentDirectory);
             ProxyInitializer.InitializeDefaultProxy();
 
             using (var container = BuildContainer(options).Build())

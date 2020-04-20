@@ -11,11 +11,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
 using Calamari.Util;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Commands
 {
@@ -92,10 +94,10 @@ namespace Calamari.Commands
         void WriteVariableScriptToFile()
         {
             if (!TryGetScriptFromVariables(out var scriptBody, out var relativeScriptFile, out var scriptSyntax) &&
-                !WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptFileName)))
+                !WasProvided(variables.Get(ScriptVariables.ScriptFileName)))
             {
-                throw new CommandException($"Could not determine script to run.  Please provide either a `{SpecialVariables.Action.Script.ScriptBody}` variable, " +
-                                           $"or a `{SpecialVariables.Action.Script.ScriptFileName}` variable.");
+                throw new CommandException($"Could not determine script to run.  Please provide either a `{ScriptVariables.ScriptBody}` variable, " +
+                                           $"or a `{ScriptVariables.ScriptFileName}` variable.");
             }
 
             if (WasProvided(scriptBody))
@@ -103,7 +105,7 @@ namespace Calamari.Commands
                 var scriptFile = Path.GetFullPath(relativeScriptFile);
 
                 //Set the name of the script we are about to create to the variables collection for replacement later on
-                variables.Set(SpecialVariables.Action.Script.ScriptFileName, relativeScriptFile);
+                variables.Set(ScriptVariables.ScriptFileName, relativeScriptFile);
 
                 // If the script body was supplied via a variable, then we write it out to a file.
                 // This will be deleted with the working directory.
@@ -118,10 +120,10 @@ namespace Calamari.Commands
 
         bool TryGetScriptFromVariables(out string scriptBody, out string scriptFileName, out ScriptSyntax syntax)
         {
-            scriptBody = variables.GetRaw(SpecialVariables.Action.Script.ScriptBody);
+            scriptBody = variables.GetRaw(ScriptVariables.ScriptBody);
             if (WasProvided(scriptBody))
             {
-                var scriptSyntax = variables.Get(SpecialVariables.Action.Script.Syntax);
+                var scriptSyntax = variables.Get(ScriptVariables.Syntax);
                 if (scriptSyntax == null)
                 {
                     syntax = scriptEngine.GetSupportedTypes().FirstOrDefault();
@@ -160,26 +162,26 @@ namespace Calamari.Commands
         {
             if (WasProvided(scriptFileArg))
             {
-                if (WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptBody)))
+                if (WasProvided(variables.Get(ScriptVariables.ScriptBody)))
                 {
                     Log.Warn(
-                        $"The `--script` parameter and `{SpecialVariables.Action.Script.ScriptBody}` variable are both set." +
+                        $"The `--script` parameter and `{ScriptVariables.ScriptBody}` variable are both set." +
                         $"\r\nThe variable value takes precedence to allow for variable replacement of the script file.");
                 }
 
-                if (WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptFileName)))
+                if (WasProvided(variables.Get(ScriptVariables.ScriptFileName)))
                 {
                     Log.Warn(
-                        $"The `--script` parameter and `{SpecialVariables.Action.Script.ScriptFileName}` variable are both set." +
+                        $"The `--script` parameter and `{ScriptVariables.ScriptFileName}` variable are both set." +
                         $"\r\nThe variable value takes precedence to allow for variable replacement of the script file.");
                 }
                 else
                 {
-                    variables.Set(SpecialVariables.Action.Script.ScriptFileName, scriptFileArg);
+                    variables.Set(ScriptVariables.ScriptFileName, scriptFileArg);
                 }
 
                 Log.Warn($"The `--script` parameter is deprecated.\r\n" +
-                         $"Please set the `{SpecialVariables.Action.Script.ScriptBody}` and `{SpecialVariables.Action.Script.ScriptFileName}` variable to allow for variable replacement of the script file.");
+                         $"Please set the `{ScriptVariables.ScriptBody}` and `{ScriptVariables.ScriptFileName}` variable to allow for variable replacement of the script file.");
             }
 
             if (WasProvided(scriptParametersArg))
@@ -206,7 +208,7 @@ namespace Calamari.Commands
                 yield break;
             }
 
-            var scriptFile = deployment.Variables.Get(SpecialVariables.Action.Script.ScriptFileName);
+            var scriptFile = deployment.Variables.Get(ScriptVariables.ScriptFileName);
             yield return Path.Combine(deployment.CurrentDirectory, scriptFile);
         }
 

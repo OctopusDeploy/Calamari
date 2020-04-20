@@ -123,7 +123,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             var transform = new XmlConfigTransformDefinition(transformDefinition);
 
             var deploymentVariables = new CalamariVariables();
-            deploymentVariables[SpecialVariables.OriginalPackageDirectoryPath] = extractionDirectory;
+            deploymentVariables[Common.Variables.SpecialVariables.OriginalPackageDirectoryPath] = extractionDirectory;
             var deployment = new RunningDeployment(null, deploymentVariables);
 
             const bool diagnosticLoggingEnabled = false;

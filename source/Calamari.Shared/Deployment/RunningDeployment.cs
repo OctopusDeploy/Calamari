@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Common.Variables;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Deployment
@@ -24,8 +25,8 @@ namespace Calamari.Deployment
         /// </summary>
         public string StagingDirectory
         {
-            get { return Variables.Get(SpecialVariables.OriginalPackageDirectoryPath); }
-            set { Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, value); }
+            get { return Variables.Get(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath); }
+            set { Variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, value); }
         }
 
         /// <summary>
@@ -36,7 +37,7 @@ namespace Calamari.Deployment
         {
             get
             {
-                var custom = Variables.Get(SpecialVariables.Package.CustomInstallationDirectory);
+                var custom = Variables.Get(PackageVariables.CustomInstallationDirectory);
                 return string.IsNullOrWhiteSpace(custom) ? StagingDirectory : custom;
             }
         }
@@ -55,13 +56,13 @@ namespace Calamari.Deployment
             get {  return variables; }
         }
 
-        public bool SkipJournal { get { return variables.GetFlag(SpecialVariables.Action.SkipJournal); } }
+        public bool SkipJournal { get { return variables.GetFlag(Common.Variables.SpecialVariables.Action.SkipJournal); } }
 
         public void Error(Exception ex)
         {
             ex = ex.GetBaseException();
-            variables.Set(SpecialVariables.LastError, ex.ToString());
-            variables.Set(SpecialVariables.LastErrorMessage, ex.Message);
+            variables.Set(Common.Variables.SpecialVariables.LastError, ex.ToString());
+            variables.Set(Common.Variables.SpecialVariables.LastErrorMessage, ex.Message);
         }
     }
 }

@@ -1,9 +1,10 @@
 using System.IO;
-using Calamari.Deployment;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -35,10 +36,10 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
-            Variables[SpecialVariables.Package.SubstituteInFilesTargets] = "web.config";
-            Variables[SpecialVariables.Package.SubstituteInFilesEnabled] = "True";
+            Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
+            Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[SpecialVariables.Environment.Name] = Environment;
+            Variables[Common.Variables.EnvironmentVariables.Name] = Environment;
             Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
             Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
 
@@ -79,10 +80,10 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
-            Variables[SpecialVariables.Package.SubstituteInFilesTargets] = "web.config";
-            Variables[SpecialVariables.Package.SubstituteInFilesEnabled] = "True";
+            Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
+            Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[SpecialVariables.Environment.Name] = Environment;
+            Variables[Common.Variables.EnvironmentVariables.Name] = Environment;
             Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
             Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
 
@@ -131,10 +132,10 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
-            Variables[SpecialVariables.Package.SubstituteInFilesTargets] = "web.config";
-            Variables[SpecialVariables.Package.SubstituteInFilesEnabled] = "True";
+            Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
+            Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[SpecialVariables.Environment.Name] = Environment;
+            Variables[Common.Variables.EnvironmentVariables.Name] = Environment;
             Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
             Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
 

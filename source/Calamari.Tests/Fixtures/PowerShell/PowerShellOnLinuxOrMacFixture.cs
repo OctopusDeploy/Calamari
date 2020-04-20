@@ -1,5 +1,5 @@
 using System.IO;
-using Calamari.Deployment;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
@@ -7,6 +7,7 @@ using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using NUnit.Framework;
 using Octostache;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.PowerShell
 {
@@ -27,7 +28,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldRunBashInsteadOfPowerShell()
         {
             var variablesFile = Path.GetTempFileName();
-
+            
             var variables = new CalamariVariables();
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");

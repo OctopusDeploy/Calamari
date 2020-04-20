@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.HealthChecks;
 using Calamari.Integration.Processes;
@@ -23,7 +24,7 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            var deploymentTargetTypeName = variables.Get(SpecialVariables.Machine.DeploymentTargetType);
+            var deploymentTargetTypeName = variables.Get(MachineVariables.DeploymentTargetType);
 
             var checker = deploymentTargetTypeHealthCheckers.SingleOrDefault(x => x.HandlesDeploymentTargetTypeName(deploymentTargetTypeName));
 
