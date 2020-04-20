@@ -4,7 +4,6 @@ using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Azure.CloudServices.Deployment.Conventions
 {

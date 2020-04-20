@@ -10,7 +10,6 @@ using Calamari.Integration.Processes;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Octostache;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Variables
 {

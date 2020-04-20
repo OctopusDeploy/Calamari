@@ -6,13 +6,11 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {
@@ -37,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             variables = new CalamariVariables();
             variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
-            variables.Set(Common.Variables.KnownVariables.OriginalPackageDirectoryPath, deployDirectory);
+            variables.Set(KnownVariables.OriginalPackageDirectoryPath, deployDirectory);
 
             deployment = new RunningDeployment(deployDirectory, variables);
             logs = new InMemoryLog();
@@ -259,7 +257,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             //these variables would normally be set by ExtractPackageToStagingDirectoryConvention
             Log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, "c:\\temp", runningDeployment.Variables);
-            Log.SetOutputVariable(Common.Variables.KnownVariables.OriginalPackageDirectoryPath, "c:\\temp", runningDeployment.Variables);
+            Log.SetOutputVariable(KnownVariables.OriginalPackageDirectoryPath, "c:\\temp", runningDeployment.Variables);
 
             var log = new InMemoryLog();
             var transformer = Substitute.For<IConfigurationTransformer>();

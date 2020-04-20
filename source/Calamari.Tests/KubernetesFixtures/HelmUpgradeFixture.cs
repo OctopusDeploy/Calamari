@@ -16,8 +16,6 @@ using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
-using Octostache;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.KubernetesFixtures
 {

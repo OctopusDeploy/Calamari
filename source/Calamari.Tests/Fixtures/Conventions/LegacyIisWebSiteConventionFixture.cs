@@ -4,11 +4,9 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
-using Calamari.Integration.Processes;
 using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {

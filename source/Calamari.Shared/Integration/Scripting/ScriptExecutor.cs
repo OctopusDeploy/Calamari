@@ -7,7 +7,6 @@ using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Calamari.Integration.Proxies;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Integration.Scripting
 {

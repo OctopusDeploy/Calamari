@@ -1,16 +1,12 @@
 ﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Commands.Support;
 using Calamari.Common.Variables;
+using Calamari.Deployment;
 using Calamari.Integration.Certificates;
-using Calamari.Integration.Processes;
-using Octostache;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
-
 
 namespace Calamari.Commands
 {

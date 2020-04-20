@@ -7,7 +7,6 @@ using Calamari.Commands.Support;
 using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell
 {

@@ -16,8 +16,6 @@ using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
-using Octostache;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Java.Fixtures.Deployment
 {

@@ -5,8 +5,6 @@ using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Integration.Substitutions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +15,6 @@ using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
 using Calamari.Util;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Commands
 {

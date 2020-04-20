@@ -10,7 +10,6 @@ using Calamari.Variables;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {
@@ -28,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void SetUp()
         {
             variables = new CalamariVariables();
-            variables.Set(Common.Variables.KnownVariables.OriginalPackageDirectoryPath, stagingDirectory);
+            variables.Set(KnownVariables.OriginalPackageDirectoryPath, stagingDirectory);
             fileSystem = Substitute.For<ICalamariFileSystem>();
             deployment = new RunningDeployment(packageFilePath, variables);
         }

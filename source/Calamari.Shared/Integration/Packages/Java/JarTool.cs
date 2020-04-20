@@ -1,11 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
-using Octostache;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Integration.Packages.Java
 {

@@ -16,8 +16,6 @@ using Microsoft.Rest;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Octostache;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Azure.Deployment.Conventions
 {

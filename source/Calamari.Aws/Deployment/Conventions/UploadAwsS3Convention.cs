@@ -22,7 +22,6 @@ using Calamari.Integration.Substitutions;
 using Calamari.Util;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Aws.Deployment.Conventions
 {

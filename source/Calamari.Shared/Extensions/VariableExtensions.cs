@@ -3,7 +3,6 @@ using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Extensions
 {

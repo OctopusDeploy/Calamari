@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -24,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void SetUp()
         {
             var variables = new CalamariVariables(); 
-            variables.Set(Common.Variables.KnownVariables.OriginalPackageDirectoryPath, TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0"));
+            variables.Set(KnownVariables.OriginalPackageDirectoryPath, TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0"));
             deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), variables);
             configurationVariableReplacer = Substitute.For<IJsonConfigurationVariableReplacer>();
             fileSystem = Substitute.For<ICalamariFileSystem>();

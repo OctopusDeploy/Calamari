@@ -1,6 +1,5 @@
 using Calamari.Common.Variables;
-using Octostache;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
+using Calamari.Deployment;
 
 namespace Calamari.Integration.Processes
 {

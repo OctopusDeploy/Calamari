@@ -5,11 +5,10 @@ using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
 using Calamari.Common.Variables;
+using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
-using Octostache;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell
 {

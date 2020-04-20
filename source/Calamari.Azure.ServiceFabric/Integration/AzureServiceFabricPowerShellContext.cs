@@ -2,18 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Calamari.Azure.ServiceFabric.Util;
 using Calamari.Commands.Support;
 using Calamari.Common.Variables;
+using Calamari.Deployment;
 using Calamari.Hooks;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Octostache;
-using Org.BouncyCastle.Asn1.Esf;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Azure.ServiceFabric.Integration
 {

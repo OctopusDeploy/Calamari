@@ -13,7 +13,6 @@ using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -252,7 +251,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldSkipIfAlreadyInstalled(DeploymentType deploymentType)
         {
             Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            Variables.Set(Common.Variables.KnownVariables.RetentionPolicySet, "a/b/c/d");
+            Variables.Set(KnownVariables.RetentionPolicySet, "a/b/c/d");
             Variables.Set(PackageVariables.PackageId, "Acme.Web");
             Variables.Set(PackageVariables.PackageVersion, "1.0.0");
 
@@ -269,7 +268,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldSkipIfAlreadyInstalledWithDifferentPackageType()
         {
             Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            Variables.Set(Common.Variables.KnownVariables.RetentionPolicySet, "a/b/c/d");
+            Variables.Set(KnownVariables.RetentionPolicySet, "a/b/c/d");
             Variables.Set(PackageVariables.PackageId, "Acme.Web");
             Variables.Set(PackageVariables.PackageVersion, "1.0.0");
 
