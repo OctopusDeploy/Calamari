@@ -118,6 +118,6 @@
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Integration\Packages\Download" />
+    <Folder Include="Integration\FileSystem" />
   </ItemGroup>
 </Project>
