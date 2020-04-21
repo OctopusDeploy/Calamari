@@ -361,7 +361,19 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var sb = new StringBuilder();
             foreach (var variableName in variables.GetNames().Where(name => !SpecialVariables.IsLibraryScriptModule(name)))
             {
-                var value = variables.Get(variableName);
+                string value = null;
+
+                Log.Verbose($"Getting ecnrypted variabes string for {variableName}");
+                try
+                {
+                    value = variables.Get(variableName);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Error getting ecnrypted variabes string for {variableName}");
+                    throw ex;
+                }
+
                 var encryptedValue = value == null ? "nul" : EncodeAsBase64(value); // "nul" is not a valid Base64 string
                 sb.Append(EncodeAsBase64(variableName)).Append("$").AppendLine(encryptedValue);
             }
