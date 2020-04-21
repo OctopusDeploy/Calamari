@@ -2,16 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Calamari.Azure.ServiceFabric.Util;
 using Calamari.Commands.Support;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Octostache;
 
 namespace Calamari.Azure.ServiceFabric.Integration
 {
@@ -66,7 +65,7 @@ namespace Calamari.Azure.ServiceFabric.Integration
             if (securityMode == AzureServiceFabricSecurityMode.SecureClientCertificate.ToString())
             {
                 var certificateVariable = GetMandatoryVariable(variables, SpecialVariables.Action.ServiceFabric.ClientCertVariable);
-                clientCertThumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
+                clientCertThumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
             }
 
             // Set output variables for our script to access.

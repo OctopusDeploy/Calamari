@@ -227,7 +227,7 @@ namespace Calamari.Kubernetes.Conventions
             var releaseName = variables.Get(SpecialVariables.Helm.ReleaseName)?.ToLower();
             if (string.IsNullOrWhiteSpace(releaseName))
             {
-                releaseName = $"{variables.Get(ActionVariables.Name)}-{variables.Get(DeploymentEnvironmentVariables.Name)}";
+                releaseName = $"{variables.Get(ActionVariables.Name)}-{variables.Get(DeploymentEnvironment.Name)}";
                 releaseName = validChars.Replace(releaseName, "").ToLowerInvariant();
             }
 

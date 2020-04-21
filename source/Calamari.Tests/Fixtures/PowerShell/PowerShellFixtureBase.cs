@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Common.Variables;
+using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
@@ -12,8 +13,6 @@ using Calamari.Variables;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using Octostache;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.PowerShell
 {

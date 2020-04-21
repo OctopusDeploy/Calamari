@@ -11,7 +11,7 @@ namespace Calamari.Deployment.Journal
     {
         public JournalEntry(RunningDeployment deployment, bool wasSuccessful)
             : this(Guid.NewGuid().ToString(),
-                deployment.Variables.Get(DeploymentEnvironmentVariables.Id),
+                deployment.Variables.Get(DeploymentEnvironment.Id),
                 deployment.Variables.Get(DeploymentVariables.Tenant.Id),
                 deployment.Variables.Get(ProjectVariables.Id),
                 deployment.Variables.Get(KnownVariables.RetentionPolicySet),

@@ -1,5 +1,6 @@
 using System.IO;
 using Calamari.Common.Variables;
+using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
@@ -39,7 +40,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
             Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[DeploymentEnvironmentVariables.Name] = Environment;
+            Variables[DeploymentEnvironment.Name] = Environment;
             Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
             Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
 
@@ -83,7 +84,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
             Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[DeploymentEnvironmentVariables.Name] = Environment;
+            Variables[DeploymentEnvironment.Name] = Environment;
             Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
             Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
 
@@ -135,7 +136,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
             Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[DeploymentEnvironmentVariables.Name] = Environment;
+            Variables[DeploymentEnvironment.Name] = Environment;
             Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
             Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
 

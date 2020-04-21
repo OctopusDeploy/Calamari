@@ -28,25 +28,21 @@ namespace Calamari.Common.Variables
             public static readonly string FilePath = "Package.FilePath";
         }
         
-        //IndexedPackageId
         public static string IndexedPackageId(string packageReferenceName)
         {
             return $"Octopus.Action.Package[{packageReferenceName}].PackageId";
         }
 
-        //IndexedPackageVersion
         public static string IndexedPackageVersion(string packageReferenceName)
         {
             return $"Octopus.Action.Package[{packageReferenceName}].PackageVersion";
         }
         
-        //IndexedOriginalPath
         public static string IndexedOriginalPath(string packageReferenceName)
         {
             return $"Octopus.Action.Package[{packageReferenceName}].OriginalPath";
         }
         
-        //IndexedExtract
         public static string IndexedExtract(string packageReferenceName)
         {
             return $"Octopus.Action.Package[{packageReferenceName}].Extract";

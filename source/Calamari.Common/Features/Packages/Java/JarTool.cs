@@ -4,7 +4,6 @@ using System.Linq;
 using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
-using Octostache;
 
 namespace Calamari.Integration.Packages.Java
 {

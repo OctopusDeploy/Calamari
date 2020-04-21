@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -74,8 +73,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             var outputResult = Path.Combine(CustomDirectory, Path.GetFileName(nupkgFile.FilePath));
 
-            result.AssertOutputVariable(PackageVariables.Output.FileName,Is.EqualTo(Path.GetFileName(nupkgFile.FilePath)));
             result.AssertOutputVariable(PackageVariables.Output.DirectoryPath, Is.EqualTo(CustomDirectory));
+            result.AssertOutputVariable(PackageVariables.Output.FileName,Is.EqualTo(Path.GetFileName(nupkgFile.FilePath)));
             result.AssertOutputVariable(PackageVariables.Output.FilePath, Is.EqualTo(outputResult));
         }
 

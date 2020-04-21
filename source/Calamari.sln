@@ -39,7 +39,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Azure.ServiceFabri
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.CloudAccounts", "Calamari.CloudAccounts\Calamari.CloudAccounts.csproj", "{58955C6D-3FC6-413F-B532-F37FF70EB818}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Common", "Calamari.Common\Calamari.Common.csproj", "{1E0E3289-6742-416B-921D-B3CDB351970A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Common", "Calamari.Common\Calamari.Common.csproj", "{0CE6EDAC-DEEE-4EA1-A573-E660811445E6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Tests.Common", "Calamari.Tests.Common\Calamari.Tests.Common.csproj", "{4AA21A2A-9512-48F1-B272-62D8D0F73E06}"
 EndProject
@@ -107,6 +107,10 @@ Global
 		{702F7C8C-E71F-42E4-8FF8-AB2B504552D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{702F7C8C-E71F-42E4-8FF8-AB2B504552D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{702F7C8C-E71F-42E4-8FF8-AB2B504552D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CE6EDAC-DEEE-4EA1-A573-E660811445E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CE6EDAC-DEEE-4EA1-A573-E660811445E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CE6EDAC-DEEE-4EA1-A573-E660811445E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CE6EDAC-DEEE-4EA1-A573-E660811445E6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

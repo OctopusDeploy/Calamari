@@ -33,9 +33,9 @@ namespace Calamari.Integration.Certificates
 
         public X509Certificate2 GetOrAdd(IVariables variables, string certificateVariable, StoreName storeName, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
-            var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
-            var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
-            var password = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Password}");
+            var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Pfx}"));
+            var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
+            var password = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Password}");
 
             return GetOrAdd(thumbprint, pfxBytes, password, new X509Store(storeName, storeLocation));
         }

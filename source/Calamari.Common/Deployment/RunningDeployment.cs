@@ -55,8 +55,12 @@ namespace Calamari.Deployment
         {
             get {  return variables; }
         }
-
-        public bool SkipJournal { get { return variables.GetFlag(KnownVariables.Action.SkipJournal); } }
+        
+        public bool SkipJournal
+        {
+            get => variables.GetFlag(KnownVariables.Action.SkipJournal);
+            set => variables.Set(KnownVariables.Action.SkipJournal, value.ToString().ToLower());
+        }
 
         public void Error(Exception ex)
         {

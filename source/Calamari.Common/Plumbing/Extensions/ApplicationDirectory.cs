@@ -63,7 +63,7 @@ namespace Calamari.Deployment
 
         static string AppendEnvironmentNameIfProvided(ICalamariFileSystem fileSystem, IVariables variables, string root)
         {
-            var environment = variables.Get(DeploymentEnvironmentVariables.Name);
+            var environment = variables.Get(DeploymentEnvironment.Name);
             if (!string.IsNullOrWhiteSpace(environment))
             {
                 environment = fileSystem.RemoveInvalidFileNameChars(environment);

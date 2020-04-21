@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -7,7 +6,6 @@ using Calamari.Commands.Support;
 using Calamari.Common.Features.Packages.Download;
 using Calamari.Common.Features.Scripting;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
@@ -23,8 +21,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static readonly string AuthFeedUri =   "https://octopusdeploy-docker.jfrog.io";
         static readonly string FeedUsername = "e2e-reader";
         static readonly string FeedPassword = ExternalVariables.Get(ExternalVariable.HelmPassword);
-        static string home = Path.GetTempPath();
-        
+        static readonly string Home = Path.GetTempPath();
+
         static readonly string DockerHubFeedUri = "https://index.docker.io";
         static readonly string DockerTestUsername = "octopustestaccount";
         static readonly string DockerTestPassword = ExternalVariables.Get(ExternalVariable.DockerReaderPassword);
@@ -32,7 +30,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
-            Environment.SetEnvironmentVariable("TentacleHome", home);
+            Environment.SetEnvironmentVariable("TentacleHome", Home);
         }
 
         [OneTimeTearDown]
@@ -40,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             Environment.SetEnvironmentVariable("TentacleHome", null);
         }
-                   
+
         [Test]
         [RequiresDockerInstalledAttribute]
         public void PackageWithoutCredentials_Loads()
@@ -50,16 +48,17 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 new SemanticVersion("3.6.5"), "docker-feed", 
                 new Uri(DockerHubFeedUri), null, true, 1,
                 TimeSpan.FromSeconds(3));
-            
+
             Assert.AreEqual("alpine", pkg.PackageId);
             Assert.AreEqual(new SemanticVersion("3.6.5"), pkg.Version);
+            Assert.AreEqual(string.Empty, pkg.FullFilePath);
         }
-        
+
         [Test]
         [RequiresDockerInstalledAttribute]
         public void DockerHubWithCredentials_Loads()
         {
-            var privateImage = "octopusdeploy/private-alpine";
+            const string privateImage = "octopusdeploy/private-alpine";
             var version =  new SemanticVersion("1.0.0");
 
             var downloader = GetDownloader();
@@ -71,11 +70,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 true, 
                 1,
                 TimeSpan.FromSeconds(3));
-            
+
             Assert.AreEqual(privateImage, pkg.PackageId);
             Assert.AreEqual(version, pkg.Version);
+            Assert.AreEqual(string.Empty, pkg.FullFilePath);
         }
-        
+
         [Test]
         [RequiresDockerInstalledAttribute]
         public void PackageWithCredentials_Loads()
@@ -87,11 +87,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 new Uri(AuthFeedUri), 
                 new NetworkCredential(FeedUsername, FeedPassword), true, 1,
                 TimeSpan.FromSeconds(3));
-            
+
             Assert.AreEqual("octopus-echo", pkg.PackageId);
             Assert.AreEqual(new SemanticVersion("1.1"), pkg.Version);
+            Assert.AreEqual(string.Empty, pkg.FullFilePath);
         }
-        
+
         [Test]
         [RequiresDockerInstalledAttribute]
         public void PackageWithWrongCredentials_Fails()
@@ -102,7 +103,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 new Uri(AuthFeedUri), 
                 new NetworkCredential(FeedUsername, "SuperDooper"), true, 1,
                 TimeSpan.FromSeconds(3)));
-            
+
             StringAssert.Contains("Unable to pull Docker image", exception.Message);
         }
 
@@ -111,6 +112,5 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var runner = new CommandLineRunner(ConsoleLog.Instance, new CalamariVariables());
             return new DockerImagePackageDownloader(new ScriptEngine(Enumerable.Empty<IScriptWrapper>()), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables());
         }
-        
     }
 }

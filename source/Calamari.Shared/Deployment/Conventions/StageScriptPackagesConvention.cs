@@ -53,7 +53,7 @@ namespace Calamari.Deployment.Conventions
                 
                 if (string.IsNullOrWhiteSpace(packageOriginalPath))
                 {
-                    Log.Info($"Package '{packageReferenceName}' was not acquired");
+                    Log.Info($"Package '{packageReferenceName}' was not acquired or does not require staging");
                     continue;
                 }
                 

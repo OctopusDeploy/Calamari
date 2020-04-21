@@ -8,7 +8,6 @@ using Calamari.Deployment;
 using Calamari.Deployment.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Nginx;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using Newtonsoft.Json;

@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Variables
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.PrintVariables, true.ToString());
             variables.Set(KnownVariables.PrintEvaluatedVariables, true.ToString());
-            variables.Set(DeploymentEnvironmentVariables.Name, "Production");
+            variables.Set(DeploymentEnvironment.Name, "Production");
             const string variableName = "foo";
             const string rawVariableValue = "The environment is #{Octopus.Environment.Name}";
             variables.Set(variableName, rawVariableValue);

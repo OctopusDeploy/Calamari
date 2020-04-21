@@ -6,11 +6,8 @@ using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
-using Calamari.Util;
 using Calamari.Variables;
 using NUnit.Framework;
-using Octostache;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Substitutions
 {
