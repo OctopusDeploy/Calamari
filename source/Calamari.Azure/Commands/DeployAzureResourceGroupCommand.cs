@@ -7,6 +7,7 @@ using Calamari.Azure.Deployment.Conventions;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Commands;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -52,7 +53,7 @@ namespace Calamari.Azure.Commands
         {
             Options.Parse(commandLineArguments);
 
-            variables.Set(Common.Variables.KnownVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
+            variables.Set(KnownVariables.OriginalPackageDirectoryPath, Environment.CurrentDirectory);
             var fileSystem = new WindowsPhysicalFileSystem();
             var filesInPackage = !string.IsNullOrWhiteSpace(pathToPackage);
             var templateResolver = new TemplateResolver(fileSystem);

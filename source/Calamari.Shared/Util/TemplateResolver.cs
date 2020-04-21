@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Octopus.CoreUtilities;
@@ -36,7 +37,7 @@ namespace Calamari.Util
         public Maybe<ResolvedTemplatePath> MaybeResolve(string relativeFilePath, bool inPackage, IVariables variables)
         {
             var absolutePath = relativeFilePath.ToMaybe().Select(path => inPackage
-                ? Path.Combine(variables.Get(Common.Variables.KnownVariables.OriginalPackageDirectoryPath), variables.Evaluate(path))
+                ? Path.Combine(variables.Get(KnownVariables.OriginalPackageDirectoryPath), variables.Evaluate(path))
                 : Path.Combine(Environment.CurrentDirectory, path));
 
             return absolutePath.SelectValueOr(x =>

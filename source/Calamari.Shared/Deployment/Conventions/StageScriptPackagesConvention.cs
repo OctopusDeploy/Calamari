@@ -28,7 +28,7 @@ namespace Calamari.Deployment.Conventions
             if (!string.IsNullOrWhiteSpace(packagePathContainingScript))
             {
                 ExtractPackage(packagePathContainingScript, deployment.CurrentDirectory);
-                deployment.Variables.Set(Common.Variables.KnownVariables.OriginalPackageDirectoryPath, deployment.CurrentDirectory);
+                deployment.Variables.Set(KnownVariables.OriginalPackageDirectoryPath, deployment.CurrentDirectory);
             }
             
             // Stage any referenced packages (i.e. packages that don't contain the script) 
