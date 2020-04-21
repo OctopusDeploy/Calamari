@@ -14,7 +14,7 @@ using Calamari.Integration.Scripting;
 
 namespace Calamari.Azure.ServiceFabric.Integration
 {
-    public class AzureServiceFabricPowerShellContext : IScriptWrapper
+    public class AzureServiceFabricPowerShellContext : ScriptWrapperBase
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
@@ -29,15 +29,15 @@ namespace Calamari.Azure.ServiceFabric.Integration
             this.variables = variables;
         }
 
-        public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
+        public override int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
 
-        public bool IsEnabled(ScriptSyntax syntax) =>
+        public override bool IsEnabled(ScriptSyntax syntax) =>
             !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)) &&
             supportedScriptSyntax.Contains(syntax);
 
-        public IScriptWrapper NextWrapper { get; set; }
+        public override IScriptWrapper NextWrapper { get; set; }
 
-        public CommandResult ExecuteScript(Script script,
+        protected override CommandResult ExecuteScriptBase(Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
@@ -85,7 +85,7 @@ namespace Calamari.Azure.ServiceFabric.Integration
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
-                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
+                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, Variables, environmentVars);
             }
         }
 

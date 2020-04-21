@@ -4,6 +4,32 @@ using Calamari.Integration.Scripting;
 
 namespace Calamari.Hooks
 {
+    public abstract class ScriptWrapperBase : IScriptWrapper
+    {
+        protected IVariables Variables;
+        public abstract IScriptWrapper NextWrapper { get; set; }
+        public abstract int Priority { get; }
+        public abstract bool IsEnabled(ScriptSyntax syntax);
+
+        public CommandResult ExecuteScript(
+            Script script, 
+            ScriptSyntax scriptSyntax, 
+            ICommandLineRunner commandLineRunner,
+            IVariables inputVariables,
+            Dictionary<string, string> environmentVars)
+        {
+            Variables = inputVariables.Clone();
+
+            return ExecuteScriptBase(script, scriptSyntax, commandLineRunner, environmentVars);
+        }
+
+        protected abstract CommandResult ExecuteScriptBase(
+            Script script, 
+            ScriptSyntax scriptSyntax,
+            ICommandLineRunner commandLineRunner,
+            Dictionary<string, string> environmentVars);
+    }
+    
     /// <summary>
     /// This hook is used to wrap the execution of a script with another script.
     /// </summary>
@@ -35,6 +61,7 @@ namespace Calamari.Hooks
         CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
+            IVariables variables,
             Dictionary<string, string> environmentVars);
     }
 }

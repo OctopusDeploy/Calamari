@@ -7,31 +7,31 @@ using Calamari.Integration.Scripting;
 
 namespace Calamari.Aws.Integration
 {
-    public class AwsScriptWrapper : IScriptWrapper
+    public class AwsScriptWrapper : ScriptWrapperBase
     {
         readonly ILog log;
-        readonly IVariables variables;
-        public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
-        bool IScriptWrapper.IsEnabled(ScriptSyntax syntax) => true;
-        public IScriptWrapper NextWrapper { get; set; }
+        public override int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
+        public override bool IsEnabled(ScriptSyntax syntax) => true;
+        public override IScriptWrapper NextWrapper { get; set; }
 
-        public AwsScriptWrapper(ILog log, IVariables variables)
+        public AwsScriptWrapper(ILog log)
         {
             this.log = log;
-            this.variables = variables;
         }
         
-        public CommandResult ExecuteScript(Script script,
+        protected override CommandResult ExecuteScriptBase (Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
-            var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult().EnvironmentVars;
+            var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, Variables).GetAwaiter().GetResult().EnvironmentVars;
             awsEnvironmentVars.AddRange(environmentVars);
 
             return NextWrapper.ExecuteScript(
-                script, scriptSyntax, 
+                script, 
+                scriptSyntax, 
                 commandLineRunner,
+                Variables,
                 awsEnvironmentVars);
         }
     }

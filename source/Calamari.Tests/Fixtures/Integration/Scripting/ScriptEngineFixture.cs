@@ -12,43 +12,29 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 {
     public class ScriptEngineVariableHandlingFixture
     {
-        class ScriptWrapperOne : IScriptWrapper
+        class ScriptWrapperOne : ScriptWrapperBase
         {
-            readonly IVariables variables;
-
-            public ScriptWrapperOne(IVariables variables)
-            {
-                this.variables = variables;
-            }
-
-            public int Priority => 1;
-            public bool IsEnabled(ScriptSyntax syntax) => true;
-            public IScriptWrapper NextWrapper { get; set; }
-            public CommandResult ExecuteScript(Script script, ScriptSyntax scriptSyntax, ICommandLineRunner commandLineRunner,
+            public override int Priority => 1;
+            public override bool IsEnabled(ScriptSyntax syntax) => true;
+            public override IScriptWrapper NextWrapper { get; set; }
+            protected override CommandResult ExecuteScriptBase(Script script, ScriptSyntax scriptSyntax, ICommandLineRunner commandLineRunner,
                 Dictionary<string, string> environmentVars)
             {
-                variables.Set("OctopusAzureTargetScript", "ValueOne");
-                return NextWrapper.ExecuteScript(new Script("Script-One.ps1"), scriptSyntax, commandLineRunner, environmentVars);
+                Variables.Set("OctopusAzureTargetScript", "ValueOne");
+                return NextWrapper.ExecuteScript(new Script("Script-One.ps1"), scriptSyntax, commandLineRunner, Variables, environmentVars);
             }
         }
         
-        class ScriptWrapperTwo : IScriptWrapper
+        class ScriptWrapperTwo : ScriptWrapperBase
         {
-            readonly IVariables variables;
-
-            public ScriptWrapperTwo(IVariables variables)
-            {
-                this.variables = variables;
-            }
-
-            public int Priority => 1;
-            public bool IsEnabled(ScriptSyntax syntax) => true;
-            public IScriptWrapper NextWrapper { get; set; }
-            public CommandResult ExecuteScript(Script script, ScriptSyntax scriptSyntax, ICommandLineRunner commandLineRunner,
+            public override int Priority => 1;
+            public override bool IsEnabled(ScriptSyntax syntax) => true;
+            public override IScriptWrapper NextWrapper { get; set; }
+            protected override CommandResult ExecuteScriptBase(Script script, ScriptSyntax scriptSyntax, ICommandLineRunner commandLineRunner,
                 Dictionary<string, string> environmentVars)
             {
-                variables.Set("OctopusAzureTargetScript", "ValueTwo");
-                return NextWrapper.ExecuteScript(new Script("Script-Two.ps1"), scriptSyntax, commandLineRunner, environmentVars);
+                Variables.Set("OctopusAzureTargetScript", "ValueTwo");
+                return NextWrapper.ExecuteScript(new Script("Script-Two.ps1"), scriptSyntax, commandLineRunner, Variables, environmentVars);
             }
         }
 
@@ -61,7 +47,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             var runner = Substitute.For<ICommandLineRunner>();
             runner.Execute(Arg.Any<CommandLineInvocation>()).Returns(new CommandResult("command", 0));
             
-            var sut = new ScriptEngine(new IScriptWrapper[] { new ScriptWrapperOne(variables), new ScriptWrapperTwo(variables) });
+            var sut = new ScriptEngine(new IScriptWrapper[] { new ScriptWrapperOne(), new ScriptWrapperTwo() });
             
             sut.Execute(new Script("My-Script.ps1", "Parameters"), variables, runner);
 

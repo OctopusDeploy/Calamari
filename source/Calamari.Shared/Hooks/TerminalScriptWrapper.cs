@@ -8,16 +8,16 @@ namespace Calamari.Hooks
     /// <summary>
     /// The last wrapper in any chain. It calls the script engine directly.
     /// </summary>
-    public class TerminalScriptWrapper : IScriptWrapper
+    public class TerminalScriptWrapper : ScriptWrapperBase
     {
         readonly IScriptExecutor scriptExecutor;
         readonly IVariables variables;
 
-        public bool IsEnabled(ScriptSyntax syntax) => true;
+        public override bool IsEnabled(ScriptSyntax syntax) => true;
 
-        public int Priority => ScriptWrapperPriorities.TerminalScriptPriority;
+        public override int Priority => ScriptWrapperPriorities.TerminalScriptPriority;
 
-        public IScriptWrapper NextWrapper
+        public override IScriptWrapper NextWrapper
         {
             get => throw new MethodAccessException("TerminalScriptWrapper does not have a NextWrapper");
             set => throw new MethodAccessException("TerminalScriptWrapper does not have a NextWrapper");
@@ -29,7 +29,7 @@ namespace Calamari.Hooks
             this.variables = variables;
         }
 
-        public CommandResult ExecuteScript(Script script,
+        protected override CommandResult ExecuteScriptBase(Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars) => 

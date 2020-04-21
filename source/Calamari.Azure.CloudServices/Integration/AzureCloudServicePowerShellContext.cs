@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Deployment;
@@ -12,16 +11,14 @@ using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Octostache;
 
 namespace Calamari.Azure.CloudServices.Integration
 {
-    public class AzureCloudServicePowerShellContext : IScriptWrapper
+    public class AzureCloudServicePowerShellContext : ScriptWrapperBase
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICertificateStore certificateStore;
         readonly ICalamariEmbeddedResources embeddedResources;
-        readonly IVariables variables;
 
         readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell};
 
@@ -30,23 +27,22 @@ namespace Calamari.Azure.CloudServices.Integration
 
         public const string DefaultAzureEnvironment = "AzureCloud";
 
-        public AzureCloudServicePowerShellContext(IVariables variables)
+        public AzureCloudServicePowerShellContext()
         {
             this.fileSystem = new WindowsPhysicalFileSystem();
             this.certificateStore = new CalamariCertificateStore();
             this.embeddedResources = new AssemblyEmbeddedResources();
-            this.variables = variables;
         }
 
-        public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
+        public override int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
 
-        public bool IsEnabled(ScriptSyntax syntax) => variables.Get(SpecialVariables.Account.AccountType, "").StartsWith("Azure") &&
-                                string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)) &&
-                                supportedScriptSyntax.Contains(syntax);
+        public override bool IsEnabled(ScriptSyntax syntax) => Variables.Get(SpecialVariables.Account.AccountType, "").StartsWith("Azure") &&
+                                                               string.IsNullOrEmpty(Variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)) &&
+                                                               supportedScriptSyntax.Contains(syntax);
 
-        public IScriptWrapper NextWrapper { get; set; }
+        public override IScriptWrapper NextWrapper { get; set; }
 
-        public CommandResult ExecuteScript(Script script,
+        protected override CommandResult ExecuteScriptBase(Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
@@ -59,12 +55,12 @@ namespace Calamari.Azure.CloudServices.Integration
             }
 
             var workingDirectory = Path.GetDirectoryName(script.File);
-            variables.Set("OctopusAzureTargetScript", script.File);
-            variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
+            Variables.Set("OctopusAzureTargetScript", script.File);
+            Variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
-            SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, variables.Get(SpecialVariables.Action.Azure.SubscriptionId));
-            SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName));
-            var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment);
+            SetOutputVariable(SpecialVariables.Action.Azure.Output.SubscriptionId, Variables.Get(SpecialVariables.Action.Azure.SubscriptionId));
+            SetOutputVariable("OctopusAzureStorageAccountName", Variables.Get(SpecialVariables.Action.Azure.StorageAccountName));
+            var azureEnvironment = Variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment);
             if (azureEnvironment != DefaultAzureEnvironment)
             {
                 Log.Info("Using Azure Environment override - {0}", azureEnvironment);
@@ -76,7 +72,7 @@ namespace Calamari.Azure.CloudServices.Integration
             {
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory)))
                 {
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, Variables, environmentVars);
                 }
             }
         }
@@ -94,12 +90,12 @@ namespace Calamari.Azure.CloudServices.Integration
             var certificateFilePath = Path.Combine(workingDirectory, CertificateFileName);
             var certificatePassword = GenerateCertificatePassword();
             var azureCertificate = certificateStore.GetOrAdd(
-                variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
+                Variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
+                Convert.FromBase64String(Variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
                 StoreName.My);
 
-            variables.Set("OctopusAzureCertificateFileName", certificateFilePath);
-            variables.Set("OctopusAzureCertificatePassword", certificatePassword);
+            Variables.Set("OctopusAzureCertificateFileName", certificateFilePath);
+            Variables.Set("OctopusAzureCertificatePassword", certificatePassword);
 
             fileSystem.WriteAllBytes(certificateFilePath, azureCertificate.Export(X509ContentType.Pfx, certificatePassword));
             return certificateFilePath;
@@ -107,9 +103,9 @@ namespace Calamari.Azure.CloudServices.Integration
 
         void SetOutputVariable(string name, string value)
         {
-            if (variables.Get(name) != value)
+            if (Variables.Get(name) != value)
             {
-                Log.SetOutputVariable(name, value, variables);
+                Log.SetOutputVariable(name, value, Variables);
             }
         }
 

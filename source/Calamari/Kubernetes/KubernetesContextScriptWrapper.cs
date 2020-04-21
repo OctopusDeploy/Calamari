@@ -10,7 +10,7 @@ using Calamari.Integration.Scripting;
 
 namespace Calamari.Kubernetes
 {
-    public class KubernetesContextScriptWrapper : IScriptWrapper
+    public class KubernetesContextScriptWrapper : ScriptWrapperBase
     {
         readonly IVariables variables;
         readonly WindowsPhysicalFileSystem fileSystem;
@@ -23,21 +23,21 @@ namespace Calamari.Kubernetes
             this.variables = variables;
         }
 
-        public int Priority => ScriptWrapperPriorities.ToolConfigPriority;
+        public override int Priority => ScriptWrapperPriorities.ToolConfigPriority;
 
         /// <summary>
         /// One of these fields must be present for a k8s step
         /// </summary>
-        public bool IsEnabled(ScriptSyntax syntax)
+        public override bool IsEnabled(ScriptSyntax syntax)
         {
             return (!string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl, "")) ||
                     !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName, "")) ||
                     !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName, "")));
         }
 
-        public IScriptWrapper NextWrapper { get; set; }
+        public override IScriptWrapper NextWrapper { get; set; }
 
-        public CommandResult ExecuteScript(Script script,
+        protected override CommandResult ExecuteScriptBase(Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
@@ -50,7 +50,7 @@ namespace Calamari.Kubernetes
             
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
             {
-                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
+                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, Variables, environmentVars);
             }
         }
 

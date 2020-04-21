@@ -45,7 +45,9 @@ namespace Calamari.Integration.Scripting
         {
             var syntax = script.File.ToScriptType();
             return BuildWrapperChain(syntax, variables)
-                .ExecuteScript(script, syntax, commandLineRunner, environmentVars);
+                .ExecuteScript(script, syntax, commandLineRunner, variables, environmentVars);
+            
+            // scriptExecutor.Execute(script, variables, commandLineRunner, environmentVars);
         }
 
         /// <summary>
