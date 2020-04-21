@@ -363,14 +363,14 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             {
                 string value = null;
 
-                Log.Verbose($"Getting ecnrypted variabes string for {variableName}");
+                Log.Verbose($"Getting ecnrypted variables string for {variableName}");
                 try
                 {
                     value = variables.Get(variableName);
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"Error getting ecnrypted variabes string for {variableName}");
+                    Log.Error($"Error getting ecnrypted variables string for {variableName}");
                     throw ex;
                 }
 
