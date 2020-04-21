@@ -148,7 +148,7 @@ namespace Calamari.Tests.Fixtures.Variables
                         }
                     }.Save(varFile.FilePath);
 
-                    Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, varFile.FilePath);
+                    Environment.SetEnvironmentVariable(VariablesFactory.AdditionalVariablesPathVariable, varFile.FilePath);
 
                     var variables = new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem())
                         .Create(new CommonOptions("test"));
@@ -158,7 +158,7 @@ namespace Calamari.Tests.Fixtures.Variables
             }
             finally
             {
-                Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, null);
+                Environment.SetEnvironmentVariable(VariablesFactory.AdditionalVariablesPathVariable, null);
             }
         }
 
@@ -169,20 +169,20 @@ namespace Calamari.Tests.Fixtures.Variables
             {
                 const string filePath = "c:/assuming/that/this/file/doesnt/exist.json";
 
-                Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, filePath);
+                Environment.SetEnvironmentVariable(VariablesFactory.AdditionalVariablesPathVariable, filePath);
 
                 new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem())
                     .Invoking(c => c.Create(new CommonOptions("test")))
                     .Should()
                     .Throw<CommandException>()
                     // Make sure that the message says how to turn this feature off.
-                    .Where(e => e.Message.Contains(SpecialVariables.AdditionalVariablesPath))
+                    .Where(e => e.Message.Contains(VariablesFactory.AdditionalVariablesPathVariable))
                     // Make sure that the message says where it looked for the file.
                     .Where(e => e.Message.Contains(filePath));
             }
             finally
             {
-                Environment.SetEnvironmentVariable(SpecialVariables.AdditionalVariablesPath, null);
+                Environment.SetEnvironmentVariable(VariablesFactory.AdditionalVariablesPathVariable, null);
             }
         }
     }

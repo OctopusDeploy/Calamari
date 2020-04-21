@@ -1,9 +1,9 @@
 ﻿using System.IO;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
-using Calamari.Integration.Processes;
 using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
@@ -50,7 +50,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             const string packageId = "Acme.1.1.1";
             variables.Set(SpecialVariables.Package.UpdateIisWebsite, true.ToString());
-            variables.Set(SpecialVariables.Package.PackageId, packageId);
+            variables.Set(PackageVariables.PackageId, packageId);
             fileSystem.FileExists(Path.Combine(stagingDirectory, "Web.config")).Returns(true);
             iis.OverwriteHomeDirectory(packageId, stagingDirectory, false).Returns(true);
 

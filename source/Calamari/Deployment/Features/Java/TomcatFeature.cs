@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Calamari.Common.Variables;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Deployment.Features.Java
@@ -31,7 +32,7 @@ namespace Calamari.Deployment.Features.Java
             Log.Verbose("Invoking java to perform Tomcat integration");
             javaRunner.Run("com.octopus.calamari.tomcat.TomcatDeploy", new Dictionary<string, string>()
             {
-                {"OctopusEnvironment_Octopus_Tentacle_CurrentDeployment_PackageFilePath", deployment.Variables.Get(SpecialVariables.Package.Output.InstallationPackagePath, deployment.PackageFilePath)},
+                {"OctopusEnvironment_Octopus_Tentacle_CurrentDeployment_PackageFilePath", deployment.Variables.Get(PackageVariables.Output.InstallationPackagePath, deployment.PackageFilePath)},
                 {"OctopusEnvironment_Tomcat_Deploy_Name", variables.Get(SpecialVariables.Action.Java.Tomcat.DeployName)},
                 {"OctopusEnvironment_Tomcat_Deploy_Controller", variables.Get(SpecialVariables.Action.Java.Tomcat.Controller)},
                 {"OctopusEnvironment_Tomcat_Deploy_User", variables.Get(SpecialVariables.Action.Java.Tomcat.User)},

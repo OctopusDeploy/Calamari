@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Common.Variables;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Calamari.Util;

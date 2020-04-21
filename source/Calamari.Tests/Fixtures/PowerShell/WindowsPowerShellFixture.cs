@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.PowerShell
 {
@@ -23,7 +23,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void ShouldCustomizePowerShellVersionIfRequested(string customPowerShellVersion, string expectedLogMessage)
         {
             var variables = new CalamariVariables();
-            variables.Set(SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customPowerShellVersion);
+            variables.Set(PowerShellVariables.CustomPowerShellVersion, customPowerShellVersion);
 
             // Let's just use the Hello.ps1 script for something simples
             var output = InvokeCalamariForPowerShell(calamari => calamari
@@ -62,7 +62,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var nonExistentEdition = "WindowsPowerShell";
             var output = RunScript("Hello.ps1",
-                new Dictionary<string, string>() {{SpecialVariables.Action.PowerShell.Edition, nonExistentEdition}});
+                new Dictionary<string, string>() {{PowerShellVariables.Edition, nonExistentEdition}});
             
             output.result.AssertFailure();
             output.result.AssertErrorOutput("Attempted to use 'WindowsPowerShell' edition of PowerShell, but this edition could not be found. Possible editions: Core, Desktop");

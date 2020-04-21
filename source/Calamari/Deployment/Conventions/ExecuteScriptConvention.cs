@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Calamari.Common.Variables;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 
@@ -18,7 +19,7 @@ namespace Calamari.Deployment.Conventions
         public void Install(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            var scriptFile = Path.Combine(deployment.CurrentDirectory, variables.Get(SpecialVariables.Action.Script.ScriptFileName));
+            var scriptFile = Path.Combine(deployment.CurrentDirectory, variables.Get(ScriptVariables.ScriptFileName));
             var scriptParameters = variables.Get(SpecialVariables.Action.Script.ScriptParameters);
             Log.VerboseFormat("Executing '{0}'", scriptFile);
             var result = scriptEngine.Execute(new Script(scriptFile, scriptParameters), variables, commandLineRunner);

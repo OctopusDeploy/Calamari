@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Deployment.Journal;
 
 namespace Calamari.Deployment.Conventions
@@ -22,9 +23,9 @@ namespace Calamari.Deployment.Conventions
                 return;
             }
 
-            var id = deployment.Variables.Get(SpecialVariables.Package.PackageId);
-            var version = deployment.Variables.Get(SpecialVariables.Package.PackageVersion);
-            var policySet = deployment.Variables.Get(SpecialVariables.RetentionPolicySet);
+            var id = deployment.Variables.Get(PackageVariables.PackageId);
+            var version = deployment.Variables.Get(PackageVariables.PackageVersion);
+            var policySet = deployment.Variables.Get(Common.Variables.KnownVariables.RetentionPolicySet);
 
             var previous = journal.GetLatestInstallation(policySet, id, version);
             if (previous == null) 
@@ -37,10 +38,11 @@ namespace Calamari.Deployment.Conventions
             else
             {
                 log.Info("The package has already been installed on this machine, so installation will be skipped.");
-                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.InstallationDirectoryPath, previous.ExtractedTo);
-                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, previous.ExtractedTo);
+                log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.InstallationDirectoryPath, previous.ExtractedTo);
+                log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.DeprecatedInstallationDirectoryPath, previous.ExtractedTo);
                 deployment.Variables.Set(SpecialVariables.Action.SkipRemainingConventions, "true");
-                deployment.Variables.Set(SpecialVariables.Action.SkipJournal, "true");
+                //deployment.Variables.Set(Common.Variables.SpecialVariables.Action.SkipJournal, "true");
+                deployment.SkipJournal = true;
             }
         }
     }

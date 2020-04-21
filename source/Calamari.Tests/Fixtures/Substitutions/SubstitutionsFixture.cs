@@ -2,14 +2,12 @@
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using Calamari.Deployment;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
-using Calamari.Util;
 using Calamari.Variables;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.Substitutions
 {
@@ -66,7 +64,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             var filePath = GetFixtureResouce("Samples", "UTF16LE.ini");
             var variables = new CalamariVariables();
-            variables[SpecialVariables.Package.SubstituteInFilesOutputEncoding] = "utf-8";
+            variables[PackageVariables.SubstituteInFilesOutputEncoding] = "utf-8";
 
             var encoding = (Encoding)PerformTest(filePath, variables).encoding;
 
@@ -82,7 +80,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             var filePath = GetFixtureResouce("Samples", "UTF16LE.ini");
             var variables = new CalamariVariables();
-            variables[SpecialVariables.Package.SubstituteInFilesOutputEncoding] = "utf-666";
+            variables[PackageVariables.SubstituteInFilesOutputEncoding] = "utf-666";
 
             var encoding = (Encoding)PerformTest(filePath, variables).encoding;
 

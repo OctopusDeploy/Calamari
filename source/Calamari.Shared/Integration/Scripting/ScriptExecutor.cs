@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -11,6 +12,8 @@ namespace Calamari.Integration.Scripting
 {
     public abstract class ScriptExecutor : IScriptExecutor
     {
+        static readonly string CopyWorkingDirectoryVariable = "Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo";
+        
         public CommandResult Execute(Script script, IVariables variables, ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars = null)
         {
@@ -23,7 +26,7 @@ namespace Calamari.Integration.Scripting
             CommandResult result = null;
             foreach (var execution in prepared)
             {
-                if (variables.IsSet(SpecialVariables.CopyWorkingDirectoryIncludingKeyTo))
+                if (variables.IsSet(CopyWorkingDirectoryVariable))
                 {
                     CopyWorkingDirectory(variables, execution.CommandLineInvocation.WorkingDirectory,
                         execution.CommandLineInvocation.Arguments);
@@ -68,10 +71,10 @@ namespace Calamari.Integration.Scripting
             var fs = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
             var copyToParent = Path.Combine(
-                variables.Get(SpecialVariables.CopyWorkingDirectoryIncludingKeyTo),
-                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Project.Name, "Non-Project")),
-                variables.Get(SpecialVariables.Deployment.Id, "Non-Deployment"),
-                fs.RemoveInvalidFileNameChars(variables.Get(SpecialVariables.Action.Name, "Non-Action"))
+                variables.Get(CopyWorkingDirectoryVariable),
+                fs.RemoveInvalidFileNameChars(variables.Get(ProjectVariables.Name, "Non-Project")),
+                variables.Get(DeploymentVariables.Id, "Non-Deployment"),
+                fs.RemoveInvalidFileNameChars(variables.Get(ActionVariables.Name, "Non-Action"))
             );
 
             string copyTo;

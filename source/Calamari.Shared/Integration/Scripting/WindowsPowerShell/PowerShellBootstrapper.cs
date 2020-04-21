@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
-using Octostache;
 
 namespace Calamari.Integration.Scripting.WindowsPowerShell
 {
@@ -46,7 +46,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
         protected override IEnumerable<string> ContributeCommandArguments(IVariables variables)
         {
-            var customPowerShellVersion = variables[SpecialVariables.Action.PowerShell.CustomPowerShellVersion];
+            var customPowerShellVersion = variables[PowerShellVariables.CustomPowerShellVersion];
             if (!string.IsNullOrEmpty(customPowerShellVersion))
             {
                 yield return $"-Version {customPowerShellVersion} ";
@@ -78,7 +78,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
         public override string PathToPowerShellExecutable(IVariables variables)
         {
-            var customVersion = variables[SpecialVariables.Action.PowerShell.CustomPowerShellVersion];
+            var customVersion = variables[PowerShellVariables.CustomPowerShellVersion];
             var customVersionIsDefined = !string.IsNullOrEmpty(customVersion);
             try
             {
@@ -178,7 +178,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         {
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            var executeWithoutProfile = variables[SpecialVariables.Action.PowerShell.ExecuteWithoutProfile];
+            var executeWithoutProfile = variables[PowerShellVariables.ExecuteWithoutProfile];
             var traceCommand = GetPsDebugCommand(variables);
 
             foreach (var argument in ContributeCommandArguments(variables))
@@ -204,7 +204,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
         static string GetPsDebugCommand(IVariables variables)
         {
             //https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/set-psdebug?view=powershell-6
-            var traceArg = variables[SpecialVariables.Action.PowerShell.PSDebug.Trace];
+            var traceArg = variables[PowerShellVariables.PSDebug.Trace];
             var traceCommand = "-Trace 0";
             var powerShellVersion = ScriptingEnvironment.SafelyGetPowerShellVersion();
             int.TryParse(traceArg, out var traceArgAsInt);
@@ -212,10 +212,10 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             if (traceArgAsInt > 0 || traceArgAsBool)
             {
                 if (powerShellVersion.Major < 5 && powerShellVersion.Major > 0)
-                    Log.Warn($"{SpecialVariables.Action.PowerShell.PSDebug.Trace} is enabled, but PowerShell tracing is only supported with PowerShell versions 5 and above. This server is currently running PowerShell version {powerShellVersion}.");
+                    Log.Warn($"{PowerShellVariables.PSDebug.Trace} is enabled, but PowerShell tracing is only supported with PowerShell versions 5 and above. This server is currently running PowerShell version {powerShellVersion}.");
                 else
                 {
-                    Log.Warn($"{SpecialVariables.Action.PowerShell.PSDebug.Trace} is enabled. This should only be used for debugging, and then disabled again for normal deployments.");
+                    Log.Warn($"{PowerShellVariables.PSDebug.Trace} is enabled. This should only be used for debugging, and then disabled again for normal deployments.");
                     if (traceArgAsInt > 0)
                         traceCommand = $"-Trace {traceArgAsInt}";
                     if (traceArgAsBool)
@@ -223,11 +223,11 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
                 }
             }
             
-            var strictArg = variables[SpecialVariables.Action.PowerShell.PSDebug.Strict];
+            var strictArg = variables[PowerShellVariables.PSDebug.Strict];
             var strictCommand = "";
             if (bool.TryParse(strictArg, out var strictArgAsBool) && strictArgAsBool)
             {
-                Log.Info($"{SpecialVariables.Action.PowerShell.PSDebug.Strict} is enabled, putting PowerShell into strict mode where variables must be assigned a value before being referenced in a script. If a variable is referenced before a value is assigned, an exception will be thrown. This feature is experimental.");
+                Log.Info($"{PowerShellVariables.PSDebug.Strict} is enabled, putting PowerShell into strict mode where variables must be assigned a value before being referenced in a script. If a variable is referenced before a value is assigned, an exception will be thrown. This feature is experimental.");
                 strictCommand = " -Strict";
             }
             
@@ -238,7 +238,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
 
         private static bool IsDebuggingEnabled(IVariables variables)
         {
-            var powershellDebugMode = variables[SpecialVariables.Action.PowerShell.DebugMode];
+            var powershellDebugMode = variables[PowerShellVariables.DebugMode];
 
             if (string.IsNullOrEmpty(powershellDebugMode))
                 return false;
@@ -280,7 +280,7 @@ namespace Calamari.Integration.Scripting.WindowsPowerShell
             var beforeScriptModulesDebugLocation = string.Empty;
             var beforeLaunchingUserScriptDebugLocation = string.Empty;
 
-            var powershellDebugMode = variables[SpecialVariables.Action.PowerShell.DebugMode];
+            var powershellDebugMode = variables[PowerShellVariables.DebugMode];
             if (!string.IsNullOrEmpty(powershellDebugMode))
             {
                 switch (powershellDebugMode.ToLower())

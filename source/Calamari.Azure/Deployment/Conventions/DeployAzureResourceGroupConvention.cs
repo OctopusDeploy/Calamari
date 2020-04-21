@@ -7,6 +7,7 @@ using Calamari.Azure.Accounts.Security;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Azure.Integration;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Microsoft.Azure.Management.ResourceManager;
@@ -15,7 +16,6 @@ using Microsoft.Rest;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Octostache;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
@@ -55,7 +55,7 @@ namespace Calamari.Azure.Deployment.Conventions
             var resourceGroupName = variables[SpecialVariables.Action.Azure.ResourceGroupName];
             var deploymentName = !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName])
                     ? variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName]
-                    : GenerateDeploymentNameFromStepName(variables[SpecialVariables.Action.Name]);
+                    : GenerateDeploymentNameFromStepName(variables[ActionVariables.Name]);
             var deploymentMode = (DeploymentMode) Enum.Parse(typeof (DeploymentMode),
                 variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
             var template = templateService.GetSubstitutedTemplateContent(templateFile, filesInPackage, variables); 

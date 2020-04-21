@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Xml;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -74,17 +75,17 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             var result = DeployPackage();
             result.AssertSuccess();
-            result.AssertOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, Is.EqualTo(Path.Combine(StagingDirectory, "Acme.Web", "1.0.0")));
+            result.AssertOutputVariable(PackageVariables.Output.InstallationDirectoryPath, Is.EqualTo(Path.Combine(StagingDirectory, "Acme.Web", "1.0.0")));
         }
 
         [Test]
         public void ShouldCopyToCustomDirectoryExtractionVariable()
         {
-            Variables[SpecialVariables.Package.CustomInstallationDirectory] = CustomDirectory;
+            Variables[PackageVariables.CustomInstallationDirectory] = CustomDirectory;
             var result = DeployPackage();
             result.AssertSuccess();
             result.AssertOutput("Copying package contents to");
-            result.AssertOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, Is.EqualTo(CustomDirectory));
+            result.AssertOutputVariable(PackageVariables.Output.InstallationDirectoryPath, Is.EqualTo(CustomDirectory));
         }
 
         [Test]
@@ -92,8 +93,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             Variables.Set("foo", "bar");
             // Enable file substitution and configure the target
-            Variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
-            Variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, "web.config");
+            Variables.Set(PackageVariables.SubstituteInFilesEnabled, true.ToString());
+            Variables.Set(PackageVariables.SubstituteInFilesTargets, "web.config");
 
             DeployPackage();
 
@@ -109,8 +110,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             var path = Path.Combine("assets", "README.txt");
 
             // Enable file substitution and configure the target
-            Variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
-            Variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, path);
+            Variables.Set(PackageVariables.SubstituteInFilesEnabled, true.ToString());
+            Variables.Set(PackageVariables.SubstituteInFilesTargets, path);
 
             DeployPackage();
 
@@ -124,7 +125,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
-            Variables.Set(SpecialVariables.Environment.Name, "Production");
+            Variables.Set(DeploymentEnvironment.Name, "Production");
             Variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
             Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
 
@@ -170,7 +171,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             FileSystem.EnsureDirectoryExists(customInstallDirectory);
             // Ensure the directory is empty before we start
             FileSystem.PurgeDirectory(customInstallDirectory, FailureOptions.ThrowOnFailure); 
-            Variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallDirectory );
+            Variables.Set(PackageVariables.CustomInstallationDirectory, customInstallDirectory );
 
             var result = DeployPackage(deploymentType);
 
@@ -250,9 +251,9 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldSkipIfAlreadyInstalled(DeploymentType deploymentType)
         {
             Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            Variables.Set(SpecialVariables.RetentionPolicySet, "a/b/c/d");
-            Variables.Set(SpecialVariables.Package.PackageId, "Acme.Web");
-            Variables.Set(SpecialVariables.Package.PackageVersion, "1.0.0");
+            Variables.Set(KnownVariables.RetentionPolicySet, "a/b/c/d");
+            Variables.Set(PackageVariables.PackageId, "Acme.Web");
+            Variables.Set(PackageVariables.PackageVersion, "1.0.0");
 
             var result = DeployPackage(deploymentType);
             result.AssertSuccess();
@@ -267,9 +268,9 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldSkipIfAlreadyInstalledWithDifferentPackageType()
         {
             Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            Variables.Set(SpecialVariables.RetentionPolicySet, "a/b/c/d");
-            Variables.Set(SpecialVariables.Package.PackageId, "Acme.Web");
-            Variables.Set(SpecialVariables.Package.PackageVersion, "1.0.0");
+            Variables.Set(KnownVariables.RetentionPolicySet, "a/b/c/d");
+            Variables.Set(PackageVariables.PackageId, "Acme.Web");
+            Variables.Set(PackageVariables.PackageVersion, "1.0.0");
 
             var result = DeployPackage(DeploymentType.Tar);
             result.AssertSuccess();

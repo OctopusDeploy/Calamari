@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
 
@@ -60,13 +61,14 @@ namespace Calamari.Deployment.Conventions
             {
                 result.Add(new XmlConfigTransformDefinition("Release"));
 
-                var environment = deployment.Variables.Get(SpecialVariables.Environment.Name);
+                var environment = deployment.Variables.Get(
+                    DeploymentEnvironment.Name);
                 if (!string.IsNullOrWhiteSpace(environment))
                 {
                     result.Add(new XmlConfigTransformDefinition(environment));
                 }
                 
-                var tenant = deployment.Variables.Get(SpecialVariables.Deployment.Tenant.Name);
+                var tenant = deployment.Variables.Get(DeploymentVariables.Tenant.Name);
                 if (!string.IsNullOrWhiteSpace(tenant))
                 {
                     result.Add(new XmlConfigTransformDefinition(tenant));
@@ -205,7 +207,7 @@ namespace Calamari.Deployment.Conventions
         {
             var files = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions).ToList();
 
-            foreach (var path in deployment.Variables.GetStrings(SpecialVariables.Action.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
+            foreach (var path in deployment.Variables.GetStrings(ActionVariables.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
             {
                 var pathFiles = fileSystem.EnumerateFilesRecursively(path, sourceExtensions);
                 files.AddRange(pathFiles);

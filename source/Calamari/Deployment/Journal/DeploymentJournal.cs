@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes.Semaphores;
 using Octostache;
@@ -25,7 +26,7 @@ namespace Calamari.Deployment.Journal
 
         private string JournalPath
         {
-            get { return variables.Get(SpecialVariables.Tentacle.Agent.JournalPath); }
+            get { return variables.Get(TentacleVariables.Agent.JournalPath); }
         }
 
         public void AddJournalEntry(JournalEntry entry)

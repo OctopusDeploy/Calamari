@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -80,7 +81,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 
             var variables = new CalamariVariables
             {
-                {SpecialVariables.Action.PowerShell.CustomPowerShellVersion, customVersion}
+                {PowerShellVariables.CustomPowerShellVersion, customVersion}
             };
 
             return CreateBootstrapper(fileSystem).PathToPowerShellExecutable(variables);

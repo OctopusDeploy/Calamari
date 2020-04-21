@@ -8,6 +8,7 @@ using Calamari.Aws.Integration.S3;
 using Calamari.CloudAccounts;
 using Calamari.Commands;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -53,7 +54,7 @@ namespace Calamari.Aws.Commands
 
             if (string.IsNullOrEmpty(pathToPackage))
             {
-                throw new CommandException($"No package file was specified. Please provide `{SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath}` variable");
+                throw new CommandException($"No package file was specified. Please provide `{TentacleVariables.CurrentDeployment.PackageFilePath}` variable");
             }
 
             if (!fileSystem.FileExists(pathToPackage))

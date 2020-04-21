@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
-using Octostache;
 
 namespace Calamari.Integration.Packages.Java
 {

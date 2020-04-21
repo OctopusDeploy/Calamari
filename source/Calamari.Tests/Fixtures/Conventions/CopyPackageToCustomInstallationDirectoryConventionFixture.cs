@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -26,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void SetUp()
         {
             variables = new CalamariVariables();
-            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, stagingDirectory);
+            variables.Set(KnownVariables.OriginalPackageDirectoryPath, stagingDirectory);
             fileSystem = Substitute.For<ICalamariFileSystem>();
             deployment = new RunningDeployment(packageFilePath, variables);
         }
@@ -34,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldCopyFilesWhenCustomInstallationDirectoryIsSupplied()
         {
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
+            variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
             CreateConvention().Install(deployment);
             fileSystem.Received().CopyDirectory( stagingDirectory, customInstallationDirectory);
         }
@@ -49,8 +50,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldPurgeCustomInstallationDirectoryWhenFlagIsSet()
         {
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, true.ToString());
+            variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
+            variables.Set(PackageVariables.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, true.ToString());
 
             CreateConvention().Install(deployment);
 
@@ -61,9 +62,9 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldPassGlobsToPurgeWhenSet()
         {
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, true.ToString());
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectoryPurgeExclusions, "firstglob\nsecondglob");
+            variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
+            variables.Set(PackageVariables.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, true.ToString());
+            variables.Set(PackageVariables.CustomInstallationDirectoryPurgeExclusions, "firstglob\nsecondglob");
 
 
             CreateConvention().Install(deployment);
@@ -75,8 +76,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotPurgeCustomInstallationDirectoryWhenFlagIsNotSet()
         {
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, false.ToString());
+            variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
+            variables.Set(PackageVariables.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, false.ToString());
 
             CreateConvention().Install(deployment);
 
@@ -87,9 +88,9 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldSetCustomInstallationDirectoryVariable()
         {
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
+            variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
             CreateConvention().Install(deployment);
-            Assert.AreEqual(variables.Get(SpecialVariables.Package.CustomInstallationDirectory), customInstallationDirectory);
+            Assert.AreEqual(variables.Get(PackageVariables.CustomInstallationDirectory), customInstallationDirectory);
         }
 
         [Test]
@@ -97,7 +98,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldFailIfCustomInstallationDirectoryVariableIsNotEvaluated()
         {
             variables.Set("CustomInstallDirectory", customInstallationDirectory);
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, "#{CustomInstalDirectory}");
+            variables.Set(PackageVariables.CustomInstallationDirectory, "#{CustomInstalDirectory}");
 
             CreateConvention().Install(deployment);
         }
@@ -107,7 +108,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldFailIfCustomInstallationDirectoryIsRelativePath()
         {
             const string relativeInstallDirectory = "relative/path/to/folder";
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, relativeInstallDirectory);
+            variables.Set(PackageVariables.CustomInstallationDirectory, relativeInstallDirectory);
 
             CreateConvention().Install(deployment);
         }
@@ -117,7 +118,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [ExpectedException(ExpectedMessage = "Access to the path /var/tmp/myCustomInstallDir was denied. Ensure that the application that uses this directory is not running.")]
         public void ShouldNotIncludeIISRelatedInfoInErrorMessageWhenAccessDeniedException()
         {
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
+            variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
             fileSystem.CopyDirectory(Arg.Any<string>(), Arg.Any<string>())
                 .ThrowsForAnyArgs(
                     new UnauthorizedAccessException($"Access to the path {customInstallationDirectory} was denied."));
@@ -130,7 +131,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [ExpectedException(ExpectedMessage = "Access to the path C:\\myCustomInstallDir was denied. Ensure that the application that uses this directory is not running. If this is an IIS website, stop the application pool or use an app_offline.htm file (see https://g.octopushq.com/TakingWebsiteOffline).")]
         public void ShouldIncludeIISRelatedInfoInErrorMessageWhenAccessDeniedException()
         {
-            variables.Set(SpecialVariables.Package.CustomInstallationDirectory, customInstallationDirectory);
+            variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
             fileSystem.CopyDirectory(Arg.Any<string>(), Arg.Any<string>())
                 .ThrowsForAnyArgs(
                     new UnauthorizedAccessException($"Access to the path {customInstallationDirectory} was denied."));

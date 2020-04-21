@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Tests.Fixtures.Integration.Proxies;
 using Calamari.Tests.Helpers;
@@ -20,7 +21,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var variables = new Dictionary<string,string>()
             {
-                {SpecialVariables.Action.PowerShell.Edition, "Core"}
+                {PowerShellVariables.Edition, "Core"}
             };
 
             return RunScript("Proxy.ps1", variables).result;

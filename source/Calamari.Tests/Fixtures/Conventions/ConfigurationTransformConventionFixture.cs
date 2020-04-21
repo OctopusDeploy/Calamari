@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.IO;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using FluentAssertions;
@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             variables = new CalamariVariables();
             variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
-            variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
+            variables.Set(KnownVariables.OriginalPackageDirectoryPath, deployDirectory);
 
             deployment = new RunningDeployment(deployDirectory, variables);
             logs = new InMemoryLog();
@@ -67,7 +67,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string environment = "Production";
 
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-            variables.Set(SpecialVariables.Environment.Name, environment);
+            variables.Set(DeploymentEnvironment.Name, environment);
 
             CreateConvention().Install(deployment);
 
@@ -82,8 +82,8 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string tenant = "Tenant-1";
 
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-            variables.Set(SpecialVariables.Environment.Name, environment);
-            variables.Set(SpecialVariables.Deployment.Tenant.Name, tenant);
+            variables.Set(DeploymentEnvironment.Name, environment);
+            variables.Set(DeploymentVariables.Tenant.Name, tenant);
 
             CreateConvention().Install(deployment);
 
@@ -99,8 +99,8 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string tenant = "Tenant-1";
 
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-            variables.Set(SpecialVariables.Environment.Name, environment);
-            variables.Set(SpecialVariables.Deployment.Tenant.Name, tenant);
+            variables.Set(DeploymentEnvironment.Name, environment);
+            variables.Set(DeploymentVariables.Tenant.Name, tenant);
 
             CreateConvention().Install(deployment);
 
@@ -239,7 +239,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             deploymentVariables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, @"MyPackage.1.0.0.nupkg");
             deploymentVariables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, @"MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config => MyApplication.ProcessingServer.WorkerRole.dll.config");
             deploymentVariables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, "True");
-            deploymentVariables.Set(SpecialVariables.Environment.Name, "my-test-env");
+            deploymentVariables.Set(DeploymentEnvironment.Name, "my-test-env");
             deploymentVariables.Set(SpecialVariables.Package.EnableDiagnosticsConfigTransformationLogging, "True");
             deploymentVariables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
             var runningDeployment = new RunningDeployment(@"c:\temp\MyPackage.1.0.0.nupkg", deploymentVariables);
@@ -256,8 +256,8 @@ namespace Calamari.Tests.Fixtures.Conventions
              .Returns(new[] { @"c:\temp\MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config" });
 
             //these variables would normally be set by ExtractPackageToStagingDirectoryConvention
-            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, "c:\\temp", runningDeployment.Variables);
-            Log.SetOutputVariable(SpecialVariables.OriginalPackageDirectoryPath, "c:\\temp", runningDeployment.Variables);
+            Log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, "c:\\temp", runningDeployment.Variables);
+            Log.SetOutputVariable(KnownVariables.OriginalPackageDirectoryPath, "c:\\temp", runningDeployment.Variables);
 
             var log = new InMemoryLog();
             var transformer = Substitute.For<IConfigurationTransformer>();

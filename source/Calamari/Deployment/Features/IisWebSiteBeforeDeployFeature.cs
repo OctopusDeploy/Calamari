@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.Cryptography.X509Certificates;
+using Calamari.Common.Variables;
 using Calamari.Integration.Certificates;
 using Octostache;
 
@@ -42,7 +43,7 @@ namespace Calamari.Deployment.Features
 
         static void EnsureCertificateInStore(IVariables variables, string certificateVariable)
         {
-            var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
+            var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
 
             var storeName = FindCertificateInLocalMachineStore(thumbprint);
             if (storeName != null)
@@ -78,9 +79,9 @@ namespace Calamari.Deployment.Features
 
         static string AddCertificateToLocalMachineStore(IVariables variables, string certificateVariable)
         {
-            var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
-            var password = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Password}");
-            var subject = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Subject}"); 
+            var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Pfx}"));
+            var password = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Password}");
+            var subject = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}"); 
 
             Log.Info($"Adding certificate '{subject}' into Cert:\\LocalMachine\\My");
 

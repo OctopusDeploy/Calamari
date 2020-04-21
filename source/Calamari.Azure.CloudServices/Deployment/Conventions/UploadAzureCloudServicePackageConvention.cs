@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Calamari.Azure.CloudServices.Integration;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -27,7 +28,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
             var package = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath); 
             Log.Info("Uploading package to Azure blob storage: '{0}'", package);
             var packageHash = HashCalculator.Hash(package);
-            var nugetPackageVersion = deployment.Variables.Get(SpecialVariables.Package.PackageVersion);
+            var nugetPackageVersion = deployment.Variables.Get(PackageVariables.PackageVersion);
             var uploadedFileName = Path.ChangeExtension(Path.GetFileName(package), "." + nugetPackageVersion + "_" + packageHash + ".cspkg");
 
             var credentials = credentialsFactory.GetCredentials(deployment.Variables);

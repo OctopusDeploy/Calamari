@@ -32,15 +32,15 @@ namespace Calamari.Variables
                 return text.ToString();
             }
 
-            if (variables.GetFlag(SpecialVariables.PrintVariables))
+            if (variables.GetFlag(Common.Variables.KnownVariables.PrintVariables))
             {
-                log.Warn($"{SpecialVariables.PrintVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
+                log.Warn($"{Common.Variables.KnownVariables.PrintVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
                 log.Verbose("The following variables are available:" + Environment.NewLine + ToString(true));
             }
 
-            if (variables.GetFlag(SpecialVariables.PrintEvaluatedVariables))
+            if (variables.GetFlag(Common.Variables.KnownVariables.PrintEvaluatedVariables))
             {
-                log.Warn($"{SpecialVariables.PrintEvaluatedVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
+                log.Warn($"{Common.Variables.KnownVariables.PrintEvaluatedVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
                 log.Verbose("The following evaluated variables are available:" + Environment.NewLine + ToString(false));
             }
         }

@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Reflection;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.EmbeddedResources;
@@ -35,7 +36,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
             Log.SetOutputVariable("OctopusAzureSlot", deployment.Variables.Get(SpecialVariables.Action.Azure.Slot), deployment.Variables);
             Log.SetOutputVariable("OctopusAzurePackageUri", deployment.Variables.Get(SpecialVariables.Action.Azure.UploadedPackageUri), deployment.Variables);
 
-            var deploymentLabel = deployment.Variables.Get(SpecialVariables.Action.Azure.DeploymentLabel, defaultValue: deployment.Variables.Get(SpecialVariables.Action.Name) + " v" + deployment.Variables.Get(SpecialVariables.Release.Number));
+            var deploymentLabel = deployment.Variables.Get(SpecialVariables.Action.Azure.DeploymentLabel, defaultValue: deployment.Variables.Get(ActionVariables.Name) + " v" + deployment.Variables.Get(SpecialVariables.Release.Number));
             Log.SetOutputVariable("OctopusAzureDeploymentLabel", deploymentLabel, deployment.Variables);
 
             Log.SetOutputVariable("OctopusAzureSwapIfPossible", deployment.Variables.Get(SpecialVariables.Action.Azure.SwapIfPossible, defaultValue: false.ToString()), deployment.Variables);

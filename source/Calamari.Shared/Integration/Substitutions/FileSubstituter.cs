@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Octostache;
@@ -39,7 +40,7 @@ namespace Calamari.Integration.Substitutions
 
         private Encoding GetEncoding(IVariables variables, Encoding fileEncoding)
         {
-            var requestedEncoding = variables.Get(SpecialVariables.Package.SubstituteInFilesOutputEncoding);
+            var requestedEncoding = variables.Get(PackageVariables.SubstituteInFilesOutputEncoding);
             if (requestedEncoding == null)
             {
                 return fileEncoding;

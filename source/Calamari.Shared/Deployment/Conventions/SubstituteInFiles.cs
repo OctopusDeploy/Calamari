@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Substitutions;
 
@@ -23,11 +24,11 @@ namespace Calamari.Deployment.Conventions
 
         public void SubstituteBasedSettingsInSuppliedVariables(RunningDeployment deployment)
         {
-            var substituteInFilesEnabled = variables.GetFlag(SpecialVariables.Package.SubstituteInFilesEnabled);
+            var substituteInFilesEnabled = variables.GetFlag(PackageVariables.SubstituteInFilesEnabled);
             if (!substituteInFilesEnabled)
                 return;
             
-            var filesToTarget = variables.GetPaths(SpecialVariables.Package.SubstituteInFilesTargets);
+            var filesToTarget = variables.GetPaths(PackageVariables.SubstituteInFilesTargets);
             Substitute(deployment, filesToTarget);
         }
 
@@ -39,7 +40,7 @@ namespace Calamari.Deployment.Conventions
 
                 if (!matchingFiles.Any())
                 {
-                    if (deployment.Variables.GetFlag(SpecialVariables.Package.EnableNoMatchWarning, true))
+                    if (deployment.Variables.GetFlag(PackageVariables.EnableNoMatchWarning, true))
                     {
                         Log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
                     }
@@ -58,7 +59,7 @@ namespace Calamari.Deployment.Conventions
         {
             var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
 
-            foreach (var path in variables.GetStrings(SpecialVariables.Action.AdditionalPaths)
+            foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths)
                 .Where(s => !string.IsNullOrWhiteSpace(s)))
             {
                 var pathFiles = fileSystem.EnumerateFilesWithGlob(path, target).Select(Path.GetFullPath);
