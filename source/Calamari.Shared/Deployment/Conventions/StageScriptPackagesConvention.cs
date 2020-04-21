@@ -28,7 +28,7 @@ namespace Calamari.Deployment.Conventions
             if (!string.IsNullOrWhiteSpace(packagePathContainingScript))
             {
                 ExtractPackage(packagePathContainingScript, deployment.CurrentDirectory);
-                deployment.Variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, deployment.CurrentDirectory);
+                deployment.Variables.Set(KnownVariables.OriginalPackageDirectoryPath, deployment.CurrentDirectory);
             }
             
             // Stage any referenced packages (i.e. packages that don't contain the script) 
@@ -49,7 +49,7 @@ namespace Calamari.Deployment.Conventions
                 Log.Verbose($"Considering '{packageReferenceName}' for extraction");
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
                 
-                var packageOriginalPath = variables.Get(PackageVariables.OriginalPathWithKey(packageReferenceName));
+                var packageOriginalPath = variables.Get(PackageVariables.IndexedOriginalPath(packageReferenceName));
                 
                 if (string.IsNullOrWhiteSpace(packageOriginalPath))
                 {
@@ -57,7 +57,7 @@ namespace Calamari.Deployment.Conventions
                     continue;
                 }
                 
-                packageOriginalPath = Path.GetFullPath(variables.Get(PackageVariables.OriginalPathWithKey(packageReferenceName)));
+                packageOriginalPath = Path.GetFullPath(variables.Get(PackageVariables.IndexedOriginalPath(packageReferenceName)));
 
                 // In the case of container images, the original path is not a file-path.  We won't try and extract or move it.
                 if (!fileSystem.FileExists(packageOriginalPath))
@@ -66,7 +66,7 @@ namespace Calamari.Deployment.Conventions
                     continue;
                 }
 
-                var shouldExtract = variables.GetFlag(SpecialVariables.Packages.Extract(packageReferenceName));
+                var shouldExtract = variables.GetFlag(PackageVariables.IndexedExtract(packageReferenceName));
 
                 if (forceExtract || shouldExtract)
                 {

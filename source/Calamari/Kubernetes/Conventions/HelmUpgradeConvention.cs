@@ -247,8 +247,8 @@ namespace Calamari.Kubernetes.Conventions
                 
                 foreach (var providedPath in paths)
                 {
-                    var packageId = variables.Get(PackageVariables.PackageIdWithKey(packageReferenceName));
-                    var version = variables.Get(PackageVariables.PackageVersionWithKey(packageReferenceName));
+                    var packageId = variables.Get(PackageVariables.IndexedPackageId(packageReferenceName));
+                    var version = variables.Get(PackageVariables.IndexedPackageVersion(packageReferenceName));
                     var relativePath = Path.Combine(sanitizedPackageReferenceName, providedPath);
                     var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
 

@@ -14,9 +14,9 @@ namespace Calamari.Deployment.Journal
                 deployment.Variables.Get(Common.Variables.EnvironmentVariables.Id),
                 deployment.Variables.Get(DeploymentVariables.Tenant.Id),
                 deployment.Variables.Get(ProjectVariables.Id),
-                deployment.Variables.Get(SpecialVariables.RetentionPolicySet),
+                deployment.Variables.Get(KnownVariables.RetentionPolicySet),
                 DateTime.UtcNow,
-                deployment.Variables.Get(SpecialVariables.OriginalPackageDirectoryPath),
+                deployment.Variables.Get(KnownVariables.OriginalPackageDirectoryPath),
                 deployment.Variables.Get(PackageVariables.CustomInstallationDirectory),
                 wasSuccessful,
                 DeployedPackage.GetDeployedPackages(deployment)

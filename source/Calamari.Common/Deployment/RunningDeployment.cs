@@ -25,8 +25,8 @@ namespace Calamari.Deployment
         /// </summary>
         public string StagingDirectory
         {
-            get { return Variables.Get(SpecialVariables.OriginalPackageDirectoryPath); }
-            set { Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, value); }
+            get { return Variables.Get(KnownVariables.OriginalPackageDirectoryPath); }
+            set { Variables.Set(KnownVariables.OriginalPackageDirectoryPath, value); }
         }
 
         /// <summary>
@@ -56,13 +56,13 @@ namespace Calamari.Deployment
             get {  return variables; }
         }
 
-        public bool SkipJournal { get { return variables.GetFlag(SpecialVariables.Action.SkipJournal); } }
+        public bool SkipJournal { get { return variables.GetFlag(KnownVariables.Action.SkipJournal); } }
 
         public void Error(Exception ex)
         {
             ex = ex.GetBaseException();
-            variables.Set(SpecialVariables.LastError, ex.ToString());
-            variables.Set(SpecialVariables.LastErrorMessage, ex.Message);
+            variables.Set("OctopusLastError", ex.ToString());
+            variables.Set("OctopusLastErrorMessage", ex.Message);
         }
     }
 }

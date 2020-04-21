@@ -7,6 +7,8 @@ using System.Linq;
 using System.Reflection;
 using Calamari.Commands;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Variables;
+using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.HealthChecks;
@@ -20,7 +22,6 @@ using Calamari.Plumbing;
 using Calamari.Util.Environments;
 using Calamari.Variables;
 using NuGet;
-using SpecialVariables = Calamari.Common.Variables.SpecialVariables;
 
 namespace Calamari
 {
@@ -58,7 +59,7 @@ namespace Calamari
             var envInfo = string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation());
             log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
 
-            EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory, Environment.CurrentDirectory);
+            EnvironmentHelper.SetEnvironmentVariable("OctopusCalamariWorkingDirectory", Environment.CurrentDirectory);
             ProxyInitializer.InitializeDefaultProxy();
 
             using (var container = BuildContainer(options).Build())

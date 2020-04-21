@@ -20,7 +20,7 @@ namespace Calamari.Deployment.Conventions
         {
             string errorString;
             var customInstallationDirectory = deployment.Variables.Get(PackageVariables.CustomInstallationDirectory, out errorString);
-            var sourceDirectory = deployment.Variables.Get(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath);
+            var sourceDirectory = deployment.Variables.Get(KnownVariables.OriginalPackageDirectoryPath);
 
             if (string.IsNullOrWhiteSpace(customInstallationDirectory))
             {

@@ -81,7 +81,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 
             var variables = new CalamariVariables
             {
-                {PowershellVariables.Action.CustomPowerShellVersion, customVersion}
+                {PowerShellVariables.CustomPowerShellVersion, customVersion}
             };
 
             return CreateBootstrapper(fileSystem).PathToPowerShellExecutable(variables);

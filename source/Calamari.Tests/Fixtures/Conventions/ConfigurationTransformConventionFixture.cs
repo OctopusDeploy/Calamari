@@ -37,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             variables = new CalamariVariables();
             variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
-            variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, deployDirectory);
+            variables.Set(KnownVariables.OriginalPackageDirectoryPath, deployDirectory);
 
             deployment = new RunningDeployment(deployDirectory, variables);
             logs = new InMemoryLog();
@@ -259,7 +259,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             //these variables would normally be set by ExtractPackageToStagingDirectoryConvention
             Log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, "c:\\temp", runningDeployment.Variables);
-            Log.SetOutputVariable(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, "c:\\temp", runningDeployment.Variables);
+            Log.SetOutputVariable(KnownVariables.OriginalPackageDirectoryPath, "c:\\temp", runningDeployment.Variables);
 
             var log = new InMemoryLog();
             var transformer = Substitute.For<IConfigurationTransformer>();

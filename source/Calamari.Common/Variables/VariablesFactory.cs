@@ -19,6 +19,7 @@ namespace Calamari.Common.Variables
     public class VariablesFactory
     {
         readonly ICalamariFileSystem fileSystem;
+        public static readonly string AdditionalVariablesPathVariable = "AdditionalVariablesPath";
 
         public VariablesFactory(ICalamariFileSystem fileSystem)
         {
@@ -104,13 +105,13 @@ namespace Calamari.Common.Variables
 
         void ReadAdditionalVariablesFromFile(CalamariVariables variables)
         {
-            var path = variables.Get(SpecialVariables.AdditionalVariablesPath)
-                       ?? variables.Get(Common.Variables.EnvironmentVariables.Prefix + SpecialVariables.AdditionalVariablesPath);
+            var path = variables.Get(AdditionalVariablesPathVariable)
+                       ?? variables.Get($"env:{AdditionalVariablesPathVariable}");
 
             string BuildExceptionMessage(string reason)
                 => $"Could not read additional variables from JSON file at '{path}'. " +
                    $"{reason} Make sure the file can be read or remove the " +
-                   $"'{SpecialVariables.AdditionalVariablesPath}' environment variable. " +
+                   $"'{AdditionalVariablesPathVariable}' environment variable. " +
                    $"See inner exception for details.";
 
             if (string.IsNullOrEmpty(path))

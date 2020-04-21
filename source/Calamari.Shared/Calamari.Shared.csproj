@@ -119,5 +119,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Integration\FileSystem" />
+    <Folder Include="Variables" />
   </ItemGroup>
 </Project>

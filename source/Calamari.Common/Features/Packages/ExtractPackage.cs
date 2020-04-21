@@ -59,7 +59,7 @@ namespace Calamari.Deployment.Conventions
 
                 log.Verbose("Extracted " + filesExtracted + " files");
 
-                variables.Set(SpecialVariables.OriginalPackageDirectoryPath, targetPath);
+                variables.Set(KnownVariables.OriginalPackageDirectoryPath, targetPath);
                 log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, targetPath, variables);
                 log.SetOutputVariable(PackageVariables.Output.DeprecatedInstallationDirectoryPath, targetPath, variables);
                 log.SetOutputVariable(PackageVariables.Output.ExtractedFileCount, filesExtracted.ToString(), variables);

@@ -49,7 +49,7 @@ namespace Calamari
                     EnvironmentHelper.SafelyGetEnvironmentInformation());
                 log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
 
-                EnvironmentHelper.SetEnvironmentVariable(SpecialVariables.CalamariWorkingDirectory,
+                EnvironmentHelper.SetEnvironmentVariable("OctopusCalamariWorkingDirectory",
                     Environment.CurrentDirectory);
                 ProxyInitializer.InitializeDefaultProxy();
 

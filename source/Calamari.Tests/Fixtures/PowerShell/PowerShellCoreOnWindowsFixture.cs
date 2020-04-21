@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var nonExistentEdition = "PowerShellCore";
             var output = RunScript("Hello.ps1",
-                new Dictionary<string, string>() {{PowershellVariables.Action.Edition, nonExistentEdition}});
+                new Dictionary<string, string>() {{PowerShellVariables.Edition, nonExistentEdition}});
             
             output.result.AssertFailure();
             output.result.AssertErrorOutput("Attempted to use 'PowerShellCore' edition of PowerShell, but this edition could not be found. Possible editions: Core, Desktop");

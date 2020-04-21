@@ -10,15 +10,10 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
-using Octostache;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
-using VariablesFactory = Calamari.Variables.VariablesFactory;
 
 namespace Calamari.Tests.Java.Fixtures.Deployment
 {

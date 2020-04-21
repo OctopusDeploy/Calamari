@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
@@ -366,7 +367,7 @@ namespace Calamari.Tests.Terraform
             {
                 var variables = new CalamariVariables();
                 variables.Set(TerraformSpecialVariables.Calamari.TerraformCliPath, Path.GetDirectoryName(customTerraformExecutable));
-                variables.Set(Common.Variables.SpecialVariables.OriginalPackageDirectoryPath, currentDirectory.DirectoryPath);
+                variables.Set(KnownVariables.OriginalPackageDirectoryPath, currentDirectory.DirectoryPath);
                 variables.Set(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable, customTerraformExecutable);
 
                 populateVariables(variables);

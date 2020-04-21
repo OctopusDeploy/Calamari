@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Assent;
 using Assent.Namers;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.FileSystem;
@@ -16,7 +17,6 @@ using Calamari.Variables;
 using NSubstitute;
 using NSubstitute.Core;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Common.Variables.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 {
@@ -124,7 +124,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             var transform = new XmlConfigTransformDefinition(transformDefinition);
 
             var deploymentVariables = new CalamariVariables();
-            deploymentVariables[SpecialVariables.OriginalPackageDirectoryPath] = extractionDirectory;
+            deploymentVariables[KnownVariables.OriginalPackageDirectoryPath] = extractionDirectory;
             var deployment = new RunningDeployment(null, deploymentVariables);
 
             const bool diagnosticLoggingEnabled = false;

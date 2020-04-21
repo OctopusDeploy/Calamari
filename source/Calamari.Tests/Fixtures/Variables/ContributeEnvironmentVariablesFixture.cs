@@ -1,4 +1,5 @@
-﻿using Calamari.Deployment;
+﻿using Calamari.Common.Variables;
+using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
@@ -50,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Variables
             var variables = new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem()).Create(new CommonOptions("test"));
 
             Assert.That(variables.GetNames().Count, Is.GreaterThan(3));
-            Assert.That(variables.GetRaw(SpecialVariables.Tentacle.Agent.InstanceName), Is.EqualTo("#{env:TentacleInstanceName}"));
+            Assert.That(variables.GetRaw(TentacleVariables.Agent.InstanceName), Is.EqualTo("#{env:TentacleInstanceName}"));
             return variables;
         }
     }

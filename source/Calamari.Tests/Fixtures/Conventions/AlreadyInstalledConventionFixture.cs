@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
@@ -7,7 +8,6 @@ using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Common.Variables.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {
@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             RunConvention();
 
-            Assert.That(variables.Get(Common.Variables.SpecialVariables.Action.SkipJournal), Is.EqualTo("true"));
+            Assert.That(variables.Get(KnownVariables.Action.SkipJournal), Is.EqualTo("true"));
         }
 
         [Test]
@@ -46,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             RunConvention();
 
-            Assert.That(variables.Get(SpecialVariables.Action.SkipJournal), Is.Null);
+            Assert.That(variables.Get(KnownVariables.Action.SkipJournal), Is.Null);
         }
 
         [Test]
@@ -58,7 +58,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             RunConvention();
 
-            Assert.That(variables.Get(SpecialVariables.Action.SkipJournal), Is.Null);
+            Assert.That(variables.Get(KnownVariables.Action.SkipJournal), Is.Null);
         }
 
         void RunConvention()

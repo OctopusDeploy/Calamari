@@ -1,22 +1,48 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Linq;
 using Calamari.Integration.Scripting;
+using Octostache;
 
 namespace Calamari.Deployment
 {
-    public static partial class SpecialVariables
+    public static class SpecialVariables
     {
+
         public static readonly string AppliedXmlConfigTransforms = "OctopusAppliedXmlConfigTransforms";
 
+        public static string GetLibraryScriptModuleName(string variableName)
+        {
+            return variableName.Replace("Octopus.Script.Module[", "").TrimEnd(']');
+        }
+
+        public static bool IsExcludedFromLocalVariables(string name)
+        {
+            return name.Contains("[");
+        }
+
+        public static bool IsLibraryScriptModule(string variableName)
+        {
+            return variableName.StartsWith("Octopus.Script.Module[");
+        }
+
+        public static string GetOutputVariableName(string actionName, string variableName)
+        {
+            return string.Format("Octopus.Action[{0}].Output.{1}", actionName, variableName);
+        }
+
+        public static string GetMachineIndexedOutputVariableName(string actionName, string machineName, string variableName)
+        {
+            return string.Format("Octopus.Action[{0}].Output[{1}].{2}", actionName, machineName, variableName);
+        }
+
         public const string UseLegacyIisSupport = "OctopusUseLegacyIisSupport";
-        
+
         public static readonly string RetentionPolicyItemsToKeep = "OctopusRetentionPolicyItemsToKeep";
         public static readonly string RetentionPolicyDaysToKeep = "OctopusRetentionPolicyDaysToKeep";
         
-
         public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
-
+        
         public static class Bootstrapper
         {
             public static string ModulePaths = "Octopus.Calamari.Bootstrapper.ModulePaths";
@@ -32,7 +58,6 @@ namespace Calamari.Deployment
 
             public static class Agent
             {
-                public static readonly string InstanceName = "Octopus.Tentacle.Agent.InstanceName";
                 public static readonly string ProgramDirectoryPath = "Octopus.Tentacle.Agent.ProgramDirectoryPath";
             }
         }
@@ -54,16 +79,11 @@ namespace Calamari.Deployment
             public static readonly string AdditionalXmlConfigurationTransforms = "Octopus.Action.Package.AdditionalXmlConfigurationTransforms";
             public static readonly string SkipIfAlreadyInstalled = "Octopus.Action.Package.SkipIfAlreadyInstalled";
             public static readonly string IgnoreVariableReplacementErrors = "Octopus.Action.Package.IgnoreVariableReplacementErrors";
-            public static readonly string RunPackageScripts = "Octopus.Action.Package.RunScripts";   
+            public static readonly string RunPackageScripts = "Octopus.Action.Package.RunScripts";
         }
 
         public static class Packages
         {
-            public static string Extract(string key)
-            {
-                return $"Octopus.Action.Package[{key}].Extract";
-            }
-
             public static string ExtractedPath(string key)
             {
                 return $"Octopus.Action.Package[{key}].ExtractedPath";
@@ -97,8 +117,8 @@ namespace Calamari.Deployment
         public static class Action
         {
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
-            public const string FailScriptOnErrorOutput = "Octopus.Action.FailScriptOnErrorOutput";
-            
+            public const string FailScriptOnErrorOutput = "Octopus.Action.FailScriptOnErrorOutput";            
+
             public static class IisWebSite
             {
                 public static readonly string DeployAsWebSite = "Octopus.Action.IISWebSite.CreateOrUpdateWebSite"; 
@@ -193,7 +213,9 @@ namespace Calamari.Deployment
                 public static readonly string ResourceGroupDeploymentMode = "Octopus.Action.Azure.ResourceGroupDeploymentMode";
 
                 public static readonly string Environment = "Octopus.Action.Azure.Environment";
+                public static readonly string ResourceManagementEndPoint = "Octopus.Action.Azure.ResourceManagementEndPoint";
                 public static readonly string ServiceManagementEndPoint = "Octopus.Action.Azure.ServiceManagementEndPoint";
+                public static readonly string ActiveDirectoryEndPoint = "Octopus.Action.Azure.ActiveDirectoryEndPoint";
                 public static readonly string StorageEndPointSuffix = "Octopus.Action.Azure.StorageEndpointSuffix";
 
                 public static class Output
@@ -222,7 +244,6 @@ namespace Calamari.Deployment
 
             public static class Script
             {
-                
                 public static readonly string ScriptParameters = "Octopus.Action.Script.ScriptParameters";
                 public static readonly string ScriptSource = "Octopus.Action.Script.ScriptSource";
                 public static readonly string ExitCode = "Octopus.Action.Script.ExitCode";
@@ -232,7 +253,7 @@ namespace Calamari.Deployment
                     return $"Octopus.Action.Script.ScriptBody[{syntax.ToString()}]";
                 }
             }
-            
+
             public static class CustomScripts
             {
                 public static readonly string Prefix = "Octopus.Action.CustomScripts.";
@@ -245,6 +266,8 @@ namespace Calamari.Deployment
 
             public static class Java
             {
+                public static readonly string JavaLibraryEnvVar = "JavaIntegrationLibraryPackagePath";
+                
                 public static readonly string JavaArchiveExtractionDisabled =
                     "Octopus.Action.Java.JavaArchiveExtractionDisabled";
 
@@ -328,7 +351,7 @@ namespace Calamari.Deployment
                 }
             }
         }
-
+        
         public static class Account
         {
             public const string Name = "Octopus.Account.Name";

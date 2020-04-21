@@ -7,7 +7,6 @@ using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using Octostache;
-using VariablesFactory = Calamari.Variables.VariablesFactory;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {

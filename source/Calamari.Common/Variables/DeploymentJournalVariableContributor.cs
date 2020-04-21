@@ -11,7 +11,7 @@ namespace Calamari.Variables
     {
         public static void Contribute(ICalamariFileSystem fileSystem, IVariables variables)
         {
-            var policySet = variables.Get(SpecialVariables.RetentionPolicySet);
+            var policySet = variables.Get(KnownVariables.RetentionPolicySet);
             if (string.IsNullOrWhiteSpace(policySet))
                 return;
 

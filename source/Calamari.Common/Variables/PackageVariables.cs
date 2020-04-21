@@ -2,7 +2,6 @@ namespace Calamari.Common.Variables
 {
     public static class PackageVariables
     {
-        
         public static readonly string TransferPath = "Octopus.Action.Package.TransferPath";
         public static readonly string PackageId = "Octopus.Action.Package.PackageId";
         public static readonly string PackageVersion = "Octopus.Action.Package.PackageVersion";
@@ -29,19 +28,28 @@ namespace Calamari.Common.Variables
             public static readonly string FilePath = "Package.FilePath";
         }
         
-        public static string PackageIdWithKey(string key)
+        //IndexedPackageId
+        public static string IndexedPackageId(string packageReferenceName)
         {
-            return $"Octopus.Action.Package[{key}].PackageId";
+            return $"Octopus.Action.Package[{packageReferenceName}].PackageId";
         }
 
-        public static string PackageVersionWithKey(string key)
+        //IndexedPackageVersion
+        public static string IndexedPackageVersion(string packageReferenceName)
         {
-            return $"Octopus.Action.Package[{key}].PackageVersion";
+            return $"Octopus.Action.Package[{packageReferenceName}].PackageVersion";
         }
         
-        public static string OriginalPathWithKey(string key)
+        //IndexedOriginalPath
+        public static string IndexedOriginalPath(string packageReferenceName)
         {
-            return $"Octopus.Action.Package[{key}].OriginalPath";
+            return $"Octopus.Action.Package[{packageReferenceName}].OriginalPath";
+        }
+        
+        //IndexedExtract
+        public static string IndexedExtract(string packageReferenceName)
+        {
+            return $"Octopus.Action.Package[{packageReferenceName}].Extract";
         }
         
     }
