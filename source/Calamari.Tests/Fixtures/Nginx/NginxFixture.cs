@@ -13,7 +13,6 @@ using Calamari.Variables;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Nginx
 {

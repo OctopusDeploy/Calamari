@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Reflection;
 using Calamari.Commands.Support;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Variables;
@@ -8,8 +7,6 @@ using Calamari.Deployment.Conventions;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Azure.CloudServices.Deployment.Conventions
 {

@@ -16,7 +16,6 @@ using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
 using Calamari.Util;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Commands
 {

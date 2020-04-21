@@ -11,7 +11,6 @@ using Calamari.Variables;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {

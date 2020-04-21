@@ -5,7 +5,6 @@ using Calamari.Deployment.Journal;
 using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Variables
 {

@@ -7,7 +7,6 @@ using Calamari.Integration.Iis;
 using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.Fixtures.Conventions
 {
