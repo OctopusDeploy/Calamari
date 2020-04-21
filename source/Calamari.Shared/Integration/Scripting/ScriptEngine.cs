@@ -46,8 +46,6 @@ namespace Calamari.Integration.Scripting
             var syntax = script.File.ToScriptType();
             return BuildWrapperChain(syntax, variables)
                 .ExecuteScript(script, syntax, commandLineRunner, variables, environmentVars);
-            
-            // scriptExecutor.Execute(script, variables, commandLineRunner, environmentVars);
         }
 
         /// <summary>
@@ -77,7 +75,7 @@ namespace Calamari.Integration.Scripting
                 .OrderByDescending(hook => hook.Priority)
                 .Aggregate(
                 // The last wrapper is always the TerminalScriptWrapper
-                new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax), variables),
+                new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax)),
                 (IScriptWrapper current, IScriptWrapper next) =>
                 {
                     // the next wrapper is pointed to the current one
