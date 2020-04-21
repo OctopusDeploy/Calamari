@@ -126,7 +126,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
-            Variables.Set(Common.Variables.EnvironmentVariables.Name, "Production");
+            Variables.Set(DeploymentEnvironmentVariables.Name, "Production");
             Variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
             Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
 
