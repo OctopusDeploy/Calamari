@@ -85,17 +85,12 @@ namespace Calamari
             builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
             builder.RegisterType<VariableLogger>().AsSelf();
             builder.RegisterInstance(log).As<ILog>().SingleInstance();
-            
             builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
-            builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
-            builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
-
             builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
-            builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
             builder.RegisterType<FileSubstituter>().As<IFileSubstituter>();
             builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
+            builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
-
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 

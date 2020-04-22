@@ -30,9 +30,9 @@ namespace Calamari.Common.Variables
         {
             var variables = new CalamariVariables();
 
-            ReadUnencryptedVariablesFromFile(options.InputVariables, variables);
-            ReadEncryptedVariablesFromFile(options.InputVariables, variables);
-            ReadOutputVariablesFromOfflineDropPreviousSteps(options.InputVariables, variables);
+            ReadUnencryptedVariablesFromFile(options, variables);
+            ReadEncryptedVariablesFromFile(options, variables);
+            ReadOutputVariablesFromOfflineDropPreviousSteps(options, variables);
 
             AddEnvironmentVariables(variables);
             variables.Set(TentacleVariables.Agent.InstanceName, "#{env:TentacleInstanceName}");
@@ -42,9 +42,9 @@ namespace Calamari.Common.Variables
             return variables;
         }
 
-        void ReadUnencryptedVariablesFromFile(CommonOptions.Variables inputVariables, CalamariVariables variables)
+        void ReadUnencryptedVariablesFromFile(CommonOptions options, CalamariVariables variables)
         {
-            var variablesFile = inputVariables.VariablesFile;
+            var variablesFile = options.InputVariables.VariablesFile;
             if (string.IsNullOrEmpty(variablesFile))
                 return;
 
@@ -55,11 +55,11 @@ namespace Calamari.Common.Variables
             variables.Merge(readVars);
         }
 
-        void ReadEncryptedVariablesFromFile(CommonOptions.Variables inputVariables, CalamariVariables variables)
+        void ReadEncryptedVariablesFromFile(CommonOptions options, CalamariVariables variables)
         {
-            foreach (var sensitiveFilePath in inputVariables.SensitiveVariablesFiles.Where(f => !string.IsNullOrEmpty(f)))
+            foreach (var sensitiveFilePath in options.InputVariables.SensitiveVariablesFiles.Where(f => !string.IsNullOrEmpty(f)))
             {
-                var sensitiveFilePassword = inputVariables.SensitiveVariablesPassword;
+                var sensitiveFilePassword = options.InputVariables.SensitiveVariablesPassword;
                 var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword)
                     ? fileSystem.ReadFile(sensitiveFilePath)
                     : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
@@ -77,13 +77,13 @@ namespace Calamari.Common.Variables
             }
         }
 
-        void ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions.Variables inputVariables, CalamariVariables variables)
+        void ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options, CalamariVariables variables)
         {
-            var outputVariablesFilePath = inputVariables.OutputVariablesFile;
+            var outputVariablesFilePath = options.InputVariables.OutputVariablesFile;
             if (string.IsNullOrEmpty(outputVariablesFilePath))
                 return;
 
-            var rawVariables = DecryptWithMachineKey(fileSystem.ReadFile(outputVariablesFilePath), inputVariables.OutputVariablesPassword);
+            var rawVariables = DecryptWithMachineKey(fileSystem.ReadFile(outputVariablesFilePath), options.InputVariables.OutputVariablesPassword);
             try
             {
                 var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
