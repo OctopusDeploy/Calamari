@@ -162,7 +162,7 @@ Task("Pack")
 	foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
     {
 		var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", nugetVersion, rid);
-		var zipName = $"Calamari.Tests.netcoreapp3.{rid}.{nugetVersion}.zip";
+		var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
 		Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
     }
 
