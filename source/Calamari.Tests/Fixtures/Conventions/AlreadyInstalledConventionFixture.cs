@@ -29,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldSkipIfInstalled()
         {
-            variables.Set(Calamari.Deployment.SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
             previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true, 
                 new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
 
@@ -52,7 +52,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotSkipIfPreviouslyFailed()
         {
-            variables.Set(Calamari.Deployment.SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
             previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", false, 
                 new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
 

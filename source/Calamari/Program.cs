@@ -68,7 +68,7 @@ namespace Calamari
             {
                 container.Resolve<VariableLogger>().LogVariables();
 
-                var command = container.Resolve<Calamari.Commands.Support.ICommandWithArgs[]>();
+                var command = container.Resolve<ICommandWithArgs[]>();
                 if (command.Length == 0)
                     throw new CommandException($"Could not find the command {options.Command}");
                 if (command.Length > 1)
