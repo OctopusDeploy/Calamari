@@ -29,6 +29,11 @@
             }
         }
 
+        public static class RunbookRun
+        {
+            public static readonly string Id = "Octopus.RunbookRun.Id";
+        }
+
         public static class Certificate
         {
             public static string Name(string variableName)
