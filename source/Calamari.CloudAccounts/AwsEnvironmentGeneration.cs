@@ -119,7 +119,7 @@ namespace Calamari.CloudAccounts
         /// <summary>
         /// If the keys were explicitly supplied, use them directly
         /// </summary>
-        /// <exception cref="LoginException">The supplied keys were not valid</exception>
+        /// <exception cref="Exception">The supplied keys were not valid</exception>
         async Task PopulateSuppliedKeys()
         {
             if (!String.IsNullOrEmpty(accessKey))
@@ -138,7 +138,7 @@ namespace Calamari.CloudAccounts
         /// <summary>
         /// If no keys were supplied, we must be using the instance role
         /// </summary>
-        /// <exception cref="LoginException">The instance role information could not be extracted</exception>
+        /// <exception cref="Exception">The instance role information could not be extracted</exception>
         async Task PopulateKeysFromInstanceRole()
         {
             if (String.IsNullOrEmpty(accessKey))

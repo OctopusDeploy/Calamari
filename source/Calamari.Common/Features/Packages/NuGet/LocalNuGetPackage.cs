@@ -12,7 +12,7 @@ using NuGet;
 
 namespace Calamari.Integration.Packages.NuGet
 {
-    internal class LocalNuGetPackage 
+    public class LocalNuGetPackage 
     {
         private readonly string filePath;
         private readonly Lazy<ManifestMetadata> metadata; 

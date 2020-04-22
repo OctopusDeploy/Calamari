@@ -9,13 +9,10 @@ using Calamari.Commands.Support;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Variables;
 using Calamari.Deployment.Conventions;
-using Calamari.Deployment.Journal;
-using Calamari.HealthChecks;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Proxies;
-using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
 using Calamari.Plumbing;
 using Calamari.Util.Environments;
@@ -98,11 +95,6 @@ namespace Calamari
                 .AssignableTo<IScriptWrapper>()
                 .Except<TerminalScriptWrapper>()
                 .As<IScriptWrapper>()
-                .SingleInstance();
-
-            builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<IDoesDeploymentTargetTypeHealthChecks>()
-                .As<IDoesDeploymentTargetTypeHealthChecks>()
                 .SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
