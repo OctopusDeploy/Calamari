@@ -11,7 +11,7 @@ namespace Calamari.Integration.Scripting.ScriptCS
             Dictionary<string, string> environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
-            var executable = ScriptCSBootstrapper.FindExecutable();
+            var executable = ScriptCSBootstrapper.FindExecutable(variables);
             var configurationFile = ScriptCSBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = ScriptCSBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = ScriptCSBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);

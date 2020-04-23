@@ -7,6 +7,7 @@ using Calamari.Commands.Support;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using System.Reflection;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Octostache;
@@ -25,14 +26,13 @@ namespace Calamari.Integration.Scripting.FSharp
             BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(FSharpBootstrapper).Namespace + ".Bootstrap.fsx");
         }
 
-        public static string FindExecutable()
+        public static string FindExecutable(IVariables variables)
         {
             if (!ScriptingEnvironment.IsNet45OrNewer())
                 throw new CommandException("FSharp scripts require requires .NET framework 4.5");
 
-            var myPath = typeof(FSharpExecutor).Assembly.Location;
-            var parent = Path.GetDirectoryName(myPath);
-            var executable = Path.GetFullPath(Path.Combine(parent, "FSharp", "fsi.exe"));
+            var path = variables.Get(ScriptVariables.FSharpPath);
+            var executable = Path.GetFullPath(Path.Combine(path, "fsi.exe"));
 
             if (File.Exists(executable))
                 return executable;

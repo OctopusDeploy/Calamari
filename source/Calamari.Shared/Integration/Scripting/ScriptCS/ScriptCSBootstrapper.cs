@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Integration.Processes;
 using Calamari.Util;
 using Calamari.Deployment;
@@ -24,14 +25,13 @@ namespace Calamari.Integration.Scripting.ScriptCS
             BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(ScriptCSBootstrapper).Namespace + ".Bootstrap.csx");
         }
 
-        public static string FindExecutable()
+        public static string FindExecutable(IVariables variables)
         {
             if (!ScriptingEnvironment.IsNet45OrNewer())
                 throw new CommandException("ScriptCS scripts require the Roslyn CTP, which requires .NET framework 4.5");
 
-            var myPath = typeof(ScriptCSScriptExecutor).Assembly.Location;
-            var parent = Path.GetDirectoryName(myPath);
-            var executable = Path.GetFullPath(Path.Combine(parent, "ScriptCS", "scriptcs.exe"));
+            var path = variables.Get(ScriptVariables.ScriptCsPath);
+            var executable = Path.GetFullPath(Path.Combine(path, "scriptcs.exe"));
 
             if (File.Exists(executable))
                 return executable;

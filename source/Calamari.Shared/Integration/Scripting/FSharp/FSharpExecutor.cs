@@ -11,7 +11,7 @@ namespace Calamari.Integration.Scripting.FSharp
             Dictionary<string, string> environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
-            var executable = FSharpBootstrapper.FindExecutable();
+            var executable = FSharpBootstrapper.FindExecutable(variables);
             var configurationFile = FSharpBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = FSharpBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = FSharpBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
