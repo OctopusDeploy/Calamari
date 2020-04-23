@@ -17,18 +17,16 @@ namespace Calamari.Tests.Helpers
         public ICommandWithArgs CommandOverride { get; set; }
         public bool StubWasCalled { get; set; }
         public IVariables VariablesOverride { get; set; }
-        
-        public int Run(string[] args)
+
+        public int RunWithArgs(string[] args)
         {
-            var options = CommonOptions.Parse(args);
-            return Run(options);
+            return Run(args);
         }
-        
+
         public int RunStubCommand()
         {
             CommandOverride  = new StubCommand(() => StubWasCalled = true);
-            var commonOptions = new CommonOptions("stub");
-            return Run(commonOptions);
+            return Run(new [] {"stub"});
         }
         
         protected override ContainerBuilder BuildContainer(CommonOptions options)

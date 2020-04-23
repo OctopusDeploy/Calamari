@@ -27,104 +27,61 @@ using NuGet;
 
 namespace Calamari
 {
-    public class Program
+    public class Program : CalamariFlavourProgram
     {
-        readonly ILog log;
+        List<string> extensions;
 
-        protected Program(ILog log)
+        protected Program(ILog log) : base(log)
         {
-            this.log = log;
         }
         
         public static int Main(string[] args)
         {
-            try
-            {
-                SecurityProtocols.EnableAllSecurityProtocols();
-
-                var options = CommonOptions.Parse(args);
-                return new Program(ConsoleLog.Instance).Run(options);
-            }
-            catch (Exception ex)
-            {
-                return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
-            }
+            return new Program(ConsoleLog.Instance).Run(args);
         }
 
-        internal int Run(CommonOptions options)
+        protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
         {
-            log.Verbose($"Calamari Version: {typeof(Program).Assembly.GetInformationalVersion()}");
+            var command = container.Resolve<ICommandWithArgs[]>();
+            if (command.Length == 0)
+                throw new CommandException($"Could not find the command {options.Command}");
+            if (command.Length > 1)
+                throw new CommandException($"Multiple commands found with the name {options.Command}");
 
-            if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
-                return 0;
-
-            var envInfo = string.Join($"{Environment.NewLine}  ", EnvironmentHelper.SafelyGetEnvironmentInformation());
-            log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
-
-            EnvironmentHelper.SetEnvironmentVariable("OctopusCalamariWorkingDirectory", Environment.CurrentDirectory);
-            ProxyInitializer.InitializeDefaultProxy();
-
-            using (var container = BuildContainer(options).Build())
-            {
-                container.Resolve<VariableLogger>().LogVariables();
-
-                var command = container.Resolve<ICommandWithArgs[]>();
-                if (command.Length == 0)
-                    throw new CommandException($"Could not find the command {options.Command}");
-                if (command.Length > 1)
-                    throw new CommandException($"Multiple commands found with the name {options.Command}");
-
-                return command[0].Execute(options.RemainingArguments.ToArray());
-            }
+            return command[0].Execute(options.RemainingArguments.ToArray());
         }
 
-        protected virtual ContainerBuilder BuildContainer(CommonOptions options)
+        protected override ContainerBuilder BuildContainer(CommonOptions options)
         {
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var builder = new ContainerBuilder();
-            builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
-            builder.RegisterType<VariablesFactory>().AsSelf();
-            builder.Register(c => c.Resolve<VariablesFactory>().Create(options)).As<IVariables>().SingleInstance();
-            builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
-            builder.RegisterType<VariableLogger>().AsSelf();
-            builder.RegisterInstance(log).As<ILog>().SingleInstance();
+            // Setting extensions here as in the new Modularity world we don't register extensions
+            // and GetAllAssembliesToRegister doesn't get passed CommonOptions 
+            extensions = options.Extensions;
+            
+            var builder = base.BuildContainer(options);
+            
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
-            builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
-            builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
-            builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
-            builder.RegisterType<FileSubstituter>().As<IFileSubstituter>();
-            builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
-            builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
 
-
-            var assemblies = GetAllAssembliesToRegister(options).ToArray();
-
-            builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<IScriptWrapper>()
-                .Except<TerminalScriptWrapper>()
-                .As<IScriptWrapper>()
-                .SingleInstance();
+            var assemblies = extensions.Select(Assembly.Load).ToArray();
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IDoesDeploymentTargetTypeHealthChecks>()
                 .As<IDoesDeploymentTargetTypeHealthChecks>()
                 .SingleInstance();
 
-            builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<ICommandWithArgs>()
-                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-                .As<ICommandWithArgs>();
-
             return builder;
         }
 
-        static IEnumerable<Assembly> GetAllAssembliesToRegister(CommonOptions options)
+        protected override IEnumerable<Assembly> GetAllAssembliesToRegister()
         {
-            yield return typeof(Program).Assembly; // Calamari
+            var assemblies = base.GetAllAssembliesToRegister();
+            foreach (var assembly in assemblies)
+            {
+                yield return assembly;
+            }
             yield return typeof(ApplyDeltaCommand).Assembly; // Calamari.Shared
-            foreach (var extension in options.Extensions)
+            foreach (var extension in extensions)
                 yield return Assembly.Load(extension) ?? throw new CommandException($"Could not find the extension {extension}");
         }
     }

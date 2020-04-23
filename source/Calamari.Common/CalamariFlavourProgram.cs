@@ -23,14 +23,14 @@ namespace Calamari
 {
     public abstract class CalamariFlavourProgram
     {
-        readonly ILog log;
+        protected readonly ILog log;
 
         protected CalamariFlavourProgram(ILog log)
         {
             this.log = log;
         }
 
-        protected int Run(string[] args)
+        protected virtual int Run(string[] args)
         {
             try
             {
@@ -54,21 +54,26 @@ namespace Calamari
                 {
                     container.Resolve<VariableLogger>().LogVariables();
 
-                    try
-                    {
-                        var command = container.ResolveNamed<ICommand>(options.Command);
-                        return command.Execute();
-                    }
-                    catch (Exception e) when (e is ComponentNotRegisteredException ||
-                                              e is DependencyResolutionException)
-                    {
-                        throw new CommandException($"Could not find the command {options.Command}");
-                    }
+                    return ResolveAndExecuteCommand(container, options);
                 }
             }
             catch (Exception ex)
             {
                 return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
+            }
+        }
+
+        protected virtual int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
+        {
+            try
+            {
+                var command = container.ResolveNamed<ICommand>(options.Command);
+                return command.Execute();
+            }
+            catch (Exception e) when (e is ComponentNotRegisteredException ||
+                                      e is DependencyResolutionException)
+            {
+                throw new CommandException($"Could not find the command {options.Command}");
             }
         }
 
@@ -106,7 +111,7 @@ namespace Calamari
             return builder;
         }
 
-        IEnumerable<Assembly> GetAllAssembliesToRegister()
+        protected virtual IEnumerable<Assembly> GetAllAssembliesToRegister()
         {
             yield return GetType().Assembly; // Calamari Flavour
             yield return typeof(CalamariFlavourProgram).Assembly; // Calamari.Common

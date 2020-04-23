@@ -56,7 +56,7 @@ namespace Calamari.Tests.Helpers
             int exitCode;
             try
             {
-                exitCode = program.Run(args);
+                exitCode = program.RunWithArgs(args);
             }
             catch (Exception ex)
             {
