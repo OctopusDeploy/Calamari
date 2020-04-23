@@ -12,11 +12,6 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 {
     public class PowerShellScriptExecutor : ScriptExecutor
     {
-        public PowerShellScriptExecutor() : base()
-        {
-            Log.Info("Constructor for PowershellScriptExecutor");
-        }
-        
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
             Dictionary<string, string> environmentVars = null)

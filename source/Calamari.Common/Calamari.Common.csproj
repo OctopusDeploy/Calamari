@@ -8,15 +8,15 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
-        <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
+        <DefineConstants>$(DefineConstants);USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
         <PlatformTarget>anycpu</PlatformTarget>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
-        <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;SUPPORTS_POLLY;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
+        <DefineConstants>$(DefineConstants);USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
         <PlatformTarget>anycpu</PlatformTarget>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-        <DefineConstants>$(DefineConstants);USE_NUGET_V3_LIBS;SUPPORTS_POLLY;WORKAROUND_FOR_EMPTY_STRING_BUG</DefineConstants>
+        <DefineConstants>$(DefineConstants);USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
