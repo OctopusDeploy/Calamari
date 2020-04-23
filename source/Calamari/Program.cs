@@ -63,13 +63,19 @@ namespace Calamari
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
 
-            var assemblies = extensions.Select(Assembly.Load).ToArray();
+            var assemblies = GetAllAssembliesToRegister().ToArray();
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IDoesDeploymentTargetTypeHealthChecks>()
                 .As<IDoesDeploymentTargetTypeHealthChecks>()
                 .SingleInstance();
 
+            builder.RegisterAssemblyTypes(assemblies)
+                .AssignableTo<ICommandWithArgs>()
+                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
+                    .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
+                .As<ICommandWithArgs>();
+            
             return builder;
         }
 
