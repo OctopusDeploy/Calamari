@@ -11,12 +11,14 @@ namespace Calamari.Deployment.Conventions
 {
     public class SubstituteInFiles : ISubstituteInFiles
     {
+        readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         readonly IFileSubstituter substituter;
         readonly IVariables variables;
 
-        public SubstituteInFiles(ICalamariFileSystem fileSystem, IFileSubstituter substituter, IVariables variables)
+        public SubstituteInFiles(ILog log, ICalamariFileSystem fileSystem, IFileSubstituter substituter, IVariables variables)
         {
+            this.log = log;
             this.fileSystem = fileSystem;
             this.substituter = substituter;
             this.variables = variables;
@@ -42,7 +44,7 @@ namespace Calamari.Deployment.Conventions
                 {
                     if (deployment.Variables.GetFlag(PackageVariables.EnableNoMatchWarning, true))
                     {
-                        Log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
+                        log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
                     }
 
                     continue;
