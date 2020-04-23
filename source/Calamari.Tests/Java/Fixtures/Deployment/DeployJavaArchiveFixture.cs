@@ -108,7 +108,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                 variables,
                 fileSystem,
                 new CommandLineRunner(log, variables),
-                new SubstituteInFiles(fileSystem, new FileSubstituter(log, fileSystem), variables),
+                new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
                 new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log)
             );
             returnCode = command.Execute(new[] { "--archive", $"{packageName}" });

@@ -239,7 +239,7 @@ namespace Calamari.Tests.AWS
                     log,
                     variables,
                     fileSystem,
-                    new SubstituteInFiles(fileSystem, new FileSubstituter(log, fileSystem), variables),
+                    new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
                     new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log)
                 );
                 var result = command.Execute(new[] { 
