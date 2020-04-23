@@ -179,6 +179,7 @@ Task("Pack")
     {
         DotNetCorePack(project.ToString(), dotNetCorePackSettings);
     }
+    DotNetCorePack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings);
 
 });
 
