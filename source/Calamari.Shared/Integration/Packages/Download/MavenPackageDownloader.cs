@@ -6,7 +6,6 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
-using Calamari.Exceptions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;

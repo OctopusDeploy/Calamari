@@ -7,14 +7,15 @@ using Calamari.Commands.Support;
 using Calamari.Common.Features.Scripting;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Octopus.Versioning;
 
-namespace Calamari.Common.Features.Packages.Download
+namespace Calamari.Integration.Packages.Download
 {
+    // Note about moving this class: GetFetchScript method uses the namespace of this class as part of the 
+    // get Embedded Resource to find the DockerPull scripts. If you move this file, be sure look at that method
+    // and make sure it can still find the scripts
     public class DockerImagePackageDownloader : IPackageDownloader
     {
         readonly IScriptEngine scriptEngine;
