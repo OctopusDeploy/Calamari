@@ -31,9 +31,9 @@ namespace Calamari.Tests.Helpers
 
         protected override Assembly GetProgramAssemblyToRegister()
         {
-            // Return null so we don't register the TestProgram Assembly.
-            // The only thing needed to register is the stub command from this assembly and that's handled below
-            return null;
+            // Return Calamari Assembly as it contains the helm commands that needs to be tested.
+            // Don't register Calamari.Test Assembly as the only thing we need to register is the stub command and that's handled below
+            return typeof(Program).Assembly;
         }
 
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
