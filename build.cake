@@ -6,6 +6,7 @@
 
 using Path = System.IO.Path;
 using IO = System.IO;
+using Cake.Common.Xml;
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
@@ -15,6 +16,7 @@ var configuration = Argument("configuration", "Release");
 ///////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
 ///////////////////////////////////////////////////////////////////////////////
+var publishDir = "./publish/";
 var artifactsDir = "./artifacts/";
 var localPackagesDir = "../LocalPackages";
 
@@ -52,6 +54,7 @@ Teardown(context =>
 Task("Clean")
     .Does(() =>
 {
+    CleanDirectory(publishDir);
     CleanDirectory(artifactsDir);
     CleanDirectories("./source/**/bin");
     CleanDirectories("./source/**/obj");
@@ -89,12 +92,49 @@ Task("Test")
 			});
     });
 
+Task("PublishCalamariProjects")
+   .IsDependentOn("Build")
+    .Does(() => {
+        var projects = GetFiles("./source/**/Calamari.*.csproj");
+		foreach(var project in projects)
+        {
+            var calamariFlavour = project.GetFilenameWithoutExtension().ToString();
 
-Task("Pack")
-    .IsDependentOn("Build")
+            var frameworks = XmlPeek(project, "Project/PropertyGroup/TargetFramework")
+                                ?? XmlPeek(project, "Project/PropertyGroup/TargetFrameworks");
+
+            foreach(var framework in frameworks.Split(';'))
+            {
+                void RunPublish(string runtime, string platform) {
+                     DotNetCorePublish(project.FullPath, new DotNetCorePublishSettings
+		    	    {
+		    	    	Configuration = configuration,
+                        OutputDirectory = $"{publishDir}/{calamariFlavour}/{platform}",
+                        Framework = framework,
+                        Runtime = runtime
+		    	    });
+                }
+
+                if(framework.StartsWith("netcoreapp"))
+                {
+                    var runtimes = XmlPeek(project, "Project/PropertyGroup/RuntimeIdentifiers").Split(';');
+                    foreach(var runtime in runtimes)
+                        RunPublish(runtime, runtime);
+                }
+                else
+                {
+                    RunPublish(null, "netfx");
+                }
+            }
+            Console.WriteLine($"{publishDir}/{calamariFlavour}");
+            Zip($"{publishDir}{calamariFlavour}", $"{artifactsDir}{calamariFlavour}.zip");
+        }
+});
+
+Task("PackSashimi")
+    .IsDependentOn("PublishCalamariProjects")
     .Does(() =>
 {
-
     DotNetCorePack("source", new DotNetCorePackSettings
     {
         Configuration = configuration,
@@ -109,7 +149,7 @@ Task("Pack")
 
 Task("CopyToLocalPackages")
     .IsDependentOn("Test")
-    .IsDependentOn("Pack")
+    .IsDependentOn("PackSashimi")
     .WithCriteria(BuildSystem.IsLocalBuild)
     .Does(() =>
 {
@@ -119,7 +159,7 @@ Task("CopyToLocalPackages")
 
 Task("Publish")
     .IsDependentOn("Test")
-    .IsDependentOn("Pack")
+    .IsDependentOn("PackSashimi")
     .WithCriteria(BuildSystem.IsRunningOnTeamCity)
     .Does(() =>
 {

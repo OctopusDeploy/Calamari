@@ -10,7 +10,19 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Terraform.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Tests.Shared", "Sashimi.Tests.Shared\Sashimi.Tests.Shared.csproj", "{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Terraform", "Calamari.Terraform\Calamari.Terraform.csproj", "{A0869805-A69C-4026-9C85-61C73DC24AC2}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{A5977E44-894E-4B70-AE3A-78B514B44274}"
+ProjectSection(SolutionItems) = preProject
+	..\.gitattributes = ..\.gitattributes
+	..\.gitignore = ..\.gitignore
+	..\build.cake = ..\build.cake
+	..\build.cmd = ..\build.cmd
+	..\build.ps1 = ..\build.ps1
+	..\CODEOWNERS = ..\CODEOWNERS
+	..\gitversion.yml = ..\gitversion.yml
+	..\readme.md = ..\readme.md
+EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Terraform", "Calamari.Terraform\Calamari.Terraform.csproj", "{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,14 +46,14 @@ Global
 		{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A0869805-A69C-4026-9C85-61C73DC24AC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A0869805-A69C-4026-9C85-61C73DC24AC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A0869805-A69C-4026-9C85-61C73DC24AC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A0869805-A69C-4026-9C85-61C73DC24AC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{44851CEC-89D0-4D76-8BBA-2206308974D1} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
 		{C25C8D0B-7203-4BC4-A86F-7558FF890089} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
-		{A0869805-A69C-4026-9C85-61C73DC24AC2} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
+		{107D9B9C-7EAD-4256-AEF1-F7EF402C150B} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
 	EndGlobalSection
 EndGlobal
