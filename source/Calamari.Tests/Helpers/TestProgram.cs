@@ -1,8 +1,8 @@
 using System;
 using System.IO;
+using System.Reflection;
 using Autofac;
 using Calamari.Commands.Support;
-using Octostache;
 
 namespace Calamari.Tests.Helpers
 {
@@ -14,7 +14,7 @@ namespace Calamari.Tests.Helpers
         }
 
         public InMemoryLog Log { get; }
-        public ICommandWithArgs CommandOverride { get; set; }
+        ICommandWithArgs CommandOverride { get; set; }
         public bool StubWasCalled { get; set; }
         public IVariables VariablesOverride { get; set; }
 
@@ -28,16 +28,25 @@ namespace Calamari.Tests.Helpers
             CommandOverride  = new StubCommand(() => StubWasCalled = true);
             return Run(new [] {"stub"});
         }
-        
-        protected override ContainerBuilder BuildContainer(CommonOptions options)
+
+        protected override Assembly GetProgramAssemblyToRegister()
         {
-            var builder = base.BuildContainer(options);
-            builder.RegisterInstance(Log).As<ILog>();
+            // Return null so we don't register the TestProgram Assembly.
+            // The only thing needed to register is the stub command from this assembly and that's handled below
+            return null;
+        }
+
+        protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
+        {
+            // Register CommandOverride so it shows up first in IEnumerable
             if (CommandOverride != null)
                 builder.RegisterInstance(CommandOverride).As<ICommandWithArgs>();
+            
+            base.ConfigureContainer(builder, options);
+
+            // Register after base so Singleton gets overridden 
             if (VariablesOverride != null)
                 builder.RegisterInstance(VariablesOverride).As<IVariables>();
-            return builder;
         }
     }
 

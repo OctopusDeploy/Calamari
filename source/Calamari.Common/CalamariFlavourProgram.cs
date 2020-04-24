@@ -15,6 +15,7 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Proxies;
 using Calamari.Integration.Substitutions;
 using Calamari.Plumbing;
+using Calamari.Util;
 using Calamari.Util.Environments;
 using Calamari.Variables;
 using NuGet;
@@ -50,7 +51,9 @@ namespace Calamari
                     Environment.CurrentDirectory);
                 ProxyInitializer.InitializeDefaultProxy();
 
-                using (var container = BuildContainer(options).Build())
+                var builder = new ContainerBuilder();
+                ConfigureContainer(builder, options);
+                using (var container = builder.Build())
                 {
                     container.Resolve<VariableLogger>().LogVariables();
 
@@ -77,10 +80,9 @@ namespace Calamari
             }
         }
 
-        protected virtual ContainerBuilder BuildContainer(CommonOptions options)
+        protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            var builder = new ContainerBuilder();
             builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
             builder.RegisterType<VariablesFactory>().AsSelf();
             builder.Register(c => c.Resolve<VariablesFactory>().Create(options)).As<IVariables>().SingleInstance();
@@ -107,13 +109,21 @@ namespace Calamari
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
                     .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .As<ICommand>();
+        }
 
-            return builder;
+        protected virtual Assembly GetProgramAssemblyToRegister()
+        {
+            return GetType().Assembly;
         }
 
         protected virtual IEnumerable<Assembly> GetAllAssembliesToRegister()
         {
-            yield return GetType().Assembly; // Calamari Flavour
+            var programAssembly = GetProgramAssemblyToRegister();
+            if (programAssembly != null)
+            {
+                yield return programAssembly; // Calamari Flavour
+            }
+            
             yield return typeof(CalamariFlavourProgram).Assembly; // Calamari.Common
         }
     }

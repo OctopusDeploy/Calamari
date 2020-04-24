@@ -51,32 +51,34 @@ namespace Calamari
             return command[0].Execute(options.RemainingArguments.ToArray());
         }
 
-        protected override ContainerBuilder BuildContainer(CommonOptions options)
+        protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
             // Setting extensions here as in the new Modularity world we don't register extensions
             // and GetAllAssembliesToRegister doesn't get passed CommonOptions 
             extensions = options.Extensions;
             
-            var builder = base.BuildContainer(options);
+            base.ConfigureContainer(builder, options);
             
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
 
-            var assemblies = GetAllAssembliesToRegister().ToArray();
-
-            builder.RegisterAssemblyTypes(assemblies)
+            builder.RegisterAssemblyTypes(GetExtensionAssemblies().ToArray())
                 .AssignableTo<IDoesDeploymentTargetTypeHealthChecks>()
                 .As<IDoesDeploymentTargetTypeHealthChecks>()
                 .SingleInstance();
 
-            builder.RegisterAssemblyTypes(assemblies)
+            builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
                 .AssignableTo<ICommandWithArgs>()
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
                     .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .As<ICommandWithArgs>();
-            
-            return builder;
+        }
+
+        IEnumerable<Assembly> GetExtensionAssemblies()
+        {
+            foreach (var extension in extensions)
+                yield return Assembly.Load(extension) ?? throw new CommandException($"Could not find the extension {extension}");
         }
 
         protected override IEnumerable<Assembly> GetAllAssembliesToRegister()
@@ -86,9 +88,14 @@ namespace Calamari
             {
                 yield return assembly;
             }
+            
             yield return typeof(ApplyDeltaCommand).Assembly; // Calamari.Shared
-            foreach (var extension in extensions)
-                yield return Assembly.Load(extension) ?? throw new CommandException($"Could not find the extension {extension}");
+            
+            var extensionAssemblies = GetExtensionAssemblies();
+            foreach (var extensionAssembly in extensionAssemblies)
+            {
+                yield return extensionAssembly;
+            }
         }
     }
 }
