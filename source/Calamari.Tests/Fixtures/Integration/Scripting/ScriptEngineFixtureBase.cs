@@ -1,3 +1,5 @@
+using System.IO;
+using Calamari.Common.Variables;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
@@ -12,6 +14,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             var cd = new CalamariVariables();
             cd.Set("foo", "bar");
             cd.Set("mysecrect", "KingKong");
+            AddScriptRunnerVariables(cd);
             return cd;
         }
 
@@ -20,6 +23,13 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             var runner = new TestCommandLineRunner(new InMemoryLog(), variables);
             var result = psse.Execute(new Script(scriptName), variables, runner);
             return new CalamariResult(result.ExitCode, runner.Output);
+        }
+
+        public static void AddScriptRunnerVariables(CalamariVariables variables)
+        {
+            var binDir = Path.GetDirectoryName(typeof(ScriptEngineFixtureBase).Assembly.Location);
+            variables.Set(ScriptVariables.ScriptCsPath, Path.Combine(binDir, "ScriptCS"));
+            variables.Set(ScriptVariables.FSharpPath, Path.Combine(binDir, "FSharp"));
         }
     }
 }

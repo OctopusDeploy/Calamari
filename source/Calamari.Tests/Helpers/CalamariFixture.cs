@@ -12,6 +12,7 @@ using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
+using Calamari.Tests.Fixtures.Integration.Scripting;
 using Calamari.Variables;
 using NUnit.Framework;
 
@@ -108,9 +109,7 @@ namespace Calamari.Tests.Helpers
             variables.Set(ScriptVariables.ScriptFileName, scriptName);
             variables.Set(ScriptVariables.ScriptBody, File.ReadAllText(GetFixtureResouce("Scripts", scriptName)));
             variables.Set(ScriptVariables.Syntax, scriptName.ToScriptType().ToString());
-            var binDir = Path.GetDirectoryName(typeof(CalamariFixture).Assembly.Location);
-            variables.Set(ScriptVariables.ScriptCsPath, Path.Combine(binDir, "scriptcs"));
-            variables.Set(ScriptVariables.FSharpPath, Path.Combine(binDir, "FSharp"));
+            ScriptEngineFixtureBase.AddScriptRunnerVariables(variables);
             
             additionalVariables?.ToList().ForEach(v => variables[v.Key] = v.Value);
 
