@@ -1,13 +1,20 @@
-﻿using System;
+using System;
+using Calamari.Commands.Support;
+using Calamari.Common;
+using Calamari.Plumbing;
 
 namespace Calamari.Terraform
 {
-    public class Program
+    public class Program : CalamariFlavourProgram
     {
-        public static void Main(string[] args)
-        {
-            Console.WriteLine("This is Calamari.Terraform from Sashimi");
-        }
 
+        Program() : base(ConsoleLog.Instance)
+        {
+        }
+        
+        public static int Main(string[] args)
+        {
+            return new Program().Run(args);
+        }
     }
 }
