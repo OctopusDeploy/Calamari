@@ -2,6 +2,7 @@
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
+using Calamari.Util;
 
 namespace Calamari.Integration.Processes.Semaphores
 {
@@ -37,8 +38,10 @@ namespace Calamari.Integration.Processes.Semaphores
             {
                 semaphore = CreateGlobalSemaphoreAccessibleToEveryone(globalName);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                log.Verbose($"Acquiring semaphore failed: {ex.PrettyPrint()}");
+                log.Verbose("Retrying without setting access controls...");
                 semaphore = new Semaphore(1, 1, globalName);
             }
 
@@ -73,8 +76,10 @@ namespace Calamari.Integration.Processes.Semaphores
             {
                 mutex = CreateGlobalMutexAccessibleToEveryone(globalName);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                log.Verbose($"Acquiring mutex failed: {ex.PrettyPrint()}");
+                log.Verbose("Retrying without setting access controls...");
                 mutex = new Mutex(false, globalName);
             }
 
@@ -109,7 +114,7 @@ namespace Calamari.Integration.Processes.Semaphores
             semaphoreSecurity.AddAccessRule(rule);
 
             bool createdNew;
-            
+
             var semaphore = new Semaphore(1, 1, name, out createdNew);
             semaphore.SetAccessControl(semaphoreSecurity);
             return semaphore;
