@@ -15,6 +15,7 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Retry;
 using Calamari.Integration.Substitutions;
+using Calamari.Plumbing;
 using Calamari.Tests.Shared;
 using Calamari.Tests.Shared.Helpers;
 using Calamari.Tests.Shared.Requirements;
@@ -44,8 +45,7 @@ namespace Calamari.Terraform.Tests
             {
                 Console.WriteLine("Downloading terraform cli...");
                 
-                // Set Security Protocol to TLS1.2 (flag 3072)
-                ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;
+                SecurityProtocols.EnableAllSecurityProtocols();
                 
                 var retry = new RetryTracker(3, TimeSpan.MaxValue, new LimitedExponentialRetryInterval(1000, 30000, 2));
                 while (retry.Try())
@@ -61,7 +61,7 @@ namespace Calamari.Terraform.Tests
                             var currentVersion = parsedJson["current_version"].Value<string>();
                             var fileName = GetTerraformFileName(currentVersion);
 
-                            if (!TerraformFileAvailable(downloadBaseUrl, retry, fileName))
+                            if (!TerraformFileAvailable(downloadBaseUrl, retry))
                             {
                                 // At times Terraform's API has been unreliable. This is a fallback
                                 // for a version we know exists.
@@ -113,11 +113,11 @@ namespace Calamari.Terraform.Tests
                 : $"terraform_{currentVersion}_windows_amd64.zip";
         }
 
-        static bool TerraformFileAvailable(string downloadBaseUrl, RetryTracker retry, string fileName)
+        static bool TerraformFileAvailable(string downloadBaseUrl, RetryTracker retry)
         {
             try
             {
-                var request = WebRequest.Create($"{downloadBaseUrl}{fileName}");
+                var request = WebRequest.Create($"{downloadBaseUrl}");
                 request.Method = "HEAD";
 
                 using (request.GetResponse())
