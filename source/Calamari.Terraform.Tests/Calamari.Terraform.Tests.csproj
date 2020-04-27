@@ -1,9 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-
         <IsPackable>false</IsPackable>
-
         <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
     </PropertyGroup>
 
