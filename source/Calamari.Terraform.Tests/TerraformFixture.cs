@@ -43,6 +43,10 @@ namespace Calamari.Terraform.Tests
             async Task DownloadCli(string destination)
             {
                 Console.WriteLine("Downloading terraform cli...");
+                
+                // Set Security Protocol to TLS1.2 (flag 3072)
+                ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;
+                
                 var retry = new RetryTracker(3, TimeSpan.MaxValue, new LimitedExponentialRetryInterval(1000, 30000, 2));
                 while (retry.Try())
                 {
