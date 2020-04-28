@@ -100,8 +100,8 @@ Task("PublishCalamariProjects")
         {
             var calamariFlavour = project.GetFilenameWithoutExtension().ToString();
 
-            var frameworks = XmlPeek(project, "Project/PropertyGroup/TargetFramework")
-                                ?? XmlPeek(project, "Project/PropertyGroup/TargetFrameworks");
+            var frameworks = XmlPeek(project, "Project/PropertyGroup/TargetFrameworks") ??
+                XmlPeek(project, "Project/PropertyGroup/TargetFramework");
 
             foreach(var framework in frameworks.Split(';'))
             {
