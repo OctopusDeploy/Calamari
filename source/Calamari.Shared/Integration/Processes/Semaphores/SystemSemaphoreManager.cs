@@ -70,18 +70,8 @@ namespace Calamari.Integration.Processes.Semaphores
 
         IDisposable AcquireMutex(string name, string waitMessage)
         {
-            Mutex mutex;
             var globalName = $"Global\\{name}";
-            try
-            {
-                mutex = CreateGlobalMutexAccessibleToEveryone(globalName);
-            }
-            catch (Exception ex)
-            {
-                log.Verbose($"Acquiring mutex failed: {ex.PrettyPrint()}");
-                log.Verbose("Retrying without setting access controls...");
-                mutex = new Mutex(false, globalName);
-            }
+            var mutex = new Mutex(false, globalName);
 
             try
             {
@@ -120,21 +110,6 @@ namespace Calamari.Integration.Processes.Semaphores
             return semaphore;
         }
 
-
-        static Mutex CreateGlobalMutexAccessibleToEveryone(string name)
-        {
-            var semaphoreSecurity = new MutexSecurity();
-            var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
-            var rule = new MutexAccessRule(everyone, MutexRights.FullControl, AccessControlType.Allow);
-
-            semaphoreSecurity.AddAccessRule(rule);
-
-            bool createdNew;
-            
-            var mutex = new Mutex(false, name, out createdNew);
-            mutex.SetAccessControl(semaphoreSecurity);
-            return mutex;
-        }
 
         class Releaser : IDisposable
         {
