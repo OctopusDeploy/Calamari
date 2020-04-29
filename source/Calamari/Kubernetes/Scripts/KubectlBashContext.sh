@@ -210,6 +210,7 @@ function set_base64_args {
       base64_args='-w0'
     else
       # Openssl base64, no wrapping by default
+      write_verbose 'Using macOS base64'
       base64_args=''
     fi
 }
