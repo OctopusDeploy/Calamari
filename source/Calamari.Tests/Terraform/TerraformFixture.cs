@@ -219,6 +219,53 @@ namespace Calamari.Tests.Terraform
                 .And
                 .Contain("Octopus.Action[\"Step Name\"].Output.TerraformValueOutputs[\"my_output_from_txt_file\"]' with the value only of 'Hello World from text'");
         }
+        
+        [Test]
+        public void EnableNoMatchWarningIsNotSet()
+        {
+            ExecuteAndReturnLogOutput<ApplyCommand>(variables => { }, "Simple")
+                .Should()
+                .NotContain("No files were found that match the substitution target pattern");
+        }
+             
+        [Test]
+        public void EnableNoMatchWarningIsNotSetWithAdditionSubstitution()
+        {
+            ExecuteAndReturnLogOutput<ApplyCommand>(variables =>
+                {
+                    variables.Set(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "doesNotExist.txt");
+                }, "Simple")
+                .Should()
+                .Contain("No files were found that match the substitution target pattern '**/*.tfvars.json'")
+                .And
+                .Contain("No files were found that match the substitution target pattern 'doesNotExist.txt'");
+        }
+        
+        [Test]
+        public void EnableNoMatchWarningIsTrue()
+        {
+            ExecuteAndReturnLogOutput<ApplyCommand>(variables =>
+                {
+                    variables.Set(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "doesNotExist.txt");
+                    variables.Set(PackageVariables.EnableNoMatchWarning, "true");
+                }, "Simple")
+                .Should()
+                .Contain("No files were found that match the substitution target pattern '**/*.tfvars.json'")
+                .And
+                .Contain("No files were found that match the substitution target pattern 'doesNotExist.txt'");
+        }
+        
+        [Test]
+        public void EnableNoMatchWarningIsFalse()
+        {
+            ExecuteAndReturnLogOutput<ApplyCommand>(variables =>
+                {
+                    variables.Set(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "doesNotExist.txt");
+                    variables.Set(PackageVariables.EnableNoMatchWarning, "False");
+                }, "Simple")
+                .Should()
+                .NotContain("No files were found that match the substitution target pattern");
+        }
 
         [Test]
         [TestCase(typeof(PlanCommand))]
@@ -401,7 +448,7 @@ namespace Calamari.Tests.Terraform
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             var commandLineRunner = new CommandLineRunner(ConsoleLog.Instance, variables);
-            var substituteInFiles = new SubstituteInFiles(fileSystem, new FileSubstituter(log, fileSystem), variables);
+            var substituteInFiles = new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables);
             var extractPackages = new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log);
 
             if (type == typeof(PlanCommand))

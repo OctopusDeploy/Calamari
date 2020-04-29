@@ -39,9 +39,12 @@ namespace Calamari.Terraform
             var pathToPrimaryPackage = variables.GetPathToPrimaryPackage(fileSystem, false);
             
             var isEnableNoMatchWarningSet = variables.IsSet(PackageVariables.EnableNoMatchWarning);
-            if (!isEnableNoMatchWarningSet && !string.IsNullOrEmpty(GetAdditionalFileSubstitutions()))
-                variables.Add(PackageVariables.EnableNoMatchWarning, "true");
-            
+            if (!isEnableNoMatchWarningSet)
+            {
+                var hasAdditionalSubstitutions = !string.IsNullOrEmpty(GetAdditionalFileSubstitutions()); 
+                variables.AddFlag(PackageVariables.EnableNoMatchWarning, hasAdditionalSubstitutions);
+            }
+
             var runningDeployment = new RunningDeployment(pathToPrimaryPackage, variables);
             
             if(pathToPrimaryPackage != null)

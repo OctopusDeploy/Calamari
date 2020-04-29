@@ -19,6 +19,7 @@ namespace Calamari
         List<string> GetNames();
         List<string> GetIndexes(string variableCollectionName);
         void Add(string key, string value);
+        void AddFlag(string key, bool value);
         string this[string name] { get; set; }
         IVariables Clone();
     }
