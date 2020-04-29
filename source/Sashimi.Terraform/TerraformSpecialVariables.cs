@@ -5,7 +5,7 @@ namespace Sashimi.Terraform
     /// <summary>
     /// Constants to represents the variables passed down by the UI
     /// </summary>
-    public static class TerraformSpecialVariables
+    static class TerraformSpecialVariables
     {
         public const string HclTemplateFile = "template.tf";
         public const string JsonTemplateFile = "template.tf.json";

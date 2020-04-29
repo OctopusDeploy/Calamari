@@ -14,7 +14,7 @@ using PropertiesDictionary = System.Collections.Generic.IReadOnlyDictionary<stri
 
 namespace Sashimi.Terraform.Validation
 {
-    public class TerraformValidation : IDeploymentActionValidator
+    class TerraformValidation : IDeploymentActionValidator
     {
         const string DefaultTemplate = "{}";
         

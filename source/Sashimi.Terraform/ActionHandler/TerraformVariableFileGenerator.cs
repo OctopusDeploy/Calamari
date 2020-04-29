@@ -9,7 +9,7 @@ using Sashimi.Terraform.CloudTemplates;
 
 namespace Sashimi.Terraform.ActionHandler
 {
-    public static class TerraformVariableFileGenerator
+    static class TerraformVariableFileGenerator
     {
         /// <summary>
         /// When variables are supplied from the UI (i.e. not from a package), all values are strings.

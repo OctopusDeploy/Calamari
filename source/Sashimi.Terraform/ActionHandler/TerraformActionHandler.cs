@@ -8,7 +8,7 @@ using Sashimi.Terraform.CloudTemplates;
 
 namespace Sashimi.Terraform.ActionHandler
 {
-    public class TerraformApplyActionHandler : TerraformActionHandler
+    class TerraformApplyActionHandler : TerraformActionHandler
     {
         public override string Id => TerraformActionTypes.Apply;
         public override string Name => "Apply a Terraform template";
@@ -21,7 +21,7 @@ namespace Sashimi.Terraform.ActionHandler
         }
     }
 
-    public class TerraformDestroyActionHandler : TerraformActionHandler
+    class TerraformDestroyActionHandler : TerraformActionHandler
     {
         public TerraformDestroyActionHandler(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
             : base(cloudTemplateHandlerFactory)
@@ -34,7 +34,7 @@ namespace Sashimi.Terraform.ActionHandler
         public override string ToolCommand => "destroy-terraform";
     }
 
-    public class TerraformPlanActionHandler : TerraformActionHandler
+    class TerraformPlanActionHandler : TerraformActionHandler
     {
         public TerraformPlanActionHandler(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
             : base(cloudTemplateHandlerFactory)
@@ -47,7 +47,7 @@ namespace Sashimi.Terraform.ActionHandler
         public override string ToolCommand => "plan-terraform";
     }
 
-    public class TerraformPlanDestroyActionHandler : TerraformActionHandler
+    class TerraformPlanDestroyActionHandler : TerraformActionHandler
     {
         public TerraformPlanDestroyActionHandler(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
             : base(cloudTemplateHandlerFactory)
@@ -64,7 +64,7 @@ namespace Sashimi.Terraform.ActionHandler
     /// The action handler that prepares a Calamari script execution with
     /// the path set to include the Terraform CLI.
     /// </summary>
-    public abstract class TerraformActionHandler : IActionHandler
+    abstract class TerraformActionHandler : IActionHandler
     {
         public static readonly CalamariFlavour CalamariTerraform = new CalamariFlavour("Calamari.Terraform");
 

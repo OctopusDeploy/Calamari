@@ -2,7 +2,7 @@
 
 namespace Sashimi.Terraform
 {
-    public class TerraformActionTypes
+    class TerraformActionTypes
     {
         public const string Apply = "Octopus.TerraformApply";
         public const string Destroy = "Octopus.TerraformDestroy";            
