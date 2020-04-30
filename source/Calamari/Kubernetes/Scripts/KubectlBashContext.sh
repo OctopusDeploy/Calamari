@@ -119,8 +119,8 @@ function setup_context {
       exit 1
     fi
     
-    Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Client_Cert_Pem" | base64 -w0)
-    Octopus_K8S_Client_Cert_Key_Encoded=$(echo "$Octopus_K8S_Client_Cert_Key" | base64 -w0)
+    Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Client_Cert_Pem" | base64 $base64_args) 
+    Octopus_K8S_Client_Cert_Key_Encoded=$(echo "$Octopus_K8S_Client_Cert_Key" | base64 $base64_args)
     
     set_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPemBase64" $Octopus_K8S_Client_Cert_Key_Encoded -sensitive
     
@@ -134,7 +134,7 @@ function setup_context {
       exit 1
     fi
     
-    Octopus_K8S_Server_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Server_Cert_Pem" | base64 -w0)
+    Octopus_K8S_Server_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Server_Cert_Pem" | base64 $base64_args)
     kubectl config set clusters.octocluster.certificate-authority-data "$Octopus_K8S_Server_Cert_Pem_Encoded"
     else
     kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification
@@ -202,8 +202,21 @@ function create_namespace {
 	fi
 }
 
+function set_base64_args {
+    # https://stackoverflow.com/questions/46463027/base64-doesnt-have-w-option-in-mac
+    echo | base64 -w0 > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      # GNU coreutils base64, '-w' supported
+      base64_args='-w0'
+    else
+      # Openssl base64, no wrapping by default
+      base64_args=''
+    fi
+}
+
 echo "##octopus[stdout-verbose]"
 check_app_exists base64
+set_base64_args
 get_kubectl
 configure_kubectl_path
 setup_context

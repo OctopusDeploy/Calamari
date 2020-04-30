@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
     <AssemblyName>Calamari.Azure.Accounts</AssemblyName>
     <OutputType>Library</OutputType>
     <PackageId>Calamari.Azure.Accounts</PackageId>
@@ -13,6 +12,12 @@
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
     <Description>Contains the classes for Azure accounts.</Description>
+  </PropertyGroup>
+  <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
+    <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.7" />
