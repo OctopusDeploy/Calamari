@@ -38,7 +38,7 @@ namespace Calamari
                 SecurityProtocols.EnableAllSecurityProtocols();
                 var options = CommonOptions.Parse(args);
 
-                log.Verbose($"Calamari Version: {typeof(CalamariFlavourProgram).Assembly.GetInformationalVersion()}");
+                log.Verbose($"Calamari Version: {this.GetType().Assembly.GetInformationalVersion()}");
 
                 if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
                     return 0;
@@ -108,7 +108,7 @@ namespace Calamari
                 .AssignableTo<ICommand>()
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
                     .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-                .As<ICommand>();
+                .Named<ICommand>(t => t.GetCustomAttribute<CommandAttribute>().Name);
         }
 
         protected virtual Assembly GetProgramAssemblyToRegister()
