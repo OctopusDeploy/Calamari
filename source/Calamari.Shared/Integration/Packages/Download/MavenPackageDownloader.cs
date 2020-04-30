@@ -218,7 +218,7 @@ namespace Calamari.Integration.Packages.Download
             var fileChecks = JarPackageExtractor.SupportedExtensions
                 .Union(AdditionalExtensions)
                 // Either consider all supported extensions, or select only the specified extension
-                .Where(e => string.IsNullOrEmpty(mavenPackageId.Packaging) || e == mavenPackageId.Packaging)
+                .Where(e => string.IsNullOrEmpty(mavenPackageId.Packaging) || e == "." + mavenPackageId.Packaging)
                 .Select(extension =>
                 {
                     var packageId = new MavenPackageID(mavenPackageId.Group, mavenPackageId.Artifact,
