@@ -32,7 +32,6 @@ namespace Calamari.Tests.Helpers
 #if NETFX
             var calamariFullPath = typeof(DeployPackageCommand).Assembly.FullLocalPath();
             return new CommandLine(calamariFullPath);
-
 #else
             var folder = Path.GetDirectoryName(typeof(Program).Assembly.FullLocalPath());
             var calamariFullPath = Path.Combine(folder, "Calamari.Tests.dll");
@@ -46,7 +45,7 @@ namespace Calamari.Tests.Helpers
         protected CommandLine OctoDiff()
         {
             var octoDiffExe = OctoDiffCommandLineRunner.FindOctoDiffExecutable();
-
+            
             return new CommandLine(octoDiffExe);
         }
 
@@ -57,7 +56,7 @@ namespace Calamari.Tests.Helpers
             int exitCode;
             try
             {
-                exitCode = program.Run(args);
+                exitCode = program.RunWithArgs(args);
             }
             catch (Exception ex)
             {

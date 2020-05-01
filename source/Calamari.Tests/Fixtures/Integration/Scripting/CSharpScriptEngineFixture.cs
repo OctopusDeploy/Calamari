@@ -1,6 +1,6 @@
 using System.IO;
+using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Scripting.ScriptCS;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 

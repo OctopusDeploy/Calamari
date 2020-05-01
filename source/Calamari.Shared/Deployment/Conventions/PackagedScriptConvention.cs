@@ -1,3 +1,4 @@
+using Calamari.Common.Features.Scripting;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;

@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using Calamari.Commands.Support;
-using Calamari.Hooks;
+using Calamari.Common.Features.Scripting;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;

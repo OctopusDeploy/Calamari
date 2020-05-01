@@ -26,6 +26,6 @@
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="2.28.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
+    <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
   </ItemGroup>
 </Project>

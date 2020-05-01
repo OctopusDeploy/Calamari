@@ -1,5 +1,6 @@
 ﻿using Calamari.Common.Variables;
 using Calamari.Deployment;
+using Calamari.Integration.Processes;
 using Calamari.Variables;
 using NUnit.Framework;
 

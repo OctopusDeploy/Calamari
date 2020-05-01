@@ -1,4 +1,5 @@
-﻿using Calamari.Deployment;
+﻿using Calamari.Common.Features.Scripting;
+using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;

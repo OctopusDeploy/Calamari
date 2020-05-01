@@ -4,13 +4,13 @@ using System;
 using System.Net;
 using System.Threading;
 using NuGet.Configuration;
-using NuGet.DependencyResolver;
-using NuGet.LibraryModel;
 using NuGet.Common;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using System.IO;
 using Calamari.Extensions;
+using NuGet.DependencyResolver;
+using NuGet.LibraryModel;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet

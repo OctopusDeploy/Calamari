@@ -1,6 +1,6 @@
 using System.IO;
+using Calamari.Common.Features.Scripting.Bash;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Scripting.Bash;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 

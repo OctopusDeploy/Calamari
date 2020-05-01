@@ -1,6 +1,4 @@
-﻿using Calamari.Integration.Processes;
-
-namespace Calamari.HealthChecks
+﻿namespace Calamari.HealthChecks
 {
     public interface IDoesDeploymentTargetTypeHealthChecks
     {

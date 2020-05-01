@@ -144,26 +144,43 @@ Task("Pack")
 	.IsDependentOn("Build")
     .Does(() =>
 {
+
     DoPackage("Calamari", "net40", nugetVersion);
 	DoPackage("Calamari", "net452", nugetVersion, "Cloud");
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
     // Create a portable .NET Core package
-    DoPackage("Calamari", "netcoreapp2.2", nugetVersion, "portable");
+    DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable");
 
     // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
     foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari\Calamari.csproj"))
     {
-        DoPackage("Calamari", "netcoreapp2.2", nugetVersion, rid);
+        DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid);
     }
 	
 	// Create a Zip for each runtime for testing
 	foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
     {
-		var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp2.2", nugetVersion, rid);
+		var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", nugetVersion, rid);
 		var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
 		Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
     }
+
+    var dotNetCorePackSettings = new DotNetCorePackSettings
+    {
+        Configuration = configuration,
+        OutputDirectory = artifactsDir,
+        NoBuild = true,
+        IncludeSource = true,
+        ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
+    };
+    var commonProjects = GetFiles("./source/**/*.Common.csproj");
+    foreach(var project in commonProjects)
+    {
+        DotNetCorePack(project.ToString(), dotNetCorePackSettings);
+    }
+    DotNetCorePack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings);
+
 });
 
 Task("CopyToLocalPackages")
@@ -191,7 +208,7 @@ private string DoPublish(string project, string framework, string version, strin
     {
         publishSettings.OutputDirectory = Path.Combine(publishedTo, runtimeId);
         // "portable" is not an actual runtime ID. We're using it to represent the portable .NET core build.
-        publishSettings.Runtime = (runtimeId != null && runtimeId != "portable") ? runtimeId : null;
+        publishSettings.Runtime = (runtimeId != null && runtimeId != "portable" && runtimeId != "Cloud") ? runtimeId : null;
     }
 	DotNetCorePublish(projectDir, publishSettings);
 
@@ -218,7 +235,7 @@ private void DoPackage(string project, string framework, string version, string 
         publishedTo = Path.Combine(publishedTo, runtimeId);
         publishSettings.OutputDirectory = publishedTo;
         // "portable" is not an actual runtime ID. We're using it to represent the portable .NET core build.
-        publishSettings.Runtime = (runtimeId != null && runtimeId != "portable") ? runtimeId : null;
+        publishSettings.Runtime = (runtimeId != null && runtimeId != "portable" && runtimeId != "Cloud") ? runtimeId : null;
         packageId = $"{project}.{runtimeId}";
         nugetPackProperties.Add("runtimeId", runtimeId);
     }

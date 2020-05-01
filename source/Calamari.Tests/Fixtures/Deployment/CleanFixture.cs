@@ -2,14 +2,12 @@
 using System.Globalization;
 using System.IO;
 using System.Xml.Linq;
+using Calamari.Common.Variables;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {

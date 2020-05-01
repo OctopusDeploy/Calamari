@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
+using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
-using Calamari.Integration.Scripting.WindowsPowerShell;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting

@@ -26,18 +26,18 @@
     <TargetFrameworks>net452;netstandard2.0;net40</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;SUPPORTS_POLLY</DefineConstants>
+    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;SUPPORTS_POLLY;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <DefineConstants>$(DefineConstants);USE_OCTOPUS_XMLT;USE_SYSTEM_IO_DIRECTORY;USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG;SUPPORTS_POLLY</DefineConstants>
+    <DefineConstants>$(DefineConstants);USE_NUGET_V3_LIBS;SUPPORTS_POLLY;USE_OCTOPUS_XMLT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
@@ -111,13 +111,6 @@
     <None Remove="Integration\Scripting\Python\InstallDependencies.py" />
     <None Remove="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
     <None Remove="Integration\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
-    <EmbeddedResource Include="Integration\Scripting\Bash\Bootstrap.sh" />
-    <EmbeddedResource Include="Integration\Scripting\FSharp\Bootstrap.fsx" />
-    <EmbeddedResource Include="Integration\Scripting\ScriptCS\Bootstrap.csx" />
-    <EmbeddedResource Include="Integration\Scripting\Python\Configuration.py" />
-    <EmbeddedResource Include="Integration\Scripting\Python\InstallDependencies.py" />
-    <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
-    <EmbeddedResource Include="Integration\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
     <None Update="javatest.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

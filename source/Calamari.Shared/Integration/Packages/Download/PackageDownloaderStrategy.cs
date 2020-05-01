@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Net;
 using System.Net.Http;
+using Calamari.Common.Features.Scripting;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages.Download.Helm;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Octopus.Versioning;

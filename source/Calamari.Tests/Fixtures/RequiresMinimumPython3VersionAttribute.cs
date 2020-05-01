@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Calamari.Common.Features.Scripting.Python;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting.Python;
 using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;

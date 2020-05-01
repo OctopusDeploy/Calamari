@@ -2,17 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Calamari.Common.Features.Scripting;
 using Calamari.Deployment;
-using Calamari.Hooks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Octostache;
 
 namespace Calamari.Azure.Integration
 {

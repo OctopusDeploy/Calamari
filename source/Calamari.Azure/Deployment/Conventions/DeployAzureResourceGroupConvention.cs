@@ -6,6 +6,7 @@ using System.Threading;
 using Calamari.Azure.Accounts.Security;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Azure.Integration;
+using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
 using Calamari.Common.Variables;
 using Calamari.Deployment;
@@ -44,11 +45,11 @@ namespace Calamari.Azure.Deployment.Conventions
             var tenantId = variables[SpecialVariables.Action.Azure.TenantId];
             var clientId = variables[SpecialVariables.Action.Azure.ClientId];
             var password = variables[SpecialVariables.Action.Azure.Password];
-            var resourceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
+            var resourceManagementEndpoint = variables.Get(AzureAccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
             if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
                 Log.Info("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
 
-            var activeDirectoryEndPoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
+            var activeDirectoryEndPoint = variables.Get(AzureAccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
             if (activeDirectoryEndPoint != DefaultVariables.ActiveDirectoryEndpoint)
                 Log.Info("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndPoint);
 

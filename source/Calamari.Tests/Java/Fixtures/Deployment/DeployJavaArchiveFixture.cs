@@ -4,16 +4,14 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using Calamari.Commands.Java;
+using Calamari.Common.Features.Scripting;
 using Calamari.Common.Variables;
 using Calamari.Deployment.Conventions;
-using Calamari.Hooks;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 

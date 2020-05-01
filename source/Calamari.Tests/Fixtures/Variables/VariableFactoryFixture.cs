@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Util;

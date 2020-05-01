@@ -1,5 +1,4 @@
-﻿using Autofac;
-using Calamari.Integration.Processes;
+﻿using Calamari.Integration.Processes;
 using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
 using System;

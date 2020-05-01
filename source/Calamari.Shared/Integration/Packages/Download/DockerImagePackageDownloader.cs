@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Reflection;
 using Calamari.Commands.Support;
+using Calamari.Common.Features.Scripting;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
@@ -13,6 +13,9 @@ using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
 {
+    // Note about moving this class: GetFetchScript method uses the namespace of this class as part of the 
+    // get Embedded Resource to find the DockerPull scripts. If you move this file, be sure look at that method
+    // and make sure it can still find the scripts
     public class DockerImagePackageDownloader : IPackageDownloader
     {
         readonly IScriptEngine scriptEngine;
@@ -146,7 +149,7 @@ namespace Calamari.Integration.Packages.Download
             }
 
             var scriptFile = Path.Combine(".", $"Octopus.{contextFile}");
-            var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Integration.Packages.Download.Scripts.{contextFile}");
+            var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"{typeof (DockerImagePackageDownloader).Namespace}.Scripts.{contextFile}");
             fileSystem.OverwriteFile(scriptFile, contextScript);
             return scriptFile;
         }

@@ -16,15 +16,6 @@ namespace Calamari.Deployment
             return variableName.Replace("Octopus.Script.Module[", "").TrimEnd(']');
         }
 
-        public static ScriptSyntax GetLibraryScriptModuleLanguage(IVariables variables, string variableName)
-        {
-            var expectedName = variableName.Replace("Octopus.Script.Module[", "Octopus.Script.Module.Language[");
-            var syntaxVariable = variables.GetNames().FirstOrDefault(x => x == expectedName);
-            if (syntaxVariable == null)
-                return ScriptSyntax.PowerShell;
-            return (ScriptSyntax) Enum.Parse(typeof(ScriptSyntax), variables[syntaxVariable]);
-        }
-
         public static bool IsExcludedFromLocalVariables(string name)
         {
             return name.Contains("[");

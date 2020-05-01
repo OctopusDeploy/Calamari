@@ -35,7 +35,7 @@ namespace Calamari.Integration.Packages.NuGet
             if (maxDownloadAttempts <= 0)
                 throw new ArgumentException($"The number of download attempts should be greater than zero, but was {maxDownloadAttempts}", nameof(maxDownloadAttempts));
 
-            var tempTargetFilePath = targetFilePath + Download.NuGetPackageDownloader.DownloadingExtension;
+            var tempTargetFilePath = targetFilePath + NuGetPackageDownloader.DownloadingExtension;
 
             // The RetryTracker is a bit finicky to set up...
             var numberOfRetriesOnFailure = maxDownloadAttempts-1;

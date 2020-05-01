@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using Calamari.Commands.Support;
+using Calamari.Common.Features.Scripting;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.EmbeddedResources;
