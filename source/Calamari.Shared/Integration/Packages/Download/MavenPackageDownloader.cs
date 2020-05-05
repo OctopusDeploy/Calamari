@@ -128,7 +128,7 @@ namespace Calamari.Integration.Packages.Download
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
             freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
-            var mavenPackageId = MavenPackageID.CreatePackageIDFromUIInput(packageId, version);
+            var mavenPackageId = MavenPackageID.CreatePackageIdFromOctopusInput(packageId, version);
             
             var snapshotMetadata = GetSnapshotMetadata(mavenPackageId,  feedUri,  feedCredentials,  maxDownloadAttempts, downloadAttemptBackoff);
 
