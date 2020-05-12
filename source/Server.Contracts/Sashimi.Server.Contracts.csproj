@@ -10,9 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentValidation" Version="8.5.1" />
+    <PackageReference Include="FluentValidation" Version="8.6.2" />
     <PackageReference Include="Octopus.Diagnostics" Version="1.3.0" />
-    <PackageReference Include="Octopus.Server.Extensibility" Version="8.0.0" />
+    <PackageReference Include="Octopus.Server.Extensibility" Version="8.1.0" />
   </ItemGroup>
 
 </Project>
