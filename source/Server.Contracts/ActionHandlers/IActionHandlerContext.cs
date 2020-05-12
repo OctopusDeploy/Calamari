@@ -6,7 +6,7 @@ using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.Server.Contracts.ActionHandlers
 {
-    public interface IActionHanderContext
+    public interface IActionHandlerContext
     {
         ILog Log { get; }
         Maybe<DeploymentTargetType> DeploymentTargetType { get; }

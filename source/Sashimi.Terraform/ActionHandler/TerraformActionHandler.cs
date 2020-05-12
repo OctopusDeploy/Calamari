@@ -85,7 +85,7 @@ namespace Sashimi.Terraform.ActionHandler
         public bool CanRunOnDeploymentTarget => false;
         public ActionHandlerCategory[] Categories => new[] {ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Terraform};
 
-        public IActionHandlerResult Execute(IActionHanderContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context)
         {
             var builder = context.CalamariCommand(CalamariTerraform, ToolCommand);
 

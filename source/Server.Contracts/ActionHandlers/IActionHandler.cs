@@ -14,6 +14,6 @@
         bool CanRunOnDeploymentTarget { get; }
         ActionHandlerCategory[] Categories { get; }
 
-        IActionHandlerResult Execute(IActionHanderContext context);
+        IActionHandlerResult Execute(IActionHandlerContext context);
     }
 }
