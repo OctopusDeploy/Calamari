@@ -221,8 +221,12 @@ namespace Calamari.Integration.Packages.Download
                 .Where(e => string.IsNullOrEmpty(mavenPackageId.Packaging) || e == "." + mavenPackageId.Packaging)
                 .Select(extension =>
                 {
-                    var packageId = new MavenPackageID(mavenPackageId.Group, mavenPackageId.Artifact,
-                        mavenPackageId.Version, Regex.Replace(extension, "^\\.", ""));
+                    var packageId = new MavenPackageID(
+                        mavenPackageId.Group, 
+                        mavenPackageId.Artifact,
+                        mavenPackageId.Version, 
+                        Regex.Replace(extension, "^\\.", ""),
+                        mavenPackageId.Classifier);
                     var result = MavenPackageExists(packageId, feedUri, feedCredentials, snapshotMetadata);
                     errors.Add(result.ErrorMsg);
                     return new
