@@ -206,11 +206,12 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             //https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/set-psdebug?view=powershell-6
             var traceArg = variables[PowerShellVariables.PSDebug.Trace];
             var traceCommand = "-Trace 0";
-            var powerShellVersion = ScriptingEnvironment.SafelyGetPowerShellVersion();
             int.TryParse(traceArg, out var traceArgAsInt);
             bool.TryParse(traceArg, out var traceArgAsBool);
             if (traceArgAsInt > 0 || traceArgAsBool)
             {
+                var powerShellVersion = ScriptingEnvironment.SafelyGetPowerShellVersion();
+
                 if (powerShellVersion.Major < 5 && powerShellVersion.Major > 0)
                     Log.Warn($"{PowerShellVariables.PSDebug.Trace} is enabled, but PowerShell tracing is only supported with PowerShell versions 5 and above. This server is currently running PowerShell version {powerShellVersion}.");
                 else
