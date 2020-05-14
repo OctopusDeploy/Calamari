@@ -260,8 +260,8 @@ namespace Calamari.Integration.Packages.Download
                               GetLatestSnapshotRelease(
                                   snapshotMetadata,
                                   mavenGavParser.Packaging,
-                                  mavenGavParser.Version,
-                                  mavenGavParser.Classifier)));
+                                  mavenGavParser.Classifier,
+                                  mavenGavParser.Version)));
 
             try
             {
@@ -275,7 +275,7 @@ namespace Calamari.Integration.Packages.Download
             }
             catch(Exception ex)
             {
-                return (false, ex.Message);
+                return (false, $"Failed to download {uri}\n" + ex.Message);
             }
         }
 
