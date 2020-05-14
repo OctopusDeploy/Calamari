@@ -174,8 +174,8 @@ namespace Calamari.Integration.Packages.Download
                                   : mavenGavFirst.SnapshotArtifactPath(GetLatestSnapshotRelease(
                                       snapshotMetadata,
                                       mavenGavFirst.Packaging,
-                                      mavenGavFirst.Version,
-                                      mavenGavFirst.Classifier)));
+                                      mavenGavFirst.Classifier,
+                                      mavenGavFirst.Version)));
 
             for (var retry = 0; retry < maxDownloadAttempts; ++retry)
             {
