@@ -22,15 +22,12 @@
   </ItemGroup>
   
   <ItemGroup>
-    <EmbeddedResource Include="**/*.tf" />
+    <None Update="**/*.tf*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="**/*.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   
-  <ItemGroup>
-    <None Update="Simple\backend.tfvars">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Simple\example.tf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>

@@ -1,16 +1,19 @@
 ﻿using System;
 using Autofac;
 using Calamari;
+using Calamari.Integration.FileSystem;
 using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.Tests.Shared.Server
 {
     public abstract class BaseTest
     {
-        public void TestActionHandler<TActionHandler, TCalamariProgram>(Action<TestActionHandlerContext<TCalamariProgram>> arrange, Action<IActionHandlerResult> assert) where TActionHandler : IActionHandler where TCalamariProgram : CalamariFlavourProgram
+        public void TestActionHandler<TCalamariProgram>(
+            Type actionHandlerType, Action<TestActionHandlerContext<TCalamariProgram>> arrange, Action<TestActionHandlerResult> assert)
+            where TCalamariProgram : CalamariFlavourProgram
         {
             var builder = new ContainerBuilder();
-            builder.RegisterAssemblyModules(typeof(TActionHandler).Assembly);
+            builder.RegisterAssemblyModules(actionHandlerType.Assembly);
             builder.RegisterModule<ServerModule>();
 
             var commandBuilder = new TestCalamariCommandBuilder<TCalamariProgram>();
@@ -18,16 +21,25 @@ namespace Sashimi.Tests.Shared.Server
 
             arrange(context);
 
-            IActionHandlerResult result;
+            TestActionHandlerResult result;
             using (var container = builder.Build())
             {
-                var actionHandler = container.Resolve<TActionHandler>();
+                var actionHandler = (IActionHandler)container.Resolve(actionHandlerType);
 
                 commandBuilder.SetVariables(context.Variables);
-                result = actionHandler.Execute(context);
+                result = (TestActionHandlerResult) actionHandler.Execute(context);
             }
 
             assert(result);
         }
+
+        public void TestActionHandler<TActionHandler, TCalamariProgram>(Action<TestActionHandlerContext<TCalamariProgram>> arrange, Action<TestActionHandlerResult> assert) where TActionHandler : IActionHandler where TCalamariProgram : CalamariFlavourProgram
+        {
+            TestActionHandler(typeof(TActionHandler), arrange, assert);
+        }
+        
+        
     }
+
+    
 }

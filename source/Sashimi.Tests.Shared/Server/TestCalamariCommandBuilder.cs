@@ -5,18 +5,21 @@ using System.Linq;
 using System.Reflection;
 using Calamari;
 using Calamari.Integration.FileSystem;
-using Calamari.Terraform;
+using Calamari.Tests.Shared.Helpers;
+using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.DeploymentTools;
+using Sashimi.Tests.Shared.LogParser;
 
 namespace Sashimi.Tests.Shared.Server
 {
     public class TestCalamariCommandBuilder<TCalamariProgram> : ICalamariCommandBuilder where TCalamariProgram : CalamariFlavourProgram
     {
         TestVariableDictionary variables = new TestVariableDictionary();
-
+        bool withStagedPackageArgument = false;
+        
         public CalamariFlavour? CalamariFlavour { get; set; }
         public string? CalamariCommand { get; set; }
         public List<(string? filename, string contents, bool hasBom)> Files = new List<(string?, string, bool)>();
@@ -26,7 +29,10 @@ namespace Sashimi.Tests.Shared.Server
         public IList<IDeploymentTool> Tools { get;} = new List<IDeploymentTool>();
 
         public ICalamariCommandBuilder WithStagedPackageArgument()
-            => throw new NotImplementedException();
+        {
+            withStagedPackageArgument = true;
+            return this;
+        }
 
         public ICalamariCommandBuilder WithArgument(string name)
         {
@@ -76,7 +82,6 @@ namespace Sashimi.Tests.Shared.Server
             return this;
         }
 
-
         public ICalamariCommandBuilder WithVariable(string name, string value, bool isSensitive = false)
         { 
             throw new NotImplementedException();
@@ -87,16 +92,28 @@ namespace Sashimi.Tests.Shared.Server
 
         public IActionHandlerResult Execute()
         {
-            var inMemoryLog = new InMemoryLog();
+            void Copy(string sourcePath, string destinationPath)
+            {
+                foreach (var dirPath in Directory.EnumerateDirectories(sourcePath, "*", SearchOption.AllDirectories))
+                {
+                    Directory.CreateDirectory(dirPath.Replace(sourcePath, destinationPath));
+                }
+
+                foreach (var newPath in Directory.EnumerateFiles(sourcePath, "*.*", SearchOption.AllDirectories))
+                {
+                    File.Copy(newPath, newPath.Replace(sourcePath, destinationPath), true);
+                }
+            }
+
             using (var working = TemporaryDirectory.Create())
             {
-                Directory.CreateDirectory(working.DirectoryPath);
+                var workingPath = working.DirectoryPath;
 
                 //TODO: set this as the working directory
                 var originalWorkingDirectory = Environment.CurrentDirectory;
                 try
                 {
-                    Environment.CurrentDirectory = working.DirectoryPath;
+                    Environment.CurrentDirectory = workingPath;
 
                     var args = new List<string> {CalamariCommand!};
 
@@ -106,17 +123,27 @@ namespace Sashimi.Tests.Shared.Server
                     );
                     args.AddRange(Extensions.Select(e => $"--extension={e}"));
 
-                    var varPath = Path.Combine(working.DirectoryPath, "variables.json");
+                    var varPath = Path.Combine(workingPath, "variables.json");
+
                     variables.Save(varPath);
                     args.Add($"--variables={varPath}");
 
                     //TODO: Deal with sensitive variables
                     // variableArgs += $" -sensitiveVariables=\"{sshBashPaths.BuildPath(sshBashPaths.WorkingDirectory, "variables.secret")}\" -sensitiveVariablesPassword=$1";
+
                     foreach (var (filename, contents, _) in Files)
                     {
-                        File.WriteAllText(Path.Combine(working.DirectoryPath, filename!), contents);
+                        File.WriteAllText(Path.Combine(workingPath, filename!), contents);
                     }
 
+                    if (withStagedPackageArgument)
+                    {
+                        var folderName = variables.GetRaw(KnownVariables.Action.Packages.PackageId);
+
+                        Copy(folderName, workingPath);
+                    }
+
+                    var inMemoryLog = new InMemoryLog();
                     var constructor = typeof(TCalamariProgram).GetConstructor(
                         BindingFlags.Public | BindingFlags.Instance,
                         null, new[] {typeof(ILog)}, new ParameterModifier[0]);
@@ -125,14 +152,31 @@ namespace Sashimi.Tests.Shared.Server
                         inMemoryLog
                     })!;
 
-                    var methodInfo = typeof(CalamariFlavourProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
+                    var methodInfo =
+                        typeof(CalamariFlavourProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
                     if (methodInfo == null)
                     {
                         throw new Exception("CalamariFlavourProgram.Run method was not found");
                     }
-                    var exitCode = (int)methodInfo.Invoke(instance, new object?[] {args.ToArray()})!;
-                        
-                    return new TestActionHandlerResult(exitCode, inMemoryLog.StandardOut);
+
+                    var exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()})!;
+                    var serverInMemoryLog = new ServerInMemoryLog();
+
+                    var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
+                    foreach (var text in inMemoryLog.StandardError)
+                    {
+                        outputFilter.Write(ProcessOutputSource.StdErr, text);
+                    }
+
+                    foreach (var text in inMemoryLog.StandardOut)
+                    {
+                        outputFilter.Write(ProcessOutputSource.StdOut, text);
+                    }
+
+                    return new TestActionHandlerResult(exitCode,
+                        new Dictionary<string, OutputVariable>(outputFilter.OutputVariables), outputFilter.Actions,
+                        outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
+                        serverInMemoryLog.ToString());
                 }
                 finally
                 {
@@ -153,120 +197,6 @@ namespace Sashimi.Tests.Shared.Server
         public void SetVariables(TestVariableDictionary variables)
         {
             this.variables = variables;
-        }
-    }
-    
-    public class TestActionHandlerResult : IActionHandlerResult
-    {
-        public TestActionHandlerResult(int exitCode, List<string> stdOut)
-        {
-            ExitCode = exitCode;
-            Output = stdOut;
-            OutputVariables = new Dictionary<string, OutputVariable>();
-            OutputActions = new List<ScriptOutputAction>();
-            ServiceMessages = new List<ServiceMessage>();
-        }
-        
-        public List<string> Output { get; } = new List<string>();
-
-        public IReadOnlyDictionary<string, OutputVariable> OutputVariables { get; set; }
-        public IReadOnlyList<ScriptOutputAction> OutputActions { get; set; }
-        public IReadOnlyList<ServiceMessage> ServiceMessages { get; set; }
-        public ExecutionOutcome Outcome => WasSuccessful ? ExecutionOutcome.Successful : ExecutionOutcome.Unsuccessful;
-        public bool WasSuccessful => ExitCode == 0;
-        public string? ResultMessage { get; set; }
-        public int ExitCode { get; set; }
-    }
-    
-    public class InMemoryLog : AbstractLog
-    {
-        public List<Message> Messages { get; } = new List<Message>();
-        public List<string> StandardOut { get; } = new List<string>();
-        public List<string> StandardError  { get; }= new List<string>();
-
-        protected override void StdOut(string message)
-        {
-            Console.WriteLine(message); // Write to console for the test output
-            StandardOut.Add(message);
-        }
-
-        protected override void StdErr(string message)
-        {
-            Console.Error.WriteLine(message);
-            StandardError.Add(message);
-        }
-
-        public override void Verbose(string message)
-        {
-            Messages.Add(new Message(Level.Verbose, message));
-            base.Verbose(message);
-        }
-
-        public override void VerboseFormat(string messageFormat, params object[] args)
-        {
-            Messages.Add(new Message(Level.Verbose, messageFormat, args));
-            base.VerboseFormat(messageFormat, args);
-        }
-
-        public override void Info(string message)
-        {
-            Messages.Add(new Message(Level.Info, message));
-            base.Info(message);
-        }
-
-        public override void InfoFormat(string messageFormat, params object[] args)
-        {
-            Messages.Add(new Message(Level.Info, messageFormat, args));
-            base.InfoFormat(messageFormat, args);
-        }
-
-        public override void Warn(string message)
-        {
-            Messages.Add(new Message(Level.Warn, message));
-            base.Warn(message);
-        }
-
-        public override void WarnFormat(string messageFormat, params object[] args)
-        {
-            Messages.Add(new Message(Level.Warn, messageFormat, args));
-            base.WarnFormat(messageFormat, args);
-        }
-
-        public override void Error(string message)
-        {
-            Messages.Add(new Message(Level.Error, message));
-            base.Error(message);
-        }
-
-        public override void ErrorFormat(string messageFormat, params object[] args)
-        {
-            Messages.Add(new Message(Level.Error, messageFormat, args));
-            base.ErrorFormat(messageFormat, args);
-        }
-
-
-        public class Message
-        {
-            public Level Level { get; }
-            public string MessageFormat { get; }
-            public object[] Args { get; }
-            public string FormattedMessage { get; }
-
-            public Message(Level level, string message, params object[] args)
-            {
-                Level = level;
-                MessageFormat = message;
-                Args = args;
-                FormattedMessage = args == null ? message : string.Format(message, args);
-            }
-        }
-
-        public enum Level
-        {
-            Verbose,
-            Info,
-            Warn,
-            Error
         }
     }
 }
