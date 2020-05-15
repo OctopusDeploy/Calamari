@@ -21,7 +21,7 @@
     <DefineConstants>$(DefineConstants);NETCORE;AZURE_CORE;USE_OCTOPUS_XMLT;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <DefineConstants>$(DefineConstants);NETFX;AZURE;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;WINDOWS_USER_ACCOUNT_SUPPORT;WINDOWS_REGISTRY_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETFX;AZURE;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;WINDOWS_USER_ACCOUNT_SUPPORT;WINDOWS_REGISTRY_SUPPORT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
@@ -39,12 +39,10 @@
     <PackageReference Include="Markdown" Version="2.1.0" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <ProjectReference Include="..\Calamari.Azure.ServiceFabric\Calamari.Azure.ServiceFabric.csproj" />
     <ProjectReference Include="..\Calamari.Azure.WebApps\Calamari.Azure.WebApps.csproj" />
-    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net" />
     <Reference Include="System.ServiceProcess" />
@@ -153,21 +151,6 @@
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="AWS\S3\Package1\Content\Resources\TextFile.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="AWS\S3\Package1\Content\root\Page.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="AWS\S3\Package1\Extra\JavaScript.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="AWS\S3\Package2\Wild\Ignore\TextFile1.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="AWS\S3\Package2\Wild\Things\TextFile2.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Java\Fixtures\Deployment\Packages\HelloWorld.0.0.1.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

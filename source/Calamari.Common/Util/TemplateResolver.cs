@@ -2,12 +2,10 @@
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Common.Variables;
-using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Octopus.CoreUtilities;
-using Octostache;
 
-namespace Calamari.Util
+namespace Calamari.Common.Util
 {
     public class TemplateResolver : ITemplateResolver
     {

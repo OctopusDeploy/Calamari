@@ -71,7 +71,7 @@ namespace Calamari.Tests.Fixtures.Commands
                 {
                     "run-test-script", 
                     "--script=" + Script, 
-                    "--extensions=Calamari.Aws,Calamari.Tests",
+                    "--extensions=Calamari.Tests",
                     "--variables=" + temp.FilePath
                 };
 

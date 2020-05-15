@@ -1,7 +1,6 @@
 ﻿using Octopus.CoreUtilities;
-using Octostache;
 
-namespace Calamari.Util
+namespace Calamari.Common.Util
 {
     public class ResolvedTemplatePath
     {
