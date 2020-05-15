@@ -24,7 +24,7 @@ using Sashimi.Tests.Shared.Server;
 namespace Sashimi.Terraform.Tests
 {
     [TestFixture]
-    public class TerraformTests : BaseTest
+    public class ActionHandlersFixture : BaseTest
     {
         string? customTerraformExecutable;
 
