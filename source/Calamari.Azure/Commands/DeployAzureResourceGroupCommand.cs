@@ -1,21 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using Calamari.Azure.Deployment.Conventions;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Util;
 using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
 using Calamari.Util;
 
 namespace Calamari.Azure.Commands
