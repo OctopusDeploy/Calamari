@@ -97,6 +97,87 @@ namespace Sashimi.Tests.Shared.Server
 
         public IActionHandlerResult Execute()
         {
+            List<string> GetArgs(string workingPath)
+            {
+                var args = new List<string> {CalamariCommand!};
+
+                args.AddRange(
+                    Arguments
+                        .Select(a => $"--{a.name}{(a.value == null ? "" : $"={a.value}")}")
+                );
+                args.AddRange(Extensions.Select(e => $"--extension={e}"));
+
+                var varPath = Path.Combine(workingPath, "variables.json");
+
+                variables.Save(varPath);
+                args.Add($"--variables={varPath}");
+
+                //TODO: Deal with sensitive variables
+                // variableArgs += $" -sensitiveVariables=\"{sshBashPaths.BuildPath(sshBashPaths.WorkingDirectory, "variables.secret")}\" -sensitiveVariablesPassword=$1";
+                return args;
+            }
+
+            void CopyFilesToWorkingFolder(string workingPath)
+            {
+                foreach (var (filename, contents) in Files)
+                {
+                    using var fileStream = File.Create(Path.Combine(workingPath, filename!));
+                    contents.Seek(0, SeekOrigin.Begin);
+                    contents.CopyTo(fileStream);
+                }
+
+                if (withStagedPackageArgument)
+                {
+                    var folderName = variables.GetRaw(KnownVariables.Action.Packages.PackageId);
+
+                    Copy(folderName, workingPath);
+                }
+            }
+
+            IActionHandlerResult ExecuteActionHandler(List<string> args)
+            {
+                var inMemoryLog = new InMemoryLog();
+                var constructor = typeof(TCalamariProgram).GetConstructor(
+                    BindingFlags.Public | BindingFlags.Instance,
+                    null, new[] {typeof(ILog)}, new ParameterModifier[0]);
+                if (constructor == null)
+                {
+                    throw new Exception(
+                        $"{typeof(TCalamariProgram).Name} doesn't seem to have a `public {typeof(TCalamariProgram)}({nameof(ILog)})` constructor.");
+                }
+
+                var instance = (TCalamariProgram) constructor.Invoke(new object?[]
+                {
+                    inMemoryLog
+                })!;
+
+                var methodInfo =
+                    typeof(CalamariFlavourProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (methodInfo == null)
+                {
+                    throw new Exception("CalamariFlavourProgram.Run method was not found.");
+                }
+
+                var exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()})!;
+                var serverInMemoryLog = new ServerInMemoryLog();
+
+                var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
+                foreach (var text in inMemoryLog.StandardError)
+                {
+                    outputFilter.Write(ProcessOutputSource.StdErr, text);
+                }
+
+                foreach (var text in inMemoryLog.StandardOut)
+                {
+                    outputFilter.Write(ProcessOutputSource.StdOut, text);
+                }
+
+                return new TestActionHandlerResult(exitCode,
+                    new Dictionary<string, OutputVariable>(outputFilter.OutputVariables), outputFilter.Actions,
+                    outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
+                    serverInMemoryLog.ToString());
+            }
+
             void Copy(string sourcePath, string destinationPath)
             {
                 foreach (var dirPath in Directory.EnumerateDirectories(sourcePath, "*", SearchOption.AllDirectories))
@@ -120,70 +201,11 @@ namespace Sashimi.Tests.Shared.Server
                 {
                     Environment.CurrentDirectory = workingPath;
 
-                    var args = new List<string> {CalamariCommand!};
+                    var args = GetArgs(workingPath);
 
-                    args.AddRange(
-                        Arguments
-                            .Select(a => $"--{a.name}{(a.value == null ? "" : $"={a.value}")}")
-                    );
-                    args.AddRange(Extensions.Select(e => $"--extension={e}"));
+                    CopyFilesToWorkingFolder(workingPath);
 
-                    var varPath = Path.Combine(workingPath, "variables.json");
-
-                    variables.Save(varPath);
-                    args.Add($"--variables={varPath}");
-
-                    //TODO: Deal with sensitive variables
-                    // variableArgs += $" -sensitiveVariables=\"{sshBashPaths.BuildPath(sshBashPaths.WorkingDirectory, "variables.secret")}\" -sensitiveVariablesPassword=$1";
-
-                    foreach (var (filename, contents) in Files)
-                    {
-                        using var fileStream = File.Create(Path.Combine(workingPath, filename!));
-                        contents.Seek(0, SeekOrigin.Begin);
-                        contents.CopyTo(fileStream);
-                    }
-
-                    if (withStagedPackageArgument)
-                    {
-                        var folderName = variables.GetRaw(KnownVariables.Action.Packages.PackageId);
-
-                        Copy(folderName, workingPath);
-                    }
-
-                    var inMemoryLog = new InMemoryLog();
-                    var constructor = typeof(TCalamariProgram).GetConstructor(
-                        BindingFlags.Public | BindingFlags.Instance,
-                        null, new[] {typeof(ILog)}, new ParameterModifier[0]);
-                    var instance = (TCalamariProgram) constructor?.Invoke(new object?[]
-                    {
-                        inMemoryLog
-                    })!;
-
-                    var methodInfo =
-                        typeof(CalamariFlavourProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
-                    if (methodInfo == null)
-                    {
-                        throw new Exception("CalamariFlavourProgram.Run method was not found");
-                    }
-
-                    var exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()})!;
-                    var serverInMemoryLog = new ServerInMemoryLog();
-
-                    var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
-                    foreach (var text in inMemoryLog.StandardError)
-                    {
-                        outputFilter.Write(ProcessOutputSource.StdErr, text);
-                    }
-
-                    foreach (var text in inMemoryLog.StandardOut)
-                    {
-                        outputFilter.Write(ProcessOutputSource.StdOut, text);
-                    }
-
-                    return new TestActionHandlerResult(exitCode,
-                        new Dictionary<string, OutputVariable>(outputFilter.OutputVariables), outputFilter.Actions,
-                        outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
-                        serverInMemoryLog.ToString());
+                    return ExecuteActionHandler(args);
                 }
                 finally
                 {
