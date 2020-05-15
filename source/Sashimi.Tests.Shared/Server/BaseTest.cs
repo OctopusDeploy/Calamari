@@ -1,7 +1,6 @@
 ﻿using System;
 using Autofac;
 using Calamari;
-using Calamari.Integration.FileSystem;
 using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.Tests.Shared.Server

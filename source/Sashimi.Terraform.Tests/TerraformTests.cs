@@ -18,22 +18,11 @@ using NUnit.Framework;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Terraform.ActionHandler;
+using Sashimi.Tests.Shared;
 using Sashimi.Tests.Shared.Server;
 
 namespace Sashimi.Terraform.Tests
 {
-    public static class TestEnvironment 
-    {
-        public static readonly string AssemblyLocalPath = typeof(TestEnvironment).Assembly.FullLocalPath();
-        public static readonly string CurrentWorkingDirectory = Path.GetDirectoryName(AssemblyLocalPath)!;
-
-        public static string GetTestPath(params string[] paths)
-        {
-            return Path.Combine(CurrentWorkingDirectory, Path.Combine(paths));
-        }
-
-    }
-
     [TestFixture]
     public class TerraformTests : BaseTest
     {
@@ -155,10 +144,9 @@ namespace Sashimi.Terraform.Tests
         }
 
         [Test]
-        [TestCase("-backend-config=\"backend.tfvars\"", TestName = "Using double quotes")]
-        [TestCase("--backend-config=backend.tfvars", TestName = "Using no quotes, this one needs to use -- for the argument!")]
-        public void ExtraInitParametersAreSet(string additionalParams)
+        public void ExtraInitParametersAreSet()
         {
+            var additionalParams = "-var-file=\"backend.tfvars\"";
             ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(_ =>
                     _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, additionalParams), "Simple")
                 .Should().Contain($"init -no-color -get-plugins=true {additionalParams}");
@@ -419,7 +407,24 @@ namespace Sashimi.Terraform.Tests
                         "Saving variable 'Octopus.Action[\"\"].Output.TerraformPlanDetailedExitCode' with the detailed exit code of the plan, with value '0'");
             }
         }
-        
+
+        [Test]
+        public void InlineTemplateAndVariables()
+        {
+            ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(_ =>
+            {
+                var template = $@"output ""my_output"" {{
+  value = ""boo""
+}}";
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, "{}");
+                _.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariables.Action.Script.ScriptSourceOptions.Inline);
+            }, String.Empty, _ =>
+            {
+                _.WasSuccessful.Should().BeTrue();
+            });
+        }
+
         string ExecuteAndReturnLogOutput(Type commandType, Action<TestActionHandlerContext<Program>> populateVariables,
             string folderName, Action<TestActionHandlerResult>? assert = null)
         {
