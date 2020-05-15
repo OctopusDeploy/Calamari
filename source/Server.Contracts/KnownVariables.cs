@@ -72,6 +72,8 @@
             public static readonly string Id = "Octopus.Action.Id";
             public static readonly string EnabledFeatures = "Octopus.Action.EnabledFeatures";
             
+            public static readonly string UseBundledTooling = "OctopusUseBundledTooling";
+
             public static class Script
             {
                 public static readonly string Syntax = "Octopus.Action.Script.Syntax";
