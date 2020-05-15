@@ -21,24 +21,25 @@ namespace Sashimi.Terraform.Validation
         public TerraformValidator(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
         {
             this.cloudTemplateHandlerFactory = cloudTemplateHandlerFactory;
-            RuleFor(a => a.Properties)
-                .MustHaveProperty(TerraformSpecialVariables.Action.Terraform.Template, "Please provide the Terraform template.")
-                .When(a => (a.ActionType == TerraformActionTypes.Apply ||
-                            a.ActionType == TerraformActionTypes.Destroy) &&
-                           !IsTemplateFromPackage(a.Properties));
+            
+            When(a => (a.ActionType == TerraformActionTypes.Apply ||
+                       a.ActionType == TerraformActionTypes.Destroy) &&
+                      !IsTemplateFromPackage(a.Properties), () =>
+            {
+                RuleFor(a => a.Properties)
+                    .MustHaveProperty(TerraformSpecialVariables.Action.Terraform.Template,
+                        "Please provide the Terraform template.");
+                RuleFor(a => a.Properties)
+                    .Must(a => !ValidationVariables(a).Any())
+                    .WithMessage(a =>
+                        $"The variable(s) could not be parsed: {string.Join(", ", ValidationVariables(a.Properties))}.");
+            });
 
             RuleFor(a => a.Packages)
                 .MustHaveExactlyOnePackage("Please provide the Terraform template package.")
                 .When(a => (a.ActionType == TerraformActionTypes.Apply ||
                             a.ActionType == TerraformActionTypes.Destroy) &&
                            IsTemplateFromPackage(a.Properties));
-
-            RuleFor(a => a.Properties)
-                .Must(a => !ValidationVariables(a).Any())
-                .When(a => (a.ActionType == TerraformActionTypes.Apply ||
-                            a.ActionType == TerraformActionTypes.Destroy) &&
-                           !IsTemplateFromPackage(a.Properties))
-                .WithMessage(a => $"The variable(s) could not be parsed: {string.Join(", ", ValidationVariables(a.Properties))}.");
 
             AddAzureAccountRules(this);
             AddAwsAccountRules(this);
@@ -48,7 +49,6 @@ namespace Sashimi.Terraform.Validation
         {
             bool AzureAccountSelected(DeploymentActionValidationContext a) => a.Properties.ContainsKey(TerraformSpecialVariables.Action.Terraform.AzureAccount)
                                                                               && a.Properties[TerraformSpecialVariables.Action.Terraform.AzureAccount].ToLower() == "true";
-
             validator.RuleFor(a => a.Properties)
                 .MustHaveProperty("Octopus.Action.AzureAccount.Variable", "Please specify an Azure account variable.")
                 .When(AzureAccountSelected);
@@ -62,19 +62,19 @@ namespace Sashimi.Terraform.Validation
             bool ChosenToAssumeRole(DeploymentActionValidationContext a) => a.Properties.ContainsKey(TerraformSpecialVariables.Action.Aws.AssumeRole)
                                                                             && bool.TrueString.Equals(a.Properties[TerraformSpecialVariables.Action.Aws.AssumeRole], StringComparison.OrdinalIgnoreCase);
             
-            
             bool ChosenToUseInstanceRole(DeploymentActionValidationContext a) => a.Properties.ContainsKey(TerraformSpecialVariables.Action.Aws.UseInstanceRole)
                                                                                  && bool.TrueString.Equals(a.Properties[TerraformSpecialVariables.Action.Aws.UseInstanceRole], StringComparison.OrdinalIgnoreCase);
-            
-            
-            validator.RuleFor(a => a.Properties)
-                .MustHaveProperty(TerraformSpecialVariables.Action.Aws.AssumedRoleArn, "Please provide the assumed role ARN.")
-                .When(x => AwsAccountSelected(x) && ChosenToAssumeRole(x));
-            
-            validator.RuleFor(a => a.Properties)
-                .MustHaveProperty(TerraformSpecialVariables.Action.Aws.AssumedRoleSession, "Please provide the assumed role session name.")
-                .When(x => AwsAccountSelected(x) && ChosenToAssumeRole(x));
 
+            validator.When(x => AwsAccountSelected(x) && ChosenToAssumeRole(x), () =>
+            {
+                validator.RuleFor(a => a.Properties)
+                    .MustHaveProperty(TerraformSpecialVariables.Action.Aws.AssumedRoleArn,
+                        "Please provide the assumed role ARN.");
+
+                validator.RuleFor(a => a.Properties)
+                    .MustHaveProperty(TerraformSpecialVariables.Action.Aws.AssumedRoleSession,
+                        "Please provide the assumed role session name.");
+            });
 
             validator.RuleFor(a => a.Properties)
                 .MustHaveProperty(TerraformSpecialVariables.Action.Aws.AccountVariable, "Please specify an AWS account variable.")
