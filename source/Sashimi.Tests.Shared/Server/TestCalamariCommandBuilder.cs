@@ -6,6 +6,7 @@ using System.Reflection;
 using Calamari;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Shared.Helpers;
+using Calamari.Util;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
@@ -22,7 +23,7 @@ namespace Sashimi.Tests.Shared.Server
         
         public CalamariFlavour? CalamariFlavour { get; set; }
         public string? CalamariCommand { get; set; }
-        public List<(string? filename, string contents, bool hasBom)> Files = new List<(string?, string, bool)>();
+        public List<(string? filename, Stream contents)> Files = new List<(string?, Stream)>();
         public List<(string name, string? value)> Arguments = new List<(string, string?)>();
         public List<string> Extensions = new List<string>();
 
@@ -36,14 +37,12 @@ namespace Sashimi.Tests.Shared.Server
 
         public ICalamariCommandBuilder WithArgument(string name)
         {
-            Arguments.Add((name, null));
-            return this;
+            throw new NotImplementedException();
         }
 
         public ICalamariCommandBuilder WithArgument(string name, string value)
         {
-            Arguments.Add((name, value));
-            return this;
+            throw new NotImplementedException();
         }
 
         public ICalamariCommandBuilder WithExtension(string extension)
@@ -54,21 +53,27 @@ namespace Sashimi.Tests.Shared.Server
 
         public ICalamariCommandBuilder WithDataFile(string fileContents, string? fileName = null)
         {
-            Files.Add((fileName, fileContents, true));
+            WithDataFile(fileContents.EncodeInUtf8Bom(), fileName);
             return this;
         }
 
         public ICalamariCommandBuilder WithDataFileNoBom(string fileContents, string? fileName = null)
         {
-            Files.Add((fileName, fileContents, false));
+            WithDataFile(fileContents.EncodeInUtf8NoBom(), fileName);
             return this;
         }
 
         public ICalamariCommandBuilder WithDataFile(byte[] fileContents, string? fileName = null)
-            => throw new NotImplementedException();
+        {
+            WithDataFile(new MemoryStream(fileContents), fileName);
+            return this;
+        }
 
         public ICalamariCommandBuilder WithDataFile(Stream fileContents, string? fileName = null, Action<int>? progress = null)
-            => throw new NotImplementedException();
+        { 
+            Files.Add((fileName, fileContents));
+            return this;
+        }
 
         public ICalamariCommandBuilder WithDataFileAsArgument(string argumentName, string fileContents, string? fileName = null)
             => throw new NotImplementedException();
@@ -109,7 +114,7 @@ namespace Sashimi.Tests.Shared.Server
             {
                 var workingPath = working.DirectoryPath;
 
-                //TODO: set this as the working directory
+                //HACK: set the working directory, we will need to modify Calamari to not depend on this
                 var originalWorkingDirectory = Environment.CurrentDirectory;
                 try
                 {
@@ -131,9 +136,11 @@ namespace Sashimi.Tests.Shared.Server
                     //TODO: Deal with sensitive variables
                     // variableArgs += $" -sensitiveVariables=\"{sshBashPaths.BuildPath(sshBashPaths.WorkingDirectory, "variables.secret")}\" -sensitiveVariablesPassword=$1";
 
-                    foreach (var (filename, contents, _) in Files)
+                    foreach (var (filename, contents) in Files)
                     {
-                        File.WriteAllText(Path.Combine(workingPath, filename!), contents);
+                        using var fileStream = File.Create(Path.Combine(workingPath, filename!));
+                        contents.Seek(0, SeekOrigin.Begin);
+                        contents.CopyTo(fileStream);
                     }
 
                     if (withStagedPackageArgument)
