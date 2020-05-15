@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
     <ProjectReference Include="..\Sashimi.Terraform\Sashimi.Terraform.csproj" />
     <ProjectReference Include="..\Sashimi.Tests.Shared\Sashimi.Tests.Shared.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
@@ -21,6 +22,12 @@
   </ItemGroup>
   
   <ItemGroup>
-    <EmbeddedResource Include="**/*.tf" />
+    <None Update="**/*.tf*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="**/*.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
+  
 </Project>

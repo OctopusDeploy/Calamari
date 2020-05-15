@@ -1,20 +1,14 @@
-using System;
-using Calamari.Commands.Support;
-using Calamari.Common;
-using Calamari.Plumbing;
-
 namespace Calamari.Terraform
 {
     public class Program : CalamariFlavourProgram
     {
-
-        Program() : base(ConsoleLog.Instance)
+        public Program(ILog log) : base(log)
         {
         }
         
         public static int Main(string[] args)
         {
-            return new Program().Run(args);
+            return new Program(ConsoleLog.Instance).Run(args);
         }
     }
 }

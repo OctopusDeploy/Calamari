@@ -96,6 +96,8 @@
 
             public static class Packages
             {
+                public static readonly string PackageId = "Octopus.Action.Package.PackageId";
+                
                 public static string FeedId(string name)
                 {
                     return $"Octopus.Action.Package[{name}].FeedId";

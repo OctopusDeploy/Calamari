@@ -8,6 +8,7 @@ using Sashimi.Tests.Shared.Server;
 
 namespace Sashimi.Terraform.Tests
 {
+    [TestFixture]
     public class TerraformVariableFileGeneratorFixture
     {
         [Test]
