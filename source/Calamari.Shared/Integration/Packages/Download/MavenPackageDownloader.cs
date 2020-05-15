@@ -174,6 +174,7 @@ namespace Calamari.Integration.Packages.Download
                                   : mavenGavFirst.SnapshotArtifactPath(GetLatestSnapshotRelease(
                                       snapshotMetadata,
                                       mavenGavFirst.Packaging,
+                                      mavenGavFirst.Classifier,
                                       mavenGavFirst.Version)));
 
             for (var retry = 0; retry < maxDownloadAttempts; ++retry)
@@ -221,8 +222,12 @@ namespace Calamari.Integration.Packages.Download
                 .Where(e => string.IsNullOrEmpty(mavenPackageId.Packaging) || e == "." + mavenPackageId.Packaging)
                 .Select(extension =>
                 {
-                    var packageId = new MavenPackageID(mavenPackageId.Group, mavenPackageId.Artifact,
-                        mavenPackageId.Version, Regex.Replace(extension, "^\\.", ""));
+                    var packageId = new MavenPackageID(
+                        mavenPackageId.Group, 
+                        mavenPackageId.Artifact,
+                        mavenPackageId.Version, 
+                        Regex.Replace(extension, "^\\.", ""),
+                        mavenPackageId.Classifier);
                     var result = MavenPackageExists(packageId, feedUri, feedCredentials, snapshotMetadata);
                     errors.Add(result.ErrorMsg);
                     return new
@@ -255,6 +260,7 @@ namespace Calamari.Integration.Packages.Download
                               GetLatestSnapshotRelease(
                                   snapshotMetadata,
                                   mavenGavParser.Packaging,
+                                  mavenGavParser.Classifier,
                                   mavenGavParser.Version)));
 
             try
@@ -269,7 +275,7 @@ namespace Calamari.Integration.Packages.Download
             }
             catch(Exception ex)
             {
-                return (false, ex.Message);
+                return (false, $"Failed to download {uri}\n" + ex.Message);
             }
         }
 
@@ -326,7 +332,7 @@ namespace Calamari.Integration.Packages.Download
         }
 
         //Shared code with Server. Should live in Common Location
-        public string GetLatestSnapshotRelease(XmlDocument snapshotMetadata, string extension, string defaultVersion = "")
+        public string GetLatestSnapshotRelease(XmlDocument snapshotMetadata, string extension, string classifier, string defaultVersion = "")
         {
             return snapshotMetadata.ToEnumerable()
                        .Select(doc => doc.DocumentElement?.SelectSingleNode("./*[local-name()='versioning']"))
@@ -334,6 +340,8 @@ namespace Calamari.Integration.Packages.Download
                        .Where(nodes => nodes != null)
                        .SelectMany(nodes => nodes.Cast<XmlNode>())
                        .Where(node => (node.SelectSingleNode("./*[local-name()='extension']")?.InnerText.Trim() ?? "").Equals(extension.Trim(), StringComparison.OrdinalIgnoreCase))
+                       // Classifier is optional, and the XML element does not exists if the artifact has no classifier
+                       .Where(node => classifier == null || (node.SelectSingleNode("./*[local-name()='classifier']")?.InnerText.Trim() ?? "").Equals(classifier.Trim(), StringComparison.OrdinalIgnoreCase))
                        .OrderByDescending(node => node.SelectSingleNode("./*[local-name()='updated']")?.InnerText)
                        .Select(node => node.SelectSingleNode("./*[local-name()='value']")?.InnerText)
                        .FirstOrDefault() ?? defaultVersion;

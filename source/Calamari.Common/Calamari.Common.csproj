@@ -51,7 +51,7 @@
 
     <ItemGroup>
       <PackageReference Include="Octopus.CoreUtilities" Version="1.1.2" />
-      <PackageReference Include="Octopus.Versioning" Version="4.1.4" />
+      <PackageReference Include="Octopus.Versioning" Version="4.1.8" />
       <PackageReference Include="Octostache" Version="2.7.0" />
       <PackageReference Include="SharpCompress" Version="0.24.0" />
       <PackageReference Include="YamlDotNet" Version="8.1.0" />
