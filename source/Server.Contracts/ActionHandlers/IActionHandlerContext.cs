@@ -9,11 +9,11 @@ namespace Sashimi.Server.Contracts.ActionHandlers
     public interface IActionHandlerContext
     {
         ILog Log { get; }
-        Maybe<DeploymentTargetType>? DeploymentTargetType { get; }
-        Maybe<string>? DeploymentTargetName { get; }
+        Maybe<DeploymentTargetType> DeploymentTargetType { get; }
+        Maybe<string> DeploymentTargetName { get; }
         IActionAndTargetScopedVariables Variables { get; }
-        string? EnvironmentId { get; }
-        Maybe<string>? TenantId { get; }
+        string EnvironmentId { get; }
+        Maybe<string> TenantId { get; }
         IRawShellCommandBuilder RawShellCommand();
         ICalamariCommandBuilder CalamariCommand(CalamariFlavour tool, string toolCommand);
         IScriptCommandBuilder ScriptCommand();

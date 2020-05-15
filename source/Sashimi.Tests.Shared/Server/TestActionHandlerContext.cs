@@ -1,6 +1,5 @@
 ﻿using System;
 using Calamari;
-using Calamari.Terraform;
 using Octopus.CoreUtilities;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
@@ -20,14 +19,13 @@ namespace Sashimi.Tests.Shared.Server
             this.calamariCommandBuilder = calamariCommandBuilder;
         }
 
-        ILog IActionHandlerContext.Log => Log;
-        public ServerInMemoryLog Log { get; } = new ServerInMemoryLog(); 
-        public Maybe<DeploymentTargetType>? DeploymentTargetType { get; set; }
-        public Maybe<string>? DeploymentTargetName { get; set; }
+        ILog IActionHandlerContext.Log { get; } = new ServerInMemoryLog();
+        public Maybe<DeploymentTargetType> DeploymentTargetType { get; set; } = null!;
+        public Maybe<string> DeploymentTargetName { get; set; } = null!;
         IActionAndTargetScopedVariables IActionHandlerContext.Variables => Variables;
         public TestVariableDictionary Variables { get; } = new TestVariableDictionary();
-        public string? EnvironmentId { get; set; }
-        public Maybe<string>? TenantId { get; set; }
+        public string EnvironmentId { get; set; } = null!;
+        public Maybe<string> TenantId { get; set; } = null!;
 
         public IRawShellCommandBuilder RawShellCommand()
             => throw new NotImplementedException();
