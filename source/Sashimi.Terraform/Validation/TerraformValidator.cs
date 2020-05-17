@@ -157,7 +157,7 @@ namespace Sashimi.Terraform.Validation
             return invalidProperties;
         }
         
-        public static bool IsTemplateFromPackage(IReadOnlyDictionary<string, string> properties)
+        static bool IsTemplateFromPackage(IReadOnlyDictionary<string, string> properties)
         {
             return properties.TryGetValue(KnownVariables.Action.Script.ScriptSource, out var scriptSource) &&
                    scriptSource == KnownVariableValues.Action.Script.ScriptSource.Package;
