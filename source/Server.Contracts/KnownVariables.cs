@@ -97,28 +97,32 @@
             public static class Packages
             {
                 public static readonly string PackageId = "Octopus.Action.Package.PackageId";
+                public static readonly string NuGetPackageId = "Octopus.Action.Package.NuGetPackageId";
+
+                public static readonly string FeedId = "Octopus.Action.Package.FeedId";
+                public static readonly string NuGetFeedId = "Octopus.Action.Package.NuGetFeedId";
                 
-                public static string FeedId(string name)
+                public static string FeedIdForPackage(string name)
                 {
                     return $"Octopus.Action.Package[{name}].FeedId";
                 }
 
-                public static string Image(string name)
+                public static string ImageForPackage(string name)
                 {
                     return $"Octopus.Action.Package[{name}].Image";
                 }
                 
-                public static string Registry(string name)
+                public static string RegistryForPackage(string name)
                 {
                     return $"Octopus.Action.Package[{name}].Registry";
                 }
 
-                public static string FeedUserName(string name)
+                public static string FeedUserNameForPackage(string name)
                 {
                     return $"Octopus.Action.Package[{name}].Feed.UserName";
                 }
                 
-                public static string FeedPassword(string name)
+                public static string FeedPasswordForPackage(string name)
                 {
                     return $"Octopus.Action.Package[{name}].Feed.Password";
                 }
