@@ -6,19 +6,19 @@ namespace Sashimi.Server.Contracts.Variables
     {
         public static readonly VariableType String = new VariableType("String");
         public static readonly VariableType Sensitive = new VariableType("Sensitive");
-        public static readonly VariableType Certificate = new VariableType("Certificate", IsDocumentReference.Yes);
-        public static readonly VariableType WorkerPool = new VariableType("WorkerPool", IsDocumentReference.Yes);
-        public static readonly VariableType AmazonWebServicesAccount = new VariableType("AmazonWebServicesAccount", IsDocumentReference.Yes);
-        public static readonly VariableType AzureAccount = new VariableType("AzureAccount", IsDocumentReference.Yes);
+        public static readonly VariableType Certificate = new VariableType("Certificate", Contracts.DocumentType.Certificate);
+        public static readonly VariableType WorkerPool = new VariableType("WorkerPool", Contracts.DocumentType.WorkerPool);
+        public static readonly VariableType AmazonWebServicesAccount = new VariableType("AmazonWebServicesAccount", Contracts.DocumentType.Account);
+        public static readonly VariableType AzureAccount = new VariableType("AzureAccount", Contracts.DocumentType.Account);
 
-        public VariableType(string name, IsDocumentReference isDocumentReference = IsDocumentReference.No)
+        public VariableType(string name, DocumentType? documentType = null)
         {
             Name = name;
-            IsDocumentReference = isDocumentReference;
+            DocumentType = documentType;
         }
 
         public string Name { get; }
-        public IsDocumentReference IsDocumentReference { get; }
+        public DocumentType? DocumentType { get; }
 
         protected bool Equals(VariableType other)
         {
@@ -37,11 +37,5 @@ namespace Sashimi.Server.Contracts.Variables
         {
             return (Name != null ? Name.GetHashCode() : 0);
         }
-    }
-
-    public enum IsDocumentReference
-    {
-        No,
-        Yes
     }
 }
