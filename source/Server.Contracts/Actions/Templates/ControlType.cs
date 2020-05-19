@@ -42,9 +42,13 @@ namespace Sashimi.Server.Contracts.Actions.Templates
             return Equals((ControlType) obj);
         }
 
-        public override int GetHashCode()
-        {
-            return (Name != null ? Name.GetHashCode() : 0);
-        }
+        public override int GetHashCode() 
+            => (Name != null ? Name.GetHashCode() : 0);
+
+        public static bool operator ==(ControlType left, ControlType right) 
+            => Equals(left, right);
+
+        public static bool operator !=(ControlType left, ControlType right) 
+            => !Equals(left, right);
     }
 }

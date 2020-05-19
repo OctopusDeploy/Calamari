@@ -33,9 +33,13 @@ namespace Sashimi.Server.Contracts.Variables
             return Equals((VariableType) obj);
         }
 
-        public override int GetHashCode()
-        {
-            return (Name != null ? Name.GetHashCode() : 0);
-        }
+        public override int GetHashCode() 
+            => (Name != null ? Name.GetHashCode() : 0);
+
+        public static bool operator ==(VariableType left, VariableType right) 
+            => Equals(left, right);
+
+        public static bool operator !=(VariableType left, VariableType right) 
+            => !Equals(left, right);
     }
 }
