@@ -11,9 +11,9 @@ if (-not ([string]::IsNullOrEmpty($dockerUsername))) {
     $parsedVersion = [Version]($dockerVersion -split '-')[0]
     $dockerNeedsPasswordViaStdIn = (($parsedVersion.Major -gt 17) -or (($parsedVersion.Major -eq 17) -and ($parsedVersion.Minor -gt 6)))
     if ($dockerNeedsPasswordViaStdIn) {
-        echo $dockerPassword | docker login --username $dockerUsername --password-stdin $feedUri 2>&1
+        echo $dockerPassword | cmd /c "docker login --username $dockerUsername --password-stdin $feedUri 2>&1"
     } else {
-        docker login --username $dockerUsername --password $dockerPassword $feedUri 2>&1
+        cmd /c "docker login --username $dockerUsername --password $dockerPassword $feedUri 2>&1"
     }
     
     if(!$?)
