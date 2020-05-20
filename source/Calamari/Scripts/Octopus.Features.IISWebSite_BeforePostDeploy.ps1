@@ -481,8 +481,17 @@ if ($deployAsWebSite)
 		}
 
 		Write-Host "Finding SSL certificate with thumbprint $sslCertificateThumbprint"
-	
-		$certificate = Get-ChildItem Cert:\LocalMachine -Recurse | Where-Object { $_.Thumbprint -eq $sslCertificateThumbprint -and $_.HasPrivateKey -eq $true } | Select-Object -first 1
+		foreach ($certStore in (Get-ChildItem Cert:\LocalMachine)) {
+			try {
+				$certs = Get-ChildItem "Cert:\LocalMachine\$($certStore.Name)" -ErrorAction Stop
+				$certificate = $certs | Where-Object { $_.Thumbprint -eq $sslCertificateThumbprint -and $_.HasPrivateKey -eq $true } | Select-Object -first 1
+				if ($certificate) {
+					break
+				}
+			} catch {
+				Write-Host "Skipping inaccessible certificate store '$($certStore.Name)': $_"
+			}
+		}
 		if (! $certificate) 
 		{
 			throw "Could not find certificate under Cert:\LocalMachine with thumbprint $sslCertificateThumbprint. Make sure that the certificate is installed to the Local Machine context and that the private key is available."
