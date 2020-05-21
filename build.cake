@@ -84,12 +84,14 @@ Task("Test")
     .IsDependentOn("Build")
     .Does(() => {
 		var projects = GetFiles("./source/**/*Tests.csproj");
-		foreach(var project in projects)
-			DotNetCoreTest(project.FullPath, new DotNetCoreTestSettings
+
+        Parallel.ForEach(projects, project => {
+            DotNetCoreTest(project.FullPath, new DotNetCoreTestSettings
 			{
 				Configuration = configuration,
 				NoBuild = true
 			});
+        });
     });
 
 Task("PublishCalamariProjects")
@@ -170,7 +172,7 @@ Task("Publish")
             Source = "https://f.feedz.io/octopus-deploy/dependencies/nuget",
             ApiKey = EnvironmentVariable("FeedzIoApiKey")
         });
-    } 
+    }
 });
 
 Task("Default")
