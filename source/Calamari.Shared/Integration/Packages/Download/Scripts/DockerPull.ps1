@@ -3,6 +3,14 @@ $dockerUsername=$OctopusParameters["DockerUsername"]
 $dockerPassword=$OctopusParameters["DockerPassword"]
 $feedUri=$OctopusParameters["FeedUri"]
 
+try {
+  Write-Verbose $(Get-Process 'com.docker.proxy' -ErrorAction Stop)
+}
+Catch [System.Exception] {
+  Write-Error "You will need docker installed and running to pull docker images"
+  Write-Error $_
+}
+
 Write-Verbose $(docker -v)
 
 if (-not ([string]::IsNullOrEmpty($dockerUsername))) {
