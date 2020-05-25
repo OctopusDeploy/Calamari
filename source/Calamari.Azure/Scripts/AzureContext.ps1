@@ -131,7 +131,8 @@ Execute-WithRetry{
 
                     $loginArgs = @();
                     $loginArgs += @("-u", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId))));
-                    $loginArgs += @("-p", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword))));
+                    # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
+                    $loginArgs += @("--password", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword))));
                     $loginArgs += @("--tenant", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId))));
                     az login --service-principal $loginArgs
 
