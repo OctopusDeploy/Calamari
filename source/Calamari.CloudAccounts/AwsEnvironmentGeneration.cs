@@ -17,13 +17,14 @@ namespace Calamari.CloudAccounts
     public class AwsEnvironmentGeneration
     {
         readonly ILog log;
-        private const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
-        private readonly string region;
-        private readonly string accessKey;
-        private readonly string secretKey;
-        private readonly string assumeRole;
-        private readonly string assumeRoleArn;
-        private readonly string assumeRoleSession;
+        const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
+        readonly string region;
+        readonly string accessKey;
+        readonly string secretKey;
+        readonly string assumeRole;
+        readonly string assumeRoleArn;
+        readonly string assumeRoleExternalId;
+        readonly string assumeRoleSession;
 
         public static async Task<AwsEnvironmentGeneration> Create(ILog log, IVariables variables)
         {
@@ -58,6 +59,7 @@ namespace Calamari.CloudAccounts
                         variables.Get("Octopus.Action.Amazon.SecretKey")?.Trim();
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
+            assumeRoleExternalId = variables.Get("Octopus.Action.Aws.AssumeRoleExternalId")?.Trim();
             assumeRoleSession = variables.Get("Octopus.Action.Aws.AssumedRoleSession")?.Trim();
         }
 
@@ -184,7 +186,8 @@ namespace Calamari.CloudAccounts
                var credentials = (await client.AssumeRoleAsync(new AssumeRoleRequest
                    {
                        RoleArn = assumeRoleArn,
-                       RoleSessionName = assumeRoleSession
+                       RoleSessionName = assumeRoleSession,
+                       ExternalId = string.IsNullOrWhiteSpace(assumeRoleExternalId) ? null : assumeRoleExternalId
                    })
                ).Credentials;
 
