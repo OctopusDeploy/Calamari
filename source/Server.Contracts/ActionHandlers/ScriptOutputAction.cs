@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Sashimi.Server.Contracts.ActionHandlers
 {
@@ -13,5 +15,35 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         public string Name { get; }
 
         public IDictionary<string, string> Properties { get; }
+
+        public bool ContainsPropertyWithValue(string propertyName)
+        {
+            return Properties.ContainsKey(propertyName) && !string.IsNullOrEmpty(Properties[propertyName]);
+        }
+
+        public bool ContainsPropertyWithGuid(string propertyName)
+        {
+            return ContainsPropertyWithValue(propertyName) && IsGuid(propertyName);
+        }
+
+        bool IsGuid(string propertyName)
+        {
+            return Guid.TryParse(Properties[propertyName], out _);
+        }
+
+        public string[] GetStrings(params string[] propertyNames)
+        {
+            var values = Properties.Where(x => propertyNames.Contains(x.Key))
+                .Select(x => x.Value)
+                .ToList();
+            if (!values.Any())
+            {
+                return Array.Empty<string>();
+            }
+
+            return values
+                .Where(v => !string.IsNullOrWhiteSpace(v))
+                .SelectMany(v => v.Split(new[] {","}, StringSplitOptions.RemoveEmptyEntries)).ToArray();
+        }
     }
 }
