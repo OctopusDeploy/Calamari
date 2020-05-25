@@ -94,8 +94,8 @@ namespace Sashimi.Terraform.Tests
                                 "https://checkpoint-api.hashicorp.com/v1/check/terraform");
                             var parsedJson = JObject.Parse(json);
 
-                            var downloadBaseUrl = parsedJson["current_download_url"].Value<string>();
-                            var currentVersion = parsedJson["current_version"].Value<string>();
+                            var downloadBaseUrl = parsedJson["current_download_url"]!.Value<string>();
+                            var currentVersion = parsedJson["current_version"]!.Value<string>();
                             var fileName = GetTerraformFileName(currentVersion);
 
                             if (!await TerraformFileAvailable(downloadBaseUrl, retry))

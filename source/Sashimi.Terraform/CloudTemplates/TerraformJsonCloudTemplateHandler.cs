@@ -31,11 +31,11 @@ namespace Sashimi.Terraform.CloudTemplates
                     {
                         DisplayInfo = new DisplayInfo
                         {
-                            Description = p.Value.SelectToken("description")?.ToString(),
+                            Description = p.Value!.SelectToken("description")?.ToString(),
                             Label = p.Key,
                             Required = true,
                         },
-                        Type = GetType(p.Value),
+                        Type = GetType(p.Value!),
                         Name = p.Key,
                     }).ToList()
                 )
@@ -54,7 +54,7 @@ namespace Sashimi.Terraform.CloudTemplates
         {
             var parameters = GetVariables(template);
             return parameters?
-                .Select(x => new KeyValuePair<string, object?>(x.Key.ToString(), GetDefaultValue(x.Value)))
+                .Select(x => new KeyValuePair<string, object?>(x.Key.ToString(), GetDefaultValue(x.Value!)))
                 .ToDictionary(x => x.Key, x => x.Value) ?? new Dictionary<string, object?>();
         }
 
@@ -93,11 +93,11 @@ namespace Sashimi.Terraform.CloudTemplates
             // Otherwise we default to a string
         }
 
-        IDictionary<string, JToken> GetVariables(string template)
+        IDictionary<string, JToken?> GetVariables(string template)
         {
             var o = JObject.Parse(template);
-            IDictionary<string, JToken> variables = (JObject) o["variable"];
-            return variables ?? new Dictionary<string, JToken>();
+            IDictionary<string, JToken?>? variables = (JObject) o["variable"]!;
+            return variables ?? new Dictionary<string, JToken?>();
         }
     }
 }
