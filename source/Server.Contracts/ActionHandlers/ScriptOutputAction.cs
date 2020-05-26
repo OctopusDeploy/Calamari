@@ -41,9 +41,12 @@ namespace Sashimi.Server.Contracts.ActionHandlers
                 return Array.Empty<string>();
             }
 
-            return values
-                .Where(v => !string.IsNullOrWhiteSpace(v))
-                .SelectMany(v => v.Split(new[] {","}, StringSplitOptions.RemoveEmptyEntries)).ToArray();
+            var allValues = new List<string>();
+            foreach (var v in values.Where(v => !string.IsNullOrWhiteSpace(v)))
+            {
+                allValues.AddRange(v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(_ => _.Trim()));
+            }
+            return allValues.ToArray();
         }
     }
 }
