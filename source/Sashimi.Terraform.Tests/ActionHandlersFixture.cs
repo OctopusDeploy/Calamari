@@ -359,6 +359,10 @@ namespace Sashimi.Terraform.Tests
         {
             var bucketName = $"cfe2e-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
 
+            var temporaryFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N").Substring(0, 6));
+            Directory.CreateDirectory(temporaryFolder);
+            CopyAllFiles(TestEnvironment.GetTestPath("AWS"), temporaryFolder);
+
             void PopulateVariables(TestActionHandlerContext<Program> _)
             {
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
@@ -369,6 +373,7 @@ namespace Sashimi.Terraform.Tests
                 _.Variables.Add("bucket_name", bucketName);
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "AWS");
+                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder);
             }
 
             using (var outputs = ExecuteAndReturnLogOutput(PopulateVariables, "AWS", typeof(TerraformPlanActionHandler), typeof(TerraformApplyActionHandler), typeof(TerraformDestroyActionHandler)).GetEnumerator())
@@ -389,8 +394,15 @@ namespace Sashimi.Terraform.Tests
                 fileData.Should().Be("Hello World from AWS");
 
                 outputs.MoveNext();
-                outputs.Current.FullLog.Should()
-                    .Contain("destroy -force -no-color");
+
+                using (var client = new HttpClient())
+                {
+                    var response = await client.GetAsync($"https://{bucketName}.s3.amazonaws.com/test.txt").ConfigureAwait(false);
+
+                    response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+                }
+
+                Directory.Delete(temporaryFolder, true);
             }
         }
 
@@ -572,7 +584,27 @@ output ""config-map-aws-auth"" {{
                 _.OutputVariables.ContainsKey("TerraformValueOutputs[random]").Should().BeTrue();
                 _.OutputVariables["TerraformValueOutputs[random]"].Value.Should().Be(randomNumber);
             });
-        }        
+        }
+
+        static void CopyAllFiles(string sourceFolderPath, string destinationFolderPath)
+        {
+            if (Directory.Exists(sourceFolderPath))
+            {
+                var filePaths = Directory.GetFiles(sourceFolderPath);
+
+                // Copy the files and overwrite destination files if they already exist.
+                foreach (var filePath in filePaths)
+                {
+                    var fileName = Path.GetFileName(filePath);
+                    var destFilePath = Path.Combine(destinationFolderPath, fileName);
+                    File.Copy(filePath, destFilePath, true);
+                }
+            }
+            else
+            {
+                throw new Exception($"'{nameof(sourceFolderPath)}' ({sourceFolderPath}) does not exist!");
+            }
+        }
 
         string ExecuteAndReturnLogOutput(Type commandType, Action<TestActionHandlerContext<Program>> populateVariables,
             string folderName, Action<TestActionHandlerResult>? assert = null)
