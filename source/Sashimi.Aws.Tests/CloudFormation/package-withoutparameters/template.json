@@ -1,0 +1,25 @@
+{
+  "Description": "AWS S3 Bucket",
+  "Resources": {
+    "TestBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "@BucketName",
+        "Tags" : [
+          {
+            "Key" : "Environment",
+            "Value" : "Test"
+          }         
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "OutputName": {
+      "Value": {
+        "Ref": "TestBucket"
+      },
+      "Description": "Bucket Name"
+    }
+  }
+}

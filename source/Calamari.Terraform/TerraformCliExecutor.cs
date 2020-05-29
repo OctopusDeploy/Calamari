@@ -8,11 +8,10 @@ using Calamari.Extensions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Proxies;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Terraform
 {
-    class TerraformCliExecutor : IDisposable
+    internal class TerraformCliExecutor : IDisposable
     {
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
@@ -191,13 +190,22 @@ namespace Calamari.Terraform
         /// <summary>
         /// Create a list of -var-file arguments from the newline separated list of variable files 
         /// </summary>
-        public string TerraformVariableFiles =>
-            deployment.Variables
-                .Get(TerraformSpecialVariables.Action.Terraform.VarFiles)
-                ?.Map(var => Regex.Split(var, "\r?\n"))
-                .Select(var => $"-var-file=\"{var}\"")
-                .ToList()
-                .Map(list => string.Join(" ", list));
+        public string TerraformVariableFiles 
+        {
+            get
+            {
+                var varFilesAsString = deployment.Variables.Get(TerraformSpecialVariables.Action.Terraform.VarFiles);
+
+                if (varFilesAsString == null) return null;
+
+                var varFiles = Regex.Split(varFilesAsString, "\r?\n")
+                    .Select(var => $"-var-file=\"{var}\"")
+                    .ToList();
+
+                return string.Join(" ", varFiles);
+            } 
+        }
+            
 
         void InitializeTerraformEnvironmentVariables()
         {

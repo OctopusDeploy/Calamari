@@ -13,13 +13,15 @@ namespace Sashimi.Tests.Shared.Server
     public class TestActionHandlerContext<TCalamariProgram> : IActionHandlerContext where TCalamariProgram : CalamariFlavourProgram
     {
         readonly TestCalamariCommandBuilder<TCalamariProgram> calamariCommandBuilder;
+        readonly ILog log;
 
-        public TestActionHandlerContext(TestCalamariCommandBuilder<TCalamariProgram> calamariCommandBuilder)
+        public TestActionHandlerContext(TestCalamariCommandBuilder<TCalamariProgram> calamariCommandBuilder, ILog log)
         {
             this.calamariCommandBuilder = calamariCommandBuilder;
+            this.log = log;
         }
 
-        ILog IActionHandlerContext.Log { get; } = new ServerInMemoryLog();
+        ILog IActionHandlerContext.Log => log;
         public Maybe<DeploymentTargetType> DeploymentTargetType { get; set; } = null!;
         public Maybe<string> DeploymentTargetName { get; set; } = null!;
         IActionAndTargetScopedVariables IActionHandlerContext.Variables => Variables;

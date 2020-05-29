@@ -128,9 +128,16 @@ namespace Sashimi.Tests.Shared.Server
 
                 if (withStagedPackageArgument)
                 {
-                    var folderName = variables.GetRaw(KnownVariables.Action.Packages.PackageId);
-
-                    Copy(folderName, workingPath);
+                    var packageId = variables.GetRaw(KnownVariables.Action.Packages.PackageId);
+                    if (File.Exists(packageId))
+                    {
+                        var fileName = new FileInfo(packageId).Name;
+                        File.Copy(packageId, Path.Combine(workingPath, fileName));
+                    }
+                    else
+                    {
+                        Copy(packageId, workingPath);
+                    }
                 }
             }
 

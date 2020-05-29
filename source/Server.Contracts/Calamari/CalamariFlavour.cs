@@ -3,7 +3,6 @@
     public class CalamariFlavour
     {
         public static readonly CalamariFlavour Calamari = new CalamariFlavour("Calamari");
-        public static CalamariFlavour CalamariAws = new CalamariFlavour("Calamari.Cloud");
         public static readonly CalamariFlavour CalamariAzure = new CalamariFlavour("Calamari.Cloud");
 
         public CalamariFlavour(string id)

@@ -24,7 +24,7 @@ using Sashimi.Tests.Shared.Server;
 namespace Sashimi.Terraform.Tests
 {
     [TestFixture]
-    public class ActionHandlersFixture : BaseTest
+    public class ActionHandlersFixture
     {
         string? customTerraformExecutable;
 
@@ -631,8 +631,8 @@ output ""config-map-aws-auth"" {{
             
             foreach (var commandType in commandTypes)
             {
-                TestActionHandlerResult outputResult = null!;
-                TestActionHandler<Program>(commandType, context =>
+                yield return ActionHandlerTestBuilder.Create<Program>(commandType)
+                    .WithArrange(context =>
                     {
                         context.Variables.Add(KnownVariables.Action.Script.ScriptSource,
                             KnownVariables.Action.Script.ScriptSourceOptions.Package);
@@ -643,14 +643,12 @@ output ""config-map-aws-auth"" {{
                             customTerraformExecutable);
 
                         populateVariables(context);
-                    }, result =>
+                    })
+                    .WithAssert(result =>
                     {
                         Assert.IsTrue(result.WasSuccessful);
-                        outputResult = result;
-                    }
-                );
-
-                yield return outputResult;
+                    })
+                    .Execute();
             }
         }
     }

@@ -1,0 +1,10 @@
+[
+  {
+    "ParameterKey": "NameVarParam",
+    "ParameterValue": "#{NameVarParamValue}"
+  },
+  {
+    "ParameterKey": "NamePlainParam",
+    "ParameterValue": "@NamePlainParamValue"
+  }
+]

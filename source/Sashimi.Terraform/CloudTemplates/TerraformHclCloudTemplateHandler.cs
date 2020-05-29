@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Octopus.CoreParsers.Hcl;
-using Octopus.CoreUtilities.Extensions;
 using Octopus.Server.Extensibility.Metadata;
 using Sashimi.Server.Contracts.CloudTemplates;
 using Sprache;
@@ -17,29 +16,32 @@ namespace Sashimi.Terraform.CloudTemplates
 
         public Metadata ParseTypes(string template)
         {
-            return template?
-                .Map(GetVariables)
-                .Map(variable => variable.Select(p => new PropertyMetadata
-                    {
-                        DisplayInfo = new DisplayInfo
-                        {
-                            Description = GetDefaultDescription(p),
-                            Label = p.Value,
-                            Required = true,
-                        },
-                        Type = GetType(p),
-                        Name = p.Value,
-                    }).ToList()
-                )
-                .Map(properties => new List<TypeMetadata>
+            if (template == null) return new Metadata();
+
+            var hclElements = GetVariables(template);
+            var properties = hclElements.Select(p => new PropertyMetadata
+            {
+                DisplayInfo = new DisplayInfo
+                {
+                    Description = GetDefaultDescription(p),
+                    Label = p.Value,
+                    Required = true,
+                },
+                Type = GetType(p),
+                Name = p.Value,
+            }).ToList();
+
+            return new Metadata
+            {
+                Types = new List<TypeMetadata>
                 {
                     new TypeMetadata
                     {
                         Name = TerraformDataTypes.TerraformTemplateTypeName,
                         Properties = properties
                     }
-                })
-                .Map(typeMetadata => new Metadata() {Types = typeMetadata}) ?? new Metadata();
+                }
+            };
         }
 
         public object ParseModel(string template)
@@ -94,14 +96,14 @@ namespace Sashimi.Terraform.CloudTemplates
             return "string";            
         }
 
-        IList<HclElement> GetVariables(string template)
+        static IList<HclElement> GetVariables(string template)
         {
-            return template?
-                .Map(HclParser.NormalizeLineEndings)
-                .Map(normalized => HclParser.HclTemplate.Parse(normalized))
+            if (template == null) return new List<HclElement>();
+
+            return HclParser.HclTemplate.Parse(HclParser.NormalizeLineEndings(template))
                 .Children
                 .Where(child => child.Name == "variable")
-                .ToList() ?? new List<HclElement>();
+                .ToList();
         }
     }
 }

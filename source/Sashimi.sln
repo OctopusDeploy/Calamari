@@ -1,32 +1,45 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Server.Contracts", "Server.Contracts\Sashimi.Server.Contracts.csproj", "{59B028A9-5DD5-477F-9845-B0927D02E3CF}"
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29920.165
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Server.Contracts", "Server.Contracts\Sashimi.Server.Contracts.csproj", "{59B028A9-5DD5-477F-9845-B0927D02E3CF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Terraform", "Terraform", "{06CB7580-EC1B-44C3-93BC-0F58E6582EA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Terraform", "Sashimi.Terraform\Sashimi.Terraform.csproj", "{44851CEC-89D0-4D76-8BBA-2206308974D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Terraform", "Sashimi.Terraform\Sashimi.Terraform.csproj", "{44851CEC-89D0-4D76-8BBA-2206308974D1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Terraform.Tests", "Sashimi.Terraform.Tests\Sashimi.Terraform.Tests.csproj", "{C25C8D0B-7203-4BC4-A86F-7558FF890089}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Terraform.Tests", "Sashimi.Terraform.Tests\Sashimi.Terraform.Tests.csproj", "{C25C8D0B-7203-4BC4-A86F-7558FF890089}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Tests.Shared", "Sashimi.Tests.Shared\Sashimi.Tests.Shared.csproj", "{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Tests.Shared", "Sashimi.Tests.Shared\Sashimi.Tests.Shared.csproj", "{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{A5977E44-894E-4B70-AE3A-78B514B44274}"
-ProjectSection(SolutionItems) = preProject
-	..\.gitattributes = ..\.gitattributes
-	..\.gitignore = ..\.gitignore
-	..\build.cake = ..\build.cake
-	..\build.cmd = ..\build.cmd
-	..\build.ps1 = ..\build.ps1
-	..\CODEOWNERS = ..\CODEOWNERS
-	..\gitversion.yml = ..\gitversion.yml
-	..\readme.md = ..\readme.md
-EndProjectSection
+	ProjectSection(SolutionItems) = preProject
+		..\.gitattributes = ..\.gitattributes
+		..\.gitignore = ..\.gitignore
+		..\build.cake = ..\build.cake
+		..\build.cmd = ..\build.cmd
+		..\build.ps1 = ..\build.ps1
+		..\CODEOWNERS = ..\CODEOWNERS
+		..\gitversion.yml = ..\gitversion.yml
+		..\readme.md = ..\readme.md
+	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Terraform", "Calamari.Terraform\Calamari.Terraform.csproj", "{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Terraform", "Calamari.Terraform\Calamari.Terraform.csproj", "{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Tests.Shared", "Calamari.Tests.Shared\Calamari.Tests.Shared.csproj", "{6EC56FF1-BE19-42F3-A40B-FAF6A870E0F1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Tests.Shared", "Calamari.Tests.Shared\Calamari.Tests.Shared.csproj", "{6EC56FF1-BE19-42F3-A40B-FAF6A870E0F1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Terraform.Tests", "Calamari.Terraform.Tests\Calamari.Terraform.Tests.csproj", "{66067CC8-9D74-494E-A5F1-5641B1D07C17}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Terraform.Tests", "Calamari.Terraform.Tests\Calamari.Terraform.Tests.csproj", "{66067CC8-9D74-494E-A5F1-5641B1D07C17}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aws", "Aws", "{5B9A9DC5-F295-4303-A69E-03FAD5FB4A00}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Aws", "Calamari.Aws\Calamari.Aws.csproj", "{45B986E1-2415-440E-BC5C-5D5139BA54E2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Aws", "Sashimi.Aws\Sashimi.Aws.csproj", "{82BF1F99-67AA-492B-9E7F-2E015CB9DEC6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Aws.Tests", "Calamari.Aws.Tests\Calamari.Aws.Tests.csproj", "{73F25271-555A-4249-85E8-3B6744291809}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Aws.Tests", "Sashimi.Aws.Tests\Sashimi.Aws.Tests.csproj", "{43FED2F0-11D1-4AE2-8172-6266B61B4121}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -62,11 +75,37 @@ Global
 		{66067CC8-9D74-494E-A5F1-5641B1D07C17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{66067CC8-9D74-494E-A5F1-5641B1D07C17}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{66067CC8-9D74-494E-A5F1-5641B1D07C17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45B986E1-2415-440E-BC5C-5D5139BA54E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45B986E1-2415-440E-BC5C-5D5139BA54E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45B986E1-2415-440E-BC5C-5D5139BA54E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45B986E1-2415-440E-BC5C-5D5139BA54E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82BF1F99-67AA-492B-9E7F-2E015CB9DEC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82BF1F99-67AA-492B-9E7F-2E015CB9DEC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82BF1F99-67AA-492B-9E7F-2E015CB9DEC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82BF1F99-67AA-492B-9E7F-2E015CB9DEC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73F25271-555A-4249-85E8-3B6744291809}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73F25271-555A-4249-85E8-3B6744291809}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73F25271-555A-4249-85E8-3B6744291809}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73F25271-555A-4249-85E8-3B6744291809}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43FED2F0-11D1-4AE2-8172-6266B61B4121}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43FED2F0-11D1-4AE2-8172-6266B61B4121}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43FED2F0-11D1-4AE2-8172-6266B61B4121}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43FED2F0-11D1-4AE2-8172-6266B61B4121}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{44851CEC-89D0-4D76-8BBA-2206308974D1} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
 		{C25C8D0B-7203-4BC4-A86F-7558FF890089} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
 		{107D9B9C-7EAD-4256-AEF1-F7EF402C150B} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
 		{66067CC8-9D74-494E-A5F1-5641B1D07C17} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
+		{45B986E1-2415-440E-BC5C-5D5139BA54E2} = {5B9A9DC5-F295-4303-A69E-03FAD5FB4A00}
+		{82BF1F99-67AA-492B-9E7F-2E015CB9DEC6} = {5B9A9DC5-F295-4303-A69E-03FAD5FB4A00}
+		{73F25271-555A-4249-85E8-3B6744291809} = {5B9A9DC5-F295-4303-A69E-03FAD5FB4A00}
+		{43FED2F0-11D1-4AE2-8172-6266B61B4121} = {5B9A9DC5-F295-4303-A69E-03FAD5FB4A00}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F8108764-E787-43A4-A43A-2BB5540615E8}
 	EndGlobalSection
 EndGlobal
