@@ -59,17 +59,19 @@ namespace Calamari.Azure.Commands
             var filesInPackage = !string.IsNullOrWhiteSpace(pathToPackage);
             var templateResolver = new TemplateResolver(fileSystem);
             var templateService = new TemplateService(fileSystem, templateResolver, new TemplateReplacement(templateResolver));
+            var packagedScriptService = new PackagedScriptService(log, fileSystem, scriptEngine, commandLineRunner);
+            var configuredScriptService = new ConfiguredScriptService(fileSystem, scriptEngine, commandLineRunner);
 
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.PreDeploy),
+                new PackagedScriptConvention(packagedScriptService, DeploymentStages.PreDeploy),
+                new PackagedScriptConvention(packagedScriptService, DeploymentStages.Deploy),
+                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.Deploy),
                 new DeployAzureResourceGroupConvention(templateFile, templateParameterFile, filesInPackage, templateService, new ResourceGroupTemplateNormalizer()),
-                new PackagedScriptConvention(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(packagedScriptService, DeploymentStages.PostDeploy),
+                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.PostDeploy),
             };
 
             var deployment = new RunningDeployment(pathToPackage, variables);

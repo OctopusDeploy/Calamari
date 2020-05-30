@@ -18,17 +18,32 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
 {
     public class AzureWebAppConvention : IInstallConvention
     {
+        readonly AzureWebAppService service;
+
+        public AzureWebAppConvention(AzureWebAppService service)
+        {
+            this.service = service;
+        }
+
+        public void Install(RunningDeployment deployment)
+        {
+            service.Install(deployment);
+        }
+    }
+
+    public class AzureWebAppService : IInstallConvention
+    {
         readonly ILog log;
 
-        public AzureWebAppConvention(ILog log)
+        public AzureWebAppService(ILog log)
         {
             this.log = log;
         }
-        
+
         public void Install(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            
+
             if (variables.Get(SpecialVariables.Account.AccountType) == "AzureSubscription")
             {
                 log.Warn("Use of Management Certificates to deploy Azure Web App services has been deprecated by Microsoft and they are progressively disabling them, please update to using a Service Principal. If you receive an error about the app not being found in the subscription then this account type is the most likely cause. See [our documentation](https://g.octopushq.com/AzureTargets#azure-management-certificate) for more details.");
@@ -45,7 +60,7 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
                 ? string.Empty
                 : $" in Resource Group '{resourceGroupName}'";
             var slotText = targetSite.HasSlot
-                ? $", deployment slot '{targetSite.Slot}'" 
+                ? $", deployment slot '{targetSite.Slot}'"
                 : string.Empty;
             log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
@@ -63,7 +78,8 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
             }
         }
 
-        void DeployToAzure(RunningDeployment deployment, AzureTargetSite targetSite,
+        void DeployToAzure(RunningDeployment deployment,
+            AzureTargetSite targetSite,
             IVariables variables,
             WebDeployPublishSettings publishSettings)
         {
@@ -108,8 +124,10 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
             }
         }
 
-        bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate,
-            X509Chain chain, SslPolicyErrors sslpolicyerrors)
+        bool WrapperForServerCertificateValidationCallback(object sender,
+            X509Certificate certificate,
+            X509Chain chain,
+            SslPolicyErrors sslpolicyerrors)
         {
             switch (sslpolicyerrors)
             {
@@ -136,7 +154,7 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
             if (account is AzureServicePrincipalAccount servicePrincipalAccount)
             {
                 return ResourceManagerPublishProfileProvider.GetPublishProperties(servicePrincipalAccount,
-                    variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty), 
+                    variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty),
                     targetSite);
             }
 
@@ -155,7 +173,7 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
         {
             var publishProfile = settings.PublishProfile;
             var deploySite = settings.DeploymentSite;
-            
+
             var options = new DeploymentBaseOptions
             {
                 AuthenticationType = "Basic",
@@ -190,7 +208,7 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
         private static void ApplyPreserveAppDataDeploymentRule(DeploymentSyncOptions syncOptions,
             IVariables variables)
         {
-            // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory 
+            // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory
             // ReSharper disable once InvertIf
             if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData))
             {
@@ -252,6 +270,5 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
                     break;
             }
         }
-        
     }
 }

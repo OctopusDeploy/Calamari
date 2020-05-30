@@ -9,10 +9,25 @@ namespace Calamari.Deployment.Conventions
 {
     public class JsonConfigurationVariablesConvention : IInstallConvention
     {
+        readonly JsonConfigurationVariablesService service;
+
+        public JsonConfigurationVariablesConvention(JsonConfigurationVariablesService service)
+        {
+            this.service = service;
+        }
+
+        public void Install(RunningDeployment deployment)
+        {
+            service.Install(deployment);
+        }
+    }
+
+    public class JsonConfigurationVariablesService
+    {
         readonly IJsonConfigurationVariableReplacer jsonConfigurationVariableReplacer;
         readonly ICalamariFileSystem fileSystem;
 
-        public JsonConfigurationVariablesConvention(IJsonConfigurationVariableReplacer jsonConfigurationVariableReplacer, ICalamariFileSystem fileSystem)
+        public JsonConfigurationVariablesService(IJsonConfigurationVariableReplacer jsonConfigurationVariableReplacer, ICalamariFileSystem fileSystem)
         {
             this.jsonConfigurationVariableReplacer = jsonConfigurationVariableReplacer;
             this.fileSystem = fileSystem;

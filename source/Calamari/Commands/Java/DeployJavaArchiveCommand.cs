@@ -83,30 +83,32 @@ namespace Calamari.Commands.Java
             };
 
             var deployExploded = variables.GetFlag(SpecialVariables.Action.Java.DeployExploded);
+            var packagedScriptService = new PackagedScriptService(log, fileSystem, scriptEngine, commandLineRunner);
+            var configuredScriptService = new ConfiguredScriptService(fileSystem, scriptEngine, commandLineRunner);
 
             var conventions = new List<IConvention>
             {
                 new AlreadyInstalledConvention(log, journal),
                 // If we are deploying the package exploded then extract directly to the application directory.
-                // Else, if we are going to re-pack, then we extract initially to a temporary directory 
+                // Else, if we are going to re-pack, then we extract initially to a temporary directory
                 deployExploded
                     ? (IInstallConvention)new DelegateInstallConvention(d => extractPackage.ExtractToApplicationDirectory(archiveFile, packageExtractor))
                     : new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(archiveFile, packageExtractor)),
                 new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.PreDeploy),
+                new PackagedScriptConvention(packagedScriptService, DeploymentStages.PreDeploy),
                 new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
+                new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesService(jsonReplacer, fileSystem)),
                 new RePackArchiveConvention(log, fileSystem, jarTools),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(packagedScriptService, DeploymentStages.Deploy),
+                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.Deploy),
                 new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(packagedScriptService, DeploymentStages.PostDeploy),
+                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.PostDeploy),
                 new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new RollbackScriptConvention(log, DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources)

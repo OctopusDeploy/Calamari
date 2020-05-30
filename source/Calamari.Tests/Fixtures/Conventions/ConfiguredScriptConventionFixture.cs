@@ -51,9 +51,9 @@ namespace Calamari.Tests.Fixtures.Conventions
             var script = new Script(scriptPath);
             variables.Set(scriptName, scriptBody);
 
-            var convention = CreateConvention(stage);
+            var convention = CreateConvention();
             scriptEngine.Execute(Arg.Any<Script>(), variables, commandLineRunner).Returns(new CommandResult("", 0));
-            convention.Install(deployment);
+            convention.Install(deployment, stage);
 
             fileSystem.Received().WriteAllBytes(scriptPath, Arg.Any<byte[]>());
             scriptEngine.Received().Execute(Arg.Is<Script>(s => s.File == scriptPath), variables, commandLineRunner);
@@ -68,9 +68,9 @@ namespace Calamari.Tests.Fixtures.Conventions
             var script = new Script(scriptPath);
             variables.Set(scriptName, "blah blah");
 
-            var convention = CreateConvention(stage);
+            var convention = CreateConvention();
             scriptEngine.Execute(Arg.Any<Script>(), variables, commandLineRunner).Returns(new CommandResult("", 0));
-            convention.Install(deployment);
+            convention.Install(deployment, stage);
 
             fileSystem.Received().DeleteFile(scriptPath, Arg.Any<FailureOptions>());
         }
@@ -84,9 +84,9 @@ namespace Calamari.Tests.Fixtures.Conventions
             var scriptPath = Path.Combine(stagingDirectory, scriptName);
             variables.Set(scriptName, "blah blah");
 
-            var convention = CreateConvention(stage);
+            var convention = CreateConvention();
             scriptEngine.Execute(Arg.Any<Script>(), variables, commandLineRunner).Returns(new CommandResult("", 0));
-            convention.Install(deployment);
+            convention.Install(deployment, stage);
 
             fileSystem.DidNotReceive().DeleteFile(scriptPath, Arg.Any<FailureOptions>());
         }
@@ -97,14 +97,14 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string stage = DeploymentStages.PostDeploy;
             var scriptName = ConfiguredScriptConvention.GetScriptName(stage, ScriptSyntax.CSharp);
             variables.Set(scriptName, "blah blah");
-            var convention = CreateConvention(stage);
-            Action exec = () => convention.Install(deployment);
+            var convention = CreateConvention();
+            Action exec = () => convention.Install(deployment, stage);
             exec.Should().Throw<CommandException>().WithMessage("CSharp scripts are not supported on this platform (PostDeploy)");
         }
 
-        private ConfiguredScriptConvention CreateConvention(string deployStage)
+        private ConfiguredScriptService CreateConvention()
         {
-            return new ConfiguredScriptConvention(deployStage, fileSystem, scriptEngine, commandLineRunner);
+            return new ConfiguredScriptService(fileSystem, scriptEngine, commandLineRunner);
         }
     }
 }

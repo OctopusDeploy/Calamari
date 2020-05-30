@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             configurationTransformer = Substitute.For<IConfigurationTransformer>();
             transformFileLocator = new TransformFileLocator(fileSystem);
-            
+
             var deployDirectory = BuildConfigPath(null);
 
             variables = new CalamariVariables();
@@ -74,7 +74,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             AssertTransformRun("bar.config", "bar.Release.config");
             AssertTransformRun("bar.config", "bar.Production.config");
         }
-        
+
         [Test]
         public void ShouldApplyTenantTransform()
         {
@@ -91,7 +91,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             AssertTransformRun("bar.config", "bar.Production.config");
             AssertTransformRun("bar.config", "bar.Tenant-1.config");
         }
-        
+
         [Test]
         public void ShouldApplyNamingConventTransformsInTheRightOrder()
         {
@@ -110,7 +110,7 @@ namespace Calamari.Tests.Fixtures.Conventions
                     Arg.Any<string>(),
                     Arg.Is<string>(s => s.Equals(BuildConfigPath("bar.Release.config"), StringComparison.OrdinalIgnoreCase)),
                     Arg.Any<string>());
-                
+
                 configurationTransformer.Received().PerformTransform(
                     Arg.Any<string>(),
                     Arg.Is<string>(s => s.Equals(BuildConfigPath("bar.Production.config"), StringComparison.OrdinalIgnoreCase)),
@@ -162,7 +162,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [TestCaseSource(nameof(AdvancedTransformTestCases))]
         public void ShouldApplyAdvancedTransformations(string sourceFile, string transformDefinition, string expectedAppliedTransform)
         {
-            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformDefinition.Replace('\\', Path.DirectorySeparatorChar));            
+            variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformDefinition.Replace('\\', Path.DirectorySeparatorChar));
             variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
             CreateConvention().Install(deployment);
@@ -262,7 +262,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             var log = new InMemoryLog();
             var transformer = Substitute.For<IConfigurationTransformer>();
             var fileLocator = new TransformFileLocator(calamariFileSystem, log);
-            new ConfigurationTransformsConvention(calamariFileSystem, transformer, fileLocator, log).Install(runningDeployment);
+            var asApplied = new ConfigurationTransformsService(calamariFileSystem, transformer, fileLocator, log).Install(runningDeployment);
 
             //not completely testing every scenario here, but this is a reasonable half way point to make sure it works without going overboard
             log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @"Recursively searching for transformation files that match *.config in folder 'c:\temp'");
@@ -321,9 +321,9 @@ namespace Calamari.Tests.Fixtures.Conventions
             }
         }
 
-        private ConfigurationTransformsConvention CreateConvention()
+        private ConfigurationTransformsService CreateConvention()
         {
-            return new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator, logs);
+            return new ConfigurationTransformsService(fileSystem, configurationTransformer, transformFileLocator, logs);
         }
 
         private void AssertTransformRun(string configFile, string transformFile)

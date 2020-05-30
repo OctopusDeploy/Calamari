@@ -159,7 +159,8 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         PackagedScriptConvention CreateConvention(string scriptName)
         {
-            return new PackagedScriptConvention(log, scriptName, fileSystem, scriptEngine, runner);
+            var packagedScriptService = new PackagedScriptService(log, fileSystem, scriptEngine, runner);
+            return new PackagedScriptConvention(packagedScriptService, scriptName);
         }
 
         RollbackScriptConvention CreateRollbackConvention(string scriptName)

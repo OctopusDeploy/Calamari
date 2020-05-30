@@ -10,12 +10,28 @@ namespace Calamari.Deployment.Conventions
 {
     public class ConfigurationTransformsConvention : IInstallConvention
     {
+        readonly ConfigurationTransformsService service;
+
+        public ConfigurationTransformsConvention(ConfigurationTransformsService service)
+        {
+            this.service = service;
+        }
+
+        public void Install(RunningDeployment deployment)
+        {
+            var transformFilesApplied = service.Install(deployment);
+            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformFilesApplied.ToList(), "|");
+        }
+    }
+
+    public class ConfigurationTransformsService
+    {
         readonly ICalamariFileSystem fileSystem;
         readonly IConfigurationTransformer configurationTransformer;
         private readonly ITransformFileLocator transformFileLocator;
         readonly ILog log;
 
-        public ConfigurationTransformsConvention(ICalamariFileSystem fileSystem, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog log = null)
+        public ConfigurationTransformsService(ICalamariFileSystem fileSystem, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog log = null)
         {
             this.fileSystem = fileSystem;
             this.configurationTransformer = configurationTransformer;
@@ -23,35 +39,35 @@ namespace Calamari.Deployment.Conventions
             this.log = log ?? ConsoleLog.Instance;
         }
 
-        public void Install(RunningDeployment deployment)
+        public IEnumerable<string> Install(RunningDeployment deployment)
         {
             var features = deployment.Variables.GetStrings(SpecialVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
 
             if (!features.Contains(SpecialVariables.Features.ConfigurationTransforms))
-                return;
+                return new List<string>();
 
             var explicitTransforms = GetExplicitTransforms(deployment);
             var automaticTransforms = GetAutomaticTransforms(deployment);
-            var sourceExtensions = GetSourceExtensions(deployment, explicitTransforms);           
+            var sourceExtensions = GetSourceExtensions(deployment, explicitTransforms);
 
             var allTransforms = explicitTransforms.Concat(automaticTransforms).ToList();
             var transformDefinitionsApplied = new List<XmlConfigTransformDefinition>();
             var duplicateTransformDefinitions = new List<XmlConfigTransformDefinition>();
             var transformFilesApplied = new HashSet<Tuple<string, string>>();
             var diagnosticLoggingEnabled = deployment.Variables.GetFlag(SpecialVariables.Package.EnableDiagnosticsConfigTransformationLogging);
-            
+
             if (diagnosticLoggingEnabled)
                 log.Verbose($"Recursively searching for transformation files that match {string.Join(" or ", sourceExtensions)} in folder '{deployment.CurrentDirectory}'");
             foreach (var configFile in MatchingFiles(deployment, sourceExtensions))
             {
                 if (diagnosticLoggingEnabled)
                     log.Verbose($"Found config file '{configFile}'");
-                ApplyTransformations(configFile, allTransforms, transformFilesApplied, 
+                ApplyTransformations(configFile, allTransforms, transformFilesApplied,
                     transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, deployment);
             }
 
             LogFailedTransforms(explicitTransforms, automaticTransforms, transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled);
-            deployment.Variables.SetStrings(SpecialVariables.AppliedXmlConfigTransforms, transformFilesApplied.Select(t => t.Item1), "|");
+            return transformFilesApplied.Select(t => t.Item1);
         }
 
         private static List<XmlConfigTransformDefinition> GetAutomaticTransforms(RunningDeployment deployment)
@@ -67,13 +83,14 @@ namespace Calamari.Deployment.Conventions
                 {
                     result.Add(new XmlConfigTransformDefinition(environment));
                 }
-                
+
                 var tenant = deployment.Variables.Get(DeploymentVariables.Tenant.Name);
                 if (!string.IsNullOrWhiteSpace(tenant))
                 {
                     result.Add(new XmlConfigTransformDefinition(tenant));
                 }
             }
+
             return result;
         }
 
@@ -92,9 +109,9 @@ namespace Calamari.Deployment.Conventions
                 .ToList();
         }
 
-        void ApplyTransformations(string sourceFile, 
-            IEnumerable<XmlConfigTransformDefinition> transformations, 
-            ISet<Tuple<string, string>> transformFilesApplied,  
+        void ApplyTransformations(string sourceFile,
+            IEnumerable<XmlConfigTransformDefinition> transformations,
+            ISet<Tuple<string, string>> transformFilesApplied,
             IList<XmlConfigTransformDefinition> transformDefinitionsApplied,
             IList<XmlConfigTransformDefinition> duplicateTransformDefinitions,
             bool diagnosticLoggingEnabled,
@@ -113,8 +130,8 @@ namespace Calamari.Deployment.Conventions
 
                 try
                 {
-                    ApplyTransformations(sourceFile, transformation, transformFilesApplied, 
-                                         transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, deployment);
+                    ApplyTransformations(sourceFile, transformation, transformFilesApplied,
+                        transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, deployment);
                 }
                 catch (Exception)
                 {
@@ -124,9 +141,9 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        void ApplyTransformations(string sourceFile, 
-            XmlConfigTransformDefinition transformation, 
-            ISet<Tuple<string, string>> transformFilesApplied, 
+        void ApplyTransformations(string sourceFile,
+            XmlConfigTransformDefinition transformation,
+            ISet<Tuple<string, string>> transformFilesApplied,
             ICollection<XmlConfigTransformDefinition> transformDefinitionsApplied,
             ICollection<XmlConfigTransformDefinition> duplicateTransformDefinitions,
             bool diagnosticLoggingEnabled,
@@ -134,7 +151,7 @@ namespace Calamari.Deployment.Conventions
         {
             if (transformation == null)
                 return;
-            
+
             var transformFileNames = transformFileLocator.DetermineTransformFileNames(sourceFile, transformation, diagnosticLoggingEnabled, deployment)
                 .Distinct()
                 .ToArray();
@@ -180,10 +197,10 @@ namespace Calamari.Deployment.Conventions
         }
 
         void LogFailedTransforms(IEnumerable<XmlConfigTransformDefinition> configTransform,
-                                 List<XmlConfigTransformDefinition> automaticTransforms,
-                                 List<XmlConfigTransformDefinition> transformDefinitionsApplied,
-                                 List<XmlConfigTransformDefinition> duplicateTransformDefinitions,
-                                 bool diagnosticLoggingEnabled)
+            List<XmlConfigTransformDefinition> automaticTransforms,
+            List<XmlConfigTransformDefinition> transformDefinitionsApplied,
+            List<XmlConfigTransformDefinition> duplicateTransformDefinitions,
+            bool diagnosticLoggingEnabled)
         {
             foreach (var transform in configTransform.Except(transformDefinitionsApplied).Except(duplicateTransformDefinitions).Select(trans => trans.ToString()).Distinct())
             {

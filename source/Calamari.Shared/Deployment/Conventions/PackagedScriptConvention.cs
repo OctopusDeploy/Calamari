@@ -8,17 +8,34 @@ namespace Calamari.Deployment.Conventions
     /// <summary>
     /// This convention is used to detect PreDeploy.ps1, Deploy.ps1 and PostDeploy.ps1 scripts.
     /// </summary>
-    public class PackagedScriptConvention : PackagedScriptRunner, IInstallConvention
+    public class PackagedScriptConvention : IInstallConvention
+    {
+        readonly PackagedScriptService service;
+        readonly string scriptFilePrefix;
+
+        public PackagedScriptConvention(PackagedScriptService service, string scriptFilePrefix)
+        {
+            this.service = service;
+            this.scriptFilePrefix = scriptFilePrefix;
+        }
+
+        public void Install(RunningDeployment deployment)
+        {
+            service.Install(deployment, scriptFilePrefix);
+        }
+    }
+
+    public class PackagedScriptService : PackagedScriptRunner
     {
         readonly ILog log;
 
-        public PackagedScriptConvention(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) : 
-            base(log, scriptFilePrefix, fileSystem, scriptEngine, commandLineRunner)
+        public PackagedScriptService(ILog log, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
+            base(log, fileSystem, scriptEngine, commandLineRunner)
         {
             this.log = log;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Install(RunningDeployment deployment, string scriptFilePrefix)
         {
             var runScripts = deployment.Variables.GetFlag(SpecialVariables.Package.RunPackageScripts, true);
             if (!runScripts)
@@ -27,10 +44,10 @@ namespace Calamari.Deployment.Conventions
                 return;
             }
 
-            RunPreferredScript(deployment);
+            RunPreferredScript(deployment, scriptFilePrefix);
             if (deployment.Variables.GetFlag(SpecialVariables.DeleteScriptsOnCleanup, true))
             {
-                DeleteScripts(deployment);
+                DeleteScripts(deployment, scriptFilePrefix);
             }
         }
     }

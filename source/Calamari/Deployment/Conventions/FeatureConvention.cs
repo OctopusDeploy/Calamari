@@ -15,7 +15,7 @@ namespace Calamari.Deployment.Conventions
 {
     public class FeatureConvention : FeatureConventionBase, IInstallConvention
     {
-        public FeatureConvention(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources) 
+        public FeatureConvention(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources)
             : base(deploymentStage, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
         {
         }
@@ -36,11 +36,6 @@ namespace Calamari.Deployment.Conventions
         {
             Run(deployment);
         }
-
-        public void Cleanup(RunningDeployment deployment)
-        {
-            
-        }
     }
 
     public abstract class FeatureConventionBase
@@ -52,9 +47,9 @@ namespace Calamari.Deployment.Conventions
         readonly ICommandLineRunner commandLineRunner;
         const string scriptResourcePrefix = "Calamari.Scripts.";
         readonly ICollection<IFeature> featureClasses;
-        static readonly Assembly Assembly = typeof(FeatureConventionBase).Assembly; 
+        static readonly Assembly Assembly = typeof(FeatureConventionBase).Assembly;
 
-        protected FeatureConventionBase(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem, 
+        protected FeatureConventionBase(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem,
             IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources)
         {
             this.deploymentStage = deploymentStage;
@@ -109,7 +104,7 @@ namespace Calamari.Deployment.Conventions
 
                 var scriptFile = Path.Combine(deployment.CurrentDirectory, featureScript);
 
-                // To execute the script, we need a physical file on disk. 
+                // To execute the script, we need a physical file on disk.
                 // If one already exists, we don't recreate it, as this provides a handy
                 // way to override behaviour.
                 if (!fileSystem.FileExists(scriptFile))
@@ -152,7 +147,7 @@ namespace Calamari.Deployment.Conventions
         /// </summary>
         private IEnumerable<string> GetScriptNames(string feature)
         {
-            return scriptEngine.GetSupportedTypes() 
+            return scriptEngine.GetSupportedTypes()
                 .Select(type => GetScriptName(feature, deploymentStage, type.FileExtension()));
         }
 

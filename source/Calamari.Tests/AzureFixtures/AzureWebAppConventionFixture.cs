@@ -18,7 +18,7 @@ namespace Calamari.Tests.AzureFixtures
         public void UsingAManagementCertificateCausesAWarning()
         {
             var log = new InMemoryLog();
-            var convention = new AzureWebAppConvention(log);
+            var convention = new AzureWebAppService(log);
 
             var vars = new CalamariVariables();
             vars.Set(SpecialVariables.Account.AccountType, "AzureSubscription");
@@ -42,7 +42,7 @@ namespace Calamari.Tests.AzureFixtures
         {
             var log = new InMemoryLog();
 
-            var convention = new AzureWebAppConvention(log);
+            var convention = new AzureWebAppService(log);
 
             var vars = new CalamariVariables();
             vars.Set(SpecialVariables.Account.AccountType, "AzureServicePrincipal");

@@ -9,6 +9,21 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
 {
     public class LogAzureWebAppDetails : IInstallConvention
     {
+        readonly LogAzureWebAppService service;
+
+        public LogAzureWebAppDetails(LogAzureWebAppService service)
+        {
+            this.service = service;
+        }
+
+        public void Install(RunningDeployment deployment)
+        {
+            service.Install(deployment);
+        }
+    }
+
+    public class LogAzureWebAppService : IInstallConvention
+    {
         readonly ILog log;
 
         private Dictionary<string, string> PortalLinks = new Dictionary<string, string>
@@ -19,7 +34,7 @@ namespace Calamari.Azure.WebApps.Deployment.Conventions
             { "AzureGermanCloud", "portal.microsoftazure.de" }
         };
 
-        public LogAzureWebAppDetails(ILog log)
+        public LogAzureWebAppService(ILog log)
         {
             this.log = log;
         }

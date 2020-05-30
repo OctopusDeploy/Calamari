@@ -14,23 +14,21 @@ namespace Calamari.Integration.Scripting
     public class PackagedScriptRunner
     {
         readonly ILog log;
-        readonly string scriptFilePrefix;
         readonly ICalamariFileSystem fileSystem;
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
 
-        public PackagedScriptRunner(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+        public PackagedScriptRunner(ILog log, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
             this.log = log;
-            this.scriptFilePrefix = scriptFilePrefix;
             this.fileSystem = fileSystem;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
         }
 
-        protected void RunPreferredScript(RunningDeployment deployment)
+        protected void RunPreferredScript(RunningDeployment deployment, string scriptFilePrefix)
         {
-            var script = FindPreferredScript(deployment);
+            var script = FindPreferredScript(deployment, scriptFilePrefix);
 
             if (!string.IsNullOrEmpty(script))
             {
@@ -48,9 +46,9 @@ namespace Calamari.Integration.Scripting
             }
         }
 
-        protected void DeleteScripts(RunningDeployment deployment)
+        protected void DeleteScripts(RunningDeployment deployment, string scriptFilePrefix)
         {
-            var scripts = FindScripts(deployment);
+            var scripts = FindScripts(deployment, scriptFilePrefix);
 
             foreach (var script in scripts)
             {
@@ -58,11 +56,11 @@ namespace Calamari.Integration.Scripting
             }
         }
 
-        string FindPreferredScript(RunningDeployment deployment)
+        string FindPreferredScript(RunningDeployment deployment, string scriptFilePrefix)
         {
             var supportedScriptExtensions = scriptEngine.GetSupportedTypes();
 
-            var files = (from file in FindScripts(deployment)
+            var files = (from file in FindScripts(deployment, scriptFilePrefix)
                          let preferenceOrdinal = Array.IndexOf(supportedScriptExtensions, file.ToScriptType())
                          orderby preferenceOrdinal
                          select file).ToArray();
@@ -79,7 +77,7 @@ namespace Calamari.Integration.Scripting
             return selectedFile;
         }
 
-        IEnumerable<string> FindScripts(RunningDeployment deployment)
+        IEnumerable<string> FindScripts(RunningDeployment deployment, string scriptFilePrefix)
         {
             var supportedScriptExtensions = scriptEngine.GetSupportedTypes();
             var searchPatterns = supportedScriptExtensions.Select(e => "*." + e.FileExtension()).ToArray();

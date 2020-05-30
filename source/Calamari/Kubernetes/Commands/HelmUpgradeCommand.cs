@@ -39,9 +39,9 @@ namespace Calamari.Kubernetes.Commands
         readonly ICommandLineRunner commandLineRunner;
 
         public HelmUpgradeCommand(
-            ILog log, 
-            IScriptEngine scriptEngine, 
-            IDeploymentJournalWriter deploymentJournalWriter, 
+            ILog log,
+            IScriptEngine scriptEngine,
+            IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
 			ICommandLineRunner commandLineRunner,
             ICalamariFileSystem fileSystem,
@@ -59,29 +59,30 @@ namespace Calamari.Kubernetes.Commands
             this.extractPackage = extractPackage;
             this.commandLineRunner = commandLineRunner;
         }
-        
+
         public override int Execute(string[] commandLineArguments)
         {
               Options.Parse(commandLineArguments);
 
             if (!File.Exists(pathToPackage))
                 throw new CommandException("Could not find package file: " + pathToPackage);
-            
+
             ValidateRequiredVariables();
-            
+            var configuredScriptService = new ConfiguredScriptService(fileSystem, scriptEngine, commandLineRunner);
+
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
                 new StageScriptPackagesConvention(null, fileSystem, new CombinedPackageExtractor(log), true),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.PreDeploy),
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d, FileTargetFactory().ToList())),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.Deploy),
                 new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.PostDeploy),
             };
             var deployment = new RunningDeployment(pathToPackage, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions);
-            
+
             try
             {
                 conventionRunner.RunConventions();
@@ -103,7 +104,7 @@ namespace Calamari.Kubernetes.Commands
                 throw new CommandException($"The variable `{SpecialVariables.ClusterUrl}` is not provided.");
             }
         }
-        
+
         private IEnumerable<string> FileTargetFactory()
         {
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
@@ -111,10 +112,10 @@ namespace Calamari.Kubernetes.Commands
             {
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
                 var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
-                
+
                 foreach (var path in paths)
                 {
-                    yield return Path.Combine(sanitizedPackageReferenceName, path);    
+                    yield return Path.Combine(sanitizedPackageReferenceName, path);
                 }
             }
         }

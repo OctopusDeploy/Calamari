@@ -13,20 +13,42 @@ namespace Calamari.Deployment.Conventions
 {
     public class ConfiguredScriptConvention : IInstallConvention
     {
+        readonly ConfiguredScriptService service;
         readonly string deploymentStage;
+
+        public ConfiguredScriptConvention(ConfiguredScriptService service, string deploymentStage)
+        {
+            this.service = service;
+            this.deploymentStage = deploymentStage;
+        }
+
+        public void Install(RunningDeployment deployment)
+        {
+            service.Install(deployment, deploymentStage);
+        }
+
+        public static string GetScriptName(string deploymentStage, ScriptSyntax scriptSyntax)
+        {
+            return "Octopus.Action.CustomScripts." + deploymentStage + "." + scriptSyntax.FileExtension();
+        }
+
+
+    }
+
+        public class ConfiguredScriptService
+    {
         readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-        public ConfiguredScriptConvention(string deploymentStage, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+        public ConfiguredScriptService(ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
-            this.deploymentStage = deploymentStage;
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Install(RunningDeployment deployment, string deploymentStage)
         {
             var features = deployment.Variables.GetStrings(SpecialVariables.Package.EnabledFeatures)
                 .Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
@@ -41,8 +63,8 @@ namespace Calamari.Deployment.Conventions
                 var scriptBody = deployment.Variables.Get(scriptName, out error);
                 if (!string.IsNullOrEmpty(error))
                     Log.VerboseFormat(
-                        "Parsing script for phase {0} with Octostache returned the following error: `{1}`", 
-                        deploymentStage, 
+                        "Parsing script for phase {0} with Octostache returned the following error: `{1}`",
+                        deploymentStage,
                         error);
 
                 if (string.IsNullOrWhiteSpace(scriptBody))
@@ -86,4 +108,5 @@ namespace Calamari.Deployment.Conventions
 
 
     }
+
 }

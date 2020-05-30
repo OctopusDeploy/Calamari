@@ -86,7 +86,7 @@ namespace Calamari.Deployment
 
         void RunRollbackCleanup()
         {
-            foreach (var convention in conventions.OfType<IRollbackConvention>())
+            foreach (var convention in conventions.OfType<ICleanupConvention>())
             {
                 if (deployment.Variables.GetFlag(SpecialVariables.Action.SkipRemainingConventions))
                 {
