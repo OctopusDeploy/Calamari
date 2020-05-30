@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Azure.WebApps.Deployment.Conventions;
 using Calamari.Commands;
 using Calamari.Commands.Support;
@@ -69,27 +70,21 @@ namespace Calamari.Azure.WebApps.Commands
             var packagedScriptService = new PackagedScriptService(log, fileSystem, scriptEngine, commandLineRunner);
             var configuredScriptService = new ConfiguredScriptService(fileSystem, scriptEngine, commandLineRunner);
 
-            var conventions = new List<IConvention>
-            {
-                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
-                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.PreDeploy),
-                new PackagedScriptConvention(packagedScriptService, DeploymentStages.PreDeploy),
-                new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new ConfigurationTransformsConvention(new ConfigurationTransformsService(fileSystem, configurationTransformer, transformFileLocator)),
-                new ConfigurationVariablesConvention(new ConfigurationVariablesService(fileSystem, replacer)),
-                new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesService(jsonReplacer, fileSystem)),
-                new PackagedScriptConvention(packagedScriptService, DeploymentStages.Deploy),
-                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.Deploy),
-                new AzureWebAppConvention(new AzureWebAppService(log)),
-                new LogAzureWebAppDetails(new LogAzureWebAppService(log)),
-                new PackagedScriptConvention(packagedScriptService, DeploymentStages.PostDeploy),
-                new ConfiguredScriptConvention(configuredScriptService, DeploymentStages.PostDeploy),
-            };
-
             var deployment = new RunningDeployment(pathToPackage, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
 
-            conventionRunner.RunConventions();
+            extractPackage.ExtractToStagingDirectory(pathToPackage);
+            configuredScriptService.Install(deployment, DeploymentStages.PreDeploy);
+            packagedScriptService.Install(deployment, DeploymentStages.PreDeploy);
+            substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(deployment);
+            var appliedAsTransform = new ConfigurationTransformsService(fileSystem, configurationTransformer, transformFileLocator).Install(deployment);
+            new ConfigurationVariablesService(fileSystem, replacer).Install(deployment, appliedAsTransform.ToList());
+            new JsonConfigurationVariablesService(jsonReplacer, fileSystem).Install(deployment);
+            packagedScriptService.Install(deployment, DeploymentStages.Deploy);
+            configuredScriptService.Install(deployment, DeploymentStages.Deploy);
+            new AzureWebAppService(log).Install(deployment);
+            new LogAzureWebAppService(log).Install(deployment);
+            packagedScriptService.Install(deployment, DeploymentStages.PostDeploy);
+            configuredScriptService.Install(deployment, DeploymentStages.PostDeploy);
 
             return 0;
         }
