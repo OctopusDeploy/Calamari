@@ -142,6 +142,8 @@ namespace Sashimi.Tests.Shared.Server
 
             IActionHandlerResult ExecuteActionHandler(List<string> args)
             {
+                AssertMatchingCalamariFlavour();
+
                 var inMemoryLog = new InMemoryLog();
                 var constructor = typeof(TCalamariProgram).GetConstructor(
                     BindingFlags.Public | BindingFlags.Instance,
@@ -217,6 +219,13 @@ namespace Sashimi.Tests.Shared.Server
                 {
                     Environment.CurrentDirectory = originalWorkingDirectory;
                 }
+            }
+
+            void AssertMatchingCalamariFlavour()
+            {
+                var assemblyName = typeof(TCalamariProgram).Assembly.GetName();
+                if (CalamariFlavour?.Id != assemblyName.Name)
+                    throw new Exception($"The specified CalamariFlavour '{CalamariFlavour?.Id}' doesn't match that of the program exe '{assemblyName.Name}'");
             }
         }
 
