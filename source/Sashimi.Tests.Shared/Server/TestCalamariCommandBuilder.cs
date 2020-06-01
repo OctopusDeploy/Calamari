@@ -98,6 +98,28 @@ namespace Sashimi.Tests.Shared.Server
 
         public IActionHandlerResult Execute()
         {
+            using (var working = TemporaryDirectory.Create())
+            {
+                var workingPath = working.DirectoryPath;
+
+                //HACK: set the working directory, we will need to modify Calamari to not depend on this
+                var originalWorkingDirectory = Environment.CurrentDirectory;
+                try
+                {
+                    Environment.CurrentDirectory = workingPath;
+
+                    var args = GetArgs(workingPath);
+
+                    CopyFilesToWorkingFolder(workingPath);
+
+                    return ExecuteActionHandler(args);
+                }
+                finally
+                {
+                    Environment.CurrentDirectory = originalWorkingDirectory;
+                }
+            }
+
             List<string> GetArgs(string workingPath)
             {
                 var args = new List<string> {CalamariCommand!};
@@ -196,28 +218,6 @@ namespace Sashimi.Tests.Shared.Server
                 foreach (var newPath in Directory.EnumerateFiles(sourcePath, "*.*", SearchOption.AllDirectories))
                 {
                     File.Copy(newPath, newPath.Replace(sourcePath, destinationPath), true);
-                }
-            }
-
-            using (var working = TemporaryDirectory.Create())
-            {
-                var workingPath = working.DirectoryPath;
-
-                //HACK: set the working directory, we will need to modify Calamari to not depend on this
-                var originalWorkingDirectory = Environment.CurrentDirectory;
-                try
-                {
-                    Environment.CurrentDirectory = workingPath;
-
-                    var args = GetArgs(workingPath);
-
-                    CopyFilesToWorkingFolder(workingPath);
-
-                    return ExecuteActionHandler(args);
-                }
-                finally
-                {
-                    Environment.CurrentDirectory = originalWorkingDirectory;
                 }
             }
 
