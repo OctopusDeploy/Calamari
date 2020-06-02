@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Octopus.TinyTypes;
-using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.Server.Contracts.Actions.Templates
 {
@@ -14,10 +13,6 @@ namespace Sashimi.Server.Contracts.Actions.Templates
         public static readonly ControlType StepName = new ControlType("StepName");
         public static readonly ControlType Certificate = new ControlType("Certificate");
         public static readonly ControlType WorkerPool = new ControlType("WorkerPool");
-
-        //TODO: Move out to respective projects
-        public static readonly ControlType AmazonWebServicesAccount = new ControlType("AmazonWebServicesAccount");
-        public static readonly ControlType AzureAccount = new ControlType("AzureAccount");
 
         public ControlType(string value) : base(value)
         {

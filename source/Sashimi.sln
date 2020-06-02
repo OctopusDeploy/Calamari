@@ -41,6 +41,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Aws.Tests", "Calam
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Aws.Tests", "Sashimi.Aws.Tests\Sashimi.Aws.Tests.csproj", "{43FED2F0-11D1-4AE2-8172-6266B61B4121}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Azure.Common", "Azure.Common\Sashimi.Azure.Common.csproj", "{11521671-2469-40C3-94F4-7EDC83670DD8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Aws.Common", "Aws.Common\Sashimi.Aws.Common.csproj", "{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,9 +95,25 @@ Global
 		{43FED2F0-11D1-4AE2-8172-6266B61B4121}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43FED2F0-11D1-4AE2-8172-6266B61B4121}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43FED2F0-11D1-4AE2-8172-6266B61B4121}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11521671-2469-40C3-94F4-7EDC83670DD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11521671-2469-40C3-94F4-7EDC83670DD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11521671-2469-40C3-94F4-7EDC83670DD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11521671-2469-40C3-94F4-7EDC83670DD8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+		{11521671-2469-40C3-94F4-7EDC83670DD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11521671-2469-40C3-94F4-7EDC83670DD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11521671-2469-40C3-94F4-7EDC83670DD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11521671-2469-40C3-94F4-7EDC83670DD8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{44851CEC-89D0-4D76-8BBA-2206308974D1} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}

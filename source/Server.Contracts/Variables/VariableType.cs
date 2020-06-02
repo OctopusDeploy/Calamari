@@ -10,10 +10,6 @@ namespace Sashimi.Server.Contracts.Variables
         public static readonly VariableType Certificate = new VariableType("Certificate");
         public static readonly VariableType WorkerPool = new VariableType("WorkerPool");
 
-        //TODO: Move out to respective projects
-        public static readonly VariableType AmazonWebServicesAccount = new VariableType("AmazonWebServicesAccount");
-        public static readonly VariableType AzureAccount = new VariableType("AzureAccount");
-
         public VariableType(string value) : base(value)
         {
         }
