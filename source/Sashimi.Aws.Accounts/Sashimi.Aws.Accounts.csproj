@@ -10,7 +10,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Aws.Common\Sashimi.Aws.Common.csproj" />
         <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <PackageReference Include="AWSSDK.Core" Version="3.3.104.32" />
+        <PackageReference Include="AWSSDK.ECR" Version="3.3.103.21" />
+        <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.104.38" />
+    </ItemGroup>
 </Project>
