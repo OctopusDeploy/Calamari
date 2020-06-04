@@ -28,6 +28,11 @@ namespace Sashimi.Aws.Accounts
             yield return new Variable($"{variable.Name}.SecretKey", SecretKey);
         }
 
+        public override IEnumerable<Variable> ContributeVariables()
+        {
+            yield break;
+        }
+
         public bool CanExpand(string id, string referencedEntityId)
         {
             return id == referencedEntityId;
