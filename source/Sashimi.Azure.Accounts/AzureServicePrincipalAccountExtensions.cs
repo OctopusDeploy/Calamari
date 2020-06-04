@@ -52,7 +52,7 @@ using IHttpClientFactory = Microsoft.IdentityModel.Clients.ActiveDirectory.IHttp
             {
                 resourceManagementEndpointBaseUri = account.ResourceManagementEndpointBaseUri;
             }
-            var result = context.AcquireTokenAsync(resourceManagementEndpointBaseUri, new ClientCredential(account.ClientId, account.Password.Value)).GetAwaiter().GetResult();
+            var result = context.AcquireTokenAsync(resourceManagementEndpointBaseUri, new ClientCredential(account.ClientId, account.Password?.Value)).GetAwaiter().GetResult();
             return result.AccessToken;
         }
 

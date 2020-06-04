@@ -14,7 +14,7 @@ namespace Sashimi.Aws.Accounts
 
         public string? AccessKey { get; set; }
 
-        public SensitiveString SecretKey { get; set; } = new SensitiveString();
+        public SensitiveString? SecretKey { get; set; }
 
         [JsonIgnore]
         public VariableType ExpandsVariableType => AmazonWebServicesVariableType.AmazonWebServicesAccount;
@@ -25,7 +25,7 @@ namespace Sashimi.Aws.Accounts
                 throw new InvalidOperationException($"Can only expand variables for type {ExpandsVariableType}");
 
             yield return new Variable($"{variable.Name}.AccessKey", AccessKey!);
-            yield return new Variable($"{variable.Name}.SecretKey", SecretKey);
+            yield return new Variable($"{variable.Name}.SecretKey", SecretKey!);
         }
 
         public override IEnumerable<Variable> ContributeVariables()

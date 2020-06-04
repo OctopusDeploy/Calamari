@@ -10,7 +10,7 @@ namespace Sashimi.Aws.Accounts
         public void Verify(AccountDetails account)
         {
             var accountTyped = (AmazonWebServicesAccountDetails) account;
-            using (var client = new AmazonSecurityTokenServiceClient(new BasicAWSCredentials(accountTyped.AccessKey, accountTyped.SecretKey.Value)))
+            using (var client = new AmazonSecurityTokenServiceClient(new BasicAWSCredentials(accountTyped.AccessKey, accountTyped.SecretKey?.Value)))
             {
                 client.GetCallerIdentityAsync(new GetCallerIdentityRequest()).Wait();
             }
