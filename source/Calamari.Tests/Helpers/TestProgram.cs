@@ -17,6 +17,7 @@ namespace Calamari.Tests.Helpers
         ICommandWithArgs CommandOverride { get; set; }
         public bool StubWasCalled { get; set; }
         public IVariables VariablesOverride { get; set; }
+        public Action<ContainerBuilder> AdditionalContainerConfiguration { get; set; }
 
         public int RunWithArgs(string[] args)
         {
@@ -47,6 +48,8 @@ namespace Calamari.Tests.Helpers
             // Register after base so Singleton gets overridden 
             if (VariablesOverride != null)
                 builder.RegisterInstance(VariablesOverride).As<IVariables>();
+
+            AdditionalContainerConfiguration?.Invoke(builder);
         }
     }
 

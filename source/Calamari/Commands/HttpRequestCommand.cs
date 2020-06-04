@@ -10,11 +10,13 @@ namespace Calamari.Commands
     {
         readonly ILog log;
         readonly IVariables variables;
+        readonly HttpMessageHandler mockMessageHandler; // For testing only
 
-        public HttpRequestCommand(ILog log, IVariables variables)
+        public HttpRequestCommand(ILog log, IVariables variables, HttpMessageHandler httpMessageHandler = null)
         {
             this.log = log;
             this.variables = variables;
+            this.mockMessageHandler = httpMessageHandler;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -25,19 +27,21 @@ namespace Calamari.Commands
 
             log.Info($"Sending HTTP {httpMethod.Method} to {url}");
             var request = new HttpRequestMessage(httpMethod, url);
-            using var client = new HttpClient();
-            if (timeout > 0)
+            using (var client = CreateHttpClient())
             {
-                log.Verbose($"Timeout: {timeout} seconds");
-                client.Timeout = TimeSpan.FromSeconds(timeout);
+                if (timeout > 0)
+                {
+                    log.Verbose($"Timeout: {timeout} seconds");
+                    client.Timeout = TimeSpan.FromSeconds(timeout);
+                }
+
+                var response = client.SendAsync(request).Result;
+
+                log.Info($"Response received with status {response.StatusCode}");
+                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Action.HttpRequest.Output.ResponseStatusCode, response.StatusCode.ToString("D"));
+                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Action.HttpRequest.Output.ResponseContent, response.Content?.ReadAsStringAsync().Result ?? "");
+                return 0;
             }
-
-            var task = client.SendAsync(request);
-            task.Wait();
-
-            var response = task.Result;
-            log.Info($"Response received with status {response.StatusCode}");
-            return 0;
         }
 
         static HttpMethod EvaluateHttpMethod(IVariables variables)
@@ -68,6 +72,12 @@ namespace Calamari.Commands
             }
 
             return 0;
+        }
+
+        HttpClient CreateHttpClient()
+        {
+            // Use a mock HttpMessageHandler if supplied (testing) otherwise return a real client
+            return mockMessageHandler != null ? new HttpClient(mockMessageHandler) : new HttpClient();
         }
     }
 }

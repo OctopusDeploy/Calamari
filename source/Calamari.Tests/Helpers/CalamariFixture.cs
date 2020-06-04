@@ -49,10 +49,14 @@ namespace Calamari.Tests.Helpers
             return new CommandLine(octoDiffExe);
         }
 
-        protected CalamariResult InvokeInProcess(CommandLine command, IVariables variables = null)
+        protected CalamariResult InvokeInProcess(CommandLine command, IVariables variables = null, Action<ContainerBuilder> configureContainer = null)
         {
             var args = command.GetRawArgs();
-            var program = new TestProgram(Log);
+            var program = new TestProgram(Log)
+            {
+                AdditionalContainerConfiguration = configureContainer
+            };
+            
             int exitCode;
             try
             {
