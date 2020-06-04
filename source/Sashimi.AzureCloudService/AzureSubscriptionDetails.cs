@@ -8,7 +8,7 @@ using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.AzureCloudService
 {
-    class AzureSubscriptionDetails : AccountDetails, IExpandVariableForAccountDetails
+    public class AzureSubscriptionDetails : AccountDetails, IExpandVariableForAccountDetails
     {
         public string? SubscriptionNumber { get; set; }
         public string? CertificateThumbprint { get; set; }

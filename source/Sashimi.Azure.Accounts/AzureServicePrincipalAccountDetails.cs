@@ -8,7 +8,7 @@ using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.Azure.Accounts
 {
-    class AzureServicePrincipalAccountDetails : AccountDetails, IExpandVariableForAccountDetails
+    public class AzureServicePrincipalAccountDetails : AccountDetails, IExpandVariableForAccountDetails
     {
         public override AccountType AccountType { get; } = AccountTypes.AzureServicePrincipalAccountType;
 
