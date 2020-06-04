@@ -8,7 +8,7 @@ using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.Aws.Accounts
 {
-    internal class AmazonWebServicesAccountDetails : AccountDetails, IExpandVariableForAccountDetails
+    class AmazonWebServicesAccountDetails : AccountDetails, IExpandVariableForAccountDetails
     {
         public override AccountType AccountType { get; } = AccountTypes.AmazonWebServicesAccountType;
 

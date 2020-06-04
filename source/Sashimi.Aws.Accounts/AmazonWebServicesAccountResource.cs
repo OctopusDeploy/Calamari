@@ -5,7 +5,7 @@ using Sashimi.Server.Contracts.Accounts;
 
 namespace Sashimi.Aws.Accounts
 {
-    public class AmazonWebServicesAccountResource : AccountDetailsResource
+    class AmazonWebServicesAccountResource : AccountDetailsResource
     {
         public override AccountType AccountType => AccountTypes.AmazonWebServicesAccountType;
 
