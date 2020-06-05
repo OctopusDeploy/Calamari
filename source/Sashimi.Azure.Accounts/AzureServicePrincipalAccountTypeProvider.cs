@@ -54,7 +54,7 @@ namespace Sashimi.Azure.Accounts
         {
             var total = details.Count(accountDetails => accountDetails.AccountType == AccountType);
 
-            yield return ("azureserviceprincipal", total);
+            yield return ("azureserviceprincipalaccount", total);
         }
 
         public void BuildMappings(IResourceMappingsBuilder builder)

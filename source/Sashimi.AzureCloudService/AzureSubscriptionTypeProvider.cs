@@ -9,7 +9,7 @@ using Sashimi.Server.Contracts.ServiceMessages;
 
 namespace Sashimi.AzureCloudService
 {
-    class AzureSubscription : IAccountTypeProvider
+    class AzureSubscriptionTypeProvider : IAccountTypeProvider
     {
         public AccountDetails CreateViaServiceMessage(IDictionary<string, string> properties)
         {
@@ -35,7 +35,7 @@ namespace Sashimi.AzureCloudService
         {
             var total = details.Count(accountDetails => accountDetails.AccountType == AccountType);
 
-            yield return ("azuresubscription", total);
+            yield return ("azuresubscriptionaccount", total);
         }
 
         public void BuildMappings(IResourceMappingsBuilder builder)
