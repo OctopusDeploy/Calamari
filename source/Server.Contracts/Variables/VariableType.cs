@@ -3,7 +3,7 @@ using Octopus.TinyTypes;
 
 namespace Sashimi.Server.Contracts.Variables
 {
-    public class VariableType : CaseInsensitiveTypedString
+    public class VariableType : CaseInsensitiveStringTinyType
     {
         public static readonly VariableType String = new VariableType("String");
         public static readonly VariableType Sensitive = new VariableType("Sensitive");

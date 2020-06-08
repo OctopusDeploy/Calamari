@@ -3,7 +3,7 @@ using Octopus.TinyTypes;
 
 namespace Sashimi.Server.Contracts.Actions.Templates
 {
-    public class ControlType : CaseInsensitiveTypedString
+    public class ControlType : CaseInsensitiveStringTinyType
     {
         public static readonly ControlType SingleLineText = new ControlType("SingleLineText");
         public static readonly ControlType MultiLineText = new ControlType("MultiLineText");
