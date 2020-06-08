@@ -1,6 +1,8 @@
 ﻿using Autofac;
 using Octopus.Server.Extensibility.Extensions.Mappings;
+using Sashimi.AzureCloudService.Endpoints;
 using Sashimi.Server.Contracts.Accounts;
+using Sashimi.Server.Contracts.Endpoints;
 
 namespace Sashimi.AzureCloudService
 {
@@ -16,6 +18,8 @@ namespace Sashimi.AzureCloudService
             builder.RegisterType<AzureCertificateThumbprintWillBeSet>().As<AccountStoreContributor>().SingleInstance();
             builder.RegisterType<CertificateEncoder>().SingleInstance();
             builder.RegisterType<CertificateGenerator>().SingleInstance();
+
+            builder.RegisterType<AzureCloudServiceDeploymentTargetTypeProvider>().As<IDeploymentTargetTypeProvider>().SingleInstance();
         }
     }
 }
