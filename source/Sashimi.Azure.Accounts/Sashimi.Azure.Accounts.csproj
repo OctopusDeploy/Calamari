@@ -6,7 +6,7 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <Nullable>enable</Nullable>
         <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
-        <PackageLicenseUrl>https://github.com/OctopusDeploy/Sashimi/blob/master/LICENSE.txt</PackageLicenseUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     </PropertyGroup>
 
     <ItemGroup>
