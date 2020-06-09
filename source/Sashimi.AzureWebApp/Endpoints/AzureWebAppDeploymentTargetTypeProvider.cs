@@ -12,9 +12,7 @@ namespace Sashimi.AzureWebApp.Endpoints
     {
         public DeploymentTargetType DeploymentTargetType => AzureWebAppEndpoint.AzureWebAppDeploymentTargetType;
         public Type DomainType => typeof(AzureWebAppEndpoint);
-
         public Type ApiType => typeof(AzureWebAppEndpointResource);
-
         public IValidator Validator => new AzureWebAppEndpointValidator();
 
         public IEnumerable<AccountType> SupportedAccountTypes {

@@ -11,16 +11,12 @@ namespace Sashimi.AzureServiceFabric.Endpoints
     {
         public DeploymentTargetType DeploymentTargetType => AzureServiceFabricClusterEndpoint.AzureServiceFabricClusterDeploymentTargetType;
         public Type DomainType => typeof(AzureServiceFabricClusterEndpoint);
-
         public Type ApiType => typeof(ServiceFabricEndpointResource);
-
         public IValidator Validator => new AzureServiceFabricClusterEndpointValidator();
 
-        public IEnumerable<AccountType> SupportedAccountTypes {
-            get
-            {
-                yield break;
-            }
+        public IEnumerable<AccountType> SupportedAccountTypes
+        {
+            get { yield break; }
         }
     }
 }
