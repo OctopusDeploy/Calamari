@@ -72,6 +72,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureCloudService.Tests", "Sashimi.AzureCloudService.Tests\Sashimi.AzureCloudService.Tests.csproj", "{407F831F-9403-4256-A6A2-02C47CB55703}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureServiceFabric.Tests", "Sashimi.AzureServiceFabric.Tests\Sashimi.AzureServiceFabric.Tests.csproj", "{64333AEE-137E-4885-95AA-B67998AE0674}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureCloudService", "Calamari.AzureCloudService\Calamari.AzureCloudService.csproj", "{149F5282-0950-430B-BBC5-80A18CBEB5EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureServiceFabric", "Calamari.AzureServiceFabric\Calamari.AzureServiceFabric.csproj", "{7C77F3F9-8E5B-4768-9805-3A6B7DA02CEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureWebApp", "Calamari.AzureWebApp\Calamari.AzureWebApp.csproj", "{65F03C26-08A3-42C6-ABB1-3103C93AF591}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -171,6 +176,18 @@ Global
 		{64333AEE-137E-4885-95AA-B67998AE0674}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64333AEE-137E-4885-95AA-B67998AE0674}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64333AEE-137E-4885-95AA-B67998AE0674}.Release|Any CPU.Build.0 = Release|Any CPU
+		{149F5282-0950-430B-BBC5-80A18CBEB5EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{149F5282-0950-430B-BBC5-80A18CBEB5EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{149F5282-0950-430B-BBC5-80A18CBEB5EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{149F5282-0950-430B-BBC5-80A18CBEB5EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C77F3F9-8E5B-4768-9805-3A6B7DA02CEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C77F3F9-8E5B-4768-9805-3A6B7DA02CEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C77F3F9-8E5B-4768-9805-3A6B7DA02CEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C77F3F9-8E5B-4768-9805-3A6B7DA02CEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65F03C26-08A3-42C6-ABB1-3103C93AF591}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65F03C26-08A3-42C6-ABB1-3103C93AF591}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65F03C26-08A3-42C6-ABB1-3103C93AF591}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65F03C26-08A3-42C6-ABB1-3103C93AF591}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -200,6 +217,9 @@ Global
 		{A002A1C0-F0D1-434E-BF4E-10EE13FAD723} = {3E14A387-C500-4486-A7AE-BA0C5F95B344}
 		{407F831F-9403-4256-A6A2-02C47CB55703} = {937741D4-BF0F-4073-A101-8E52141FCD28}
 		{64333AEE-137E-4885-95AA-B67998AE0674} = {2A807B6D-3E41-4758-AFA8-433C055F96B7}
+		{149F5282-0950-430B-BBC5-80A18CBEB5EF} = {937741D4-BF0F-4073-A101-8E52141FCD28}
+		{7C77F3F9-8E5B-4768-9805-3A6B7DA02CEC} = {2A807B6D-3E41-4758-AFA8-433C055F96B7}
+		{65F03C26-08A3-42C6-ABB1-3103C93AF591} = {3E14A387-C500-4486-A7AE-BA0C5F95B344}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		{54EF951A-AA50-4ED2-BB79-C9CBC70BCA65} = {6288E064-DE6F-4012-B887-64B364482B5C}

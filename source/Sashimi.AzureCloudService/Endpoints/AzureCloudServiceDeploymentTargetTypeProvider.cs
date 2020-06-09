@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FluentValidation;
 using Octopus.Server.Extensibility.HostServices.Mapping;
 using Sashimi.Server.Contracts;
+using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.Endpoints;
 
@@ -18,6 +19,10 @@ namespace Sashimi.AzureCloudService.Endpoints
         public IEnumerable<AccountType> SupportedAccountTypes
         {
             get { yield return AccountTypes.AzureSubscriptionAccountType; }
+        }
+        public IActionHandler HealthCheckActionHandlerForTargetType()
+        {
+            return new AzureCloudServiceHealthCheckActionHandler();
         }
     }
 }

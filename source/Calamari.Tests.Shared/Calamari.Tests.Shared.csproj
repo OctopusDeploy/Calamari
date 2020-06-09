@@ -6,7 +6,7 @@
 
     <ItemGroup>
         <PackageReference Include="Assent" Version="1.6.0" />
-        <PackageReference Include="Calamari.Common" Version="13.0.1" />
+        <PackageReference Include="Calamari.Common" Version="13.0.5" />
         <PackageReference Include="FluentAssertions" Version="5.10.3" />
         <PackageReference Include="NUnit" Version="3.12.0" />
     </ItemGroup>
