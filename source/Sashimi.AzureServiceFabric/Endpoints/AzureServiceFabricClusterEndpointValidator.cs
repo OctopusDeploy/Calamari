@@ -15,7 +15,7 @@ namespace Sashimi.AzureServiceFabric.Endpoints
                 .NotEmpty()
                 .When(a => a.SecurityMode == AzureServiceFabricSecurityMode.SecureClientCertificate);
             RuleFor(a => a.AadCredentialType)
-                .NotEmpty()
+                .NotEqual(AzureServiceFabricCredentialType.ClientCredential)
                 .When(a => a.SecurityMode == AzureServiceFabricSecurityMode.SecureAzureAD);
             RuleFor(a => a.AadClientCredentialSecret)
                 .NotEmpty()
