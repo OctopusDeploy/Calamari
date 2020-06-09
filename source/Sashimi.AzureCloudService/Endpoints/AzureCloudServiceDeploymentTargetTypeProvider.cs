@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using FluentValidation;
 using Sashimi.Server.Contracts;
+using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.Endpoints;
 
 namespace Sashimi.AzureCloudService.Endpoints
@@ -10,5 +13,12 @@ namespace Sashimi.AzureCloudService.Endpoints
         public Type DomainType => typeof(AzureCloudServiceEndpoint);
 
         public Type ApiType => typeof(AzureCloudServiceResource);
+
+        public IValidator Validator => new AzureCloudServiceEndpointValidator();
+
+        public IEnumerable<AccountType> SupportedAccountTypes
+        {
+            get { yield return AccountTypes.AzureSubscriptionAccountType; }
+        }
     }
 }
