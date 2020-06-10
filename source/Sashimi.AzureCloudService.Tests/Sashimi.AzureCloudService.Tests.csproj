@@ -2,23 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
-
         <IsPackable>false</IsPackable>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <PackageReference Include="FluentAssertions" Version="5.10.3" />
-        <PackageReference Include="nunit" Version="3.12.0" />
-        <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Sashimi.AzureCloudService\Sashimi.AzureCloudService.csproj" />
-      <ProjectReference Include="..\Sashimi.Tests.Shared\Sashimi.Tests.Shared.csproj" />
-        <TargetFramework>net462</TargetFramework>
-        <IsPackable>false</IsPackable>
-        <LangVersion>8</LangVersion>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

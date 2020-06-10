@@ -41,7 +41,7 @@ namespace Sashimi.AzureCloudService
                 }
             }
 
-            if (!isLegacyStep && accountType != AccountTypes.AzureSubscriptionAccountType)
+            if (!isLegacyStep && accountType != AccountTypes.AzureSubscriptionAccountType.ToString())
             {
                 throw new KnownDeploymentFailureException($"The account type '{accountType}' is not valid for this step.");
             }

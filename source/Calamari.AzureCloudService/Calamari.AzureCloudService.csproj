@@ -5,6 +5,7 @@
         <IsPackable>false</IsPackable>
         <OutputType>Exe</OutputType>
         <TargetFramework>net452</TargetFramework>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Calamari.Common" Version="13.0.5" />

@@ -7,7 +7,6 @@ using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using NUnit.Framework;
 using Sashimi.Azure.Accounts;
-using Sashimi.AzureWebApp.Endpoints;
 using Sashimi.Tests.Shared.Server;
 
 
@@ -72,7 +71,7 @@ namespace Sashimi.AzureWebApp.Tests
                             clientSecret);
                         context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroupName);
                         context.Variables.Add(SpecialVariables.Action.Azure.WebAppName, webAppName);
-                        context.Variables.Add(SpecialVariables.AccountType, AccountTypes.AzureServicePrincipalAccountType);
+                        context.Variables.Add(SpecialVariables.AccountType, AccountTypes.AzureServicePrincipalAccountType.ToString());
                     })
                     .WithAssert(result => result.WasSuccessful.Should().BeTrue())
                     .Execute();
@@ -108,7 +107,7 @@ namespace Sashimi.AzureWebApp.Tests
                         clientSecret);
                     context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, randomName);
                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppName, randomName);
-                    context.Variables.Add(SpecialVariables.AccountType, AccountTypes.AzureServicePrincipalAccountType);
+                    context.Variables.Add(SpecialVariables.AccountType, AccountTypes.AzureServicePrincipalAccountType.ToString());
                 })
                 .WithAssert(result => result.WasSuccessful.Should().BeFalse())
                 .Execute(false);

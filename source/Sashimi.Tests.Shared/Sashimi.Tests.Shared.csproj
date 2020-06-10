@@ -3,13 +3,13 @@
   <PropertyGroup>
     <AssemblyName>Sashimi.Tests.Shared</AssemblyName>
     <RootNamespace>Sashimi.Tests.Shared</RootNamespace>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <OutputPath>bin\</OutputPath>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <LangVersion>8</LangVersion>
+    <LangVersion>default</LangVersion>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 

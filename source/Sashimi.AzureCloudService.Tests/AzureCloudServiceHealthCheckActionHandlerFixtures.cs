@@ -65,7 +65,7 @@ namespace Sashimi.AzureCloudService.Tests
                         context.Variables.Add(SpecialVariables.Action.Azure.CertificateThumbprint, managementCertificate.Thumbprint);
                         context.Variables.Add(SpecialVariables.Action.Azure.CertificateBytes, certificate);
                         context.Variables.Add(SpecialVariables.Action.Azure.CloudServiceName, serviceName);
-                        context.Variables.Add(SpecialVariables.AccountType, AccountTypes.AzureSubscriptionAccountType);
+                        context.Variables.Add(SpecialVariables.AccountType, AccountTypes.AzureSubscriptionAccountType.ToString());
                     })
                     .WithAssert(result => result.WasSuccessful.Should().BeTrue())
                     .Execute();
@@ -92,7 +92,7 @@ namespace Sashimi.AzureCloudService.Tests
                     context.Variables.Add(SpecialVariables.Action.Azure.CertificateThumbprint, managementCertificate.Thumbprint);
                     context.Variables.Add(SpecialVariables.Action.Azure.CertificateBytes, certificate);
                     context.Variables.Add(SpecialVariables.Action.Azure.CloudServiceName, serviceName);
-                    context.Variables.Add(SpecialVariables.AccountType, AccountTypes.AzureSubscriptionAccountType);
+                    context.Variables.Add(SpecialVariables.AccountType, AccountTypes.AzureSubscriptionAccountType.ToString());
                 })
                 .WithAssert(result => result.WasSuccessful.Should().BeFalse())
                 .Execute(false);
