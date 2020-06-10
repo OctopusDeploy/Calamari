@@ -134,10 +134,10 @@ namespace Calamari.AzureServiceFabric
         static string GetAccessToken(AzureActiveDirectoryMetadata aad, string aadUsername, string aadPassword)
         {
             var authContext = new AuthenticationContext(aad.Authority);
-            var authResult = authContext.AcquireToken(
+            var authResult = authContext.AcquireTokenAsync(
                 aad.ClusterApplication,
                 aad.ClientApplication,
-                new UserCredential(aadUsername, aadPassword));
+                new UserPasswordCredential(aadUsername, aadPassword)).GetAwaiter().GetResult();
             return authResult.AccessToken;
         }
 

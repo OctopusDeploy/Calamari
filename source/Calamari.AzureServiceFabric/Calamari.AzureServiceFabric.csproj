@@ -10,8 +10,8 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Calamari.Common" Version="13.0.5" />
-        <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
-        <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="2.28.3" />
+        <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.7" />
+        <PackageReference Include="Microsoft.ServiceFabric" Version="7.1.416" />
         <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
