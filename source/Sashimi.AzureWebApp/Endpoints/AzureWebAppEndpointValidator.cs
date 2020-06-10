@@ -6,9 +6,9 @@ namespace Sashimi.AzureWebApp.Endpoints
     {
         public AzureWebAppEndpointValidator()
         {
-            RuleFor(p => p.AccountId).NotEmpty().OverridePropertyName("Account");
-            RuleFor(p => p.WebAppName).NotEmpty().OverridePropertyName("WebApp");
-            RuleFor(p => p.ResourceGroupName).NotEmpty().OverridePropertyName("ResourceGroup");
+            RuleFor(p => p.AccountId).NotEmpty().WithName("Account");
+            RuleFor(p => p.WebAppName).NotEmpty().WithName("Web App");
+            RuleFor(p => p.ResourceGroupName).NotEmpty().WithName("Resource Group");
         }
     }
 }

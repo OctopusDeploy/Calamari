@@ -45,7 +45,7 @@ namespace Sashimi.AzureServiceFabric.Tests
 
             var errors = sut.ValidateAndGetErrors(endpoint);
 
-            errors.Should().Contain("'Aad Credential Type' must not be equal to 'ClientCredential'.");
+            errors.Should().Contain("'Azure AD Credential Type' must not be equal to 'ClientCredential'.");
         }
 
         [Test]
@@ -56,8 +56,8 @@ namespace Sashimi.AzureServiceFabric.Tests
 
             var errors = sut.ValidateAndGetErrors(endpoint);
 
-            errors.Should().Contain("'Aad User Credential Username' must not be empty.");
-            errors.Should().Contain("'Aad User Credential Password' must not be empty.");
+            errors.Should().Contain("'Azure AD User Credential Username' must not be empty.");
+            errors.Should().Contain("'Azure AD User Credential Password' must not be empty.");
             errors.Should().Contain("'Server Cert Thumbprint' must not be empty.");
         }
 

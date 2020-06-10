@@ -14,21 +14,27 @@ namespace Sashimi.AzureServiceFabric.Endpoints
             RuleFor(a => a.ClientCertVariable)
                 .NotEmpty()
                 .When(a => a.SecurityMode == AzureServiceFabricSecurityMode.SecureClientCertificate);
-            RuleFor(a => a.AadCredentialType)
-                .NotEqual(AzureServiceFabricCredentialType.ClientCredential)
-                .When(a => a.SecurityMode == AzureServiceFabricSecurityMode.SecureAzureAD);
-            RuleFor(a => a.AadClientCredentialSecret)
-                .NotEmpty()
-                .When(a => a.SecurityMode == AzureServiceFabricSecurityMode.SecureAzureAD
-                           && a.AadCredentialType == AzureServiceFabricCredentialType.ClientCredential);
-            RuleFor(a => a.AadUserCredentialUsername)
-                .NotEmpty()
-                .When(a => a.SecurityMode == AzureServiceFabricSecurityMode.SecureAzureAD
-                           && a.AadCredentialType == AzureServiceFabricCredentialType.UserCredential);
-            RuleFor(a => a.AadUserCredentialPassword)
-                .NotEmpty()
-                .When(a => a.SecurityMode == AzureServiceFabricSecurityMode.SecureAzureAD
-                           && a.AadCredentialType == AzureServiceFabricCredentialType.UserCredential);
+            When(a => a.SecurityMode == AzureServiceFabricSecurityMode.SecureAzureAD,
+                () =>
+                {
+                    RuleFor(a => a.AadCredentialType)
+                        .NotEqual(AzureServiceFabricCredentialType.ClientCredential)
+                        .WithName("Azure AD Credential Type");
+                    RuleFor(a => a.AadClientCredentialSecret)
+                        .NotEmpty()
+                        .When(a => a.SecurityMode == AzureServiceFabricSecurityMode.SecureAzureAD
+                                   && a.AadCredentialType == AzureServiceFabricCredentialType.ClientCredential);
+
+                    When(a => a.AadCredentialType == AzureServiceFabricCredentialType.UserCredential, () =>
+                    {
+                        RuleFor(a => a.AadUserCredentialUsername)
+                            .NotEmpty()
+                            .WithName("Azure AD User Credential Username");
+                        RuleFor(a => a.AadUserCredentialPassword)
+                            .NotEmpty()
+                            .WithName("Azure AD User Credential Password");
+                    });
+                });
         }
     }
 }

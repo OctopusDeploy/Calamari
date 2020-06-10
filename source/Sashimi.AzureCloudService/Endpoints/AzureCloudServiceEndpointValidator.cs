@@ -6,7 +6,7 @@ namespace Sashimi.AzureCloudService.Endpoints
     {
         public AzureCloudServiceEndpointValidator()
         {
-            RuleFor(p => p.AccountId).NotEmpty().OverridePropertyName("Account");
+            RuleFor(p => p.AccountId).NotEmpty().WithName("Account");
             RuleFor(p => p.CloudServiceName).NotEmpty();
             RuleFor(p => p.StorageAccountName).NotEmpty();
         }
