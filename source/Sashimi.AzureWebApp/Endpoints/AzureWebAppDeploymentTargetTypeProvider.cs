@@ -22,6 +22,7 @@ namespace Sashimi.AzureWebApp.Endpoints
                 yield return AccountTypes.AzureServicePrincipalAccountType;
             }
         }
+
         public IActionHandler HealthCheckActionHandlerForTargetType()
         {
             return new AzureWebAppHealthCheckActionHandler();

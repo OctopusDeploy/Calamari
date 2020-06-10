@@ -19,6 +19,7 @@ namespace Sashimi.AzureServiceFabric.Endpoints
         {
             return new AzureServiceFabricAppHealthCheckActionHandler();
         }
+
         public IEnumerable<AccountType> SupportedAccountTypes
         {
             get { yield break; }

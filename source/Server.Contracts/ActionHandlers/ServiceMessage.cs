@@ -31,8 +31,8 @@ namespace Sashimi.Server.Contracts.ActionHandlers
             var sb = new StringBuilder();
             sb.Append("##octopus[").Append(Name);
 
-            foreach (var p in properties)
-                sb.Append(" ").Append(p.Key).Append("=\"").Append(EncodeValue(p.Value)).Append("\"");
+            foreach (var (key, value) in properties)
+                sb.Append(" ").Append(key).Append("=\"").Append(EncodeValue(value)).Append("\"");
 
             sb.Append("]");
 

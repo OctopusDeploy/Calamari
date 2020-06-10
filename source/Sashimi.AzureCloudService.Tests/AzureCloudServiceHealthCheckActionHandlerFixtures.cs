@@ -10,6 +10,7 @@ using Microsoft.WindowsAzure.Management.Compute.Models;
 using NUnit.Framework;
 using Sashimi.AzureCloudService.Endpoints;
 using Sashimi.Server.Contracts.ActionHandlers;
+using Sashimi.Tests.Shared.Extensions;
 using Sashimi.Tests.Shared.Server;
 
 namespace Sashimi.AzureCloudService.Tests

@@ -35,17 +35,17 @@ namespace Sashimi.AzureCloudService
 
             if (!String.IsNullOrWhiteSpace(AzureEnvironment))
             {
-                yield return new Variable(SpecialVariables.Action.Azure.Environment, AzureEnvironment!);
+                yield return new Variable(SpecialVariables.Action.Azure.Environment, AzureEnvironment);
             }
 
             if (!String.IsNullOrWhiteSpace(ServiceManagementEndpointBaseUri))
             {
-                yield return new Variable(SpecialVariables.Action.Azure.ServiceManagementEndPoint, ServiceManagementEndpointBaseUri!);
+                yield return new Variable(SpecialVariables.Action.Azure.ServiceManagementEndPoint, ServiceManagementEndpointBaseUri);
             }
 
             if (!String.IsNullOrWhiteSpace(ServiceManagementEndpointSuffix))
             {
-                yield return new Variable(SpecialVariables.Action.Azure.StorageEndPointSuffix, ServiceManagementEndpointSuffix!);
+                yield return new Variable(SpecialVariables.Action.Azure.StorageEndPointSuffix, ServiceManagementEndpointSuffix);
             }
         }
 

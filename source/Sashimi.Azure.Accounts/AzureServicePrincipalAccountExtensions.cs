@@ -2,8 +2,6 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Microsoft.Azure.Management.ResourceManager;
-using Microsoft.Azure.Management.Storage;
-using Microsoft.Azure.Management.WebSites;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 using Sashimi.Azure.Accounts;
@@ -24,33 +22,19 @@ using IHttpClientFactory = Microsoft.IdentityModel.Clients.ActiveDirectory.IHttp
                 new ResourceManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
         }
 
-        public static StorageManagementClient CreateStorageManagementClient(this AzureServicePrincipalAccountDetails account, HttpClientHandler httpClientHandler)
-        {
-            return string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri) ?
-                new StorageManagementClient(account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber } :
-                new StorageManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
-        }
-
-        public static WebSiteManagementClient CreateWebSiteManagementClient(this AzureServicePrincipalAccountDetails account, HttpClientHandler httpClientHandler)
-        {
-            return string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri) ?
-                new WebSiteManagementClient(account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber } :
-                new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
-        }
-
         static string GetAuthorizationToken(AzureServicePrincipalAccountDetails account, HttpMessageHandler handler)
         {
             var adDirectory = "https://login.windows.net/";
             if (!string.IsNullOrWhiteSpace(account.ActiveDirectoryEndpointBaseUri))
             {
-                adDirectory = account.ActiveDirectoryEndpointBaseUri!;
+                adDirectory = account.ActiveDirectoryEndpointBaseUri;
             }
             var context = new AuthenticationContext(adDirectory + account.TenantId, true, TokenCache.DefaultShared, new HttpClientFactory(handler));
 
             var resourceManagementEndpointBaseUri = "https://management.core.windows.net/";
             if (!string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri))
             {
-                resourceManagementEndpointBaseUri = account.ResourceManagementEndpointBaseUri!;
+                resourceManagementEndpointBaseUri = account.ResourceManagementEndpointBaseUri;
             }
             var result = context.AcquireTokenAsync(resourceManagementEndpointBaseUri, new ClientCredential(account.ClientId, account.Password?.Value)).GetAwaiter().GetResult();
             return result.AccessToken;

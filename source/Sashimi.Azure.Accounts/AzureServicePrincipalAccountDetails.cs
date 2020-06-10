@@ -49,17 +49,17 @@ namespace Sashimi.Azure.Accounts
 
             if (!String.IsNullOrWhiteSpace(AzureEnvironment))
             {
-                yield return new Variable(SpecialVariables.Action.Azure.Environment, AzureEnvironment!);
+                yield return new Variable(SpecialVariables.Action.Azure.Environment, AzureEnvironment);
             }
 
             if (!String.IsNullOrWhiteSpace(ResourceManagementEndpointBaseUri))
             {
-                yield return new Variable(SpecialVariables.Action.Azure.ResourceManagementEndPoint, ResourceManagementEndpointBaseUri!);
+                yield return new Variable(SpecialVariables.Action.Azure.ResourceManagementEndPoint, ResourceManagementEndpointBaseUri);
             }
 
             if (!String.IsNullOrWhiteSpace(ActiveDirectoryEndpointBaseUri))
             {
-                yield return new Variable(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, ActiveDirectoryEndpointBaseUri!);
+                yield return new Variable(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, ActiveDirectoryEndpointBaseUri);
             }
         }
 
