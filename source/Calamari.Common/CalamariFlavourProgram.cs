@@ -15,7 +15,6 @@ using Calamari.Integration.Processes;
 using Calamari.Integration.Proxies;
 using Calamari.Integration.Substitutions;
 using Calamari.Plumbing;
-using Calamari.Util;
 using Calamari.Util.Environments;
 using Calamari.Variables;
 using NuGet;
@@ -123,7 +122,7 @@ namespace Calamari
             {
                 yield return programAssembly; // Calamari Flavour
             }
-            
+
             yield return typeof(CalamariFlavourProgram).Assembly; // Calamari.Common
         }
     }
