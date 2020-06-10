@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using Sashimi.Server.Contracts.ActionHandlers;
 
-namespace Sashimi.Tests.Shared.ActionHandlers
+namespace Sashimi.Tests.Shared.Tests
 {
+    [TestFixture]
     public class ScriptOutputActionFixture
     {
         [Test]
@@ -55,6 +56,5 @@ namespace Sashimi.Tests.Shared.ActionHandlers
 
             action.GetStrings("non-existant-property").Should().BeNullOrEmpty();
         }
-
     }
 }

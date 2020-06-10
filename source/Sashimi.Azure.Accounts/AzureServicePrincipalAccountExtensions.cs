@@ -43,14 +43,14 @@ using IHttpClientFactory = Microsoft.IdentityModel.Clients.ActiveDirectory.IHttp
             var adDirectory = "https://login.windows.net/";
             if (!string.IsNullOrWhiteSpace(account.ActiveDirectoryEndpointBaseUri))
             {
-                adDirectory = account.ActiveDirectoryEndpointBaseUri;
+                adDirectory = account.ActiveDirectoryEndpointBaseUri!;
             }
             var context = new AuthenticationContext(adDirectory + account.TenantId, true, TokenCache.DefaultShared, new HttpClientFactory(handler));
 
             var resourceManagementEndpointBaseUri = "https://management.core.windows.net/";
             if (!string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri))
             {
-                resourceManagementEndpointBaseUri = account.ResourceManagementEndpointBaseUri;
+                resourceManagementEndpointBaseUri = account.ResourceManagementEndpointBaseUri!;
             }
             var result = context.AcquireTokenAsync(resourceManagementEndpointBaseUri, new ClientCredential(account.ClientId, account.Password?.Value)).GetAwaiter().GetResult();
             return result.AccessToken;

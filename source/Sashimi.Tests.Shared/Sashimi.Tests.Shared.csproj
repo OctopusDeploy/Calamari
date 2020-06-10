@@ -3,24 +3,22 @@
   <PropertyGroup>
     <AssemblyName>Sashimi.Tests.Shared</AssemblyName>
     <RootNamespace>Sashimi.Tests.Shared</RootNamespace>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <OutputPath>bin\</OutputPath>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <LangVersion>default</LangVersion>
+    <LangVersion>8</LangVersion>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Tests.Shared\Calamari.Tests.Shared.csproj" />
     <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
     <PackageReference Include="Calamari.Common" Version="13.0.5" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
-    <PackageReference Include="NUnit" Version="3.12.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
-    <PackageReference Include="Octostache" Version="2.7.0" />
     <PackageReference Include="FluentAssertions" Version="5.10.3" />
+    <PackageReference Include="Octostache" Version="2.7.0" />
   </ItemGroup>
 
 </Project>

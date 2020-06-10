@@ -3,12 +3,13 @@
   <PropertyGroup>
     <AssemblyName>Sashimi.Server.Contracts</AssemblyName>
     <RootNamespace>Sashimi.Server.Contracts</RootNamespace>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Nullable>enable</Nullable>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <LangVersion>8</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

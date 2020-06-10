@@ -2,7 +2,7 @@
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 
-namespace Sashimi.AzureWebApp.Endpoints
+namespace Sashimi.AzureWebApp
 {
     class AzureWebAppHealthCheckActionHandler : IActionHandlerWithAccount
     {

@@ -1,7 +1,7 @@
 ﻿using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 
-namespace Sashimi.AzureServiceFabric.Endpoints
+namespace Sashimi.AzureServiceFabric
 {
     class AzureServiceFabricAppHealthCheckActionHandler : IActionHandlerWithAccount
     {

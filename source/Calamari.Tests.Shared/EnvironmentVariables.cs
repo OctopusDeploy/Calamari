@@ -27,21 +27,24 @@ namespace Calamari.Tests.Shared
         [EnvironmentVariable("Azure_OctopusAPITester_ClientId", "Azure - OctopusAPITester")]
         AzureSubscriptionClientId,
 
+        [EnvironmentVariable("Azure_OctopusAPITester_Certificate", "Azure - OctopusAPITester")]
+        AzureSubscriptionCertificate,
+
         [EnvironmentVariable("GitHub_OctopusAPITester_Username", "GitHub Test Account")]
         GitHubUsername,
 
         [EnvironmentVariable("GitHub_OctopusAPITester_Password", "GitHub Test Account")]
         GitHubPassword,
-        
+
         [EnvironmentVariable("K8S_OctopusAPITester_Token", "GKS Kubernetes API Test Cluster Token")]
         KubernetesClusterToken,
-        
+
         [EnvironmentVariable("K8S_OctopusAPITester_Server", "GKS Kubernetes API Test Cluster Url")]
         KubernetesClusterUrl,
-        
+
         [EnvironmentVariable("Helm_OctopusAPITester_Password", "Helm Password for https://octopusdeploy.jfrog.io")]
         HelmPassword,
-        
+
         [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "Password for DockerHub Test reader account")]
         DockerReaderPassword,
 

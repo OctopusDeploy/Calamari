@@ -20,7 +20,7 @@ namespace Sashimi.Tests.Shared.Server
     {
         TestVariableDictionary variables = new TestVariableDictionary();
         bool withStagedPackageArgument = false;
-        
+
         public CalamariFlavour? CalamariFlavour { get; set; }
         public string? CalamariCommand { get; set; }
         public List<(string? filename, Stream contents)> Files = new List<(string?, Stream)>();
@@ -70,7 +70,7 @@ namespace Sashimi.Tests.Shared.Server
         }
 
         public ICalamariCommandBuilder WithDataFile(Stream fileContents, string? fileName = null, Action<int>? progress = null)
-        { 
+        {
             Files.Add((fileName, fileContents));
             return this;
         }
@@ -88,7 +88,7 @@ namespace Sashimi.Tests.Shared.Server
         }
 
         public ICalamariCommandBuilder WithVariable(string name, string value, bool isSensitive = false)
-        { 
+        {
             throw new NotImplementedException();
         }
 
@@ -180,7 +180,7 @@ namespace Sashimi.Tests.Shared.Server
                 }
 
                 return new TestActionHandlerResult(exitCode,
-                    new Dictionary<string, OutputVariable>(outputFilter.OutputVariables), outputFilter.Actions,
+                    outputFilter.OutputVariables, outputFilter.Actions,
                     outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
                     serverInMemoryLog.ToString());
             }

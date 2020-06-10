@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Linq;
 using Calamari.Commands.Support;
+using Hyak.Common;
 using Microsoft.WindowsAzure.Management.Compute;
 
 namespace Calamari.AzureCloudService
@@ -23,12 +23,18 @@ namespace Calamari.AzureCloudService
 
             using (var azureClient = account.CreateComputeManagementClient(certificate))
             {
-                var azureResponse = azureClient.HostedServices.List();
-                var hostedService = azureResponse.HostedServices.FirstOrDefault(hs => hs.ServiceName == cloudServiceName);
-
-                if (hostedService == null)
+                try
                 {
-                    throw new Exception($"Hosted service with name {cloudServiceName} was not found.");
+                    azureClient.HostedServices.Get(cloudServiceName);
+                }
+                catch (CloudException e)
+                {
+                    if (e.Error.Code == "ResourceNotFound")
+                    {
+                        throw new Exception($"Hosted service with name {cloudServiceName} was not found.");
+                    }
+
+                    throw;
                 }
             }
 

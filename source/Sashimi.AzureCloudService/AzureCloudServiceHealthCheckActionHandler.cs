@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 
-namespace Sashimi.AzureCloudService.Endpoints
+namespace Sashimi.AzureCloudService
 {
     class AzureCloudServiceHealthCheckActionHandler : IActionHandlerWithAccount
     {
@@ -23,13 +20,13 @@ namespace Sashimi.AzureCloudService.Endpoints
 
         public IActionHandlerResult Execute(IActionHandlerContext context)
         {
-            ValidateAccountIsOfType(context, new[] {AccountTypes.AzureSubscriptionAccountType});
+            ValidateAccountIsOfType(context);
 
             return context.CalamariCommand(CalamariAzure, "health-check")
                 .Execute();
         }
 
-        void ValidateAccountIsOfType(IActionHandlerContext context, IEnumerable<AccountType> accountTypes)
+        void ValidateAccountIsOfType(IActionHandlerContext context)
         {
             var accountType = context.Variables.Get(SpecialVariables.AccountType);
             var isLegacyStep = false;
@@ -43,8 +40,11 @@ namespace Sashimi.AzureCloudService.Endpoints
                     isLegacyStep = true;
                 }
             }
-            if (!isLegacyStep && accountTypes.All(a => a.ToString() != accountType))
+
+            if (!isLegacyStep && accountType != AccountTypes.AzureSubscriptionAccountType)
+            {
                 throw new KnownDeploymentFailureException($"The account type '{accountType}' is not valid for this step.");
+            }
         }
     }
 }

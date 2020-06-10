@@ -31,12 +31,11 @@ namespace Calamari.AzureWebApp
         {
             using (var webSiteClient = servicePrincipalAccount.CreateWebSiteManagementClient())
             {
-                var matchingSite = webSiteClient.WebApps
-                    .ListByResourceGroup(resourceGroupName, true)
-                    .ToList()
-                    .FirstOrDefault(x => string.Equals(x.Name, siteAndSlotName, StringComparison.OrdinalIgnoreCase));
+                var matchingSite = webSiteClient.WebApps.Get(resourceGroupName, siteAndSlotName);
                 if (matchingSite == null)
+                {
                     throw new Exception($"Could not find site {siteAndSlotName} in resource group {resourceGroupName}, using Service Principal with subscription {servicePrincipalAccount.SubscriptionNumber}");
+                }
             }
         }
     }

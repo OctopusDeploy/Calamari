@@ -44,7 +44,7 @@ namespace Sashimi.Server.Contracts.ActionHandlers
             var allValues = new List<string>();
             foreach (var v in values.Where(v => !string.IsNullOrWhiteSpace(v)))
             {
-                allValues.AddRange(v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(_ => _.Trim()));
+                allValues.AddRange(v.Split(new [] {','}, StringSplitOptions.RemoveEmptyEntries).Select(_ => _.Trim()));
             }
             return allValues.ToArray();
         }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Tests.Shared.LogParser;
 
@@ -19,9 +18,9 @@ namespace Sashimi.Tests.Shared.Server
             FullLog = fullLog;
             Artifacts = artifacts;
         }
-        
+
         public string FullLog { get; }
-        
+
         public IReadOnlyList<CollectedArtifact> Artifacts { get; }
         public IReadOnlyDictionary<string, OutputVariable> OutputVariables { get; }
         public IReadOnlyList<ScriptOutputAction> OutputActions { get; }

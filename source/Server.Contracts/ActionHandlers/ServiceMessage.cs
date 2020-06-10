@@ -13,7 +13,7 @@ namespace Sashimi.Server.Contracts.ActionHandlers
             this.Name = name;
             this.properties = properties ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
-        
+
         public static string EncodeValue(string value) =>
             Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
 
@@ -25,14 +25,14 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         {
             return properties.TryGetValue(key, out var s) ? s : null;
         }
-        
+
         public override string ToString()
         {
             var sb = new StringBuilder();
             sb.Append("##octopus[").Append(Name);
 
-            foreach (var (key, value) in properties)
-                sb.Append(" ").Append(key).Append("=\"").Append(EncodeValue(value)).Append("\"");
+            foreach (var p in properties)
+                sb.Append(" ").Append(p.Key).Append("=\"").Append(EncodeValue(p.Value)).Append("\"");
 
             sb.Append("]");
 
