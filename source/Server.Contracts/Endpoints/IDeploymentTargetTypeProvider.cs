@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using FluentValidation;
+using Sashimi.Server.Contracts.Accounts;
 
 namespace Sashimi.Server.Contracts.Endpoints
 {
@@ -7,5 +10,9 @@ namespace Sashimi.Server.Contracts.Endpoints
         DeploymentTargetType DeploymentTargetType { get; }
         Type DomainType { get; }
         Type ApiType { get; }
+
+        IValidator Validator { get; }
+
+        IEnumerable<AccountType> SupportedAccountTypes { get; }
     }
 }

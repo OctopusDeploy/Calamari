@@ -11,6 +11,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Azure.Common\Sashimi.Azure.Common.csproj" />
+      <ProjectReference Include="..\Sashimi.Azure.Accounts\Sashimi.Azure.Accounts.csproj" />
       <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
     </ItemGroup>
 
