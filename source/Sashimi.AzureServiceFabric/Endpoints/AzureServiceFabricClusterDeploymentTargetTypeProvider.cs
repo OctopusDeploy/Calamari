@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using FluentValidation;
+using Newtonsoft.Json;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.ActionHandlers;
@@ -23,6 +25,47 @@ namespace Sashimi.AzureServiceFabric.Endpoints
         public IEnumerable<AccountType> SupportedAccountTypes
         {
             get { yield break; }
+        }
+
+        public IEnumerable<(string key, object value)> GetMetric(IReadOnlyCollection<Endpoint> endpoints)
+        {
+            var serviceFabricEndpoints = endpoints.OfType<AzureServiceFabricClusterEndpoint>().ToArray();
+            var total = serviceFabricEndpoints.Length;
+
+            yield return ("servicefabricclusters", total);
+
+            if (total > 0)
+            {
+                yield return ("servicefabricclusterdetail", ConvertObject(GetServiceFabricMetrics(serviceFabricEndpoints)));
+            }
+        }
+
+        static IList<ServiceFabricDetails> GetServiceFabricMetrics(IEnumerable<AzureServiceFabricClusterEndpoint> endpoints)
+        {
+            bool isAzure(AzureServiceFabricClusterEndpoint e) => e.ConnectionEndpoint != null && e.ConnectionEndpoint.Contains("azure.com");
+            bool isOnPrem(AzureServiceFabricClusterEndpoint e) => e.ConnectionEndpoint != null && !e.ConnectionEndpoint.Contains("azure.com");
+
+            return endpoints
+                .GroupBy(x => x.SecurityMode)
+                .Select(x => new ServiceFabricDetails
+                {
+                    securitymode = x.Key.ToString(),
+                    azure = x.Count(isAzure),
+                    onprem = x.Count(isOnPrem)
+                })
+                .ToList();
+        }
+
+        static string ConvertObject(object o)
+        {
+            return Uri.EscapeDataString(JsonConvert.SerializeObject(o));
+        }
+
+        class ServiceFabricDetails
+        {
+            public string? securitymode { get; set; }
+            public int azure { get; set; }
+            public int onprem { get; set; }
         }
     }
 }

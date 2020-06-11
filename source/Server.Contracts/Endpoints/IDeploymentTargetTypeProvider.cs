@@ -14,5 +14,6 @@ namespace Sashimi.Server.Contracts.Endpoints
         IActionHandler HealthCheckActionHandlerForTargetType();
         IValidator Validator { get; }
         IEnumerable<AccountType> SupportedAccountTypes { get; }
+        IEnumerable<(string key, object value)> GetMetric(IReadOnlyCollection<Endpoint> endpoints);
     }
 }
