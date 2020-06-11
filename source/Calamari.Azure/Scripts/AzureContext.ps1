@@ -17,6 +17,8 @@
 ##   $OctopusAzureADPassword = "..."
 ##   $OctopusAzureEnvironment = "..."
 ##   $OctopusDisableAzureCLI = "..."
+##   $OctopusAzureUseBundledTooling = "true"
+
 
 $ErrorActionPreference = "Stop"
 
@@ -117,6 +119,11 @@ Execute-WithRetry{
                 try {
                     # authenticate with the Azure CLI
                     Write-Host "##octopus[stdout-verbose]"
+
+                    if ($OctopusAzureUseBundledTooling) {
+                        $env:AZURE_EXTENSION_DIR = [System.IO.Path]::Combine($env:HOME, ".azure/cliextensions")
+                        EnsureDirectoryExists($env:AZURE_EXTENSION_DIR)
+                    }
 
                     $env:AZURE_CONFIG_DIR = [System.IO.Path]::Combine($env:OctopusCalamariWorkingDirectory, "azure-cli")
                     EnsureDirectoryExists($env:AZURE_CONFIG_DIR)
