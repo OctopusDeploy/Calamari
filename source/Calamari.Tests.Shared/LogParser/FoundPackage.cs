@@ -1,7 +1,7 @@
 ﻿using System;
 using Octopus.Versioning;
 
-namespace Sashimi.Tests.Shared.LogParser
+namespace Calamari.Tests.Shared.LogParser
 {
     public class FoundPackage
     {

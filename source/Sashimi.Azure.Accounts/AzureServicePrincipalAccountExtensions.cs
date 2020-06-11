@@ -2,8 +2,6 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Microsoft.Azure.Management.ResourceManager;
-using Microsoft.Azure.Management.Storage;
-using Microsoft.Azure.Management.WebSites;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 using Sashimi.Azure.Accounts;
@@ -22,20 +20,6 @@ using IHttpClientFactory = Microsoft.IdentityModel.Clients.ActiveDirectory.IHttp
             return string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri) ?
                 new ResourceManagementClient(account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber } :
                 new ResourceManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
-        }
-
-        public static StorageManagementClient CreateStorageManagementClient(this AzureServicePrincipalAccountDetails account, HttpClientHandler httpClientHandler)
-        {
-            return string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri) ?
-                new StorageManagementClient(account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber } :
-                new StorageManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
-        }
-
-        public static WebSiteManagementClient CreateWebSiteManagementClient(this AzureServicePrincipalAccountDetails account, HttpClientHandler httpClientHandler)
-        {
-            return string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri) ?
-                new WebSiteManagementClient(account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber } :
-                new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
         }
 
         static string GetAuthorizationToken(AzureServicePrincipalAccountDetails account, HttpMessageHandler handler)

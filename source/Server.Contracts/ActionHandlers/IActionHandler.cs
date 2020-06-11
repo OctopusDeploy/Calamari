@@ -1,7 +1,7 @@
 ﻿namespace Sashimi.Server.Contracts.ActionHandlers
 {
     /// <summary>
-    /// Implementors of this interface must not keep state so that they can be reusable between steps and deployments 
+    /// Implementors of this interface must not keep state so that they can be reusable between steps and deployments
     /// </summary>
     public interface IActionHandler
     {

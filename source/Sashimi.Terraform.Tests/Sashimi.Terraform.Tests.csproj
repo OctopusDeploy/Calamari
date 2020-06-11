@@ -20,7 +20,7 @@
     <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.21" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <None Update="**/*.tf*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -29,5 +29,5 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  
+
 </Project>

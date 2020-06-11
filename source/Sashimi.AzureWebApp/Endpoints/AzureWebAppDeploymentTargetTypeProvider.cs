@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FluentValidation;
 using Sashimi.Azure.Accounts;
 using Sashimi.Server.Contracts;
+using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.Endpoints;
 
@@ -20,6 +21,11 @@ namespace Sashimi.AzureWebApp.Endpoints
             {
                 yield return AccountTypes.AzureServicePrincipalAccountType;
             }
+        }
+
+        public IActionHandler HealthCheckActionHandlerForTargetType()
+        {
+            return new AzureWebAppHealthCheckActionHandler();
         }
     }
 }

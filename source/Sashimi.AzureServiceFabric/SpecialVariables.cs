@@ -34,7 +34,11 @@ namespace Sashimi.AzureServiceFabric
                 public static readonly string CertificateStoreName = "Octopus.Action.ServiceFabric.CertificateStoreName";
 
                 #endregion
+
+                public static readonly string AppHealthCheckActionTypeName = "Octopus.HealthCheck.AzureServiceFabricApp";
             }
+
+            public static readonly string AccountId = "Octopus.Action.Azure.AccountId";
         }
     }
 }

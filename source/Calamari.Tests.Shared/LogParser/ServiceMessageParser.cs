@@ -2,9 +2,9 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
-using Sashimi.Server.Contracts.ActionHandlers;
+using Calamari.Integration.ServiceMessages;
 
-namespace Sashimi.Tests.Shared.LogParser
+namespace Calamari.Tests.Shared.LogParser
 {
     public class ServiceMessageParser
     {

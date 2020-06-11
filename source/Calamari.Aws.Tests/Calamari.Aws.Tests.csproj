@@ -2,7 +2,6 @@
 
     <PropertyGroup>
         <IsPackable>false</IsPackable>
-        <OutputType>Library</OutputType>
         <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     </PropertyGroup>
@@ -41,5 +40,5 @@
       </None>
     </ItemGroup>
 
-    
+
 </Project>

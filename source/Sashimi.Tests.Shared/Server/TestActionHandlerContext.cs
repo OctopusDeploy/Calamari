@@ -15,7 +15,7 @@ namespace Sashimi.Tests.Shared.Server
         readonly TestCalamariCommandBuilder<TCalamariProgram> calamariCommandBuilder;
         readonly ILog log;
 
-        public TestActionHandlerContext(TestCalamariCommandBuilder<TCalamariProgram> calamariCommandBuilder, ILog log)
+        internal TestActionHandlerContext(TestCalamariCommandBuilder<TCalamariProgram> calamariCommandBuilder, ILog log)
         {
             this.calamariCommandBuilder = calamariCommandBuilder;
             this.log = log;

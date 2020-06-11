@@ -1,5 +1,6 @@
 ﻿using System;
 using Autofac;
+using Calamari.Tests.Shared;
 using Octopus.Diagnostics;
 
 namespace Sashimi.Tests.Shared.Server

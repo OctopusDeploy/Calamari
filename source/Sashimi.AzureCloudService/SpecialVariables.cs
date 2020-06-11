@@ -3,6 +3,8 @@ namespace Sashimi.AzureCloudService
     //TODO: This is duplicated from Server while we sort out a way for Sashimi to contribute special variables.
     static class SpecialVariables
     {
+        public static readonly string AccountType = "Octopus.Account.AccountType";
+
         public static class Action
         {
             public static class Azure
@@ -19,6 +21,8 @@ namespace Sashimi.AzureCloudService
                 public static readonly string Environment = "Octopus.Action.Azure.Environment";
                 public static readonly string ServiceManagementEndPoint = "Octopus.Action.Azure.ServiceManagementEndPoint";
                 public static readonly string StorageEndPointSuffix = "Octopus.Action.Azure.StorageEndpointSuffix";
+                public static readonly string CloudServiceHealthCheckActionTypeName = "Octopus.HealthCheck.AzureCloudService";
+                public static readonly string AccountId = "Octopus.Action.Azure.AccountId";
             }
         }
     }

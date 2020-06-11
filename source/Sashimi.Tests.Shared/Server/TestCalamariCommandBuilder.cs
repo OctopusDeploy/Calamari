@@ -5,22 +5,23 @@ using System.Linq;
 using System.Reflection;
 using Calamari;
 using Calamari.Integration.FileSystem;
+using Calamari.Tests.Shared;
 using Calamari.Tests.Shared.Helpers;
+using Calamari.Tests.Shared.LogParser;
 using Calamari.Util;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.DeploymentTools;
-using Sashimi.Tests.Shared.LogParser;
 
 namespace Sashimi.Tests.Shared.Server
 {
-    public class TestCalamariCommandBuilder<TCalamariProgram> : ICalamariCommandBuilder where TCalamariProgram : CalamariFlavourProgram
+    class TestCalamariCommandBuilder<TCalamariProgram> : ICalamariCommandBuilder where TCalamariProgram : CalamariFlavourProgram
     {
         TestVariableDictionary variables = new TestVariableDictionary();
-        bool withStagedPackageArgument = false;
-        
+        bool withStagedPackageArgument;
+
         public CalamariFlavour? CalamariFlavour { get; set; }
         public string? CalamariCommand { get; set; }
         public List<(string? filename, Stream contents)> Files = new List<(string?, Stream)>();
@@ -70,7 +71,7 @@ namespace Sashimi.Tests.Shared.Server
         }
 
         public ICalamariCommandBuilder WithDataFile(Stream fileContents, string? fileName = null, Action<int>? progress = null)
-        { 
+        {
             Files.Add((fileName, fileContents));
             return this;
         }
@@ -88,7 +89,7 @@ namespace Sashimi.Tests.Shared.Server
         }
 
         public ICalamariCommandBuilder WithVariable(string name, string value, bool isSensitive = false)
-        { 
+        {
             throw new NotImplementedException();
         }
 
@@ -112,8 +113,6 @@ namespace Sashimi.Tests.Shared.Server
                 variables.Save(varPath);
                 args.Add($"--variables={varPath}");
 
-                //TODO: Deal with sensitive variables
-                // variableArgs += $" -sensitiveVariables=\"{sshBashPaths.BuildPath(sshBashPaths.WorkingDirectory, "variables.secret")}\" -sensitiveVariablesPassword=$1";
                 return args;
             }
 
@@ -180,7 +179,7 @@ namespace Sashimi.Tests.Shared.Server
                 }
 
                 return new TestActionHandlerResult(exitCode,
-                    new Dictionary<string, OutputVariable>(outputFilter.OutputVariables), outputFilter.Actions,
+                    outputFilter.TestOutputVariables, outputFilter.Actions,
                     outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
                     serverInMemoryLog.ToString());
             }

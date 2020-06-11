@@ -2,7 +2,7 @@
 
 namespace Sashimi.Terraform
 {
-    public class TerraformTools
+    class TerraformTools
     {
         public static IDeploymentTool TerraformCli = new InPathDeploymentTool(
             "Octopus.Dependencies.TerraformCLI",

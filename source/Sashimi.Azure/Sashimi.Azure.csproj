@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.28.1" />
     <PackageReference Include="Octopus.Server.Extensibility" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.33.0" />
   </ItemGroup>
 
 </Project>
