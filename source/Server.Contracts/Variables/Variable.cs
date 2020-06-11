@@ -16,15 +16,15 @@ namespace Sashimi.Server.Contracts.Variables
             Type = type;
         }
 
-        public Variable(string name, SensitiveString value)
+        public Variable(string name, SensitiveString? value)
         {
             Name = name;
-            Value = value.Value;
+            Value = value?.Value;
             Type = VariableType.Sensitive;
         }
 
         public string Name { get; }
-        public string Value { get; }
+        public string? Value { get; }
         public VariableType Type { get; }
     }
 }
