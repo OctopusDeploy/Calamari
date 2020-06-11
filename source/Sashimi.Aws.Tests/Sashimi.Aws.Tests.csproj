@@ -6,10 +6,8 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <OutputPath>bin\</OutputPath>
         <Nullable>disable</Nullable>
         <IsPackable>false</IsPackable>
-        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,7 +19,7 @@
         <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.21" />
     </ItemGroup>
-    
+
     <ItemGroup>
         <None Include="Templates\TemplateSamples\*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

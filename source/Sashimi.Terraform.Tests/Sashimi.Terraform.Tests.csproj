@@ -6,10 +6,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <OutputPath>bin\</OutputPath>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

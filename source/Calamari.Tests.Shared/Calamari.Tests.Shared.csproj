@@ -2,7 +2,6 @@
 
     <PropertyGroup>
         <TargetFrameworks>net452;netstandard2.1</TargetFrameworks>
-        <LangVersion>default</LangVersion>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
