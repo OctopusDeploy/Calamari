@@ -6,6 +6,7 @@
         <IsPackable>false</IsPackable>
         <OutputType>Exe</OutputType>
         <TargetFramework>net452</TargetFramework>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
         <LangVersion>default</LangVersion>
     </PropertyGroup>
     <ItemGroup>
