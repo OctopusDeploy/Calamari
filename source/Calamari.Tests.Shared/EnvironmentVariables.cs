@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 namespace Calamari.Tests.Shared
 {
@@ -57,24 +56,14 @@ namespace Calamari.Tests.Shared
 
     public static class ExternalVariables
     {
-        public static void LogMissingVariables()
-        {
-            var missingVariables = Enum.GetValues(typeof(ExternalVariable)).Cast<ExternalVariable>()
-                .Select(prop => EnvironmentVariableAttribute.Get(prop))
-                .Where(attr => Environment.GetEnvironmentVariable(attr.Name) == null)
-                .ToList();
-
-            if (!missingVariables.Any())
-                return;
-
-            Log.Warn($"The following environment variables could not be found: " +
-                $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}\t\tSource: {var.LastPassName}"))}" +
-                $"\n\nTests that rely on these variables are likely to fail.");
-        }
-
         public static string Get(ExternalVariable property)
         {
             var attr = EnvironmentVariableAttribute.Get(property);
+            if (attr == null)
+            {
+                throw new Exception($"`{property}` does not include a {nameof(EnvironmentVariableAttribute)}.");
+            }
+
             var valueFromEnv = Environment.GetEnvironmentVariable(attr.Name);
             if (valueFromEnv == null)
             {
@@ -96,10 +85,14 @@ namespace Calamari.Tests.Shared
             LastPassName = lastPassName;
         }
 
-        public static EnvironmentVariableAttribute Get(object enm)
+        public static EnvironmentVariableAttribute? Get(object enm)
         {
             var mi = enm?.GetType().GetMember(enm.ToString());
-            if (mi == null || mi.Length <= 0) return null;
+            if (mi == null || mi.Length <= 0)
+            {
+                return null;
+            }
+
             return GetCustomAttribute(mi[0], typeof(EnvironmentVariableAttribute)) as EnvironmentVariableAttribute;
         }
     }

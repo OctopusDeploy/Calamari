@@ -23,7 +23,7 @@ namespace Calamari.Tests.Shared.Helpers
 
         public override void Verbose(string message)
         {
-            Messages.Add(new Message(Level.Verbose, message, null));
+            Messages.Add(new Message(Level.Verbose, message));
             base.Verbose(message);
         }
 
@@ -35,7 +35,7 @@ namespace Calamari.Tests.Shared.Helpers
 
         public override void Info(string message)
         {
-            Messages.Add(new Message(Level.Info, message, null));
+            Messages.Add(new Message(Level.Info, message));
             base.Info(message);
         }
 
@@ -47,7 +47,7 @@ namespace Calamari.Tests.Shared.Helpers
 
         public override void Warn(string message)
         {
-            Messages.Add(new Message(Level.Warn, message, null));
+            Messages.Add(new Message(Level.Warn, message));
             base.Warn(message);
         }
 
@@ -59,7 +59,7 @@ namespace Calamari.Tests.Shared.Helpers
 
         public override void Error(string message)
         {
-            Messages.Add(new Message(Level.Error, message, null));
+            Messages.Add(new Message(Level.Error, message));
             base.Error(message);
         }
 
@@ -77,12 +77,12 @@ namespace Calamari.Tests.Shared.Helpers
             public object[] Args { get; }
             public string FormattedMessage { get; }
 
-            public Message(Level level, string message, object[] args)
+            public Message(Level level, string message, params object[] args)
             {
                 Level = level;
                 MessageFormat = message;
                 Args = args;
-                FormattedMessage = args == null ? message : string.Format(message, args);
+                FormattedMessage = args == null || args.Length == 0 ? message : string.Format(message, args);
             }
         }
 

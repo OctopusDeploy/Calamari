@@ -7,7 +7,6 @@ using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using NUnit.Framework;
 using Sashimi.Azure.Accounts;
-using Sashimi.Tests.Shared.Extensions;
 using Sashimi.Tests.Shared.Server;
 
 

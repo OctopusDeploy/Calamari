@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 using Octopus.Diagnostics;
 
-namespace Sashimi.Tests.Shared.Server
+namespace Calamari.Tests.Shared
 {
     public class ServerInMemoryLog : ILogWithContext
     {
         readonly StringBuilder log = new StringBuilder();
-            
+
         public ILogContext CurrentContext { get; } = null!;
         public bool IsVerboseEnabled { get; }
         public bool IsErrorEnabled { get; }
@@ -302,7 +302,7 @@ namespace Sashimi.Tests.Shared.Server
             log.AppendLine(message);
             list.Add((message, error));
         }
-        
+
         class Disposable : IDisposable
         {
             public void Dispose()
