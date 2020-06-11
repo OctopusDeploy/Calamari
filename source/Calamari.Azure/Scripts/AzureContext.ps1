@@ -120,7 +120,7 @@ Execute-WithRetry{
                     # authenticate with the Azure CLI
                     Write-Host "##octopus[stdout-verbose]"
 
-                    if ($OctopusAzureUseBundledTooling) {
+                    if (!$OctopusAzureUseBundledTooling) {
                         $env:AZURE_EXTENSION_DIR = [System.IO.Path]::Combine($env:HOME, ".azure/cliextensions")
                         EnsureDirectoryExists($env:AZURE_EXTENSION_DIR)
                     }
