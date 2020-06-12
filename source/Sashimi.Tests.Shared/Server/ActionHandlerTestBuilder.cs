@@ -39,7 +39,7 @@ namespace Sashimi.Tests.Shared.Server
     public class ActionHandlerTestBuilder<TCalamariProgram> 
         where TCalamariProgram : CalamariFlavourProgram
     {
-        List<Action<TestActionHandlerContext<TCalamariProgram>>>? arrangeActions;
+        readonly List<Action<TestActionHandlerContext<TCalamariProgram>>> arrangeActions;
         Action<TestActionHandlerResult>? assertAction;
         Type actionHandlerType;
 
@@ -51,7 +51,7 @@ namespace Sashimi.Tests.Shared.Server
 
         public ActionHandlerTestBuilder<TCalamariProgram> WithArrange(Action<TestActionHandlerContext<TCalamariProgram>> arrange)
         {
-            arrangeActions!.Add(arrange);
+            arrangeActions.Add(arrange);
             return this;
         }
 
@@ -70,7 +70,7 @@ namespace Sashimi.Tests.Shared.Server
             var commandBuilder = new TestCalamariCommandBuilder<TCalamariProgram>();
             var context = new TestActionHandlerContext<TCalamariProgram>(commandBuilder, container.Resolve<Octopus.Diagnostics.ILog>());
 
-            foreach (var arrangeAction in arrangeActions!)
+            foreach (var arrangeAction in arrangeActions)
             {
                 arrangeAction?.Invoke(context);    
             }

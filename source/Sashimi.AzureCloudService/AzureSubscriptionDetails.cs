@@ -29,9 +29,9 @@ namespace Sashimi.AzureCloudService
 
         public override IEnumerable<Variable> ContributeVariables()
         {
-            yield return new Variable(SpecialVariables.Action.Azure.SubscriptionId, SubscriptionNumber!);
+            yield return new Variable(SpecialVariables.Action.Azure.SubscriptionId, SubscriptionNumber);
             yield return new Variable(SpecialVariables.Action.Azure.CertificateBytes, CertificateBytes!.Value, VariableType.Sensitive);
-            yield return new Variable(SpecialVariables.Action.Azure.CertificateThumbprint, CertificateThumbprint!);
+            yield return new Variable(SpecialVariables.Action.Azure.CertificateThumbprint, CertificateThumbprint);
 
             if (!String.IsNullOrWhiteSpace(AzureEnvironment))
             {
@@ -57,10 +57,10 @@ namespace Sashimi.AzureCloudService
             }
 
             yield return new Variable($"{variable.Name}.CertificateThumbprint", CertificateThumbprint!, VariableType.Sensitive);
-            yield return new Variable($"{variable.Name}.SubscriptionNumber", SubscriptionNumber!);
-            yield return new Variable($"{variable.Name}.AzureEnvironment", AzureEnvironment!);
-            yield return new Variable($"{variable.Name}.ServiceManagementEndpointBaseUri", ServiceManagementEndpointBaseUri!);
-            yield return new Variable($"{variable.Name}.ServiceManagementEndpointSuffix", ServiceManagementEndpointSuffix!);
+            yield return new Variable($"{variable.Name}.SubscriptionNumber", SubscriptionNumber);
+            yield return new Variable($"{variable.Name}.AzureEnvironment", AzureEnvironment);
+            yield return new Variable($"{variable.Name}.ServiceManagementEndpointBaseUri", ServiceManagementEndpointBaseUri);
+            yield return new Variable($"{variable.Name}.ServiceManagementEndpointSuffix", ServiceManagementEndpointSuffix);
         }
 
         [JsonIgnore]

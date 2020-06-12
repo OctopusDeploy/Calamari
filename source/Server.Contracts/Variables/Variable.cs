@@ -4,12 +4,12 @@ namespace Sashimi.Server.Contracts.Variables
 {
     public class Variable
     {
-        public Variable(string name, string value)
+        public Variable(string name, string? value)
             : this(name, value, VariableType.String)
         {
         }
 
-        public Variable(string name, string value, VariableType type)
+        public Variable(string name, string? value, VariableType type)
         {
             Name = name;
             Value = value;

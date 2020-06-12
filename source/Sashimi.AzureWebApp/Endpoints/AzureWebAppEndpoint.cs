@@ -1,5 +1,4 @@
-﻿#nullable disable
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Endpoints;
 using Sashimi.Server.Contracts.Variables;
@@ -15,11 +14,11 @@ namespace Sashimi.AzureWebApp.Endpoints
 
         public override bool ScriptConsoleSupported => true;
 
-        public string AccountId { get; set; }
+        public string AccountId { get; set; } = string.Empty;
 
-        public string WebAppName { get; set; }
-        public string ResourceGroupName { get; set; }
-        public string WebAppSlotName { get; set; }
+        public string WebAppName { get; set; } = string.Empty;
+        public string ResourceGroupName { get; set; } = string.Empty;
+        public string? WebAppSlotName { get; set; } = string.Empty;
 
         public override IEnumerable<Variable> ContributeVariables()
         {
@@ -37,6 +36,6 @@ namespace Sashimi.AzureWebApp.Endpoints
                 yield return (DefaultWorkerPoolId, DocumentType.WorkerPool);
         }
 
-        public string DefaultWorkerPoolId { get; set; }
+        public string DefaultWorkerPoolId { get; set; } = string.Empty;
     }
 }

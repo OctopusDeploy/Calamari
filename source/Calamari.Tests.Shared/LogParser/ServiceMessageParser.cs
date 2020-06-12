@@ -101,7 +101,7 @@ namespace Calamari.Tests.Shared.LogParser
                 var element = XElement.Parse("<" + message + "/>");
                 var name = element.Name.LocalName;
                 var values = element.Attributes().ToDictionary(s => s.Name.LocalName, s => Encoding.UTF8.GetString(Convert.FromBase64String(s.Value)), StringComparer.OrdinalIgnoreCase);
-                serviceMessage(new ServiceMessage(name, values!));
+                serviceMessage(new ServiceMessage(name, values));
             }
             catch
             {
