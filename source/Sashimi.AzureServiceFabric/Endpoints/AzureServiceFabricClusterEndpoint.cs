@@ -1,5 +1,4 @@
-﻿#nullable disable
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using Octopus.Data.Model;
 using Sashimi.Server.Contracts;
@@ -15,17 +14,17 @@ namespace Sashimi.AzureServiceFabric.Endpoints
         public override DeploymentTargetType DeploymentTargetType { get; } = AzureServiceFabricClusterDeploymentTargetType;
         public override string Description => ConnectionEndpoint;
 
-        public string ConnectionEndpoint { get; set; }
+        public string ConnectionEndpoint { get; set; } = string.Empty;
         public AzureServiceFabricSecurityMode SecurityMode { get; set; }
-        public string ServerCertThumbprint { get; set; }
-        public string ClientCertVariable { get; set; }
-        public string CertificateStoreLocation { get; set; }
-        public string CertificateStoreName { get; set; }
-        public AzureServiceFabricCredentialType AadCredentialType { get; set; }
-        public string AadClientCredentialSecret { get; set; }
-        public string AadUserCredentialUsername { get; set; }
+        public string? ServerCertThumbprint { get; set; }
+        public string? ClientCertVariable { get; set; }
+        public string? CertificateStoreLocation { get; set; }
+        public string? CertificateStoreName { get; set; }
+        public AzureServiceFabricCredentialType? AadCredentialType { get; set; }
+        public string? AadClientCredentialSecret { get; set; }
+        public string? AadUserCredentialUsername { get; set; }
 
-        public SensitiveString AadUserCredentialPassword { get; set; }
+        public SensitiveString? AadUserCredentialPassword { get; set; }
 
         public override IEnumerable<Variable> ContributeVariables()
         {
@@ -48,7 +47,7 @@ namespace Sashimi.AzureServiceFabric.Endpoints
             }
         }
 
-        public string DefaultWorkerPoolId { get; set;  }
+        public string DefaultWorkerPoolId { get; set; } = string.Empty;
 
         public override IEnumerable<(string id, DocumentType documentType)> GetRelatedDocuments()
         {

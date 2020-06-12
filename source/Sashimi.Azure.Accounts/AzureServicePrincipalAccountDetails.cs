@@ -42,9 +42,9 @@ namespace Sashimi.Azure.Accounts
 
         public override IEnumerable<Variable> ContributeVariables()
         {
-            yield return new Variable(SpecialVariables.Action.Azure.SubscriptionId, SubscriptionNumber!);
-            yield return new Variable(SpecialVariables.Action.Azure.ClientId, ClientId!);
-            yield return new Variable(SpecialVariables.Action.Azure.TenantId, TenantId!);
+            yield return new Variable(SpecialVariables.Action.Azure.SubscriptionId, SubscriptionNumber);
+            yield return new Variable(SpecialVariables.Action.Azure.ClientId, ClientId);
+            yield return new Variable(SpecialVariables.Action.Azure.TenantId, TenantId);
             yield return new Variable(SpecialVariables.Action.Azure.Password, Password!.Value, VariableType.Sensitive);
 
             if (!String.IsNullOrWhiteSpace(AzureEnvironment))
@@ -70,13 +70,13 @@ namespace Sashimi.Azure.Accounts
                 throw new InvalidOperationException($"Can only expand variables for type {ExpandsVariableType}");
             }
 
-            yield return new Variable($"{variable.Name}.Client", ClientId!);
-            yield return new Variable($"{variable.Name}.SubscriptionNumber", SubscriptionNumber!);
-            yield return new Variable($"{variable.Name}.Password", Password!);
-            yield return new Variable($"{variable.Name}.TenantId", TenantId!);
-            yield return new Variable($"{variable.Name}.AzureEnvironment", AzureEnvironment!);
-            yield return new Variable($"{variable.Name}.ActiveDirectoryEndpointBaseUri", ActiveDirectoryEndpointBaseUri!);
-            yield return new Variable($"{variable.Name}.ResourceManagementEndpointBaseUri", ResourceManagementEndpointBaseUri!);
+            yield return new Variable($"{variable.Name}.Client", ClientId);
+            yield return new Variable($"{variable.Name}.SubscriptionNumber", SubscriptionNumber);
+            yield return new Variable($"{variable.Name}.Password", Password);
+            yield return new Variable($"{variable.Name}.TenantId", TenantId);
+            yield return new Variable($"{variable.Name}.AzureEnvironment", AzureEnvironment);
+            yield return new Variable($"{variable.Name}.ActiveDirectoryEndpointBaseUri", ActiveDirectoryEndpointBaseUri);
+            yield return new Variable($"{variable.Name}.ResourceManagementEndpointBaseUri", ResourceManagementEndpointBaseUri);
         }
 
         public IEnumerable<(string property, bool isSensitive)> GetVariableReferencePropertiesToExpand(VariableType variableType)

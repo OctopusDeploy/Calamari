@@ -24,8 +24,8 @@ namespace Sashimi.Aws.Accounts
             if (variable.Type != ExpandsVariableType)
                 throw new InvalidOperationException($"Can only expand variables for type {ExpandsVariableType}");
 
-            yield return new Variable($"{variable.Name}.AccessKey", AccessKey!);
-            yield return new Variable($"{variable.Name}.SecretKey", SecretKey!);
+            yield return new Variable($"{variable.Name}.AccessKey", AccessKey);
+            yield return new Variable($"{variable.Name}.SecretKey", SecretKey);
         }
 
         public override IEnumerable<Variable> ContributeVariables()
