@@ -12,7 +12,7 @@ namespace Sashimi.AzureCloudService.Endpoints
     {
         public DeploymentTargetType DeploymentTargetType => AzureCloudServiceEndpoint.AzureCloudServiceDeploymentTargetType;
         public Type DomainType => typeof(AzureCloudServiceEndpoint);
-        public Type ApiType => typeof(AzureCloudServiceResource);
+        public Type ApiType => typeof(CloudServiceEndpointResource);
         public IValidator Validator => new AzureCloudServiceEndpointValidator();
 
         public IEnumerable<AccountType> SupportedAccountTypes
