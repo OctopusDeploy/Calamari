@@ -68,6 +68,9 @@ namespace Calamari.Azure.Integration
                 Log.Info("Using Azure Environment override - {0}", azureEnvironment);
             }
             SetOutputVariable("OctopusAzureEnvironment", azureEnvironment, variables);
+            
+            SetOutputVariable("OctopusAzureExtensionsDirectory",
+                variables.Get(SpecialVariables.Action.Azure.ExtensionsDirectory), variables);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
