@@ -25,6 +25,7 @@ namespace Calamari.CloudAccounts
         readonly string assumeRoleArn;
         readonly string assumeRoleExternalId;
         readonly string assumeRoleSession;
+        readonly string assumeRoleDurationSeconds;
 
         public static async Task<AwsEnvironmentGeneration> Create(ILog log, IVariables variables)
         {
@@ -61,6 +62,7 @@ namespace Calamari.CloudAccounts
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
             assumeRoleExternalId = variables.Get("Octopus.Action.Aws.AssumeRoleExternalId")?.Trim();
             assumeRoleSession = variables.Get("Octopus.Action.Aws.AssumedRoleSession")?.Trim();
+            assumeRoleDurationSeconds = variables.Get("Octopus.Action.Aws.AssumeRoleSessionDurationSeconds")?.Trim();
         }
 
         /// <summary>
@@ -187,7 +189,8 @@ namespace Calamari.CloudAccounts
                    {
                        RoleArn = assumeRoleArn,
                        RoleSessionName = assumeRoleSession,
-                       ExternalId = string.IsNullOrWhiteSpace(assumeRoleExternalId) ? null : assumeRoleExternalId
+                       ExternalId = string.IsNullOrWhiteSpace(assumeRoleExternalId) ? null : assumeRoleExternalId,
+                       DurationSeconds = int.TryParse(assumeRoleDurationSeconds, out var durationSeconds) ? durationSeconds : 3600
                    })
                ).Credentials;
 
