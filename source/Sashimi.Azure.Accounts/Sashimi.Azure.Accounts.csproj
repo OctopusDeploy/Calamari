@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <Nullable>enable</Nullable>
+        <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Azure.Common\Sashimi.Azure.Common.csproj" />
+        <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
+        <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.7" />
+        <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="1.6.0-preview" />
+        <PackageReference Include="Microsoft.Azure.Management.Storage" Version="9.0.0-preview" />
+        <PackageReference Include="Microsoft.Azure.Management.Websites" Version="2.0.1" />
+    </ItemGroup>
+
+</Project>

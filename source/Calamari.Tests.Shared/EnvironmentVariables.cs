@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 namespace Calamari.Tests.Shared
 {
@@ -27,21 +26,24 @@ namespace Calamari.Tests.Shared
         [EnvironmentVariable("Azure_OctopusAPITester_ClientId", "Azure - OctopusAPITester")]
         AzureSubscriptionClientId,
 
+        [EnvironmentVariable("Azure_OctopusAPITester_Certificate", "Azure - OctopusAPITester")]
+        AzureSubscriptionCertificate,
+
         [EnvironmentVariable("GitHub_OctopusAPITester_Username", "GitHub Test Account")]
         GitHubUsername,
 
         [EnvironmentVariable("GitHub_OctopusAPITester_Password", "GitHub Test Account")]
         GitHubPassword,
-        
+
         [EnvironmentVariable("K8S_OctopusAPITester_Token", "GKS Kubernetes API Test Cluster Token")]
         KubernetesClusterToken,
-        
+
         [EnvironmentVariable("K8S_OctopusAPITester_Server", "GKS Kubernetes API Test Cluster Url")]
         KubernetesClusterUrl,
-        
+
         [EnvironmentVariable("Helm_OctopusAPITester_Password", "Helm Password for https://octopusdeploy.jfrog.io")]
         HelmPassword,
-        
+
         [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "Password for DockerHub Test reader account")]
         DockerReaderPassword,
 
@@ -54,24 +56,14 @@ namespace Calamari.Tests.Shared
 
     public static class ExternalVariables
     {
-        public static void LogMissingVariables()
-        {
-            var missingVariables = Enum.GetValues(typeof(ExternalVariable)).Cast<ExternalVariable>()
-                .Select(prop => EnvironmentVariableAttribute.Get(prop))
-                .Where(attr => Environment.GetEnvironmentVariable(attr.Name) == null)
-                .ToList();
-
-            if (!missingVariables.Any())
-                return;
-
-            Log.Warn($"The following environment variables could not be found: " +
-                $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}\t\tSource: {var.LastPassName}"))}" +
-                $"\n\nTests that rely on these variables are likely to fail.");
-        }
-
         public static string Get(ExternalVariable property)
         {
             var attr = EnvironmentVariableAttribute.Get(property);
+            if (attr == null)
+            {
+                throw new Exception($"`{property}` does not include a {nameof(EnvironmentVariableAttribute)}.");
+            }
+
             var valueFromEnv = Environment.GetEnvironmentVariable(attr.Name);
             if (valueFromEnv == null)
             {
@@ -93,10 +85,14 @@ namespace Calamari.Tests.Shared
             LastPassName = lastPassName;
         }
 
-        public static EnvironmentVariableAttribute Get(object enm)
+        public static EnvironmentVariableAttribute? Get(object enm)
         {
             var mi = enm?.GetType().GetMember(enm.ToString());
-            if (mi == null || mi.Length <= 0) return null;
+            if (mi == null || mi.Length <= 0)
+            {
+                return null;
+            }
+
             return GetCustomAttribute(mi[0], typeof(EnvironmentVariableAttribute)) as EnvironmentVariableAttribute;
         }
     }

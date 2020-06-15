@@ -2,7 +2,7 @@
 {
     public class OutputVariable
     {
-        public OutputVariable(string name, string value, bool isSensitive = false)
+        public OutputVariable(string name, string? value, bool isSensitive = false)
         {
             Name = name;
             Value = value;
@@ -10,7 +10,7 @@
         }
 
         public string Name { get; }
-        public string Value { get; }
+        public string? Value { get; }
         public bool IsSensitive { get; }
     }
 }

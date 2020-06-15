@@ -6,22 +6,28 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <OutputPath>bin\</OutputPath>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
     <ProjectReference Include="..\Sashimi.Terraform\Sashimi.Terraform.csproj" />
     <ProjectReference Include="..\Sashimi.Tests.Shared\Sashimi.Tests.Shared.csproj" />
-    <PackageReference Include="Assent" Version="1.3.0" />
+    <PackageReference Include="Assent" Version="1.6.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
-    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.20" />
+    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.21" />
   </ItemGroup>
-  
+
   <ItemGroup>
-    <EmbeddedResource Include="**/*.tf" />
+    <None Update="**/*.tf*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="**/*.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
+
 </Project>

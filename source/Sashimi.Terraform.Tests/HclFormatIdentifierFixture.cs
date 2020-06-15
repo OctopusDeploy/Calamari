@@ -1,7 +1,9 @@
 ﻿using System;
+using System.IO;
 using FluentAssertions;
 using NUnit.Framework;
 using Sashimi.Terraform.CloudTemplates;
+using Sashimi.Tests.Shared;
 using Sashimi.Tests.Shared.Extensions;
 
 namespace Sashimi.Terraform.Tests
@@ -11,7 +13,7 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public void CanIdentify()
         {
-            var template = this.ReadResourceAsString("HclFormatIdentifierFixture_main.tf");
+            var template = File.ReadAllText(TestEnvironment.GetTestPath("HclFormatIdentifierFixture_main.tf"));
             HclFormatIdentifier.IsHcl(template)
                 .Should().BeTrue();
         }

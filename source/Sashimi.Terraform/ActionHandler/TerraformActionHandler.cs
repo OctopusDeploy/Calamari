@@ -8,58 +8,6 @@ using Sashimi.Terraform.CloudTemplates;
 
 namespace Sashimi.Terraform.ActionHandler
 {
-    class TerraformApplyActionHandler : TerraformActionHandler
-    {
-        public override string Id => TerraformActionTypes.Apply;
-        public override string Name => "Apply a Terraform template";
-        public override string Description => "Applies a Terraform template";
-        public override string ToolCommand => "apply-terraform";
-
-        public TerraformApplyActionHandler(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
-            : base(cloudTemplateHandlerFactory)
-        {
-        }
-    }
-
-    class TerraformDestroyActionHandler : TerraformActionHandler
-    {
-        public TerraformDestroyActionHandler(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
-            : base(cloudTemplateHandlerFactory)
-        {
-        }
-
-        public override string Id => TerraformActionTypes.Destroy;
-        public override string Name => "Destroy Terraform resources";
-        public override string Description => "Destroys Terraform resources";
-        public override string ToolCommand => "destroy-terraform";
-    }
-
-    class TerraformPlanActionHandler : TerraformActionHandler
-    {
-        public TerraformPlanActionHandler(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
-            : base(cloudTemplateHandlerFactory)
-        {
-        }
-
-        public override string Id => TerraformActionTypes.Plan;
-        public override string Name => "Plan to apply a Terraform template";
-        public override string Description => "Plans the creation of a Terraform deployment";
-        public override string ToolCommand => "plan-terraform";
-    }
-
-    class TerraformPlanDestroyActionHandler : TerraformActionHandler
-    {
-        public TerraformPlanDestroyActionHandler(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
-            : base(cloudTemplateHandlerFactory)
-        {
-        }
-
-        public override string Id => TerraformActionTypes.PlanDestroy;
-        public override string Name => "Plan a Terraform destroy";
-        public override string Description => "Plans the destruction of Terraform resources";
-        public override string ToolCommand => "destroyplan-terraform";
-    }
-
     /// <summary>
     /// The action handler that prepares a Calamari script execution with
     /// the path set to include the Terraform CLI.
@@ -85,7 +33,7 @@ namespace Sashimi.Terraform.ActionHandler
         public bool CanRunOnDeploymentTarget => false;
         public ActionHandlerCategory[] Categories => new[] {ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Terraform};
 
-        public IActionHandlerResult Execute(IActionHanderContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context)
         {
             var builder = context.CalamariCommand(CalamariTerraform, ToolCommand);
 

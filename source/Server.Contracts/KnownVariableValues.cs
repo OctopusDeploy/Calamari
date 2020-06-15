@@ -9,6 +9,7 @@
                 public static class ScriptSource
                 {
                     public static readonly string Package = "Package";
+                    public static readonly string Inline = "Inline";
                 }
             }
         }

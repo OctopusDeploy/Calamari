@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
-using Octopus.CoreUtilities.Extensions;
 using Octopus.Server.Extensibility.Metadata;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.CloudTemplates;
@@ -25,40 +24,43 @@ namespace Sashimi.Terraform.CloudTemplates
 
         public Metadata ParseTypes(string template)
         {
-            return template?
-                .Map(GetVariables)
-                .Map(variable => variable.Select(p => new PropertyMetadata
-                    {
-                        DisplayInfo = new DisplayInfo
-                        {
-                            Description = p.Value.SelectToken("description")?.ToString(),
-                            Label = p.Key,
-                            Required = true,
-                        },
-                        Type = GetType(p.Value),
-                        Name = p.Key,
-                    }).ToList()
-                )
-                .Map(properties => new List<TypeMetadata>
+            if (template == null) return new Metadata();
+
+            var jTokenDict = GetVariables(template);
+            var properties = jTokenDict.Select(p => new PropertyMetadata
+            {
+                DisplayInfo = new DisplayInfo
+                {
+                    Description = p.Value!.SelectToken("description")?.ToString(),
+                    Label = p.Key,
+                    Required = true,
+                },
+                Type = GetType(p.Value!),
+                Name = p.Key,
+            }).ToList();
+
+            return new Metadata
+            {
+                Types = new List<TypeMetadata>
                 {
                     new TypeMetadata
                     {
                         Name = TerraformDataTypes.TerraformTemplateTypeName,
                         Properties = properties
                     }
-                })
-                .Map(typeMetadata => new Metadata() {Types = typeMetadata}) ?? new Metadata();
+                }
+            };
         }
 
         public object ParseModel(string template)
         {
             var parameters = GetVariables(template);
             return parameters?
-                .Select(x => new KeyValuePair<string, object?>(x.Key.ToString(), GetDefaultValue(x.Value)))
+                .Select(x => new KeyValuePair<string, object?>(x.Key.ToString(), GetDefaultValue(x.Value!)))
                 .ToDictionary(x => x.Key, x => x.Value) ?? new Dictionary<string, object?>();
         }
 
-        object? GetDefaultValue(JToken argValue)
+        static object? GetDefaultValue(JToken argValue)
         {
             var defaultValueToken = argValue.SelectToken("default");
             return defaultValueToken?.ToString();
@@ -93,11 +95,11 @@ namespace Sashimi.Terraform.CloudTemplates
             // Otherwise we default to a string
         }
 
-        IDictionary<string, JToken> GetVariables(string template)
+        static IDictionary<string, JToken?> GetVariables(string template)
         {
             var o = JObject.Parse(template);
-            IDictionary<string, JToken> variables = (JObject) o["variable"];
-            return variables ?? new Dictionary<string, JToken>();
+            IDictionary<string, JToken?>? variables = (JObject)o["variable"]!;
+            return variables ?? new Dictionary<string, JToken?>();
         }
     }
 }

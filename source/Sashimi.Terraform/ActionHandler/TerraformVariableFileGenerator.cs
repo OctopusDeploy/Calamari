@@ -112,10 +112,10 @@ namespace Sashimi.Terraform.ActionHandler
         {
             if (propertyType != null && propertyType.StartsWith(TerraformDataTypes.RawPrefix))
             {
-                return "\"" + HclParser.EscapeString(property.Name) + "\" = " + property.Value;
+                return HclParser.EscapeString(property.Name) + " = " + property.Value;
             }
 
-            return "\"" + HclParser.EscapeString(property.Name) + "\" = \"" + HclParser.EscapeString(property.Value.ToString()) + "\"";
+            return HclParser.EscapeString(property.Name) + " = \"" + HclParser.EscapeString(property.Value.ToString()) + "\"";
         }
 
         public static string? GetPropertyType(Metadata metadata, string property)
