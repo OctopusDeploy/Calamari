@@ -26,9 +26,9 @@ namespace Sashimi.AzureCloudService.Endpoints
             return new AzureCloudServiceHealthCheckActionHandler();
         }
 
-        public IEnumerable<(string key, object value)> GetMetric(IReadOnlyCollection<Endpoint> endpoints)
+        public IEnumerable<(string key, object value)> GetMetric(IEndpointMetricContext context)
         {
-            var total = endpoints.Count(m => m is AzureCloudServiceEndpoint);
+            var total = context.GetEndpoints<AzureCloudServiceEndpoint>().Count();
 
             yield return ("azurecloudservices", total);
         }

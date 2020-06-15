@@ -29,9 +29,9 @@ namespace Sashimi.AzureWebApp.Endpoints
             return new AzureWebAppHealthCheckActionHandler();
         }
 
-        public IEnumerable<(string key, object value)> GetMetric(IReadOnlyCollection<Endpoint> endpoints)
+        public IEnumerable<(string key, object value)> GetMetric(IEndpointMetricContext context)
         {
-            var total = endpoints.Count(m => m is AzureWebAppEndpoint);
+            var total = context.GetEndpoints<AzureWebAppEndpoint>().Count();
 
             yield return ("azurewebapps", total);
         }

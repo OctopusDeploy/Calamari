@@ -27,9 +27,9 @@ namespace Sashimi.AzureServiceFabric.Endpoints
             get { yield break; }
         }
 
-        public IEnumerable<(string key, object value)> GetMetric(IReadOnlyCollection<Endpoint> endpoints)
+        public IEnumerable<(string key, object value)> GetMetric(IEndpointMetricContext context)
         {
-            var serviceFabricEndpoints = endpoints.OfType<AzureServiceFabricClusterEndpoint>().ToArray();
+            var serviceFabricEndpoints = context.GetEndpoints<AzureServiceFabricClusterEndpoint>().ToArray();
             var total = serviceFabricEndpoints.Length;
 
             yield return ("servicefabricclusters", total);
