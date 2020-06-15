@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using FluentValidation;
 using Newtonsoft.Json;
+using Octopus.Server.Extensibility.HostServices.Mapping;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.ActionHandlers;
@@ -10,9 +11,11 @@ using Sashimi.Server.Contracts.Endpoints;
 
 namespace Sashimi.AzureServiceFabric.Endpoints
 {
-    class AzureServiceFabricClusterDeploymentTargetTypeProvider : IDeploymentTargetTypeProvider
+    internal class AzureServiceFabricClusterDeploymentTargetTypeProvider : IDeploymentTargetTypeProvider
     {
-        public DeploymentTargetType DeploymentTargetType => AzureServiceFabricClusterEndpoint.AzureServiceFabricClusterDeploymentTargetType;
+        public DeploymentTargetType DeploymentTargetType =>
+            AzureServiceFabricClusterEndpoint.AzureServiceFabricClusterDeploymentTargetType;
+
         public Type DomainType => typeof(AzureServiceFabricClusterEndpoint);
         public Type ApiType => typeof(ServiceFabricEndpointResource);
         public IValidator Validator => new AzureServiceFabricClusterEndpointValidator();
@@ -27,6 +30,11 @@ namespace Sashimi.AzureServiceFabric.Endpoints
             get { yield break; }
         }
 
+        public void BuildMappings(IResourceMappingsBuilder builder)
+        {
+            builder.Map<ServiceFabricEndpointResource, AzureServiceFabricClusterEndpoint>();
+        }
+
         public IEnumerable<(string key, object value)> GetMetric(IEndpointMetricContext context)
         {
             var serviceFabricEndpoints = context.GetEndpoints<AzureServiceFabricClusterEndpoint>().ToArray();
@@ -36,14 +44,19 @@ namespace Sashimi.AzureServiceFabric.Endpoints
 
             if (total > 0)
             {
-                yield return ("servicefabricclusterdetail", ConvertObject(GetServiceFabricMetrics(serviceFabricEndpoints)));
+                yield return ("servicefabricclusterdetail",
+                    ConvertObject(GetServiceFabricMetrics(serviceFabricEndpoints)));
             }
         }
 
-        static IList<ServiceFabricDetails> GetServiceFabricMetrics(IEnumerable<AzureServiceFabricClusterEndpoint> endpoints)
+        static IList<ServiceFabricDetails> GetServiceFabricMetrics(
+            IEnumerable<AzureServiceFabricClusterEndpoint> endpoints)
         {
-            bool isAzure(AzureServiceFabricClusterEndpoint e) => e.ConnectionEndpoint != null && e.ConnectionEndpoint.Contains("azure.com");
-            bool isOnPrem(AzureServiceFabricClusterEndpoint e) => e.ConnectionEndpoint != null && !e.ConnectionEndpoint.Contains("azure.com");
+            bool isAzure(AzureServiceFabricClusterEndpoint e) =>
+                e.ConnectionEndpoint != null && e.ConnectionEndpoint.Contains("azure.com");
+
+            bool isOnPrem(AzureServiceFabricClusterEndpoint e) =>
+                e.ConnectionEndpoint != null && !e.ConnectionEndpoint.Contains("azure.com");
 
             return endpoints
                 .GroupBy(x => x.SecurityMode)
