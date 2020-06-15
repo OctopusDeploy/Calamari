@@ -128,6 +128,12 @@ namespace Calamari.Aws.Integration.CloudFormation
                     "Please ensure the current account has permission to perform action 'cloudformation:DescribeStackEvents'" +
                     ex.Message);
             }
+            catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "ExpiredToken")
+            {
+                throw new PermissionException(
+                    "The security token has expired. Please increase the session duration and/or check that the system date and time are set correctly." +
+                    ex.Message);
+            }
             catch (AmazonCloudFormationException)
             {
                 return Maybe<StackEvent>.None;
