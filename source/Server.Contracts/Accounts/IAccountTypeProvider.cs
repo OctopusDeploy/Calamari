@@ -13,6 +13,6 @@ namespace Sashimi.Server.Contracts.Accounts
         Type ApiType { get; }
         IValidator Validator { get; }
         IVerifyAccount Verifier { get; }
-        IEnumerable<(string key, object value)> GetMetric(IReadOnlyCollection<AccountDetails> details);
+        IEnumerable<(string key, object value)> GetMetric(IAccountMetricContext context);
     }
 }

@@ -50,9 +50,9 @@ namespace Sashimi.Azure.Accounts
         public IValidator Validator { get; } = new AzureServicePrincipalAccountValidator();
         public IVerifyAccount Verifier { get; }
 
-        public IEnumerable<(string key, object value)> GetMetric(IReadOnlyCollection<AccountDetails> details)
+        public IEnumerable<(string key, object value)> GetMetric(IAccountMetricContext context)
         {
-            var total = details.Count(accountDetails => accountDetails.AccountType == AccountType);
+            var total = context.GetAccountDetails<AzureServicePrincipalAccountDetails>().Count();
 
             yield return ("azureserviceprincipalaccount", total);
         }

@@ -45,9 +45,9 @@ namespace Sashimi.Aws.Accounts
         public IValidator Validator { get; } = new AmazonWebServicesAccountValidator();
         public IVerifyAccount Verifier { get; } = new AmazonWebServicesAccountVerifier();
 
-        public IEnumerable<(string key, object value)> GetMetric(IReadOnlyCollection<AccountDetails> details)
+        public IEnumerable<(string key, object value)> GetMetric(IAccountMetricContext context)
         {
-            var total = details.Count(accountDetails => accountDetails.AccountType == AccountType);
+            var total = context.GetAccountDetails<AmazonWebServicesAccountDetails>().Count();
 
             yield return ("amazonwebservicesaccount", total);
         }
