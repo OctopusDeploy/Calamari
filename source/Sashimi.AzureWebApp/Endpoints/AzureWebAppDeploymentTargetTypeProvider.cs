@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using FluentValidation;
 using Sashimi.Azure.Accounts;
@@ -26,6 +27,13 @@ namespace Sashimi.AzureWebApp.Endpoints
         public IActionHandler HealthCheckActionHandlerForTargetType()
         {
             return new AzureWebAppHealthCheckActionHandler();
+        }
+
+        public IEnumerable<(string key, object value)> GetMetric(IEndpointMetricContext context)
+        {
+            var total = context.GetEndpoints<AzureWebAppEndpoint>().Count();
+
+            yield return ("azurewebapps", total);
         }
     }
 }

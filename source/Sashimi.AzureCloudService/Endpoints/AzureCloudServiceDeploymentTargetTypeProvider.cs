@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using FluentValidation;
 using Sashimi.Server.Contracts;
@@ -23,6 +24,13 @@ namespace Sashimi.AzureCloudService.Endpoints
         public IActionHandler HealthCheckActionHandlerForTargetType()
         {
             return new AzureCloudServiceHealthCheckActionHandler();
+        }
+
+        public IEnumerable<(string key, object value)> GetMetric(IEndpointMetricContext context)
+        {
+            var total = context.GetEndpoints<AzureCloudServiceEndpoint>().Count();
+
+            yield return ("azurecloudservices", total);
         }
     }
 }
