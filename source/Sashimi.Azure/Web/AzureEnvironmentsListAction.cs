@@ -6,7 +6,7 @@ using Octopus.Server.Extensibility.Extensions.Infrastructure.Web.Api;
 
 namespace Sashimi.Azure.Web
 {
-    public class AzureEnvironmentsListAction : IAsyncApiAction
+    class AzureEnvironmentsListAction : IAsyncApiAction
     {
         static readonly IReadOnlyCollection<AzureEnvironmentResource> EnvironmentResources;
 
@@ -79,7 +79,7 @@ namespace Sashimi.Azure.Web
         }
     }
 
-    public class AzureEnvironmentResource
+    class AzureEnvironmentResource
     {
         public string Name { get; set; }
         public string DisplayName { get; set; }

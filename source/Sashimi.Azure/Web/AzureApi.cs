@@ -4,7 +4,7 @@ using Octopus.Server.Extensibility.Extensions.Infrastructure.Web.Api;
 
 namespace Sashimi.Azure.Web
 {
-    public class AzureApi : RegisterEndpoint
+    class AzureApi : RegisterEndpoint
     {
         public const string AzureEnvironmentsPath = "/api/accounts/azureenvironments";
 
