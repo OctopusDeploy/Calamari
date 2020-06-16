@@ -8,7 +8,7 @@
         {
              public static readonly string Id = "Octopus.Project.Id";
         }
-        
+
         public static class Account
         {
             public static readonly string AccountType = "Octopus.Account.AccountType";
@@ -22,7 +22,7 @@
         public static class Deployment
         {
             public static readonly string Id = "Octopus.Deployment.Id";
-            
+
             public static class Tenant
             {
                 public static string Id = "Octopus.Deployment.Tenant.Id";
@@ -45,17 +45,17 @@
             {
                 return $"{variableName}.CertificatePem";
             }
-            
+
             public static string PrivateKey(string variableName)
             {
                 return $"{variableName}.PrivateKey";
             }
-            
+
             public static string PrivateKeyPem(string variableName)
             {
                 return $"{variableName}.PrivateKeyPem";
             }
-            
+
             public static string Subject(string variableName)
             {
                 return $"{variableName}.Subject";
@@ -66,12 +66,17 @@
         {
             public static readonly string Id = "Octopus.Step.Id";
         }
-        
+
         public static class Action
         {
             public static readonly string Id = "Octopus.Action.Id";
             public static readonly string EnabledFeatures = "Octopus.Action.EnabledFeatures";
             public static readonly string UseBundledTooling = "OctopusUseBundledTooling";
+
+            public static class Container
+            {
+                public static readonly string Image = "Octopus.Action.Container.Image";
+            }
 
             public static class Script
             {
@@ -80,7 +85,7 @@
                 public static readonly string ScriptFileName = "Octopus.Action.Script.ScriptFileName";
                 public static readonly string ScriptParameters = "Octopus.Action.Script.ScriptParameters";
                 public static readonly string ScriptSource = "Octopus.Action.Script.ScriptSource";
-               
+
                 public static class ScriptSourceOptions
                 {
                     public const string Package = "Package";
@@ -100,7 +105,7 @@
 
                 public static readonly string FeedId = "Octopus.Action.Package.FeedId";
                 public static readonly string NuGetFeedId = "Octopus.Action.Package.NuGetFeedId";
-                
+
                 public static string FeedIdForPackage(string name)
                 {
                     return $"Octopus.Action.Package[{name}].FeedId";
@@ -110,7 +115,7 @@
                 {
                     return $"Octopus.Action.Package[{name}].Image";
                 }
-                
+
                 public static string RegistryForPackage(string name)
                 {
                     return $"Octopus.Action.Package[{name}].Registry";
@@ -120,13 +125,13 @@
                 {
                     return $"Octopus.Action.Package[{name}].Feed.UserName";
                 }
-                
+
                 public static string FeedPasswordForPackage(string name)
                 {
                     return $"Octopus.Action.Package[{name}].Feed.Password";
                 }
             }
-            
+
             public static class SubstituteInFiles
             {
                 public static readonly string Enabled = "Octopus.Action.SubstituteInFiles.Enabled";
