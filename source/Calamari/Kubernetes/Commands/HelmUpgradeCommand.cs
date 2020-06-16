@@ -80,8 +80,8 @@ namespace Calamari.Kubernetes.Commands
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };
             var deployment = new RunningDeployment(pathToPackage, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
             
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             try
             {
                 conventionRunner.RunConventions();

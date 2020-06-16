@@ -81,7 +81,7 @@ namespace Calamari.Commands
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             conventionRunner.RunConventions();
             var exitCode = variables.GetInt32(SpecialVariables.Action.Script.ExitCode);
