@@ -1,22 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Assent;
 using NUnit.Framework;
+using Server.Extensibility.Tests;
 
 namespace Sashimi.Terraform.Tests
 {
     [TestFixture]
-    public class OnlyExposeWhatIsNecessary
+    public class OnlyExposeWhatIsNecessary : OnlyExposeWhatIsNecessaryFixture
     {
-        [Test]
-        public void ServerExtensionsShouldMinimiseWhatIsExposed()
-        {
-            var assembly = typeof(TerraformModule).Assembly;
-
-            var publicThings = assembly.GetExportedTypes()
-                .Select(t => t.FullName);
-            
-            this.Assent(string.Join(Environment.NewLine, publicThings));
-        }
+        protected override Type EntryPointTypeUnderTest => typeof(TerraformModule);
     }
 }
