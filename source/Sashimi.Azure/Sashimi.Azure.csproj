@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Octopus.Server.Extensibility" Version="9.0.11-enh-privatething0003" />
+    <PackageReference Include="Octopus.Server.Extensibility" Version="9.0.11" />
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.33.0" />
   </ItemGroup>
 

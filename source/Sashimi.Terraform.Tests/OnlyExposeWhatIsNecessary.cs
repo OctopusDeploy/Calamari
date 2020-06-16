@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using Assent;
 using NUnit.Framework;
-using Server.Extensibility.Tests;
+using Octopus.Server.Extensibility.Tests;
 
 namespace Sashimi.Terraform.Tests
 {
