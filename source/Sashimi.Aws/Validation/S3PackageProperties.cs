@@ -2,7 +2,7 @@
 
 namespace Sashimi.Aws.Validation
 {
-    public class S3PackageProperties
+    class S3PackageProperties
     {
         public List<KeyValuePair<string, string>> Tags { get; } = new List<KeyValuePair<string, string>>();
         public List<KeyValuePair<string, string>> Metadata { get; } = new List<KeyValuePair<string, string>>();

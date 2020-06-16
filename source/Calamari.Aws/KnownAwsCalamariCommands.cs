@@ -1,6 +1,6 @@
 ﻿namespace Calamari.Aws
 {
-    public static class KnownAwsCalamariCommands
+    static class KnownAwsCalamariCommands
     {
         public static class Commands
         {

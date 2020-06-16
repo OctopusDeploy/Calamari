@@ -6,7 +6,7 @@ using PropertiesDictionary = System.Collections.Generic.IReadOnlyDictionary<stri
 
 namespace Sashimi.Aws.Validation
 {
-    public abstract class AwsDeploymentValidatorBase : IDeploymentActionValidator
+    abstract class AwsDeploymentValidatorBase : IDeploymentActionValidator
     {
         readonly string actionType;
 

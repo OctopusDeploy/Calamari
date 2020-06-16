@@ -1,6 +1,6 @@
 ﻿namespace Sashimi.Aws
 {
-    public static class AwsSpecialVariables
+    static class AwsSpecialVariables
     {
         public static class Account
         {

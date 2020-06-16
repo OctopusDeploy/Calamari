@@ -2,7 +2,7 @@
 
 namespace Sashimi.Aws.Validation
 {
-    public class S3FileSelectionProperties
+    class S3FileSelectionProperties
     {
         public string Type { get; set; }
         public List<KeyValuePair<string, string>> Tags { get; } = new List<KeyValuePair<string, string>>();

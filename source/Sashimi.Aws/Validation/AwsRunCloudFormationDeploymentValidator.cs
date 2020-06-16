@@ -7,7 +7,7 @@ using PropertiesDictionary = System.Collections.Generic.IReadOnlyDictionary<stri
 
 namespace Sashimi.Aws.Validation
 {
-    public class AwsRunCloudFormationDeploymentValidator : AwsDeploymentValidatorBase
+    class AwsRunCloudFormationDeploymentValidator : AwsDeploymentValidatorBase
     {
         public AwsRunCloudFormationDeploymentValidator() : base(AwsActionTypes.RunCloudFormation)
         {

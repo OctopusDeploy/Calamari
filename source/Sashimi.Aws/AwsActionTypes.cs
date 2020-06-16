@@ -1,6 +1,6 @@
 ﻿namespace Sashimi.Aws
 {
-    public static class AwsActionTypes
+    static class AwsActionTypes
     {
         public const string RunScript = "Octopus.AwsRunScript";
         public const string RunCloudFormation = "Octopus.AwsRunCloudFormation";

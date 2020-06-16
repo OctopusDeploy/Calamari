@@ -6,7 +6,7 @@ using PropertiesDictionary = System.Collections.Generic.IReadOnlyDictionary<stri
 
 namespace Sashimi.Aws.Validation
 {
-    public class AwsUploadS3DeploymentValidator : AwsDeploymentValidatorBase
+    class AwsUploadS3DeploymentValidator : AwsDeploymentValidatorBase
     {
         public AwsUploadS3DeploymentValidator() : base(AwsActionTypes.UploadS3)
         {

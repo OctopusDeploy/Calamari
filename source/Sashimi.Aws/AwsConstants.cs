@@ -3,7 +3,7 @@ using Sashimi.Server.Contracts.Calamari;
 
 namespace Sashimi.Aws
 {
-    public class AwsConstants
+    class AwsConstants
     {
         public static readonly string[] CloudTemplateProviderIds ={ "CloudFormation", "CF", "AWSCloudFormation" };
         public static readonly ActionHandlerCategory AwsActionHandlerCategory = new ActionHandlerCategory("Aws", "AWS", 600);

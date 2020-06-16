@@ -5,7 +5,7 @@ using Sashimi.Server.Contracts.CommandBuilders;
 
 namespace Sashimi.Aws.ActionHandler
 {
-    public static class AwsActionHandlerExtensions
+    static class AwsActionHandlerExtensions
     {
         public static ICalamariCommandBuilder WithAwsTools(
             this ICalamariCommandBuilder builder,

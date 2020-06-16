@@ -10,7 +10,7 @@ namespace Sashimi.Aws.ActionHandler
     /// set in the common environment variable paths. It then goes on to
     /// deploy a cloud formation template.
     /// </summary>
-    public class AwsRunCloudFormationActionHandler : IActionHandler
+    class AwsRunCloudFormationActionHandler : IActionHandler
     {
         public string Id => AwsActionTypes.RunCloudFormation;
         public string Name => "Deploy an AWS CloudFormation template";

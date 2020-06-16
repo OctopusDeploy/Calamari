@@ -11,7 +11,7 @@ namespace Sashimi.Aws.ActionHandler
     /// set in the common environment variable paths. It then goes on to
     /// deploy a cloud formation template.
     /// </summary>
-    public class AwsDeleteCloudFormationActionHandler : IActionHandler
+    class AwsDeleteCloudFormationActionHandler : IActionHandler
     {
         public string Id => AwsActionTypes.DeleteCloudFormation;
         public string Name => "Delete an AWS CloudFormation stack";

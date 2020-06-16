@@ -4,7 +4,7 @@ using Sashimi.Server.Contracts.ActionHandlers.Validation;
 
 namespace Sashimi.Aws.Validation
 {
-    public class AwsRunScriptDeploymentValidator : AwsDeploymentValidatorBase
+    class AwsRunScriptDeploymentValidator : AwsDeploymentValidatorBase
     {
         public AwsRunScriptDeploymentValidator() : base(AwsActionTypes.RunScript)
         {

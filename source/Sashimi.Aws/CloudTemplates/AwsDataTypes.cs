@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Sashimi.Aws.CloudTemplates
 {
-    public static class AwsDataTypes
+    static class AwsDataTypes
     {
         public const string CloudFormationTemplateTypeName = "CloudFormationTemplateParameters";
         const string DefaultType = "string";

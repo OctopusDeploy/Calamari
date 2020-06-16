@@ -3,7 +3,7 @@ using Sashimi.Server.Contracts.Validation;
 
 namespace Sashimi.Aws.Validation
 {
-    public class S3PackageOptionsValidator: AbstractValidator<S3PackageProperties>
+    class S3PackageOptionsValidator: AbstractValidator<S3PackageProperties>
     {
         public S3PackageOptionsValidator()
         {
