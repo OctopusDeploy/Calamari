@@ -131,7 +131,7 @@ namespace Calamari.Aws.Integration.CloudFormation
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "ExpiredToken")
             {
                 throw new PermissionException(
-                    "Security token has expired. Please increase the session duration and/or check that the system date and time are set correctly." +
+                    "Security token has expired. Please increase the session duration and/or check that the system date and time are set correctly. " +
                     ex.Message);
             }
             catch (AmazonCloudFormationException)
