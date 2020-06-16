@@ -14,8 +14,10 @@
     <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
     <ProjectReference Include="..\Sashimi.Terraform\Sashimi.Terraform.csproj" />
     <ProjectReference Include="..\Sashimi.Tests.Shared\Sashimi.Tests.Shared.csproj" />
+    <PackageReference Include="Assent" Version="1.6.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
+    <PackageReference Include="Octopus.Server.Extensibility.Tests" Version="9.0.11-enh-privatething0003" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.21" />
   </ItemGroup>
 

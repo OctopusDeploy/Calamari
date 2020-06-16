@@ -4,7 +4,7 @@ using Sashimi.Server.Contracts.CloudTemplates;
 
 namespace Sashimi.Terraform.Validation
 {
-    public class TerraformDeploymentActionValidation : IDeploymentActionValidator
+    class TerraformDeploymentActionValidation : IDeploymentActionValidator
     {
         readonly ICloudTemplateHandlerFactory cloudTemplateHandlerFactory;
 

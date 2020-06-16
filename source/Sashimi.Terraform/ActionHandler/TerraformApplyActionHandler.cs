@@ -2,7 +2,7 @@
 
 namespace Sashimi.Terraform.ActionHandler
 {
-    public class TerraformApplyActionHandler : TerraformActionHandler
+    class TerraformApplyActionHandler : TerraformActionHandler
     {
         public override string Id => TerraformActionTypes.Apply;
         public override string Name => "Apply a Terraform template";

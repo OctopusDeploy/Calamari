@@ -12,7 +12,7 @@ namespace Sashimi.Terraform.ActionHandler
     /// The action handler that prepares a Calamari script execution with
     /// the path set to include the Terraform CLI.
     /// </summary>
-    public abstract class TerraformActionHandler : IActionHandler
+    abstract class TerraformActionHandler : IActionHandler
     {
         public static readonly CalamariFlavour CalamariTerraform = new CalamariFlavour("Calamari.Terraform");
 

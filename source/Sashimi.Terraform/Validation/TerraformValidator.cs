@@ -13,7 +13,7 @@ using Sprache;
 
 namespace Sashimi.Terraform.Validation
 {
-    public class TerraformValidator : AbstractValidator<DeploymentActionValidationContext>
+    class TerraformValidator : AbstractValidator<DeploymentActionValidationContext>
     {
         readonly ICloudTemplateHandlerFactory cloudTemplateHandlerFactory;
         const string DefaultTemplate = "{}";

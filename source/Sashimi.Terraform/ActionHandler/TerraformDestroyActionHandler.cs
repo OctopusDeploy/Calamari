@@ -2,7 +2,7 @@
 
 namespace Sashimi.Terraform.ActionHandler
 {
-    public class TerraformDestroyActionHandler : TerraformActionHandler
+    class TerraformDestroyActionHandler : TerraformActionHandler
     {
         public TerraformDestroyActionHandler(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
             : base(cloudTemplateHandlerFactory)

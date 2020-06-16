@@ -8,7 +8,7 @@ using Sashimi.Server.Contracts.CloudTemplates;
 
 namespace Sashimi.Terraform.CloudTemplates
 {
-    public class TerraformJsonCloudTemplateHandler : ICloudTemplateHandler
+    class TerraformJsonCloudTemplateHandler : ICloudTemplateHandler
     {
         readonly IFormatIdentifier formatIdentifier;
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Sashimi.Terraform.CloudTemplates
 {
-    public static class TerraformDataTypes
+    static class TerraformDataTypes
     {
         public const string TerraformTemplateTypeName = "TerraformTemplateParameters";
         public static string DefaultType = "string";

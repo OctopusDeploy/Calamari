@@ -2,7 +2,7 @@ using System;
 
 namespace Sashimi.Terraform
 {
-    public enum TerraformTemplateFormat
+    enum TerraformTemplateFormat
     {
         Json,
         Hcl

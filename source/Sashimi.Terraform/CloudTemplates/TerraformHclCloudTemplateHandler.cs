@@ -8,7 +8,7 @@ using Sprache;
 
 namespace Sashimi.Terraform.CloudTemplates
 {
-    public class TerraformHclCloudTemplateHandler : ICloudTemplateHandler
+    class TerraformHclCloudTemplateHandler : ICloudTemplateHandler
     {
         public bool CanHandleTemplate(string providerId, string template)
             => TerraformConstants.CloudTemplateProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase) &&

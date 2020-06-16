@@ -4,7 +4,7 @@ using Sprache;
 
 namespace Sashimi.Terraform.CloudTemplates
 {
-    public static class HclFormatIdentifier
+    static class HclFormatIdentifier
     {
         public static bool IsHcl(string template)
             => !string.IsNullOrWhiteSpace(template) && 
