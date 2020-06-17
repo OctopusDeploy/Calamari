@@ -30,7 +30,8 @@ namespace Sashimi.Aws.Accounts
 
         public override IEnumerable<Variable> ContributeVariables()
         {
-            yield break;
+            yield return new Variable(SpecialVariables.Action.Amazon.AccessKey, AccessKey);
+            yield return new Variable(SpecialVariables.Action.Amazon.SecretKey, SecretKey);
         }
 
         public bool CanExpand(string id, string referencedEntityId)

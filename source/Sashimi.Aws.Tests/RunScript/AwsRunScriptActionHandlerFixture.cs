@@ -22,7 +22,7 @@ namespace Sashimi.Aws.Tests.RunScript
         public void AwsPowerShellToolAdded(bool? variableValue, bool expectedAction)
         {
             var builder = Substitute.For<ICalamariCommandBuilder>();
-            builder.ReturnsForAll<ICalamariCommandBuilder>(builder);
+            builder.ReturnsForAll(builder);
             var context = Substitute.For<IActionHandlerContext>();
 
             var variables = new TestVariableDictionary();
@@ -45,7 +45,7 @@ namespace Sashimi.Aws.Tests.RunScript
         public void AwsCliToolAdded(bool? variableValue, bool expectedAction)
         {
             var builder = Substitute.For<ICalamariCommandBuilder>();
-            builder.ReturnsForAll<ICalamariCommandBuilder>(builder);
+            builder.ReturnsForAll(builder);
             var context = Substitute.For<IActionHandlerContext>();
 
             var variables = new TestVariableDictionary();

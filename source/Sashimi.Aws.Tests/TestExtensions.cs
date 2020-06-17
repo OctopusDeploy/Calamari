@@ -1,8 +1,9 @@
-using System;
 using System.Collections.Generic;
 using Calamari;
 using Calamari.Tests.Shared;
 using Newtonsoft.Json;
+using Octopus.Data.Model;
+using Sashimi.Aws.Accounts;
 using Sashimi.Server.Contracts;
 using Sashimi.Tests.Shared.Server;
 
@@ -10,11 +11,21 @@ namespace Sashimi.Aws.Tests
 {
     public static class TestExtensions
     {
-        public static TestActionHandlerContext<TCalamariProgram> WithAwsAccount<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context) 
+        public static TestActionHandlerContext<TCalamariProgram> WithAwsAccount<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context)
             where TCalamariProgram : CalamariFlavourProgram
         {
-            context.Variables.Add(AwsSpecialVariables.Account.AccessKey, ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey));
-            context.Variables.Add(AwsSpecialVariables.Account.SecretKey, ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+            var accountDetails = new AmazonWebServicesAccountDetails
+            {
+                AccessKey = ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey),
+                SecretKey = ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey)
+                    .ToSensitiveString()
+            };
+
+            foreach (var contributeVariable in accountDetails.ContributeVariables())
+            {
+                context.Variables.Add(contributeVariable.Name, contributeVariable.Value);
+
+            }
 
             return context;
         }
@@ -45,7 +56,7 @@ namespace Sashimi.Aws.Tests
 
             return context;
         }
-        
+
         public static TestActionHandlerContext<TCalamariProgram> WithAwsTemplateInlineSource<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string template, string templateParameters)
             where TCalamariProgram : CalamariFlavourProgram
         {
@@ -55,8 +66,8 @@ namespace Sashimi.Aws.Tests
 
             return context;
         }
-        
-        public static TestActionHandlerContext<TCalamariProgram> WithStackRole<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string stackRole) 
+
+        public static TestActionHandlerContext<TCalamariProgram> WithStackRole<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string stackRole)
             where TCalamariProgram : CalamariFlavourProgram
         {
             context.Variables.Add(AwsSpecialVariables.Action.Aws.CloudFormation.RoleArn, stackRole);
@@ -66,8 +77,8 @@ namespace Sashimi.Aws.Tests
 
             return context;
         }
-        
-        public static TestActionHandlerContext<TCalamariProgram> WithIamCapabilities<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, IEnumerable<string> capabilities) 
+
+        public static TestActionHandlerContext<TCalamariProgram> WithIamCapabilities<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, IEnumerable<string> capabilities)
             where TCalamariProgram : CalamariFlavourProgram
         {
             context.Variables.Add(AwsSpecialVariables.Action.Aws.IamCapabilities, JsonConvert.SerializeObject(capabilities));

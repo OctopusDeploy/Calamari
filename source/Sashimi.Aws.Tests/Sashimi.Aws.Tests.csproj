@@ -11,6 +11,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Sashimi.Aws.Accounts\Sashimi.Aws.Accounts.csproj" />
         <ProjectReference Include="..\Sashimi.Aws\Sashimi.Aws.csproj" />
         <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
         <ProjectReference Include="..\Sashimi.Tests.Shared\Sashimi.Tests.Shared.csproj" />

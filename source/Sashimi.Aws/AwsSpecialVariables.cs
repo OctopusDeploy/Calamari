@@ -2,12 +2,6 @@
 {
     public static class AwsSpecialVariables
     {
-        public static class Account
-        {
-            public const string AccessKey = "Octopus.Action.Amazon.AccessKey";
-            public const string SecretKey = "Octopus.Action.Amazon.SecretKey";
-        }
-        
         public static class Action
         {
             public static class Aws
