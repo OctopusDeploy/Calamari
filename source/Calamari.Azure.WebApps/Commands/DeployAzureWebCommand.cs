@@ -84,7 +84,7 @@ namespace Calamari.Azure.WebApps.Commands
             };
 
             var deployment = new RunningDeployment(pathToPackage, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             conventionRunner.RunConventions();
 

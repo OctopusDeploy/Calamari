@@ -1,16 +1,13 @@
 ﻿using System;
+using Calamari.Commands.Support;
 
 namespace Calamari.Aws.Exceptions
 {
     /// <summary>
     /// Represents a failed deployment that resulted in a rollback state
     /// </summary>
-    public class RollbackException : Exception
+    public class RollbackException : CommandException
     {
-        public RollbackException()
-        {
-        }
-
         public RollbackException(string message)
             : base(message)
         {

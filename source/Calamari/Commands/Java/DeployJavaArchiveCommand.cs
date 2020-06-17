@@ -113,7 +113,7 @@ namespace Calamari.Commands.Java
             };
 
             var deployment = new RunningDeployment(archiveFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             try
             {

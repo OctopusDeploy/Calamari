@@ -17,19 +17,21 @@ namespace Calamari.Commands.Java
     [Command("java-library", Description = "Invokes the Octopus java library")]
     public class JavaLibraryCommand : Command
     {
+        readonly ILog log;
         string actionType;
         readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
 
-        public JavaLibraryCommand(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, IVariables variables, ICommandLineRunner commandLineRunner)
+        public JavaLibraryCommand(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, IVariables variables, ICommandLineRunner commandLineRunner, ILog log)
         {
             Options.Add("actionType=", "The step type being invoked.", v => actionType = v);
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.variables = variables;
             this.commandLineRunner = commandLineRunner;
+            this.log = log;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -47,7 +49,7 @@ namespace Calamari.Commands.Java
             };
 
             var deployment = new RunningDeployment(null, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             conventionRunner.RunConventions();
 
             return 0;

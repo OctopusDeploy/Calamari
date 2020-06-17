@@ -25,6 +25,7 @@ namespace Calamari.CloudAccounts
         readonly string assumeRoleArn;
         readonly string assumeRoleExternalId;
         readonly string assumeRoleSession;
+        readonly string assumeRoleDurationSeconds;
 
         public static async Task<AwsEnvironmentGeneration> Create(ILog log, IVariables variables)
         {
@@ -45,7 +46,7 @@ namespace Calamari.CloudAccounts
 
         public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
 
-        private AwsEnvironmentGeneration(ILog log, IVariables variables)
+        internal AwsEnvironmentGeneration(ILog log, IVariables variables)
         {
             this.log = log;
             var account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
@@ -61,6 +62,7 @@ namespace Calamari.CloudAccounts
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
             assumeRoleExternalId = variables.Get("Octopus.Action.Aws.AssumeRoleExternalId")?.Trim();
             assumeRoleSession = variables.Get("Octopus.Action.Aws.AssumedRoleSession")?.Trim();
+            assumeRoleDurationSeconds = variables.Get("Octopus.Action.Aws.AssumeRoleSessionDurationSeconds")?.Trim();
         }
 
         /// <summary>
@@ -182,19 +184,27 @@ namespace Calamari.CloudAccounts
         {
             if ("True".Equals(assumeRole, StringComparison.OrdinalIgnoreCase))
             {
-               var client = new AmazonSecurityTokenServiceClient(AwsCredentials);
-               var credentials = (await client.AssumeRoleAsync(new AssumeRoleRequest
-                   {
-                       RoleArn = assumeRoleArn,
-                       RoleSessionName = assumeRoleSession,
-                       ExternalId = string.IsNullOrWhiteSpace(assumeRoleExternalId) ? null : assumeRoleExternalId
-                   })
-               ).Credentials;
+                var client = new AmazonSecurityTokenServiceClient(AwsCredentials);
+                var credentials = (await client.AssumeRoleAsync(GetAssumeRoleRequest())).Credentials;
 
                 EnvironmentVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKeyId;
                 EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = credentials.SecretAccessKey;
                 EnvironmentVars["AWS_SESSION_TOKEN"] = credentials.SessionToken;
             }
+        }
+
+        public AssumeRoleRequest GetAssumeRoleRequest()
+        {
+            var request = new AssumeRoleRequest
+            {
+                RoleArn = assumeRoleArn,
+                RoleSessionName = assumeRoleSession,
+                ExternalId = string.IsNullOrWhiteSpace(assumeRoleExternalId) ? null : assumeRoleExternalId
+            };
+            if (int.TryParse(assumeRoleDurationSeconds, out var durationSeconds))
+                request.DurationSeconds = durationSeconds;
+
+            return request;
         }
     }
 }
