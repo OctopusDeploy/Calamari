@@ -58,7 +58,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void DockerHubWithCredentials_Loads()
         {
             const string privateImage = "octopusdeploy/octo-prerelease";
-            var version =  new SemanticVersion("7.3.7");
+            var version =  new SemanticVersion("7.3.7-alpine");
 
             var downloader = GetDownloader();
             var pkg = downloader.DownloadPackage(privateImage, 
