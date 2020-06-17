@@ -37,7 +37,7 @@ namespace Sashimi.Azure.Accounts
             yield return ("ResourceGroups", "accounts/{id}/resourceGroups");
             yield return ("StorageAccounts", "accounts/{id}/storageAccounts");
             yield return ("WebSites", "accounts/{id}/websites");
-            yield return ("WebSiteSlots", "accounts/{id}/{{resourceGroupName}}/websites/{{webSiteName}}/slots");
+            yield return ("WebSiteSlots", "accounts/{id}/{resourceGroupName}/websites/{webSiteName}/slots");
         }
 
         public override IEnumerable<Variable> ContributeVariables()

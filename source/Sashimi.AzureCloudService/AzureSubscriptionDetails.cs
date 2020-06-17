@@ -24,7 +24,7 @@ namespace Sashimi.AzureCloudService
             yield return ("PublicKey", "accounts/{id}/pk");
             yield return ("StorageAccounts", "accounts/{id}/storageAccounts");
             yield return ("WebSites", "accounts/{id}/websites");
-            yield return ("WebSiteSlots", "accounts/{id}/{{resourceGroupName}}/websites/{{webSiteName}}/slots");
+            yield return ("WebSiteSlots", "accounts/{id}/{resourceGroupName}/websites/{webSiteName}/slots");
         }
 
         public override IEnumerable<Variable> ContributeVariables()
