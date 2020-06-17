@@ -46,7 +46,7 @@ namespace Calamari.CloudAccounts
 
         public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
 
-        private AwsEnvironmentGeneration(ILog log, IVariables variables)
+        internal AwsEnvironmentGeneration(ILog log, IVariables variables)
         {
             this.log = log;
             var account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
@@ -184,20 +184,27 @@ namespace Calamari.CloudAccounts
         {
             if ("True".Equals(assumeRole, StringComparison.OrdinalIgnoreCase))
             {
-               var client = new AmazonSecurityTokenServiceClient(AwsCredentials);
-               var credentials = (await client.AssumeRoleAsync(new AssumeRoleRequest
-                   {
-                       RoleArn = assumeRoleArn,
-                       RoleSessionName = assumeRoleSession,
-                       ExternalId = string.IsNullOrWhiteSpace(assumeRoleExternalId) ? null : assumeRoleExternalId,
-                       DurationSeconds = int.TryParse(assumeRoleDurationSeconds, out var durationSeconds) ? durationSeconds : 3600
-                   })
-               ).Credentials;
+                var client = new AmazonSecurityTokenServiceClient(AwsCredentials);
+                var credentials = (await client.AssumeRoleAsync(GetAssumeRoleRequest())).Credentials;
 
                 EnvironmentVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKeyId;
                 EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = credentials.SecretAccessKey;
                 EnvironmentVars["AWS_SESSION_TOKEN"] = credentials.SessionToken;
             }
+        }
+
+        public AssumeRoleRequest GetAssumeRoleRequest()
+        {
+            var request = new AssumeRoleRequest
+            {
+                RoleArn = assumeRoleArn,
+                RoleSessionName = assumeRoleSession,
+                ExternalId = string.IsNullOrWhiteSpace(assumeRoleExternalId) ? null : assumeRoleExternalId
+            };
+            if (int.TryParse(assumeRoleDurationSeconds, out var durationSeconds))
+                request.DurationSeconds = durationSeconds;
+
+            return request;
         }
     }
 }
