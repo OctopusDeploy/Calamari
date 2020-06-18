@@ -22,7 +22,7 @@ namespace Sashimi.AzureCloudService
             var resource = (AzureSubscriptionAccountResource)accountResource;
             if (string.IsNullOrWhiteSpace(resource.CertificateBytes.NewValue))
             {
-                return false;
+                return true;
             }
 
             var cert = certificateEncoder.FromBase64String(resource.CertificateBytes.NewValue);
