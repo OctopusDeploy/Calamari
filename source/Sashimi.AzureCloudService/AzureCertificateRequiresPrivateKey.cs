@@ -16,19 +16,18 @@ namespace Sashimi.AzureCloudService
             return resource is AzureSubscriptionAccountResource;
         }
 
-        public override bool ValidateResource(AccountDetailsResource accountResource, out string errorMessage)
+        public override ValidationResult ValidateResource(AccountDetailsResource accountResource)
         {
-            errorMessage = "The X509 Certificate file lacks the private key. Please provide a file that includes the private key.";
-            var resource = (AzureSubscriptionAccountResource)accountResource;
-            if (string.IsNullOrWhiteSpace(resource.CertificateBytes.NewValue))
+            var resource = (AzureSubscriptionAccountResource) accountResource;
+            if (!string.IsNullOrWhiteSpace(resource.CertificateBytes.NewValue))
             {
-                return false;
+                var cert = certificateEncoder.FromBase64String(resource.CertificateBytes.NewValue);
+
+                if (!cert.HasPrivateKey)
+                    return ValidationResult.Error("The X509 Certificate file lacks the private key. Please provide a file that includes the private key.");
             }
 
-            var cert = certificateEncoder.FromBase64String(resource.CertificateBytes.NewValue);
-
-            return cert.HasPrivateKey;
+            return ValidationResult.Success;
         }
-
     }
 }
