@@ -7,10 +7,9 @@ namespace Sashimi.Server.Contracts.Accounts
             return false;
         }
 
-        public virtual bool ValidateResource(AccountDetailsResource resource, out string errorMessage)
+        public virtual ValidationResult ValidateResource(AccountDetailsResource resource)
         {
-            errorMessage = null!;
-            return true;
+            return ValidationResult.Success;
         }
 
         public virtual void ModifyResource(AccountDetailsResource accountResource, string name)
@@ -20,5 +19,24 @@ namespace Sashimi.Server.Contracts.Accounts
         public virtual void ModifyModel(AccountDetailsResource resource, AccountDetails model, string name)
         {
         }
+    }
+
+    public class ValidationResult
+    {
+        public static readonly ValidationResult Success = new ValidationResult(true, null);
+
+        public static ValidationResult Error(string errorMessage)
+        {
+            return new ValidationResult(false, errorMessage);
+        }
+
+        ValidationResult(bool isValid, string? errorMessage)
+        {
+            IsValid = isValid;
+            ErrorMessage = errorMessage;
+        }
+
+        public bool IsValid { get; }
+        public string? ErrorMessage { get; }
     }
 }
