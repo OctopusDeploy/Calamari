@@ -31,7 +31,7 @@ namespace Sashimi.AzureCloudService
         public IValidator Validator { get; } = new AzureSubscriptionValidator();
         public IVerifyAccount Verifier { get; } = new AzureSubscriptionAccountVerifier();
 
-        public IEnumerable<(string key, object value)> GetMetric(IAccountMetricContext context)
+        public IEnumerable<(string key, object value)> GetFeatureUsage(IAccountMetricContext context)
         {
             var total = context.GetAccountDetails<AzureSubscriptionDetails>().Count();
 
