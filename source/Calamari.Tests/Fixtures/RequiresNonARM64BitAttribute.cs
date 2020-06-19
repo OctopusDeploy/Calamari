@@ -7,6 +7,10 @@ namespace Calamari.Tests.Fixtures
 {
     public class RequiresNonARM64BitAttribute : NUnitAttribute, IApplyToTest
     {
+        public RequiresNonARM64BitAttribute(string attributeReason)
+        {
+        }
+        
         public void ApplyToTest(Test test)
         {
             if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)

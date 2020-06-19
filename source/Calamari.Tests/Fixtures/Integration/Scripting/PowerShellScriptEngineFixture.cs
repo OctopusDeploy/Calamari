@@ -12,7 +12,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     {
         [Test]
         [RequiresNonFreeBSDPlatform]
-        [RequiresNonARM64Bit]
+        [RequiresNonARM64Bit("As of June 2020, PowerShell Core for ARM is still an experimental release that is unsupported.")]
         public void PowerShellDecryptsVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -89,7 +89,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         [TestCase("false")]
         [TestCase("")]
         [RequiresNonFreeBSDPlatform]
-        [RequiresNonARM64Bit]
+        [RequiresNonARM64Bit("As of June 2020, PowerShell Core for ARM is still an experimental release that is unsupported.")]
         public void PowerShellDoesntForceTraceMode(string variableValue)
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -109,7 +109,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 
         [Test]
         [RequiresNonFreeBSDPlatform]
-        [RequiresNonARM64Bit]
+        [RequiresNonARM64Bit("As of June 2020, PowerShell Core for ARM is still an experimental release that is unsupported.")]
         public void PowerShellWorksWithStrictMode()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -131,7 +131,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         [TestCase("false")]
         [TestCase("")]
         [RequiresNonFreeBSDPlatform]
-        [RequiresNonARM64Bit]
+        [RequiresNonARM64Bit("As of June 2020, PowerShell Core for ARM is still an experimental release that is unsupported.")]
         public void PowerShellDoesntForceStrictMode(string variableValue)
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
