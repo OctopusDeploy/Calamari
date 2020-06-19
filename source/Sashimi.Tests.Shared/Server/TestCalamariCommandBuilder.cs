@@ -28,7 +28,7 @@ namespace Sashimi.Tests.Shared.Server
         public List<(string name, string? value)> Arguments = new List<(string, string?)>();
         public List<string> Extensions = new List<string>();
 
-        public IList<IDeploymentTool> Tools { get;} = new List<IDeploymentTool>();
+        public IList<IDeploymentTool> Tools { get; } = new List<IDeploymentTool>();
 
         public ICalamariCommandBuilder WithStagedPackageArgument()
         {
@@ -119,114 +119,114 @@ namespace Sashimi.Tests.Shared.Server
                     Environment.CurrentDirectory = originalWorkingDirectory;
                 }
             }
+        }
 
-            List<string> GetArgs(string workingPath)
+        List<string> GetArgs(string workingPath)
+        {
+            var args = new List<string> {CalamariCommand!};
+
+            args.AddRange(
+                Arguments
+                    .Select(a => $"--{a.name}{(a.value == null ? "" : $"={a.value}")}")
+            );
+            args.AddRange(Extensions.Select(e => $"--extension={e}"));
+
+            var varPath = Path.Combine(workingPath, "variables.json");
+
+            variables.Save(varPath);
+            args.Add($"--variables={varPath}");
+
+            return args;
+        }
+
+        void CopyFilesToWorkingFolder(string workingPath)
+        {
+            foreach (var (filename, contents) in Files)
             {
-                var args = new List<string> {CalamariCommand!};
-
-                args.AddRange(
-                    Arguments
-                        .Select(a => $"--{a.name}{(a.value == null ? "" : $"={a.value}")}")
-                );
-                args.AddRange(Extensions.Select(e => $"--extension={e}"));
-
-                var varPath = Path.Combine(workingPath, "variables.json");
-
-                variables.Save(varPath);
-                args.Add($"--variables={varPath}");
-
-                return args;
+                using var fileStream = File.Create(Path.Combine(workingPath, filename!));
+                contents.Seek(0, SeekOrigin.Begin);
+                contents.CopyTo(fileStream);
             }
 
-            void CopyFilesToWorkingFolder(string workingPath)
+            if (withStagedPackageArgument)
             {
-                foreach (var (filename, contents) in Files)
+                var packageId = variables.GetRaw(KnownVariables.Action.Packages.PackageId);
+                if (File.Exists(packageId))
                 {
-                    using var fileStream = File.Create(Path.Combine(workingPath, filename!));
-                    contents.Seek(0, SeekOrigin.Begin);
-                    contents.CopyTo(fileStream);
+                    var fileName = new FileInfo(packageId).Name;
+                    File.Copy(packageId, Path.Combine(workingPath, fileName));
                 }
-
-                if (withStagedPackageArgument)
+                else
                 {
-                    var packageId = variables.GetRaw(KnownVariables.Action.Packages.PackageId);
-                    if (File.Exists(packageId))
-                    {
-                        var fileName = new FileInfo(packageId).Name;
-                        File.Copy(packageId, Path.Combine(workingPath, fileName));
-                    }
-                    else
-                    {
-                        Copy(packageId, workingPath);
-                    }
+                    Copy(packageId, workingPath);
                 }
             }
+        }
 
-            IActionHandlerResult ExecuteActionHandler(List<string> args)
+        IActionHandlerResult ExecuteActionHandler(List<string> args)
+        {
+            AssertMatchingCalamariFlavour();
+
+            var inMemoryLog = new InMemoryLog();
+            var constructor = typeof(TCalamariProgram).GetConstructor(
+                BindingFlags.Public | BindingFlags.Instance,
+                null, new[] {typeof(ILog)}, new ParameterModifier[0]);
+            if (constructor == null)
             {
-                AssertMatchingCalamariFlavour();
-
-                var inMemoryLog = new InMemoryLog();
-                var constructor = typeof(TCalamariProgram).GetConstructor(
-                    BindingFlags.Public | BindingFlags.Instance,
-                    null, new[] {typeof(ILog)}, new ParameterModifier[0]);
-                if (constructor == null)
-                {
-                    throw new Exception(
-                        $"{typeof(TCalamariProgram).Name} doesn't seem to have a `public {typeof(TCalamariProgram)}({nameof(ILog)})` constructor.");
-                }
-
-                var instance = (TCalamariProgram) constructor.Invoke(new object?[]
-                {
-                    inMemoryLog
-                })!;
-
-                var methodInfo =
-                    typeof(CalamariFlavourProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
-                if (methodInfo == null)
-                {
-                    throw new Exception("CalamariFlavourProgram.Run method was not found.");
-                }
-
-                var exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()})!;
-                var serverInMemoryLog = new ServerInMemoryLog();
-
-                var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
-                foreach (var text in inMemoryLog.StandardError)
-                {
-                    outputFilter.Write(ProcessOutputSource.StdErr, text);
-                }
-
-                foreach (var text in inMemoryLog.StandardOut)
-                {
-                    outputFilter.Write(ProcessOutputSource.StdOut, text);
-                }
-
-                return new TestActionHandlerResult(exitCode,
-                    outputFilter.TestOutputVariables, outputFilter.Actions,
-                    outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
-                    serverInMemoryLog.ToString());
+                throw new Exception(
+                    $"{typeof(TCalamariProgram).Name} doesn't seem to have a `public {typeof(TCalamariProgram)}({nameof(ILog)})` constructor.");
             }
 
-            void Copy(string sourcePath, string destinationPath)
+            var instance = (TCalamariProgram) constructor.Invoke(new object?[]
             {
-                foreach (var dirPath in Directory.EnumerateDirectories(sourcePath, "*", SearchOption.AllDirectories))
-                {
-                    Directory.CreateDirectory(dirPath.Replace(sourcePath, destinationPath));
-                }
+                inMemoryLog
+            })!;
 
-                foreach (var newPath in Directory.EnumerateFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-                {
-                    File.Copy(newPath, newPath.Replace(sourcePath, destinationPath), true);
-                }
+            var methodInfo =
+                typeof(CalamariFlavourProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (methodInfo == null)
+            {
+                throw new Exception("CalamariFlavourProgram.Run method was not found.");
             }
 
-            void AssertMatchingCalamariFlavour()
+            var exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()})!;
+            var serverInMemoryLog = new ServerInMemoryLog();
+
+            var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
+            foreach (var text in inMemoryLog.StandardError)
             {
-                var assemblyName = typeof(TCalamariProgram).Assembly.GetName();
-                if (CalamariFlavour?.Id != assemblyName.Name)
-                    throw new Exception($"The specified CalamariFlavour '{CalamariFlavour?.Id}' doesn't match that of the program exe '{assemblyName.Name}'");
+                outputFilter.Write(ProcessOutputSource.StdErr, text);
             }
+
+            foreach (var text in inMemoryLog.StandardOut)
+            {
+                outputFilter.Write(ProcessOutputSource.StdOut, text);
+            }
+
+            return new TestActionHandlerResult(exitCode,
+                outputFilter.TestOutputVariables, outputFilter.Actions,
+                outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
+                serverInMemoryLog.ToString());
+        }
+
+        void Copy(string sourcePath, string destinationPath)
+        {
+            foreach (var dirPath in Directory.EnumerateDirectories(sourcePath, "*", SearchOption.AllDirectories))
+            {
+                Directory.CreateDirectory(dirPath.Replace(sourcePath, destinationPath));
+            }
+
+            foreach (var newPath in Directory.EnumerateFiles(sourcePath, "*.*", SearchOption.AllDirectories))
+            {
+                File.Copy(newPath, newPath.Replace(sourcePath, destinationPath), true);
+            }
+        }
+
+        void AssertMatchingCalamariFlavour()
+        {
+            var assemblyName = typeof(TCalamariProgram).Assembly.GetName();
+            if (CalamariFlavour?.Id != assemblyName.Name)
+                throw new Exception($"The specified CalamariFlavour '{CalamariFlavour?.Id}' doesn't match that of the program exe '{assemblyName.Name}'");
         }
 
         public ICalamariCommandBuilder WithIsolation(ExecutionIsolation executionIsolation)
