@@ -42,6 +42,7 @@
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
+    <PackageReference Include="NETStandard.Library" Version="2.0.3" />
     <ProjectReference Include="..\Calamari.Azure.ServiceFabric\Calamari.Azure.ServiceFabric.csproj" />
     <ProjectReference Include="..\Calamari.Azure.WebApps\Calamari.Azure.WebApps.csproj" />
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />

@@ -12,6 +12,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     {
         [Test]
         [RequiresNonFreeBSDPlatform]
+        [RequiresNonARM64Bit]
         public void PowerShellDecryptsVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -88,6 +89,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         [TestCase("false")]
         [TestCase("")]
         [RequiresNonFreeBSDPlatform]
+        [RequiresNonARM64Bit]
         public void PowerShellDoesntForceTraceMode(string variableValue)
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -107,6 +109,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 
         [Test]
         [RequiresNonFreeBSDPlatform]
+        [RequiresNonARM64Bit]
         public void PowerShellWorksWithStrictMode()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -128,6 +131,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         [TestCase("false")]
         [TestCase("")]
         [RequiresNonFreeBSDPlatform]
+        [RequiresNonARM64Bit]
         public void PowerShellDoesntForceStrictMode(string variableValue)
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
