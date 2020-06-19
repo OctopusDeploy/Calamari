@@ -35,7 +35,7 @@ namespace Sashimi.AzureServiceFabric.Endpoints
             builder.Map<ServiceFabricEndpointResource, AzureServiceFabricClusterEndpoint>();
         }
 
-        public IEnumerable<(string key, object value)> GetMetric(IEndpointMetricContext context)
+        public IEnumerable<(string key, object value)> GetFeatureUsage(IEndpointMetricContext context)
         {
             var serviceFabricEndpoints = context.GetEndpoints<AzureServiceFabricClusterEndpoint>().ToArray();
             var total = serviceFabricEndpoints.Length;
