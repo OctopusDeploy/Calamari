@@ -5,8 +5,8 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <IsPackable>false</IsPackable>
         <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Calamari.Common" Version="13.0.5" />

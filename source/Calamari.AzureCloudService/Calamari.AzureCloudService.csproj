@@ -11,6 +11,7 @@
         <PackageReference Include="Calamari.Common" Version="13.0.5" />
         <PackageReference Include="Hyak.Common" Version="1.2.2" />
         <PackageReference Include="Microsoft.Azure.Common" Version="2.2.1" />
+        <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168" />
         <PackageReference Include="Microsoft.WindowsAzure.Management.Compute" Version="14.0.0" />
         <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
             <PrivateAssets>all</PrivateAssets>
