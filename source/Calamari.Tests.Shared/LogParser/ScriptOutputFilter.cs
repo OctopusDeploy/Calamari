@@ -173,7 +173,9 @@ namespace Calamari.Tests.Shared.LogParser
         public ScriptOutputFilter(ILogWithContext log)
         {
             this.log = log;
-            DeltaPackageVerifcation = null!;
+            DeltaPackageVerifcation = null;
+            DeltaPackageError = null;
+            ResultMessage = null;
             parser = new ServiceMessageParser(WritePlainText, ServiceMessage);
             debugTarget = log.Verbose;
             outputTarget = log.Info;
@@ -199,11 +201,11 @@ namespace Calamari.Tests.Shared.LogParser
 
         public List<TestScriptOutputAction> Actions => actions;
 
-        public DeltaPackage DeltaPackageVerifcation { get; set; }
+        public DeltaPackage? DeltaPackageVerifcation { get; set; }
 
-        public string DeltaPackageError { get; set; } = null!;
+        public string? DeltaPackageError { get; set; }
 
-        public string ResultMessage { get; private set; } = null!;
+        public string? ResultMessage { get; private set; }
 
 
         public void Write(IEnumerable<ProcessOutput> output)
@@ -302,7 +304,7 @@ namespace Calamari.Tests.Shared.LogParser
                     break;
                 }
                 case ScriptServiceMessageNames.ResultMessage.Name:
-                    ResultMessage = serviceMessage.GetValue(ScriptServiceMessageNames.ResultMessage.MessageAttribute)!;
+                    ResultMessage = serviceMessage.GetValue(ScriptServiceMessageNames.ResultMessage.MessageAttribute);
                     break;
 
                 case ScriptServiceMessageNames.CalamariFoundPackage.Name:
@@ -326,10 +328,10 @@ namespace Calamari.Tests.Shared.LogParser
                     var deltaVerificationRemotePath = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.RemotePathAttribute);
                     var deltaVerificationHash = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.HashAttribute);
                     var deltaVerificationSize = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.SizeAttribute);
-                    DeltaPackageError = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.Error)!;
+                    DeltaPackageError = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.Error);
                     if (deltaVerificationRemotePath != null && deltaVerificationHash != null)
                     {
-                        DeltaPackageVerifcation = new DeltaPackage(deltaVerificationRemotePath, deltaVerificationHash, long.Parse(deltaVerificationSize!));
+                        DeltaPackageVerifcation = new DeltaPackage(deltaVerificationRemotePath, deltaVerificationHash, long.Parse(deltaVerificationSize));
                     }
                     break;
 
@@ -377,15 +379,15 @@ namespace Calamari.Tests.Shared.LogParser
             var actionNames = GetAllFieldValues(
                     typeof(ScriptServiceMessageNames.ScriptOutputActions),
                     x => Attribute.IsDefined(x, typeof(ServiceMessageNameAttribute)))
-                .Select(x => x.ToString() ?? String.Empty);
+                .Select(x => x.ToString());
             supportedScriptActionNames.AddRange(actionNames);
         }
 
-        IEnumerable<object> GetAllFieldValues(Type t, Func<FieldInfo, bool> filter)
+        static IEnumerable<object> GetAllFieldValues(Type t, Func<FieldInfo, bool> filter)
         {
-            List<object> values = new List<object>();
+            var values = new List<object>();
             var fields = t.GetFields();
-            values.AddRange(fields.Where(x => filter(x)).Select(x => x.GetValue(null)!));
+            values.AddRange(fields.Where(filter).Select(x => x.GetValue(null)));
 
             var nestedTypes = t.GetNestedTypes();
             foreach (var nestedType in nestedTypes)

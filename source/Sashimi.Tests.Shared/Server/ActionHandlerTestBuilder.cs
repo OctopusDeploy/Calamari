@@ -67,8 +67,7 @@ namespace Sashimi.Tests.Shared.Server
             builder.RegisterAssemblyModules(actionHandlerType.Assembly);
             builder.RegisterModule<ServerModule>();
             var container = builder.Build();
-            var commandBuilder = new TestCalamariCommandBuilder<TCalamariProgram>();
-            var context = new TestActionHandlerContext<TCalamariProgram>(commandBuilder, container.Resolve<Octopus.Diagnostics.ILog>());
+            var context = new TestActionHandlerContext<TCalamariProgram>(container.Resolve<Octopus.Diagnostics.ILog>());
 
             foreach (var arrangeAction in arrangeActions)
             {
@@ -79,8 +78,6 @@ namespace Sashimi.Tests.Shared.Server
             using (container)
             {
                 var actionHandler = (IActionHandler) container.Resolve(actionHandlerType);
-
-                commandBuilder.SetVariables(context.Variables);
 
                 result = (TestActionHandlerResult) actionHandler.Execute(context);
             }

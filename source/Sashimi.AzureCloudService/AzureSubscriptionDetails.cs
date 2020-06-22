@@ -30,7 +30,7 @@ namespace Sashimi.AzureCloudService
         public override IEnumerable<Variable> ContributeVariables()
         {
             yield return new Variable(SpecialVariables.Action.Azure.SubscriptionId, SubscriptionNumber);
-            yield return new Variable(SpecialVariables.Action.Azure.CertificateBytes, CertificateBytes!.Value, VariableType.Sensitive);
+            yield return new Variable(SpecialVariables.Action.Azure.CertificateBytes, CertificateBytes);
             yield return new Variable(SpecialVariables.Action.Azure.CertificateThumbprint, CertificateThumbprint);
 
             if (!String.IsNullOrWhiteSpace(AzureEnvironment))

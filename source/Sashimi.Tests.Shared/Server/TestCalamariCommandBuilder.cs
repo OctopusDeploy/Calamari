@@ -19,11 +19,17 @@ namespace Sashimi.Tests.Shared.Server
 {
     class TestCalamariCommandBuilder<TCalamariProgram> : ICalamariCommandBuilder where TCalamariProgram : CalamariFlavourProgram
     {
+        public TestCalamariCommandBuilder(CalamariFlavour calamariFlavour, string calamariCommand)
+        {
+            CalamariFlavour = calamariFlavour;
+            CalamariCommand = calamariCommand;
+        }
+
         TestVariableDictionary variables = new TestVariableDictionary();
         bool withStagedPackageArgument;
 
-        public CalamariFlavour? CalamariFlavour { get; set; }
-        public string? CalamariCommand { get; set; }
+        public CalamariFlavour CalamariFlavour { get; set; }
+        public string CalamariCommand { get; set; }
         public List<(string? filename, Stream contents)> Files = new List<(string?, Stream)>();
         public List<(string name, string? value)> Arguments = new List<(string, string?)>();
         public List<string> Extensions = new List<string>();
@@ -123,7 +129,7 @@ namespace Sashimi.Tests.Shared.Server
 
         List<string> GetArgs(string workingPath)
         {
-            var args = new List<string> {CalamariCommand!};
+            var args = new List<string> {CalamariCommand};
 
             args.AddRange(
                 Arguments
@@ -180,7 +186,7 @@ namespace Sashimi.Tests.Shared.Server
             var instance = (TCalamariProgram) constructor.Invoke(new object?[]
             {
                 inMemoryLog
-            })!;
+            });
 
             var methodInfo =
                 typeof(CalamariFlavourProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -189,7 +195,7 @@ namespace Sashimi.Tests.Shared.Server
                 throw new Exception("CalamariFlavourProgram.Run method was not found.");
             }
 
-            var exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()})!;
+            var exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
             var serverInMemoryLog = new ServerInMemoryLog();
 
             var outputFilter = new ScriptOutputFilter(serverInMemoryLog);

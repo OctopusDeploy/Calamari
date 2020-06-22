@@ -12,31 +12,31 @@ namespace Sashimi.Tests.Shared.Server
 {
     public class TestActionHandlerContext<TCalamariProgram> : IActionHandlerContext where TCalamariProgram : CalamariFlavourProgram
     {
-        readonly TestCalamariCommandBuilder<TCalamariProgram> calamariCommandBuilder;
         readonly ILog log;
 
-        internal TestActionHandlerContext(TestCalamariCommandBuilder<TCalamariProgram> calamariCommandBuilder, ILog log)
+        internal TestActionHandlerContext(ILog log)
         {
-            this.calamariCommandBuilder = calamariCommandBuilder;
             this.log = log;
         }
 
         ILog IActionHandlerContext.Log => log;
-        public Maybe<DeploymentTargetType> DeploymentTargetType { get; set; } = null!;
-        public Maybe<string> DeploymentTargetName { get; set; } = null!;
+        public Maybe<DeploymentTargetType> DeploymentTargetType { get; set; } = Maybe<DeploymentTargetType>.None;
+        public Maybe<string> DeploymentTargetName { get; set; } = Maybe<string>.None;
         IActionAndTargetScopedVariables IActionHandlerContext.Variables => Variables;
         public TestVariableDictionary Variables { get; } = new TestVariableDictionary();
         public string EnvironmentId { get; set; } = null!;
-        public Maybe<string> TenantId { get; set; } = null!;
+        public Maybe<string> TenantId { get; set; } = Maybe<string>.None;
 
         public IRawShellCommandBuilder RawShellCommand()
             => throw new NotImplementedException();
 
         public ICalamariCommandBuilder CalamariCommand(CalamariFlavour tool, string toolCommand)
         {
-            calamariCommandBuilder.CalamariFlavour = tool;
-            calamariCommandBuilder.CalamariCommand = toolCommand;
-            return calamariCommandBuilder;
+            var builder = new TestCalamariCommandBuilder<TCalamariProgram>(tool, toolCommand);
+            
+            builder.SetVariables(Variables);
+
+            return builder;
         }
 
         public IScriptCommandBuilder ScriptCommand()
