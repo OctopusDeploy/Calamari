@@ -14,10 +14,10 @@ namespace Calamari.Terraform
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-        public PlanCommand(ILog log, 
-            IVariables variables, 
-            ICalamariFileSystem fileSystem, 
-            ICommandLineRunner commandLineRunner, 
+        public PlanCommand(ILog log,
+            IVariables variables,
+            ICalamariFileSystem fileSystem,
+            ICommandLineRunner commandLineRunner,
             ISubstituteInFiles substituteInFiles,
             IExtractPackage extractPackage)
             : base(log, variables, fileSystem, substituteInFiles, extractPackage)
@@ -43,12 +43,12 @@ namespace Calamari.Terraform
                 }
 
                 log.Info(
-                    $"Saving variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.{TerraformSpecialVariables.Action.Terraform.PlanDetailedExitCode}' with the detailed exit code of the plan, with value '{resultCode}'.");
+                    $"Saving variable 'Octopus.Action[{deployment.Variables["Octopus.Action.StepName"]}].Output.{TerraformSpecialVariables.Action.Terraform.PlanDetailedExitCode}' with the detailed exit code of the plan, with value '{resultCode}'.");
                 log.SetOutputVariable(TerraformSpecialVariables.Action.Terraform.PlanDetailedExitCode, resultCode.ToString(), deployment.Variables);
             }
 
             log.Info(
-                $"Saving variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.{TerraformSpecialVariables.Action.Terraform.PlanOutput}' with the details of the plan");
+                $"Saving variable 'Octopus.Action[{deployment.Variables["Octopus.Action.StepName"]}].Output.{TerraformSpecialVariables.Action.Terraform.PlanOutput}' with the details of the plan");
             log.SetOutputVariable(TerraformSpecialVariables.Action.Terraform.PlanOutput, results, deployment.Variables);
         }
     }

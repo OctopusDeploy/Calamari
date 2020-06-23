@@ -23,7 +23,7 @@ namespace Calamari.Terraform
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
         }
-        
+
         protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
             using (var cli = new TerraformCliExecutor(log, fileSystem, commandLineRunner, deployment, environmentVariables))
@@ -44,7 +44,7 @@ namespace Calamari.Terraform
 
                     var json = token.ToString();
                     var value = token.SelectToken("value")?.ToString();
-                    
+
                     log.SetOutputVariable($"TerraformJsonOutputs[{name}]", json, deployment.Variables, isSensitive);
                     if (value != null)
                     {
@@ -52,11 +52,11 @@ namespace Calamari.Terraform
                     }
 
                     log.Info(
-                        $"Saving {(isSensitive ? "sensitive" : String.Empty)}variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.TerraformJsonOutputs[\"{name}\"]' with the JSON value only of '{json}'");
+                        $"Saving {(isSensitive ? "sensitive " : String.Empty)}variable 'Octopus.Action[{deployment.Variables["Octopus.Action.StepName"]}].Output.TerraformJsonOutputs[\"{name}\"]' with the JSON value only of '{json}'");
                     if (value != null)
                     {
                         log.Info(
-                            $"Saving {(isSensitive ? "sensitive" : String.Empty)}variable 'Octopus.Action[\"{deployment.Variables["Octopus.Action.StepName"]}\"].Output.TerraformValueOutputs[\"{name}\"]' with the value only of '{value}'");
+                            $"Saving {(isSensitive ? "sensitive " : String.Empty)}variable 'Octopus.Action[{deployment.Variables["Octopus.Action.StepName"]}].Output.TerraformValueOutputs[\"{name}\"]' with the value only of '{value}'");
                     }
                 }
             }
