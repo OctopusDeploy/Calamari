@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System;
+using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using System.Runtime.InteropServices;
@@ -13,11 +14,25 @@ namespace Calamari.Tests.Fixtures
         
         public void ApplyToTest(Test test)
         {
-            if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+            try
             {
-                test.RunState = RunState.Skipped;
-                test.Properties.Set(PropertyNames.SkipReason, "This test does not run on ARMx64");
+                if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    test.RunState = RunState.Skipped;
+                    test.Properties.Set(PropertyNames.SkipReason, "This test does not run on ARMx64");
+                }
             }
+            catch(Exception e)
+            {
+                if (CalamariEnvironment.IsRunningOnMono)
+                {
+                    Assert.Ignore("Ignoring test as Mono 4.x has problems with System.Runtime.InteropServices.RuntimeInformation");
+                    return;
+                }
+
+                Assert.Fail(e.StackTrace);
+            }
+            
         }
     }
 }
