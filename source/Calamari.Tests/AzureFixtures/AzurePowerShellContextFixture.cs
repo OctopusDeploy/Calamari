@@ -4,6 +4,7 @@ using Calamari.Azure.Integration;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
+using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using FluentAssertions;
@@ -40,6 +41,7 @@ namespace Calamari.Tests.AzureFixtures
         [TestCase("")]
         [TestCase("C:\\Azure\\Modules")]
         [TestCase("/etc/azure/modules")]
+        [RequiresPowerShell5OrAbove]
         public void AzureExtension(string extensionsDirectory)
         {
             var variables = new Dictionary<string, string>()
