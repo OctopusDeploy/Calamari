@@ -64,6 +64,9 @@
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDefaultValue.fsx" />
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDirectValue.fsx" />
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloVariableSubstitution.fsx" />
+    <None Include="AzureFixtures\Scripts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\ConfigurationVariables\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

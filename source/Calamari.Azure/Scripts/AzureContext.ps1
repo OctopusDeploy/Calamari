@@ -17,6 +17,7 @@
 ##   $OctopusAzureADPassword = "..."
 ##   $OctopusAzureEnvironment = "..."
 ##   $OctopusDisableAzureCLI = "..."
+##   $OctopusAzureExtensionsDirectory = "..." 
 
 $ErrorActionPreference = "Stop"
 
@@ -118,8 +119,21 @@ Execute-WithRetry{
                     # authenticate with the Azure CLI
                     Write-Host "##octopus[stdout-verbose]"
 
-                    $env:AZURE_CONFIG_DIR = [System.IO.Path]::Combine($env:OctopusCalamariWorkingDirectory, "azure-cli")
-                    EnsureDirectoryExists($env:AZURE_CONFIG_DIR)
+                    # Config directory is set to make sure that our security is right for the step running it  
+                    # and not using the one in the default config dir to avoid issues with user defined ones 
+                    $env:AZURE_CONFIG_DIR = [System.IO.Path]::Combine($env:OctopusCalamariWorkingDirectory, "azure-cli") 
+                    EnsureDirectoryExists($env:AZURE_CONFIG_DIR) 
+ 
+                    # The azure extensions directory is getting overridden above when we set the azure config dir (undocumented behavior). 
+                    # Set the azure extensions directory to the value of $OctopusAzureExtensionsDirectory if specified, 
+                    # otherwise, back to the default value of $HOME\.azure\cliextension.
+                    if($OctopusAzureExtensionsDirectory) 
+                    { 
+                        Write-Host "Setting Azure CLI extensions directory to $OctopusAzureExtensionsDirectory" 
+                        $env:AZURE_EXTENSION_DIR = $OctopusAzureExtensionsDirectory 
+                    } else { 
+                        $env:AZURE_EXTENSION_DIR = "$($HOME)\.azure\cliextensions" 
+                    } 
 
                     $previousErrorAction = $ErrorActionPreference
                     $ErrorActionPreference = "Continue"
@@ -196,4 +210,3 @@ try {
         }
     }
 }
-

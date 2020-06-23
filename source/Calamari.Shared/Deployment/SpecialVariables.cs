@@ -208,6 +208,7 @@ namespace Calamari.Deployment
                 public static readonly string LogExtractedCspkg = "Octopus.Action.Azure.LogExtractedCspkg";
                 public static readonly string CloudServiceConfigurationFileRelativePath = "Octopus.Action.Azure.CloudServiceConfigurationFileRelativePath";
                 public static readonly string DeploymentLabel = "Octopus.Action.Azure.DeploymentLabel";
+                public static readonly string ExtensionsDirectory = "Octopus.Action.Azure.ExtensionsDirectory";
 
                 public static readonly string ResourceGroupName = "Octopus.Action.Azure.ResourceGroupName";
                 public static readonly string ResourceGroupDeploymentName = "Octopus.Action.Azure.ResourceGroupDeploymentName";

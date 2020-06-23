@@ -100,7 +100,8 @@ namespace Calamari.Tests.Helpers
         protected (CalamariResult result, IVariables variables) RunScript(string scriptName,
             Dictionary<string, string> additionalVariables = null,
             Dictionary<string, string> additionalParameters = null,
-            string sensitiveVariablesPassword = null)
+            string sensitiveVariablesPassword = null,
+            IEnumerable<string> extensions = null)
         {
             var variablesFile = Path.GetTempFileName();
             var variables = new CalamariVariables();
@@ -127,6 +128,11 @@ namespace Calamari.Tests.Helpers
                         .Argument("sensitiveVariablesPassword", sensitiveVariablesPassword);
                 }
 
+                if (extensions != null)
+                {
+                    cmdBase.Argument("extensions", string.Join(",", extensions));
+                }
+                
                 cmdBase = (additionalParameters ?? new Dictionary<string, string>()).Aggregate(cmdBase, (cmd, param) => cmd.Argument(param.Key, param.Value));
 
                 var output = Invoke(cmdBase, variables);
