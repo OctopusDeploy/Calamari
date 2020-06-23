@@ -124,9 +124,9 @@ Execute-WithRetry{
                     $env:AZURE_CONFIG_DIR = [System.IO.Path]::Combine($env:OctopusCalamariWorkingDirectory, "azure-cli") 
                     EnsureDirectoryExists($env:AZURE_CONFIG_DIR) 
  
-                    # Set the azure extensions directory to $HOME\.azure\cliextension as that's the default, but it's getting 
-                    # overridden above when we set the azure config dir. By defining $env:AZURE_EXTENSION_DIR we can override the 
-                    # directory again back to the default 
+                    # The azure extensions directory is getting overridden above when we set the azure config dir (undocumented behavior). 
+                    # Set the azure extensions directory to the value of $OctopusAzureExtensionsDirectory if specified, 
+                    # otherwise, back to the default value of $HOME\.azure\cliextension.
                     if($OctopusAzureExtensionsDirectory) 
                     { 
                         Write-Host "Setting Azure CLI extensions directory to $OctopusAzureExtensionsDirectory" 
@@ -210,4 +210,3 @@ try {
         }
     }
 }
-
