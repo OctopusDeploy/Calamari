@@ -1,14 +1,10 @@
 ﻿using System;
 using Calamari.Aws.Deployment.Conventions;
-using Calamari.Aws.Integration;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using Amazon.CloudFormation;
 using Calamari.Aws.Deployment;
@@ -17,11 +13,9 @@ using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
 using Calamari.Commands;
-using Calamari.Util;
+using Calamari.Common.Util;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities;
-using Octostache;
 
 namespace Calamari.Aws.Commands
 {
@@ -118,7 +112,7 @@ namespace Calamari.Aws.Commands
             };
 
             var deployment = new RunningDeployment(pathToPackage, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             conventionRunner.RunConventions();
             return 0;

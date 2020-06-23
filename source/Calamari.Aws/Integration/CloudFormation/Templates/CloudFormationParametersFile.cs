@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Amazon.CloudFormation.Model;
+using Calamari.Common.Util;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Util;
