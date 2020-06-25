@@ -234,7 +234,7 @@ function SetupContext {
 			$K8S_Username=$OctopusParameters["Octopus.Account.Username"]
 			Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using Username $K8S_Username"
 			& $Kubectl_Exe config set-credentials octouser --username=$K8S_Username --password=$($OctopusParameters["Octopus.Account.Password"])
-		} elseif($K8S_AccountType -eq "AmazonWebServicesAccount") {
+		} elseif($K8S_AccountType -eq "AmazonWebServicesAccount" -or $EKS_Use_Instance_Role -ieq "true") {
 			# kubectl doesn't yet support exec authentication
 			# https://github.com/kubernetes/kubernetes/issues/64751
 			# so build this manually
