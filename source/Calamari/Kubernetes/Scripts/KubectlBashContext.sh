@@ -7,6 +7,7 @@ Octopus_K8S_OutputKubeConfig=$(get_octopusvariable "Octopus.Action.Kubernetes.Ou
 Octopus_AccountType=$(get_octopusvariable "Octopus.Account.AccountType")
 Octopus_K8S_KubectlExe=$(get_octopusvariable "Octopus.Action.Kubernetes.CustomKubectlExecutable")
 Octopus_K8S_Client_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.ClientCertificate")
+Octopus_EKS_Use_Instance_Role=$(get_octopusvariable "Octopus.Action.AwsAccount.UseInstanceRole")
 Octopus_K8S_Client_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.CertificatePem")
 Octopus_K8S_Client_Cert_Key=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPem")
 Octopus_K8S_Server_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.CertificateAuthority")
@@ -70,7 +71,7 @@ function setup_context {
     exit 1
   fi
 
-  if [[ -z $Octopus_AccountType && -z $Octopus_K8S_Client_Cert ]]; then
+  if [[ -z $Octopus_AccountType && -z $Octopus_K8S_Client_Cert && ${Octopus_EKS_Use_Instance_Role,,} != "true" ]]; then
     echo >&2 "Kubernetes account type or certificate is missing"
     exit 1
   fi
@@ -152,7 +153,7 @@ function setup_context {
     Octopus_K8S_Username=$(get_octopusvariable "Octopus.Account.Username")
     echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using $Octopus_K8S_Username"
     kubectl config set-credentials octouser --username=$Octopus_K8S_Username --password=$(get_octopusvariable "Octopus.Account.Password")
-    elif [[ "$Octopus_AccountType" == "AmazonWebServicesAccount" ]]; then
+    elif [[ "$Octopus_AccountType" == "AmazonWebServicesAccount" || ${Octopus_EKS_Use_Instance_Role,,} = "true" ]]; then
         # kubectl doesn't yet support exec authentication
         # https://github.com/kubernetes/kubernetes/issues/64751
         # so build this manually
