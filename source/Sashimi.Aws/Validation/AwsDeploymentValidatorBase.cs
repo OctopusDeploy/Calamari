@@ -1,5 +1,6 @@
 ﻿using System;
 using FluentValidation;
+using Sashimi.Aws.Accounts;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers.Validation;
 using PropertiesDictionary = System.Collections.Generic.IReadOnlyDictionary<string, string>;
@@ -21,23 +22,23 @@ namespace Sashimi.Aws.Validation
         public virtual void AddDeploymentValidationRule(AbstractValidator<DeploymentActionValidationContext> validator)
         {
             validator.RuleFor(a => a.Properties)
-                .MustHaveProperty(AwsSpecialVariables.Action.Aws.AwsRegion, "Please provide the AWS region that the step will default to.")
+                .MustHaveProperty(SpecialVariables.Action.Aws.AwsRegion, "Please provide the AWS region that the step will default to.")
                 .When(ThisAction);
 
             validator.RuleFor(a => a.Properties)
-                .MustHaveProperty(AwsSpecialVariables.Action.Aws.AssumedRoleArn, $"Please provide the assumed role ARN.")
+                .MustHaveProperty(SpecialVariables.Action.Aws.AssumedRoleArn, $"Please provide the assumed role ARN.")
                 .When(ThisAction)
-                .When(a => a.Properties.ContainsKey(AwsSpecialVariables.Action.Aws.AssumeRole) &&
-                    "True".Equals(a.Properties[AwsSpecialVariables.Action.Aws.AssumeRole], StringComparison.OrdinalIgnoreCase));
+                .When(a => a.Properties.ContainsKey(SpecialVariables.Action.Aws.AssumeRole) &&
+                    "True".Equals(a.Properties[SpecialVariables.Action.Aws.AssumeRole], StringComparison.OrdinalIgnoreCase));
 
             validator.RuleFor(a => a.Properties)
-                .MustHaveProperty(AwsSpecialVariables.Action.Aws.AssumedRoleSession, $"Please provide the assumed role session name.")
+                .MustHaveProperty(SpecialVariables.Action.Aws.AssumedRoleSession, $"Please provide the assumed role session name.")
                 .When(ThisAction)
-                .When(a => a.Properties.ContainsKey(AwsSpecialVariables.Action.Aws.AssumeRole) &&
-                    "True".Equals(a.Properties[AwsSpecialVariables.Action.Aws.AssumeRole], StringComparison.OrdinalIgnoreCase));
+                .When(a => a.Properties.ContainsKey(SpecialVariables.Action.Aws.AssumeRole) &&
+                    "True".Equals(a.Properties[SpecialVariables.Action.Aws.AssumeRole], StringComparison.OrdinalIgnoreCase));
 
             validator.RuleFor(a => a.Properties)
-                .MustHaveProperty(AwsSpecialVariables.Action.Aws.AccountId, "Please specify the AWS account.")
+                .MustHaveProperty(SpecialVariables.Action.Aws.AccountId, "Please specify the AWS account.")
                 .When(ThisAction)
                 .When(a => !IsInstanceRole(a.Properties));
         }
@@ -50,8 +51,8 @@ namespace Sashimi.Aws.Validation
 
         static bool IsInstanceRole(PropertiesDictionary properties)
         {
-            return properties.ContainsKey(AwsSpecialVariables.Action.Aws.UseInstanceRole) &&
-                (properties[AwsSpecialVariables.Action.Aws.UseInstanceRole] ?? "") == "True";
+            return properties.ContainsKey(SpecialVariables.Action.Aws.UseInstanceRole) &&
+                (properties[SpecialVariables.Action.Aws.UseInstanceRole] ?? "") == "True";
         }
     }
 }

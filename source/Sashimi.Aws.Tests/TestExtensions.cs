@@ -42,7 +42,7 @@ namespace Sashimi.Aws.Tests
         public static TestActionHandlerContext<TCalamariProgram> WithAwsRegion<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string region)
             where TCalamariProgram : CalamariFlavourProgram
         {
-            context.Variables.Add(AwsSpecialVariables.Action.Aws.AwsRegion, region);
+            context.Variables.Add(SpecialVariables.Action.Aws.AwsRegion, region);
 
             return context;
         }
@@ -81,7 +81,7 @@ namespace Sashimi.Aws.Tests
         public static TestActionHandlerContext<TCalamariProgram> WithIamCapabilities<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, IEnumerable<string> capabilities)
             where TCalamariProgram : CalamariFlavourProgram
         {
-            context.Variables.Add(AwsSpecialVariables.Action.Aws.IamCapabilities, JsonConvert.SerializeObject(capabilities));
+            context.Variables.Add(SpecialVariables.Action.Aws.IamCapabilities, JsonConvert.SerializeObject(capabilities));
 
             return context;
         }

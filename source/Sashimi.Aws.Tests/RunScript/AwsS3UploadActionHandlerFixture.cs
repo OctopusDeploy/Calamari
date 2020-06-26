@@ -5,6 +5,7 @@ using Calamari.Aws.Integration.S3;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
+using Sashimi.Aws.Accounts;
 using Sashimi.Aws.ActionHandler;
 using Sashimi.Aws.Validation;
 using Sashimi.Server.Contracts;
@@ -50,7 +51,7 @@ namespace Sashimi.Aws.Tests.RunScript
                         }, new JsonSerializerSettings {ContractResolver = new CamelCasePropertyNamesContractResolver()}));
                 })
                 .Execute();
-            
+
             CleanUpS3Bucket(bucketName, folderPrefix, region);
         }
 
@@ -61,7 +62,7 @@ namespace Sashimi.Aws.Tests.RunScript
             var region = "ap-southeast-1";
             var folderPrefix = $"test/{Guid.NewGuid().ToString()}/";
             var path = TestEnvironment.GetTestPath(@"AwsS3Sample\AwsS3Sample.1.0.0.nupkg");
-            
+
             ActionHandlerTestBuilder.Create<AwsUploadS3ActionHandler, Program>()
                 .WithArrange(context =>
                 {
@@ -69,7 +70,7 @@ namespace Sashimi.Aws.Tests.RunScript
                     context.Variables.Add("Octopus.Action.Aws.AssumedRoleArn", string.Empty);
                     context.Variables.Add("Octopus.Action.Aws.AssumedRoleSession", string.Empty);
                     context.Variables.Add("Octopus.Action.Aws.Region", region);
-                    context.Variables.Add(AwsSpecialVariables.Action.Aws.UseInstanceRole, bool.FalseString);
+                    context.Variables.Add(SpecialVariables.Action.Aws.UseInstanceRole, bool.FalseString);
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.S3.BucketName, bucketName);
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.S3.TargetMode, S3TargetMode.FileSelections.ToString());
                     context.WithPackage(path);
@@ -113,7 +114,7 @@ namespace Sashimi.Aws.Tests.RunScript
                                 }, new JsonSerializerSettings {ContractResolver = new CamelCasePropertyNamesContractResolver()}));
                 })
                 .Execute();
-            
+
             CleanUpS3Bucket(bucketName, folderPrefix, region);
         }
 
@@ -123,13 +124,13 @@ namespace Sashimi.Aws.Tests.RunScript
                 .WithArrange(context =>
                 {
                     context.WithAwsAccount();
-                    context.Variables.Add(AwsSpecialVariables.Action.Aws.UseInstanceRole, bool.FalseString);
+                    context.Variables.Add(SpecialVariables.Action.Aws.UseInstanceRole, bool.FalseString);
                     context.Variables.Add(KnownVariables.Action.Script.ScriptSource, "Inline");
                     context.Variables.Add(KnownVariables.Action.Script.ScriptBody, $"aws s3 rm s3://{bucketName}/{folderPrefix} --recursive");
-                    context.Variables.Add("Octopus.Action.Aws.AssumeRole", bool.FalseString);
-                    context.Variables.Add("Octopus.Action.Aws.AssumedRoleArn", string.Empty);
-                    context.Variables.Add("Octopus.Action.Aws.AssumedRoleSession", string.Empty);
-                    context.Variables.Add("Octopus.Action.Aws.Region", region);
+                    context.Variables.Add(SpecialVariables.Action.Aws.AssumeRole, bool.FalseString);
+                    context.Variables.Add(SpecialVariables.Action.Aws.AssumedRoleArn, string.Empty);
+                    context.Variables.Add(SpecialVariables.Action.Aws.AssumedRoleSession, string.Empty);
+                    context.Variables.Add(SpecialVariables.Action.Aws.AwsRegion, region);
                 })
                 .Execute(assertWasSuccess: false); // don't fail the test if the cleanup fails
         }

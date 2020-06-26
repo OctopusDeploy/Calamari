@@ -17,6 +17,7 @@
         <EmbeddedResource Include="**\*.sh" />
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="..\Sashimi.Aws.Accounts\Sashimi.Aws.Accounts.csproj" />
         <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
         <PackageReference Include="YamlDotNet" Version="6.1.2" />
     </ItemGroup>

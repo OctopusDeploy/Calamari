@@ -14,13 +14,6 @@
                 }
 
                 public const string WaitForCompletion = "Octopus.Action.Aws.WaitForCompletion";
-                public const string AccountId = "Octopus.Action.AwsAccount.Variable";
-                public const string UseInstanceRole = "Octopus.Action.AwsAccount.UseInstanceRole";
-                public const string AwsRegion = "Octopus.Action.Aws.Region";
-                public const string AssumeRole = "Octopus.Action.Aws.AssumeRole";
-                public const string AssumedRoleArn = "Octopus.Action.Aws.AssumedRoleArn";
-                public const string AssumedRoleSession = "Octopus.Action.Aws.AssumedRoleSession";
-                public const string IamCapabilities = "Octopus.Action.Aws.IamCapabilities";
                 public const string DisableRollback = "Octopus.Action.Aws.DisableRollback";
 
                 public static readonly string UseBundledAwsPowerShellModules = "OctopusUseBundledAwsPowerShellModules";
