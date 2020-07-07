@@ -247,8 +247,13 @@ namespace Calamari.Deployment
             {
                 public static readonly string HttpMethod = "Octopus.Action.HttpRequest.Method";
                 public static readonly string Url = "Octopus.Action.HttpRequest.Url";
+                public static readonly string Body = "Octopus.Action.HttpRequest.Body";
+                public static readonly string ContentType = "Octopus.Action.HttpRequest.ContentType";
+                public static readonly string Authentication = "Octopus.Action.HttpRequest.Authentication";
                 public static readonly string ExpectedResponseStatus = "Octopus.Action.HttpRequest.ExpectedResponseStatus";
                 public static readonly string Timeout = "Octopus.Action.HttpRequest.Timeout";
+                public static readonly string UserName = "Octopus.Action.HttpRequest.UserName";
+                public static readonly string Password = "Octopus.Action.HttpRequest.Password";
 
                 public static class Output
                 {
