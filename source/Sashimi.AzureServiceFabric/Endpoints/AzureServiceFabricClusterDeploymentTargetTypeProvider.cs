@@ -20,7 +20,7 @@ namespace Sashimi.AzureServiceFabric.Endpoints
         public Type ApiType => typeof(ServiceFabricEndpointResource);
         public IValidator Validator => new AzureServiceFabricClusterEndpointValidator();
 
-        public IActionHandler HealthCheckActionHandlerForTargetType()
+        public IActionHandler? HealthCheckActionHandlerForTargetType()
         {
             return new AzureServiceFabricAppHealthCheckActionHandler();
         }

@@ -29,7 +29,7 @@ namespace Sashimi.AzureCloudService.Endpoints
             builder.Map<CloudServiceEndpointResource, AzureCloudServiceEndpoint>();
         }
 
-        public IActionHandler HealthCheckActionHandlerForTargetType()
+        public IActionHandler? HealthCheckActionHandlerForTargetType()
         {
             return new AzureCloudServiceHealthCheckActionHandler();
         }
