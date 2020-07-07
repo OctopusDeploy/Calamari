@@ -28,7 +28,7 @@ namespace Sashimi.AzureWebApp.Endpoints
             builder.Map<AzureWebAppEndpointResource, AzureWebAppEndpoint>();
         }
 
-        public IActionHandler HealthCheckActionHandlerForTargetType()
+        public IActionHandler? HealthCheckActionHandlerForTargetType()
         {
             return new AzureWebAppHealthCheckActionHandler();
         }
