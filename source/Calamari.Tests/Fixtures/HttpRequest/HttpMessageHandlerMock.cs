@@ -6,10 +6,11 @@ using FluentAssertions.Execution;
 
 namespace Calamari.Tests.Fixtures.HttpRequest
 {
-    public class HttpMessageHandlerMock : HttpMessageHandler, HttpMessageHandlerMock.IExpectation
+    public class HttpMessageHandlerMock : HttpMessageHandler, HttpMessageHandlerMock.IReturnOrError, HttpMessageHandlerMock.IDuration
     {
         Func<HttpRequestMessage, bool> predicate;
         HttpResponseMessage response;
+        TimeSpan? duration;
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
             CancellationToken cancellationToken)
@@ -17,24 +18,52 @@ namespace Calamari.Tests.Fixtures.HttpRequest
             if (!predicate(request))
                 throw new AssertionFailedException("HTTP request did not match expectation");
 
-            return Task.FromResult(response);
+            if (duration.HasValue)
+                Thread.Sleep(duration.Value);
+            
+            var tcs = new TaskCompletionSource<HttpResponseMessage>();
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                tcs.TrySetCanceled();
+            }
+            else if (response != null)
+            {
+                 tcs.SetResult(response);
+            }
+            else
+            {
+               tcs.SetResult(null); 
+            }
+
+            return tcs.Task;
         }
 
-        public IExpectation Expect(Func<HttpRequestMessage, bool> expectation)
+        public IReturnOrError Expect(Func<HttpRequestMessage, bool> expectation)
         {
-            this.predicate = expectation;
+            predicate = expectation;
             return this;
         }
 
-
-        void IExpectation.Return(HttpResponseMessage returns)
+        void IDuration.Duration(TimeSpan duration)
         {
-            this.response = returns;
+            this.duration = duration;
         }
 
-        public interface IExpectation
+        IDuration IReturnOrError.Return(HttpResponseMessage returns)
         {
-            void Return(HttpResponseMessage response);
+            response = returns;
+            return this;
+        }
+
+        public interface IReturnOrError 
+        {
+            IDuration Return(HttpResponseMessage response);
+        }
+
+        public interface IDuration
+        {
+            void Duration(TimeSpan duration);
         }
     }
 }

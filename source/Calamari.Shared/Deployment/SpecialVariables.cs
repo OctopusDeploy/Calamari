@@ -247,6 +247,7 @@ namespace Calamari.Deployment
             {
                 public static readonly string HttpMethod = "Octopus.Action.HttpRequest.Method";
                 public static readonly string Url = "Octopus.Action.HttpRequest.Url";
+                public static readonly string ExpectedResponseStatus = "Octopus.Action.HttpRequest.ExpectedResponseStatus";
                 public static readonly string Timeout = "Octopus.Action.HttpRequest.Timeout";
 
                 public static class Output

@@ -1,6 +1,8 @@
 using System;
 using Calamari.Commands.Support;
 using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Calamari.Deployment;
 
 namespace Calamari.Commands
@@ -24,6 +26,7 @@ namespace Calamari.Commands
             var httpMethod = EvaluateHttpMethod(variables);
             var url = EvaluateUrl(variables);
             var timeout = EvaluateTimeout(variables);
+            var expectedResponseStatus = EvaluateExpectedResponseStatus(variables);
 
             log.Info($"Sending HTTP {httpMethod.Method} to {url}");
             var request = new HttpRequestMessage(httpMethod, url);
@@ -35,11 +38,43 @@ namespace Calamari.Commands
                     client.Timeout = TimeSpan.FromSeconds(timeout);
                 }
 
-                var response = client.SendAsync(request).Result;
+                try
+                {
+                    var response = client.SendAsync(request).Result;
+                    var responseStatusCode = response.StatusCode.ToString("D");
 
-                log.Info($"Response received with status {response.StatusCode}");
-                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Action.HttpRequest.Output.ResponseStatusCode, response.StatusCode.ToString("D"));
-                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Action.HttpRequest.Output.ResponseContent, response.Content?.ReadAsStringAsync().Result ?? "");
+                    if (!string.IsNullOrEmpty(expectedResponseStatus))
+                    {
+                        log.Verbose($"Confirming response status code matches {expectedResponseStatus}");
+                        var match = Regex.Match(responseStatusCode, expectedResponseStatus);
+                        if (!match.Success)
+                        {
+                            throw new CommandException($"Response status {response.StatusCode} does not match expected pattern: {expectedResponseStatus}");
+                        }
+                        
+                        log.Info($"Response status {response.StatusCode} matches expected pattern: {expectedResponseStatus}");
+                    }
+                    
+                    log.Info($"Response received with status {response.StatusCode}"); 
+                    log.SetOutputVariableButDoNotAddToVariables( SpecialVariables.Action.HttpRequest.Output.ResponseStatusCode, 
+                        responseStatusCode);
+                    log.SetOutputVariableButDoNotAddToVariables( SpecialVariables.Action.HttpRequest.Output.ResponseContent, 
+                        response.Content?.ReadAsStringAsync().Result ?? "");
+                }
+                catch (AggregateException ex)
+                {
+                    ex.Handle(inner =>
+                    {
+                        if (inner is TaskCanceledException) // HTTPClient treats timeouts as a canceled task
+                        {
+                            throw new CommandException("HTTP request timed out", inner);
+                        }
+
+                        return false;
+                    });
+                    
+                }
+
                 return 0;
             }
         }
@@ -72,6 +107,11 @@ namespace Calamari.Commands
             }
 
             return 0;
+        }
+
+        static string EvaluateExpectedResponseStatus(IVariables variables)
+        {
+            return variables.Get(SpecialVariables.Action.HttpRequest.ExpectedResponseStatus)?.Trim();
         }
 
         HttpClient CreateHttpClient()
