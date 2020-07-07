@@ -1,28 +1,13 @@
 ﻿using Autofac;
 using Calamari.Commands.Support;
-using Calamari.Integration.Proxies;
-using Calamari.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using Calamari.Commands;
-using Calamari.Common.Features.Scripting;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
-using Calamari.HealthChecks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.Substitutions;
-using Calamari.Util.Environments;
-using Calamari.Variables;
-using Calamari.Plumbing;
 using NuGet;
 
 namespace Calamari
@@ -62,11 +47,6 @@ namespace Calamari
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
-
-            builder.RegisterAssemblyTypes(GetExtensionAssemblies().ToArray())
-                .AssignableTo<IDoesDeploymentTargetTypeHealthChecks>()
-                .As<IDoesDeploymentTargetTypeHealthChecks>()
-                .SingleInstance();
 
             builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
                 .AssignableTo<ICommandWithArgs>()
