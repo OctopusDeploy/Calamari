@@ -22,6 +22,7 @@ namespace Calamari.Tests.Helpers
         public static readonly Configuration AssentJsonDeepCompareConfiguration = new Configuration()
             .UsingNamer(IsCI ? (INamer) new CIAssentNamer() : new SubdirectoryNamer("Approved"))
             .SetInteractive(!IsCI)
+            .UsingExtension("json")
             .UsingComparer((received, approved) =>
             {
                 var replacedJson = JToken.Parse(received);
