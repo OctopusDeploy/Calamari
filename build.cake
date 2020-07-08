@@ -165,7 +165,7 @@ Task("Publish")
     .WithCriteria(BuildSystem.IsRunningOnTeamCity)
     .Does(() =>
 {
-    var packages = GetFiles($"{artifactsDir}Sashimi.*.{nugetVersion}.nupkg");
+    var packages = GetFiles($"{artifactsDir}*.{nugetVersion}.nupkg");
     foreach (var package in packages)
     {
         NuGetPush(package, new NuGetPushSettings {
