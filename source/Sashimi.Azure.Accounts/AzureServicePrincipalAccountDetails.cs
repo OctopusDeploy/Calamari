@@ -45,7 +45,7 @@ namespace Sashimi.Azure.Accounts
             yield return new Variable(SpecialVariables.Action.Azure.SubscriptionId, SubscriptionNumber);
             yield return new Variable(SpecialVariables.Action.Azure.ClientId, ClientId);
             yield return new Variable(SpecialVariables.Action.Azure.TenantId, TenantId);
-            yield return new Variable(SpecialVariables.Action.Azure.Password, Password!.Value, VariableType.Sensitive);
+            yield return new Variable(SpecialVariables.Action.Azure.Password, Password);
 
             if (!String.IsNullOrWhiteSpace(AzureEnvironment))
             {

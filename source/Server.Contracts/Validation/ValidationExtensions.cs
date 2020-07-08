@@ -48,6 +48,7 @@ namespace Sashimi.Server.Contracts.Validation
                 return value =>
                 {
                     var serializerSettings = JsonSerialization.GetDefaultSerializerSettings();
+
                     return JsonConvert.DeserializeObject<TNested>(value, serializerSettings)!;
                 };
             }

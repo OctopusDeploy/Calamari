@@ -31,11 +31,11 @@ namespace Sashimi.Terraform.CloudTemplates
             {
                 DisplayInfo = new DisplayInfo
                 {
-                    Description = p.Value!.SelectToken("description")?.ToString(),
+                    Description = p.Value.SelectToken("description")?.ToString(),
                     Label = p.Key,
                     Required = true,
                 },
-                Type = GetType(p.Value!),
+                Type = GetType(p.Value),
                 Name = p.Key,
             }).ToList();
 
@@ -55,14 +55,15 @@ namespace Sashimi.Terraform.CloudTemplates
         public object ParseModel(string template)
         {
             var parameters = GetVariables(template);
-            return parameters?
-                .Select(x => new KeyValuePair<string, object?>(x.Key.ToString(), GetDefaultValue(x.Value!)))
-                .ToDictionary(x => x.Key, x => x.Value) ?? new Dictionary<string, object?>();
+            return parameters
+                .Select(x => new KeyValuePair<string, object?>(x.Key, GetDefaultValue(x.Value)))
+                .ToDictionary(x => x.Key, x => x.Value);
         }
 
         static object? GetDefaultValue(JToken argValue)
         {
             var defaultValueToken = argValue.SelectToken("default");
+
             return defaultValueToken?.ToString();
         }
 
@@ -71,7 +72,7 @@ namespace Sashimi.Terraform.CloudTemplates
         /// Valid values are string, list, and map. If this field is omitted, the variable type will be inferred based on default.
         /// If no default is provided, the type is assumed to be string.
         /// </summary>
-        string GetType(JToken token)
+        static string GetType(JToken token)
         {
             var type = token.SelectToken("type");
             if (type != null)
@@ -95,11 +96,24 @@ namespace Sashimi.Terraform.CloudTemplates
             // Otherwise we default to a string
         }
 
-        static IDictionary<string, JToken?> GetVariables(string template)
+        static IDictionary<string, JToken> GetVariables(string template)
         {
             var o = JObject.Parse(template);
-            IDictionary<string, JToken?>? variables = (JObject)o["variable"]!;
-            return variables ?? new Dictionary<string, JToken?>();
+            var variables = o["variable"];
+
+            if (variables == null) return new Dictionary<string, JToken>();
+
+            var tokenDictionary = new Dictionary<string, JToken>();
+
+            foreach (var (key, value) in (JObject) variables)
+            {
+                if (value == null)
+                    throw new Exception($"{nameof(JToken)} with key '{key}' has a null value.");
+
+                tokenDictionary.Add(key, value);
+            }
+
+            return tokenDictionary;
         }
     }
 }

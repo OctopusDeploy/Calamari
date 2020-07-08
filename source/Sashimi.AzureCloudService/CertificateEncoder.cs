@@ -170,7 +170,7 @@ namespace Sashimi.AzureCloudService
             try
             {
 #pragma warning disable PC001
-                var cert = new X509Certificate2(file, (string)null!, flags);
+                var cert = new X509Certificate2(file, (string) null!, flags);
 #pragma warning restore PC001
                 if (!HasPrivateKey(cert) && requirePrivateKey)
                     return null;
@@ -199,7 +199,7 @@ namespace Sashimi.AzureCloudService
                 var flag = false;
                 var dwFlags = 0u;
                 var num = 0;
-                string text = null!;
+                string? text = null;
                 if (CryptAcquireCertificatePrivateKey(cert.Handle, dwFlags, IntPtr.Zero, ref zero, ref num, ref flag))
                 {
                     var intPtr = IntPtr.Zero;

@@ -9,7 +9,7 @@ namespace Calamari.Tests.Shared
     {
         readonly StringBuilder log = new StringBuilder();
 
-        public ILogContext CurrentContext { get; } = null!;
+        public ILogContext CurrentContext { get; } = new NullLogContext();
         public bool IsVerboseEnabled { get; }
         public bool IsErrorEnabled { get; }
         public bool IsFatalEnabled { get; }
@@ -301,6 +301,35 @@ namespace Calamari.Tests.Shared
         {
             log.AppendLine(message);
             list.Add((message, error));
+        }
+
+        class NullLogContext : ILogContext
+        {
+            public void SafeSanitize(string raw, Action<string> action)
+            {
+            }
+
+            public ILogContext CreateChild(string[] sensitiveValues = null)
+            {
+                return this;
+            }
+
+            public ILogContext WithSensitiveValues(string[] sensitiveValues)
+            {
+                return this;
+            }
+
+            public ILogContext WithSensitiveValue(string sensitiveValue)
+            {
+                return this;
+            }
+
+            public void Flush()
+            {
+            }
+
+            public string CorrelationId { get; } = Guid.NewGuid().ToString();
+            public string[] SensitiveValues { get; } = new string[0];
         }
 
         class Disposable : IDisposable

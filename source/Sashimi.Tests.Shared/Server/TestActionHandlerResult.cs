@@ -9,7 +9,7 @@ namespace Sashimi.Tests.Shared.Server
     {
         public TestActionHandlerResult(int exitCode, IReadOnlyDictionary<string, TestOutputVariable> outputVariables,
             IEnumerable<TestScriptOutputAction> outputActions, IEnumerable<Calamari.Integration.ServiceMessages.ServiceMessage> serviceMessages,
-            string resultMessage, IReadOnlyList<CollectedArtifact> artifacts, string fullLog)
+            string? resultMessage, IReadOnlyList<CollectedArtifact> artifacts, string fullLog)
         {
             ExitCode = exitCode;
             OutputVariables = outputVariables.ToDictionary(pair => pair.Key, pair => new OutputVariable(pair.Value.Name, pair.Value.Value, pair.Value.IsSensitive));
@@ -28,7 +28,7 @@ namespace Sashimi.Tests.Shared.Server
         public IReadOnlyList<ServiceMessage> ServiceMessages { get; }
         public ExecutionOutcome Outcome => WasSuccessful ? ExecutionOutcome.Successful : ExecutionOutcome.Unsuccessful;
         public bool WasSuccessful => ExitCode == 0;
-        public string ResultMessage { get; }
+        public string? ResultMessage { get; }
         public int ExitCode { get; }
     }
 }
