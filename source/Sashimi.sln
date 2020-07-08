@@ -5,12 +5,6 @@ VisualStudioVersion = 16.0.29920.165
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Server.Contracts", "Server.Contracts\Sashimi.Server.Contracts.csproj", "{59B028A9-5DD5-477F-9845-B0927D02E3CF}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Terraform", "Terraform", "{06CB7580-EC1B-44C3-93BC-0F58E6582EA1}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Terraform", "Sashimi.Terraform\Sashimi.Terraform.csproj", "{44851CEC-89D0-4D76-8BBA-2206308974D1}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Terraform.Tests", "Sashimi.Terraform.Tests\Sashimi.Terraform.Tests.csproj", "{C25C8D0B-7203-4BC4-A86F-7558FF890089}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Tests.Shared", "Sashimi.Tests.Shared\Sashimi.Tests.Shared.csproj", "{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{A5977E44-894E-4B70-AE3A-78B514B44274}"
@@ -21,16 +15,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{A5977E44-894E-4B
 		..\build.cmd = ..\build.cmd
 		..\build.ps1 = ..\build.ps1
 		..\CODEOWNERS = ..\CODEOWNERS
+		Directory.Build.props = Directory.Build.props
 		..\gitversion.yml = ..\gitversion.yml
 		..\readme.md = ..\readme.md
-		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Terraform", "Calamari.Terraform\Calamari.Terraform.csproj", "{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Tests.Shared", "Calamari.Tests.Shared\Calamari.Tests.Shared.csproj", "{6EC56FF1-BE19-42F3-A40B-FAF6A870E0F1}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Terraform.Tests", "Calamari.Terraform.Tests\Calamari.Terraform.Tests.csproj", "{66067CC8-9D74-494E-A5F1-5641B1D07C17}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aws", "Aws", "{5B9A9DC5-F295-4303-A69E-03FAD5FB4A00}"
 EndProject
@@ -42,9 +32,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Aws.Tests", "Calam
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Aws.Tests", "Sashimi.Aws.Tests\Sashimi.Aws.Tests.csproj", "{43FED2F0-11D1-4AE2-8172-6266B61B4121}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Azure.Common", "Azure.Common\Sashimi.Azure.Common.csproj", "{11521671-2469-40C3-94F4-7EDC83670DD8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Azure.Common", "Azure.Common\Sashimi.Azure.Common.csproj", "{11521671-2469-40C3-94F4-7EDC83670DD8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Aws.Common", "Aws.Common\Sashimi.Aws.Common.csproj", "{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Aws.Common", "Aws.Common\Sashimi.Aws.Common.csproj", "{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Azure", "Azure", "{6288E064-DE6F-4012-B887-64B364482B5C}"
 EndProject
@@ -54,35 +44,35 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Azure.Tests", "Sash
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureWebApp", "AzureWebApp", "{3E14A387-C500-4486-A7AE-BA0C5F95B344}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureWebApp", "Sashimi.AzureWebApp\Sashimi.AzureWebApp.csproj", "{0D4CB9A4-309E-472C-89CD-A49232E3FC48}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.AzureWebApp", "Sashimi.AzureWebApp\Sashimi.AzureWebApp.csproj", "{0D4CB9A4-309E-472C-89CD-A49232E3FC48}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureServiceFabric", "AzureServiceFabric", "{2A807B6D-3E41-4758-AFA8-433C055F96B7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureServiceFabric", "Sashimi.AzureServiceFabric\Sashimi.AzureServiceFabric.csproj", "{0D858717-4002-49FA-B80C-346244D15E4A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.AzureServiceFabric", "Sashimi.AzureServiceFabric\Sashimi.AzureServiceFabric.csproj", "{0D858717-4002-49FA-B80C-346244D15E4A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureCloudService", "AzureCloudService", "{937741D4-BF0F-4073-A101-8E52141FCD28}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureCloudService", "Sashimi.AzureCloudService\Sashimi.AzureCloudService.csproj", "{1741C587-FED8-4324-85F4-06DC24CE1680}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.AzureCloudService", "Sashimi.AzureCloudService\Sashimi.AzureCloudService.csproj", "{1741C587-FED8-4324-85F4-06DC24CE1680}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Azure.Accounts", "Sashimi.Azure.Accounts\Sashimi.Azure.Accounts.csproj", "{2BF290BD-9231-4895-AF83-6B15BF24EE0D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Azure.Accounts", "Sashimi.Azure.Accounts\Sashimi.Azure.Accounts.csproj", "{2BF290BD-9231-4895-AF83-6B15BF24EE0D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Aws.Accounts", "Sashimi.Aws.Accounts\Sashimi.Aws.Accounts.csproj", "{D2C212C6-4F29-44EB-82A9-6580A7E30C6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Aws.Accounts", "Sashimi.Aws.Accounts\Sashimi.Aws.Accounts.csproj", "{D2C212C6-4F29-44EB-82A9-6580A7E30C6C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureServiceFabric.Tests", "Sashimi.AzureServiceFabric.Tests\Sashimi.AzureServiceFabric.Tests.csproj", "{64333AEE-137E-4885-95AA-B67998AE0674}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.AzureServiceFabric.Tests", "Sashimi.AzureServiceFabric.Tests\Sashimi.AzureServiceFabric.Tests.csproj", "{64333AEE-137E-4885-95AA-B67998AE0674}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureCloudService", "Calamari.AzureCloudService\Calamari.AzureCloudService.csproj", "{149F5282-0950-430B-BBC5-80A18CBEB5EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.AzureCloudService", "Calamari.AzureCloudService\Calamari.AzureCloudService.csproj", "{149F5282-0950-430B-BBC5-80A18CBEB5EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureServiceFabric", "Calamari.AzureServiceFabric\Calamari.AzureServiceFabric.csproj", "{7C77F3F9-8E5B-4768-9805-3A6B7DA02CEC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.AzureServiceFabric", "Calamari.AzureServiceFabric\Calamari.AzureServiceFabric.csproj", "{7C77F3F9-8E5B-4768-9805-3A6B7DA02CEC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureWebApp", "Calamari.AzureWebApp\Calamari.AzureWebApp.csproj", "{65F03C26-08A3-42C6-ABB1-3103C93AF591}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.AzureWebApp", "Calamari.AzureWebApp\Calamari.AzureWebApp.csproj", "{65F03C26-08A3-42C6-ABB1-3103C93AF591}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Tests.Shared.Tests", "Sashimi.Tests.Shared.Tests\Sashimi.Tests.Shared.Tests.csproj", "{2AB23BC9-DC28-45F5-A854-1181EE5BE917}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Tests.Shared.Tests", "Sashimi.Tests.Shared.Tests\Sashimi.Tests.Shared.Tests.csproj", "{2AB23BC9-DC28-45F5-A854-1181EE5BE917}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureCloudService.Tests", "Sashimi.AzureCloudService.Tests\Sashimi.AzureCloudService.Tests.csproj", "{1B20EF4A-DFEB-42DE-A23F-A3AF51E53F56}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.AzureCloudService.Tests", "Sashimi.AzureCloudService.Tests\Sashimi.AzureCloudService.Tests.csproj", "{1B20EF4A-DFEB-42DE-A23F-A3AF51E53F56}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureWebApp.Tests", "Sashimi.AzureWebApp.Tests\Sashimi.AzureWebApp.Tests.csproj", "{E1598B39-5116-473F-8E05-3E2C18791D2D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.AzureWebApp.Tests", "Sashimi.AzureWebApp.Tests\Sashimi.AzureWebApp.Tests.csproj", "{E1598B39-5116-473F-8E05-3E2C18791D2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureCloudService.Tests", "Calamari.AzureCloudService.Tests\Calamari.AzureCloudService.Tests.csproj", "{41DEE880-5505-43B4-8366-C8B14EC92B17}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.AzureCloudService.Tests", "Calamari.AzureCloudService.Tests\Calamari.AzureCloudService.Tests.csproj", "{41DEE880-5505-43B4-8366-C8B14EC92B17}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -94,30 +84,14 @@ Global
 		{59B028A9-5DD5-477F-9845-B0927D02E3CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{59B028A9-5DD5-477F-9845-B0927D02E3CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{59B028A9-5DD5-477F-9845-B0927D02E3CF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{44851CEC-89D0-4D76-8BBA-2206308974D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{44851CEC-89D0-4D76-8BBA-2206308974D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{44851CEC-89D0-4D76-8BBA-2206308974D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{44851CEC-89D0-4D76-8BBA-2206308974D1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C25C8D0B-7203-4BC4-A86F-7558FF890089}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C25C8D0B-7203-4BC4-A86F-7558FF890089}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C25C8D0B-7203-4BC4-A86F-7558FF890089}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C25C8D0B-7203-4BC4-A86F-7558FF890089}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2FA9B655-E72A-416E-AD0B-9A581AF8C4DB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{107D9B9C-7EAD-4256-AEF1-F7EF402C150B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6EC56FF1-BE19-42F3-A40B-FAF6A870E0F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6EC56FF1-BE19-42F3-A40B-FAF6A870E0F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6EC56FF1-BE19-42F3-A40B-FAF6A870E0F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6EC56FF1-BE19-42F3-A40B-FAF6A870E0F1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{66067CC8-9D74-494E-A5F1-5641B1D07C17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{66067CC8-9D74-494E-A5F1-5641B1D07C17}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{66067CC8-9D74-494E-A5F1-5641B1D07C17}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{66067CC8-9D74-494E-A5F1-5641B1D07C17}.Release|Any CPU.Build.0 = Release|Any CPU
 		{45B986E1-2415-440E-BC5C-5D5139BA54E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{45B986E1-2415-440E-BC5C-5D5139BA54E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{45B986E1-2415-440E-BC5C-5D5139BA54E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -134,14 +108,14 @@ Global
 		{43FED2F0-11D1-4AE2-8172-6266B61B4121}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43FED2F0-11D1-4AE2-8172-6266B61B4121}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43FED2F0-11D1-4AE2-8172-6266B61B4121}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{11521671-2469-40C3-94F4-7EDC83670DD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{11521671-2469-40C3-94F4-7EDC83670DD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11521671-2469-40C3-94F4-7EDC83670DD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11521671-2469-40C3-94F4-7EDC83670DD8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E79F91CA-CD16-4068-8170-C66804533720}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E79F91CA-CD16-4068-8170-C66804533720}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E79F91CA-CD16-4068-8170-C66804533720}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -205,20 +179,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-		{11521671-2469-40C3-94F4-7EDC83670DD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{11521671-2469-40C3-94F4-7EDC83670DD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{11521671-2469-40C3-94F4-7EDC83670DD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{11521671-2469-40C3-94F4-7EDC83670DD8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EF64A3BD-9FF7-45E9-96D4-B3DC446C032E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{44851CEC-89D0-4D76-8BBA-2206308974D1} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
-		{C25C8D0B-7203-4BC4-A86F-7558FF890089} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
-		{107D9B9C-7EAD-4256-AEF1-F7EF402C150B} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
-		{66067CC8-9D74-494E-A5F1-5641B1D07C17} = {06CB7580-EC1B-44C3-93BC-0F58E6582EA1}
 		{45B986E1-2415-440E-BC5C-5D5139BA54E2} = {5B9A9DC5-F295-4303-A69E-03FAD5FB4A00}
 		{82BF1F99-67AA-492B-9E7F-2E015CB9DEC6} = {5B9A9DC5-F295-4303-A69E-03FAD5FB4A00}
 		{73F25271-555A-4249-85E8-3B6744291809} = {5B9A9DC5-F295-4303-A69E-03FAD5FB4A00}
@@ -237,8 +199,8 @@ Global
 		{41DEE880-5505-43B4-8366-C8B14EC92B17} = {937741D4-BF0F-4073-A101-8E52141FCD28}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		{54EF951A-AA50-4ED2-BB79-C9CBC70BCA65} = {6288E064-DE6F-4012-B887-64B364482B5C}
-		{E79F91CA-CD16-4068-8170-C66804533720} = {6288E064-DE6F-4012-B887-64B364482B5C}
 		SolutionGuid = {F8108764-E787-43A4-A43A-2BB5540615E8}
+		{E79F91CA-CD16-4068-8170-C66804533720} = {6288E064-DE6F-4012-B887-64B364482B5C}
+		{54EF951A-AA50-4ED2-BB79-C9CBC70BCA65} = {6288E064-DE6F-4012-B887-64B364482B5C}
 	EndGlobalSection
 EndGlobal
