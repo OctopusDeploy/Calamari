@@ -4,6 +4,8 @@ using System.Reflection;
 using Assent;
 using Assent.Namers;
 using Calamari.Integration.Processes;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Calamari.Tests.Helpers
 {
@@ -16,6 +18,28 @@ namespace Calamari.Tests.Helpers
         public static readonly Configuration AssentConfiguration = new Configuration()
             .UsingNamer(IsCI ? (INamer) new CIAssentNamer() : new SubdirectoryNamer("Approved"))
             .SetInteractive(!IsCI);
+        
+        public static readonly Configuration AssentJsonDeepCompareConfiguration = new Configuration()
+            .UsingNamer(IsCI ? (INamer) new CIAssentNamer() : new SubdirectoryNamer("Approved"))
+            .SetInteractive(!IsCI)
+            .UsingComparer((received, approved) =>
+            {
+                var replacedJson = JToken.Parse(received);
+                var expectedJson = JToken.Parse(approved);
+                
+                if (!JToken.DeepEquals(replacedJson, expectedJson))
+                {
+                    Console.WriteLine("Expected:");
+                    Console.WriteLine(expectedJson.ToString(Formatting.Indented));
+            
+                    Console.WriteLine("Replaced:");
+                    Console.WriteLine(replacedJson.ToString(Formatting.Indented));
+                        
+                    return CompareResult.Fail("Replaced JSON did not match expected JSON");
+                }
+
+                return CompareResult.Pass();
+            });
 
         public static string GetTestPath(params string[] paths)
         {

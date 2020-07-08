@@ -1,0 +1,8 @@
+[
+  {
+    "Property": "NewValue"
+  },
+  {
+    "Property": "Value2"
+  }
+]
