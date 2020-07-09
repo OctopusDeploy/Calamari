@@ -4,23 +4,38 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Octostache;
 
 namespace Calamari.Features.StructuredVariables
 {
-    public class JsonConfigurationVariableReplacer : IJsonConfigurationVariableReplacer
+    public interface IJsonFormatVariableReplacer : IFileFormatVariableReplacer
     {
-        public void ModifyJsonFile(string jsonFilePath, IVariables variables)
+    }
+
+    public class JsonFormatVariableReplacer : IJsonFormatVariableReplacer
+    {
+        public string FileFormatName => "JSON";
+        
+        public bool TryModifyFile(string filePath, IVariables variables)
         {
-            var root = LoadJson(jsonFilePath);
+            JToken root;
+            try
+            {
+                root = LoadJson(filePath);
+            }
+            catch (JsonReaderException)
+            {
+                // File was not valid JSON.
+                return false;
+            }
 
             var map = new JsonUpdateMap();
             map.Load(root);
             map.Update(variables);
 
-            SaveJson(jsonFilePath, root);
+            SaveJson(filePath, root);
+            return true;
         }
-
+        
         static JToken LoadJson(string jsonFilePath)
         {
             if (!File.Exists(jsonFilePath))
@@ -48,7 +63,7 @@ namespace Calamari.Features.StructuredVariables
             }
         }
     }
-
+    
     public class JsonUpdateMap
     {
         private readonly IDictionary<string, Action<string>> map = new SortedDictionary<string, Action<string>>(StringComparer.OrdinalIgnoreCase);

@@ -71,7 +71,9 @@ namespace Calamari.Commands
             var featureClasses = new List<IFeature>();
 
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var generator = new JsonConfigurationVariableReplacer();
+            var generator = new StructuredConfigVariableReplacer(
+                new JsonFormatVariableReplacer(), 
+                new YamlFormatVariableReplacer());
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var embeddedResources = new AssemblyEmbeddedResources();

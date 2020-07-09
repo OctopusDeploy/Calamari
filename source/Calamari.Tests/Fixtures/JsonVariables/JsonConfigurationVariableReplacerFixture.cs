@@ -12,12 +12,14 @@ namespace Calamari.Tests.Fixtures.JsonVariables
     [TestFixture]
     public class JsonConfigurationVariableReplacerFixture : CalamariFixture
     {
-        JsonConfigurationVariableReplacer configurationVariableReplacer;
+        StructuredConfigVariableReplacer configVariableReplacer;
 
         [SetUp]
         public void SetUp()
         {
-            configurationVariableReplacer = new JsonConfigurationVariableReplacer();
+            configVariableReplacer = new StructuredConfigVariableReplacer(
+                new JsonFormatVariableReplacer(), 
+                new YamlFormatVariableReplacer());
         }
 
         [Test]
@@ -194,7 +196,7 @@ namespace Calamari.Tests.Fixtures.JsonVariables
 
             using (new TemporaryFile(temp))
             {
-                configurationVariableReplacer.ModifyJsonFile(temp, variables);
+                configVariableReplacer.ModifyFile(temp, variables);
                 return File.ReadAllText(temp);
             }
         }
