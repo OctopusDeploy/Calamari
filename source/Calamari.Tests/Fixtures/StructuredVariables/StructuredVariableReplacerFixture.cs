@@ -9,7 +9,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 {
     public class StructuredVariableReplacerFixture
     {
-        private void RunExceptionTest(
+        private void RunTest(
             bool canParseAsJson,
             bool canParseAsYaml,
             Action<Action> invocationAssertions
@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         [Test]
         public void ShouldNotThrowIfTheFileCanBeParsedAsJson()
         {
-            RunExceptionTest(
+            RunTest(
                 canParseAsJson: true,
                 canParseAsYaml: false,
                 invocationResult => invocationResult
@@ -42,7 +42,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         [Test]
         public void ShouldNotThrowIfTheFileCanBeParsedAsYaml()
         {
-            RunExceptionTest(
+            RunTest(
                 canParseAsJson: false,
                 canParseAsYaml: true,
                 invocationResult => invocationResult
@@ -54,7 +54,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         [Test]
         public void ShouldThrowIfTheFileCantBeParsedWithAllReplacers()
         {
-            RunExceptionTest(
+            RunTest(
                 canParseAsJson: false,
                 canParseAsYaml: false,
                 invocationResult => invocationResult
