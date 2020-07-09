@@ -13,7 +13,7 @@ using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.JsonVariables;
+using Calamari.Features.StructuredVariables;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;

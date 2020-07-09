@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.JsonVariables;
+using Calamari.Features.StructuredVariables;
 
 namespace Calamari.Deployment.Conventions
 {

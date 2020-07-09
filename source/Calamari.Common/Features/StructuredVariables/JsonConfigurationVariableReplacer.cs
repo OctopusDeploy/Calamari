@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octostache;
 
-namespace Calamari.Integration.JsonVariables
+namespace Calamari.Features.StructuredVariables
 {
     public class JsonConfigurationVariableReplacer : IJsonConfigurationVariableReplacer
     {
