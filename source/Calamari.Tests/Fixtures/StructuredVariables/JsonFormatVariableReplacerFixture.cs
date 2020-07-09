@@ -1,25 +1,16 @@
-﻿using System;
-using System.IO;
-using Assent;
+﻿using Assent;
 using Calamari.Common.Features.StructuredVariables;
-using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
-using FluentAssertions;
-using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables
 {
     [TestFixture]
-    public class JsonFormatVariableReplacerFixture : CalamariFixture
+    public class JsonFormatVariableReplacerFixture : VariableReplacerFixture
     {
-        JsonFormatVariableReplacer replacer;
-
-        [SetUp]
-        public void SetUp()
+        public JsonFormatVariableReplacerFixture() : base(new JsonFormatVariableReplacer())
         {
-            replacer = new JsonFormatVariableReplacer();
         }
 
         [Test]
@@ -185,20 +176,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 
             var replaced = Replace(variables, existingFile: "appsettings.array.json");
             this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
-        }
-
-        string Replace(IVariables variables, string existingFile = null)
-        {
-            var temp = Path.GetTempFileName();
-            if (existingFile != null)
-                File.Copy(GetFixtureResouce("Samples", existingFile), temp, true);
-
-            using (new TemporaryFile(temp))
-            {
-                var success = replacer.TryModifyFile(temp, variables);
-                success.Should().BeTrue();
-                return File.ReadAllText(temp);
-            }
         }
     }
 }
