@@ -6,11 +6,12 @@ using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.NuGet;
+using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Deployment.Packages
+namespace Calamari.Tests.Fixtures.Deployment
 {
     public class DeployPackageWithJsonConfigurationFixture : DeployPackageFixture
     {
