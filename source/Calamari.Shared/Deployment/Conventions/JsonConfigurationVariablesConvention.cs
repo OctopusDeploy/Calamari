@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Variables;
 using Calamari.Integration.FileSystem;
-using Calamari.Features.StructuredVariables;
 
 namespace Calamari.Deployment.Conventions
 {

@@ -10,10 +10,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Variables;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
-using Calamari.Features.StructuredVariables;
 using Calamari.Integration.Packages;
 using Calamari.Util;
 

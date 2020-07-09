@@ -5,7 +5,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Calamari.Features.StructuredVariables
+namespace Calamari.Common.Features.StructuredVariables
 {
     public interface IJsonFormatVariableReplacer : IFileFormatVariableReplacer
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.Features.StructuredVariables
+namespace Calamari.Common.Features.StructuredVariables
 {
     public class StructuredConfigVariableReplacer : IStructuredConfigVariableReplacer
     {
