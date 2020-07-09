@@ -1,6 +1,6 @@
 ﻿using Octostache;
 
-namespace Calamari.Integration.JsonVariables
+namespace Calamari.Features.StructuredVariables
 {
     public interface IJsonConfigurationVariableReplacer
     {

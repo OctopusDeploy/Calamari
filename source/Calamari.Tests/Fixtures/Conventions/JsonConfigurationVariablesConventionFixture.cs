@@ -4,7 +4,7 @@ using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.JsonVariables;
+using Calamari.Features.StructuredVariables;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;

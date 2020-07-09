@@ -12,7 +12,7 @@ using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
-using Calamari.Integration.JsonVariables;
+using Calamari.Features.StructuredVariables;
 using Calamari.Integration.Nginx;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;

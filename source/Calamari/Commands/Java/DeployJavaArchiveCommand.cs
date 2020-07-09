@@ -10,7 +10,7 @@ using Calamari.Deployment.Features.Java;
 using Calamari.Deployment.Journal;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.JsonVariables;
+using Calamari.Features.StructuredVariables;
 using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Processes.Semaphores;

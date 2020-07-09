@@ -2,7 +2,7 @@
 using System.IO;
 using Assent;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.JsonVariables;
+using Calamari.Features.StructuredVariables;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using NUnit.Framework;
