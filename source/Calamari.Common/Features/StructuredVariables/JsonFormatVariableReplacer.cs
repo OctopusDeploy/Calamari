@@ -35,7 +35,7 @@ namespace Calamari.Features.StructuredVariables
             SaveJson(filePath, root);
             return true;
         }
-        
+
         static JToken LoadJson(string jsonFilePath)
         {
             if (!File.Exists(jsonFilePath))
@@ -63,7 +63,7 @@ namespace Calamari.Features.StructuredVariables
             }
         }
     }
-    
+
     public class JsonUpdateMap
     {
         private readonly IDictionary<string, Action<string>> map = new SortedDictionary<string, Action<string>>(StringComparer.OrdinalIgnoreCase);
