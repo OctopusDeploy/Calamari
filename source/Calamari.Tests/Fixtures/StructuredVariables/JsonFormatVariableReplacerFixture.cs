@@ -5,19 +5,21 @@ using Calamari.Integration.FileSystem;
 using Calamari.Features.StructuredVariables;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
+using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.JsonVariables
+namespace Calamari.Tests.Fixtures.StructuredVariables
 {
     [TestFixture]
-    public class JsonConfigurationVariableReplacerFixture : CalamariFixture
+    public class JsonFormatVariableReplacerFixture : CalamariFixture
     {
-        JsonConfigurationVariableReplacer configurationVariableReplacer;
+        JsonFormatVariableReplacer replacer;
 
         [SetUp]
         public void SetUp()
         {
-            configurationVariableReplacer = new JsonConfigurationVariableReplacer();
+            replacer = new JsonFormatVariableReplacer();
         }
 
         [Test]
@@ -162,7 +164,6 @@ namespace Calamari.Tests.Fixtures.JsonVariables
             this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
-
         [Test]
         public void ShouldReplaceDecimal()
         {
@@ -194,7 +195,8 @@ namespace Calamari.Tests.Fixtures.JsonVariables
 
             using (new TemporaryFile(temp))
             {
-                configurationVariableReplacer.ModifyJsonFile(temp, variables);
+                var success = replacer.TryModifyFile(temp, variables);
+                success.Should().BeTrue();
                 return File.ReadAllText(temp);
             }
         }

@@ -115,10 +115,10 @@
     <None Include="Fixtures\Integration\Packages\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\JsonVariables\Samples\**">
+    <None Include="Fixtures\StructuredVariables\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\JsonVariables\Approved\*.approved.*">
+    <None Include="Fixtures\StructuredVariables\Approved\*.approved.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Nginx\Approved\*.approved.*">
