@@ -33,7 +33,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             RunTest(
                 canParseAsJson: true,
                 canParseAsYaml: false,
-                invocationResult => invocationResult
+                invocation => invocation
                     .Should()
                     .NotThrow()
             );
@@ -45,7 +45,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             RunTest(
                 canParseAsJson: false,
                 canParseAsYaml: true,
-                invocationResult => invocationResult
+                invocation => invocation
                     .Should()
                     .NotThrow()
             );
@@ -57,7 +57,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             RunTest(
                 canParseAsJson: false,
                 canParseAsYaml: false,
-                invocationResult => invocationResult
+                invocation => invocation
                     .Should()
                     .ThrowExactly<Exception>()
                     .WithMessage("The config file at 'path' couldn't be parsed.")
