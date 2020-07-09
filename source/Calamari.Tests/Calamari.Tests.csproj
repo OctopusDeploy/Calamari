@@ -121,6 +121,9 @@
     <None Include="Fixtures\JsonVariables\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\JsonVariables\Approved\*.approved.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Nginx\Approved\*.approved.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
