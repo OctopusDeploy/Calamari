@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Linq;
 
 namespace Calamari.Common.Features.StructuredVariables
 {
     public class StructuredConfigVariableReplacer : IStructuredConfigVariableReplacer
     {
+        readonly string featureToggleVariableName = "Octopus.Action.Package.StructuredConfigurationFeatureFlag";
+
         readonly IFileFormatVariableReplacer[] replacers;
 
         public StructuredConfigVariableReplacer(
@@ -25,7 +28,12 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             Log.Info($"Attempting to push variables into structured config file at '{filePath}'");
 
-            foreach (var replacer in replacers)
+            // Toggle set of replacers based on feature flag
+            var replacersToTry = variables.GetFlag(featureToggleVariableName)
+                ? replacers.OfType<IJsonFormatVariableReplacer>().ToArray()
+                : replacers;
+
+            foreach (var replacer in replacersToTry)
             {
                 var fileUpdated = replacer.TryModifyFile(filePath, variables);
                 if (fileUpdated)
