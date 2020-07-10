@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using Assent;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Integration.FileSystem;
-using Calamari.Features.StructuredVariables;
 using Calamari.Tests.Helpers;
 using Calamari.Variables;
 using FluentAssertions;

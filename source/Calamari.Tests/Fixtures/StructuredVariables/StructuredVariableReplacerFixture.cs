@@ -1,5 +1,5 @@
 ﻿using System;
-using Calamari.Features.StructuredVariables;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Variables;
 using FluentAssertions;
 using NSubstitute;

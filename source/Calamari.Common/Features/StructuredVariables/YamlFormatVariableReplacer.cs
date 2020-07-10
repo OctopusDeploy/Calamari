@@ -1,4 +1,4 @@
-﻿namespace Calamari.Features.StructuredVariables
+﻿namespace Calamari.Common.Features.StructuredVariables
 {
     public interface IYamlFormatVariableReplacer : IFileFormatVariableReplacer
     {

@@ -1,6 +1,4 @@
-﻿using Octostache;
-
-namespace Calamari.Features.StructuredVariables
+﻿namespace Calamari.Common.Features.StructuredVariables
 {
     public interface IStructuredConfigVariableReplacer
     {
