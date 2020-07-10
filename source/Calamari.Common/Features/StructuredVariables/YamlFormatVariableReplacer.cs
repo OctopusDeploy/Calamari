@@ -21,9 +21,10 @@ namespace Calamari.Common.Features.StructuredVariables
                 .DistinctBy(v => v.Key)
                 .ToDictionary(v => v.Key, v => v.Value);
 
+            // Read and transform the input file
+            var outputEvents = new List<ParsingEvent>();
             try
             {
-                var outputEvents = new List<ParsingEvent>();
                 using (var reader = new StreamReader(filePath))
                 {
                     var parser = new Parser(reader);
@@ -44,27 +45,29 @@ namespace Calamari.Common.Features.StructuredVariables
                         outputEvents.Add(ev);
                     }
                 }
-
-                string outputText;
-                using (var writer = new StringWriter())
-                {
-                    var emitter = new Emitter(writer);
-                    foreach (var outputEvent in outputEvents)
-                    {
-                        emitter.Emit(outputEvent);
-                    }
-
-                    writer.Close();
-                    outputText = writer.ToString();
-                }
-
-                File.WriteAllText(filePath, outputText);
-                return true;
             }
-            catch
+            catch (SyntaxErrorException)
             {
+                // TODO: Report where the problem was in the input file
                 return false;
             }
+
+            // Write the replacement file
+            string outputText;
+            using (var writer = new StringWriter())
+            {
+                var emitter = new Emitter(writer);
+                foreach (var outputEvent in outputEvents)
+                {
+                    emitter.Emit(outputEvent);
+                }
+
+                writer.Close();
+                outputText = writer.ToString();
+            }
+
+            File.WriteAllText(filePath, outputText);
+            return true;
         }
     }
 }
