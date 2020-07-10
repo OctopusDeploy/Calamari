@@ -29,9 +29,16 @@ namespace Calamari.Common.Features.StructuredVariables
             Log.Info($"Attempting to push variables into structured config file at '{filePath}'");
 
             // Toggle set of replacers based on feature flag
-            var replacersToTry = variables.GetFlag(featureToggleVariableName)
-                ? replacers.OfType<IJsonFormatVariableReplacer>().ToArray()
-                : replacers;
+            IFileFormatVariableReplacer[] replacersToTry;
+            if (variables.GetFlag(featureToggleVariableName))
+            {
+                Log.Info($"Feature toggle flag {featureToggleVariableName} detected. Trying replacers for all supported file formats.");
+                replacersToTry = replacers;
+            }
+            else
+            {
+                replacersToTry = replacers.OfType<IJsonFormatVariableReplacer>().ToArray<IFileFormatVariableReplacer>();
+            }
 
             foreach (var replacer in replacersToTry)
             {
