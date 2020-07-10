@@ -5,7 +5,7 @@ namespace Calamari.Common.Features.StructuredVariables
 {
     public class StructuredConfigVariableReplacer : IStructuredConfigVariableReplacer
     {
-        readonly string featureToggleVariableName = "Octopus.Action.Package.StructuredConfigurationFeatureFlag";
+        public static readonly string FeatureToggleVariableName = "Octopus.Action.Package.StructuredConfigurationFeatureFlag";
 
         readonly IFileFormatVariableReplacer[] replacers;
 
@@ -30,9 +30,9 @@ namespace Calamari.Common.Features.StructuredVariables
 
             // Toggle set of replacers based on feature flag
             IFileFormatVariableReplacer[] replacersToTry;
-            if (variables.GetFlag(featureToggleVariableName))
+            if (variables.GetFlag(FeatureToggleVariableName))
             {
-                Log.Info($"Feature toggle flag {featureToggleVariableName} detected. Trying replacers for all supported file formats.");
+                Log.Info($"Feature toggle flag {FeatureToggleVariableName} detected. Trying replacers for all supported file formats.");
                 replacersToTry = replacers;
             }
             else

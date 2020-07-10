@@ -22,7 +22,10 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             yamlReplacer.TryModifyFile(Arg.Any<string>(), Arg.Any<IVariables>()).Returns(canParseAsYaml);
             
             var replacer = new StructuredConfigVariableReplacer(jsonReplacer, yamlReplacer);
-            var variables = new CalamariVariables();
+            var variables = new CalamariVariables
+            {
+                {StructuredConfigVariableReplacer.FeatureToggleVariableName, "true"}
+            };
 
             invocationAssertions(replacer.Invoking(r => r.ModifyFile("path", variables)));
         }
@@ -73,7 +76,11 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             jsonReplacer.TryModifyFile(Arg.Any<string>(), Arg.Any<IVariables>()).Returns(true);
             
             var replacer = new StructuredConfigVariableReplacer(jsonReplacer, yamlReplacer);
-            var variables = new CalamariVariables();
+            var variables = new CalamariVariables
+            {
+                {StructuredConfigVariableReplacer.FeatureToggleVariableName, "true"}
+            };
+
 
             replacer.ModifyFile("path", variables);
             
