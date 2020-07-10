@@ -1,6 +1,7 @@
-﻿using Calamari.Common.Features.StructuredVariables;
+﻿using Assent;
+using Calamari.Common.Features.StructuredVariables;
+using Calamari.Tests.Helpers;
 using Calamari.Variables;
-using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables
@@ -15,24 +16,14 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         [Test]
         public void ShouldReplaceSimpleStringYamlVariables()
         {
-            const string expected = @"environment: production
-include:
-- prod-system
-- monitoring
-";
-
             var variables = new CalamariVariables();
+            variables.Set("server:ports:0", "8080");
+            variables.Set("spring:h2:console:enabled", "false");
             variables.Set("environment", "production");
-            variables.Set("include:0", "prod-system");
 
-            var replaced = Replace(variables, "application-simple-string.yaml");
+            var replaced = Replace(variables, "application.yaml");
 
-            AssertYamlEquivalent(replaced, expected);
-        }
-
-        void AssertYamlEquivalent(string replaced, string expected)
-        {
-            replaced.Should().Be(expected);
+            this.Assent(replaced, TestEnvironment.AssentConfiguration);
         }
     }
 }

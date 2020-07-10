@@ -1,4 +1,0 @@
-﻿environment: development
-include:
-  - dev-system
-  - monitoring
