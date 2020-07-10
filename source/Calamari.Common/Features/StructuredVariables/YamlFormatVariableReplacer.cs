@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Calamari.Integration.FileSystem;
 using YamlDotNet.Core;
@@ -13,7 +14,7 @@ namespace Calamari.Common.Features.StructuredVariables
     public class YamlFormatVariableReplacer : IYamlFormatVariableReplacer
     {
         public string FileFormatName => "YAML";
-        
+
         public bool TryModifyFile(string filePath, IVariables variables)
         {
             var variablesByKey = variables
@@ -22,13 +23,11 @@ namespace Calamari.Common.Features.StructuredVariables
 
             try
             {
-                string updatedText;
-                using (var writer = new StringWriter())
+                var outputEvents = new List<ParsingEvent>();
                 using (var reader = new StreamReader(filePath))
                 {
                     var parser = new Parser(reader);
                     var classifier = new YamlEventStreamClassifier();
-                    var emitter = new Emitter(writer);
                     while (parser.MoveNext())
                     {
                         var ev = parser.Current;
@@ -42,14 +41,24 @@ namespace Calamari.Common.Features.StructuredVariables
                             ev = scalar.ReplaceValue(newValue);
                         }
 
-                        emitter.Emit(ev);
+                        outputEvents.Add(ev);
+                    }
+                }
+
+                string outputText;
+                using (var writer = new StringWriter())
+                {
+                    var emitter = new Emitter(writer);
+                    foreach (var outputEvent in outputEvents)
+                    {
+                        emitter.Emit(outputEvent);
                     }
 
                     writer.Close();
-                    updatedText = writer.ToString();
+                    outputText = writer.ToString();
                 }
 
-                File.WriteAllText(filePath, updatedText);
+                File.WriteAllText(filePath, outputText);
                 return true;
             }
             catch
