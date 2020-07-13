@@ -104,10 +104,9 @@ namespace Calamari.Common
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<ICommand>()
-                .Where(t => t.GetCustomAttribute<CommandAttribute>()
-                    .Name
+                .Where(t => ((CommandAttribute)Attribute.GetCustomAttribute(t, typeof(CommandAttribute))).Name
                     .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-                .Named<ICommand>(t => t.GetCustomAttribute<CommandAttribute>().Name);
+                .Named<ICommand>(t => ((CommandAttribute)Attribute.GetCustomAttribute(t, typeof(CommandAttribute))).Name);
         }
 
         protected virtual Assembly GetProgramAssemblyToRegister()
