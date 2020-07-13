@@ -41,11 +41,11 @@ namespace Calamari.Common.Features.StructuredVariables
                         if (node is YamlScalarValueNode scalar
                             && variablesByKey.TryGetValue(scalar.Path, out string newValue))
                         {
-                            outputEvent = scalar.ReplaceValue(newValue);
+                            outputEvent = scalar.Event.ReplaceValue(newValue);
                         }
                         else
                         {
-                            outputEvent = node.ParsingEvent;
+                            outputEvent = node.Event;
                         }
 
                         outputEvents.Add(outputEvent);

@@ -71,34 +71,30 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public interface IYamlNode
     {
-        ParsingEvent ParsingEvent { get; }
+        ParsingEvent Event { get; }
         string Path { get; }
     }
 
     public class YamlNode<T> : IYamlNode where T : ParsingEvent
     {
-        public T ParsingEvent { get; }
+        public T Event { get; }
         public string Path { get; }
 
         public YamlNode(T parsingEvent, string path)
         {
-            ParsingEvent = parsingEvent;
+            Event = parsingEvent;
             Path = path;
         }
 
-        ParsingEvent IYamlNode.ParsingEvent => ParsingEvent;
+        ParsingEvent IYamlNode.Event => Event;
     }
 
-    public class YamlScalarValueNode : YamlNode<Scalar>
+    public static class ParsingEventExtensions
     {
-        public YamlScalarValueNode(Scalar scalar, string path) : base(scalar, path)
+        public static Scalar ReplaceValue(this Scalar scalar, string newValue)
         {
-        }
-
-        public Scalar ReplaceValue(string newValue)
-        {
-            return new Scalar(ParsingEvent.Anchor, ParsingEvent.Tag, newValue, ParsingEvent.Style,
-                ParsingEvent.IsPlainImplicit, ParsingEvent.IsQuotedImplicit, ParsingEvent.Start, ParsingEvent.End);
+            return new Scalar(scalar.Anchor, scalar.Tag, newValue, scalar.Style, scalar.IsPlainImplicit,
+                scalar.IsQuotedImplicit, scalar.Start, scalar.End);
         }
     }
 
@@ -117,17 +113,21 @@ namespace Calamari.Common.Features.StructuredVariables
 
             switch (ev)
             {
-                case MappingStart _:
+                case MappingStart ms:
                     stack.Push(YamlStructure.Mapping);
+                    classifiedNode = new YamlNode<MappingStart>(ms, stack.GetPath());
                     break;
-                case MappingEnd _:
+                case MappingEnd me:
+                    classifiedNode = new YamlNode<MappingEnd>(me, stack.GetPath());
                     stack.Pop();
                     stack.TopMappingKeyEnd();
                     break;
-                case SequenceStart _:
+                case SequenceStart ss:
                     stack.Push(YamlStructure.Sequence);
+                    classifiedNode = new YamlNode<SequenceStart>(ss, stack.GetPath());
                     break;
-                case SequenceEnd _:
+                case SequenceEnd se:
+                    classifiedNode = new YamlNode<SequenceEnd>(se, stack.GetPath());
                     stack.Pop();
                     stack.TopMappingKeyEnd();
                     break;
@@ -140,7 +140,7 @@ namespace Calamari.Common.Features.StructuredVariables
                     else
                     {
                         // This is a value in a map or sequence
-                        classifiedNode = new YamlScalarValueNode(sc, stack.GetPath());
+                        classifiedNode = new YamlNode<Scalar>(sc, stack.GetPath());
                         stack.TopMappingKeyEnd();
                     }
 
