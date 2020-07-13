@@ -1,4 +1,5 @@
-﻿using Calamari.Common.Plumbing.Commands;
+﻿using System;
+using Calamari.Common.Plumbing.Commands;
 
 namespace Calamari.Common.Plumbing.Logging
 {
@@ -15,7 +16,7 @@ namespace Calamari.Common.Plumbing.Logging
 
         public void WriteInfo(string line)
         {
-            if(outputAsVerbose)
+            if (outputAsVerbose)
                 log.Verbose(line);
             else
                 log.Info(line);

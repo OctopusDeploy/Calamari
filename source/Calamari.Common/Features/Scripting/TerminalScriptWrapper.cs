@@ -14,7 +14,11 @@ namespace Calamari.Common.Features.Scripting
         readonly IScriptExecutor scriptExecutor;
         readonly IVariables variables;
 
-        public bool IsEnabled(ScriptSyntax syntax) => true;
+        public TerminalScriptWrapper(IScriptExecutor scriptExecutor, IVariables variables)
+        {
+            this.scriptExecutor = scriptExecutor;
+            this.variables = variables;
+        }
 
         public int Priority => ScriptWrapperPriorities.TerminalScriptPriority;
 
@@ -24,16 +28,17 @@ namespace Calamari.Common.Features.Scripting
             set => throw new MethodAccessException("TerminalScriptWrapper does not have a NextWrapper");
         }
 
-        public TerminalScriptWrapper(IScriptExecutor scriptExecutor, IVariables variables)
+        public bool IsEnabled(ScriptSyntax syntax)
         {
-            this.scriptExecutor = scriptExecutor;
-            this.variables = variables;
+            return true;
         }
 
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
-            Dictionary<string, string> environmentVars) => 
-            scriptExecutor.Execute(script, variables, commandLineRunner, environmentVars);
+            Dictionary<string, string> environmentVars)
+        {
+            return scriptExecutor.Execute(script, variables, commandLineRunner, environmentVars);
+        }
     }
 }

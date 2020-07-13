@@ -123,12 +123,14 @@
 //      p.Parse (new string[]{"-a-"});  // sets v == null
 //
 
+using System;
+
 namespace Calamari.Common.Plumbing.Commands.Options
 {
     public enum OptionValueType
     {
         None,
         Optional,
-        Required,
+        Required
     }
 }

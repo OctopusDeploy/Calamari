@@ -13,23 +13,21 @@ namespace Calamari.Common.Plumbing.FileSystem
 {
     public abstract class CalamariPhysicalFileSystem : ICalamariFileSystem
     {
-        public static CalamariPhysicalFileSystem GetPhysicalFileSystem()
-        {
-            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
-            {
-                return new NixCalamariPhysicalFileSystem();
-            }
-
-            return new WindowsPhysicalFileSystem();
-        }
-
-        protected IFile File { get; set; } = new StandardFile();
-        protected IDirectory Directory { get; set; } = new StandardDirectory();
-
         /// <summary>
         /// For file operations, try again after 100ms and again every 200ms after that
         /// </summary>
         static readonly LimitedExponentialRetryInterval RetryIntervalForFileOperations = new LimitedExponentialRetryInterval(100, 200, 2);
+
+        protected IFile File { get; set; } = new StandardFile();
+        protected IDirectory Directory { get; set; } = new StandardDirectory();
+
+        public static CalamariPhysicalFileSystem GetPhysicalFileSystem()
+        {
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
+                return new NixCalamariPhysicalFileSystem();
+
+            return new WindowsPhysicalFileSystem();
+        }
 
         /// <summary>
         /// For file operations, retry constantly up to one minute
@@ -40,9 +38,9 @@ namespace Calamari.Common.Plumbing.FileSystem
         /// </remarks>
         protected static RetryTracker GetFileOperationRetryTracker()
         {
-            return new RetryTracker(maxRetries:10000, 
-                timeLimit: TimeSpan.FromMinutes(1), 
-                retryInterval: RetryIntervalForFileOperations);
+            return new RetryTracker(10000,
+                TimeSpan.FromMinutes(1),
+                RetryIntervalForFileOperations);
         }
 
         public bool FileExists(string path)
@@ -68,13 +66,15 @@ namespace Calamari.Common.Plumbing.FileSystem
         }
 
         public virtual void DeleteFile(string path, FailureOptions options = FailureOptions.ThrowOnFailure)
-            => DeleteFile(path, options, GetFileOperationRetryTracker(), CancellationToken.None);
+        {
+            DeleteFile(path, options, GetFileOperationRetryTracker(), CancellationToken.None);
+        }
 
         void DeleteFile(string path, FailureOptions options, RetryTracker retry, CancellationToken cancel)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return;
-            
+
             retry.Reset();
             while (retry.Try())
             {
@@ -84,11 +84,10 @@ namespace Calamari.Common.Plumbing.FileSystem
                     if (File.Exists(path))
                     {
                         if (retry.IsNotFirstAttempt)
-                        {
                             File.SetAttributes(path, FileAttributes.Normal);
-                        }
                         File.Delete(path);
                     }
+
                     break;
                 }
                 catch (Exception ex)
@@ -96,17 +95,13 @@ namespace Calamari.Common.Plumbing.FileSystem
                     if (retry.CanRetry())
                     {
                         if (retry.ShouldLogWarning())
-                        {
                             Log.VerboseFormat("Retry #{0} on delete file '{1}'. Exception: {2}", retry.CurrentTry, path, ex.Message);
-                        }
                         Thread.Sleep(retry.Sleep());
                     }
                     else
                     {
                         if (options == FailureOptions.ThrowOnFailure)
-                        {
                             throw;
-                        }
                     }
                 }
             }
@@ -124,7 +119,6 @@ namespace Calamari.Common.Plumbing.FileSystem
 
             var retry = GetFileOperationRetryTracker();
             while (retry.Try())
-            {
                 try
                 {
                     if (Directory.Exists(path))
@@ -134,6 +128,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                         dir.Delete(true);
                         EnsureDirectoryDeleted(path, options);
                     }
+
                     break;
                 }
                 catch (Exception ex)
@@ -141,25 +136,20 @@ namespace Calamari.Common.Plumbing.FileSystem
                     if (retry.CanRetry())
                     {
                         if (retry.ShouldLogWarning())
-                        {
                             Log.VerboseFormat("Retry #{0} on delete directory '{1}'. Exception: {2}", retry.CurrentTry, path, ex.Message);
-                        }
                         Thread.Sleep(retry.Sleep());
                     }
                     else
                     {
                         if (options == FailureOptions.ThrowOnFailure)
-                        {
                             throw;
-                        }
                     }
                 }
-            }
         }
 
         void EnsureDirectoryDeleted(string path, FailureOptions failureOptions)
         {
-            var retry = GetFileOperationRetryTracker(); 
+            var retry = GetFileOperationRetryTracker();
 
             while (retry.Try())
             {
@@ -183,7 +173,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             return EnumerateWithGlob(parentDirectoryPath, globPattern).Select(fi => fi.FullName).Where(FileExists);
         }
 
-        private IEnumerable<FileSystemInfo> EnumerateWithGlob(string parentDirectoryPath, params string[] globPattern)
+        IEnumerable<FileSystemInfo> EnumerateWithGlob(string parentDirectoryPath, params string[] globPattern)
         {
             var results = globPattern.Length == 0
                 ? Glob.Expand(Path.Combine(parentDirectoryPath, "*"))
@@ -240,12 +230,41 @@ namespace Calamari.Common.Plumbing.FileSystem
             var b = File.ReadAllBytes(filename);
 
             // BOM/signature exists (sourced from http://www.unicode.org/faq/utf_bom.html#bom4)
-            if (b.Length >= 4 && b[0] == 0x00 && b[1] == 0x00 && b[2] == 0xFE && b[3] == 0xFF) { encoding = Encoding.GetEncoding("utf-32BE"); return Encoding.GetEncoding("utf-32BE").GetString(b, 4, b.Length - 4); }  // UTF-32, big-endian 
-            else if (b.Length >= 4 && b[0] == 0xFF && b[1] == 0xFE && b[2] == 0x00 && b[3] == 0x00) { encoding = Encoding.UTF32; return Encoding.UTF32.GetString(b, 4, b.Length - 4); }    // UTF-32, little-endian
-            else if (b.Length >= 2 && b[0] == 0xFE && b[1] == 0xFF) { encoding = Encoding.BigEndianUnicode; return Encoding.BigEndianUnicode.GetString(b, 2, b.Length - 2); }     // UTF-16, big-endian
-            else if (b.Length >= 2 && b[0] == 0xFF && b[1] == 0xFE) { encoding = Encoding.Unicode; return Encoding.Unicode.GetString(b, 2, b.Length - 2); }            // UTF-16, little-endian
-            else if (b.Length >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF) { encoding = Encoding.UTF8; return Encoding.UTF8.GetString(b, 3, b.Length - 3); }  // UTF-8
-            else if (b.Length >= 3 && b[0] == 0x2b && b[1] == 0x2f && b[2] == 0x76) { encoding = Encoding.UTF7; return Encoding.UTF7.GetString(b, 3, b.Length - 3);  } // UTF-7
+            if (b.Length >= 4 && b[0] == 0x00 && b[1] == 0x00 && b[2] == 0xFE && b[3] == 0xFF)
+            {
+                encoding = Encoding.GetEncoding("utf-32BE");
+                return Encoding.GetEncoding("utf-32BE").GetString(b, 4, b.Length - 4);
+            } // UTF-32, big-endian 
+
+            if (b.Length >= 4 && b[0] == 0xFF && b[1] == 0xFE && b[2] == 0x00 && b[3] == 0x00)
+            {
+                encoding = Encoding.UTF32;
+                return Encoding.UTF32.GetString(b, 4, b.Length - 4);
+            } // UTF-32, little-endian
+
+            if (b.Length >= 2 && b[0] == 0xFE && b[1] == 0xFF)
+            {
+                encoding = Encoding.BigEndianUnicode;
+                return Encoding.BigEndianUnicode.GetString(b, 2, b.Length - 2);
+            } // UTF-16, big-endian
+
+            if (b.Length >= 2 && b[0] == 0xFF && b[1] == 0xFE)
+            {
+                encoding = Encoding.Unicode;
+                return Encoding.Unicode.GetString(b, 2, b.Length - 2);
+            } // UTF-16, little-endian
+
+            if (b.Length >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF)
+            {
+                encoding = Encoding.UTF8;
+                return Encoding.UTF8.GetString(b, 3, b.Length - 3);
+            } // UTF-8
+
+            if (b.Length >= 3 && b[0] == 0x2b && b[1] == 0x2f && b[2] == 0x76)
+            {
+                encoding = Encoding.UTF7;
+                return Encoding.UTF7.GetString(b, 3, b.Length - 3);
+            } // UTF-7
 
             // Some text files are encoded in UTF8, but have no BOM/signature. Hence
             // the below manually checks for a UTF8 pattern. This code is based off
@@ -255,22 +274,53 @@ namespace Calamari.Common.Plumbing.FileSystem
             var ascii = true;
             while (i < b.Length - 4)
             {
-                if (b[i] <= 0x7F) { i += 1; continue; }     // If all characters are below 0x80, then it is valid UTF8, but UTF8 is not 'required' 
-                if (b[i] >= 0xC2 && b[i] <= 0xDF && b[i + 1] >= 0x80 && b[i + 1] < 0xC0) { i += 2; utf8 = true; ascii = false; continue; }
-                if (b[i] >= 0xE0 && b[i] <= 0xF0 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0) { i += 3; utf8 = true; ascii = false; continue; }
-                if (b[i] >= 0xF0 && b[i] <= 0xF4 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0 && b[i + 3] >= 0x80 && b[i + 3] < 0xC0) { i += 4; utf8 = true; ascii = false; continue; }
-                ascii = false; utf8 = false; break;
+                if (b[i] <= 0x7F)
+                {
+                    i += 1;
+                    continue;
+                } // If all characters are below 0x80, then it is valid UTF8, but UTF8 is not 'required' 
+
+                if (b[i] >= 0xC2 && b[i] <= 0xDF && b[i + 1] >= 0x80 && b[i + 1] < 0xC0)
+                {
+                    i += 2;
+                    utf8 = true;
+                    ascii = false;
+                    continue;
+                }
+
+                if (b[i] >= 0xE0 && b[i] <= 0xF0 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0)
+                {
+                    i += 3;
+                    utf8 = true;
+                    ascii = false;
+                    continue;
+                }
+
+                if (b[i] >= 0xF0 && b[i] <= 0xF4 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0 && b[i + 3] >= 0x80 && b[i + 3] < 0xC0)
+                {
+                    i += 4;
+                    utf8 = true;
+                    ascii = false;
+                    continue;
+                }
+
+                ascii = false;
+                utf8 = false;
+                break;
             }
+
             if (ascii)
             {
                 encoding = Encoding.ASCII;
                 return Encoding.ASCII.GetString(b);
             }
+
             if (utf8)
             {
-                encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false); //UTF8 with no BOM
+                encoding = new UTF8Encoding(false); //UTF8 with no BOM
                 return Encoding.UTF8.GetString(b);
             }
+
             // If all else fails, the encoding is probably (though certainly not definitely) the user's local codepage! 
             // this probably something like Windows 1252 on Windows, but is Encoding.Default is UTF8 on Linux so this probably isn't right in Linux.
             encoding = Encoding.Default;
@@ -294,11 +344,14 @@ namespace Calamari.Common.Plumbing.FileSystem
         }
 
         //File.WriteAllText won't overwrite a hidden file, so implement our own.
-        private static void WriteAllText(string path, string contents, Encoding encoding)
+        static void WriteAllText(string path, string contents, Encoding encoding)
         {
-            if (path == null) throw new ArgumentNullException(nameof(path));
-            if (encoding == null) throw new ArgumentNullException(nameof(encoding));
-            if (path.Length <= 0) throw new ArgumentException(path);
+            if (path == null)
+                throw new ArgumentNullException(nameof(path));
+            if (encoding == null)
+                throw new ArgumentNullException(nameof(encoding));
+            if (path.Length <= 0)
+                throw new ArgumentException(path);
 
             //FileMode.Open causes an existing file to be truncated to the
             //length of our new data, but can't overwrite a hidden file,
@@ -312,10 +365,12 @@ namespace Calamari.Common.Plumbing.FileSystem
             }
         }
 
-        private static void WriteAllText(string path, string contents)
+        static void WriteAllText(string path, string contents)
         {
-            if (path == null) throw new ArgumentNullException(nameof(path));
-            if (path.Length <= 0) throw new ArgumentException(path);
+            if (path == null)
+                throw new ArgumentNullException(nameof(path));
+            if (path.Length <= 0)
+                throw new ArgumentException(path);
             using (var fs = new FileStream(path, FileMode.OpenOrCreate))
             using (var sw = new StreamWriter(fs))
             {
@@ -352,9 +407,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             path1 = Path.Combine(path1, "Temp");
             var path = path1;
             if (!Directory.Exists(path))
-            {
                 Directory.CreateDirectory(path);
-            }
             return Path.GetFullPath(path);
         }
 
@@ -362,9 +415,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         {
             var path = Path.Combine(GetTempBasePath(), Guid.NewGuid().ToString());
             if (!Directory.Exists(path))
-            {
                 Directory.CreateDirectory(path);
-            }
             return path;
         }
 
@@ -392,20 +443,24 @@ namespace Calamari.Common.Plumbing.FileSystem
                 check = fsi =>
                 {
                     return keep.Any(k => k is DirectoryInfo && fsi.FullName.IsChildOf(k.FullName) ||
-                                         k.FullName == fsi.FullName);
+                        k.FullName == fsi.FullName);
                 };
             }
+
             PurgeDirectory(targetDirectory, check, options, CancellationToken.None);
         }
 
-        void PurgeDirectory(string targetDirectory, Predicate<FileSystemInfo> exclude, FailureOptions options, CancellationToken cancel, bool includeTarget = false, RetryTracker retry = null)
+        void PurgeDirectory(string targetDirectory,
+            Predicate<FileSystemInfo> exclude,
+            FailureOptions options,
+            CancellationToken cancel,
+            bool includeTarget = false,
+            RetryTracker retry = null)
         {
-            exclude = exclude?? (fi => false);
+            exclude = exclude ?? (fi => false);
 
             if (!DirectoryExists(targetDirectory))
-            {
                 return;
-            }
 
             retry = retry ?? GetFileOperationRetryTracker();
 
@@ -415,9 +470,7 @@ namespace Calamari.Common.Plumbing.FileSystem
 
                 var includeInfo = new FileInfo(file);
                 if (exclude(includeInfo))
-                {
                     continue;
-                }
 
                 DeleteFile(file, options, retry, cancel);
             }
@@ -428,18 +481,17 @@ namespace Calamari.Common.Plumbing.FileSystem
 
                 var info = new DirectoryInfo(directory);
                 if (exclude(info))
-                {
                     continue;
-                }
 
                 if ((info.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
-                {
                     Directory.Delete(directory, false);
-                }
                 else
-                {
-                    PurgeDirectory(directory, exclude, options, cancel, true, retry);
-                }
+                    PurgeDirectory(directory,
+                        exclude,
+                        options,
+                        cancel,
+                        true,
+                        retry);
             }
 
             if (includeTarget && DirectoryIsEmpty(targetDirectory))
@@ -453,9 +505,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             if (!File.Exists(originalFile))
                 File.Copy(temporaryReplacement, originalFile, true);
             else
-            {
                 System.IO.File.Replace(temporaryReplacement, originalFile, backup);
-            }
 
             File.Delete(temporaryReplacement);
             if (File.Exists(backup))
@@ -469,7 +519,8 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public string RemoveInvalidFileNameChars(string path)
         {
-            if (string.IsNullOrEmpty(path)) return path;
+            if (string.IsNullOrEmpty(path))
+                return path;
             var invalidPathChars = Path.GetInvalidPathChars();
             var invalidFileChars = Path.GetInvalidFileNameChars();
 
@@ -478,10 +529,9 @@ namespace Calamari.Common.Plumbing.FileSystem
             {
                 var c = path[i];
                 if (!invalidPathChars.Contains(c) && !invalidFileChars.Contains(c))
-                {
                     result.Append(c);
-                }
             }
+
             return result.ToString();
         }
 
@@ -493,12 +543,8 @@ namespace Calamari.Common.Plumbing.FileSystem
         public void EnsureDirectoryExists(string directoryPath)
         {
             if (!DirectoryExists(directoryPath))
-            {
                 Directory.CreateDirectory(directoryPath);
-            }
-        }
-
-        // ReSharper disable AssignNullToNotNullAttribute
+        } // ReSharper disable AssignNullToNotNullAttribute
 
         public int CopyDirectory(string sourceDirectory, string targetDirectory)
         {
@@ -511,11 +557,9 @@ namespace Calamari.Common.Plumbing.FileSystem
                 return 0;
 
             if (!DirectoryExists(targetDirectory))
-            {
                 Directory.CreateDirectory(targetDirectory);
-            }
 
-            int count = 0;
+            var count = 0;
             var files = Directory.GetFiles(sourceDirectory, "*");
             foreach (var sourceFile in files)
             {
@@ -541,11 +585,10 @@ namespace Calamari.Common.Plumbing.FileSystem
             RetryTrackerFileAction(() => File.Copy(sourceFile, targetFile, true), targetFile, "copy");
         }
 
-        private static void RetryTrackerFileAction(Action fileAction, string target, string action)
+        static void RetryTrackerFileAction(Action fileAction, string target, string action)
         {
             var retry = GetFileOperationRetryTracker();
             while (retry.Try())
-            {
                 try
                 {
                     fileAction();
@@ -556,9 +599,11 @@ namespace Calamari.Common.Plumbing.FileSystem
                     if (retry.CanRetry())
                     {
                         if (retry.ShouldLogWarning())
-                        {
-                            Log.VerboseFormat("Retry #{0} on {1} '{2}'. Exception: {3}", retry.CurrentTry, action, target, ex.Message);
-                        }
+                            Log.VerboseFormat("Retry #{0} on {1} '{2}'. Exception: {3}",
+                                retry.CurrentTry,
+                                action,
+                                target,
+                                ex.Message);
                         Thread.Sleep(retry.Sleep());
                     }
                     else
@@ -566,15 +611,12 @@ namespace Calamari.Common.Plumbing.FileSystem
                         throw;
                     }
                 }
-            }
         }
 
         public string GetFullPath(string relativeOrAbsoluteFilePath)
         {
             if (!Path.IsPathRooted(relativeOrAbsoluteFilePath))
-            {
                 relativeOrAbsoluteFilePath = Path.Combine(Directory.GetCurrentDirectory(), relativeOrAbsoluteFilePath);
-            }
 
             relativeOrAbsoluteFilePath = Path.GetFullPath(relativeOrAbsoluteFilePath);
             return relativeOrAbsoluteFilePath;
@@ -589,10 +631,8 @@ namespace Calamari.Common.Plumbing.FileSystem
 
             var matchingTokens = 0;
             for (; matchingTokens < fromPathTokens.Count() - 1; matchingTokens++)
-            {
                 if (!fromPathTokens[matchingTokens].Equals(toPathTokens[matchingTokens], StringComparison.Ordinal))
                     break;
-            }
 
             var relativePath = new StringBuilder();
             for (var i = matchingTokens; i < fromPathTokens.Length - 1; i++)

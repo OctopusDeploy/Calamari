@@ -13,7 +13,7 @@ namespace Calamari
             var fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
             return fileVersionInfo.ProductVersion;
         }
-        
+
         public static string FullLocalPath(this Assembly assembly)
         {
             var codeBase = assembly.CodeBase;

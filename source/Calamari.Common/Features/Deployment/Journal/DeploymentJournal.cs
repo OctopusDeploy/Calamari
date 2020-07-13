@@ -12,10 +12,10 @@ namespace Calamari.Common.Features.Deployment.Journal
 {
     public class DeploymentJournal : IDeploymentJournal
     {
+        const string SemaphoreName = "Octopus.Calamari.DeploymentJournal";
         readonly ICalamariFileSystem fileSystem;
         readonly ISemaphoreFactory semaphore;
         readonly IVariables variables;
-        const string SemaphoreName = "Octopus.Calamari.DeploymentJournal";
 
         public DeploymentJournal(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphore, IVariables variables)
         {
@@ -24,10 +24,7 @@ namespace Calamari.Common.Features.Deployment.Journal
             this.variables = variables;
         }
 
-        private string JournalPath
-        {
-            get { return variables.Get(TentacleVariables.Agent.JournalPath); }
-        }
+        string JournalPath => variables.Get(TentacleVariables.Agent.JournalPath);
 
         public void AddJournalEntry(JournalEntry entry)
         {
@@ -35,7 +32,7 @@ namespace Calamari.Common.Features.Deployment.Journal
             {
                 var xElement = entry.ToXmlElement();
                 Log.VerboseFormat("Adding journal entry:\n{0}", xElement.ToString());
-                Write(Read().Concat(new[] {xElement}));
+                Write(Read().Concat(new[] { xElement }));
             }
         }
 
@@ -68,9 +65,10 @@ namespace Calamari.Common.Features.Deployment.Journal
 
         public JournalEntry GetLatestInstallation(string retentionPolicySubset, string packageId, string packageVersion)
         {
-            return GetAllJournalEntries().Where(e =>
-                    string.Equals(retentionPolicySubset, e.RetentionPolicySet, StringComparison.OrdinalIgnoreCase)
-                    && ((packageId == null && packageVersion == null) ||
+            return GetAllJournalEntries()
+                .Where(e =>
+                    string.Equals(retentionPolicySubset, e.RetentionPolicySet, StringComparison.OrdinalIgnoreCase) &&
+                    (packageId == null && packageVersion == null ||
                         e.Packages.Any(deployedPackage =>
                             (packageId == null || string.Equals(packageId, deployedPackage.PackageId, StringComparison.OrdinalIgnoreCase)) &&
                             (packageVersion == null || string.Equals(packageVersion, deployedPackage.PackageVersion, StringComparison.OrdinalIgnoreCase)))))
@@ -83,37 +81,37 @@ namespace Calamari.Common.Features.Deployment.Journal
             return GetLatestSuccessfulInstallation(retentionPolicySubset, null, null);
         }
 
-        public JournalEntry GetLatestSuccessfulInstallation(string retentionPolicySubset, string packageId,
+        public JournalEntry GetLatestSuccessfulInstallation(string retentionPolicySubset,
+            string packageId,
             string packageVersion)
         {
-            return GetAllJournalEntries().Where(e =>
-                    string.Equals(retentionPolicySubset, e.RetentionPolicySet, StringComparison.OrdinalIgnoreCase)
-                    && ((packageId == null && packageVersion == null) ||
+            return GetAllJournalEntries()
+                .Where(e =>
+                    string.Equals(retentionPolicySubset, e.RetentionPolicySet, StringComparison.OrdinalIgnoreCase) &&
+                    (packageId == null && packageVersion == null ||
                         e.Packages.Any(deployedPackage =>
                             (packageId == null || string.Equals(packageId, deployedPackage.PackageId, StringComparison.OrdinalIgnoreCase)) &&
-                            (packageVersion == null || string.Equals(packageVersion, deployedPackage.PackageVersion, StringComparison.OrdinalIgnoreCase))))
-                    && e.WasSuccessful)
+                            (packageVersion == null || string.Equals(packageVersion, deployedPackage.PackageVersion, StringComparison.OrdinalIgnoreCase)))) &&
+                    e.WasSuccessful)
                 .OrderByDescending(o => o.InstalledOn)
                 .FirstOrDefault();
         }
 
-        private IEnumerable<XElement> Read()
+        IEnumerable<XElement> Read()
         {
             if (!fileSystem.FileExists(JournalPath))
-                yield break; 
-                
+                yield break;
+
             using (var file = fileSystem.OpenFile(JournalPath, FileAccess.Read))
             {
                 var document = XDocument.Load(file);
 
                 foreach (var element in document.Element("Deployments").Elements())
-                {
                     yield return element;
-                }
             }
         }
 
-        private void Write(IEnumerable<XElement> elements)
+        void Write(IEnumerable<XElement> elements)
         {
             fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(JournalPath));
 
@@ -125,7 +123,9 @@ namespace Calamari.Common.Features.Deployment.Journal
                 root.Add(element);
 
             using (var stream = fileSystem.OpenFile(tempPath, FileMode.Create, FileAccess.Write))
+            {
                 document.Save(stream);
+            }
 
             fileSystem.OverwriteAndDelete(JournalPath, tempPath);
         }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Calamari.Common.Commands;
@@ -14,17 +15,17 @@ namespace Calamari.Common.Features.Deployment.Journal
             PackageVersion = packageVersion;
             DeployedFrom = deployedFrom;
         }
-        
+
         public DeployedPackage(XElement element)
-        : this(
-            element.Attribute("PackageId")?.Value,
-            element.Attribute("PackageVersion")?.Value,
-            element.Attribute("DeployedFrom")?.Value)
+            : this(
+                element.Attribute("PackageId")?.Value,
+                element.Attribute("PackageVersion")?.Value,
+                element.Attribute("DeployedFrom")?.Value)
         {
         }
-        
+
         public string PackageId { get; }
-        public string PackageVersion { get; } 
+        public string PackageVersion { get; }
         public string DeployedFrom { get; }
 
         public XElement ToXmlElement()
@@ -32,35 +33,31 @@ namespace Calamari.Common.Features.Deployment.Journal
             var attributes = new List<XAttribute>
             {
                 new XAttribute("PackageId", PackageId),
-                new XAttribute("PackageVersion", PackageVersion),
-            }; 
-            
+                new XAttribute("PackageVersion", PackageVersion)
+            };
+
             if (!string.IsNullOrEmpty(DeployedFrom))
                 attributes.Add(new XAttribute("DeployedFrom", DeployedFrom));
-            
+
             return new XElement("Package", attributes);
         }
-        
+
         public static IEnumerable<DeployedPackage> GetDeployedPackages(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
 
             if (!string.IsNullOrWhiteSpace(variables.Get(PackageVariables.PackageId)))
-            {
                 yield return new DeployedPackage(
                     variables.Get(PackageVariables.PackageId),
                     variables.Get(PackageVariables.PackageVersion),
                     deployment.PackageFilePath
                 );
-            }
 
             foreach (var packageReferenceName in variables.GetIndexes(PackageVariables.PackageCollection))
             {
                 if (string.IsNullOrEmpty(packageReferenceName) && variables.IsSet(PackageVariables.PackageId))
-                {
                     continue;
-                }
-                
+
                 yield return new DeployedPackage(
                     variables.Get(PackageVariables.IndexedPackageId(packageReferenceName)),
                     variables.Get(PackageVariables.IndexedPackageVersion(packageReferenceName)),
@@ -68,7 +65,7 @@ namespace Calamari.Common.Features.Deployment.Journal
                 );
             }
         }
-        
+
         public static IEnumerable<DeployedPackage> FromJournalEntryElement(XElement deploymentElement)
         {
             // Originally journal entries were restricted to having one package (as deployment steps could 
@@ -76,17 +73,14 @@ namespace Calamari.Common.Features.Deployment.Journal
             // When the capability was added for deployment steps to have multiple packages, the package 
             // details were moved to child <Package> elements.
             // We need to support reading both for backwards-compatibility with legacy journal entries.
-            
+
             // If the deployment element has children, then we will read the packages from there. 
             if (deploymentElement.HasElements)
-            {
                 return deploymentElement.Elements("Package").Select(x => new DeployedPackage(x));
-            }
 
             // Otherwise we try to read them from the legacy attributes
-            var packageIdAttribute = deploymentElement.Attribute("PackageId"); 
+            var packageIdAttribute = deploymentElement.Attribute("PackageId");
             if (packageIdAttribute != null && !string.IsNullOrEmpty(packageIdAttribute.Value))
-            {
                 return new[]
                 {
                     new DeployedPackage(
@@ -94,7 +88,6 @@ namespace Calamari.Common.Features.Deployment.Journal
                         deploymentElement.Attribute("PackageVersion")?.Value,
                         deploymentElement.Attribute("ExtractedFrom")?.Value)
                 };
-            }
 
             return new List<DeployedPackage>();
         }

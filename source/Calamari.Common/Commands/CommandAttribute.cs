@@ -2,7 +2,7 @@ using System;
 
 namespace Calamari.Common.Commands
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class CommandAttribute : Attribute
     {
         public CommandAttribute(string name)

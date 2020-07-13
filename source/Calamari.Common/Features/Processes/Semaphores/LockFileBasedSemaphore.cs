@@ -8,16 +8,31 @@ namespace Calamari.Common.Features.Processes.Semaphores
 {
     public class LockFileBasedSemaphore : ISemaphore
     {
-        private readonly ILockIo lockIo;
-        private readonly IProcessFinder processFinder;
-        private readonly ILog log;
+        public enum AquireLockAction
+        {
+            DontAquireLock,
+            AquireLock,
+            ForciblyAquireLock
+        }
 
-        public LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILog log) 
-            : this(name, lockTimeout, new LockIo(CalamariPhysicalFileSystem.GetPhysicalFileSystem()), new ProcessFinder(), log)
+        readonly ILockIo lockIo;
+        readonly IProcessFinder processFinder;
+        readonly ILog log;
+
+        public LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILog log)
+            : this(name,
+                lockTimeout,
+                new LockIo(CalamariPhysicalFileSystem.GetPhysicalFileSystem()),
+                new ProcessFinder(),
+                log)
         {
         }
 
-        public LockFileBasedSemaphore(string name, TimeSpan lockTimeout, ILockIo lockIo, IProcessFinder processFinder, ILog log)
+        public LockFileBasedSemaphore(string name,
+            TimeSpan lockTimeout,
+            ILockIo lockIo,
+            IProcessFinder processFinder,
+            ILog log)
         {
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentNullException(nameof(name), "name cannot be null or emtpy.");
@@ -30,11 +45,11 @@ namespace Calamari.Common.Features.Processes.Semaphores
             this.log = log;
         }
 
-        private TimeSpan LockTimeout { get; }
+        TimeSpan LockTimeout { get; }
 
         public string Name { get; set; }
 
-        private string LockFilePath { get; }
+        string LockFilePath { get; }
 
         public AquireLockAction ShouldAquireLock(FileLock fileLock)
         {
@@ -42,10 +57,8 @@ namespace Calamari.Common.Features.Processes.Semaphores
             {
                 //Someone else owns the lock
                 if (fileLock.GetType() == typeof(OtherProcessHasExclusiveLockOnFileLock))
-                {
                     //we couldn't read the file as some other process has it open exlusively
                     return AquireLockAction.DontAquireLock;
-                }
 
                 if (fileLock.GetType() == typeof(UnableToDeserialiseLockFile))
                 {
@@ -55,20 +68,17 @@ namespace Calamari.Common.Features.Processes.Semaphores
                         log.Warn("Lock file existed but was not readable, and has existed for longer than lock timeout. Taking lock.");
                         return AquireLockAction.AquireLock;
                     }
+
                     return AquireLockAction.DontAquireLock;
                 }
 
                 //the file no longer exists
                 if (fileLock.GetType() == typeof(MissingFileLock))
-                {
                     return AquireLockAction.AquireLock;
-                }
 
                 //This lock belongs to this process - we can reacquire the lock
                 if (fileLock.BelongsToCurrentProcessAndThread())
-                {
                     return AquireLockAction.AquireLock;
-                }
 
                 if (!processFinder.ProcessIsRunning((int)fileLock.ProcessId, fileLock.ProcessName))
                 {
@@ -80,9 +90,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                 var lockWriteTime = new DateTime(fileLock.Timestamp);
                 //The lock has not timed out - we can't acquire it
                 if (!(Math.Abs((DateTime.Now - lockWriteTime).TotalSeconds) > LockTimeout.TotalSeconds))
-                {
                     return AquireLockAction.DontAquireLock;
-                }
 
                 log.Warn($"Forcibly taking lock from process {fileLock.ProcessId}, thread {fileLock.ThreadId} as lock has timed out. If this happens regularly, please contact Octopus Support.");
 
@@ -112,7 +120,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                 lockIo.DeleteLock(LockFilePath);
         }
 
-        private static FileLock CreateLockContent()
+        static FileLock CreateLockContent()
         {
             var process = Process.GetCurrentProcess();
             return new FileLock
@@ -146,13 +154,6 @@ namespace Calamari.Common.Features.Processes.Semaphores
                     return true;
                 Thread.Sleep(100);
             }
-        }
-
-        public enum AquireLockAction
-        {
-            DontAquireLock,
-            AquireLock,
-            ForciblyAquireLock
         }
     }
 }

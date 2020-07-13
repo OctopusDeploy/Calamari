@@ -6,32 +6,26 @@ namespace Calamari.Common.Commands
 {
     public class RunningDeployment
     {
-        private readonly PathToPackage packageFilePath;
-        private readonly IVariables variables;
-
         public RunningDeployment(string packageFilePath, IVariables variables)
         {
-            this.packageFilePath = new PathToPackage(packageFilePath);
-            this.variables = variables;
+            this.PackageFilePath = new PathToPackage(packageFilePath);
+            this.Variables = variables;
         }
 
-        public PathToPackage PackageFilePath
-        {
-            get { return packageFilePath; }
-        }
+        public PathToPackage PackageFilePath { get; }
 
         /// <summary>
         /// Gets the directory that Tentacle extracted the package to.
         /// </summary>
         public string StagingDirectory
         {
-            get { return Variables.Get(KnownVariables.OriginalPackageDirectoryPath); }
-            set { Variables.Set(KnownVariables.OriginalPackageDirectoryPath, value); }
+            get => Variables.Get(KnownVariables.OriginalPackageDirectoryPath);
+            set => Variables.Set(KnownVariables.OriginalPackageDirectoryPath, value);
         }
 
         /// <summary>
         /// Gets the custom installation directory for this package, as selected by the user.
-        /// If the user didn't choose a custom directory, this will return <see cref="StagingDirectory"/> instead.
+        /// If the user didn't choose a custom directory, this will return <see cref="StagingDirectory" /> instead.
         /// </summary>
         public string CustomDirectory
         {
@@ -44,29 +38,24 @@ namespace Calamari.Common.Commands
 
         public DeploymentWorkingDirectory CurrentDirectoryProvider { get; set; }
 
-        public string CurrentDirectory
-        {
-            get { return CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory ?
-                string.IsNullOrWhiteSpace(StagingDirectory) ? Environment.CurrentDirectory : StagingDirectory
-                : CustomDirectory; }
-        }
+        public string CurrentDirectory =>
+            CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory
+                ? string.IsNullOrWhiteSpace(StagingDirectory) ? Environment.CurrentDirectory : StagingDirectory
+                : CustomDirectory;
 
-        public IVariables Variables
-        {
-            get {  return variables; }
-        }
-        
+        public IVariables Variables { get; }
+
         public bool SkipJournal
         {
-            get => variables.GetFlag(KnownVariables.Action.SkipJournal);
-            set => variables.Set(KnownVariables.Action.SkipJournal, value.ToString().ToLower());
+            get => Variables.GetFlag(KnownVariables.Action.SkipJournal);
+            set => Variables.Set(KnownVariables.Action.SkipJournal, value.ToString().ToLower());
         }
 
         public void Error(Exception ex)
         {
             ex = ex.GetBaseException();
-            variables.Set("OctopusLastError", ex.ToString());
-            variables.Set("OctopusLastErrorMessage", ex.Message);
+            Variables.Set("OctopusLastError", ex.ToString());
+            Variables.Set("OctopusLastErrorMessage", ex.Message);
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Calamari.Common.Features.Substitutions
             var source = fileSystem.ReadFile(sourceFile, out var sourceFileEncoding);
             var encoding = GetEncoding(variables, sourceFileEncoding);
 
-            var result = variables.Evaluate(source, out var error, haltOnError: false);
+            var result = variables.Evaluate(source, out var error, false);
 
             if (!string.IsNullOrEmpty(error))
                 log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
@@ -37,13 +37,11 @@ namespace Calamari.Common.Features.Substitutions
             fileSystem.OverwriteFile(targetFile, result, encoding);
         }
 
-        private Encoding GetEncoding(IVariables variables, Encoding fileEncoding)
+        Encoding GetEncoding(IVariables variables, Encoding fileEncoding)
         {
             var requestedEncoding = variables.Get(PackageVariables.SubstituteInFilesOutputEncoding);
             if (requestedEncoding == null)
-            {
                 return fileEncoding;
-            }
 
             try
             {

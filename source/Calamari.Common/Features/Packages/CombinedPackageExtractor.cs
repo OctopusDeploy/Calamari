@@ -27,11 +27,13 @@ namespace Calamari.Common.Features.Packages
                 new TarPackageExtractor(log)
             };
         }
-        
+
         public string[] Extensions => extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray();
 
         public int Extract(string packageFile, string directory)
-            => GetExtractor(packageFile).Extract(packageFile, directory);
+        {
+            return GetExtractor(packageFile).Extract(packageFile, directory);
+        }
 
         public IPackageExtractor GetExtractor(string packageFile)
         {
@@ -43,7 +45,7 @@ namespace Calamari.Common.Features.Packages
             var extractor = extractors.FirstOrDefault(p => p.Extensions.Any(ext => file.Extension.Equals(ext, StringComparison.OrdinalIgnoreCase)));
             if (extractor == null)
                 throw new CommandException($"Unsupported file extension `{extension}`");
-            
+
             return extractor;
         }
     }

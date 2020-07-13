@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Commands;
@@ -7,7 +8,6 @@ namespace Calamari.Common.Plumbing.Commands
 {
     public class CommonOptions
     {
-
         internal CommonOptions(string command)
         {
             Command = command;

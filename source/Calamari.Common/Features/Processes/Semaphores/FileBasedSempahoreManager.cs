@@ -6,15 +6,15 @@ namespace Calamari.Common.Features.Processes.Semaphores
     //Originally based on https://github.com/markedup-mobi/file-lock (MIT license)
     public class FileBasedSempahoreManager : ISemaphoreFactory
     {
-        private readonly ILog log;
-        private readonly ICreateSemaphores semaphoreCreator;
-        private readonly int initialWaitBeforeShowingLogMessage;
+        readonly ILog log;
+        readonly ICreateSemaphores semaphoreCreator;
+        readonly int initialWaitBeforeShowingLogMessage;
 
         public FileBasedSempahoreManager()
         {
-            this.log = ConsoleLog.Instance;
-            this.initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
-            this.semaphoreCreator = new LockFileBasedSemaphoreCreator(log);
+            log = ConsoleLog.Instance;
+            initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
+            semaphoreCreator = new LockFileBasedSemaphoreCreator(log);
         }
 
         public FileBasedSempahoreManager(ILog log, TimeSpan initialWaitBeforeShowingLogMessage, ICreateSemaphores semaphoreCreator)
@@ -37,9 +37,9 @@ namespace Calamari.Common.Features.Processes.Semaphores
             return new LockFileBasedSemaphoreReleaser(semaphore);
         }
 
-        private class LockFileBasedSemaphoreReleaser : IDisposable
+        class LockFileBasedSemaphoreReleaser : IDisposable
         {
-            private readonly ISemaphore semaphore;
+            readonly ISemaphore semaphore;
 
             public LockFileBasedSemaphoreReleaser(ISemaphore semaphore)
             {

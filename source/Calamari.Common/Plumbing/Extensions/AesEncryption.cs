@@ -15,6 +15,7 @@ namespace Calamari.Common.Plumbing.Extensions
         static readonly Random RandomGenerator = new Random();
 
         readonly byte[] key;
+
         public AesEncryption(string password)
         {
             key = GetEncryptionKey(password);
@@ -68,9 +69,7 @@ namespace Calamari.Common.Plumbing.Extensions
             provider.BlockSize = 128;
             provider.Key = key;
             if (iv != null)
-            {
                 provider.IV = iv;
-            }
             return provider;
         }
 
@@ -78,12 +77,20 @@ namespace Calamari.Common.Plumbing.Extensions
         {
             var ivLength = 16;
             iv = new byte[ivLength];
-            Buffer.BlockCopy(encrypted, IvPrefix.Length, iv, 0, ivLength);
+            Buffer.BlockCopy(encrypted,
+                IvPrefix.Length,
+                iv,
+                0,
+                ivLength);
 
             var ivDataLength = IvPrefix.Length + ivLength;
-            int aesDataLength = encrypted.Length - ivDataLength;
+            var aesDataLength = encrypted.Length - ivDataLength;
             var aesData = new byte[aesDataLength];
-            Buffer.BlockCopy(encrypted, ivDataLength, aesData, 0, aesDataLength);
+            Buffer.BlockCopy(encrypted,
+                ivDataLength,
+                aesData,
+                0,
+                aesDataLength);
             return aesData;
         }
 
@@ -98,8 +105,8 @@ namespace Calamari.Common.Plumbing.Extensions
             const string chars = "abcdefghijklmnopqrstuvwxyz0123456789";
             return new string(
                 Enumerable.Repeat(chars, length)
-                  .Select(s => s[RandomGenerator.Next(s.Length)])
-                  .ToArray());
+                    .Select(s => s[RandomGenerator.Next(s.Length)])
+                    .ToArray());
         }
     }
 }

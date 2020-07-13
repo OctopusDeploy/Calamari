@@ -1,4 +1,6 @@
-﻿#if USE_NUGET_V3_LIBS
+﻿using System;
+
+#if USE_NUGET_V3_LIBS
 using NuGet.Versioning;
 using Octopus.Versioning;
 

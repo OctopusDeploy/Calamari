@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 
 namespace Calamari.Common.Plumbing.Extensions
@@ -10,9 +11,7 @@ namespace Calamari.Common.Plumbing.Extensions
             var parentDir = GetSanitizedDirInfo(parent);
             var isParent = false;
             if (childDir.FullName == parentDir.FullName)
-            {
                 return true;
-            }
             while (childDir.Parent != null)
             {
                 if (childDir.Parent.FullName == parentDir.FullName)
@@ -20,12 +19,14 @@ namespace Calamari.Common.Plumbing.Extensions
                     isParent = true;
                     break;
                 }
+
                 childDir = childDir.Parent;
             }
+
             return isParent;
         }
 
-        private static DirectoryInfo GetSanitizedDirInfo(string dir)
+        static DirectoryInfo GetSanitizedDirInfo(string dir)
         {
             if (dir == "/")
                 return new DirectoryInfo(dir);
@@ -34,11 +35,10 @@ namespace Calamari.Common.Plumbing.Extensions
             if (CalamariEnvironment.IsRunningOnWindows)
             {
                 if (dir.EndsWith(":")) // c: needs trailing slash to match
-                {
                     dir = dir + "\\";
-                }
                 dir = dir.ToLowerInvariant();
             }
+
             return new DirectoryInfo(dir);
         }
     }

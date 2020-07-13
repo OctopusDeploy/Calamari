@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using Octopus.CoreUtilities;
 
 namespace Calamari.Common.Plumbing.Proxies
@@ -8,7 +9,7 @@ namespace Calamari.Common.Plumbing.Proxies
         public static void InitializeDefaultProxy()
         {
             var proxy = ProxySettingsInitializer.GetProxySettingsFromEnvironment().CreateProxy();
-            
+
             if (proxy.Some())
                 WebRequest.DefaultWebProxy = proxy.Value;
         }

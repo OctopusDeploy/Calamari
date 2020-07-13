@@ -1,3 +1,5 @@
+using System;
+
 namespace Calamari.Common.Plumbing.Variables
 {
     public static class MachineVariables

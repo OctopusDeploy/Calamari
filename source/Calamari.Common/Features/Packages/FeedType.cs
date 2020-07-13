@@ -1,4 +1,6 @@
-﻿namespace Calamari.Common.Features.Packages
+﻿using System;
+
+namespace Calamari.Common.Features.Packages
 {
     public enum FeedType
     {
@@ -8,6 +10,6 @@
         Maven,
         GitHub,
         Helm,
-        AwsElasticContainerRegistry,
+        AwsElasticContainerRegistry
     }
 }

@@ -13,8 +13,12 @@ namespace Calamari.Common.Features.Processes
     public static class SilentProcessRunner
     {
         // ReSharper disable once InconsistentNaming
-        private const int CP_OEMCP = 1;
-        private static readonly Encoding oemEncoding;
+        const int CP_OEMCP = 1;
+
+        const int MAX_DEFAULTCHAR = 2;
+        const int MAX_LEADBYTES = 12;
+        const int MAX_PATH = 260;
+        static readonly Encoding oemEncoding;
 
         static SilentProcessRunner()
         {
@@ -22,13 +26,9 @@ namespace Calamari.Common.Features.Processes
             {
                 CPINFOEX info;
                 if (GetCPInfoEx(CP_OEMCP, 0, out info))
-                {
                     oemEncoding = Encoding.GetEncoding(info.CodePage);
-                }
                 else
-                {
                     oemEncoding = Encoding.GetEncoding(850);
-                }
             }
             catch (Exception)
             {
@@ -38,34 +38,48 @@ namespace Calamari.Common.Features.Processes
         }
 
         public static SilentProcessRunnerResult ExecuteCommand(
-            string executable, 
-            string arguments, 
-            string workingDirectory, 
-            Action<string> output, 
+            string executable,
+            string arguments,
+            string workingDirectory,
+            Action<string> output,
             Action<string> error)
         {
-            return ExecuteCommand(executable, arguments, workingDirectory, null, null, null, output, error);
-        }
-        
-        public static SilentProcessRunnerResult ExecuteCommand(
-            string executable, 
-            string arguments, 
-            string workingDirectory, 
-            Dictionary<string, string> environmentVars, 
-            Action<string> output, 
-            Action<string> error)
-        {
-            return ExecuteCommand(executable, arguments, workingDirectory, environmentVars, null, null, output, error);
+            return ExecuteCommand(executable,
+                arguments,
+                workingDirectory,
+                null,
+                null,
+                null,
+                output,
+                error);
         }
 
         public static SilentProcessRunnerResult ExecuteCommand(
-            string executable, 
-            string arguments, 
+            string executable,
+            string arguments,
             string workingDirectory,
             Dictionary<string, string> environmentVars,
-            string userName,             
-            SecureString password, 
-            Action<string> output, 
+            Action<string> output,
+            Action<string> error)
+        {
+            return ExecuteCommand(executable,
+                arguments,
+                workingDirectory,
+                environmentVars,
+                null,
+                null,
+                output,
+                error);
+        }
+
+        public static SilentProcessRunnerResult ExecuteCommand(
+            string executable,
+            string arguments,
+            string workingDirectory,
+            Dictionary<string, string> environmentVars,
+            string userName,
+            SecureString password,
+            Action<string> output,
             Action<string> error)
         {
             try
@@ -82,14 +96,9 @@ namespace Calamari.Common.Features.Processes
                     process.StartInfo.StandardOutputEncoding = oemEncoding;
                     process.StartInfo.StandardErrorEncoding = oemEncoding;
 
-
                     if (environmentVars != null)
-                    {
-                        foreach (string environmentVar in environmentVars.Keys)
-                        {
+                        foreach (var environmentVar in environmentVars.Keys)
                             process.StartInfo.EnvironmentVariables[environmentVar] = environmentVars[environmentVar];
-                        }                       
-                    }
 
                     RunProcessWithCredentials(process.StartInfo, userName, password);
 
@@ -124,7 +133,9 @@ namespace Calamari.Common.Features.Processes
                             try
                             {
                                 if (e.Data == null)
+                                {
                                     errorWaitHandle.Set();
+                                }
                                 else
                                 {
                                     errorData.AppendLine(e.Data);
@@ -166,9 +177,7 @@ namespace Calamari.Common.Features.Processes
         static void RunProcessWithCredentials(ProcessStartInfo processStartInfo, string userName, SecureString password)
         {
             if (string.IsNullOrEmpty(userName) || password == null)
-            {
                 return;
-            }
 
             var parts = userName.Split(new[] { '\\' }, 2, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 2)
@@ -200,39 +209,37 @@ namespace Calamari.Common.Features.Processes
             {
                 var key = environmentVariable.Key.ToString();
                 if (!key.StartsWith("Tentacle"))
-                {
                     continue;
-                }
                 processStartInfo.EnvironmentVariables[key] = environmentVariable.Value.ToString();
             }
         }
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool GetCPInfoEx([MarshalAs(UnmanagedType.U4)] int CodePage, [MarshalAs(UnmanagedType.U4)] int dwFlags, out CPINFOEX lpCPInfoEx);
-
-        private const int MAX_DEFAULTCHAR = 2;
-        private const int MAX_LEADBYTES = 12;
-        private const int MAX_PATH = 260;
+        static extern bool GetCPInfoEx([MarshalAs(UnmanagedType.U4)]
+            int CodePage,
+            [MarshalAs(UnmanagedType.U4)]
+            int dwFlags,
+            out CPINFOEX lpCPInfoEx);
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct CPINFOEX
+        struct CPINFOEX
         {
             [MarshalAs(UnmanagedType.U4)]
-            public int MaxCharSize;
+            public readonly int MaxCharSize;
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAX_DEFAULTCHAR)]
-            public byte[] DefaultChar;
+            public readonly byte[] DefaultChar;
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAX_LEADBYTES)]
-            public byte[] LeadBytes;
+            public readonly byte[] LeadBytes;
 
-            public char UnicodeDefaultChar;
+            public readonly char UnicodeDefaultChar;
 
             [MarshalAs(UnmanagedType.U4)]
-            public int CodePage;
+            public readonly int CodePage;
 
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAX_PATH)]
-            public string CodePageName;
+            public readonly string CodePageName;
         }
     }
 }

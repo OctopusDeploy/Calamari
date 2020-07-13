@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace Calamari.Common.Plumbing.FileSystem
 {
@@ -11,10 +12,12 @@ namespace Calamari.Common.Plumbing.FileSystem
             var pathRoot = Path.GetPathRoot(directoryPath);
             foreach (var drive in DriveInfo.GetDrives())
             {
-                if (!drive.Name.Equals(pathRoot)) continue;
+                if (!drive.Name.Equals(pathRoot))
+                    continue;
                 totalNumberOfFreeBytes = (ulong)drive.TotalFreeSpace;
                 return true;
             }
+
             totalNumberOfFreeBytes = 0;
             return false;
         }

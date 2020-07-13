@@ -5,7 +5,6 @@ using System.Text;
 
 namespace Calamari.Common.Features.Packages
 {
-
     /// <summary>
     /// Encode illegal filename characters.
     /// Originally a blanket Uti.EscapeDataString was used but IIS seemed to have problems when the version contained metadata and the "+" turned into a "%2B" in the installed directory location.
@@ -13,7 +12,8 @@ namespace Calamari.Common.Features.Packages
     /// </summary>
     public static class FileNameEscaper
     {
-        private static readonly HashSet<char> InvalidCharacterSet = new HashSet<char> {
+        static readonly HashSet<char> InvalidCharacterSet = new HashSet<char>
+        {
             '%', '<', '>', ':', '"', '/', '\\', '|', '?'
         };
 
@@ -28,16 +28,10 @@ namespace Calamari.Common.Features.Packages
         {
             var sb = new StringBuilder();
             foreach (var c in input)
-            {
                 if (!InvalidCharacterSet.Contains(c))
-                {
                     sb.Append(c);
-                }
                 else
-                {
                     sb.Append(Uri.EscapeDataString(c.ToString()));
-                }
-            }
 
             return sb.ToString();
         }

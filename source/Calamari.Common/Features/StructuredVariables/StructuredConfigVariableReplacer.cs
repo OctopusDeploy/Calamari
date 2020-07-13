@@ -25,7 +25,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 yamlReplacer
             };
         }
-        
+
         public void ModifyFile(string filePath, IVariables variables)
         {
             Log.Info($"Attempting to push variables into structured config file at '{filePath}'");

@@ -7,7 +7,7 @@ namespace Calamari.Common.Plumbing.ServiceMessages
 {
     public class ServiceMessageParser
     {
-        private readonly Action<ServiceMessage> serviceMessage;
+        readonly Action<ServiceMessage> serviceMessage;
         readonly StringBuilder buffer = new StringBuilder();
         State state = State.Default;
 
@@ -19,7 +19,6 @@ namespace Calamari.Common.Plumbing.ServiceMessages
         public void Parse(string line)
         {
             foreach (var c in line)
-            {
                 switch (state)
                 {
                     case State.Default:
@@ -28,6 +27,7 @@ namespace Calamari.Common.Plumbing.ServiceMessages
                             state = State.PossibleMessage;
                             buffer.Append(c);
                         }
+
                         break;
 
                     case State.PossibleMessage:
@@ -43,8 +43,9 @@ namespace Calamari.Common.Plumbing.ServiceMessages
                             state = State.Default;
                             buffer.Clear();
                         }
+
                         break;
-                    
+
                     case State.InMessage:
                         if (c == ']')
                         {
@@ -56,12 +57,12 @@ namespace Calamari.Common.Plumbing.ServiceMessages
                         {
                             buffer.Append(c);
                         }
+
                         break;
-                    
+
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-            }
         }
 
         void ProcessMessage(string message)

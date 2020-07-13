@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Calamari.Common.Util
 {
@@ -6,12 +7,12 @@ namespace Calamari.Common.Util
     {
         string Content { get; }
     }
-    
+
     public interface ITemplateInputs<TInput>
     {
         IEnumerable<TInput> Inputs { get; }
     }
-    
+
     public interface ITemplateOutputs<TOutput>
     {
         bool HasOutputs { get; }

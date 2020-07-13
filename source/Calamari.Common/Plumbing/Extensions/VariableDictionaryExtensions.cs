@@ -1,3 +1,4 @@
+using System;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Plumbing.Extensions
@@ -30,6 +31,5 @@ namespace Calamari.Common.Plumbing.Extensions
             var machineIndexedVariableName = ActionVariables.GetMachineIndexedOutputVariableName(actionName, machineName, name);
             variables.Set(machineIndexedVariableName, value);
         }
-
     }
 }

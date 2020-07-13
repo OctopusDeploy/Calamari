@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.FileSystem;
@@ -21,7 +22,7 @@ namespace Calamari.Common.Plumbing.Variables
         internal static void Previous(IVariables variables, IDeploymentJournal journal, string policySet)
         {
             var previous = journal.GetLatestInstallation(policySet);
-            
+
             if (previous == null)
             {
                 variables.Set(TentacleVariables.PreviousInstallation.OriginalInstalledPath, "");
@@ -32,7 +33,7 @@ namespace Calamari.Common.Plumbing.Variables
             else
             {
                 var previousPackage = previous.Packages.FirstOrDefault();
-                
+
                 variables.Set(TentacleVariables.PreviousInstallation.OriginalInstalledPath, previous.ExtractedTo);
                 variables.Set(TentacleVariables.PreviousInstallation.CustomInstallationDirectory, previous.CustomInstallationDirectory);
                 variables.Set(TentacleVariables.PreviousInstallation.PackageFilePath, previousPackage?.DeployedFrom ?? "");
@@ -43,7 +44,7 @@ namespace Calamari.Common.Plumbing.Variables
         internal static void PreviousSuccessful(IVariables variables, IDeploymentJournal journal, string policySet)
         {
             var previous = journal.GetLatestSuccessfulInstallation(policySet);
-            
+
             if (previous == null)
             {
                 variables.Set(TentacleVariables.PreviousSuccessfulInstallation.OriginalInstalledPath, "");
@@ -54,13 +55,12 @@ namespace Calamari.Common.Plumbing.Variables
             else
             {
                 var previousPackage = previous.Packages.FirstOrDefault();
-                
+
                 variables.Set(TentacleVariables.PreviousSuccessfulInstallation.OriginalInstalledPath, previous.ExtractedTo);
                 variables.Set(TentacleVariables.PreviousSuccessfulInstallation.CustomInstallationDirectory, previous.CustomInstallationDirectory);
                 variables.Set(TentacleVariables.PreviousSuccessfulInstallation.PackageFilePath, previousPackage?.DeployedFrom ?? "");
                 variables.Set(TentacleVariables.PreviousSuccessfulInstallation.PackageVersion, previousPackage?.PackageVersion ?? "");
             }
         }
-        
     }
 }

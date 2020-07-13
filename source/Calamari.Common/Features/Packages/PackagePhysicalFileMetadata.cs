@@ -1,20 +1,22 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Calamari.Common.Plumbing.Extensions;
 
 namespace Calamari.Common.Features.Packages
 {
     public class PackagePhysicalFileMetadata : PackageFileNameMetadata
     {
-        public string FullFilePath { get; }
-        public string Hash { get; }
-        public long Size { get; }
-
-        public PackagePhysicalFileMetadata(PackageFileNameMetadata identity, string fullFilePath, string hash, long size) : base(identity.PackageId, identity.Version, identity.Extension)
+        public PackagePhysicalFileMetadata(PackageFileNameMetadata identity, string fullFilePath, string hash, long size)
+            : base(identity.PackageId, identity.Version, identity.Extension)
         {
             FullFilePath = fullFilePath;
             Hash = hash;
             Size = size;
         }
+
+        public string FullFilePath { get; }
+        public string Hash { get; }
+        public long Size { get; }
 
         public static PackagePhysicalFileMetadata Build(string fullFilePath)
         {

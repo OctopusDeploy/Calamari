@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Compressors;
@@ -7,7 +8,8 @@ namespace Calamari.Common.Features.Packages
 {
     public class TarBzipPackageExtractor : TarPackageExtractor
     {
-        public TarBzipPackageExtractor(ILog log) : base(log)
+        public TarBzipPackageExtractor(ILog log)
+            : base(log)
         {
         }
 

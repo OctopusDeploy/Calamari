@@ -1,46 +1,44 @@
-﻿namespace Calamari.Common.Features.Processes
+﻿using System;
+
+namespace Calamari.Common.Features.Processes
 {
     public class CommandResult
     {
-        private readonly string command;
-        private readonly int exitCode;
-        private readonly string additionalErrors;
-        private readonly string workingDirectory;
+        readonly string command;
+        readonly string workingDirectory;
 
-        public CommandResult(string command, int exitCode) : this(command, exitCode, null)
+        public CommandResult(string command, int exitCode)
+            : this(command, exitCode, null)
         {
         }
 
         public CommandResult(string command, int exitCode, string additionalErrors)
             : this(command, exitCode, null, null)
         {
-            
         }
-        
-        public CommandResult(string command, int exitCode, string additionalErrors, string workingDirectory)  
+
+        public CommandResult(string command, int exitCode, string additionalErrors, string workingDirectory)
         {
             this.command = command;
-            this.exitCode = exitCode;
-            this.additionalErrors = additionalErrors;
+            this.ExitCode = exitCode;
+            this.Errors = additionalErrors;
             this.workingDirectory = workingDirectory;
         }
 
-        public int ExitCode => exitCode;
+        public int ExitCode { get; }
 
-        public string Errors => additionalErrors;
+        public string Errors { get; }
 
-        public bool HasErrors => !string.IsNullOrWhiteSpace(additionalErrors);
+        public bool HasErrors => !string.IsNullOrWhiteSpace(Errors);
 
         public void VerifySuccess()
         {
-            if (exitCode != 0)
-            {
+            if (ExitCode != 0)
                 throw new CommandLineException(
-                    command, 
-                    exitCode, 
-                    additionalErrors, 
+                    command,
+                    ExitCode,
+                    Errors,
                     workingDirectory);
-            }
         }
     }
 }

@@ -49,9 +49,7 @@ namespace Calamari.Common.Plumbing.Proxies
                 };
 
                 foreach (var requiredVariableName in requiredVariables.Where(v => !existingProxyEnvironmentVariableNames.Contains(v)))
-                {
-                    yield return new EnvironmentVariable(requiredVariableName, (string) environmentVariables[existingVariableName]);
-                }
+                    yield return new EnvironmentVariable(requiredVariableName, (string)environmentVariables[existingVariableName]);
             }
         }
 

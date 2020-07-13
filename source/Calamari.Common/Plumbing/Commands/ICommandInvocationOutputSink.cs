@@ -1,4 +1,6 @@
-﻿namespace Calamari.Common.Plumbing.Commands
+﻿using System;
+
+namespace Calamari.Common.Plumbing.Commands
 {
     public interface ICommandInvocationOutputSink
     {

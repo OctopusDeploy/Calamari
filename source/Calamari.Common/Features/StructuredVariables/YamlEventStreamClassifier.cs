@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using YamlDotNet.Core.Events;
 
@@ -12,49 +13,53 @@ namespace Calamari.Common.Features.StructuredVariables
 
     class YamlPathComponent
     {
-        public YamlStructure Type { get; }
-        public string MappingKey { get; set; }
-        public int SequenceIndex { get; set; } = -1;
-
         public YamlPathComponent(YamlStructure structure)
         {
             Type = structure;
         }
+
+        public YamlStructure Type { get; }
+        public string MappingKey { get; set; }
+        public int SequenceIndex { get; set; } = -1;
     }
 
     class YamlPathStack
     {
         readonly Stack<YamlPathComponent> stack = new Stack<YamlPathComponent>();
 
-        public void Push(YamlStructure structure) => stack.Push(new YamlPathComponent(structure));
+        public bool TopIsSequence => stack.Count > 0 && stack.Peek().Type == YamlStructure.Sequence;
 
-        public void Pop() => stack.Pop();
+        public bool TopIsMappingExpectingKey => stack.Count > 0 && stack.Peek().Type == YamlStructure.Mapping && stack.Peek().MappingKey == null;
+
+        public void Push(YamlStructure structure)
+        {
+            stack.Push(new YamlPathComponent(structure));
+        }
+
+        public void Pop()
+        {
+            stack.Pop();
+        }
 
         IEnumerable<string> GetPathComponents()
         {
             foreach (var stackItem in stack.Reverse())
-            {
                 if (stackItem.MappingKey != null)
                     yield return stackItem.MappingKey;
                 else if (stackItem.Type == YamlStructure.Sequence)
                     yield return stackItem.SequenceIndex.ToString();
-            }
         }
 
-        public string GetPath() => string.Join(":", GetPathComponents());
-
-        public bool TopIsSequence => stack.Count > 0
-                                     && stack.Peek().Type == YamlStructure.Sequence;
+        public string GetPath()
+        {
+            return string.Join(":", GetPathComponents());
+        }
 
         public void TopSequenceIncrementIndex()
         {
             if (TopIsSequence)
                 stack.Peek().SequenceIndex++;
         }
-
-        public bool TopIsMappingExpectingKey => stack.Count > 0
-                                                && stack.Peek().Type == YamlStructure.Mapping
-                                                && stack.Peek().MappingKey == null;
 
         public void TopMappingKeyStart(string key)
         {
@@ -71,36 +76,43 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public abstract class YamlNode
     {
-        public IList<ParsingEvent> ParsingEvents { get; }
-        public string Path { get; }
-
         protected YamlNode(IList<ParsingEvent> parsingEvents, string path)
         {
             ParsingEvents = parsingEvents;
             Path = path;
         }
+
+        public IList<ParsingEvent> ParsingEvents { get; }
+        public string Path { get; }
     }
 
     public class YamlScalarValueNode : YamlNode
     {
         readonly Scalar scalar;
 
-        public string Value { get; }
-
         public YamlScalarValueNode(Scalar scalar, string path, string value)
             : base(new List<ParsingEvent>
-            {
-                scalar
-            }, path)
+                {
+                    scalar
+                },
+                path)
         {
             this.scalar = scalar;
             Value = value;
         }
 
+        public string Value { get; }
+
         public Scalar ReplaceValue(string newValue)
         {
-            return new Scalar(scalar.Anchor, scalar.Tag, newValue, scalar.Style, scalar.IsPlainImplicit,
-                scalar.IsQuotedImplicit, scalar.Start, scalar.End);
+            return new Scalar(scalar.Anchor,
+                scalar.Tag,
+                newValue,
+                scalar.Style,
+                scalar.IsPlainImplicit,
+                scalar.IsQuotedImplicit,
+                scalar.Start,
+                scalar.End);
         }
     }
 
@@ -113,9 +125,7 @@ namespace Calamari.Common.Features.StructuredVariables
             YamlNode result = null;
 
             if (stack.TopIsSequence && (ev is MappingStart || ev is SequenceStart || ev is Scalar))
-            {
                 stack.TopSequenceIncrementIndex();
-            }
 
             switch (ev)
             {

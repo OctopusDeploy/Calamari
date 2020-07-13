@@ -39,7 +39,7 @@ namespace Calamari.Common.Plumbing.Extensions
         }
 
         /// <summary>
-        /// When FIPS mode is enabled certain algorithms such as MD5 may not be available.  
+        /// When FIPS mode is enabled certain algorithms such as MD5 may not be available.
         /// </summary>
         /// <param name="factory">A callback function used to create the associated algorithm i.e. MD5.Create</param>
         /// <returns></returns>
@@ -50,12 +50,12 @@ namespace Calamari.Common.Plumbing.Extensions
             try
             {
                 var result = factory();
-                return result != null; 
+                return result != null;
             }
             catch (TargetInvocationException)
             {
                 return false;
             }
-        } 
+        }
     }
 }

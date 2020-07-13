@@ -1,9 +1,11 @@
-﻿namespace Calamari.Common.Features.Packages.Java
+﻿using System;
+
+namespace Calamari.Common.Features.Packages.Java
 {
     public class JarPackageExtractor : IPackageExtractor
     {
-        public static readonly string[] SupportedExtensions = {".jar", ".war", ".ear", ".rar", ".zip"};
-        
+        public static readonly string[] SupportedExtensions = { ".jar", ".war", ".ear", ".rar", ".zip" };
+
         readonly JarTool jarTool;
 
         public JarPackageExtractor(JarTool jarTool)

@@ -15,7 +15,7 @@ namespace Calamari.Common.Plumbing.Logging
             this.variables = variables;
             this.log = log;
         }
-        
+
         public void LogVariables()
         {
             string ToString(bool useRawValue)

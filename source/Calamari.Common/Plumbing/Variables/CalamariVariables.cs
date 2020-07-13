@@ -1,3 +1,4 @@
+using System;
 using Octostache;
 
 namespace Calamari.Common.Plumbing.Variables
@@ -10,16 +11,20 @@ namespace Calamari.Common.Plumbing.Variables
         }
 
         public void Merge(VariableDictionary other)
-            => other.GetNames().ForEach(name => Set(name, other.GetRaw(name)));
+        {
+            other.GetNames().ForEach(name => Set(name, other.GetRaw(name)));
+        }
 
         public void AddFlag(string key, bool value)
-            => Add(key, value.ToString());
+        {
+            Add(key, value.ToString());
+        }
 
         public IVariables Clone()
         {
             var dict = new CalamariVariables();
             dict.Merge(this);
             return dict;
-        } 
+        }
     }
 }

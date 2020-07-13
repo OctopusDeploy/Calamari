@@ -12,7 +12,7 @@ namespace Calamari.Common.Plumbing.Extensions
             {
                 var byteArray = Encoding.ASCII.GetBytes($"{userName}:{password}");
                 headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-            } 
+            }
             else if (!string.IsNullOrWhiteSpace(password))
             {
                 headers.Authorization = new AuthenticationHeaderValue("Token", password);

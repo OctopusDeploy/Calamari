@@ -40,20 +40,18 @@ namespace Calamari.Common.Features.Processes
                     exitCode.ExitCode,
                     exitCode.ErrorOutput,
                     invocation.WorkingDirectory);
-            }       
+            }
             catch (Exception ex)
             {
-                if (ex.InnerException is Win32Exception )
-                {
+                if (ex.InnerException is Win32Exception)
                     commandOutput.WriteError(ConstructWin32ExceptionMessage(invocation.Executable));
-                }
-                
+
                 commandOutput.WriteError(ex.ToString());
                 commandOutput.WriteError("The command that caused the exception was: " + invocation);
 
                 return new CommandResult(
-                    invocation.ToString(), 
-                    -1, 
+                    invocation.ToString(),
+                    -1,
                     ex.ToString(),
                     invocation.WorkingDirectory);
             }

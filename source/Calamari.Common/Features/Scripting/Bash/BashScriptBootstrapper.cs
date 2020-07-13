@@ -18,7 +18,7 @@ namespace Calamari.Common.Features.Scripting.Bash
         public const string WindowsNewLine = "\r\n";
         public const string LinuxNewLine = "\n";
 
-        private static readonly string BootstrapScriptTemplate;
+        static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -35,7 +35,7 @@ namespace Calamari.Common.Features.Scripting.Bash
             commandArguments.AppendFormat("\"{0}\" \"{1}\"", bootstrapFile, encryptionKey);
             return commandArguments.ToString();
         }
-        
+
         public static string PrepareConfigurationFile(string workingDirectory, IVariables variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".sh");
@@ -56,18 +56,19 @@ namespace Calamari.Common.Features.Scripting.Bash
 
         static IEnumerable<string> GetVariableSwitchConditions(IVariables variables)
         {
-            return variables.GetNames().Select(variable =>
-            {
-                var variableValue = DecryptValueCommand(variables.Get(variable));
-                return string.Format("    \"{1}\"){0}   {2}   ;;{0}", Environment.NewLine, EncodeValue(variable), variableValue);
-            });
+            return variables.GetNames()
+                .Select(variable =>
+                {
+                    var variableValue = DecryptValueCommand(variables.Get(variable));
+                    return string.Format("    \"{1}\"){0}   {2}   ;;{0}", Environment.NewLine, EncodeValue(variable), variableValue);
+                });
         }
 
         static string DecryptValueCommand(string value)
         {
             var encrypted = VariableEncryptor.Encrypt(value ?? "");
             var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);
-            
+
             return $@"decrypt_variable ""{Convert.ToBase64String(rawEncrypted)}"" ""{ToHex(iv)}""";
         }
 
@@ -87,7 +88,8 @@ namespace Calamari.Common.Features.Scripting.Bash
             {
                 var systemFolder = Environment.GetFolderPath(Environment.SpecialFolder.System);
                 return Path.Combine(systemFolder, "bash.exe");
-            } 
+            }
+
             return "bash";
         }
 
@@ -99,7 +101,7 @@ namespace Calamari.Common.Features.Scripting.Bash
         }
 
         public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, string configurationFile, string workingDirectory, IVariables variables)
-        {            
+        {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
             var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
 
@@ -117,12 +119,12 @@ namespace Calamari.Common.Features.Scripting.Bash
             EnsureValidUnixFile(script.File);
             return (bootstrapFile, scriptModulePaths);
         }
-        
+
         static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory)
         {
             foreach (var variableName in variables.GetNames().Where(ScriptVariables.IsLibraryScriptModule))
-            {
-                if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.Bash) {
+                if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.Bash)
+                {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
                     var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
                     var moduleFileName = $"{name}.sh";
@@ -133,7 +135,6 @@ namespace Calamari.Common.Features.Scripting.Bash
                     EnsureValidUnixFile(moduleFilePath);
                     yield return moduleFilePath;
                 }
-            }
         }
     }
 }

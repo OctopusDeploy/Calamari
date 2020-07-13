@@ -15,7 +15,9 @@ namespace Calamari.Common.Plumbing.Proxies
     public class BypassProxySettings : IProxySettings
     {
         public Maybe<IWebProxy> CreateProxy()
-            => new WebProxy().AsSome<IWebProxy>();
+        {
+            return new WebProxy().AsSome<IWebProxy>();
+        }
 
         public IEnumerable<EnvironmentVariable> GenerateEnvironmentVariables()
         {
@@ -27,17 +29,18 @@ namespace Calamari.Common.Plumbing.Proxies
     {
         static readonly Uri TestUri = new Uri("http://test9c7b575efb72442c85f706ef1d64afa6.com");
 
-        public string Username { get; }
-        public string Password { get; }
-
         public UseSystemProxySettings(string username, string password)
         {
             Username = username;
             Password = password;
         }
 
+        public string Username { get; }
+        public string Password { get; }
+
         public Maybe<IWebProxy> CreateProxy()
-            => SystemWebProxyRetriever.GetSystemWebProxy()
+        {
+            return SystemWebProxyRetriever.GetSystemWebProxy()
                 .Select(proxy =>
                 {
                     proxy.Credentials = string.IsNullOrWhiteSpace(Username)
@@ -46,30 +49,29 @@ namespace Calamari.Common.Plumbing.Proxies
 
                     return proxy;
                 });
+        }
 
         public IEnumerable<EnvironmentVariable> GenerateEnvironmentVariables()
-            => SystemWebProxyRetriever.GetSystemWebProxy().SelectValueOr(
-                proxy =>
-                {
-                    var proxyUri = proxy.GetProxy(TestUri);
+        {
+            return SystemWebProxyRetriever.GetSystemWebProxy()
+                .SelectValueOr(
+                    proxy =>
+                    {
+                        var proxyUri = proxy.GetProxy(TestUri);
 
-                    return ProxyEnvironmentVariablesGenerator.GetProxyEnvironmentVariables(
-                        proxyUri.Host,
-                        proxyUri.Port,
-                        Username,
-                        Password);
-                },
-                Enumerable.Empty<EnvironmentVariable>()
-            );
+                        return ProxyEnvironmentVariablesGenerator.GetProxyEnvironmentVariables(
+                            proxyUri.Host,
+                            proxyUri.Port,
+                            Username,
+                            Password);
+                    },
+                    Enumerable.Empty<EnvironmentVariable>()
+                );
+        }
     }
 
     public class UseCustomProxySettings : IProxySettings
     {
-        public string Host { get; }
-        public int Port { get; }
-        public string Username { get; }
-        public string Password { get; }
-
         public UseCustomProxySettings(string host, int port, string username, string password)
         {
             Host = host;
@@ -77,6 +79,11 @@ namespace Calamari.Common.Plumbing.Proxies
             Username = username;
             Password = password;
         }
+
+        public string Host { get; }
+        public int Port { get; }
+        public string Username { get; }
+        public string Password { get; }
 
         public Maybe<IWebProxy> CreateProxy()
         {
@@ -91,11 +98,13 @@ namespace Calamari.Common.Plumbing.Proxies
         }
 
         public IEnumerable<EnvironmentVariable> GenerateEnvironmentVariables()
-            => ProxyEnvironmentVariablesGenerator.GetProxyEnvironmentVariables(
+        {
+            return ProxyEnvironmentVariablesGenerator.GetProxyEnvironmentVariables(
                 Host,
                 Port,
                 Username,
                 Password
             );
+        }
     }
 }

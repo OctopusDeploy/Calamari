@@ -9,6 +9,6 @@ namespace Calamari.Common.Features.Scripts
             Extension = extension;
         }
 
-        public string Extension { get; private set; }
+        public string Extension { get; }
     }
 }

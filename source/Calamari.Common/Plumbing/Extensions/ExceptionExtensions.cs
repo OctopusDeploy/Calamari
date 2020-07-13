@@ -19,6 +19,7 @@ namespace Calamari.Common.Plumbing.Extensions
                 sb.AppendLine("--Inner Exception--");
                 PrettyPrint(ex.InnerException, sb);
             }
+
             return sb.ToString();
         }
     }
