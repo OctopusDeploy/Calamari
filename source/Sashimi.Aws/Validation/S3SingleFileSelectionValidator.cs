@@ -2,7 +2,7 @@
 
 namespace Sashimi.Aws.Validation
 {
-    public class S3SingleFileSelectionValidator : AbstractValidator<S3FileSelectionProperties>
+    class S3SingleFileSelectionValidator : AbstractValidator<S3FileSelectionProperties>
     {
         public S3SingleFileSelectionValidator()
         {

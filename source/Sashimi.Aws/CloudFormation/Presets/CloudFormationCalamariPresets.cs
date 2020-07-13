@@ -4,7 +4,7 @@ using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.Aws.CloudFormation.Presets
 {
-    public class CloudFormationCalamariPresets
+    class CloudFormationCalamariPresets
     {
         public static void TemplatesAndParameters(IActionAndTargetScopedVariables variables, ICalamariCommandBuilder builder)
         {

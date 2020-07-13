@@ -8,7 +8,7 @@ using Sashimi.Server.Contracts.CloudTemplates;
 
 namespace Sashimi.Aws.CloudTemplates
 {
-    public class CloudFormationJsonCloudTemplateHandler : ICloudTemplateHandler
+    class CloudFormationJsonCloudTemplateHandler : ICloudTemplateHandler
     {
         readonly IFormatIdentifier formatIdentifier;
 

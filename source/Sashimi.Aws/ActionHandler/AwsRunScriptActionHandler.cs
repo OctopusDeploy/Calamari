@@ -10,7 +10,7 @@ namespace Sashimi.Aws.ActionHandler
     /// the path set to include the AWS CLI and having AWS credentials
     /// set in the common environment variable paths.
     /// </summary>
-    public class AwsRunScriptActionHandler : IActionHandler
+    class AwsRunScriptActionHandler : IActionHandler
     {
         public string Id => AwsActionTypes.RunScript;
         public string Name => "Run an AWS CLI Script";

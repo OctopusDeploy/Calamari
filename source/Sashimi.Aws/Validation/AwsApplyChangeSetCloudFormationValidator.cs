@@ -3,7 +3,7 @@ using Sashimi.Server.Contracts.ActionHandlers.Validation;
 
 namespace Sashimi.Aws.Validation
 {
-    public class AwsApplyChangeSetCloudFormationValidator : AwsDeploymentValidatorBase
+    class AwsApplyChangeSetCloudFormationValidator : AwsDeploymentValidatorBase
     {
         public AwsApplyChangeSetCloudFormationValidator() : base(AwsActionTypes.ApplyCloudFormationChangeset)
         {

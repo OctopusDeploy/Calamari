@@ -9,7 +9,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace Sashimi.Aws.CloudTemplates
 {
-    public class CloudFormationYamlCloudTemplateHandler : ICloudTemplateHandler
+    class CloudFormationYamlCloudTemplateHandler : ICloudTemplateHandler
     {
 
         readonly IFormatIdentifier formatIdentifier;

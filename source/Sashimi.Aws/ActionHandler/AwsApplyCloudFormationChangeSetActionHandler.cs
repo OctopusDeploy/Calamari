@@ -11,7 +11,7 @@ namespace Sashimi.Aws.ActionHandler
     /// set in the common environment variable paths. It then goes on to
     /// deploy a cloud formation template.
     /// </summary>
-    public class AwsApplyCloudFormationChangeSetActionHandler : IActionHandler
+    class AwsApplyCloudFormationChangeSetActionHandler : IActionHandler
     {
         public string Id => AwsActionTypes.ApplyCloudFormationChangeset;
         public string Name => "Apply an AWS CloudFormation Change Set";

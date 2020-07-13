@@ -3,7 +3,7 @@ using Sashimi.Server.Contracts.ActionHandlers.Validation;
 
 namespace Sashimi.Aws.Validation
 {
-    public class AwsDeleteCloudFormationDeploymentValidator : AwsDeploymentValidatorBase
+    class AwsDeleteCloudFormationDeploymentValidator : AwsDeploymentValidatorBase
     {
         public AwsDeleteCloudFormationDeploymentValidator() : base(AwsActionTypes.DeleteCloudFormation)
         {

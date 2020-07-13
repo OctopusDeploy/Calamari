@@ -5,7 +5,7 @@ using Sashimi.Server.Contracts.Calamari;
 
 namespace Sashimi.Aws.ActionHandler
 {
-    public class AwsUploadS3ActionHandler : IActionHandler
+    class AwsUploadS3ActionHandler : IActionHandler
     {
         public string Id => AwsActionTypes.UploadS3;
         public string Name => "Upload a package to an AWS S3 bucket";

@@ -4,7 +4,7 @@ using Sashimi.Server.Contracts.Validation;
 
 namespace Sashimi.Aws.Validation
 {
-    public class S3FileSelectionsValidator : AbstractValidator<List<S3FileSelectionProperties>>
+    class S3FileSelectionsValidator : AbstractValidator<List<S3FileSelectionProperties>>
     {
         public S3FileSelectionsValidator()
         {
@@ -14,7 +14,7 @@ namespace Sashimi.Aws.Validation
         }
     }
 
-    public class S3FileSelectionValidator: AbstractValidator<S3FileSelectionProperties>
+    class S3FileSelectionValidator: AbstractValidator<S3FileSelectionProperties>
     {
         public S3FileSelectionValidator()
         {
