@@ -18,7 +18,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         {
             var variables = new CalamariVariables();
             variables.Set("server:ports:0", "8080");
-            variables.Set("spring:h2:console:enabled", "false");
+            variables.Set("Spring:H2:Console:Enabled", "false");
             variables.Set("environment", "production");
 
             var replaced = Replace(variables, "application.yaml");

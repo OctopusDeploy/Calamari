@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Plumbing.FileSystem;
@@ -20,7 +21,7 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             var variablesByKey = variables
                 .DistinctBy(v => v.Key)
-                .ToDictionary(v => v.Key, v => v.Value);
+                .ToDictionary(v => v.Key, v => v.Value, StringComparer.OrdinalIgnoreCase);
 
             // Read and transform the input file
             var outputEvents = new List<ParsingEvent>();
