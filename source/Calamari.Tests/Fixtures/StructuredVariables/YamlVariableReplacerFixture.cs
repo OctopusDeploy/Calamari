@@ -25,5 +25,17 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 
             this.Assent(replaced, TestEnvironment.AssentConfiguration);
         }
+
+        [Test]
+        public void CanReplaceMappingWithString()
+        {
+            var variables = new CalamariVariables();
+            variables.Set("server", "local");
+            variables.Set("spring:datasource", "none");
+
+            var replaced = Replace(variables, "application.yaml");
+
+            this.Assent(replaced, TestEnvironment.AssentConfiguration);
+        }
     }
 }
