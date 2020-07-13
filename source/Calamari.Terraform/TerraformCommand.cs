@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
-using Calamari.Commands.Support;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Extensions;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Terraform
 {
