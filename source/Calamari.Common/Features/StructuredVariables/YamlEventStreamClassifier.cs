@@ -36,7 +36,7 @@ namespace Calamari.Common.Features.StructuredVariables
             {
                 if (stackItem.MappingKey != null)
                     yield return stackItem.MappingKey;
-                else if (stackItem.Type == YamlStructure.Sequence)
+                else if (stackItem.Type == YamlStructure.Sequence && stackItem.SequenceIndex != -1)
                     yield return stackItem.SequenceIndex.ToString();
             }
         }
