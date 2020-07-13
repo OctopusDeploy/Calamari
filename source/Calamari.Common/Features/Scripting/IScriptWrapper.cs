@@ -36,6 +36,6 @@ namespace Calamari.Common.Features.Scripting
         CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
-            Dictionary<string, string> environmentVars);
+            Dictionary<string, string>? environmentVars);
     }
 }

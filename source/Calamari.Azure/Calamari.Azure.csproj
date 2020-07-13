@@ -2,7 +2,7 @@
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net452;netstandard2.1</TargetFrameworks>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Azure</AssemblyName>
     <OutputType>Library</OutputType>

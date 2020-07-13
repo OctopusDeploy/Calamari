@@ -9,7 +9,7 @@ using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using System.IO;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Extensions;
+using Calamari.Common.Plumbing.Extensions;
 using NuGet.DependencyResolver;
 using NuGet.LibraryModel;
 using Octopus.Versioning;

@@ -1,10 +1,9 @@
-﻿using System;
-
-#if USE_NUGET_V3_LIBS
+﻿#if USE_NUGET_V3_LIBS
+using System;
 using NuGet.Versioning;
 using Octopus.Versioning;
 
-namespace Calamari.Extensions
+namespace Calamari.Common.Plumbing.Extensions
 {
     public static class VersionExtensions
     {

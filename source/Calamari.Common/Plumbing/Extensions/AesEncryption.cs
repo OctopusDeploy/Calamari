@@ -60,14 +60,16 @@ namespace Calamari.Common.Plumbing.Extensions
             }
         }
 
-        Aes GetCryptoProvider(byte[] iv = null)
+        Aes GetCryptoProvider(byte[]? iv = null)
         {
-            var provider = new AesCryptoServiceProvider();
-            provider.Mode = CipherMode.CBC;
-            provider.Padding = PaddingMode.PKCS7;
-            provider.KeySize = 128;
-            provider.BlockSize = 128;
-            provider.Key = key;
+            var provider = new AesCryptoServiceProvider
+            {
+                Mode = CipherMode.CBC,
+                Padding = PaddingMode.PKCS7,
+                KeySize = 128,
+                BlockSize = 128,
+                Key = key
+            };
             if (iv != null)
                 provider.IV = iv;
             return provider;

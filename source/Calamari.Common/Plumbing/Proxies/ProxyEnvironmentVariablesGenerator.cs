@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using Calamari.Common.Plumbing.Logging;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Common.Plumbing.Proxies
 {
@@ -28,7 +27,7 @@ namespace Calamari.Common.Plumbing.Proxies
         public static IEnumerable<EnvironmentVariable> GenerateProxyEnvironmentVariables()
         {
             var environmentVariables = Environment.GetEnvironmentVariables();
-            var existingProxyEnvironmentVariables = ProxyEnvironmentVariableNames.Where(environmentVariables.Contains).ToHashSet(StringComparer.Ordinal);
+            var existingProxyEnvironmentVariables = new HashSet<string>(ProxyEnvironmentVariableNames.Where(environmentVariables.Contains), StringComparer.Ordinal);
             if (existingProxyEnvironmentVariables.Any())
             {
                 Log.Verbose("Proxy related environment variables already exist. Calamari will not overwrite any proxy environment variables.");

@@ -11,7 +11,7 @@ namespace Calamari.Common.Plumbing.Deployment
             this.path = path;
         }
 
-        public static implicit operator string(PathToPackage pathToPackage)
+        public static implicit operator string?(PathToPackage pathToPackage)
         {
             return pathToPackage?.path;
         }

@@ -9,7 +9,7 @@ namespace Calamari.Common.Features.Processes
             string commandLine,
             int exitCode,
             string additionalInformation,
-            string workingDirectory = null)
+            string? workingDirectory = null)
             : base(FormatMessage(commandLine, exitCode, additionalInformation, workingDirectory))
         {
         }
@@ -18,7 +18,7 @@ namespace Calamari.Common.Features.Processes
             string commandLine,
             int exitCode,
             string additionalInformation,
-            string workingDirectory)
+            string? workingDirectory)
         {
             var sb = new StringBuilder("The following command: ");
             sb.AppendLine(commandLine);

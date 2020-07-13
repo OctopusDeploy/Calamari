@@ -193,7 +193,7 @@ namespace Calamari.Common.Plumbing.Logging
             VerboseFormat("##octopus[deltaVerification error=\"{0}\"]", ConvertServiceMessageValue(error));
         }
 
-        public string FormatLink(string uri, string description = null)
+        public string FormatLink(string uri, string? description = null)
         {
             return $"[{description ?? uri}]({uri})";
         }

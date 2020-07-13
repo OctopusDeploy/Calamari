@@ -455,14 +455,14 @@ namespace Calamari.Common.Plumbing.FileSystem
             FailureOptions options,
             CancellationToken cancel,
             bool includeTarget = false,
-            RetryTracker retry = null)
+            RetryTracker? retry = null)
         {
-            exclude = exclude ?? (fi => false);
+            exclude ??= (fi => false);
 
             if (!DirectoryExists(targetDirectory))
                 return;
 
-            retry = retry ?? GetFileOperationRetryTracker();
+            retry ??= GetFileOperationRetryTracker();
 
             foreach (var file in EnumerateFiles(targetDirectory))
             {

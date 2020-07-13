@@ -9,7 +9,7 @@ namespace Calamari.Common.Features.Processes
 {
     public class CommandLineInvocation
     {
-        string workingDirectory;
+        string? workingDirectory;
 
         public CommandLineInvocation(string executable, params string[] arguments)
         {
@@ -25,7 +25,7 @@ namespace Calamari.Common.Features.Processes
 
         public SecureString Password { get; set; }
 
-        public Dictionary<string, string> EnvironmentVars { get; set; }
+        public Dictionary<string, string>? EnvironmentVars { get; set; }
 
         /// <summary>
         /// Prevent this execution from starting if another execution is running that also has this set to true.

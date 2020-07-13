@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Deployment.Journal
 {
     public class DeployedPackage
     {
-        public DeployedPackage(string packageId, string packageVersion, string deployedFrom)
+        public DeployedPackage(string? packageId, string? packageVersion, string? deployedFrom)
         {
+            Guard.NotNullOrWhiteSpace(packageId, "Deployed package must have an Id");
+            Guard.NotNullOrWhiteSpace(packageVersion, "Deployed package must have a version");
             PackageId = packageId;
             PackageVersion = packageVersion;
             DeployedFrom = deployedFrom;
@@ -26,7 +29,7 @@ namespace Calamari.Common.Features.Deployment.Journal
 
         public string PackageId { get; }
         public string PackageVersion { get; }
-        public string DeployedFrom { get; }
+        public string? DeployedFrom { get; }
 
         public XElement ToXmlElement()
         {

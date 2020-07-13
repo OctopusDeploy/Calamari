@@ -20,7 +20,7 @@ namespace Calamari.Common.Features.Packages
             return SearchPattern(packageId, version, extension, cacheBuster);
         }
 
-        static string SearchPattern(string packageId, IVersion version = null, string extension = null, string cacheBuster = null)
+        static string SearchPattern(string packageId, IVersion? version = null, string? extension = null, string? cacheBuster = null)
         {
             var ver = version == null ? "*" : EncodeVersion(version);
             return $"{Encode(packageId)}{SectionDelimiter}{ver}{SectionDelimiter}{cacheBuster ?? "*"}{extension ?? "*"}";
@@ -34,7 +34,7 @@ namespace Calamari.Common.Features.Packages
             return Regex.Escape(pattern) + "[a-fA-F0-9]{32}\\..*\\b";
         }
 
-        public static string[] ToSearchPatterns(string packageId, IVersion version = null, string[] extensions = null)
+        public static string[] ToSearchPatterns(string packageId, IVersion? version = null, string[]? extensions = null)
         {
             extensions = extensions ?? new[] { "*" };
 

@@ -19,6 +19,6 @@ namespace Calamari.Common.Plumbing.Logging
         void Progress(int percentage, string message);
         void DeltaVerification(string remotePath, string hash, long size);
         void DeltaVerificationError(string error);
-        string FormatLink(string uri, string description = null);
+        string FormatLink(string uri, string? description = null);
     }
 }

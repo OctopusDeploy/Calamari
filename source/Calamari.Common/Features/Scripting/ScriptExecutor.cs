@@ -17,7 +17,7 @@ namespace Calamari.Common.Features.Scripting
         public CommandResult Execute(Script script,
             IVariables variables,
             ICommandLineRunner commandLineRunner,
-            Dictionary<string, string> environmentVars = null)
+            Dictionary<string, string>? environmentVars = null)
         {
             var environmentVariablesIncludingProxy = environmentVars ?? new Dictionary<string, string>();
             foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
@@ -63,7 +63,7 @@ namespace Calamari.Common.Features.Scripting
 
         protected abstract IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
-            Dictionary<string, string> environmentVars = null);
+            Dictionary<string, string>? environmentVars = null);
 
         static void CopyWorkingDirectory(IVariables variables, string workingDirectory, string arguments)
         {

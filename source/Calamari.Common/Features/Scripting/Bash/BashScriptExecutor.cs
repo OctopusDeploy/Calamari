@@ -11,7 +11,7 @@ namespace Calamari.Common.Features.Scripting.Bash
     {
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
-            Dictionary<string, string> environmentVars = null)
+            Dictionary<string, string>? environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             var configurationFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
