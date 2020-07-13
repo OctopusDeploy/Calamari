@@ -91,12 +91,8 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public class YamlScalarValueNode : YamlNode<Scalar>
     {
-        public string Value { get; }
-
-        public YamlScalarValueNode(Scalar scalar, string path, string value)
-            : base(scalar, path)
+        public YamlScalarValueNode(Scalar scalar, string path) : base(scalar, path)
         {
-            Value = value;
         }
 
         public Scalar ReplaceValue(string newValue)
@@ -144,7 +140,7 @@ namespace Calamari.Common.Features.StructuredVariables
                     else
                     {
                         // This is a value in a map or sequence
-                        classifiedNode = new YamlScalarValueNode(sc, stack.GetPath(), sc.Value);
+                        classifiedNode = new YamlScalarValueNode(sc, stack.GetPath());
                         stack.TopMappingKeyEnd();
                     }
 

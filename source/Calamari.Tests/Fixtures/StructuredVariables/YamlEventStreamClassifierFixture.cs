@@ -58,7 +58,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                     var found = classifier.Process(parser.Current);
                     if (found is YamlScalarValueNode scalarValue)
                     {
-                        result.Add((scalarValue.Path, scalarValue.Value));
+                        result.Add((scalarValue.Path, scalarValue.ParsingEvent.Value));
                     }
                 }
             }
