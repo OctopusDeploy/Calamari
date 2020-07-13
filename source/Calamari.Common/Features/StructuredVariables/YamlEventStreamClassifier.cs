@@ -69,38 +69,40 @@ namespace Calamari.Common.Features.StructuredVariables
         }
     }
 
-    public abstract class YamlNode
+    public interface IYamlNode
     {
-        public IList<ParsingEvent> ParsingEvents { get; }
-        public string Path { get; }
-
-        protected YamlNode(IList<ParsingEvent> parsingEvents, string path)
-        {
-            ParsingEvents = parsingEvents;
-            Path = path;
-        }
+        ParsingEvent ParsingEvent { get; }
+        string Path { get; }
     }
 
-    public class YamlScalarValueNode : YamlNode
+    public class YamlNode<T> : IYamlNode where T : ParsingEvent
     {
-        readonly Scalar scalar;
+        public T ParsingEvent { get; }
+        public string Path { get; }
 
+        public YamlNode(T parsingEvent, string path)
+        {
+            ParsingEvent = parsingEvent;
+            Path = path;
+        }
+
+        ParsingEvent IYamlNode.ParsingEvent => ParsingEvent;
+    }
+
+    public class YamlScalarValueNode : YamlNode<Scalar>
+    {
         public string Value { get; }
 
         public YamlScalarValueNode(Scalar scalar, string path, string value)
-            : base(new List<ParsingEvent>
-            {
-                scalar
-            }, path)
+            : base(scalar, path)
         {
-            this.scalar = scalar;
             Value = value;
         }
 
         public Scalar ReplaceValue(string newValue)
         {
-            return new Scalar(scalar.Anchor, scalar.Tag, newValue, scalar.Style, scalar.IsPlainImplicit,
-                scalar.IsQuotedImplicit, scalar.Start, scalar.End);
+            return new Scalar(ParsingEvent.Anchor, ParsingEvent.Tag, newValue, ParsingEvent.Style,
+                ParsingEvent.IsPlainImplicit, ParsingEvent.IsQuotedImplicit, ParsingEvent.Start, ParsingEvent.End);
         }
     }
 
@@ -108,9 +110,9 @@ namespace Calamari.Common.Features.StructuredVariables
     {
         readonly YamlPathStack stack = new YamlPathStack();
 
-        public YamlNode Process(ParsingEvent ev)
+        public IYamlNode Process(ParsingEvent ev)
         {
-            YamlNode result = null;
+            IYamlNode classifiedNode = null;
 
             if (stack.TopIsSequence && (ev is MappingStart || ev is SequenceStart || ev is Scalar))
             {
@@ -142,14 +144,14 @@ namespace Calamari.Common.Features.StructuredVariables
                     else
                     {
                         // This is a value in a map or sequence
-                        result = new YamlScalarValueNode(sc, stack.GetPath(), sc.Value);
+                        classifiedNode = new YamlScalarValueNode(sc, stack.GetPath(), sc.Value);
                         stack.TopMappingKeyEnd();
                     }
 
                     break;
             }
 
-            return result;
+            return classifiedNode ?? new YamlNode<ParsingEvent>(ev, stack.GetPath());
         }
     }
 }

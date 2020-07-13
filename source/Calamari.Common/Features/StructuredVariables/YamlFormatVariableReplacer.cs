@@ -35,15 +35,20 @@ namespace Calamari.Common.Features.StructuredVariables
                         var ev = parser.Current;
                         if (ev == null)
                             continue;
+                        ParsingEvent outputEvent;
 
-                        var found = classifier.Process(ev);
-                        if (found is YamlScalarValueNode scalar
+                        var node = classifier.Process(ev);
+                        if (node is YamlScalarValueNode scalar
                             && variablesByKey.TryGetValue(scalar.Path, out string newValue))
                         {
-                            ev = scalar.ReplaceValue(newValue);
+                            outputEvent = scalar.ReplaceValue(newValue);
+                        }
+                        else
+                        {
+                            outputEvent = node.ParsingEvent;
                         }
 
-                        outputEvents.Add(ev);
+                        outputEvents.Add(outputEvent);
                     }
                 }
             }
