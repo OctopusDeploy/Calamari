@@ -114,21 +114,21 @@ namespace Calamari.Common.Features.StructuredVariables
             switch (ev)
             {
                 case MappingStart ms:
-                    stack.Push(YamlStructure.Mapping);
                     classifiedNode = new YamlNode<MappingStart>(ms, stack.GetPath());
+                    stack.Push(YamlStructure.Mapping);
                     break;
                 case MappingEnd me:
-                    classifiedNode = new YamlNode<MappingEnd>(me, stack.GetPath());
                     stack.Pop();
+                    classifiedNode = new YamlNode<MappingEnd>(me, stack.GetPath());
                     stack.TopMappingKeyEnd();
                     break;
                 case SequenceStart ss:
-                    stack.Push(YamlStructure.Sequence);
                     classifiedNode = new YamlNode<SequenceStart>(ss, stack.GetPath());
+                    stack.Push(YamlStructure.Sequence);
                     break;
                 case SequenceEnd se:
-                    classifiedNode = new YamlNode<SequenceEnd>(se, stack.GetPath());
                     stack.Pop();
+                    classifiedNode = new YamlNode<SequenceEnd>(se, stack.GetPath());
                     stack.TopMappingKeyEnd();
                     break;
                 case Scalar sc:
