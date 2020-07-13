@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure;
+﻿using Calamari.Common.Plumbing.Variables;
+using Microsoft.Azure;
 using Octostache;
 
 namespace Calamari.Azure.CloudServices.Integration

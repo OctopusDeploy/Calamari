@@ -1,6 +1,6 @@
 using System;
 
-namespace Calamari.Integration.Processes.Semaphores
+namespace Calamari.Common.Features.Processes.Semaphores
 {
     public class UnableToDeserialiseLockFile : FileLock
     {

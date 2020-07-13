@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Util;
 using Octostache;
 

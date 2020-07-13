@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Tests.Helpers

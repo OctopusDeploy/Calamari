@@ -1,8 +1,9 @@
 using System.IO;
+using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Compressors;
 using SharpCompress.Compressors.BZip2;
 
-namespace Calamari.Integration.Packages
+namespace Calamari.Common.Features.Packages
 {
     public class TarBzipPackageExtractor : TarPackageExtractor
     {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Calamari.Common.Plumbing.Commands.Options;
 
 namespace Calamari.Commands.Support
 {

@@ -1,6 +1,7 @@
 ﻿using System;
+using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.Integration.Processes.Semaphores
+namespace Calamari.Common.Features.Processes.Semaphores
 {
     //Originally based on https://github.com/markedup-mobi/file-lock (MIT license)
     public class FileBasedSempahoreManager : ISemaphoreFactory

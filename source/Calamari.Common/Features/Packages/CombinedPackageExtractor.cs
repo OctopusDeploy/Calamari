@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Commands.Support;
-using Calamari.Integration.Packages.NuGet;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.Integration.Packages
+namespace Calamari.Common.Features.Packages
 {
     public interface ICombinedPackageExtractor : IPackageExtractor
     {

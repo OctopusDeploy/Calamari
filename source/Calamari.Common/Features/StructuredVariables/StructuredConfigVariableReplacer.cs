@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.StructuredVariables
 {

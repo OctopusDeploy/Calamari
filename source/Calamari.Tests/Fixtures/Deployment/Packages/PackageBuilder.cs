@@ -1,10 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.IO.Compression;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
-using Calamari.Variables;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment.Packages

@@ -1,9 +1,10 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using Calamari.Common.Plumbing.Logging;
 using Octopus.CoreUtilities;
 
-namespace Calamari.Integration.Proxies
+namespace Calamari.Common.Plumbing.Proxies
 {
     public static class SystemWebProxyRetriever
     {

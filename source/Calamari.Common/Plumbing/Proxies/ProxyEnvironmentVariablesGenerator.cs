@@ -3,10 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using Octopus.CoreUtilities;
+using Calamari.Common.Plumbing.Logging;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.Integration.Proxies
+namespace Calamari.Common.Plumbing.Proxies
 {
     public static class ProxyEnvironmentVariablesGenerator
     {

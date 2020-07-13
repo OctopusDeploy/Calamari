@@ -1,6 +1,6 @@
 using System;
 
-namespace Calamari.Commands.Support
+namespace Calamari.Common.Commands
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public class CommandAttribute : Attribute

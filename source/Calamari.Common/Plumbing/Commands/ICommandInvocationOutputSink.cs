@@ -1,4 +1,4 @@
-﻿namespace Calamari.Integration.Processes
+﻿namespace Calamari.Common.Plumbing.Commands
 {
     public interface ICommandInvocationOutputSink
     {

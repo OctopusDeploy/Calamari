@@ -1,8 +1,4 @@
-﻿using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Octostache;
-
-namespace Calamari.Integration.Packages.Java
+﻿namespace Calamari.Common.Features.Packages.Java
 {
     public class JarPackageExtractor : IPackageExtractor
     {

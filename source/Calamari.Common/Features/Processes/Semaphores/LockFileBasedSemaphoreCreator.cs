@@ -1,6 +1,7 @@
 ﻿using System;
+using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.Integration.Processes.Semaphores
+namespace Calamari.Common.Features.Processes.Semaphores
 {
     public class LockFileBasedSemaphoreCreator : ICreateSemaphores
     {

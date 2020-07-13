@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 
-namespace Calamari.Integration.ServiceMessages
+namespace Calamari.Common.Plumbing.ServiceMessages
 {
     public class ServiceMessageParser
     {

@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Calamari.Commands.Support
+namespace Calamari.Common.Commands
 {
     /// <summary>
     /// A command that requires the command line arguments passed to it. We are transitioning away from this interface

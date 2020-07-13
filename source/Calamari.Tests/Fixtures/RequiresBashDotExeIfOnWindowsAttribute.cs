@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Calamari.Common.Plumbing;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;

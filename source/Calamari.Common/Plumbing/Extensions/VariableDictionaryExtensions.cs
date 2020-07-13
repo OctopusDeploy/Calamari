@@ -1,6 +1,6 @@
-using Calamari.Common.Variables;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Integration.Processes
+namespace Calamari.Common.Plumbing.Extensions
 {
     public static class VariableDictionaryExtensions
     {

@@ -1,7 +1,8 @@
-﻿using Calamari.Integration.Processes;
-using Octostache;
+﻿using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Integration.ServiceMessages
+namespace Calamari.Common.Plumbing.ServiceMessages
 {
     /// <summary>
     /// Parses command-output for service-messages

@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using Calamari.Common.Features.StructuredVariables;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 

@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Net;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NUnit.Framework;
 using Octopus.Versioning;
 

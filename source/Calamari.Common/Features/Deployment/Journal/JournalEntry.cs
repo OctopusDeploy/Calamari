@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
-using Calamari.Common.Variables;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Deployment.Journal
+namespace Calamari.Common.Features.Deployment.Journal
 {
     public class JournalEntry
     {

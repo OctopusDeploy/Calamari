@@ -8,6 +8,7 @@ using NuGet.Common;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using System.IO;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Extensions;
 using NuGet.DependencyResolver;
 using NuGet.LibraryModel;

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using Calamari.Common.Commands;
 
-namespace Calamari.Deployment.Conventions
+namespace Calamari.Common.Features.Substitutions
 {
     public interface ISubstituteInFiles
     {

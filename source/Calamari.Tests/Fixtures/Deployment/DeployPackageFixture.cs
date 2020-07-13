@@ -1,11 +1,12 @@
 using System;
 using System.IO;
-using Calamari.Common.Variables;
+using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using Octostache;
 
 namespace Calamari.Tests.Fixtures.Deployment

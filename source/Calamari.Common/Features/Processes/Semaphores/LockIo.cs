@@ -1,10 +1,10 @@
 using System;
 using System.IO;
+using Calamari.Common.Plumbing.FileSystem;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Calamari.Integration.FileSystem;
 
-namespace Calamari.Integration.Processes.Semaphores
+namespace Calamari.Common.Features.Processes.Semaphores
 {
     public class LockIo : ILockIo
     {

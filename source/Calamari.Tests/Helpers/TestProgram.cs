@@ -3,6 +3,9 @@ using System.IO;
 using System.Reflection;
 using Autofac;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Tests.Helpers
 {

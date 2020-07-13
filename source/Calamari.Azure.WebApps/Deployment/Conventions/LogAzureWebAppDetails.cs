@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using Calamari.Azure.Accounts;
 using Calamari.Azure.WebApps.Util;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Microsoft.Azure.Management.WebSites;

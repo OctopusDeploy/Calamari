@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.Util
+namespace Calamari.Common.Plumbing.Extensions
 {
     public static class BinaryExtensions
     {

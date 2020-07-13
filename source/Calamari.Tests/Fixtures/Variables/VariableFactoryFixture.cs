@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
-using Calamari.Common.Variables;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Util;
-using Calamari.Variables;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;

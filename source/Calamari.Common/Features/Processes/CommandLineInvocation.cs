@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
-using Calamari.Util;
+using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Extensions;
 
-namespace Calamari.Integration.Processes
+namespace Calamari.Common.Features.Processes
 {
     public class CommandLineInvocation
     {

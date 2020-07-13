@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.Logging;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet

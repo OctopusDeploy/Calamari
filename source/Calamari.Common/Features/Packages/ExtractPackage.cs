@@ -1,11 +1,12 @@
 ﻿using System;
 using System.IO;
-using Calamari.Common.Variables;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Util;
+using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Deployment.Conventions
+namespace Calamari.Common.Features.Packages
 {
     public class ExtractPackage : IExtractPackage
     {

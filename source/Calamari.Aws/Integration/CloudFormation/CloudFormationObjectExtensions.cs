@@ -8,6 +8,7 @@ using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Exceptions;
+using Calamari.Common.Plumbing;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;

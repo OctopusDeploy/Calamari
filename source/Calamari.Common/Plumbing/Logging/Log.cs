@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Globalization;
 using System.Text;
-using Calamari.Integration.Processes;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari
+namespace Calamari.Common.Plumbing.Logging
 {
     public static class Log
     {

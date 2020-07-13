@@ -1,16 +1,14 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using Calamari.Util;
-using SharpCompress.Archives.Zip;
-using SharpCompress.Readers.Zip;
-#if USE_NUGET_V3_LIBS
+﻿#if USE_NUGET_V3_LIBS
 using NuGet.Packaging;
 #else
 using NuGet;
 #endif
+using System;
+using System.IO;
+using Calamari.Common.Plumbing;
+using SharpCompress.Archives.Zip;
 
-namespace Calamari.Integration.Packages.NuGet
+namespace Calamari.Common.Features.Packages.NuGet
 {
     public class LocalNuGetPackage 
     {

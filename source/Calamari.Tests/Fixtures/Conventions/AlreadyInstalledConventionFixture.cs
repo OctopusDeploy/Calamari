@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
-using Calamari.Common.Variables;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
 

@@ -1,9 +1,9 @@
 using System;
 using System.IO;
-using Calamari.Commands.Support;
-using Calamari.Integration.Processes;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
 
-namespace Calamari.Integration.Packages.Java
+namespace Calamari.Common.Features.Packages.Java
 {
     public static class JavaRuntime
     {

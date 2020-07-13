@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Calamari.Common.Variables;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Tests.Fixtures.Integration.Proxies;
 using Calamari.Tests.Helpers;

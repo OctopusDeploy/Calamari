@@ -1,8 +1,7 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using Octopus.CoreUtilities;
 
-namespace Calamari.Integration.Proxies
+namespace Calamari.Common.Plumbing.Proxies
 {
     public static class ProxyInitializer
     {

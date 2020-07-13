@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading;
-using Calamari.Util;
+using Calamari.Common.Plumbing.Extensions;
 
-namespace Calamari.Integration.Processes
+namespace Calamari.Common.Features.Processes
 {
     public static class SilentProcessRunner
     {

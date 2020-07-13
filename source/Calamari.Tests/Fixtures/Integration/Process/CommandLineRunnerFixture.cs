@@ -1,6 +1,7 @@
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 

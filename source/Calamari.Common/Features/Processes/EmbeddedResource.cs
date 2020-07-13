@@ -1,8 +1,6 @@
 ﻿using System.IO;
-using Calamari.Util;
-using System.Reflection;
 
-namespace Calamari.Integration.Processes
+namespace Calamari.Common.Features.Processes
 {
     public static class EmbeddedResource
     {

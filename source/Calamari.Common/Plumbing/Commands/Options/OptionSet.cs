@@ -126,13 +126,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Calamari.Commands.Support
+namespace Calamari.Common.Plumbing.Commands.Options
 {
     public delegate TOutput Converter<in TInput, out TOutput>(TInput input);
 

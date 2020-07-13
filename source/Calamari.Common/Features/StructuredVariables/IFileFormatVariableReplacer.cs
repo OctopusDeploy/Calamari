@@ -1,4 +1,6 @@
-﻿namespace Calamari.Common.Features.StructuredVariables
+﻿using Calamari.Common.Plumbing.Variables;
+
+namespace Calamari.Common.Features.StructuredVariables
 {
     public interface IFileFormatVariableReplacer
     {

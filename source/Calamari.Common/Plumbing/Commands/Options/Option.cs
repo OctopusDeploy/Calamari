@@ -126,9 +126,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Globalization;
 
-namespace Calamari.Commands.Support
+namespace Calamari.Common.Plumbing.Commands.Options
 {
     public abstract class Option
     {

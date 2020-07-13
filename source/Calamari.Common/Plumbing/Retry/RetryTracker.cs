@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace Calamari.Integration.Retry
+namespace Calamari.Common.Plumbing.Retry
 {
     /// <summary>
     /// Retry logic tracks when to retry vs fail and calculates sleep times for retries

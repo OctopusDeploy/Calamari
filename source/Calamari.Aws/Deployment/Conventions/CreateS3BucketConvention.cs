@@ -5,6 +5,9 @@ using Amazon.S3.Model;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 

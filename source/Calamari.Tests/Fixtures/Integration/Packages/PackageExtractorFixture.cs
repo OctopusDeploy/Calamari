@@ -1,5 +1,8 @@
 ﻿using System;
 using System.IO;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Tests.Helpers;

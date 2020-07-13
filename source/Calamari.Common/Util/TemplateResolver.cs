@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
-using Calamari.Commands.Support;
-using Calamari.Common.Variables;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Octopus.CoreUtilities;
 
 namespace Calamari.Common.Util

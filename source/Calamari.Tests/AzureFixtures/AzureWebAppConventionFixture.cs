@@ -2,10 +2,11 @@
 
 using System;
 using Calamari.Azure.WebApps.Deployment.Conventions;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 

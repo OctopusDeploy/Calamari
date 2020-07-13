@@ -1,4 +1,6 @@
-﻿namespace Calamari.Deployment.Journal
+﻿using Calamari.Common.Commands;
+
+namespace Calamari.Deployment.Journal
 {
     public interface IDeploymentJournalWriter
     {

@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
-using Calamari.Integration.Scripting;
+using Calamari.Common.Features.Scripts;
 
-namespace Calamari.Common.Variables
+namespace Calamari.Common.Plumbing.Variables
 {
     public static class ScriptVariables
     {

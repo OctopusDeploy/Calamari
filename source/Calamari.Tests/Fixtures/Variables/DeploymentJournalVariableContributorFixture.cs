@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Calamari.Common.Variables;
+using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Journal;
-using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
 

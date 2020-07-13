@@ -1,8 +1,9 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using Calamari.Common.Plumbing;
 
-namespace Calamari.Integration.Processes.Semaphores
+namespace Calamari.Common.Features.Processes.Semaphores
 {
     public class ProcessFinder : IProcessFinder
     {

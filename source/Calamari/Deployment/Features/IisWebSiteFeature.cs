@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json.Linq;
 using Octostache;
 

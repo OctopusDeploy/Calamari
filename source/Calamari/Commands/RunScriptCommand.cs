@@ -2,20 +2,23 @@
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripts;
 using Calamari.Common.Features.StructuredVariables;
-using Calamari.Common.Variables;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
-using Calamari.Integration.Packages;
-using Calamari.Util;
 
 namespace Calamari.Commands
 {

@@ -2,9 +2,8 @@
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
-using Octopus.CoreUtilities;
 
-namespace Calamari.Util
+namespace Calamari.Common.Plumbing.Extensions
 {
     public class HashCalculator
     {

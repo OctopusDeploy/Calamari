@@ -1,5 +1,5 @@
 ﻿
-namespace Calamari.Integration.Packages
+namespace Calamari.Common.Features.Packages
 {
     public interface IPackageExtractor
     {

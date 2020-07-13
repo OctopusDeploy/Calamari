@@ -1,4 +1,4 @@
-namespace Calamari.Integration.Processes.Semaphores
+namespace Calamari.Common.Features.Processes.Semaphores
 {
     public interface ILockIo
     {

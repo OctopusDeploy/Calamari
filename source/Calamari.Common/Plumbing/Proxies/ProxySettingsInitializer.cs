@@ -1,6 +1,6 @@
 using System;
 
-namespace Calamari.Integration.Proxies
+namespace Calamari.Common.Plumbing.Proxies
 {
     public static class ProxySettingsInitializer
     {

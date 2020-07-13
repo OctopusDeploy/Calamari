@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Common.Plumbing.FileSystem
 {
     public class WindowsPhysicalFileSystem : CalamariPhysicalFileSystem
     {

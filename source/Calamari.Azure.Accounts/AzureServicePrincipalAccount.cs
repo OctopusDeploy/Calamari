@@ -1,6 +1,6 @@
 ﻿using Calamari.Azure.Accounts.Integration;
 using Calamari.CloudAccounts;
-using Calamari.Common.Variables;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Azure.Accounts
 {

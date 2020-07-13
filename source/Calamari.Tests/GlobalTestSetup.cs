@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Calamari.Plumbing;
+using Calamari.Common.Plumbing;
 using NUnit.Framework;
 
 namespace Calamari.Tests

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
-using Calamari.Integration.Processes.Semaphores;
+using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;

@@ -1,6 +1,6 @@
 ﻿using System;
 using Calamari.Common.Features.StructuredVariables;
-using Calamari.Variables;
+using Calamari.Common.Plumbing.Variables;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;

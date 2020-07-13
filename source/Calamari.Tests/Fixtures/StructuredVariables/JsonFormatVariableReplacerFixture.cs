@@ -1,7 +1,7 @@
 ﻿using Assent;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables

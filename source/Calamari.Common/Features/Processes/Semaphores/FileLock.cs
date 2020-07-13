@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.Threading;
 
-namespace Calamari.Integration.Processes.Semaphores
+namespace Calamari.Common.Features.Processes.Semaphores
 {
     [DataContract]
     public class FileLock

@@ -1,7 +1,8 @@
-﻿using Calamari.Common.Variables;
+﻿using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
-using Calamari.Variables;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Conventions

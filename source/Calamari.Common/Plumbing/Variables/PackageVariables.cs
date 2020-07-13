@@ -1,4 +1,4 @@
-namespace Calamari.Common.Variables
+namespace Calamari.Common.Plumbing.Variables
 {
     public static class PackageVariables
     {

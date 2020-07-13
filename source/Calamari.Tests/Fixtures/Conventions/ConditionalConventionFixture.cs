@@ -1,8 +1,9 @@
 ﻿using System;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Processes;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 

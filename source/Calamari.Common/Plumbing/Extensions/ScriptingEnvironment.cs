@@ -2,10 +2,10 @@ using System;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Integration.Processes;
 
-namespace Calamari.Integration.Scripting
+namespace Calamari.Common.Plumbing.Extensions
 {
     public class ScriptingEnvironment
     {

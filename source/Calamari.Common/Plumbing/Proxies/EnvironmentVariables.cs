@@ -1,4 +1,4 @@
-namespace Calamari
+namespace Calamari.Common.Plumbing.Proxies
 {
     public static class EnvironmentVariables
     {

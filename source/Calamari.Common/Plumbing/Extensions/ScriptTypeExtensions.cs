@@ -1,8 +1,9 @@
 using System.IO;
 using System.Linq;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Scripts;
 
-namespace Calamari.Integration.Scripting
+namespace Calamari.Common.Plumbing.Extensions
 {
     public static class ScriptTypeExtensions
     {

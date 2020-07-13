@@ -24,15 +24,14 @@
 //SOFTWARE.                                                           
 ////------------------------------------------------------------------------------
 
-namespace Calamari
+using System;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Text;
+
+namespace Calamari.Common.Plumbing
 {
-
-    using System.Diagnostics;
-    using System;
-    using System.IO;
-    using System.Text;
-    using System.Globalization;
-
     /// <devdoc>
     ///    <para>Provides a text writer that can indent new lines by a tabString token.</para>
     /// </devdoc>

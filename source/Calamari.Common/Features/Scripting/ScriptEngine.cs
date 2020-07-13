@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting.Bash;
 using Calamari.Common.Features.Scripting.FSharp;
 using Calamari.Common.Features.Scripting.Python;
 using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting
 {

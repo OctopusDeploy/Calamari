@@ -127,8 +127,7 @@ using System;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
 
-
-namespace Calamari.Commands.Support
+namespace Calamari.Common.Plumbing.Commands.Options
 {
     [Serializable]
     public class OptionException : Exception

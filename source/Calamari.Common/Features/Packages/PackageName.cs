@@ -2,13 +2,13 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Calamari.Integration.Packages.NuGet;
+using Calamari.Common.Features.Packages.NuGet;
 using Octopus.Versioning;
 using Octopus.Versioning.Maven;
 using Octopus.Versioning.Semver;
 
 /// These classes are shared with Octopus.Server. Ideally should be moved to a common location.
-namespace Calamari.Integration.Packages
+namespace Calamari.Common.Features.Packages
 {
     public static class PackageName
     {

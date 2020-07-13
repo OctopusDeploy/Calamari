@@ -1,6 +1,8 @@
 using System;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Proxies;
 using Calamari.Tests.Helpers;
-using Calamari.Util.Environments;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Proxies

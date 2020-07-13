@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security;
-using Calamari.Commands.Support;
-using Calamari.Common.Variables;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 {

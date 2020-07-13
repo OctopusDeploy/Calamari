@@ -3,7 +3,6 @@ using System.Net;
 using Calamari.Tests.Fixtures.Integration.Proxies;
 using Calamari.Tests.Fixtures.PowerShell;
 using Calamari.Tests.Helpers;
-using Calamari.Util.Environments;
 using FluentAssertions;
 using NUnit.Framework;
 

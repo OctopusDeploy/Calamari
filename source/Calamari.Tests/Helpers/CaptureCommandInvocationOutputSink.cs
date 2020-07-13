@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.ServiceMessages;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Processes;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Variables;
 using Octostache;
 
 namespace Calamari.Tests.Helpers

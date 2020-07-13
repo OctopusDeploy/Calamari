@@ -1,9 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.Integration.Processes.Semaphores
+namespace Calamari.Common.Features.Processes.Semaphores
 {
     public class LockFileBasedSemaphore : ISemaphore
     {

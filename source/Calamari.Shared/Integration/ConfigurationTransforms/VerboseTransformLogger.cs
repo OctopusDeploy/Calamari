@@ -1,5 +1,6 @@
 ﻿using System;
 using Calamari.Commands.Support;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment;
 #if USE_OCTOPUS_XMLT
 using Octopus.Web.XmlTransform;

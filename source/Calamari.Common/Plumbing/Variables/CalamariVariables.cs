@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using Calamari.Util;
 using Octostache;
 
-namespace Calamari.Variables
+namespace Calamari.Common.Plumbing.Variables
 {
     public class CalamariVariables : VariableDictionary, IVariables
     {

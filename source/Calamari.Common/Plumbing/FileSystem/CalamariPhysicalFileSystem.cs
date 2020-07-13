@@ -5,13 +5,11 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using Calamari.Deployment;
-using Calamari.Integration.Retry;
-using Calamari.Util;
-using System.Runtime.InteropServices;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Retry;
 
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Common.Plumbing.FileSystem
 {
     public abstract class CalamariPhysicalFileSystem : ICalamariFileSystem
     {

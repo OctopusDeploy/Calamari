@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Integration.Processes;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting.ScriptCS
 {

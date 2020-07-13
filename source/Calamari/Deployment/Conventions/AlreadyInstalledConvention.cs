@@ -1,7 +1,7 @@
-﻿using System;
-using System.Linq;
-using Calamari.Common.Variables;
-using Calamari.Deployment.Journal;
+﻿using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Deployment.Conventions
 {

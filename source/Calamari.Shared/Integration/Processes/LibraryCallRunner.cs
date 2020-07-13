@@ -1,4 +1,5 @@
 using System;
+using Calamari.Common.Features.Processes;
 
 namespace Calamari.Integration.Processes
 {

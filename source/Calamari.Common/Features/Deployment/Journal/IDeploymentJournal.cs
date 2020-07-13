@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Calamari.Deployment.Journal
+namespace Calamari.Common.Features.Deployment.Journal
 {
     public interface IDeploymentJournal
     {

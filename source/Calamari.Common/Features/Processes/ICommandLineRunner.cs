@@ -1,4 +1,4 @@
-﻿namespace Calamari.Integration.Processes
+﻿namespace Calamari.Common.Features.Processes
 {
     public interface ICommandLineRunner
     {

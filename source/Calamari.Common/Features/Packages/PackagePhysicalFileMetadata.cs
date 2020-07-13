@@ -1,7 +1,7 @@
 ﻿using System.IO;
-using Calamari.Util;
+using Calamari.Common.Plumbing.Extensions;
 
-namespace Calamari.Integration.Packages
+namespace Calamari.Common.Features.Packages
 {
     public class PackagePhysicalFileMetadata : PackageFileNameMetadata
     {

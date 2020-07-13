@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Net;
+using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.Plumbing
+namespace Calamari.Common.Plumbing
 {
     public static class SecurityProtocols
     {

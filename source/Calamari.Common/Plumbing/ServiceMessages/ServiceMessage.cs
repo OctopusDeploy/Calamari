@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Calamari.Integration.ServiceMessages
+namespace Calamari.Common.Plumbing.ServiceMessages
 {
     public class ServiceMessage
     {
