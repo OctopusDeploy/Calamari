@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Plumbing.FileSystem;
@@ -37,11 +38,8 @@ namespace Calamari.Common.Features.StructuredVariables
                             continue;
 
                         var found = classifier.Process(ev);
-                        if (found is YamlScalarValueNode scalar
-                            && variablesByKey.TryGetValue(scalar.Path, out string newValue))
-                        {
+                        if (found is YamlScalarValueNode scalar && variablesByKey.TryGetValue(scalar.Path, out var newValue))
                             ev = scalar.ReplaceValue(newValue);
-                        }
 
                         outputEvents.Add(ev);
                     }
@@ -59,9 +57,7 @@ namespace Calamari.Common.Features.StructuredVariables
             {
                 var emitter = new Emitter(writer);
                 foreach (var outputEvent in outputEvents)
-                {
                     emitter.Emit(outputEvent);
-                }
 
                 writer.Close();
                 outputText = writer.ToString();

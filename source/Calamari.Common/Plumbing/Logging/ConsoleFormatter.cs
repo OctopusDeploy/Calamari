@@ -16,11 +16,10 @@ namespace Calamari.Common.Plumbing.Logging
                 log.Error(ex.Message);
                 return 1;
             }
+
             if (ex is RecursiveDefinitionException)
-            {
                 //dont log these - they have already been logged earlier
                 return 101;
-            }
             if (ex is ReflectionTypeLoadException)
             {
                 log.Error(ex.ToString());
@@ -33,9 +32,7 @@ namespace Calamari.Common.Plumbing.Logging
 
                     var exFileNotFound = loaderException as FileNotFoundException;
                     if (!string.IsNullOrEmpty(exFileNotFound.FusionLog))
-                    {
                         log.Error(exFileNotFound.FusionLog);
-                    }
                 }
 
                 return 43;

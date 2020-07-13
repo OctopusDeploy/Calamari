@@ -1,10 +1,18 @@
-﻿using Calamari.Common.Plumbing.Variables;
+﻿using System;
+using Calamari.Common.Plumbing.Variables;
 using Octopus.CoreUtilities;
 
 namespace Calamari.Common.Util
 {
     public class ResolvedTemplatePath
     {
+        public ResolvedTemplatePath(string value)
+        {
+            Value = value;
+        }
+
+        public string Value { get; }
+
         public static explicit operator ResolvedTemplatePath(string value)
         {
             return new ResolvedTemplatePath(value);
@@ -14,20 +22,13 @@ namespace Calamari.Common.Util
         {
             return value.Value;
         }
-        
-        public string Value { get; }
-
-        public ResolvedTemplatePath(string value)
-        {
-            Value = value;
-        }
 
         public override string ToString()
         {
             return Value;
         }
     }
-    
+
     public interface ITemplateResolver
     {
         /// <summary>

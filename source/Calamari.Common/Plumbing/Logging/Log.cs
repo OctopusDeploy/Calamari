@@ -9,40 +9,56 @@ namespace Calamari.Common.Plumbing.Logging
     public static class Log
     {
         public static void Verbose(string message)
-            => ConsoleLog.Instance.Verbose(message);
+        {
+            ConsoleLog.Instance.Verbose(message);
+        }
 
         public static void VerboseFormat(string message, params object[] args)
-            => ConsoleLog.Instance.VerboseFormat(message, args);
+        {
+            ConsoleLog.Instance.VerboseFormat(message, args);
+        }
 
         public static void Info(string message)
-            => ConsoleLog.Instance.Info(message);
+        {
+            ConsoleLog.Instance.Info(message);
+        }
 
         public static void Info(string message, params object[] args)
-            => ConsoleLog.Instance.InfoFormat(message, args);
+        {
+            ConsoleLog.Instance.InfoFormat(message, args);
+        }
 
         public static void Warn(string message)
-            => ConsoleLog.Instance.Warn(message);
+        {
+            ConsoleLog.Instance.Warn(message);
+        }
 
         public static void WarnFormat(string message, params object[] args)
-            => ConsoleLog.Instance.WarnFormat(message, args);
+        {
+            ConsoleLog.Instance.WarnFormat(message, args);
+        }
 
         public static void Error(string message)
-            => ConsoleLog.Instance.Error(message);
+        {
+            ConsoleLog.Instance.Error(message);
+        }
 
         public static void ErrorFormat(string message, params object[] args)
-            => ConsoleLog.Instance.ErrorFormat(message, args);
-        
-        public static void SetOutputVariable(string name, string value, IVariables variables, bool isSensitive = false)
-            => ConsoleLog.Instance.SetOutputVariable(name, value, variables, isSensitive);
+        {
+            ConsoleLog.Instance.ErrorFormat(message, args);
+        }
 
+        public static void SetOutputVariable(string name, string value, IVariables variables, bool isSensitive = false)
+        {
+            ConsoleLog.Instance.SetOutputVariable(name, value, variables, isSensitive);
+        }
     }
-    
+
     public class ConsoleLog : AbstractLog
     {
+        public static ConsoleLog Instance = new ConsoleLog();
         readonly IndentedTextWriter stdOut;
         readonly IndentedTextWriter stdErr;
-        
-        public static ConsoleLog Instance = new ConsoleLog();
 
         ConsoleLog()
         {
@@ -51,7 +67,9 @@ namespace Calamari.Common.Plumbing.Logging
         }
 
         protected override void StdOut(string message)
-            => stdOut.WriteLine(message);
+        {
+            stdOut.WriteLine(message);
+        }
 
         protected override void StdErr(string message)
         {
@@ -63,16 +81,16 @@ namespace Calamari.Common.Plumbing.Logging
 
     public abstract class AbstractLog : ILog
     {
-        string stdOutMode;
-
         readonly object sync = new object();
+        string stdOutMode;
 
         protected abstract void StdOut(string message);
         protected abstract void StdErr(string message);
 
         void SetMode(string mode)
         {
-            if (stdOutMode == mode) return;
+            if (stdOutMode == mode)
+                return;
             StdOut("##octopus[stdout-" + mode + "]");
             stdOutMode = mode;
         }
@@ -87,7 +105,9 @@ namespace Calamari.Common.Plumbing.Logging
         }
 
         public virtual void VerboseFormat(string messageFormat, params object[] args)
-            => Verbose(string.Format(messageFormat, args));
+        {
+            Verbose(string.Format(messageFormat, args));
+        }
 
         public virtual void Info(string message)
         {
@@ -99,7 +119,9 @@ namespace Calamari.Common.Plumbing.Logging
         }
 
         public virtual void InfoFormat(string messageFormat, params object[] args)
-            => Info(String.Format(messageFormat, args));
+        {
+            Info(string.Format(messageFormat, args));
+        }
 
         public virtual void Warn(string message)
         {
@@ -111,25 +133,32 @@ namespace Calamari.Common.Plumbing.Logging
         }
 
         public virtual void WarnFormat(string messageFormat, params object[] args)
-            => Warn(String.Format(messageFormat, args));
+        {
+            Warn(string.Format(messageFormat, args));
+        }
 
         public virtual void Error(string message)
         {
             lock (sync)
+            {
                 StdErr(message);
+            }
         }
 
         public virtual void ErrorFormat(string messageFormat, params object[] args)
-            => Error(string.Format(messageFormat, args));
-        
-        
+        {
+            Error(string.Format(messageFormat, args));
+        }
+
         public void SetOutputVariableButDoNotAddToVariables(string name, string value, bool isSensitive = false)
         {
-            if (name == null) throw new ArgumentNullException(nameof(name));
-            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (name == null)
+                throw new ArgumentNullException(nameof(name));
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
 
             Info(isSensitive
-                ? $"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\" sensitive=\"{ConvertServiceMessageValue(Boolean.TrueString)}\"]"
+                ? $"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\" sensitive=\"{ConvertServiceMessageValue(bool.TrueString)}\"]"
                 : $"##octopus[setVariable name=\"{ConvertServiceMessageValue(name)}\" value=\"{ConvertServiceMessageValue(value)}\"]");
         }
 
@@ -165,9 +194,13 @@ namespace Calamari.Common.Plumbing.Logging
         }
 
         public string FormatLink(string uri, string description = null)
-            => $"[{description ?? uri}]({uri})";
+        {
+            return $"[{description ?? uri}]({uri})";
+        }
 
         public static string ConvertServiceMessageValue(string value)
-            => Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+        }
     }
 }

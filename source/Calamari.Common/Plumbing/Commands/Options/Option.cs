@@ -131,13 +131,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
 {
     public abstract class Option
     {
-        static readonly char[] NameTerminator = {'=', ':'};
-        readonly int count;
-        readonly string description;
-        readonly string[] names;
-        readonly string prototype;
-        readonly OptionValueType type;
-        string[] separators;
+        static readonly char[] NameTerminator = { '=', ':' };
 
         protected Option(string prototype, string description)
             : this(prototype, description, 1)
@@ -153,88 +147,74 @@ namespace Calamari.Common.Plumbing.Commands.Options
             if (maxValueCount < 0)
                 throw new ArgumentOutOfRangeException("maxValueCount");
 
-            this.prototype = prototype;
-            names = prototype.Split('|');
-            this.description = description;
-            count = maxValueCount;
-            type = ParsePrototype();
+            this.Prototype = prototype;
+            Names = prototype.Split('|');
+            this.Description = description;
+            MaxValueCount = maxValueCount;
+            OptionValueType = ParsePrototype();
 
-            if (count == 0 && type != OptionValueType.None)
+            if (MaxValueCount == 0 && OptionValueType != OptionValueType.None)
                 throw new ArgumentException(
                     "Cannot provide maxValueCount of 0 for OptionValueType.Required or " +
                     "OptionValueType.Optional.",
                     "maxValueCount");
-            if (type == OptionValueType.None && maxValueCount > 1)
+            if (OptionValueType == OptionValueType.None && maxValueCount > 1)
                 throw new ArgumentException(
                     string.Format("Cannot provide maxValueCount of {0} for OptionValueType.None.", maxValueCount),
                     "maxValueCount");
-            if (Array.IndexOf(names, "<>") >= 0 &&
-                ((names.Length == 1 && type != OptionValueType.None) ||
-                 (names.Length > 1 && MaxValueCount > 1)))
+            if (Array.IndexOf(Names, "<>") >= 0 &&
+                (Names.Length == 1 && OptionValueType != OptionValueType.None ||
+                    Names.Length > 1 && MaxValueCount > 1))
                 throw new ArgumentException(
                     "The default option handler '<>' cannot require values.",
                     "prototype");
         }
 
-        public string Prototype
-        {
-            get { return prototype; }
-        }
+        public string Prototype { get; }
 
-        public string Description
-        {
-            get { return description; }
-        }
+        public string Description { get; }
 
-        public OptionValueType OptionValueType
-        {
-            get { return type; }
-        }
+        public OptionValueType OptionValueType { get; }
 
-        public int MaxValueCount
-        {
-            get { return count; }
-        }
+        public int MaxValueCount { get; }
 
-        internal string[] Names
-        {
-            get { return names; }
-        }
+        internal string[] Names { get; }
 
-        internal string[] ValueSeparators
-        {
-            get { return separators; }
-        }
+        internal string[] ValueSeparators { get; set; }
 
         public string[] GetNames()
         {
-            return (string[]) names.Clone();
+            return (string[])Names.Clone();
         }
 
         public string[] GetValueSeparators()
         {
-            if (separators == null)
+            if (ValueSeparators == null)
                 return new string[0];
-            return (string[]) separators.Clone();
+            return (string[])ValueSeparators.Clone();
         }
 
         protected static T Parse<T>(string value, OptionContext c)
         {
-            var conv = TypeDescriptor.GetConverter(typeof (T));
+            var conv = TypeDescriptor.GetConverter(typeof(T));
             var t = default(T);
             try
             {
                 if (value != null)
-                    t = (T) conv.ConvertFromString(value);
+                    t = (T)conv.ConvertFromString(value);
             }
             catch (Exception e)
             {
                 throw new OptionException(
                     string.Format(
                         "Could not convert string `{0}' to type {1} for option `{2}'.",
-                        value, typeof (T).Name, c.OptionName),
-                    c.OptionName, e);
+                        value,
+                        typeof(T).Name,
+                        c.OptionName),
+                    c.OptionName,
+                    e);
             }
+
             return t;
         }
 
@@ -242,16 +222,16 @@ namespace Calamari.Common.Plumbing.Commands.Options
         {
             var c = '\0';
             var seps = new List<string>();
-            for (var i = 0; i < names.Length; ++i)
+            for (var i = 0; i < Names.Length; ++i)
             {
-                var name = names[i];
+                var name = Names[i];
                 if (name.Length == 0)
                     throw new ArgumentException("Empty option names are not supported.");
 
                 var end = name.IndexOfAny(NameTerminator);
                 if (end == -1)
                     continue;
-                names[i] = name.Substring(0, end);
+                Names[i] = name.Substring(0, end);
                 if (c == '\0' || c == name[end])
                     c = name[end];
                 else
@@ -263,17 +243,17 @@ namespace Calamari.Common.Plumbing.Commands.Options
             if (c == '\0')
                 return OptionValueType.None;
 
-            if (count <= 1 && seps.Count != 0)
+            if (MaxValueCount <= 1 && seps.Count != 0)
                 throw new ArgumentException(
-                    string.Format("Cannot provide key/value separators for Options taking {0} value(s).", count));
-            if (count > 1)
+                    string.Format("Cannot provide key/value separators for Options taking {0} value(s).", MaxValueCount));
+            if (MaxValueCount > 1)
             {
                 if (seps.Count == 0)
-                    separators = new[] {":", "="};
+                    ValueSeparators = new[] { ":", "=" };
                 else if (seps.Count == 1 && seps[0].Length == 0)
-                    separators = null;
+                    ValueSeparators = null;
                 else
-                    separators = seps.ToArray();
+                    ValueSeparators = seps.ToArray();
             }
 
             return c == '=' ? OptionValueType.Required : OptionValueType.Optional;
@@ -283,7 +263,6 @@ namespace Calamari.Common.Plumbing.Commands.Options
         {
             var start = -1;
             for (var i = end + 1; i < name.Length; ++i)
-            {
                 switch (name[i])
                 {
                     case '{':
@@ -304,7 +283,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                             seps.Add(name[i].ToString());
                         break;
                 }
-            }
+
             if (start != -1)
                 throw new ArgumentException(
                     string.Format("Ill-formed name/value separator found in \"{0}\".", name));

@@ -12,7 +12,7 @@ namespace Calamari.Common.Plumbing.Extensions
         static readonly ISemaphoreFactory Semaphore = SemaphoreFactory.Get();
 
         /// <summary>
-        /// Returns the directory where the package will be installed. 
+        /// Returns the directory where the package will be installed.
         /// Also ensures the directory exists, and that there is free-space on the disk.
         /// </summary>
         public static string GetApplicationDirectory(PackageFileNameMetadata packageFileNameMetadata, IVariables variables, ICalamariFileSystem fileSystem)
@@ -51,12 +51,10 @@ namespace Calamari.Common.Plumbing.Extensions
             {
                 root = variables.Get(linuxRoot);
                 if (root == null)
-                {
                     throw new Exception(string.Format("Unable to determine the ApplicationRootDirectory. Please provide the {0} variable", TentacleVariables.Agent.ApplicationDirectoryPath));
-                }
             }
-            return string.Format("{0}{1}Applications", root, Path.DirectorySeparatorChar);
 
+            return string.Format("{0}{1}Applications", root, Path.DirectorySeparatorChar);
         }
 
         static string AppendEnvironmentNameIfProvided(ICalamariFileSystem fileSystem, IVariables variables, string root)
@@ -95,9 +93,7 @@ namespace Calamari.Common.Plumbing.Extensions
             using (Semaphore.Acquire("Octopus.Calamari.ExtractionDirectory", "Another process is finding an extraction directory, please wait..."))
             {
                 for (var i = 1; fileSystem.DirectoryExists(target) || fileSystem.FileExists(target); i++)
-                {
                     target = desiredTargetPath + "_" + i;
-                }
 
                 fileSystem.EnsureDirectoryExists(target);
             }

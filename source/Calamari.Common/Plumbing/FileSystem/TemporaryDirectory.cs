@@ -10,7 +10,7 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public TemporaryDirectory(string directoryPath)
         {
-            this.DirectoryPath = directoryPath;
+            DirectoryPath = directoryPath;
         }
 
         public void Dispose()

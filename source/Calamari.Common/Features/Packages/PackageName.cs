@@ -22,7 +22,7 @@ namespace Calamari.Common.Features.Packages
 
         static string SearchPattern(string packageId, IVersion version = null, string extension = null, string cacheBuster = null)
         {
-            var ver = version == null ? "*": EncodeVersion(version);
+            var ver = version == null ? "*" : EncodeVersion(version);
             return $"{Encode(packageId)}{SectionDelimiter}{ver}{SectionDelimiter}{cacheBuster ?? "*"}{extension ?? "*"}";
         }
 
@@ -30,24 +30,23 @@ namespace Calamari.Common.Features.Packages
         {
             var pattern = SearchPattern(packageId, version, string.Empty, string.Empty);
             if (!string.IsNullOrWhiteSpace(rootDir))
-            {
                 pattern = Path.Combine(rootDir, pattern);
-            }
             return Regex.Escape(pattern) + "[a-fA-F0-9]{32}\\..*\\b";
         }
 
         public static string[] ToSearchPatterns(string packageId, IVersion version = null, string[] extensions = null)
         {
-            extensions = extensions ?? new[] {"*"};
+            extensions = extensions ?? new[] { "*" };
 
             // Lets not bother tring to also match old pattern
             return extensions.Select(ext => $"{SearchPattern(packageId, version, ext)}")
                 //.Union(extensions.Select(ext =>$"{Encode(packageId)}.{(version == null ? "*" : Encode(version.ToString()))}{ext}-*"))
-                .Distinct().ToArray();
+                .Distinct()
+                .ToArray();
         }
 
         /// <summary>
-        ///  Old school parser for those file not yet sourced directly from the cache.
+        /// Old school parser for those file not yet sourced directly from the cache.
         /// Expects pattern {PackageId}.{Version}.{Extension}
         /// </summary>
         /// <param name="fileName"></param>
@@ -62,8 +61,10 @@ namespace Calamari.Common.Features.Packages
             extension = null;
             const string packageIdPattern = @"(?<packageId>(\w+([_.-]\w+)*?))";
             const string semanticVersionPattern = @"(?<semanticVersion>(\d+(\.\d+){0,3}" // Major Minor Patch
-                                                  + @"(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)" // Pre-release identifiers
-                                                  + @"(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)"; // Build Metadata
+                +
+                @"(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)" // Pre-release identifiers
+                +
+                @"(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)"; // Build Metadata
 
             var fileNamePattern = $@"{packageIdPattern}\.{semanticVersionPattern}";
 
@@ -82,10 +83,12 @@ namespace Calamari.Common.Features.Packages
             if (TryMatchKnownExtensions(fileName, out var strippedFileName, out var extensionMatch))
             {
                 fileName = strippedFileName;
-            } else { 
+            }
+            else
+            {
                 const string extensionPattern = @"(?<extension>(\.([a-zA-Z0-9])+)+)"; //Extension (wont catch two part extensions like .tar.gz if there is a pre-release tag)
                 fileNamePattern += extensionPattern;
-            } 
+            }
 
             var match = Regex.Match(fileName, $"^{fileNamePattern}$", RegexOptions.IgnoreCase);
 
@@ -118,7 +121,9 @@ namespace Calamari.Common.Features.Packages
             return match.Success;
         }
 
-        static bool TryParseEncodedFileName(string fileName, out string packageId, out IVersion version,
+        static bool TryParseEncodedFileName(string fileName,
+            out string packageId,
+            out IVersion version,
             out string extension)
         {
             packageId = null;
@@ -148,9 +153,8 @@ namespace Calamari.Common.Features.Packages
             var fileName = Path.GetFileName(path) ?? "";
 
             if (!TryParseEncodedFileName(fileName, out var packageId, out var version, out var extension) &&
-                !TryParseUnsafeFileName(fileName, out packageId, out version, out extension)) {
+                !TryParseUnsafeFileName(fileName, out packageId, out version, out extension))
                 throw new Exception($"Unexpected file format in {fileName}.\nExpected Octopus cached file format: `<PackageId>{SectionDelimiter}<Version>{SectionDelimiter}<CacheBuster>.<Extension>` or `<PackageId>.<SemverVersion>.<Extension>`");
-            }
 
             //TODO: Extract... Obviously _could_ be an issue for .net core
             if (extension.Equals(".nupkg", StringComparison.OrdinalIgnoreCase) && File.Exists(path))
@@ -159,7 +163,7 @@ namespace Calamari.Common.Features.Packages
 //                version = metaData.Version;
 //                packageId = metaData.PackageId;
                 var metaData = new LocalNuGetPackage(path).Metadata;
-                version = SemVerFactory.CreateVersion(metaData.Version.ToString());
+                version = SemVerFactory.CreateVersion(metaData.Version);
                 packageId = metaData.Id;
             }
 
@@ -182,7 +186,7 @@ namespace Calamari.Common.Features.Packages
             {
                 case MavenVersion mavenVersion:
                     return "M" + Encode(version.ToString());
-                case Octopus.Versioning.Semver.SemanticVersion semver:
+                case SemanticVersion semver:
                     return "S" + Encode(version.ToString());
             }
 
@@ -198,6 +202,7 @@ namespace Calamari.Common.Features.Packages
                 case 'M':
                     return VersionFactory.CreateMavenVersion(Decode(input.Substring(1)));
             }
+
             throw new Exception($"Unrecognised Version format `{input}`");
         }
     }

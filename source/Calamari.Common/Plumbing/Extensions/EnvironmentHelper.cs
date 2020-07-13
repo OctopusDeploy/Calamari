@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Principal;
+
 // Needed for dotnetcore
 
 namespace Calamari.Common.Plumbing.Extensions
@@ -23,7 +25,7 @@ namespace Calamari.Common.Plumbing.Extensions
             Environment.SetEnvironmentVariable(name, value, EnvironmentVariableTarget.Process);
         }
 
-        private static string SafelyGet(Func<string> thingToGet)
+        static string SafelyGet(Func<string> thingToGet)
         {
             try
             {
@@ -42,8 +44,8 @@ namespace Calamari.Common.Plumbing.Extensions
             yield return SafelyGet(() => $"Is64BitProcess: {Environment.Is64BitProcess}");
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 yield return SafelyGet(() => $"Running on Mono: {CalamariEnvironment.IsRunningOnMono}");
-            if(CalamariEnvironment.IsRunningOnWindows)
-                yield return SafelyGet(() => $"CurrentUser: {System.Security.Principal.WindowsIdentity.GetCurrent().Name}");
+            if (CalamariEnvironment.IsRunningOnWindows)
+                yield return SafelyGet(() => $"CurrentUser: {WindowsIdentity.GetCurrent().Name}");
             else
                 yield return SafelyGet(() => $"CurrentUser: {Environment.UserName}");
             yield return SafelyGet(() => $"MachineName: {Environment.MachineName}");

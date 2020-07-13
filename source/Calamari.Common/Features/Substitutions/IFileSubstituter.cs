@@ -1,4 +1,5 @@
-﻿using Calamari.Common.Plumbing.Variables;
+﻿using System;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Substitutions
 {

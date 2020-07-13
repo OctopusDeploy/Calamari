@@ -139,6 +139,39 @@ namespace Calamari.Common.Plumbing.Commands.Options
             this.c = c;
         }
 
+        #region IEnumerable
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return values.GetEnumerator();
+        }
+
+        #endregion
+
+        #region IEnumerable<T>
+
+        public IEnumerator<string> GetEnumerator()
+        {
+            return values.GetEnumerator();
+        }
+
+        #endregion
+
+        public List<string> ToList()
+        {
+            return new List<string>(values);
+        }
+
+        public string[] ToArray()
+        {
+            return values.ToArray();
+        }
+
+        public override string ToString()
+        {
+            return string.Join(", ", values.ToArray());
+        }
+
         #region ICollection
 
         void ICollection.CopyTo(Array array, int index)
@@ -146,15 +179,9 @@ namespace Calamari.Common.Plumbing.Commands.Options
             (values as ICollection).CopyTo(array, index);
         }
 
-        bool ICollection.IsSynchronized
-        {
-            get { return (values as ICollection).IsSynchronized; }
-        }
+        bool ICollection.IsSynchronized => (values as ICollection).IsSynchronized;
 
-        object ICollection.SyncRoot
-        {
-            get { return (values as ICollection).SyncRoot; }
-        }
+        object ICollection.SyncRoot => (values as ICollection).SyncRoot;
 
         #endregion
 
@@ -165,15 +192,9 @@ namespace Calamari.Common.Plumbing.Commands.Options
             values.Clear();
         }
 
-        public int Count
-        {
-            get { return values.Count; }
-        }
+        public int Count => values.Count;
 
-        public bool IsReadOnly
-        {
-            get { return false; }
-        }
+        public bool IsReadOnly => false;
 
         public void Add(string item)
         {
@@ -193,24 +214,6 @@ namespace Calamari.Common.Plumbing.Commands.Options
         public bool Remove(string item)
         {
             return values.Remove(item);
-        }
-
-        #endregion
-
-        #region IEnumerable
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return values.GetEnumerator();
-        }
-
-        #endregion
-
-        #region IEnumerable<T>
-
-        public IEnumerator<string> GetEnumerator()
-        {
-            return values.GetEnumerator();
         }
 
         #endregion
@@ -247,15 +250,12 @@ namespace Calamari.Common.Plumbing.Commands.Options
             (values as IList).RemoveAt(index);
         }
 
-        bool IList.IsFixedSize
-        {
-            get { return false; }
-        }
+        bool IList.IsFixedSize => false;
 
         object IList.this[int index]
         {
-            get { return this[index]; }
-            set { (values as IList)[index] = value; }
+            get => this[index];
+            set => (values as IList)[index] = value;
         }
 
         #endregion
@@ -284,7 +284,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 AssertValid(index);
                 return index >= values.Count ? null : values[index];
             }
-            set { values[index] = value; }
+            set => values[index] = value;
         }
 
         void AssertValid(int index)
@@ -296,25 +296,11 @@ namespace Calamari.Common.Plumbing.Commands.Options
             if (c.Option.OptionValueType == OptionValueType.Required &&
                 index >= values.Count)
                 throw new OptionException(string.Format(
-                    "Missing required value for option '{0}'.", c.OptionName),
+                        "Missing required value for option '{0}'.",
+                        c.OptionName),
                     c.OptionName);
         }
 
         #endregion
-
-        public List<string> ToList()
-        {
-            return new List<string>(values);
-        }
-
-        public string[] ToArray()
-        {
-            return values.ToArray();
-        }
-
-        public override string ToString()
-        {
-            return string.Join(", ", values.ToArray());
-        }
     }
 }

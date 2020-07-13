@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.Threading;
@@ -7,7 +8,6 @@ namespace Calamari.Common.Features.Processes.Semaphores
     [DataContract]
     public class FileLock
     {
-
         [DataMember]
         public long ProcessId { get; set; }
 
@@ -22,16 +22,19 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
         protected bool Equals(FileLock other)
         {
-            return ProcessId == other.ProcessId && 
-                   string.Equals(ProcessName, other.ProcessName) && 
-                   ThreadId == other.ThreadId;
+            return ProcessId == other.ProcessId &&
+                string.Equals(ProcessName, other.ProcessName) &&
+                ThreadId == other.ThreadId;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
+            if (ReferenceEquals(null, obj))
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
+            if (obj.GetType() != GetType())
+                return false;
             return Equals((FileLock)obj);
         }
 

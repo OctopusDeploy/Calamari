@@ -1,4 +1,6 @@
-﻿namespace Calamari.Common.Plumbing.Deployment
+﻿using System;
+
+namespace Calamari.Common.Plumbing.Deployment
 {
     public enum DeploymentWorkingDirectory
     {

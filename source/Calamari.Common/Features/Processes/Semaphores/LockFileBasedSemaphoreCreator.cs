@@ -11,7 +11,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
         {
             this.log = log;
         }
-        
+
         public ISemaphore Create(string name, TimeSpan lockTimeout)
         {
             return new LockFileBasedSemaphore(name, lockTimeout, log);

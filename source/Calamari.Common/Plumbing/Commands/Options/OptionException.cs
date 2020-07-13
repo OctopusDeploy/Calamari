@@ -132,8 +132,6 @@ namespace Calamari.Common.Plumbing.Commands.Options
     [Serializable]
     public class OptionException : Exception
     {
-        readonly string option;
-
         public OptionException()
         {
         }
@@ -141,31 +139,28 @@ namespace Calamari.Common.Plumbing.Commands.Options
         public OptionException(string message, string optionName)
             : base(message)
         {
-            option = optionName;
+            OptionName = optionName;
         }
 
         public OptionException(string message, string optionName, Exception innerException)
             : base(message, innerException)
         {
-            option = optionName;
-        }
-
-        public string OptionName
-        {
-            get { return option; }
+            OptionName = optionName;
         }
 
         protected OptionException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
-            option = info.GetString("OptionName");
+            OptionName = info.GetString("OptionName");
         }
+
+        public string OptionName { get; }
 
         [SecurityPermission(SecurityAction.LinkDemand, SerializationFormatter = true)]
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
-            info.AddValue("OptionName", option);
+            info.AddValue("OptionName", OptionName);
         }
     }
 }

@@ -1,13 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Calamari.Common.Plumbing.Commands;
 
 namespace Calamari.Common.Features.Processes
 {
     public class SplitCommandInvocationOutputSink : ICommandInvocationOutputSink
     {
-        private readonly List<ICommandInvocationOutputSink> outputs;
+        readonly List<ICommandInvocationOutputSink> outputs;
 
-        public SplitCommandInvocationOutputSink(params ICommandInvocationOutputSink[] outputs) : this(new List<ICommandInvocationOutputSink>(outputs))
+        public SplitCommandInvocationOutputSink(params ICommandInvocationOutputSink[] outputs)
+            : this(new List<ICommandInvocationOutputSink>(outputs))
         {
         }
 
@@ -18,12 +20,14 @@ namespace Calamari.Common.Features.Processes
 
         public void WriteInfo(string line)
         {
-            foreach (var output in outputs) output.WriteInfo(line);
+            foreach (var output in outputs)
+                output.WriteInfo(line);
         }
 
         public void WriteError(string line)
         {
-            foreach (var output in outputs) output.WriteError(line);
+            foreach (var output in outputs)
+                output.WriteError(line);
         }
     }
 }

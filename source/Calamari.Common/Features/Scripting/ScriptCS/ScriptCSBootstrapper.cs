@@ -15,7 +15,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
 {
     public static class ScriptCSBootstrapper
     {
-        private static readonly string BootstrapScriptTemplate;
+        static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -49,25 +49,26 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             return commandArguments.ToString();
         }
 
-        private static string RetrieveParameterValues(string scriptParameters)
+        static string RetrieveParameterValues(string scriptParameters)
         {
-            if (scriptParameters == null) return null;
+            if (scriptParameters == null)
+                return null;
             return scriptParameters.Trim()
-                                   .TrimStart('-')
-                                   .Trim();
+                .TrimStart('-')
+                .Trim();
         }
 
         public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, IVariables variables)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(scriptFilePath));
             var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
-            
+
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
             {
                 writer.WriteLine("#load \"" + configurationFile.Replace("\\", "\\\\") + "\"");
                 writer.WriteLine("#load \"" + scriptFilePath.Replace("\\", "\\\\") + "\"");
-                    
+
                 writer.Flush();
             }
 
@@ -78,8 +79,8 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
         static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory)
         {
             foreach (var variableName in variables.GetNames().Where(ScriptVariables.IsLibraryScriptModule))
-            {
-                if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.CSharp) {
+                if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.CSharp)
+                {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
                     var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
                     var moduleFileName = $"{name}.csx";
@@ -88,7 +89,6 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
                     yield return moduleFileName;
                 }
-            }
         }
 
         public static string PrepareConfigurationFile(string workingDirectory, IVariables variables)
@@ -108,7 +108,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
         }
-            
+
         static string WriteVariableDictionary(IVariables variables)
         {
             var builder = new StringBuilder();
@@ -117,6 +117,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
                 var variableValue = EncryptVariable(variables.Get(variable));
                 builder.Append("\t\t\tthis[").Append(EncodeValue(variable)).Append("] = ").Append(variableValue).AppendLine(";");
             }
+
             return builder.ToString();
         }
 

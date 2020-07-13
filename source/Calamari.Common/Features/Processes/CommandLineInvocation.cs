@@ -24,12 +24,12 @@ namespace Calamari.Common.Features.Processes
         public string UserName { get; set; }
 
         public SecureString Password { get; set; }
-        
+
         public Dictionary<string, string> EnvironmentVars { get; set; }
-        
+
         /// <summary>
         /// Prevent this execution from starting if another execution is running that also has this set to true.
-        /// It does not isolate from executions that have this set to false. 
+        /// It does not isolate from executions that have this set to false.
         /// </summary>
         public bool Isolate { get; set; }
 
@@ -37,16 +37,16 @@ namespace Calamari.Common.Features.Processes
         /// Whether to output the execution output to the Calamari Log (i.e. it will be send back to Octopus)
         /// </summary>
         public bool OutputToLog { get; set; } = true;
-        
+
         /// <summary>
         /// Start the logging as verbose. The executed command may change logging level itself via service messages.
         /// </summary>
         public bool OutputAsVerbose { get; set; }
-        
+
         /// <summary>
-        /// Add a non-standard output destination for the execution output 
+        /// Add a non-standard output destination for the execution output
         /// </summary>
-        public ICommandInvocationOutputSink AdditionalInvocationOutputSink { get; set; } 
+        public ICommandInvocationOutputSink AdditionalInvocationOutputSink { get; set; }
 
         /// <summary>
         /// The initial working-directory for the invocation.
@@ -57,7 +57,6 @@ namespace Calamari.Common.Features.Processes
             get => workingDirectory ?? Environment.CurrentDirectory;
             set => workingDirectory = value;
         }
-
 
         public override string ToString()
         {

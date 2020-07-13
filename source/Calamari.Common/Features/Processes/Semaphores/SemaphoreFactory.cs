@@ -1,3 +1,4 @@
+using System;
 using Calamari.Common.Plumbing;
 
 namespace Calamari.Common.Features.Processes.Semaphores

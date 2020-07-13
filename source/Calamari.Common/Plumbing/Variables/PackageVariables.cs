@@ -1,3 +1,5 @@
+using System;
+
 namespace Calamari.Common.Plumbing.Variables
 {
     public static class PackageVariables
@@ -15,7 +17,27 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string SubstituteInFilesEnabled = "Octopus.Action.SubstituteInFiles.Enabled";
         public static readonly string SubstituteInFilesTargets = "Octopus.Action.SubstituteInFiles.TargetFiles";
         public static readonly string PackageCollection = "Octopus.Action.Package";
-            
+
+        public static string IndexedPackageId(string packageReferenceName)
+        {
+            return $"Octopus.Action.Package[{packageReferenceName}].PackageId";
+        }
+
+        public static string IndexedPackageVersion(string packageReferenceName)
+        {
+            return $"Octopus.Action.Package[{packageReferenceName}].PackageVersion";
+        }
+
+        public static string IndexedOriginalPath(string packageReferenceName)
+        {
+            return $"Octopus.Action.Package[{packageReferenceName}].OriginalPath";
+        }
+
+        public static string IndexedExtract(string packageReferenceName)
+        {
+            return $"Octopus.Action.Package[{packageReferenceName}].Extract";
+        }
+
         public class Output
         {
             public static readonly string DeprecatedInstallationDirectoryPath = "Package.InstallationDirectoryPath";
@@ -27,26 +49,5 @@ namespace Calamari.Common.Plumbing.Variables
             public static readonly string FileName = "Package.FileName";
             public static readonly string FilePath = "Package.FilePath";
         }
-        
-        public static string IndexedPackageId(string packageReferenceName)
-        {
-            return $"Octopus.Action.Package[{packageReferenceName}].PackageId";
-        }
-
-        public static string IndexedPackageVersion(string packageReferenceName)
-        {
-            return $"Octopus.Action.Package[{packageReferenceName}].PackageVersion";
-        }
-        
-        public static string IndexedOriginalPath(string packageReferenceName)
-        {
-            return $"Octopus.Action.Package[{packageReferenceName}].OriginalPath";
-        }
-        
-        public static string IndexedExtract(string packageReferenceName)
-        {
-            return $"Octopus.Action.Package[{packageReferenceName}].Extract";
-        }
-        
     }
 }

@@ -15,7 +15,7 @@ namespace Calamari.Common.Features.Scripting.FSharp
 {
     public static class FSharpBootstrapper
     {
-        private static readonly string BootstrapScriptTemplate;
+        static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -66,12 +66,12 @@ namespace Calamari.Common.Features.Scripting.FSharp
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
             return (bootstrapFile, scriptModulePaths);
         }
-        
+
         static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory)
         {
             foreach (var variableName in variables.GetNames().Where(ScriptVariables.IsLibraryScriptModule))
-            {
-                if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.FSharp) {
+                if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.FSharp)
+                {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
                     var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
                     var moduleFileName = $"{name}.fsx";
@@ -80,7 +80,6 @@ namespace Calamari.Common.Features.Scripting.FSharp
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
                     yield return moduleFileName;
                 }
-            }
         }
 
         public static string PrepareConfigurationFile(string workingDirectory, IVariables variables)
@@ -108,17 +107,15 @@ namespace Calamari.Common.Features.Scripting.FSharp
             {
                 var variableValue = variables.Get(variableName);
                 if (variableValue == null)
-                {
                     builder.AppendFormat("        | \"{0}\" -> Some null", EncodeValue(variableName));
-                }
                 else
-                {
-                    builder.AppendFormat("        | \"{0}\" -> {1} |> Some", EncodeValue(variableName),
-                                                                                        EncryptVariable(variableValue));                    
-                }
+                    builder.AppendFormat("        | \"{0}\" -> {1} |> Some",
+                        EncodeValue(variableName),
+                        EncryptVariable(variableValue));
 
                 builder.Append(Environment.NewLine);
             }
+
             builder.Append("        | _ -> None");
 
             return builder.ToString();

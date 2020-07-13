@@ -6,17 +6,16 @@ namespace Calamari.Common.Plumbing.FileSystem
 {
     public class TemporaryFile : IDisposable
     {
-        private readonly string filePath;
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public TemporaryFile(string filePath)
         {
-            this.filePath = filePath;
+            this.FilePath = filePath;
         }
 
         public string DirectoryPath => "file://" + Path.GetDirectoryName(FilePath);
 
-        public string FilePath => filePath;
+        public string FilePath { get; }
 
         public string Hash
         {
@@ -40,9 +39,10 @@ namespace Calamari.Common.Plumbing.FileSystem
                 }
             }
         }
+
         public void Dispose()
         {
-            fileSystem.DeleteFile(filePath, FailureOptions.IgnoreFailure);
+            fileSystem.DeleteFile(FilePath, FailureOptions.IgnoreFailure);
         }
     }
 }

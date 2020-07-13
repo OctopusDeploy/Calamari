@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
@@ -8,7 +9,8 @@ namespace Calamari.Common.Features.Scripting.FSharp
 {
     public class FSharpExecutor : ScriptExecutor
     {
-        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, IVariables variables,
+        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
+            IVariables variables,
             Dictionary<string, string> environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
@@ -23,7 +25,7 @@ namespace Calamari.Common.Features.Scripting.FSharp
                     WorkingDirectory = workingDirectory,
                     EnvironmentVars = environmentVars
                 },
-                otherTemporaryFiles.Concat(new[] {bootstrapFile, configurationFile})
+                otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile })
             );
         }
     }

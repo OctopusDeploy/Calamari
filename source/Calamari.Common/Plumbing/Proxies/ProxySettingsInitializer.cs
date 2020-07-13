@@ -14,14 +14,12 @@ namespace Calamari.Common.Plumbing.Proxies
             var useCustomProxy = !string.IsNullOrWhiteSpace(proxyHost);
 
             if (useCustomProxy)
-            {
                 return new UseCustomProxySettings(
                     proxyHost,
                     proxyPort,
                     proxyUsername,
                     proxyPassword
                 );
-            }
 
             bool useDefaultProxy;
             if (!bool.TryParse(Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy),
@@ -29,11 +27,9 @@ namespace Calamari.Common.Plumbing.Proxies
                 useDefaultProxy = true;
 
             if (useDefaultProxy)
-            {
                 return new UseSystemProxySettings(
                     proxyUsername,
                     proxyPassword);
-            }
 
             return new BypassProxySettings();
         }

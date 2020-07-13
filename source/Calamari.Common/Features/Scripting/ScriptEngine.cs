@@ -26,7 +26,7 @@ namespace Calamari.Common.Features.Scripting
 
     public class ScriptEngine : IScriptEngine
     {
-        private readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
+        readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
 
         public ScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks)
         {
@@ -64,9 +64,10 @@ namespace Calamari.Common.Features.Scripting
         /// calling ExecuteScript() on the start of the chain will result in every part of the chain being
         /// executed, down to the final TerminalScriptWrapper.
         /// </returns>
-        IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax, IVariables variables) =>
+        IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax, IVariables variables)
+        {
             // get the type of script
-            scriptWrapperHooks
+            return scriptWrapperHooks
                 .Where(hook => hook.IsEnabled(scriptSyntax))
                 /*
                  * Sort the list in descending order of priority to ensure that
@@ -75,19 +76,20 @@ namespace Calamari.Common.Features.Scripting
                  */
                 .OrderByDescending(hook => hook.Priority)
                 .Aggregate(
-                // The last wrapper is always the TerminalScriptWrapper
-                new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax), variables),
-                (IScriptWrapper current, IScriptWrapper next) =>
-                {
-                    // the next wrapper is pointed to the current one
-                    next.NextWrapper = current;
-                    /*
+                    // The last wrapper is always the TerminalScriptWrapper
+                    new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax), variables),
+                    (IScriptWrapper current, IScriptWrapper next) =>
+                    {
+                        // the next wrapper is pointed to the current one
+                        next.NextWrapper = current;
+                        /*
                      * The next wrapper is carried across to the next aggregate call,
                      * or is returned as the result of the aggregate call. This means
                      * the last item in the list is the return value.
-                     */ 
-                    return next;
-                });
+                     */
+                        return next;
+                    });
+        }
 
         IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax)
         {

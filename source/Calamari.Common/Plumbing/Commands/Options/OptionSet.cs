@@ -137,11 +137,17 @@ namespace Calamari.Common.Plumbing.Commands.Options
 
     public class OptionSet : KeyedCollection<string, Option>
     {
+        const int OptionWidth = 29;
+
+        readonly Regex ValueOption = new Regex(
+            @"^(?<flag>--|-|/)(?<name>[^:=]+)((?<sep>[:=])(?<value>.*))?$");
+
         Action<string[]> leftovers;
 
-        public OptionSet()
-        {
-        }
+#pragma warning disable 649
+#pragma warning restore 649
+
+        public bool ShouldWaitForExit { get; }
 
         protected override string GetKeyForItem(Option item)
         {
@@ -181,9 +187,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
             var p = Items[index];
             // KeyedCollection.RemoveItem() handles the 0th item
             for (var i = 1; i < p.Names.Length; ++i)
-            {
                 Dictionary.Remove(p.Names[i]);
-            }
         }
 
         protected override void SetItem(int index, Option item)
@@ -221,24 +225,6 @@ namespace Calamari.Common.Plumbing.Commands.Options
             return this;
         }
 
-        sealed class ActionOption : Option
-        {
-            readonly Action<OptionValueCollection> action;
-
-            public ActionOption(string prototype, string description, int count, Action<OptionValueCollection> action)
-                : base(prototype, description, count)
-            {
-                if (action == null)
-                    throw new ArgumentNullException("action");
-                this.action = action;
-            }
-
-            protected override void OnParseComplete(OptionContext c)
-            {
-                action(c.OptionValues);
-            }
-        }
-
         public OptionSet Add(string prototype, Action<string> action)
         {
             return Add(prototype, null, action);
@@ -248,8 +234,13 @@ namespace Calamari.Common.Plumbing.Commands.Options
         {
             if (action == null)
                 throw new ArgumentNullException("action");
-            Option p = new ActionOption(prototype, description, 1,
-                delegate(OptionValueCollection v) { action(v[0]); });
+            Option p = new ActionOption(prototype,
+                description,
+                1,
+                delegate(OptionValueCollection v)
+                {
+                    action(v[0]);
+                });
             base.Add(p);
             return this;
         }
@@ -263,48 +254,15 @@ namespace Calamari.Common.Plumbing.Commands.Options
         {
             if (action == null)
                 throw new ArgumentNullException("action");
-            Option p = new ActionOption(prototype, description, 2,
-                delegate(OptionValueCollection v) { action(v[0], v[1]); });
+            Option p = new ActionOption(prototype,
+                description,
+                2,
+                delegate(OptionValueCollection v)
+                {
+                    action(v[0], v[1]);
+                });
             base.Add(p);
             return this;
-        }
-
-        sealed class ActionOption<T> : Option
-        {
-            readonly Action<T> action;
-
-            public ActionOption(string prototype, string description, Action<T> action)
-                : base(prototype, description, 1)
-            {
-                if (action == null)
-                    throw new ArgumentNullException("action");
-                this.action = action;
-            }
-
-            protected override void OnParseComplete(OptionContext c)
-            {
-                action(Parse<T>(c.OptionValues[0], c));
-            }
-        }
-
-        sealed class ActionOption<TKey, TValue> : Option
-        {
-            readonly OptionAction<TKey, TValue> action;
-
-            public ActionOption(string prototype, string description, OptionAction<TKey, TValue> action)
-                : base(prototype, description, 2)
-            {
-                if (action == null)
-                    throw new ArgumentNullException("action");
-                this.action = action;
-            }
-
-            protected override void OnParseComplete(OptionContext c)
-            {
-                action(
-                    Parse<TKey>(c.OptionValues[0], c),
-                    Parse<TValue>(c.OptionValues[1], c));
-            }
         }
 
         public OptionSet Add<T>(string prototype, Action<T> action)
@@ -351,7 +309,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 where ++c.OptionIndex >= 0 && (process || def != null)
                     ? process
                         ? argument == "--"
-                            ? (process = false)
+                            ? process = false
                             : !Parse(argument, c)
                                 ? def != null
                                     ? Unprocessed(null, def, c, argument)
@@ -367,9 +325,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 c.Option.Invoke(c);
 
             if (leftovers != null && r.Count > 0)
-            {
                 leftovers(r.ToArray());
-            }
 
             return r;
         }
@@ -381,20 +337,18 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 extra.Add(argument);
                 return false;
             }
+
             c.OptionValues.Add(argument);
             c.Option = def;
             c.Option.Invoke(c);
             return false;
         }
 
-        readonly Regex ValueOption = new Regex(
-            @"^(?<flag>--|-|/)(?<name>[^:=]+)((?<sep>[:=])(?<value>.*))?$");
-
-#pragma warning disable 649
-        bool waitForExit;
-#pragma warning restore 649
-
-        protected bool GetOptionParts(string argument, out string flag, out string name, out string sep, out string value)
+        protected bool GetOptionParts(string argument,
+            out string flag,
+            out string name,
+            out string sep,
+            out string value)
         {
             if (argument == null)
                 throw new ArgumentNullException("argument");
@@ -402,9 +356,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
             flag = name = sep = value = null;
             var m = ValueOption.Match(argument);
             if (!m.Success)
-            {
                 return false;
-            }
             flag = m.Groups["flag"].Value;
             name = m.Groups["name"].Value;
             if (m.Groups["sep"].Success && m.Groups["value"].Success)
@@ -412,6 +364,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 sep = m.Groups["sep"].Value;
                 value = m.Groups["value"].Value;
             }
+
             return true;
         }
 
@@ -424,7 +377,11 @@ namespace Calamari.Common.Plumbing.Commands.Options
             }
 
             string f, n, s, v;
-            if (!GetOptionParts(argument, out f, out n, out s, out v))
+            if (!GetOptionParts(argument,
+                out f,
+                out n,
+                out s,
+                out v))
                 return false;
 
             var p = this.FirstOrDefault(x => x.Names.Any(y => string.Equals(y, n, StringComparison.OrdinalIgnoreCase)));
@@ -443,8 +400,10 @@ namespace Calamari.Common.Plumbing.Commands.Options
                         ParseValue(v, c);
                         break;
                 }
+
                 return true;
             }
+
             // no match; is it a bool option?
             if (ParseBool(argument, n, c))
                 return true;
@@ -456,38 +415,31 @@ namespace Calamari.Common.Plumbing.Commands.Options
             return false;
         }
 
-        public bool ShouldWaitForExit
-        {
-            get { return waitForExit; }
-        }
-
         void ParseValue(string option, OptionContext c)
         {
             if (option != null)
                 foreach (var o in c.Option.ValueSeparators != null
                     ? option.Split(c.Option.ValueSeparators, StringSplitOptions.None)
-                    : new[] {option})
-                {
+                    : new[] { option })
                     c.OptionValues.Add(o);
-                }
             if (c.OptionValues.Count == c.Option.MaxValueCount ||
                 c.Option.OptionValueType == OptionValueType.Optional)
                 c.Option.Invoke(c);
             else if (c.OptionValues.Count > c.Option.MaxValueCount)
-            {
                 throw new OptionException(string.Format(
-                    "Error: Found {0} option values when expecting {1}.",
-                    c.OptionValues.Count, c.Option.MaxValueCount),
+                        "Error: Found {0} option values when expecting {1}.",
+                        c.OptionValues.Count,
+                        c.Option.MaxValueCount),
                     c.OptionName);
-            }
         }
 
         bool ParseBool(string option, string n, OptionContext c)
         {
             Option p;
             string rn;
-            if (n.Length >= 1 && (n[n.Length - 1] == '+' || n[n.Length - 1] == '-') &&
-                Contains((rn = n.Substring(0, n.Length - 1))))
+            if (n.Length >= 1 &&
+                (n[n.Length - 1] == '+' || n[n.Length - 1] == '-') &&
+                Contains(rn = n.Substring(0, n.Length - 1)))
             {
                 p = this[rn];
                 var v = n[n.Length - 1] == '+' ? option : null;
@@ -497,6 +449,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 p.Invoke(c);
                 return true;
             }
+
             return false;
         }
 
@@ -515,6 +468,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                         return false;
                     throw new OptionException(string.Format("Cannot bundle unregistered option '{0}'.", opt), opt);
                 }
+
                 p = this[rn];
                 switch (p.OptionValueType)
                 {
@@ -534,6 +488,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                         throw new InvalidOperationException("Unknown OptionValueType: " + p.OptionValueType);
                 }
             }
+
             return true;
         }
 
@@ -545,8 +500,6 @@ namespace Calamari.Common.Plumbing.Commands.Options
             option.Invoke(c);
         }
 
-        const int OptionWidth = 29;
-
         public void WriteOptionDescriptions(TextWriter o)
         {
             foreach (var p in this)
@@ -556,7 +509,9 @@ namespace Calamari.Common.Plumbing.Commands.Options
                     continue;
 
                 if (written < OptionWidth)
+                {
                     o.Write(new string(' ', OptionWidth - written));
+                }
                 else
                 {
                     o.WriteLine();
@@ -606,31 +561,24 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 p.OptionValueType == OptionValueType.Required)
             {
                 if (p.OptionValueType == OptionValueType.Optional)
-                {
                     Write(o, ref written, "[");
-                }
                 Write(o, ref written, "=" + GetArgumentName(0, p.MaxValueCount, p.Description));
                 var sep = p.ValueSeparators != null && p.ValueSeparators.Length > 0
                     ? p.ValueSeparators[0]
                     : " ";
                 for (var c = 1; c < p.MaxValueCount; ++c)
-                {
                     Write(o, ref written, sep + GetArgumentName(c, p.MaxValueCount, p.Description));
-                }
                 if (p.OptionValueType == OptionValueType.Optional)
-                {
                     Write(o, ref written, "]");
-                }
             }
+
             return true;
         }
 
         static int GetNextOptionIndex(string[] names, int i)
         {
             while (i < names.Length && names[i] == "<>")
-            {
                 ++i;
-            }
             return i;
         }
 
@@ -646,9 +594,9 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 return maxIndex == 1 ? "VALUE" : "VALUE" + (index + 1);
             string[] nameStart;
             if (maxIndex == 1)
-                nameStart = new[] {"{0:", "{"};
+                nameStart = new[] { "{0:", "{" };
             else
-                nameStart = new[] {"{" + index + ":"};
+                nameStart = new[] { "{" + index + ":" };
             for (var i = 0; i < nameStart.Length; ++i)
             {
                 int start, j = 0;
@@ -656,6 +604,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 {
                     start = description.IndexOf(nameStart[i], j, StringComparison.Ordinal);
                 } while (start >= 0 && j != 0 && description[j++ - 1] == '{');
+
                 if (start == -1)
                     continue;
                 var end = description.IndexOf("}", start, StringComparison.Ordinal);
@@ -663,6 +612,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                     continue;
                 return description.Substring(start + nameStart[i].Length, end - start - nameStart[i].Length);
             }
+
             return maxIndex == 1 ? "VALUE" : "VALUE" + (index + 1);
         }
 
@@ -673,7 +623,6 @@ namespace Calamari.Common.Plumbing.Commands.Options
             var sb = new StringBuilder(description.Length);
             var start = -1;
             for (var i = 0; i < description.Length; ++i)
-            {
                 switch (description[i])
                 {
                     case '{':
@@ -683,12 +632,15 @@ namespace Calamari.Common.Plumbing.Commands.Options
                             start = -1;
                         }
                         else if (start < 0)
+                        {
                             start = i + 1;
+                        }
+
                         break;
                     case '}':
                         if (start < 0)
                         {
-                            if ((i + 1) == description.Length || description[i + 1] != '}')
+                            if (i + 1 == description.Length || description[i + 1] != '}')
                                 throw new InvalidOperationException("Invalid option description: " + description);
                             ++i;
                             sb.Append("}");
@@ -698,6 +650,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                             sb.Append(description.Substring(start, i - start));
                             start = -1;
                         }
+
                         break;
                     case ':':
                         if (start < 0)
@@ -709,7 +662,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                             sb.Append(description[i]);
                         break;
                 }
-            }
+
             return sb.ToString();
         }
 
@@ -721,6 +674,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 lines.Add(string.Empty);
                 return lines;
             }
+
             var length = 80 - OptionWidth - 2;
             int start = 0, end;
             do
@@ -730,23 +684,25 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 if (end < description.Length)
                 {
                     var c = description[end];
-                    if (c == '-' || (char.IsWhiteSpace(c) && c != '\n'))
+                    if (c == '-' || char.IsWhiteSpace(c) && c != '\n')
+                    {
                         ++end;
+                    }
                     else if (c != '\n')
                     {
                         cont = true;
                         --end;
                     }
                 }
+
                 lines.Add(description.Substring(start, end - start));
                 if (cont)
-                {
                     lines[lines.Count - 1] += "-";
-                }
                 start = end;
                 if (start < description.Length && description[start] == '\n')
                     ++start;
             } while (end < description.Length);
+
             return lines;
         }
 
@@ -755,7 +711,6 @@ namespace Calamari.Common.Plumbing.Commands.Options
             var end = Math.Min(start + length, description.Length);
             var sep = -1;
             for (var i = start; i < end; ++i)
-            {
                 switch (description[i])
                 {
                     case ' ':
@@ -770,10 +725,66 @@ namespace Calamari.Common.Plumbing.Commands.Options
                     case '\n':
                         return i;
                 }
-            }
+
             if (sep == -1 || end == description.Length)
                 return end;
             return sep;
+        }
+
+        sealed class ActionOption : Option
+        {
+            readonly Action<OptionValueCollection> action;
+
+            public ActionOption(string prototype, string description, int count, Action<OptionValueCollection> action)
+                : base(prototype, description, count)
+            {
+                if (action == null)
+                    throw new ArgumentNullException("action");
+                this.action = action;
+            }
+
+            protected override void OnParseComplete(OptionContext c)
+            {
+                action(c.OptionValues);
+            }
+        }
+
+        sealed class ActionOption<T> : Option
+        {
+            readonly Action<T> action;
+
+            public ActionOption(string prototype, string description, Action<T> action)
+                : base(prototype, description, 1)
+            {
+                if (action == null)
+                    throw new ArgumentNullException("action");
+                this.action = action;
+            }
+
+            protected override void OnParseComplete(OptionContext c)
+            {
+                action(Parse<T>(c.OptionValues[0], c));
+            }
+        }
+
+        sealed class ActionOption<TKey, TValue> : Option
+        {
+            readonly OptionAction<TKey, TValue> action;
+
+            public ActionOption(string prototype, string description, OptionAction<TKey, TValue> action)
+                : base(prototype, description, 2)
+            {
+                if (action == null)
+                    throw new ArgumentNullException("action");
+                this.action = action;
+            }
+
+            protected override void OnParseComplete(OptionContext c)
+            {
+                action(
+                    Parse<TKey>(c.OptionValues[0], c),
+                    Parse<TValue>(c.OptionValues[1], c));
+            }
         }
     }
 }

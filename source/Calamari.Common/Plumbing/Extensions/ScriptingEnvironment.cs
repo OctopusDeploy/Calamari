@@ -17,7 +17,7 @@ namespace Calamari.Common.Plumbing.Extensions
             return false;
 #endif
         }
-        
+
         public static bool IsNet45OrNewer()
         {
             // Class "ReflectionContext" exists from .NET 4.5 onwards.
@@ -36,11 +36,13 @@ namespace Calamari.Common.Plumbing.Extensions
             // http://stackoverflow.com/questions/8413922/programmatically-determining-mono-runtime-version
 
             var monoRuntime = Type.GetType("Mono.Runtime");
-            if (monoRuntime == null) throw new MonoVersionCanNotBeDeterminedException("It looks like the code is not running on Mono.");
+            if (monoRuntime == null)
+                throw new MonoVersionCanNotBeDeterminedException("It looks like the code is not running on Mono.");
 
             var dispalayNameMethod = monoRuntime.GetMethod("GetDisplayName", BindingFlags.NonPublic | BindingFlags.Static);
-            if (dispalayNameMethod == null) throw new MonoVersionCanNotBeDeterminedException("Mono.Runtime.GetDisplayName can not be found.");
-            
+            if (dispalayNameMethod == null)
+                throw new MonoVersionCanNotBeDeterminedException("Mono.Runtime.GetDisplayName can not be found.");
+
             var displayName = dispalayNameMethod.Invoke(null, null).ToString();
             var match = Regex.Match(displayName, @"^\d+\.\d+.\d+");
             if (match == null || !match.Success || string.IsNullOrEmpty(match.Value))
@@ -53,7 +55,7 @@ namespace Calamari.Common.Plumbing.Extensions
         {
             try
             {
-                foreach (var cmd in new[] {"powershell.exe", "pwsh.exe"})
+                foreach (var cmd in new[] { "powershell.exe", "pwsh.exe" })
                 {
                     var stdOut = new StringBuilder();
                     var stdError = new StringBuilder();
@@ -71,6 +73,7 @@ namespace Calamari.Common.Plumbing.Extensions
             {
                 //silently ignore it - we dont want to 
             }
+
             return Version.Parse("0.0.0");
         }
     }

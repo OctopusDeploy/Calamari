@@ -1,8 +1,9 @@
+using System;
+
 namespace Calamari.Common.Plumbing.Variables
 {
     public static class ActionVariables
     {
-        
         public const string Name = "Octopus.Action.Name";
         public const string AdditionalPaths = "Octopus.Action.AdditionalPaths";
 
@@ -15,6 +16,5 @@ namespace Calamari.Common.Plumbing.Variables
         {
             return string.Format("Octopus.Action[{0}].Output[{1}].{2}", actionName, machineName, variableName);
         }
-        
     }
 }

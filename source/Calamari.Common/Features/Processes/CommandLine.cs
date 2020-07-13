@@ -9,7 +9,7 @@ namespace Calamari.Common.Features.Processes
     {
         readonly string executable;
         readonly Func<string[], int> func;
-        List<Arg> args = new List<Arg>();
+        readonly List<Arg> args = new List<Arg>();
         string action;
         bool useDotnet;
 
@@ -25,7 +25,8 @@ namespace Calamari.Common.Features.Processes
 
         public CommandLine Action(string actionName)
         {
-            if (action != null) throw new InvalidOperationException("Action is already set");
+            if (action != null)
+                throw new InvalidOperationException("Action is already set");
             action = actionName ?? throw new ArgumentNullException(nameof(actionName));
             args.Insert(0, Arg.MakeRaw(actionName));
             return this;
@@ -36,7 +37,7 @@ namespace Calamari.Common.Features.Processes
             args.Add(Arg.MakePositional(argument));
             return this;
         }
-        
+
         public CommandLine Flag(string flagName)
         {
             args.Add(Arg.MakeFlag(flagName));
@@ -67,7 +68,8 @@ namespace Calamari.Common.Features.Processes
 
             var actualExe = executable;
 
-            if (useDotnet){
+            if (useDotnet)
+            {
                 argLine.Add(Arg.MakePositional(executable));
                 actualExe = "dotnet";
             }
@@ -76,7 +78,7 @@ namespace Calamari.Common.Features.Processes
 
             return new CommandLineInvocation(actualExe, argLine.Select(b => b.Build(true)).ToArray());
         }
-        
+
         public LibraryCallInvocation BuildLibraryCall()
         {
             return new LibraryCallInvocation(func, args.Select(b => b.Build(false)).ToArray());
@@ -89,51 +91,50 @@ namespace Calamari.Common.Features.Processes
 
         class Arg
         {
-            private string Name { get; set; }
-            private object Value { get; set; }
-            private bool Flag { get; set; }
-            private bool IsRaw { get; set; }
+            string Name { get; set; }
+            object Value { get; set; }
+            bool Flag { get; set; }
+            bool IsRaw { get; set; }
 
-            public static Arg MakeArg(string name , object value)
+            public static Arg MakeArg(string name, object value)
             {
-                return new Arg(){Name = name, Value = value};
+                return new Arg
+                    { Name = name, Value = value };
             }
 
             public static Arg MakePositional(object value)
             {
-                return new Arg() {Value = value, Flag = false };
+                return new Arg
+                    { Value = value, Flag = false };
             }
-            
+
             public static Arg MakeFlag(string flag)
             {
-                return new Arg() {Name = flag, Flag = true};
+                return new Arg
+                    { Name = flag, Flag = true };
             }
-            
+
             public static Arg MakeRaw(string value)
             {
-                return new Arg() {Name = value, IsRaw = true};
+                return new Arg
+                    { Name = value, IsRaw = true };
             }
 
             public string[] Raw()
             {
                 if (Flag || IsRaw || string.IsNullOrWhiteSpace(Name))
-                {
-                    return new []{ Build(false) };
-                }
+                    return new[] { Build(false) };
 
-                return new[] {$"-{Normalize(Name)}", GetValue(false)};
+                return new[] { $"-{Normalize(Name)}", GetValue(false) };
             }
-            
+
             public string Build(bool escapeArg)
             {
                 if (Flag)
-                {
                     return $"-{Normalize(Name)}";
-                } else if (IsRaw)
-                {
+                if (IsRaw)
                     return Normalize(Name);
-                }
-                
+
                 var sval = GetValue(escapeArg);
 
                 return string.IsNullOrWhiteSpace(Name) ? sval : $"-{Normalize(Name)} {sval}";
@@ -141,11 +142,12 @@ namespace Calamari.Common.Features.Processes
 
             static string Normalize(string text)
             {
-                if (text == null) throw new ArgumentNullException(nameof(text));
+                if (text == null)
+                    throw new ArgumentNullException(nameof(text));
                 return text.Trim();
             }
-            
-            private string GetValue(bool escapeArg)
+
+            string GetValue(bool escapeArg)
             {
                 var sval = "";
                 if (Value is IFormattable f)
@@ -159,7 +161,8 @@ namespace Calamari.Common.Features.Processes
 
             string Escape(string argValue, bool escapeArg)
             {
-                if (argValue == null) throw new ArgumentNullException("argValue");
+                if (argValue == null)
+                    throw new ArgumentNullException("argValue");
                 if (!escapeArg)
                     return argValue;
 
@@ -175,17 +178,11 @@ namespace Calamari.Common.Features.Processes
 
                     var cur = argValue[last];
                     if (cur == '\\' && preq)
-                    {
                         argValue = argValue.Insert(last, "\\");
-                    }
                     else if (cur == '"')
-                    {
                         preq = true;
-                    }
                     else
-                    {
                         preq = false;
-                    }
                     last -= 1;
                 }
 

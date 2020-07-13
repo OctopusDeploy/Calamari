@@ -123,17 +123,16 @@
 //      p.Parse (new string[]{"-a-"});  // sets v == null
 //
 
+using System;
+
 namespace Calamari.Common.Plumbing.Commands.Options
 {
     public class OptionContext
     {
-        readonly OptionValueCollection c;
-        readonly OptionSet set;
-
         public OptionContext(OptionSet set)
         {
-            this.set = set;
-            c = new OptionValueCollection(this);
+            this.OptionSet = set;
+            OptionValues = new OptionValueCollection(this);
         }
 
         public Option Option { get; set; }
@@ -142,14 +141,8 @@ namespace Calamari.Common.Plumbing.Commands.Options
 
         public int OptionIndex { get; set; }
 
-        public OptionSet OptionSet
-        {
-            get { return set; }
-        }
+        public OptionSet OptionSet { get; }
 
-        public OptionValueCollection OptionValues
-        {
-            get { return c; }
-        }
+        public OptionValueCollection OptionValues { get; }
     }
 }

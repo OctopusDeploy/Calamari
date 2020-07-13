@@ -7,10 +7,10 @@ namespace Calamari.Common.Plumbing
     {
         public static void NotNullOrWhiteSpace(string value, string message)
         {
-            if (String.IsNullOrWhiteSpace(value))
+            if (string.IsNullOrWhiteSpace(value))
                 throw new CommandException(message);
         }
-        
+
         public static void NotNull(object value, string message)
         {
             if (value == null)

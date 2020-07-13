@@ -22,7 +22,8 @@ namespace Calamari.Common.Features.Deployment.Journal
                 wasSuccessful,
                 DeployedPackage.GetDeployedPackages(deployment)
             )
-        { }
+        {
+        }
 
         public JournalEntry(XElement element)
             : this(
@@ -37,10 +38,18 @@ namespace Calamari.Common.Features.Deployment.Journal
                 ParseBool(element.Attribute("WasSuccessful")?.Value) ?? true,
                 DeployedPackage.FromJournalEntryElement(element)
             )
-        { }
+        {
+        }
 
-        internal JournalEntry(string id, string environmentId, string tenantId, string projectId, 
-            string retentionPolicySet, DateTime installedOn, string extractedTo, string customInstallationDirectory, bool wasSuccessful,
+        internal JournalEntry(string id,
+            string environmentId,
+            string tenantId,
+            string projectId,
+            string retentionPolicySet,
+            DateTime installedOn,
+            string extractedTo,
+            string customInstallationDirectory,
+            bool wasSuccessful,
             IEnumerable<DeployedPackage> packages)
         {
             Id = id;
@@ -55,13 +64,26 @@ namespace Calamari.Common.Features.Deployment.Journal
             Packages = packages?.ToList() ?? new List<DeployedPackage>();
         }
 
-        internal JournalEntry(string id, string environmentId, string tenantId, string projectId,
-            string retentionPolicySet, DateTime installedOn, string extractedTo, string customInstallationDirectory,
+        internal JournalEntry(string id,
+            string environmentId,
+            string tenantId,
+            string projectId,
+            string retentionPolicySet,
+            DateTime installedOn,
+            string extractedTo,
+            string customInstallationDirectory,
             bool wasSuccessful,
             DeployedPackage package)
-            : this(id, environmentId, tenantId, projectId, retentionPolicySet, installedOn, extractedTo,
-                customInstallationDirectory, wasSuccessful,
-                package != null ? (IEnumerable<DeployedPackage>) new[] {package} : new List<DeployedPackage>())
+            : this(id,
+                environmentId,
+                tenantId,
+                projectId,
+                retentionPolicySet,
+                installedOn,
+                extractedTo,
+                customInstallationDirectory,
+                wasSuccessful,
+                package != null ? (IEnumerable<DeployedPackage>)new[] { package } : new List<DeployedPackage>())
         {
         }
 
@@ -74,11 +96,11 @@ namespace Calamari.Common.Features.Deployment.Journal
         public string ExtractedTo { get; }
         public string CustomInstallationDirectory { get; }
         public bool WasSuccessful { get; }
-        
+
         public ICollection<DeployedPackage> Packages { get; }
 
         // Short-cut for deployments with a single package
-        public DeployedPackage Package => Packages.FirstOrDefault(); 
+        public DeployedPackage Package => Packages.FirstOrDefault();
 
         public XElement ToXmlElement()
         {
@@ -92,21 +114,35 @@ namespace Calamari.Common.Features.Deployment.Journal
                 new XAttribute("ExtractedTo", ExtractedTo ?? string.Empty),
                 new XAttribute("CustomInstallationDirectory", CustomInstallationDirectory ?? string.Empty),
                 new XAttribute("WasSuccessful", WasSuccessful.ToString()),
-                Packages.Select(pkg => pkg.ToXmlElement()) 
-                );
+                Packages.Select(pkg => pkg.ToXmlElement())
+            );
         }
 
         static DateTime ParseDate(string s)
         {
             DateTime value;
             if (s != null &&
-                (DateTime.TryParseExact(s, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out value)
-                || DateTime.TryParseExact(s, "yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentUICulture, DateTimeStyles.AssumeUniversal, out value)
-                || DateTime.TryParseExact(s, "yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture, DateTimeStyles.AssumeUniversal, out value)
-                || DateTime.TryParseExact(s, "yyyy-MM-dd HH.mm.ss", CultureInfo.CurrentUICulture, DateTimeStyles.AssumeUniversal, out value)))
-            {
+                (DateTime.TryParseExact(s,
+                        "yyyy-MM-dd HH:mm:ss",
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.AssumeUniversal,
+                        out value) ||
+                    DateTime.TryParseExact(s,
+                        "yyyy-MM-dd HH:mm:ss",
+                        CultureInfo.CurrentUICulture,
+                        DateTimeStyles.AssumeUniversal,
+                        out value) ||
+                    DateTime.TryParseExact(s,
+                        "yyyy-MM-dd HH:mm:ss",
+                        CultureInfo.CurrentCulture,
+                        DateTimeStyles.AssumeUniversal,
+                        out value) ||
+                    DateTime.TryParseExact(s,
+                        "yyyy-MM-dd HH.mm.ss",
+                        CultureInfo.CurrentUICulture,
+                        DateTimeStyles.AssumeUniversal,
+                        out value)))
                 return value;
-            }
 
             throw new Exception(string.Format("Could not parse date from '{0}'", s));
         }
@@ -114,9 +150,7 @@ namespace Calamari.Common.Features.Deployment.Journal
         static bool? ParseBool(string s)
         {
             if (!string.IsNullOrWhiteSpace(s) && bool.TryParse(s, out var b))
-            {
                 return b;
-            }
 
             return null;
         }

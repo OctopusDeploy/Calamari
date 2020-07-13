@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace Calamari.Common.Plumbing.FileSystem
     public class SubstituteInFiles : ISubstituteInFiles
     {
         readonly ILog log;
-        private readonly ICalamariFileSystem fileSystem;
+        readonly ICalamariFileSystem fileSystem;
         readonly IFileSubstituter substituter;
         readonly IVariables variables;
 
@@ -28,7 +29,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             var substituteInFilesEnabled = variables.GetFlag(PackageVariables.SubstituteInFilesEnabled);
             if (!substituteInFilesEnabled)
                 return;
-            
+
             var filesToTarget = variables.GetPaths(PackageVariables.SubstituteInFilesTargets);
             Substitute(deployment, filesToTarget);
         }
@@ -42,17 +43,13 @@ namespace Calamari.Common.Plumbing.FileSystem
                 if (!matchingFiles.Any())
                 {
                     if (deployment.Variables.GetFlag(PackageVariables.EnableNoMatchWarning, true))
-                    {
                         log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
-                    }
 
                     continue;
                 }
 
                 foreach (var file in matchingFiles)
-                {
                     substituter.PerformSubstitution(file, deployment.Variables);
-                }
             }
         }
 

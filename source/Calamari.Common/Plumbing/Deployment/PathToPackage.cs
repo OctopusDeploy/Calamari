@@ -1,3 +1,5 @@
+using System;
+
 namespace Calamari.Common.Plumbing.Deployment
 {
     public class PathToPackage
@@ -10,6 +12,8 @@ namespace Calamari.Common.Plumbing.Deployment
         }
 
         public static implicit operator string(PathToPackage pathToPackage)
-            => pathToPackage?.path;
+        {
+            return pathToPackage?.path;
+        }
     }
 }
