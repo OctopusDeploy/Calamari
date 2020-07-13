@@ -7,7 +7,7 @@ namespace Calamari.Common.Features.StructuredVariables
 {
     public class StructuredConfigVariableReplacer : IStructuredConfigVariableReplacer
     {
-        public static readonly string FeatureToggleVariableName = "Octopus.Action.Package.StructuredConfigurationFeatureFlag";
+        public static readonly string FeatureToggleVariableName = "Octopus.Action.StructuredConfigurationFeatureFlag";
 
         readonly IFileFormatVariableReplacer[] replacers;
 
