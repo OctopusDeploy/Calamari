@@ -55,6 +55,12 @@ namespace Calamari.Common.Features.StructuredVariables
                                 replacing = mappingStart;
                                 outputEvent = null;
                             }
+                            else if (node is YamlNode<SequenceStart> sequenceStart
+                                     && variablesByKey.ContainsKey(sequenceStart.Path))
+                            {
+                                replacing = sequenceStart;
+                                outputEvent = null;
+                            }
                             else
                             {
                                 outputEvent = node.Event;
@@ -73,6 +79,18 @@ namespace Calamari.Common.Features.StructuredVariables
                                     mappingReplacementValue, ScalarStyle.DoubleQuoted, true, true,
                                     mappingStart.Event.Start,
                                     mappingStart.Event.End);
+                                replacing = null;
+                            }
+                            else if (replacing.Path == node.Path
+                                     && replacing is YamlNode<SequenceStart> sequenceStart
+                                     && node is YamlNode<SequenceEnd> sequenceEnd
+                                     && variablesByKey.TryGetValue(sequenceEnd.Path,
+                                         out string sequenceReplacementValue))
+                            {
+                                outputEvent = new Scalar(sequenceStart.Event.Anchor, sequenceStart.Event.Tag,
+                                    sequenceReplacementValue, ScalarStyle.DoubleQuoted, true, true,
+                                    sequenceStart.Event.Start,
+                                    sequenceStart.Event.End);
                                 replacing = null;
                             }
                             else
