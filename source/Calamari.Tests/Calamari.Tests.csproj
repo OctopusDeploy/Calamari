@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>Calamari.Tests</AssemblyName>
@@ -100,6 +100,9 @@
     <None Include="Fixtures\Deployment\Packages\Acme.Web.Tests\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.JsonFileOutput\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Package\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -115,10 +118,10 @@
     <None Include="Fixtures\Integration\Packages\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\JsonVariables\Samples\**">
+    <None Include="Fixtures\StructuredVariables\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\JsonVariables\Approved\*.approved.*">
+    <None Include="Fixtures\StructuredVariables\Approved\*.approved.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Nginx\Approved\*.approved.*">

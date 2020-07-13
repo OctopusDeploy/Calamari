@@ -1,24 +1,16 @@
-﻿using System;
-using System.IO;
-using Assent;
-using Calamari.Common.Plumbing.FileSystem;
+﻿using Assent;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.JsonVariables;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.JsonVariables
+namespace Calamari.Tests.Fixtures.StructuredVariables
 {
     [TestFixture]
-    public class JsonConfigurationVariableReplacerFixture : CalamariFixture
+    public class JsonFormatVariableReplacerFixture : VariableReplacerFixture
     {
-        JsonConfigurationVariableReplacer configurationVariableReplacer;
-
-        [SetUp]
-        public void SetUp()
+        public JsonFormatVariableReplacerFixture() : base(new JsonFormatVariableReplacer())
         {
-            configurationVariableReplacer = new JsonConfigurationVariableReplacer();
         }
 
         [Test]
@@ -163,7 +155,6 @@ namespace Calamari.Tests.Fixtures.JsonVariables
             this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
-
         [Test]
         public void ShouldReplaceDecimal()
         {
@@ -185,19 +176,6 @@ namespace Calamari.Tests.Fixtures.JsonVariables
 
             var replaced = Replace(variables, existingFile: "appsettings.array.json");
             this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
-        }
-
-        string Replace(IVariables variables, string existingFile = null)
-        {
-            var temp = Path.GetTempFileName();
-            if (existingFile != null)
-                File.Copy(GetFixtureResouce("Samples", existingFile), temp, true);
-
-            using (new TemporaryFile(temp))
-            {
-                configurationVariableReplacer.ModifyJsonFile(temp, variables);
-                return File.ReadAllText(temp);
-            }
         }
     }
 }

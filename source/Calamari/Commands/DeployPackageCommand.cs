@@ -8,6 +8,7 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment;
@@ -21,7 +22,6 @@ using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.Iis;
-using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Nginx;
 
 namespace Calamari.Commands
@@ -73,7 +73,9 @@ namespace Calamari.Commands
             var featureClasses = new List<IFeature>();
 
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var generator = new JsonConfigurationVariableReplacer();
+            var generator = new StructuredConfigVariableReplacer(
+                new JsonFormatVariableReplacer(), 
+                new YamlFormatVariableReplacer());
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var embeddedResources = new AssemblyEmbeddedResources();

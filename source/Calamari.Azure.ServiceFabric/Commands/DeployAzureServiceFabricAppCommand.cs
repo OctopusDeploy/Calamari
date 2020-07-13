@@ -8,6 +8,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment;
@@ -20,11 +21,6 @@ using Calamari.Integration.Certificates;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.JsonVariables;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 
 namespace Calamari.Azure.ServiceFabric.Commands
 {
@@ -82,7 +78,9 @@ namespace Calamari.Azure.ServiceFabric.Commands
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var jsonReplacer = new JsonConfigurationVariableReplacer();
+            var jsonReplacer = new StructuredConfigVariableReplacer(
+                new JsonFormatVariableReplacer(), 
+                new YamlFormatVariableReplacer());
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
 

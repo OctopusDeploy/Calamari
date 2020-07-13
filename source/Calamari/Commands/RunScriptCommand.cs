@@ -11,6 +11,7 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -18,7 +19,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.ConfigurationTransforms;
 using Calamari.Integration.ConfigurationVariables;
-using Calamari.Integration.JsonVariables;
 
 namespace Calamari.Commands
 {
@@ -65,7 +65,9 @@ namespace Calamari.Commands
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var jsonVariableReplacer = new JsonConfigurationVariableReplacer();
+            var jsonVariableReplacer = new StructuredConfigVariableReplacer(
+                new JsonFormatVariableReplacer(), 
+                new YamlFormatVariableReplacer());
 
             ValidateArguments();
             WriteVariableScriptToFile();

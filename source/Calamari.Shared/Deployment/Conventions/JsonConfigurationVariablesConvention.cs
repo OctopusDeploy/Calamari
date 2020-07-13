@@ -2,22 +2,21 @@
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.JsonVariables;
 
 namespace Calamari.Deployment.Conventions
 {
     public class JsonConfigurationVariablesConvention : IInstallConvention
     {
-        readonly IJsonConfigurationVariableReplacer jsonConfigurationVariableReplacer;
+        readonly IStructuredConfigVariableReplacer structuredConfigVariableReplacer;
         readonly ICalamariFileSystem fileSystem;
 
-        public JsonConfigurationVariablesConvention(IJsonConfigurationVariableReplacer jsonConfigurationVariableReplacer, ICalamariFileSystem fileSystem)
+        public JsonConfigurationVariablesConvention(IStructuredConfigVariableReplacer structuredConfigVariableReplacer, ICalamariFileSystem fileSystem)
         {
-            this.jsonConfigurationVariableReplacer = jsonConfigurationVariableReplacer;
+            this.structuredConfigVariableReplacer = structuredConfigVariableReplacer;
             this.fileSystem = fileSystem;
         }
 
@@ -45,7 +44,7 @@ namespace Calamari.Deployment.Conventions
                 foreach (var file in matchingFiles)
                 {
                     Log.Info($"Performing JSON variable replacement on '{file}'");
-                    jsonConfigurationVariableReplacer.ModifyJsonFile(file, deployment.Variables);
+                    structuredConfigVariableReplacer.ModifyFile(file, deployment.Variables);
                 }
             }
         }

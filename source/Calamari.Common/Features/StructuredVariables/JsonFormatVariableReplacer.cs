@@ -6,21 +6,36 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Octostache;
 
-namespace Calamari.Integration.JsonVariables
+namespace Calamari.Common.Features.StructuredVariables
 {
-    public class JsonConfigurationVariableReplacer : IJsonConfigurationVariableReplacer
+    public interface IJsonFormatVariableReplacer : IFileFormatVariableReplacer
     {
-        public void ModifyJsonFile(string jsonFilePath, IVariables variables)
+    }
+
+    public class JsonFormatVariableReplacer : IJsonFormatVariableReplacer
+    {
+        public string FileFormatName => "JSON";
+        
+        public bool TryModifyFile(string filePath, IVariables variables)
         {
-            var root = LoadJson(jsonFilePath);
+            JToken root;
+            try
+            {
+                root = LoadJson(filePath);
+            }
+            catch (JsonReaderException)
+            {
+                // File was not valid JSON.
+                return false;
+            }
 
             var map = new JsonUpdateMap();
             map.Load(root);
             map.Update(variables);
 
-            SaveJson(jsonFilePath, root);
+            SaveJson(filePath, root);
+            return true;
         }
 
         static JToken LoadJson(string jsonFilePath)

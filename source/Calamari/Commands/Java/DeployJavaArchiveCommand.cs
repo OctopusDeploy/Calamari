@@ -9,6 +9,7 @@ using Calamari.Common.Features.Packages.Java;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment;
@@ -20,7 +21,6 @@ using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Features;
 using Calamari.Deployment.Features.Java;
 using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.JsonVariables;
 
 namespace Calamari.Commands.Java
 {
@@ -72,7 +72,9 @@ namespace Calamari.Commands.Java
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
 
-            var jsonReplacer = new JsonConfigurationVariableReplacer();
+            var jsonReplacer = new StructuredConfigVariableReplacer(
+                new JsonFormatVariableReplacer(), 
+                new YamlFormatVariableReplacer());
             var jarTools = new JarTool(commandLineRunner, log, variables);
             var packageExtractor = new JarPackageExtractor(jarTools);
             var embeddedResources = new AssemblyEmbeddedResources();

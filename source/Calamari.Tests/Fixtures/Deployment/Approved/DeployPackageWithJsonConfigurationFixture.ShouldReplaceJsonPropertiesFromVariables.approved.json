@@ -1,0 +1,29 @@
+﻿{
+  "departments": [
+    {
+      "name": "Sales",
+      "employees": [
+        {
+          "name": "Jane",
+          "age": 43
+        },
+        {
+          "name": "Billy",
+          "age": 40
+        }
+      ],
+      "snacks": [
+        {
+          "name": "lollies",
+          "amount": 3
+        },
+        {
+          "name": "soda",
+          "amount": 24
+        }
+      ]
+    }
+  ],
+  "phone": "0123 456 789",
+  "octopus": false
+}
