@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
+﻿using Calamari.Common.Plumbing.Logging;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace Calamari.AzureWebApp
 {

@@ -3,6 +3,10 @@ using Calamari.Aws.Deployment.CloudFormation;
 using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
+using Calamari.Common;
+using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Aws
 {

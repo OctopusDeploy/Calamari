@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
-using Calamari.Integration.ServiceMessages;
+using Calamari.Common.Plumbing.ServiceMessages;
 
 namespace Calamari.Tests.Shared.LogParser
 {

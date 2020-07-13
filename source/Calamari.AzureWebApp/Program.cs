@@ -1,4 +1,7 @@
-﻿namespace Calamari.AzureWebApp
+﻿using Calamari.Common;
+using Calamari.Common.Plumbing.Logging;
+
+namespace Calamari.AzureWebApp
 {
     public class Program : CalamariFlavourProgram
     {

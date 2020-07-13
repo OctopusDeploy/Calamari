@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Calamari.Util;
+using Calamari.Common.Plumbing.Extensions;
 using Octostache;
 
 namespace Calamari.Tests.Shared

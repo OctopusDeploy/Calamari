@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Calamari;
+using Calamari.Common;
 using Calamari.Tests.Shared;
 using Newtonsoft.Json;
 using Octopus.Data.Model;

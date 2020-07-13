@@ -2,11 +2,11 @@
 using System.Threading.Tasks;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Substitutions;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Shared.Helpers;
-using Calamari.Variables;
+using Calamari.Common.Plumbing.Variables;
 #if AWS
 using System;
 using System.Collections.Generic;
@@ -17,7 +17,6 @@ using Amazon.Runtime;
 using Amazon.S3;
 using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Serialization;
-using Calamari.Integration.FileSystem;
 using FluentAssertions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;

@@ -1,4 +1,6 @@
-﻿namespace Calamari.AzureWebApp
+﻿using Calamari.Common.Plumbing.Variables;
+
+namespace Calamari.AzureWebApp
 {
     class AzureServicePrincipalAccount
     {

@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Linq;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.WebSites;
 
 namespace Calamari.AzureWebApp

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Calamari.Aws.Serialization;
+using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -9,7 +10,6 @@ namespace Calamari.Aws.Integration.S3
     public class VariableS3TargetOptionsProvider : IProvideS3TargetOptions
     {
         readonly IVariables variables;
-
 
         public VariableS3TargetOptionsProvider(IVariables variables)
         {

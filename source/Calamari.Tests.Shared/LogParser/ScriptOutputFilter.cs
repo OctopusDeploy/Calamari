@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Calamari.Integration.ServiceMessages;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Octopus.Diagnostics;
 
 namespace Calamari.Tests.Shared.LogParser

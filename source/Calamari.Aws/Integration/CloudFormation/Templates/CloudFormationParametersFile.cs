@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Amazon.CloudFormation.Model;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities;
 using Calamari.Common.Util;

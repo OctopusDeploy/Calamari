@@ -13,12 +13,15 @@ using Calamari.Aws.Deployment.S3;
 using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Util;
-using Calamari.Commands.Support;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
-using Calamari.Util;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Octopus.CoreUtilities;
 
 namespace Calamari.Aws

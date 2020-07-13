@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Calamari.Integration.ServiceMessages;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Tests.Shared.LogParser;
 
 namespace Calamari.Tests.Shared
