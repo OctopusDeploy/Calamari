@@ -1,4 +1,4 @@
-﻿namespace Calamari.Integration.ServiceMessages
+﻿namespace Calamari.Common.Plumbing.ServiceMessages
 {
     public class ServiceMessageNames
     {

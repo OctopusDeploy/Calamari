@@ -1,4 +1,8 @@
-﻿using Calamari.Common.Features.Scripting;
+﻿using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;

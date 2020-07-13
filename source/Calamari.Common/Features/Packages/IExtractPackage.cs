@@ -1,6 +1,6 @@
-using Calamari.Integration.Packages;
+using Calamari.Common.Plumbing.Deployment;
 
-namespace Calamari.Deployment.Conventions
+namespace Calamari.Common.Features.Packages
 {
     public interface IExtractPackage
     {

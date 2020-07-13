@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Calamari.Integration.Packages
+namespace Calamari.Common.Features.Packages
 {
 
     /// <summary>

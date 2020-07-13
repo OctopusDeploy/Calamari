@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Features.Packages;
 using Calamari.Integration.Packages;
 using NUnit.Framework;
 

@@ -1,12 +1,10 @@
 using System;
-using System.IO;
-using Calamari.Commands.Support;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
-using Calamari.Integration.Processes;
-using Octostache;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Common.Plumbing.FileSystem
 {
     public class FreeSpaceChecker : IFreeSpaceChecker
     {

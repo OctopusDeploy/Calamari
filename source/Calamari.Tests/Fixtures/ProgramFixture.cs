@@ -1,7 +1,7 @@
 using System;
 using System.Net;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Deployment;
-using Calamari.Util.Environments;
 using FluentAssertions;
 using NUnit.Framework;
 

@@ -3,12 +3,16 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Variables;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 

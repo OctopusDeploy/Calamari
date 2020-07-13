@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Calamari.Common.Variables;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Nginx;
-using Calamari.Integration.Processes;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Octostache;
 
 namespace Calamari.Deployment.Features
 {

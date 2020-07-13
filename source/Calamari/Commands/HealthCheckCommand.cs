@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using Calamari.Common.Commands;
 using Calamari.Commands.Support;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.HealthChecks;
-using Calamari.Integration.Processes;
 
 namespace Calamari.Commands
 {

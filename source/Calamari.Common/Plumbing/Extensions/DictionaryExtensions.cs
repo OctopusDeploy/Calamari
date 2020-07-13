@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Calamari.Extensions
+namespace Calamari.Common.Plumbing.Extensions
 {
     public static class DictionaryExtensions
     {

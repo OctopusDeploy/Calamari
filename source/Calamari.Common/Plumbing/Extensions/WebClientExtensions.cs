@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Net;
-using System.Text;
 using System.Threading;
 
-namespace Calamari.Extensions
+namespace Calamari.Common.Plumbing.Extensions
 {
     public static class WebClientExtensions
     {

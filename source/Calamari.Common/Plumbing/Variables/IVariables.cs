@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Calamari
+namespace Calamari.Common.Plumbing.Variables
 {
     public interface IVariables : IEnumerable<KeyValuePair<string, string>>
     {

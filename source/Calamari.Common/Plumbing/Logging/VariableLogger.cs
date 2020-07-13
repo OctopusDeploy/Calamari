@@ -1,10 +1,9 @@
 using System;
 using System.Linq;
 using System.Text;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Variables
+namespace Calamari.Common.Plumbing.Logging
 {
     public class VariableLogger
     {

@@ -1,9 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Common.Plumbing.FileSystem
 {
     public interface IFile
     {

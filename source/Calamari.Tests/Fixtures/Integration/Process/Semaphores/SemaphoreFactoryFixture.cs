@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.Processes.Semaphores;
+﻿using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Plumbing;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 

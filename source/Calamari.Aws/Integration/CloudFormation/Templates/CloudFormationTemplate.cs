@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Amazon.CloudFormation.Model;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
 using Calamari.Integration.FileSystem;
 using Newtonsoft.Json;

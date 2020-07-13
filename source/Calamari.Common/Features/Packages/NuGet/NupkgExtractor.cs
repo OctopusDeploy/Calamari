@@ -5,12 +5,12 @@
 using System;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
-using SharpCompress.Readers;
 
-namespace Calamari.Integration.Packages.NuGet
+namespace Calamari.Common.Features.Packages.NuGet
 {
     public class NupkgExtractor : IPackageExtractor
     {

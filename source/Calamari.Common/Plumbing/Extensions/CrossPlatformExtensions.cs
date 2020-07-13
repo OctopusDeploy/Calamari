@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 
-namespace Calamari.Util
+namespace Calamari.Common.Plumbing.Extensions
 {
     public static class CrossPlatform
     {

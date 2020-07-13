@@ -1,4 +1,4 @@
-﻿namespace Calamari.Integration.Scripting
+﻿namespace Calamari.Common.Features.Scripts
 {
     public enum ScriptSyntax
     {

@@ -1,9 +1,11 @@
 ﻿using System.Linq;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Substitutions;
-using Calamari.Variables;
 #if AWS
 using System;
 using System.Collections.Generic;

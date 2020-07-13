@@ -4,7 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Calamari.Util
+namespace Calamari.Common.Plumbing.Extensions
 {
     public class AesEncryption
     {

@@ -1,6 +1,6 @@
-﻿using Octostache;
+﻿using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Integration.Substitutions
+namespace Calamari.Common.Features.Substitutions
 {
     public interface IFileSubstituter
     {

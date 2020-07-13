@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
-using Calamari.Common.Variables;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.PowerShell

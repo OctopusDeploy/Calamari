@@ -1,5 +1,6 @@
 ﻿using System;
 using Calamari.Azure.CloudServices.Integration;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Octostache;
 

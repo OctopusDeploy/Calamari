@@ -2,9 +2,11 @@
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
-using Calamari.Util;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.Integration.Processes.Semaphores
+namespace Calamari.Common.Features.Processes.Semaphores
 {
     public class SystemSemaphoreManager : ISemaphoreFactory
     {

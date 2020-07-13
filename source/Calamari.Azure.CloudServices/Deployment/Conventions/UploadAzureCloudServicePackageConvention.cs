@@ -1,6 +1,10 @@
 ﻿using System.IO;
 using Calamari.Azure.CloudServices.Integration;
-using Calamari.Common.Variables;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;

@@ -1,4 +1,8 @@
 ﻿using System.IO;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
@@ -6,7 +10,6 @@ using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NSubstitute;
 using NUnit.Framework;
 

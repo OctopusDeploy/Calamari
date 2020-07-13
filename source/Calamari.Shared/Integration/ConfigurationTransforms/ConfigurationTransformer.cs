@@ -2,6 +2,9 @@
 using System.Linq;
 using System.Xml;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 #if USE_OCTOPUS_XMLT

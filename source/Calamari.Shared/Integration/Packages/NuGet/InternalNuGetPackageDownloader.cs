@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Net;
 using System.Threading;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Retry;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
-using Calamari.Integration.Retry;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet

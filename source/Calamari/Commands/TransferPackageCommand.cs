@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
-using Calamari.Extensions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
-using Calamari.Variables;
 
 namespace Calamari.Commands
 {

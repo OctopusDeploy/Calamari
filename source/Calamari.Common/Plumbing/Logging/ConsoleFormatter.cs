@@ -1,10 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using Calamari.Util;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
 using Octostache.Templates;
 
-namespace Calamari.Commands.Support
+namespace Calamari.Common.Plumbing.Logging
 {
     public class ConsoleFormatter
     {

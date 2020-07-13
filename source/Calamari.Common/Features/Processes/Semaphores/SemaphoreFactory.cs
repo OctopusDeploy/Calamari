@@ -1,4 +1,6 @@
-namespace Calamari.Integration.Processes.Semaphores
+using Calamari.Common.Plumbing;
+
+namespace Calamari.Common.Features.Processes.Semaphores
 {
     public static class SemaphoreFactory
     {

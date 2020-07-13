@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Calamari
+namespace Calamari.Common.Plumbing
 {
     public static class CalamariEnvironment
     {

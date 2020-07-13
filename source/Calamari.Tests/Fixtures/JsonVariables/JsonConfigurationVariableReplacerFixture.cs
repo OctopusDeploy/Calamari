@@ -1,10 +1,11 @@
 ﻿using System;
 using System.IO;
 using Assent;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.JsonVariables;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.JsonVariables

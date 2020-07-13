@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
 using Octostache.Templates;
 

@@ -127,7 +127,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Calamari.Commands.Support
+namespace Calamari.Common.Plumbing.Commands.Options
 {
     public class OptionValueCollection : IList, IList<string>
     {

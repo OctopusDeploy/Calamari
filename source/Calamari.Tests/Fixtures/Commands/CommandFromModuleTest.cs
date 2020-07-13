@@ -3,8 +3,9 @@ using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using System;
 using System.IO;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
-using Calamari.Variables;
 
 namespace Calamari.Tests.Fixtures.Commands
 {

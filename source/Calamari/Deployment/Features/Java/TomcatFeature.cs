@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using Calamari.Common.Variables;
-using Calamari.Integration.Processes;
+﻿using System.Collections.Generic;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Deployment.Features.Java
 {

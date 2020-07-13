@@ -7,13 +7,18 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using Calamari.Commands.Support;
-using Calamari.Extensions;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download.Helm;
 using Calamari.Util;
 using NuGet;
 using Octopus.Versioning;
 using HttpClient = System.Net.Http.HttpClient;
+using PackageName = Calamari.Common.Features.Packages.PackageName;
 #if SUPPORTS_POLLY
 using Polly;
 #endif

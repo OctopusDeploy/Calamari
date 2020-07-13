@@ -1,4 +1,6 @@
-namespace Calamari
+using Calamari.Common.Plumbing.Variables;
+
+namespace Calamari.Common.Plumbing.Logging
 {
     public interface ILog
     {

@@ -1,3 +1,5 @@
+using Calamari.Common.Features.Processes;
+
 namespace Calamari.Integration.Processes
 {
     public class OctoDiffLibraryCallRunner

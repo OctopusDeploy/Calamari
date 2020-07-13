@@ -1,3 +1,4 @@
+using Calamari.Common.Plumbing.Variables;
 using Octostache;
 
 namespace Calamari.Integration.ConfigurationVariables

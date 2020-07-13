@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Linq;
-using Calamari.Common.Variables;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes.Semaphores;
 
 namespace Calamari.Deployment.Journal
 {

@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Processes;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Variables;
 
 namespace Calamari.Tests.Helpers
 {

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;

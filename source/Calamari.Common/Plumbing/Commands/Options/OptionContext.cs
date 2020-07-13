@@ -123,7 +123,7 @@
 //      p.Parse (new string[]{"-a-"});  // sets v == null
 //
 
-namespace Calamari.Commands.Support
+namespace Calamari.Common.Plumbing.Commands.Options
 {
     public class OptionContext
     {

@@ -2,10 +2,15 @@
 using System.IO;
 using System.Linq;
 using System.Net;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Integration.Processes;
 using Octopus.Versioning;
+using PackageName = Calamari.Common.Features.Packages.PackageName;
 #if USE_NUGET_V2_LIBS
 using NuGet;
 #else

@@ -2,10 +2,11 @@ using System.IO;
 using System.Linq;
 using Calamari.Commands;
 using Calamari.Commands.Support;
-using Calamari.Integration.ServiceMessages;
 using Calamari.Util;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
 
 namespace Calamari.Integration.Processes
 {

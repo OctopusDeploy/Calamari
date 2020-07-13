@@ -1,4 +1,5 @@
-﻿using Octostache;
+﻿using Calamari.Common.Plumbing.Variables;
+using Octostache;
 
 namespace Calamari.Integration.JsonVariables
 {

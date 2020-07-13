@@ -1,10 +1,9 @@
-using Calamari.Commands.Support;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
-using Calamari.Util;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Extensions
+namespace Calamari.Common.Plumbing.Extensions
 {
     public static class VariableExtensions
     {

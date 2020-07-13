@@ -2,7 +2,7 @@ using System;
 using System.Net.Http.Headers;
 using System.Text;
 
-namespace Calamari.Extensions
+namespace Calamari.Common.Plumbing.Extensions
 {
     public static class HttpClientExtensions
     {

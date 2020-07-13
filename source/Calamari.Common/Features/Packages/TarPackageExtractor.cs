@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 using SharpCompress.Readers.Tar;
@@ -7,7 +8,7 @@ using SharpCompress.Readers.Tar;
 using Polly;
 #endif
 
-namespace Calamari.Integration.Packages
+namespace Calamari.Common.Features.Packages
 {
     public class TarPackageExtractor : IPackageExtractor
     {

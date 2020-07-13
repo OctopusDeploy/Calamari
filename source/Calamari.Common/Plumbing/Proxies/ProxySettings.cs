@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net;
 using Octopus.CoreUtilities;
 
-namespace Calamari.Integration.Proxies
+namespace Calamari.Common.Plumbing.Proxies
 {
     public interface IProxySettings
     {

@@ -1,27 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.IO;
 using System.Linq;
 using Calamari.Commands;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.Variables;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
-using Calamari.Integration.Certificates;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.JsonVariables;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Integration.Substitutions;
 using Calamari.Kubernetes.Conventions;
-using Octostache;
 
 namespace Calamari.Kubernetes.Commands
 {

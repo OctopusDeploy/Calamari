@@ -1,4 +1,6 @@
-﻿using Calamari.Common.Util;
+﻿using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Util;
 using Calamari.Integration.FileSystem;
 using Octopus.CoreUtilities.Extensions;
 

@@ -1,5 +1,6 @@
 using Calamari.CloudAccounts;
-using Calamari.Variables;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;

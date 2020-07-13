@@ -1,13 +1,16 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 

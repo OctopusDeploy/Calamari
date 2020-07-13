@@ -1,9 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Commands.Options;
 
-namespace Calamari
+namespace Calamari.Common.Plumbing.Commands
 {
     public class CommonOptions
     {

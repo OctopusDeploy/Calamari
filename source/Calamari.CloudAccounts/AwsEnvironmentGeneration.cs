@@ -6,6 +6,8 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 
 namespace Calamari.CloudAccounts

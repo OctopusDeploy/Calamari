@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace Calamari.Integration.Processes
+namespace Calamari.Common.Features.Processes
 {
     public class CommandLineException : Exception
     {

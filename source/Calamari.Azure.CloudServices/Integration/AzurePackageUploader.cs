@@ -4,6 +4,8 @@ using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
 using Calamari.Util;
 using Microsoft.Azure;

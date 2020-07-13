@@ -10,6 +10,8 @@ using Calamari.Azure.Accounts.Integration;
 using Calamari.Azure.Accounts.Security;
 using Calamari.Azure.WebApps.Util;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;

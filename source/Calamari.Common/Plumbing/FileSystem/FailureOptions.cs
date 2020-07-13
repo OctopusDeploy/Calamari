@@ -1,5 +1,5 @@
 
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Common.Plumbing.FileSystem
 {
     public enum FailureOptions
     {

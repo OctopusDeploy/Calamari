@@ -1,11 +1,9 @@
 ﻿using System.Linq;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
-using Calamari.Deployment.Journal;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes.Semaphores;
+using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Plumbing.FileSystem;
 
-namespace Calamari.Variables
+namespace Calamari.Common.Plumbing.Variables
 {
     public static class DeploymentJournalVariableContributor
     {

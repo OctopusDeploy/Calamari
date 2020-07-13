@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices; // Needed for dotnetcore
 using System.Linq;
+// Needed for dotnetcore
 
-namespace Calamari.Util.Environments
+namespace Calamari.Common.Plumbing.Extensions
     /* This is in the 'Environments' namespace to avoid collisions with CrossPlatformExtensions */
 {
     public static class EnvironmentHelper

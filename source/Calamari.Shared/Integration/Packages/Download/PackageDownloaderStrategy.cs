@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Net;
 using System.Net.Http;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;

@@ -1,6 +1,7 @@
 ﻿using System.Linq;
+using Calamari.Common.Plumbing;
 
-namespace Calamari.Integration.Scripting
+namespace Calamari.Common.Features.Scripts
 {
     public static class ScriptSyntaxHelper
     {

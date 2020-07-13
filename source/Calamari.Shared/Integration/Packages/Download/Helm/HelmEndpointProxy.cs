@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
-using Calamari.Extensions;
+using Calamari.Common.Plumbing.Extensions;
 using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Integration.Packages.Download.Helm

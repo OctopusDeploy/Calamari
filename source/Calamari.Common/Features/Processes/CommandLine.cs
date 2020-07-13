@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Calamari.Util;
 
-namespace Calamari.Integration.Processes
+namespace Calamari.Common.Features.Processes
 {
     public class CommandLine
     {

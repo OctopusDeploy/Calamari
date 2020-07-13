@@ -2,11 +2,12 @@
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using Calamari.Common.Variables;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Substitutions

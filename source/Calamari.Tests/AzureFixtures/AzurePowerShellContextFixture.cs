@@ -1,12 +1,11 @@
 #if AZURE_CORE
 using System.Collections.Generic;
 using Calamari.Azure.Integration;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 

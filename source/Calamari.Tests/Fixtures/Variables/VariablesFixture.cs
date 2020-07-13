@@ -1,9 +1,8 @@
 using System;
 using System.Linq;
-using Calamari.Common.Variables;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 using Octostache;

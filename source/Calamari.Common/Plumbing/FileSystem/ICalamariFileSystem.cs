@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Common.Plumbing.FileSystem
 {
     public interface ICalamariFileSystem
     {

@@ -1,6 +1,6 @@
 using Octopus.Versioning;
 
-namespace Calamari.Integration.Packages
+namespace Calamari.Common.Features.Packages
 {
     public class PackageFileNameMetadata
     {

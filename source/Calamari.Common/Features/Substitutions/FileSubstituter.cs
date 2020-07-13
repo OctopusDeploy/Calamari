@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Text;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
-using Octostache;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Integration.Substitutions
+namespace Calamari.Common.Features.Substitutions
 {
     public class FileSubstituter : IFileSubstituter
     {

@@ -1,8 +1,8 @@
 ﻿using System;
-using Calamari.Common.Variables;
-using Calamari.Integration.Processes;
+using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Deployment
+namespace Calamari.Common.Commands
 {
     public class RunningDeployment
     {

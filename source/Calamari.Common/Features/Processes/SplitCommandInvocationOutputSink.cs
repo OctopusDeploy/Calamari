@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using Calamari.Common.Plumbing.Commands;
 
-namespace Calamari.Integration.Processes
+namespace Calamari.Common.Features.Processes
 {
     public class SplitCommandInvocationOutputSink : ICommandInvocationOutputSink
     {

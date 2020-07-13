@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Serialization;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Processes;
 using Calamari.Serialization;
 using Newtonsoft.Json;

@@ -1,7 +1,8 @@
 ﻿using System.IO;
+using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Readers.GZip;
 
-namespace Calamari.Integration.Packages
+namespace Calamari.Common.Features.Packages
 {
     public class TarGzipPackageExtractor : TarPackageExtractor
     {

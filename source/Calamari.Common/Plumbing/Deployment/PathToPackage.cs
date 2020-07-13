@@ -1,4 +1,4 @@
-namespace Calamari.Deployment
+namespace Calamari.Common.Plumbing.Deployment
 {
     public class PathToPackage
     {

@@ -1,8 +1,9 @@
 using Calamari.Azure.ServiceFabric.Integration;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 

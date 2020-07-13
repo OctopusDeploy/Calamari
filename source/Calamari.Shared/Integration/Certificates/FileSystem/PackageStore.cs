@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Packages.Java;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Packages;
-using Calamari.Integration.Packages.Java;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.FileSystem

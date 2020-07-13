@@ -1,4 +1,6 @@
 ﻿using System;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 

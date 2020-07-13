@@ -1,14 +1,14 @@
 using System;
 using System.IO;
+using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
-using SharpCompress.Readers;
 #if !NET40
 using Polly;
 #endif
 
-namespace Calamari.Integration.Packages
+namespace Calamari.Common.Features.Packages
 {
     public class ZipPackageExtractor : IPackageExtractor
     {

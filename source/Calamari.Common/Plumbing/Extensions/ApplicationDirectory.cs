@@ -1,13 +1,11 @@
 ﻿using System;
 using System.IO;
-using Calamari.Common.Variables;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
-using Octostache;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Deployment
+namespace Calamari.Common.Plumbing.Extensions
 {
     public class ApplicationDirectory
     {

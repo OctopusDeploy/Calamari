@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Octopus.Versioning;

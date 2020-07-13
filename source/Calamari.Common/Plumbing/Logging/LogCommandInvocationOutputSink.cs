@@ -1,4 +1,6 @@
-﻿namespace Calamari.Integration.Processes
+﻿using Calamari.Common.Plumbing.Commands;
+
+namespace Calamari.Common.Plumbing.Logging
 {
     public class LogCommandInvocationOutputSink : ICommandInvocationOutputSink
     {

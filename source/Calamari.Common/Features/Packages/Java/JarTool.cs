@@ -1,11 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
-using Calamari.Integration.Processes;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Integration.Packages.Java
+namespace Calamari.Common.Features.Packages.Java
 {
     /// <summary>
     /// Wrapper class for invoking the Java Archive Tool http://docs.oracle.com/javase/7/docs/technotes/tools/windows/jar.html

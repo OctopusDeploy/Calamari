@@ -1,3 +1,4 @@
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;

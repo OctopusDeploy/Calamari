@@ -1,7 +1,11 @@
 ﻿using System.Collections.Generic;
 using Calamari.CloudAccounts;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Extensions;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
 

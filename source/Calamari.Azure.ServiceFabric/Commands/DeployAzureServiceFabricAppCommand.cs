@@ -4,7 +4,16 @@ using Calamari.Azure.ServiceFabric.Deployment.Conventions;
 using Calamari.Azure.ServiceFabric.Util;
 using Calamari.Commands;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Certificates;
@@ -16,8 +25,6 @@ using Calamari.Integration.JsonVariables;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
 using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Integration.Substitutions;
 
 namespace Calamari.Azure.ServiceFabric.Commands
 {

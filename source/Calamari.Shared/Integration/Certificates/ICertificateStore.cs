@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography.X509Certificates;
+using Calamari.Common.Plumbing.Variables;
 using Octostache;
 
 namespace Calamari.Integration.Certificates

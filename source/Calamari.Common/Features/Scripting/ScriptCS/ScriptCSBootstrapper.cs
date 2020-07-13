@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Calamari.Commands.Support;
-using Calamari.Common.Variables;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Util;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting.ScriptCS
 {

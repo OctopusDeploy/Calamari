@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
-using Calamari.Common.Variables;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;

@@ -1,13 +1,12 @@
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Variables;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Deployment.Conventions
+namespace Calamari.Common.Plumbing.FileSystem
 {
     public class SubstituteInFiles : ISubstituteInFiles
     {

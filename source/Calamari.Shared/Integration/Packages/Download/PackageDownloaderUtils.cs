@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Integration.Packages.Download
 {

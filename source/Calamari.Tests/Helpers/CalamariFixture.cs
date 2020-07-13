@@ -4,15 +4,18 @@ using System.IO;
 using System.Linq;
 using Calamari.Commands;
 using Calamari.Integration.Processes;
-using Calamari.Integration.ServiceMessages;
 using Octostache;
 using Autofac;
 using Calamari.Commands.Support;
-using Calamari.Common.Variables;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Scripting;
-using Calamari.Variables;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Helpers

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.Integration.Retry
+namespace Calamari.Common.Plumbing.Retry
 {
     /// <summary>
     /// Implements exponential backoff timing for retry trackers

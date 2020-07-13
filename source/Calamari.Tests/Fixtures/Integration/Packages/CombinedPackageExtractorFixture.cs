@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Packages.NuGet;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Tests.Fixtures.Util;

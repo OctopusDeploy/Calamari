@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Commands;
 
 namespace Calamari.Deployment.Conventions
 {

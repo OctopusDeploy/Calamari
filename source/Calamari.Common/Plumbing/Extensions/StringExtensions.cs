@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Calamari.Util
+namespace Calamari.Common.Plumbing.Extensions
 {
     public static class StringExtensions
     {

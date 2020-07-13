@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.IO;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
-using Calamari.Integration.Proxies;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Proxies;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting
 {

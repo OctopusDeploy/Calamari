@@ -1,20 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using Calamari.Aws.Deployment.Conventions;
-using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.S3;
 using Calamari.CloudAccounts;
 using Calamari.Commands;
 using Calamari.Commands.Support;
-using Calamari.Common.Variables;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Substitutions;
 
 namespace Calamari.Aws.Commands
 {

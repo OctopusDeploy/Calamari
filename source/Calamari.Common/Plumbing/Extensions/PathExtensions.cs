@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace Calamari.Integration.FileSystem
+namespace Calamari.Common.Plumbing.Extensions
 {
     public static class PathExtensions
     {

@@ -1,7 +1,7 @@
 ﻿using System;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
 
-namespace Calamari
+namespace Calamari.Common.Plumbing
 {
     public static class Guard
     {

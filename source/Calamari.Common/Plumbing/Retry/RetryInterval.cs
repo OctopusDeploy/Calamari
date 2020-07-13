@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.Integration.Retry
+namespace Calamari.Common.Plumbing.Retry
 {
     public abstract class RetryInterval
     {

@@ -1,4 +1,4 @@
-namespace Calamari.Deployment
+namespace Calamari.Common.Plumbing.Variables
 {
     public static class DeploymentVariables
     {
