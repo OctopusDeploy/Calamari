@@ -3,7 +3,7 @@ using Octopus.Server.Extensibility.HostServices.Web;
 
 namespace Sashimi.Azure.Web
 {
-    public class AzureHomeLinksContributor : IHomeLinksContributor
+    class AzureHomeLinksContributor : IHomeLinksContributor
     {
         static readonly IDictionary<string, string> Links;
 
