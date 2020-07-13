@@ -163,7 +163,7 @@ namespace Calamari.Common.Features.Packages
 //                version = metaData.Version;
 //                packageId = metaData.PackageId;
                 var metaData = new LocalNuGetPackage(path).Metadata;
-                version = SemVerFactory.CreateVersion(metaData.Version);
+                version = SemVerFactory.CreateVersion(metaData.Version.ToString());
                 packageId = metaData.Id;
             }
 
