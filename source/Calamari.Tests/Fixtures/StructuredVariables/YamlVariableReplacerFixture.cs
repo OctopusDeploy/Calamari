@@ -14,7 +14,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        public void ShouldReplaceSimpleStringYamlVariables()
+        public void CanReplaceStringWithString()
         {
             var variables = new CalamariVariables();
             variables.Set("server:ports:0", "8080");
