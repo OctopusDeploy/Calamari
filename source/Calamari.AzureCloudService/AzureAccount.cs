@@ -3,7 +3,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.AzureCloudService
 {
-    class AzureAccount
+    public class AzureAccount
     {
         public AzureAccount(IVariables variables)
         {
