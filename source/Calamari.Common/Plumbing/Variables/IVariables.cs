@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 
 namespace Calamari.Common.Plumbing.Variables
 {
     public interface IVariables : IEnumerable<KeyValuePair<string, string>>
     {
+        string this[string name] { get; set; }
         bool IsSet(string name);
         void Set(string name, string value);
         void SetStrings(string variableName, IEnumerable<string> values, string separator);
@@ -20,7 +22,6 @@ namespace Calamari.Common.Plumbing.Variables
         List<string> GetIndexes(string variableCollectionName);
         void Add(string key, string value);
         void AddFlag(string key, bool value);
-        string this[string name] { get; set; }
         IVariables Clone();
     }
 }

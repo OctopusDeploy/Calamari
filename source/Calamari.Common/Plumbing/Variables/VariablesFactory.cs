@@ -14,8 +14,8 @@ namespace Calamari.Common.Plumbing.Variables
 {
     public class VariablesFactory
     {
-        readonly ICalamariFileSystem fileSystem;
         public static readonly string AdditionalVariablesPathVariable = "AdditionalVariablesPath";
+        readonly ICalamariFileSystem fileSystem;
 
         public VariablesFactory(ICalamariFileSystem fileSystem)
         {
@@ -34,7 +34,7 @@ namespace Calamari.Common.Plumbing.Variables
             variables.Set(TentacleVariables.Agent.InstanceName, "#{env:TentacleInstanceName}");
             ReadAdditionalVariablesFromFile(variables);
             DeploymentJournalVariableContributor.Contribute(fileSystem, variables);
-            
+
             return variables;
         }
 
@@ -101,14 +101,15 @@ namespace Calamari.Common.Plumbing.Variables
 
         void ReadAdditionalVariablesFromFile(CalamariVariables variables)
         {
-            var path = variables.Get(AdditionalVariablesPathVariable)
-                       ?? variables.Get($"env:{AdditionalVariablesPathVariable}");
+            var path = variables.Get(AdditionalVariablesPathVariable) ?? variables.Get($"env:{AdditionalVariablesPathVariable}");
 
             string BuildExceptionMessage(string reason)
-                => $"Could not read additional variables from JSON file at '{path}'. " +
-                   $"{reason} Make sure the file can be read or remove the " +
-                   $"'{AdditionalVariablesPathVariable}' environment variable. " +
-                   $"See inner exception for details.";
+            {
+                return $"Could not read additional variables from JSON file at '{path}'. " +
+                    $"{reason} Make sure the file can be read or remove the " +
+                    $"'{AdditionalVariablesPathVariable}' environment variable. " +
+                    "See inner exception for details.";
+            }
 
             if (string.IsNullOrEmpty(path))
                 return;

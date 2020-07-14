@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using YamlDotNet.Core.Events;
 
@@ -12,14 +13,14 @@ namespace Calamari.Common.Features.StructuredVariables
 
     class YamlPathComponent
     {
-        public YamlStructure Type { get; }
-        public string MappingKey { get; set; }
-        public int SequenceIndex { get; set; } = -1;
-
         public YamlPathComponent(YamlStructure structure)
         {
             Type = structure;
         }
+
+        public YamlStructure Type { get; }
+        public string MappingKey { get; set; }
+        public int SequenceIndex { get; set; } = -1;
     }
 
     class YamlPathStack
@@ -77,14 +78,14 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public class YamlNode<T> : IYamlNode where T : ParsingEvent
     {
-        public T Event { get; }
-        public string Path { get; }
-
         public YamlNode(T parsingEvent, string path)
         {
             Event = parsingEvent;
             Path = path;
         }
+
+        public T Event { get; }
+        public string Path { get; }
 
         ParsingEvent IYamlNode.Event => Event;
     }

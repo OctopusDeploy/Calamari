@@ -57,7 +57,8 @@ namespace Calamari.Common
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<ICommandAsync>()
-                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
+                .Where(t => t.GetCustomAttribute<CommandAttribute>()
+                    .Name
                     .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .Named<ICommandAsync>(t => t.GetCustomAttribute<CommandAttribute>().Name);
         }
@@ -77,9 +78,7 @@ namespace Calamari.Common
                 log.Verbose($"Calamari Version: {GetType().Assembly.GetInformationalVersion()}");
 
                 if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
-                {
                     return 0;
-                }
 
                 var envInfo = string.Join($"{Environment.NewLine}  ",
                     EnvironmentHelper.SafelyGetEnvironmentInformation());
@@ -109,9 +108,7 @@ namespace Calamari.Common
         {
             var programAssembly = GetProgramAssemblyToRegister();
             if (programAssembly != null)
-            {
                 yield return programAssembly; // Calamari Flavour
-            }
 
             yield return typeof(CalamariFlavourProgram).Assembly; // Calamari.Common
         }
@@ -124,7 +121,7 @@ namespace Calamari.Common
                 return command.Execute();
             }
             catch (Exception e) when (e is ComponentNotRegisteredException ||
-                                      e is DependencyResolutionException)
+                e is DependencyResolutionException)
             {
                 throw new CommandException($"Could not find the command {options.Command}");
             }

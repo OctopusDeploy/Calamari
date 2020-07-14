@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
@@ -8,7 +9,8 @@ namespace Calamari.Common.Features.Scripting.Python
 {
     public class PythonScriptExecutor : ScriptExecutor
     {
-        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script, IVariables variables,
+        protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
+            IVariables variables,
             Dictionary<string, string> environmentVars = null)
         {
             var executable = PythonBootstrapper.FindPythonExecutable();
@@ -24,7 +26,7 @@ namespace Calamari.Common.Features.Scripting.Python
                     EnvironmentVars = environmentVars,
                     Isolate = true
                 },
-                new[] {dependencyInstallerFile});
+                new[] { dependencyInstallerFile });
 
             var configurationFile = PythonBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
 
@@ -37,7 +39,7 @@ namespace Calamari.Common.Features.Scripting.Python
                     WorkingDirectory = workingDirectory,
                     EnvironmentVars = environmentVars
                 },
-                otherTemporaryFiles.Concat(new[] {bootstrapFile, configurationFile}));
+                otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
         }
     }
 }

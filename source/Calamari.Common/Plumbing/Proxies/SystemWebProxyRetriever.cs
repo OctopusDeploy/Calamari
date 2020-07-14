@@ -14,7 +14,7 @@ namespace Calamari.Common.Plumbing.Proxies
 #if NETFRAMEWORK
             try
             {
-                Uri TestUri = new Uri("http://test9c7b575efb72442c85f706ef1d64afa6.com");
+                var TestUri = new Uri("http://test9c7b575efb72442c85f706ef1d64afa6.com");
 
                 var systemWebProxy = WebRequest.GetSystemWebProxy();
 

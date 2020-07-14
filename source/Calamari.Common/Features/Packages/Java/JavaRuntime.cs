@@ -25,17 +25,19 @@ namespace Calamari.Common.Features.Packages.Java
             try
             {
                 var silentProcessResult = SilentProcessRunner.ExecuteCommand(CmdPath,
-                    $"-jar \"{jarFile}\" {minimumJavaVersion}", ".", Console.WriteLine, i => Console.Error.WriteLine(i));
+                    $"-jar \"{jarFile}\" {minimumJavaVersion}",
+                    ".",
+                    Console.WriteLine,
+                    i => Console.Error.WriteLine(i));
 
                 if (silentProcessResult.ExitCode == 0)
-                {
                     return;
-                }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
+
             throw new CommandException(
                 $"Failed to run {CmdPath}. You must have Java {minimumJavaVersion} or later installed on the target machine, " +
                 "and have the java executable on the path or have the JAVA_HOME environment variable defined");

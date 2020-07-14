@@ -14,14 +14,26 @@ namespace Calamari.Common.Features.Packages.NuGet
 {
     public class NupkgExtractor : IPackageExtractor
     {
+        const string ExcludeExtension = ".nupkg.sha512";
+
+        static readonly string[] ExcludePaths =
+        {
+            "_rels/",
+            "package/services/metadata/",
+            @"_rels\",
+            @"package\services\metadata\",
+            "[Content_Types].xml"
+        };
+
         readonly ILog log;
-        public string[] Extensions => new[] {".nupkg"};
 
         public NupkgExtractor(ILog log)
         {
             this.log = log;
         }
-        
+
+        public string[] Extensions => new[] { ".nupkg" };
+
         public int Extract(string packageFile, string directory)
         {
             var filesExtracted = 0;
@@ -39,9 +51,7 @@ namespace Calamari.Common.Features.Packages.NuGet
                     var targetDirectory = Path.Combine(directory, Path.GetDirectoryName(unescapedKey));
 
                     if (!Directory.Exists(targetDirectory))
-                    {
                         Directory.CreateDirectory(targetDirectory);
-                    }
 
                     if (entry.IsDirectory || !IsPackageFile(entry.Key))
                         continue;
@@ -65,7 +75,6 @@ namespace Calamari.Common.Features.Packages.NuGet
             if (entry.LastModifiedTime.HasValue &&
                 entry.LastModifiedTime.Value != DateTime.MinValue &&
                 entry.LastModifiedTime.Value.ToUniversalTime() <= DateTime.UtcNow)
-            {
                 try
                 {
                     File.SetLastWriteTimeUtc(targetFile, entry.LastModifiedTime.Value.ToUniversalTime());
@@ -74,17 +83,13 @@ namespace Calamari.Common.Features.Packages.NuGet
                 {
                     log.Verbose($"Unable to set LastWriteTime attribute on file '{targetFile}':  {ex.Message}");
                 }
-            }
         }
 
         static bool IsPackageFile(string packageFileName)
         {
-            if (string.IsNullOrEmpty(packageFileName)
-                || string.IsNullOrEmpty(Path.GetFileName(packageFileName)))
-            {
+            if (string.IsNullOrEmpty(packageFileName) || string.IsNullOrEmpty(Path.GetFileName(packageFileName)))
                 // This is to ignore archive entries that are not really files
                 return false;
-            }
 
             if (IsManifest(packageFileName))
                 return false;
@@ -94,7 +99,7 @@ namespace Calamari.Common.Features.Packages.NuGet
 
         static bool IsExcludedPath(string path)
         {
-            return ExcludePaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)) || 
+            return ExcludePaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)) ||
                 path.EndsWith(ExcludeExtension, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -103,10 +108,9 @@ namespace Calamari.Common.Features.Packages.NuGet
             return Path.GetExtension(path).Equals(".nuspec", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string UnescapePath(string path)
+        static string UnescapePath(string path)
         {
             if (path != null && path.IndexOf('%') > -1)
-            {
                 try
                 {
                     return Uri.UnescapeDataString(path);
@@ -115,20 +119,8 @@ namespace Calamari.Common.Features.Packages.NuGet
                 {
                     // on windows server 2003 we can get UriFormatExceptions when the original unescaped string contained %, just swallow and return path
                 }
-            }
 
             return path;
         }
-
-        static readonly string[] ExcludePaths =
-        {
-            "_rels/",
-            "package/services/metadata/",
-            @"_rels\",
-            @"package\services\metadata\",
-            "[Content_Types].xml"
-        };
-
-        const string ExcludeExtension = ".nupkg.sha512";
     }
 }

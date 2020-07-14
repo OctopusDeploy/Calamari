@@ -1,4 +1,5 @@
-﻿using Calamari.Common.Plumbing.Commands;
+﻿using System;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Variables;
 
@@ -9,13 +10,13 @@ namespace Calamari.Common.Plumbing.ServiceMessages
     /// </summary>
     public class ServiceMessageCommandInvocationOutputSink : ICommandInvocationOutputSink
     {
-        private readonly IVariables variables;
+        readonly IVariables variables;
         readonly ServiceMessageParser serviceMessageParser;
 
         public ServiceMessageCommandInvocationOutputSink(IVariables variables)
         {
             this.variables = variables;
-            this.serviceMessageParser = new ServiceMessageParser(ProcessServiceMessage);
+            serviceMessageParser = new ServiceMessageParser(ProcessServiceMessage);
         }
 
         public void WriteInfo(string line)
@@ -27,7 +28,7 @@ namespace Calamari.Common.Plumbing.ServiceMessages
         {
         }
 
-        private void ProcessServiceMessage(ServiceMessage message)
+        void ProcessServiceMessage(ServiceMessage message)
         {
             switch (message.Name)
             {

@@ -36,7 +36,7 @@ namespace Calamari.Common.Features.Scripting.Python
             commandArguments.Append($"\"{bootstrapFile}\" {scriptParameters} \"{encryptionKey}\"");
             return commandArguments.ToString();
         }
-        
+
         public static string PrepareConfigurationFile(string workingDirectory, IVariables variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".py");
@@ -57,18 +57,19 @@ namespace Calamari.Common.Features.Scripting.Python
 
         static IEnumerable<string> GetVariables(IVariables variables)
         {
-            return variables.GetNames().Select(variable =>
-            {
-                var variableValue = DecryptValueCommand(variables.Get(variable));
-                return $"decode(\"{EncodeValue(variable)}\") : {variableValue}";
-            });
+            return variables.GetNames()
+                .Select(variable =>
+                {
+                    var variableValue = DecryptValueCommand(variables.Get(variable));
+                    return $"decode(\"{EncodeValue(variable)}\") : {variableValue}";
+                });
         }
 
         static string DecryptValueCommand(string value)
         {
             var encrypted = VariableEncryptor.Encrypt(value ?? "");
             var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);
-            
+
             return $@"decrypt(""{Convert.ToBase64String(rawEncrypted)}"",""{ToHex(iv)}"")";
         }
 
@@ -114,12 +115,12 @@ namespace Calamari.Common.Features.Scripting.Python
             EnsureValidUnixFile(script.File);
             return (bootstrapFile, scriptModulePaths);
         }
-        
+
         static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory)
         {
             foreach (var variableName in variables.GetNames().Where(ScriptVariables.IsLibraryScriptModule))
-            {
-                if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.Python) {
+                if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.Python)
+                {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
                     var name = new string(libraryScriptModuleName.Where(x => char.IsLetterOrDigit(x) || x == '_').ToArray());
                     var moduleFileName = $"{name}.py";
@@ -128,7 +129,6 @@ namespace Calamari.Common.Features.Scripting.Python
                     CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
                     yield return name;
                 }
-            }
         }
 
         public static string PrepareDependencyInstaller(string workingDirectory)

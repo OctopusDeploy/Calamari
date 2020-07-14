@@ -10,9 +10,7 @@ namespace Calamari.Common.Plumbing.Extensions
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
             {
                 if (path.StartsWith("~"))
-                {
                     path = "$HOME" + path.Substring(1, path.Length - 1);
-                }
 
                 path = Regex.Replace(path, @"(?<!\\)\$([a-zA-Z0-9_]+)", "%$1%");
                 path = Environment.ExpandEnvironmentVariables(path);
@@ -21,6 +19,5 @@ namespace Calamari.Common.Plumbing.Extensions
 
             return Environment.ExpandEnvironmentVariables(path);
         }
-
     }
 }

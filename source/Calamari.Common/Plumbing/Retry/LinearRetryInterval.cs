@@ -7,7 +7,7 @@ namespace Calamari.Common.Plumbing.Retry
     /// </summary>
     public class LinearRetryInterval : RetryInterval
     {
-        private readonly TimeSpan retryInterval;
+        readonly TimeSpan retryInterval;
 
         public LinearRetryInterval(TimeSpan retryInterval)
         {
@@ -16,7 +16,7 @@ namespace Calamari.Common.Plumbing.Retry
 
         public override TimeSpan GetInterval(int retryCount)
         {
-            return TimeSpan.FromMilliseconds((int) retryInterval.TotalMilliseconds * retryCount);
+            return TimeSpan.FromMilliseconds((int)retryInterval.TotalMilliseconds * retryCount);
         }
     }
 }

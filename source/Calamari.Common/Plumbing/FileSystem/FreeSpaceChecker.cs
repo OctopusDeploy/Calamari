@@ -43,11 +43,11 @@ namespace Calamari.Common.Plumbing.FileSystem
 
             if (freeSpaceOverrideInMegaBytes.HasValue)
             {
-                requiredSpaceInBytes = (ulong) freeSpaceOverrideInMegaBytes * 1024 * 1024;
-                Log.Verbose($"{freeDiskSpaceOverrideInMegaBytesVariable} has been specified. We will check and ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has {((ulong) requiredSpaceInBytes).ToFileSizeString()} free disk space.");
+                requiredSpaceInBytes = (ulong)freeSpaceOverrideInMegaBytes * 1024 * 1024;
+                Log.Verbose($"{freeDiskSpaceOverrideInMegaBytesVariable} has been specified. We will check and ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has {requiredSpaceInBytes.ToFileSizeString()} free disk space.");
             }
 
-            var success = fileSystem.GetDiskFreeSpace(directoryPath, out ulong totalNumberOfFreeBytes);
+            var success = fileSystem.GetDiskFreeSpace(directoryPath, out var totalNumberOfFreeBytes);
             if (!success)
                 return;
 

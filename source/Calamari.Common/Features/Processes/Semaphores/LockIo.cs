@@ -8,7 +8,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
 {
     public class LockIo : ILockIo
     {
-        private readonly ICalamariFileSystem fileSystem;
+        readonly ICalamariFileSystem fileSystem;
 
         public LockIo(ICalamariFileSystem fileSystem)
         {
@@ -42,9 +42,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                             ThreadId = obj["ThreadId"].ToObject<int>()
                         };
                         if (lockContent.BelongsToCurrentProcessAndThread())
-                        {
                             return lockContent;
-                        }
                         return new OtherProcessOwnsFileLock(lockContent);
                     }
                 }

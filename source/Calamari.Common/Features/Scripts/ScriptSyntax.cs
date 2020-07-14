@@ -1,4 +1,6 @@
-﻿namespace Calamari.Common.Features.Scripts
+﻿using System;
+
+namespace Calamari.Common.Features.Scripts
 {
     public enum ScriptSyntax
     {
@@ -13,7 +15,7 @@
 
         [FileExtension("fsx")]
         FSharp,
-        
+
         [FileExtension("py")]
         Python
     }

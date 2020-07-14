@@ -10,20 +10,20 @@ using SharpCompress.Archives.Zip;
 
 namespace Calamari.Common.Features.Packages.NuGet
 {
-    public class LocalNuGetPackage 
+    public class LocalNuGetPackage
     {
-        private readonly string filePath;
-        private readonly Lazy<ManifestMetadata> metadata; 
+        readonly string filePath;
+        readonly Lazy<ManifestMetadata> metadata;
 
         public LocalNuGetPackage(string filePath)
         {
             Guard.NotNullOrWhiteSpace(filePath, "Must supply a non-empty file-path");
 
             if (!File.Exists(filePath))
-                throw new FileNotFoundException($"Could not find package file '{filePath}'"); 
+                throw new FileNotFoundException($"Could not find package file '{filePath}'");
 
             this.filePath = filePath;
-            metadata = new Lazy<ManifestMetadata>(()=>ReadMetadata(this.filePath));
+            metadata = new Lazy<ManifestMetadata>(() => ReadMetadata(this.filePath));
         }
 
         public ManifestMetadata Metadata => metadata.Value;

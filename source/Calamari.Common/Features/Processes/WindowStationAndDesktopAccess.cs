@@ -18,12 +18,15 @@ namespace Calamari.Common.Features.Processes
             GrantAccess(username, domainName, GetThreadDesktop(GetCurrentThreadId()), desktopRightsAllAccess);
         }
 
-        private static void GrantAccess(string username, string domainName, IntPtr handle, int accessMask)
+        static void GrantAccess(string username, string domainName, IntPtr handle, int accessMask)
         {
             SafeHandle safeHandle = new NoopSafeHandle(handle);
-            GenericSecurity security =
+            var security =
                 new GenericSecurity(
-                    false, ResourceType.WindowObject, safeHandle, AccessControlSections.Access);
+                    false,
+                    ResourceType.WindowObject,
+                    safeHandle,
+                    AccessControlSections.Access);
 
             var account = string.IsNullOrEmpty(domainName)
                 ? new NTAccount(username)
@@ -31,18 +34,20 @@ namespace Calamari.Common.Features.Processes
 
             security.AddAccessRule(
                 new GenericAccessRule(
-                    account, accessMask, AccessControlType.Allow));
+                    account,
+                    accessMask,
+                    AccessControlType.Allow));
             security.Persist(safeHandle, AccessControlSections.Access);
         }
 
         [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr GetProcessWindowStation();
+        static extern IntPtr GetProcessWindowStation();
 
         [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr GetThreadDesktop(int dwThreadId);
+        static extern IntPtr GetThreadDesktop(int dwThreadId);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern int GetCurrentThreadId();
+        static extern int GetCurrentThreadId();
 
         // All the code to manipulate a security object is available in .NET framework,
         // but its API tries to be type-safe and handle-safe, enforcing a special implementation
@@ -54,20 +59,29 @@ namespace Calamari.Common.Features.Processes
         // of the existing .NET implementation, sparing necessity to
         // P/Invoke the underlying WinAPI.
 
-        private class GenericAccessRule : AccessRule
+        class GenericAccessRule : AccessRule
         {
             public GenericAccessRule(
-                IdentityReference identity, int accessMask, AccessControlType type) :
-                base(identity, accessMask, false, InheritanceFlags.None,
-                     PropagationFlags.None, type)
+                IdentityReference identity,
+                int accessMask,
+                AccessControlType type)
+                :
+                base(identity,
+                    accessMask,
+                    false,
+                    InheritanceFlags.None,
+                    PropagationFlags.None,
+                    type)
             {
             }
         }
 
-        private class GenericSecurity : NativeObjectSecurity
+        class GenericSecurity : NativeObjectSecurity
         {
             public GenericSecurity(
-                bool isContainer, ResourceType resType, SafeHandle objectHandle,
+                bool isContainer,
+                ResourceType resType,
+                SafeHandle objectHandle,
                 AccessControlSections sectionsRequested)
                 : base(isContainer, resType, objectHandle, sectionsRequested)
             {
@@ -85,15 +99,15 @@ namespace Calamari.Common.Features.Processes
 
             #region NativeObjectSecurity Abstract Method Overrides
 
-            public override Type AccessRightType
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override Type AccessRightType => throw new NotImplementedException();
 
             public override AccessRule AccessRuleFactory(
                 IdentityReference identityReference,
-                int accessMask, bool isInherited, InheritanceFlags inheritanceFlags,
-                PropagationFlags propagationFlags, AccessControlType type)
+                int accessMask,
+                bool isInherited,
+                InheritanceFlags inheritanceFlags,
+                PropagationFlags propagationFlags,
+                AccessControlType type)
             {
                 throw new NotImplementedException();
             }
@@ -101,9 +115,12 @@ namespace Calamari.Common.Features.Processes
             public override Type AccessRuleType => typeof(AccessRule);
 
             public override AuditRule AuditRuleFactory(
-                IdentityReference identityReference, int accessMask,
-                bool isInherited, InheritanceFlags inheritanceFlags,
-                PropagationFlags propagationFlags, AuditFlags flags)
+                IdentityReference identityReference,
+                int accessMask,
+                bool isInherited,
+                InheritanceFlags inheritanceFlags,
+                PropagationFlags propagationFlags,
+                AuditFlags flags)
             {
                 throw new NotImplementedException();
             }
@@ -114,9 +131,10 @@ namespace Calamari.Common.Features.Processes
         }
 
         // Handles returned by GetProcessWindowStation and GetThreadDesktop should not be closed
-        private class NoopSafeHandle : SafeHandle
+        class NoopSafeHandle : SafeHandle
         {
-            public NoopSafeHandle(IntPtr handle) :
+            public NoopSafeHandle(IntPtr handle)
+                :
                 base(handle, false)
             {
             }

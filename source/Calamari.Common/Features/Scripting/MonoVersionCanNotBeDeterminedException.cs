@@ -4,7 +4,8 @@ namespace Calamari.Common.Features.Scripting
 {
     public class MonoVersionCanNotBeDeterminedException : Exception
     {
-        public MonoVersionCanNotBeDeterminedException(string message) : base(message)
+        public MonoVersionCanNotBeDeterminedException(string message)
+            : base(message)
         {
         }
     }

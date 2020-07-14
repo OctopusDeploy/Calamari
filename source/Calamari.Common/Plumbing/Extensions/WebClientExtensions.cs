@@ -16,7 +16,8 @@ namespace Calamari.Common.Plumbing.Extensions
 
             client.DownloadProgressChanged += (sender, args) =>
             {
-                if ((DateTime.Now.Ticks - lastCall.Ticks) <= throttle && !(hasCalled && args.ProgressPercentage == 100)) return;
+                if (DateTime.Now.Ticks - lastCall.Ticks <= throttle && !(hasCalled && args.ProgressPercentage == 100))
+                    return;
                 progressHandler(args.ProgressPercentage, args.TotalBytesToReceive);
                 hasCalled = true;
                 lastCall = DateTime.Now;

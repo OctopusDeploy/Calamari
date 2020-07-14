@@ -1,3 +1,4 @@
+using System;
 using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Common;
 
@@ -17,6 +18,8 @@ namespace Calamari.Common.Features.Packages
         }
 
         void WarnThatSymbolicLinksAreNotSupported(string sourcepath, string targetpath)
-            => log.WarnFormat("Cannot create symbolic link: {0}, Calamari does not currently support the extraction of symbolic links", sourcepath);
+        {
+            log.WarnFormat("Cannot create symbolic link: {0}, Calamari does not currently support the extraction of symbolic links", sourcepath);
+        }
     }
 }

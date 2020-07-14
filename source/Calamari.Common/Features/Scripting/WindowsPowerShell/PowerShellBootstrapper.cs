@@ -15,17 +15,18 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 {
     public class WindowsPowerShellBootstrapper : PowerShellBootstrapper
     {
-        static string powerShellPath;
         const string EnvPowerShellPath = "PowerShell.exe";
+        static string powerShellPath;
 
-        public override bool AllowImpersonation() => true;
+        public override bool AllowImpersonation()
+        {
+            return true;
+        }
 
         public override string PathToPowerShellExecutable(IVariables variables)
         {
             if (powerShellPath != null)
-            {
                 return powerShellPath;
-            }
 
             try
             {
@@ -33,9 +34,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                 powerShellPath = Path.Combine(systemFolder, @"WindowsPowershell\v1.0\", EnvPowerShellPath);
 
                 if (!File.Exists(powerShellPath))
-                {
                     powerShellPath = EnvPowerShellPath;
-                }
             }
             catch (Exception)
             {
@@ -49,22 +48,23 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
         {
             var customPowerShellVersion = variables[PowerShellVariables.CustomPowerShellVersion];
             if (!string.IsNullOrEmpty(customPowerShellVersion))
-            {
                 yield return $"-Version {customPowerShellVersion} ";
-            }
         }
     }
 
     public class UnixLikePowerShellCoreBootstrapper : PowerShellCoreBootstrapper
     {
-        public override bool AllowImpersonation() => false;
+        public override bool AllowImpersonation()
+        {
+            return false;
+        }
 
         public override string PathToPowerShellExecutable(IVariables variables)
         {
             return "pwsh";
         }
     }
-    
+
     public class WindowsPowerShellCoreBootstrapper : PowerShellCoreBootstrapper
     {
         const string EnvPowerShellPath = "pwsh.exe";
@@ -75,7 +75,10 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             this.fileSystem = fileSystem;
         }
 
-        public override bool AllowImpersonation() => true;
+        public override bool AllowImpersonation()
+        {
+            return true;
+        }
 
         public override string PathToPowerShellExecutable(IVariables variables)
         {
@@ -98,7 +101,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                         var directoryName = fileSystem.GetDirectoryName(d);
 
                         // Directories are typically versions like "6" or they might also have a prerelease component like "7-preview"
-                        var splitString = directoryName.Split(new[] {'-'}, 2);
+                        var splitString = directoryName.Split(new[] { '-' }, 2);
                         var majorVersionPart = splitString[0];
                         var preRelease =
                             splitString.Length < 2
@@ -108,24 +111,23 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                         if (int.TryParse(majorVersionPart, out var majorVersion))
                             return (d, directoryName, majorVersion, preRelease);
                         return (d, directoryName, null, preRelease);
-                    }).ToList();
-                
+                    })
+                    .ToList();
+
                 var latestPowerShellVersionDirectory = availablePowerShellVersions
                     .Where(p => string.IsNullOrEmpty(customVersion) || p.versionId == customVersion)
                     .OrderByDescending(p => p.majorVersion)
                     .ThenBy(p => p.remaining)
                     .Select(p => p.path)
                     .FirstOrDefault();
-                
+
                 if (customVersionIsDefined && latestPowerShellVersionDirectory == null)
-                {
                     throw new PowerShellVersionNotFoundException(customVersion,
                         availablePowerShellVersions.Select(v => v.versionId));
-                }
 
                 if (latestPowerShellVersionDirectory == null)
                     return EnvPowerShellPath;
-                
+
                 var pathToPwsh = Path.Combine(latestPowerShellVersionDirectory, EnvPowerShellPath);
 
                 return fileSystem.FileExists(pathToPwsh) ? pathToPwsh : EnvPowerShellPath;
@@ -140,7 +142,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             }
         }
     }
-    
+
     public abstract class PowerShellCoreBootstrapper : PowerShellBootstrapper
     {
         protected override IEnumerable<string> ContributeCommandArguments(IVariables variables)
@@ -151,7 +153,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 
     public class PowerShellVersionNotFoundException : CommandException
     {
-        public PowerShellVersionNotFoundException(string customVersion, IEnumerable<string> availableVersions) 
+        public PowerShellVersionNotFoundException(string customVersion, IEnumerable<string> availableVersions)
             : base($"Attempted to use version '{customVersion}' of PowerShell Core, but this version could not be found. Available versions: {string.Join(", ", availableVersions)}")
         {
         }
@@ -159,20 +161,20 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 
     public abstract class PowerShellBootstrapper
     {
-        private static readonly string BootstrapScriptTemplate;
-        private static readonly string DebugBootstrapScriptTemplate;
+        static readonly string BootstrapScriptTemplate;
+        static readonly string DebugBootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static PowerShellBootstrapper()
         {
-            BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".Bootstrap.ps1");
-            DebugBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof (PowerShellBootstrapper).Namespace + ".DebugBootstrap.ps1");
+            BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(PowerShellBootstrapper).Namespace + ".Bootstrap.ps1");
+            DebugBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(PowerShellBootstrapper).Namespace + ".DebugBootstrap.ps1");
         }
 
         public abstract bool AllowImpersonation();
-        
+
         public abstract string PathToPowerShellExecutable(IVariables variables);
 
         public string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, IVariables variables)
@@ -184,12 +186,10 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 
             foreach (var argument in ContributeCommandArguments(variables))
                 commandArguments.Append(argument);
-            
+
             bool noProfile;
             if (bool.TryParse(executeWithoutProfile, out noProfile) && noProfile)
-            {
                 commandArguments.Append("-NoProfile ");
-            }
             commandArguments.Append("-NoLogo ");
             commandArguments.Append("-NonInteractive ");
             commandArguments.Append("-ExecutionPolicy Unrestricted ");
@@ -214,17 +214,19 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                 var powerShellVersion = ScriptingEnvironment.SafelyGetPowerShellVersion();
 
                 if (powerShellVersion.Major < 5 && powerShellVersion.Major > 0)
+                {
                     Log.Warn($"{PowerShellVariables.PSDebug.Trace} is enabled, but PowerShell tracing is only supported with PowerShell versions 5 and above. This server is currently running PowerShell version {powerShellVersion}.");
+                }
                 else
                 {
                     Log.Warn($"{PowerShellVariables.PSDebug.Trace} is enabled. This should only be used for debugging, and then disabled again for normal deployments.");
                     if (traceArgAsInt > 0)
                         traceCommand = $"-Trace {traceArgAsInt}";
                     if (traceArgAsBool)
-                        traceCommand = $"-Trace 2";
+                        traceCommand = "-Trace 2";
                 }
             }
-            
+
             var strictArg = variables[PowerShellVariables.PSDebug.Strict];
             var strictCommand = "";
             if (bool.TryParse(strictArg, out var strictArgAsBool) && strictArgAsBool)
@@ -232,13 +234,13 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                 Log.Info($"{PowerShellVariables.PSDebug.Strict} is enabled, putting PowerShell into strict mode where variables must be assigned a value before being referenced in a script. If a variable is referenced before a value is assigned, an exception will be thrown. This feature is experimental.");
                 strictCommand = " -Strict";
             }
-            
+
             return $"Set-PSDebug {traceCommand}{strictCommand};";
         }
 
         protected abstract IEnumerable<string> ContributeCommandArguments(IVariables variables);
 
-        private static bool IsDebuggingEnabled(IVariables variables)
+        static bool IsDebuggingEnabled(IVariables variables)
         {
             var powershellDebugMode = variables[PowerShellVariables.DebugMode];
 
@@ -272,9 +274,9 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
             return (bootstrapFile, scriptModulePaths);
-    }
+        }
 
-        private static StringBuilder SetupDebugBreakpoints(StringBuilder builder, IVariables variables)
+        static StringBuilder SetupDebugBreakpoints(StringBuilder builder, IVariables variables)
         {
             const string powershellWaitForDebuggerCommand = "Wait-Debugger";
             var startOfBootstrapScriptDebugLocation = string.Empty;
@@ -284,7 +286,6 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 
             var powershellDebugMode = variables[PowerShellVariables.DebugMode];
             if (!string.IsNullOrEmpty(powershellDebugMode))
-            {
                 switch (powershellDebugMode.ToLower())
                 {
                     case "breakatstartofbootstrapscript":
@@ -301,7 +302,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                         beforeLaunchingUserScriptDebugLocation = powershellWaitForDebuggerCommand;
                         break;
                 }
-            }
+
             builder.Replace("{{StartOfBootstrapScriptDebugLocation}}", startOfBootstrapScriptDebugLocation)
                 .Replace("{{BeforeVariablesDebugLocation}}", beforeVariablesDebugLocation)
                 .Replace("{{BeforeScriptModulesDebugLocation}}", beforeScriptModulesDebugLocation)
@@ -327,7 +328,6 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             return debugBootstrapFile;
         }
 
-
         static (string[] scriptModulePaths, string scriptModuleDeclarations) DeclareScriptModules(IVariables variables, string parentDirectory)
         {
             var output = new StringBuilder();
@@ -341,8 +341,8 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
         {
             var scriptModules = new List<string>();
             foreach (var variableName in variables.GetNames().Where(ScriptVariables.IsLibraryScriptModule))
-            {
-                if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.PowerShell) {
+                if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.PowerShell)
+                {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
                     var name = "Library_" + new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
                     var moduleFileName = $"{name}.psm1";
@@ -353,7 +353,6 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                     output.AppendLine();
                     scriptModules.Add(moduleFilePath);
                 }
-            }
 
             return scriptModules.ToArray();
         }
@@ -382,9 +381,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             foreach (var variableName in variables.GetNames().Where(name => !ScriptVariables.IsLibraryScriptModule(name)))
             {
                 if (ScriptVariables.IsExcludedFromLocalVariables(variableName))
-                {
                     continue;
-                }
 
                 // This is the way we used to fix up the identifiers - people might still rely on this behavior
                 var legacyKey = new string(variableName.Where(char.IsLetterOrDigit).ToArray());
@@ -393,9 +390,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                 var smartKey = new string(variableName.Where(IsValidPowerShellIdentifierChar).ToArray());
 
                 if (legacyKey != smartKey)
-                {
                     WriteVariableAssignment(output, legacyKey, variableName);
-                }
 
                 WriteVariableAssignment(output, smartKey, variableName);
             }
@@ -420,7 +415,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             var bytes = Encoding.UTF8.GetBytes(value);
             return string.Format("[System.Text.Encoding]::UTF8.GetString(" + "[Convert]::FromBase64String(\"{0}\")" + ")", Convert.ToBase64String(bytes));
         }
-        
+
         static string EncodeAsBase64(string value)
         {
             var bytes = Encoding.UTF8.GetBytes(value);

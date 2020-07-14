@@ -1,11 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Calamari.Common.Plumbing;
 
 namespace Calamari.Common.Features.Scripts
 {
     public static class ScriptSyntaxHelper
     {
-        private static readonly ScriptSyntax[] ScriptSyntaxPreferencesNonWindows = new[]
+        static readonly ScriptSyntax[] ScriptSyntaxPreferencesNonWindows =
         {
             ScriptSyntax.Bash,
             ScriptSyntax.Python,
@@ -14,7 +15,7 @@ namespace Calamari.Common.Features.Scripts
             ScriptSyntax.PowerShell
         };
 
-        private static readonly ScriptSyntax[] ScriptSyntaxPreferencesWindows = new[]
+        static readonly ScriptSyntax[] ScriptSyntaxPreferencesWindows =
         {
             ScriptSyntax.PowerShell,
             ScriptSyntax.Python,
@@ -25,14 +26,14 @@ namespace Calamari.Common.Features.Scripts
 
         public static ScriptSyntax GetPreferredScriptSyntaxForEnvironment()
         {
-            return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
+            return CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac
                 ? ScriptSyntaxPreferencesNonWindows.First()
                 : ScriptSyntaxPreferencesWindows.First();
         }
 
         public static ScriptSyntax[] GetPreferenceOrderedScriptSyntaxesForEnvironment()
         {
-            return (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
+            return CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac
                 ? ScriptSyntaxPreferencesNonWindows
                 : ScriptSyntaxPreferencesWindows;
         }

@@ -10,13 +10,13 @@ namespace Calamari.Common.Features.Processes.Semaphores
 {
     public class SystemSemaphoreManager : ISemaphoreFactory
     {
-        private readonly ILog log;
-        private readonly int initialWaitBeforeShowingLogMessage;
+        readonly ILog log;
+        readonly int initialWaitBeforeShowingLogMessage;
 
         public SystemSemaphoreManager()
         {
-            this.log = ConsoleLog.Instance;
-            this.initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
+            log = ConsoleLog.Instance;
+            initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
         }
 
         public SystemSemaphoreManager(ILog log, TimeSpan initialWaitBeforeShowingLogMessage)
@@ -69,7 +69,6 @@ namespace Calamari.Common.Features.Processes.Semaphores
             });
         }
 
-
         IDisposable AcquireMutex(string name, string waitMessage)
         {
             var globalName = $"Global\\{name}";
@@ -112,10 +111,9 @@ namespace Calamari.Common.Features.Processes.Semaphores
             return semaphore;
         }
 
-
         class Releaser : IDisposable
         {
-            private readonly Action dispose;
+            readonly Action dispose;
 
             public Releaser(Action dispose)
             {
@@ -127,7 +125,5 @@ namespace Calamari.Common.Features.Processes.Semaphores
                 dispose();
             }
         }
-
-
     }
 }

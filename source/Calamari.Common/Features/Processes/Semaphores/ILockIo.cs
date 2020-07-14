@@ -1,3 +1,5 @@
+using System;
+
 namespace Calamari.Common.Features.Processes.Semaphores
 {
     public interface ILockIo

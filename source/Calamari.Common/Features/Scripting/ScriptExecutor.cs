@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Common.Features.Processes;
@@ -13,11 +14,13 @@ namespace Calamari.Common.Features.Scripting
     {
         static readonly string CopyWorkingDirectoryVariable = "Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo";
 
-        public CommandResult Execute(Script script, IVariables variables, ICommandLineRunner commandLineRunner,
+        public CommandResult Execute(Script script,
+            IVariables variables,
+            ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars = null)
         {
             var environmentVariablesIncludingProxy = environmentVars ?? new Dictionary<string, string>();
-            foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables()) 
+            foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
                 environmentVariablesIncludingProxy[proxyVariable.Key] = proxyVariable.Value;
 
             var prepared = PrepareExecution(script, variables, environmentVariablesIncludingProxy);
@@ -26,25 +29,21 @@ namespace Calamari.Common.Features.Scripting
             foreach (var execution in prepared)
             {
                 if (variables.IsSet(CopyWorkingDirectoryVariable))
-                {
-                    CopyWorkingDirectory(variables, execution.CommandLineInvocation.WorkingDirectory,
+                    CopyWorkingDirectory(variables,
+                        execution.CommandLineInvocation.WorkingDirectory,
                         execution.CommandLineInvocation.Arguments);
-                }
 
                 try
                 {
                     if (execution.CommandLineInvocation.Isolate)
-                    {
-                        using (SemaphoreFactory.Get().Acquire("CalamariSynchronizeProcess",
-                            "Waiting for other process to finish executing script"))
-                        { 
+                        using (SemaphoreFactory.Get()
+                            .Acquire("CalamariSynchronizeProcess",
+                                "Waiting for other process to finish executing script"))
+                        {
                             result = commandLineRunner.Execute(execution.CommandLineInvocation);
                         }
-                    }
                     else
-                    {
                         result = commandLineRunner.Execute(execution.CommandLineInvocation);
-                    }
 
                     if (result.ExitCode != 0)
                         return result;
@@ -62,9 +61,10 @@ namespace Calamari.Common.Features.Scripting
             return result;
         }
 
-        protected abstract IEnumerable<ScriptExecution> PrepareExecution(Script script, IVariables variables,
+        protected abstract IEnumerable<ScriptExecution> PrepareExecution(Script script,
+            IVariables variables,
             Dictionary<string, string> environmentVars = null);
-        
+
         static void CopyWorkingDirectory(IVariables variables, string workingDirectory, string arguments)
         {
             var fs = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -96,7 +96,7 @@ namespace Calamari.Common.Features.Scripting
                 CommandLineInvocation = commandLineInvocation;
                 TemporaryFiles = temporaryFiles;
             }
-            
+
             public CommandLineInvocation CommandLineInvocation { get; }
             public IEnumerable<string> TemporaryFiles { get; }
         }

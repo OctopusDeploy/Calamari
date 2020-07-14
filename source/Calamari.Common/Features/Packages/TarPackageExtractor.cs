@@ -6,6 +6,7 @@ using SharpCompress.Readers;
 using SharpCompress.Readers.Tar;
 #if !NET40
 using Polly;
+
 #endif
 
 namespace Calamari.Common.Features.Packages
@@ -13,13 +14,14 @@ namespace Calamari.Common.Features.Packages
     public class TarPackageExtractor : IPackageExtractor
     {
         readonly ILog log;
-        public virtual string[] Extensions => new[] { ".tar" };
 
         public TarPackageExtractor(ILog log)
         {
             this.log = log;
         }
-        
+
+        public virtual string[] Extensions => new[] { ".tar" };
+
         public int Extract(string packageFile, string directory)
         {
             var files = 0;
@@ -40,11 +42,10 @@ namespace Calamari.Common.Features.Packages
                 finally
                 {
                     if (compressionStream != inStream)
-                    {
                         compressionStream.Dispose();
-                    }
                 }
             }
+
             return files;
         }
 
@@ -54,10 +55,14 @@ namespace Calamari.Common.Features.Packages
             reader.WriteEntryToDirectory(directory, new PackageExtractionOptions(log));
 #else
             var extractAttempts = 10;
-            Policy.Handle<IOException>().WaitAndRetry(
-                    retryCount: extractAttempts,
-                    sleepDurationProvider: i => TimeSpan.FromMilliseconds(50),
-                    onRetry: (ex, retry) => { log.Verbose($"Failed to extract: {ex.Message}. Retry in {retry.Milliseconds} milliseconds."); })
+            Policy.Handle<IOException>()
+                .WaitAndRetry(
+                    extractAttempts,
+                    i => TimeSpan.FromMilliseconds(50),
+                    (ex, retry) =>
+                    {
+                        log.Verbose($"Failed to extract: {ex.Message}. Retry in {retry.Milliseconds} milliseconds.");
+                    })
                 .Execute(() =>
                 {
                     reader.WriteEntryToDirectory(directory, new PackageExtractionOptions(log));
@@ -72,7 +77,8 @@ namespace Calamari.Common.Features.Packages
 
         protected void ProcessEvent(ref int filesExtracted, IEntry entry)
         {
-            if (entry.IsDirectory) return;
+            if (entry.IsDirectory)
+                return;
 
             filesExtracted++;
         }

@@ -47,12 +47,12 @@ namespace Calamari.Common.Features.Packages
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(pathToPackage))	
-                {	
-                    log.Verbose("No package path defined. Skipping package extraction.");	
-                    return;	
+                if (string.IsNullOrWhiteSpace(pathToPackage))
+                {
+                    log.Verbose("No package path defined. Skipping package extraction.");
+                    return;
                 }
-                
+
                 log.Verbose("Extracting package to: " + targetPath);
 
                 var extractorToUse = customPackageExtractor ?? combinedPackageExtractor;
@@ -78,6 +78,8 @@ namespace Calamari.Common.Features.Packages
         }
 
         void LogAccessDenied()
-            => log.Error("Failed to extract the package because access to the package was denied. This may have happened because anti-virus software is scanning the file. Try disabling your anti-virus software in order to rule this out.");
+        {
+            log.Error("Failed to extract the package because access to the package was denied. This may have happened because anti-virus software is scanning the file. Try disabling your anti-virus software in order to rule this out.");
+        }
     }
 }

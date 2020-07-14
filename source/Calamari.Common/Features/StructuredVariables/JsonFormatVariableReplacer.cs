@@ -16,7 +16,7 @@ namespace Calamari.Common.Features.StructuredVariables
     public class JsonFormatVariableReplacer : IJsonFormatVariableReplacer
     {
         public string FileFormatName => "JSON";
-        
+
         public bool TryModifyFile(string filePath, IVariables variables)
         {
             JToken root;
@@ -68,36 +68,28 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public class JsonUpdateMap
     {
-        private readonly IDictionary<string, Action<string>> map = new SortedDictionary<string, Action<string>>(StringComparer.OrdinalIgnoreCase);
-        private readonly Stack<string> path = new Stack<string>();
-        private string key;
+        readonly IDictionary<string, Action<string>> map = new SortedDictionary<string, Action<string>>(StringComparer.OrdinalIgnoreCase);
+        readonly Stack<string> path = new Stack<string>();
+        string key;
 
         public void Load(JToken json)
         {
             if (json.Type == JTokenType.Array)
-            {
                 MapArray(json.Value<JArray>(), true);
-            }
             else
-            {
                 MapObject(json, true);
-            }
         }
 
-        private void MapObject(JToken j, bool first = false)
+        void MapObject(JToken j, bool first = false)
         {
             if (!first)
-            {
                 map[key] = t => j.Replace(JToken.Parse(t));
-            }
 
             foreach (var property in j.Children<JProperty>())
-            {
                 MapProperty(property);
-            }
         }
 
-        private void MapToken(JToken token)
+        void MapToken(JToken token)
         {
             switch (token.Type)
             {
@@ -124,19 +116,19 @@ namespace Calamari.Common.Features.StructuredVariables
             }
         }
 
-        private void MapProperty(JProperty property)
+        void MapProperty(JProperty property)
         {
             PushPath(property.Name);
             MapToken(property.Value);
             PopPath();
         }
 
-        private void MapDefault(JToken value)
+        void MapDefault(JToken value)
         {
             map[key] = t => value.Replace(t == null ? null : JToken.FromObject(t));
         }
 
-        private void MapNumber(JToken value)
+        void MapNumber(JToken value)
         {
             map[key] = t =>
             {
@@ -146,17 +138,19 @@ namespace Calamari.Common.Features.StructuredVariables
                     value.Replace(JToken.FromObject(longvalue));
                     return;
                 }
+
                 double doublevalue;
                 if (double.TryParse(t, out doublevalue))
                 {
                     value.Replace(JToken.FromObject(doublevalue));
                     return;
                 }
+
                 value.Replace(JToken.FromObject(t));
             };
         }
 
-        private void MapBool(JToken value)
+        void MapBool(JToken value)
         {
             map[key] = t =>
             {
@@ -166,16 +160,15 @@ namespace Calamari.Common.Features.StructuredVariables
                     value.Replace(JToken.FromObject(boolvalue));
                     return;
                 }
+
                 value.Replace(JToken.FromObject(t));
             };
         }
 
-        private void MapArray(JContainer array, bool first = false)
+        void MapArray(JContainer array, bool first = false)
         {
             if (!first)
-            {
                 map[key] = t => array.Replace(JToken.Parse(t));
-            }
 
             for (var index = 0; index < array.Count; index++)
             {
@@ -185,13 +178,13 @@ namespace Calamari.Common.Features.StructuredVariables
             }
         }
 
-        private void PushPath(string p)
+        void PushPath(string p)
         {
             path.Push(p);
             key = string.Join(":", path.Reverse());
         }
 
-        private void PopPath()
+        void PopPath()
         {
             path.Pop();
             key = string.Join(":", path.Reverse());
@@ -206,19 +199,14 @@ namespace Calamari.Common.Features.StructuredVariables
                     // Only include variables starting with 'Octopus'
                     // if it also has a colon (:)
                     if (v.StartsWith("Octopus:", StringComparison.OrdinalIgnoreCase))
-                    {
                         return map.ContainsKey(v);
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return false;
                 }
+
                 return map.ContainsKey(v);
             }
 
             foreach (var name in variables.GetNames().Where(VariableNameIsNotASystemVariable))
-            {
                 try
                 {
                     map[name](variables.Get(name));
@@ -227,7 +215,6 @@ namespace Calamari.Common.Features.StructuredVariables
                 {
                     Log.WarnFormat("Unable to set value for {0}. The following error occurred: {1}", name, e.Message);
                 }
-            }
         }
     }
 }

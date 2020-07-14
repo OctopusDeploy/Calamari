@@ -23,16 +23,12 @@ namespace Calamari.Common.Plumbing
             // Enum.IsDefined is used as even though it may be compiled against net40 which does not have the flag
             // if at runtime it runs on say net475 the flags are present
             if (Enum.IsDefined(typeof(SecurityProtocolType), 768))
-                securityProcotolTypes = securityProcotolTypes | (SecurityProtocolType) 768;
+                securityProcotolTypes = securityProcotolTypes | (SecurityProtocolType)768;
 
             if (Enum.IsDefined(typeof(SecurityProtocolType), 3072))
-            {
-                securityProcotolTypes = securityProcotolTypes | (SecurityProtocolType) 3072;
-            }
+                securityProcotolTypes = securityProcotolTypes | (SecurityProtocolType)3072;
             else
-            {
                 Log.Verbose($"TLS1.2 is not supported, this means that some outgoing connections to third party endpoints will not work as they now only support TLS1.2.{Environment.NewLine}This includes GitHub feeds and Maven feeds.");
-            }
 
             ServicePointManager.SecurityProtocol = securityProcotolTypes;
         }

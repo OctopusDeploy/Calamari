@@ -13,8 +13,10 @@ namespace Calamari.Common.Plumbing.Extensions
             return originalString.IndexOf(value, StringComparison.OrdinalIgnoreCase) != -1;
         }
 
-        public static string EscapeSingleQuotedString(this string str) =>
-            str.Replace("'", "''");
+        public static string EscapeSingleQuotedString(this string str)
+        {
+            return str.Replace("'", "''");
+        }
 
         public static byte[] EncodeInUtf8Bom(this string source)
         {
@@ -31,9 +33,7 @@ namespace Calamari.Common.Plumbing.Extensions
             // Adapted from https://stackoverflow.com/a/340454
             var uri = new Uri(source);
             if (!baseDirectory.EndsWith(Path.DirectorySeparatorChar.ToString()))
-            {
                 baseDirectory += Path.DirectorySeparatorChar.ToString();
-            }
             var baseUri = new Uri(baseDirectory);
 
             var relativeUri = baseUri.MakeRelativeUri(uri);
@@ -41,16 +41,18 @@ namespace Calamari.Common.Plumbing.Extensions
 
             return relativePath;
         }
-        
+
         public static bool IsValidUrl(this string value)
         {
             if (string.IsNullOrWhiteSpace(value))
                 return false;
 
-            return Uri.TryCreate(value, UriKind.Absolute, out var _);
+            return Uri.TryCreate(value, UriKind.Absolute, out _);
         }
 
         public static string Join(this IEnumerable<string> values, string separator)
-            => string.Join(separator, values);
+        {
+            return string.Join(separator, values);
+        }
     }
 }

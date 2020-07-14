@@ -4,8 +4,9 @@ namespace Calamari.Common.Features.Scripting
 {
     public class InvalidScriptException : Exception
     {
-        public InvalidScriptException(string message) : base(message)
-        {            
+        public InvalidScriptException(string message)
+            : base(message)
+        {
         }
     }
 }

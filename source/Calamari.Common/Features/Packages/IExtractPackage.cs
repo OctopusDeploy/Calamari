@@ -1,3 +1,4 @@
+using System;
 using Calamari.Common.Plumbing.Deployment;
 
 namespace Calamari.Common.Features.Packages
