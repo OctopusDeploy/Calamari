@@ -76,8 +76,13 @@ namespace Calamari.Common.Features.StructuredVariables
                                 && node is YamlNode<MappingEnd> mappingEnd
                                 && variablesByKey.TryGetValue(mappingEnd.Path, out string mappingReplacementValue))
                             {
-                                outputEvent = new Scalar(mappingStart.Event.Anchor, mappingStart.Event.Tag,
-                                    mappingReplacementValue, ScalarStyle.DoubleQuoted, true, true,
+                                outputEvent = new Scalar(
+                                    mappingStart.Event.Anchor,
+                                    mappingStart.Event.Tag,
+                                    mappingReplacementValue,
+                                    ScalarStyle.DoubleQuoted,
+                                    true,
+                                    true,
                                     mappingStart.Event.Start,
                                     mappingStart.Event.End);
                                 replacing = null;
@@ -88,8 +93,13 @@ namespace Calamari.Common.Features.StructuredVariables
                                      && variablesByKey.TryGetValue(sequenceEnd.Path,
                                          out string sequenceReplacementValue))
                             {
-                                outputEvent = new Scalar(sequenceStart.Event.Anchor, sequenceStart.Event.Tag,
-                                    sequenceReplacementValue, ScalarStyle.DoubleQuoted, true, true,
+                                outputEvent = new Scalar(
+                                    sequenceStart.Event.Anchor,
+                                    sequenceStart.Event.Tag,
+                                    sequenceReplacementValue,
+                                    ScalarStyle.DoubleQuoted,
+                                    true,
+                                    true,
                                     sequenceStart.Event.Start,
                                     sequenceStart.Event.End);
                                 replacing = null;
