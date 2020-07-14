@@ -19,12 +19,14 @@ namespace Calamari.CommonTemp
             this.fileSystem = fileSystem;
         }
 
-        public Task Execute(RunningDeployment deployment)
+        public bool IsEnabled(RunningDeployment context)
         {
-            if (!deployment.Variables.GetFlag(KnownVariables.Package.JsonConfigurationVariablesEnabled))
-                return this.CompletedTask();
+            return context.Variables.GetFlag(KnownVariables.Package.JsonConfigurationVariablesEnabled);
+        }
 
-            foreach (var target in deployment.Variables.GetPaths(KnownVariables.Package.JsonConfigurationVariablesTargets))
+        public Task Execute(RunningDeployment context)
+        {
+            foreach (var target in context.Variables.GetPaths(KnownVariables.Package.JsonConfigurationVariablesTargets))
             {
                 if (fileSystem.DirectoryExists(target))
                 {
@@ -32,7 +34,7 @@ namespace Calamari.CommonTemp
                     continue;
                 }
 
-                var matchingFiles = MatchingFiles(deployment, target);
+                var matchingFiles = MatchingFiles(context, target);
 
                 if (!matchingFiles.Any())
                 {
@@ -43,7 +45,7 @@ namespace Calamari.CommonTemp
                 foreach (var file in matchingFiles)
                 {
                     Log.Info($"Performing JSON variable replacement on '{file}'");
-                    jsonConfigurationVariableReplacer.ModifyJsonFile(file, deployment.Variables);
+                    jsonConfigurationVariableReplacer.ModifyJsonFile(file, context.Variables);
                 }
             }
 

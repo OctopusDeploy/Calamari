@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
+using Calamari.Commands.Support;
+using Calamari.CommonTemp;
+using Calamari.Integration.FileSystem;
 using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
@@ -10,11 +14,25 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Shared.Helpers;
 using Calamari.Tests.Shared.LogParser;
 using FluentAssertions;
+using KnownVariables = Calamari.Common.Variables.KnownVariables;
 
 namespace Calamari.Tests.Shared
 {
     public static class CommandTestBuilder
     {
+        public static CommandTestBuilder<TCalamari> CreateAsync<TCalamari>(string command)
+            where TCalamari : Calamari.CommonTemp.CalamariFlavourProgramAsync
+        {
+            return new CommandTestBuilder<TCalamari>(command);
+        }
+
+        public static CommandTestBuilder<TCalamari> CreateAsync<TCommand, TCalamari>()
+            where TCalamari : Calamari.CommonTemp.CalamariFlavourProgramAsync
+            where TCommand : PipelineCommand
+        {
+            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+        }
+
         public static CommandTestBuilder<TCalamari> Create<TCalamari>(string command)
             where TCalamari : CalamariFlavourProgram
         {
@@ -62,7 +80,7 @@ namespace Calamari.Tests.Shared
             return this;
         }
 
-        public TestCalamariCommandResult Execute(bool assertWasSuccess = true)
+        public async Task<TestCalamariCommandResult> Execute(bool assertWasSuccess = true)
         {
             var context = new CommandTestBuilderContext();
 
@@ -115,7 +133,7 @@ namespace Calamari.Tests.Shared
                 }
             }
 
-            TestCalamariCommandResult ExecuteActionHandler(List<string> args)
+            async Task<TestCalamariCommandResult> ExecuteActionHandler(List<string> args)
             {
                 var inMemoryLog = new InMemoryLog();
                 var constructor = typeof(TCalamariProgram).GetConstructor(
@@ -133,13 +151,21 @@ namespace Calamari.Tests.Shared
                 });
 
                 var methodInfo =
-                    typeof(CalamariFlavourProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
+                    typeof(TCalamariProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
                 if (methodInfo == null)
                 {
-                    throw new Exception("CalamariFlavourProgram.Run method was not found.");
+                    throw new Exception($"{typeof(TCalamariProgram).Name}.Run method was not found.");
                 }
 
-                var exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+                int exitCode;
+                if (methodInfo.ReturnType.IsGenericType)
+                {
+                    exitCode = await (Task<int>) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+                }
+                else
+                {
+                    exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+                }
                 var serverInMemoryLog = new ServerInMemoryLog();
 
                 var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
@@ -180,7 +206,7 @@ namespace Calamari.Tests.Shared
 
                     CopyFilesToWorkingFolder(workingPath);
 
-                    result = ExecuteActionHandler(args);
+                    result = await ExecuteActionHandler(args);
                 }
                 finally
                 {

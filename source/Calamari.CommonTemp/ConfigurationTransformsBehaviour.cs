@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Variables;
+using Calamari.CommonTemp.ConfigurationTransforms;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 
@@ -16,21 +17,23 @@ namespace Calamari.CommonTemp
         readonly ITransformFileLocator transformFileLocator;
         readonly ILog log;
 
-        public ConfigurationTransformsBehaviour(ICalamariFileSystem fileSystem, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog log)
+        public ConfigurationTransformsBehaviour(ICalamariFileSystem fileSystem, IVariables variables, ITransformFileLocator transformFileLocator, ILog log)
         {
             this.fileSystem = fileSystem;
-            this.configurationTransformer = configurationTransformer;
+            configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             this.transformFileLocator = transformFileLocator;
             this.log = log;
         }
 
-        public Task Execute(RunningDeployment deployment)
+        public bool IsEnabled(RunningDeployment deployment)
         {
             var features = deployment.Variables.GetStrings(KnownVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
 
-            if (!features.Contains(KnownVariables.Features.ConfigurationTransforms))
-                return this.CompletedTask();
+            return features.Contains(KnownVariables.Features.ConfigurationTransforms);
+        }
 
+        public Task Execute(RunningDeployment deployment)
+        {
             var explicitTransforms = GetExplicitTransforms(deployment);
             var automaticTransforms = GetAutomaticTransforms(deployment);
             var sourceExtensions = GetSourceExtensions(deployment, explicitTransforms);

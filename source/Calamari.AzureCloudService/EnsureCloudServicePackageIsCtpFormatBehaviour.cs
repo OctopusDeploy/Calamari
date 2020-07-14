@@ -19,15 +19,15 @@ namespace Calamari.AzureCloudService
             this.fileSystem = fileSystem;
         }
 
-        public Task Execute(RunningDeployment deployment)
+        public bool IsEnabled(RunningDeployment context)
         {
-            if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.CloudServicePackageExtractionDisabled, false))
-            {
-                return this.CompletedTask();
-            }
+            return !context.Variables.GetFlag(SpecialVariables.Action.Azure.CloudServicePackageExtractionDisabled);
+        }
 
+        public Task Execute(RunningDeployment context)
+        {
             log.VerboseFormat("Ensuring cloud-service-package is {0} format.", PackageFormats.V20120315.ToString());
-            var packagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
+            var packagePath = context.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
             var packageFormat = PackageConverter.GetFormat(packagePath);
 
             switch (packageFormat)

@@ -28,16 +28,21 @@ namespace Calamari.AzureCloudService
             this.fileSystem = fileSystem;
         }
 
-        public Task Execute(RunningDeployment deployment)
+        public bool IsEnabled(RunningDeployment context)
+        {
+            return true;
+        }
+
+        public Task Execute(RunningDeployment context)
         {
             // Validate we actually have a real path to the real config file since this value is potentially passed via variable or a previous convention
-            var configurationFilePath = deployment.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile);
+            var configurationFilePath = context.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile);
             if (!fileSystem.FileExists(configurationFilePath))
                 throw new CommandException("Could not find the Azure Cloud Service Configuration file: " + configurationFilePath);
 
             var configuration = XDocument.Parse(fileSystem.ReadFile(configurationFilePath));
-            UpdateConfigurationWithCurrentInstanceCount(configuration, configurationFilePath, deployment.Variables);
-            UpdateConfigurationSettings(configuration, deployment.Variables);
+            UpdateConfigurationWithCurrentInstanceCount(configuration, configurationFilePath, context.Variables);
+            UpdateConfigurationSettings(configuration, context.Variables);
             SaveConfigurationFile(configuration, configurationFilePath);
 
             return this.CompletedTask();

@@ -23,6 +23,11 @@ namespace Calamari.AzureWebApp
             this.log = log;
         }
 
+        public bool IsEnabled(RunningDeployment context)
+        {
+            return true;
+        }
+
         public async Task Execute(RunningDeployment deployment)
         {
             try

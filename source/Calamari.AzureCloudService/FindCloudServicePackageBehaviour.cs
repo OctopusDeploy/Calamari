@@ -17,6 +17,11 @@ namespace Calamari.AzureCloudService
             this.fileSystem = fileSystem;
         }
 
+        public bool IsEnabled(RunningDeployment context)
+        {
+            return true;
+        }
+
         public Task Execute(RunningDeployment context)
         {
             context.Variables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, FindPackage(context.CurrentDirectory));

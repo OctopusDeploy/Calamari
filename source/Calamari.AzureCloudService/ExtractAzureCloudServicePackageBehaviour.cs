@@ -22,17 +22,19 @@ namespace Calamari.AzureCloudService
             this.fileSystem = fileSystem;
         }
 
-        public Task Execute(RunningDeployment deployment)
+        public bool IsEnabled(RunningDeployment context)
         {
-            if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.CloudServicePackageExtractionDisabled, false))
-                return this.CompletedTask();
+            return !context.Variables.GetFlag(SpecialVariables.Action.Azure.CloudServicePackageExtractionDisabled);
+        }
 
-            var packagePath = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
+        public Task Execute(RunningDeployment context)
+        {
+            var packagePath = context.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
             log.VerboseFormat("Extracting Cloud Service package: '{0}'", packagePath);
             using (var package = Package.Open(packagePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 var manifest = AzureCloudServiceConventions.ReadPackageManifest(package);
-                var workingDirectory = deployment.CurrentDirectory;
+                var workingDirectory = context.CurrentDirectory;
 
                 ExtractContents(package, manifest, AzureCloudServiceConventions.PackageFolders.ServiceDefinition, workingDirectory);
                 ExtractContents(package, manifest, AzureCloudServiceConventions.PackageFolders.NamedStreams, workingDirectory);
@@ -40,10 +42,10 @@ namespace Calamari.AzureCloudService
             }
 
 
-            if (deployment.Variables.GetFlag(SpecialVariables.Action.Azure.LogExtractedCspkg))
-                LogExtractedPackage(deployment.CurrentDirectory);
+            if (context.Variables.GetFlag(SpecialVariables.Action.Azure.LogExtractedCspkg))
+                LogExtractedPackage(context.CurrentDirectory);
 
-            log.SetOutputVariable(SpecialVariables.Action.Azure.PackageExtractionPath, deployment.CurrentDirectory, deployment.Variables);
+            log.SetOutputVariable(SpecialVariables.Action.Azure.PackageExtractionPath, context.CurrentDirectory, context.Variables);
 
             return this.CompletedTask();
         }

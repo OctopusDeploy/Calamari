@@ -9,6 +9,7 @@ using Autofac.Core.Registration;
 using Calamari.Commands.Support;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Variables;
+using Calamari.CommonTemp.ConfigurationTransforms;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
@@ -45,6 +46,10 @@ namespace Calamari.CommonTemp
             builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
             builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
+            builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
+            builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
+            builder.RegisterType<JsonConfigurationVariableReplacer>().As<IJsonConfigurationVariableReplacer>();
+            builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
@@ -66,10 +71,10 @@ namespace Calamari.CommonTemp
                 .Named<ICommandAsync>(t => t.GetCustomAttribute<CommandAttribute>().Name);
 
             builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<CommandPipelineRegistration>()
+                .AssignableTo<PipelineCommand>()
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
                     .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
-                .Named<CommandPipelineRegistration>(t => t.GetCustomAttribute<CommandAttribute>().Name);
+                .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>().Name);
         }
 
         Assembly GetProgramAssemblyToRegister()
@@ -123,18 +128,18 @@ namespace Calamari.CommonTemp
                 yield return programAssembly; // Calamari Flavour
             }
 
-            yield return typeof(CalamariFlavourProgram).Assembly; // Calamari.Common
+            yield return typeof(CalamariFlavourProgramAsync).Assembly; // Calamari.Common
         }
 
         Task ResolveAndExecuteCommand(ILifetimeScope container, CommonOptions options)
         {
             try
             {
-                if (container.IsRegisteredWithName<CommandPipelineRegistration>(options.Command))
+                if (container.IsRegisteredWithName<PipelineCommand>(options.Command))
                 {
-                    var pipelineRegistration = container.ResolveNamed<CommandPipelineRegistration>(options.Command);
+                    var pipeline = container.ResolveNamed<PipelineCommand>(options.Command);
                     var variables = container.Resolve<IVariables>();
-                    return new ExecutorCommand(container, pipelineRegistration, variables).Execute();
+                    return pipeline.Execute(container, variables);
                 }
 
                 var command = container.ResolveNamed<ICommandAsync>(options.Command);

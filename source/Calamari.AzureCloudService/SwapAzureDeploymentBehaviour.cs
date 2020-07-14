@@ -31,6 +31,11 @@ namespace Calamari.AzureCloudService
             this.commandLineRunner = commandLineRunner;
         }
 
+        public bool IsEnabled(RunningDeployment context)
+        {
+            return true;
+        }
+
         public Task Execute(RunningDeployment context)
         {
             log.SetOutputVariable("OctopusAzureServiceName", context.Variables.Get(SpecialVariables.Action.Azure.CloudServiceName), context.Variables);

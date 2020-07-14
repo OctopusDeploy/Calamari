@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Autofac;
+using Calamari;
 using Calamari.Common;
 using FluentAssertions;
 using Octopus.Diagnostics;
@@ -12,21 +13,33 @@ namespace Sashimi.Tests.Shared.Server
 {
     public static class ActionHandlerTestBuilder
     {
-        public static ActionHandlerTestBuilder<TCalamari> Create<TActionHandler, TCalamari>() 
+        public static ActionHandlerTestBuilder<TCalamari> CreateAsync<TActionHandler, TCalamari>()
+            where TActionHandler : IActionHandler
+            where TCalamari : Calamari.CommonTemp.CalamariFlavourProgramAsync
+        {
+            return new ActionHandlerTestBuilder<TCalamari>(typeof(TActionHandler));
+        }
+
+        public static ActionHandlerTestBuilder<TCalamari> CreateAsync<TCalamari>(Type actionHandlerType)
+            where TCalamari : Calamari.CommonTemp.CalamariFlavourProgramAsync
+        {
+            return new ActionHandlerTestBuilder<TCalamari>(actionHandlerType);
+        }
+
+        public static ActionHandlerTestBuilder<TCalamari> Create<TActionHandler, TCalamari>()
             where TActionHandler : IActionHandler
             where TCalamari : CalamariFlavourProgram
         {
             return new ActionHandlerTestBuilder<TCalamari>(typeof(TActionHandler));
         }
-        
-        public static ActionHandlerTestBuilder<TCalamari> Create<TCalamari>(Type actionHandlerType) 
+
+        public static ActionHandlerTestBuilder<TCalamari> Create<TCalamari>(Type actionHandlerType)
             where TCalamari : CalamariFlavourProgram
         {
             return new ActionHandlerTestBuilder<TCalamari>(actionHandlerType);
         }
 
         public static TestActionHandlerContext<TCalamariProgram> WithPackage<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string path)
-            where TCalamariProgram : CalamariFlavourProgram
         {
             context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(path));
             context.Variables.Add(KnownVariables.Action.Packages.PackageId, path);
@@ -35,13 +48,12 @@ namespace Sashimi.Tests.Shared.Server
             return context;
         }
     }
-    
-    public class ActionHandlerTestBuilder<TCalamariProgram> 
-        where TCalamariProgram : CalamariFlavourProgram
+
+    public class ActionHandlerTestBuilder<TCalamariProgram>
     {
         readonly List<Action<TestActionHandlerContext<TCalamariProgram>>> arrangeActions;
         Action<TestActionHandlerResult>? assertAction;
-        Type actionHandlerType;
+        readonly Type actionHandlerType;
 
         public ActionHandlerTestBuilder(Type actionHandlerType)
         {
@@ -71,7 +83,7 @@ namespace Sashimi.Tests.Shared.Server
 
             foreach (var arrangeAction in arrangeActions)
             {
-                arrangeAction?.Invoke(context);    
+                arrangeAction?.Invoke(context);
             }
 
             TestActionHandlerResult result;

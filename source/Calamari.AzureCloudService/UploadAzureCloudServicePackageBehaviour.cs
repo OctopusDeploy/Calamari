@@ -21,24 +21,29 @@ namespace Calamari.AzureCloudService
             this.azurePackageUploader = azurePackageUploader;
         }
 
-        public Task Execute(RunningDeployment deployment)
+        public bool IsEnabled(RunningDeployment context)
         {
-            var package = deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
+            return true;
+        }
+
+        public Task Execute(RunningDeployment context)
+        {
+            var package = context.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
             log.InfoFormat("Uploading package to Azure blob storage: '{0}'", package);
             var packageHash = HashCalculator.Hash(package);
-            var nugetPackageVersion = deployment.Variables.Get(PackageVariables.PackageVersion);
+            var nugetPackageVersion = context.Variables.Get(PackageVariables.PackageVersion);
             var uploadedFileName = Path.ChangeExtension(Path.GetFileName(package), "." + nugetPackageVersion + "_" + packageHash + ".cspkg");
 
-            var credentials = GetCredentials(deployment.Variables);
+            var credentials = GetCredentials(context.Variables);
 
-            var storageAccountName = deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName);
+            var storageAccountName = context.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName);
             var storageEndpointSuffix =
-                deployment.Variables.Get(SpecialVariables.Action.Azure.StorageEndPointSuffix, DefaultVariables.StorageEndpointSuffix);
+                context.Variables.Get(SpecialVariables.Action.Azure.StorageEndPointSuffix, DefaultVariables.StorageEndpointSuffix);
             var defaultServiceManagementEndpoint =
-                deployment.Variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
+                context.Variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
             var uploadedUri = azurePackageUploader.Upload(credentials, storageAccountName, package, uploadedFileName,storageEndpointSuffix, defaultServiceManagementEndpoint);
 
-            log.SetOutputVariable(SpecialVariables.Action.Azure.UploadedPackageUri, uploadedUri.ToString(), deployment.Variables);
+            log.SetOutputVariable(SpecialVariables.Action.Azure.UploadedPackageUri, uploadedUri.ToString(), context.Variables);
             log.Info($"Package uploaded to {uploadedUri}");
 
             return this.CompletedTask();

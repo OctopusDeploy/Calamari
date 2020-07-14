@@ -21,11 +21,16 @@ namespace Calamari.AzureCloudService
             this.fileSystem = fileSystem;
         }
 
-        public Task Execute(RunningDeployment deployment)
+        public bool IsEnabled(RunningDeployment context)
         {
-            var configurationFile = ChooseWhichConfigurationFileToUse(deployment);
+            return true;
+        }
+
+        public Task Execute(RunningDeployment context)
+        {
+            var configurationFile = ChooseWhichConfigurationFileToUse(context);
             log.SetOutputVariable(SpecialVariables.Action.Azure.Output.ConfigurationFile,
-                configurationFile, deployment.Variables);
+                configurationFile, context.Variables);
 
             return this.CompletedTask();
         }

@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Calamari.Common.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 
@@ -11,6 +12,11 @@ namespace Calamari.CommonTemp
         public SubstituteInFilesBehaviour(ISubstituteInFiles substituteInFiles)
         {
             this.substituteInFiles = substituteInFiles;
+        }
+
+        public bool IsEnabled(RunningDeployment context)
+        {
+            return context.Variables.GetFlag(PackageVariables.SubstituteInFilesEnabled);
         }
 
         public Task Execute(RunningDeployment context)

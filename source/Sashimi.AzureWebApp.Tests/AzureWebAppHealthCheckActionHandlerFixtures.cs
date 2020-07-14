@@ -41,7 +41,6 @@ namespace Sashimi.AzureWebApp.Tests
                     .WithRegion(Region.USWest)
                     .CreateAsync();
 
-
                 var appServicePlan = await azure.AppServices.AppServicePlans
                     .Define(SdkContext.RandomResourceName(nameof(AzureWebAppHealthCheckActionHandlerFixtures), 60))
                     .WithRegion(resourceGroup.Region)
@@ -58,7 +57,7 @@ namespace Sashimi.AzureWebApp.Tests
                     .WithRuntimeStack(WebAppRuntimeStack.NETCore)
                     .CreateAsync();
 
-                ActionHandlerTestBuilder.Create<AzureWebAppHealthCheckActionHandler, Program>()
+                ActionHandlerTestBuilder.CreateAsync<AzureWebAppHealthCheckActionHandler, Program>()
                     .WithArrange(context =>
                     {
                         context.Variables.Add(AzureAccountVariables.SubscriptionId,
@@ -94,7 +93,7 @@ namespace Sashimi.AzureWebApp.Tests
             var tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             var subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
 
-            ActionHandlerTestBuilder.Create<AzureWebAppHealthCheckActionHandler, Program>()
+            ActionHandlerTestBuilder.CreateAsync<AzureWebAppHealthCheckActionHandler, Program>()
                 .WithArrange(context =>
                 {
                     context.Variables.Add(AzureAccountVariables.SubscriptionId,

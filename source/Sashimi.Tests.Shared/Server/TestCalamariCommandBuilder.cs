@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
+using Calamari;
+using Calamari.Integration.FileSystem;
 using Calamari.Common;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -18,7 +21,7 @@ using Sashimi.Server.Contracts.DeploymentTools;
 
 namespace Sashimi.Tests.Shared.Server
 {
-    class TestCalamariCommandBuilder<TCalamariProgram> : ICalamariCommandBuilder where TCalamariProgram : CalamariFlavourProgram
+    class TestCalamariCommandBuilder<TCalamariProgram> : ICalamariCommandBuilder
     {
         public TestCalamariCommandBuilder(CalamariFlavour calamariFlavour, string calamariCommand)
         {
@@ -119,7 +122,7 @@ namespace Sashimi.Tests.Shared.Server
 
                     CopyFilesToWorkingFolder(workingPath);
 
-                    return ExecuteActionHandler(args);
+                    return ExecuteActionHandler(args).GetAwaiter().GetResult();
                 }
                 finally
                 {
@@ -170,7 +173,7 @@ namespace Sashimi.Tests.Shared.Server
             }
         }
 
-        IActionHandlerResult ExecuteActionHandler(List<string> args)
+        async Task<IActionHandlerResult> ExecuteActionHandler(List<string> args)
         {
             AssertMatchingCalamariFlavour();
 
@@ -190,13 +193,22 @@ namespace Sashimi.Tests.Shared.Server
             });
 
             var methodInfo =
-                typeof(CalamariFlavourProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
+                typeof(TCalamariProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
             if (methodInfo == null)
             {
-                throw new Exception("CalamariFlavourProgram.Run method was not found.");
+                throw new Exception($"{typeof(TCalamariProgram).Name}.Run method was not found.");
             }
 
-            var exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+            int exitCode;
+            if (methodInfo.ReturnType.IsGenericType)
+            {
+                exitCode = await (Task<int>) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+            }
+            else
+            {
+                exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+            }
+
             var serverInMemoryLog = new ServerInMemoryLog();
 
             var outputFilter = new ScriptOutputFilter(serverInMemoryLog);

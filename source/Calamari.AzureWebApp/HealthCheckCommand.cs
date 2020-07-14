@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.Commands.Support;
+using Calamari.CommonTemp;
+using Calamari.Deployment;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.WebSites;
@@ -8,21 +11,27 @@ using Microsoft.Azure.Management.WebSites;
 namespace Calamari.AzureWebApp
 {
     [Command("health-check", Description = "Run a health check on a DeploymentTargetType")]
-    public class HealthCheckCommand : ICommandAsync
+    public class HealthCheckCommand : PipelineCommand
     {
-        readonly IVariables variables;
-
-        public HealthCheckCommand(IVariables variables)
+        protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
-            this.variables = variables;
+            yield return resolver.Create<HealthCheckBehaviour>();
+        }
+    }
+
+    class HealthCheckBehaviour: IDeployBehaviour
+    {
+        public bool IsEnabled(RunningDeployment context)
+        {
+            return true;
         }
 
-        public Task Execute()
+        public Task Execute(RunningDeployment context)
         {
-            var account = new AzureServicePrincipalAccount(variables);
+            var account = new AzureServicePrincipalAccount(context.Variables);
 
-            var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
-            var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
+            var resourceGroupName = context.Variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
+            var webAppName = context.Variables.Get(SpecialVariables.Action.Azure.WebAppName);
 
             return ConfirmWebAppExists(account, resourceGroupName, webAppName);
         }

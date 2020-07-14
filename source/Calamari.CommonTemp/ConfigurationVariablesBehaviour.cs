@@ -19,21 +19,21 @@ namespace Calamari.CommonTemp
             this.log = log;
         }
 
-        public Task Execute(RunningDeployment deployment)
+        public bool IsEnabled(RunningDeployment context)
         {
-            if (deployment.Variables.GetFlag(KnownVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings) == false)
-            {
-                return this.CompletedTask();
-            }
+            return context.Variables.GetFlag(KnownVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings);
+        }
 
-            var appliedAsTransforms = deployment.Variables.GetStrings(KnownVariables.AppliedXmlConfigTransforms, '|');
+        public Task Execute(RunningDeployment context)
+        {
+            var appliedAsTransforms = context.Variables.GetStrings(KnownVariables.AppliedXmlConfigTransforms, '|');
 
             log.Verbose("Looking for appSettings, applicationSettings, and connectionStrings in any .config files");
 
-            if (deployment.Variables.GetFlag(KnownVariables.Package.IgnoreVariableReplacementErrors))
+            if (context.Variables.GetFlag(KnownVariables.Package.IgnoreVariableReplacementErrors))
                 log.Info("Variable replacement errors are suppressed because the variable Octopus.Action.Package.IgnoreVariableReplacementErrors has been set.");
 
-            foreach (var configurationFile in MatchingFiles(deployment))
+            foreach (var configurationFile in MatchingFiles(context))
             {
                 if (appliedAsTransforms.Contains(configurationFile))
                 {
@@ -41,7 +41,7 @@ namespace Calamari.CommonTemp
                     continue;
                 }
 
-                replacer.ModifyConfigurationFile(configurationFile, deployment.Variables);
+                replacer.ModifyConfigurationFile(configurationFile, context.Variables);
             }
 
             return this.CompletedTask();

@@ -12,6 +12,12 @@ namespace Calamari.CommonTemp
         {
             this.extractPackage = extractPackage;
         }
+
+        public bool IsEnabled(RunningDeployment context)
+        {
+            return !string.IsNullOrWhiteSpace(context.PackageFilePath);
+        }
+
         public Task Execute(RunningDeployment context)
         {
             extractPackage.ExtractToStagingDirectory(context.PackageFilePath);

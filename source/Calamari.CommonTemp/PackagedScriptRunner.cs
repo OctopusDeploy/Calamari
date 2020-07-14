@@ -19,7 +19,7 @@ namespace Calamari.CommonTemp
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
 
-        public PackagedScriptRunner(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+        protected PackagedScriptRunner(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
             this.log = log;
             this.scriptFilePrefix = scriptFilePrefix;
