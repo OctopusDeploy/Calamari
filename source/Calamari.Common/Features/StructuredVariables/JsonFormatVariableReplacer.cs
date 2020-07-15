@@ -68,9 +68,9 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public class JsonUpdateMap
     {
-        readonly IDictionary<string, Action<string>> map = new SortedDictionary<string, Action<string>>(StringComparer.OrdinalIgnoreCase);
+        readonly IDictionary<string, Action<string?>> map = new SortedDictionary<string, Action<string?>>(StringComparer.OrdinalIgnoreCase);
         readonly Stack<string> path = new Stack<string>();
-        string key;
+        string? key;
 
         public void Load(JToken json)
         {
@@ -82,6 +82,8 @@ namespace Calamari.Common.Features.StructuredVariables
 
         void MapObject(JToken j, bool first = false)
         {
+            if (key == null)
+                throw new InvalidOperationException("Path has not been pushed");
             if (!first)
                 map[key] = t => j.Replace(JToken.Parse(t));
 
@@ -125,11 +127,15 @@ namespace Calamari.Common.Features.StructuredVariables
 
         void MapDefault(JToken value)
         {
+            if (key == null)
+                throw new InvalidOperationException("Path has not been pushed");
             map[key] = t => value.Replace(t == null ? null : JToken.FromObject(t));
         }
 
         void MapNumber(JToken value)
         {
+            if (key == null)
+                throw new InvalidOperationException("Path has not been pushed");
             map[key] = t =>
             {
                 long longvalue;
@@ -152,6 +158,8 @@ namespace Calamari.Common.Features.StructuredVariables
 
         void MapBool(JToken value)
         {
+            if (key == null)
+                throw new InvalidOperationException("Path has not been pushed");
             map[key] = t =>
             {
                 bool boolvalue;
@@ -167,6 +175,8 @@ namespace Calamari.Common.Features.StructuredVariables
 
         void MapArray(JContainer array, bool first = false)
         {
+            if (key == null)
+                throw new InvalidOperationException("Path has not been pushed");
             if (!first)
                 map[key] = t => array.Replace(JToken.Parse(t));
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Security;
@@ -60,7 +61,8 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             throw new PowerShellEditionNotFoundException(specifiedEdition);
         }
 
-        static SecureString ToSecureString(string unsecureString)
+        [return: NotNullIfNotNull("unsecureString")]
+        static SecureString? ToSecureString(string? unsecureString)
         {
             if (string.IsNullOrEmpty(unsecureString))
                 return null;

@@ -38,7 +38,8 @@ namespace Calamari.Common.Features.StructuredVariables
                             continue;
 
                         var found = classifier.Process(ev);
-                        if (found is YamlScalarValueNode scalar && variablesByKey.TryGetValue(scalar.Path, out var newValue))
+                        if (found is YamlScalarValueNode scalar &&
+                            variablesByKey.TryGetValue(scalar.Path, out var newValue))
                             ev = scalar.ReplaceValue(newValue);
 
                         outputEvents.Add(ev);

@@ -13,10 +13,10 @@
 // distribute, sublicense, and/or sell copies of the Software, and to
 // permit persons to whom the Software is furnished to do so, subject to
 // the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -37,16 +37,16 @@
 // A Getopt::Long-inspired option parsing library for C#.
 //
 // NDesk.Options.OptionSet is built upon a key/value table, where the
-// key is a option format string and the value is a delegate that is 
+// key is a option format string and the value is a delegate that is
 // invoked when the format string is matched.
 //
 // Option format strings:
-//  Regex-like BNF Grammar: 
+//  Regex-like BNF Grammar:
 //    name: .+
 //    type: [=:]
 //    sep: ( [^{}]+ | '{' .+ '}' )?
 //    aliases: ( name type sep ) ( '|' name type sep )*
-// 
+//
 // Each '|'-delimited name is an alias for the associated action.  If the
 // format string ends in a '=', it has a required value.  If the format
 // string ends in a ':', it has an optional value.  If neither '=' or ':'
@@ -92,7 +92,7 @@
 //  p.Parse (new string[]{"-v", "--v", "/v", "-name=A", "/name", "B", "extra"});
 //
 // The above would parse the argument string array, and would invoke the
-// lambda expression three times, setting `verbose' to 3 when complete.  
+// lambda expression three times, setting `verbose' to 3 when complete.
 // It would also print out "A" and "B" to standard output.
 // The returned array would contain the string "extra".
 //
@@ -126,6 +126,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Calamari.Common.Plumbing.Commands.Options
 {
@@ -133,12 +134,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
     {
         static readonly char[] NameTerminator = { '=', ':' };
 
-        protected Option(string prototype, string description)
-            : this(prototype, description, 1)
-        {
-        }
-
-        protected Option(string prototype, string description, int maxValueCount)
+        protected Option(string? prototype, string? description, int maxValueCount = 1)
         {
             if (prototype == null)
                 throw new ArgumentNullException("prototype");
@@ -147,9 +143,9 @@ namespace Calamari.Common.Plumbing.Commands.Options
             if (maxValueCount < 0)
                 throw new ArgumentOutOfRangeException("maxValueCount");
 
-            this.Prototype = prototype;
+            Prototype = prototype;
             Names = prototype.Split('|');
-            this.Description = description;
+            Description = description;
             MaxValueCount = maxValueCount;
             OptionValueType = ParsePrototype();
 
@@ -172,7 +168,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
 
         public string Prototype { get; }
 
-        public string Description { get; }
+        public string? Description { get; }
 
         public OptionValueType OptionValueType { get; }
 
@@ -180,7 +176,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
 
         internal string[] Names { get; }
 
-        internal string[] ValueSeparators { get; set; }
+        internal string[]? ValueSeparators { get; set; }
 
         public string[] GetNames()
         {
@@ -194,7 +190,8 @@ namespace Calamari.Common.Plumbing.Commands.Options
             return (string[])ValueSeparators.Clone();
         }
 
-        protected static T Parse<T>(string value, OptionContext c)
+        [return: NotNullIfNotNull("value"), MaybeNull]
+        protected static T Parse<T>(string? value, OptionContext c)
         {
             var conv = TypeDescriptor.GetConverter(typeof(T));
             var t = default(T);
@@ -211,7 +208,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                         value,
                         typeof(T).Name,
                         c.OptionName),
-                    c.OptionName,
+                    c.OptionName ?? "UnknownOptionName",
                     e);
             }
 

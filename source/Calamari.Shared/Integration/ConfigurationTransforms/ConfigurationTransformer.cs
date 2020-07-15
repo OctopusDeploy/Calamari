@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Xml;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Integration.Processes;
 #if USE_OCTOPUS_XMLT
 using Octopus.Web.XmlTransform;
 #else
@@ -22,7 +20,7 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         bool errorEncountered;
 
-        public ConfigurationTransformer(TransformLoggingOptions transformLoggingOptions, ILog log = null)
+        public ConfigurationTransformer(TransformLoggingOptions transformLoggingOptions, ILog? log = null)
         {
             this.transformLoggingOptions = transformLoggingOptions;
             calamariLog = log ?? ConsoleLog.Instance;
@@ -98,7 +96,7 @@ namespace Calamari.Integration.ConfigurationTransforms
             configurationFileDocument.Save(destinationFile);
         }
 
-        public static ConfigurationTransformer FromVariables(IVariables variables, ILog log = null)
+        public static ConfigurationTransformer FromVariables(IVariables variables, ILog? log = null)
         {
             var treatConfigTransformationWarningsAsErrors = variables.GetFlag(SpecialVariables.Package.TreatConfigTransformationWarningsAsErrors, true);
             var ignoreConfigTransformErrors = variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors);

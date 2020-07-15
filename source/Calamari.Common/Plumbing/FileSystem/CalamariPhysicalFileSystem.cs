@@ -43,12 +43,12 @@ namespace Calamari.Common.Plumbing.FileSystem
                 RetryIntervalForFileOperations);
         }
 
-        public bool FileExists(string path)
+        public bool FileExists(string? path)
         {
             return File.Exists(path);
         }
 
-        public bool DirectoryExists(string path)
+        public bool DirectoryExists(string? path)
         {
             return Directory.Exists(path);
         }
@@ -234,7 +234,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             {
                 encoding = Encoding.GetEncoding("utf-32BE");
                 return Encoding.GetEncoding("utf-32BE").GetString(b, 4, b.Length - 4);
-            } // UTF-32, big-endian 
+            } // UTF-32, big-endian
 
             if (b.Length >= 4 && b[0] == 0xFF && b[1] == 0xFE && b[2] == 0x00 && b[3] == 0x00)
             {
@@ -278,7 +278,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 {
                     i += 1;
                     continue;
-                } // If all characters are below 0x80, then it is valid UTF8, but UTF8 is not 'required' 
+                } // If all characters are below 0x80, then it is valid UTF8, but UTF8 is not 'required'
 
                 if (b[i] >= 0xC2 && b[i] <= 0xDF && b[i + 1] >= 0x80 && b[i + 1] < 0xC0)
                 {
@@ -321,7 +321,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 return Encoding.UTF8.GetString(b);
             }
 
-            // If all else fails, the encoding is probably (though certainly not definitely) the user's local codepage! 
+            // If all else fails, the encoding is probably (though certainly not definitely) the user's local codepage!
             // this probably something like Windows 1252 on Windows, but is Encoding.Default is UTF8 on Linux so this probably isn't right in Linux.
             encoding = Encoding.Default;
 
@@ -333,18 +333,18 @@ namespace Calamari.Common.Plumbing.FileSystem
             return File.ReadAllBytes(path);
         }
 
-        public void OverwriteFile(string path, string contents)
+        public void OverwriteFile(string path, string? contents)
         {
             RetryTrackerFileAction(() => WriteAllText(path, contents), path, "overwrite");
         }
 
-        public void OverwriteFile(string path, string contents, Encoding encoding)
+        public void OverwriteFile(string path, string? contents, Encoding encoding)
         {
             RetryTrackerFileAction(() => WriteAllText(path, contents, encoding), path, "overwrite");
         }
 
         //File.WriteAllText won't overwrite a hidden file, so implement our own.
-        static void WriteAllText(string path, string contents, Encoding encoding)
+        static void WriteAllText(string path, string? contents, Encoding encoding)
         {
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
@@ -365,7 +365,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             }
         }
 
-        static void WriteAllText(string path, string contents)
+        static void WriteAllText(string path, string? contents)
         {
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
@@ -436,7 +436,7 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public void PurgeDirectory(string targetDirectory, FailureOptions options, params string[] globs)
         {
-            Predicate<FileSystemInfo> check = null;
+            Predicate<FileSystemInfo>? check = null;
             if (globs.Any())
             {
                 var keep = EnumerateWithGlob(targetDirectory, globs);
@@ -451,7 +451,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         }
 
         void PurgeDirectory(string targetDirectory,
-            Predicate<FileSystemInfo> exclude,
+            Predicate<FileSystemInfo>? exclude,
             FailureOptions options,
             CancellationToken cancel,
             bool includeTarget = false,

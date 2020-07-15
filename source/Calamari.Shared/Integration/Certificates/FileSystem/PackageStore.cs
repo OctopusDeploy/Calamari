@@ -13,7 +13,7 @@ namespace Calamari.Integration.FileSystem
 {
     public interface IPackageStore
     {
-        PackagePhysicalFileMetadata GetPackage(string packageId, IVersion version, string hash);
+        PackagePhysicalFileMetadata? GetPackage(string packageId, IVersion version, string hash);
         IEnumerable<PackagePhysicalFileMetadata> GetNearestPackages(string packageId, IVersion version, int take = 5);
     }
 
@@ -37,7 +37,7 @@ namespace Calamari.Integration.FileSystem
             return Path.Combine(tentacleHome, "Files");
         }
 
-        public PackagePhysicalFileMetadata GetPackage(string packageId, IVersion version, string hash)
+        public PackagePhysicalFileMetadata? GetPackage(string packageId, IVersion version, string hash)
         {
             fileSystem.EnsureDirectoryExists(GetPackagesDirectory());
             foreach (var file in PackageFiles(packageId, version))
@@ -52,14 +52,14 @@ namespace Calamari.Integration.FileSystem
 
                 var physicalPackageMetadata = PackagePhysicalFileMetadata.Build(file, packageNameMetadata);
 
-                if (string.IsNullOrWhiteSpace(hash) || hash == physicalPackageMetadata.Hash)
+                if (string.IsNullOrWhiteSpace(hash) || hash == physicalPackageMetadata?.Hash)
                     return physicalPackageMetadata;
             }
 
             return null;
         }
 
-        IEnumerable<string> PackageFiles(string packageId, IVersion version = null)
+        IEnumerable<string> PackageFiles(string packageId, IVersion? version = null)
         {
             return fileSystem.EnumerateFilesRecursively(GetPackagesDirectory(),
                 PackageName.ToSearchPatterns(packageId, version, supportedExtensions));
@@ -83,7 +83,7 @@ namespace Calamari.Integration.FileSystem
                 select package;
         }
 
-        PackageFileNameMetadata PackageMetadata(string file)
+        PackageFileNameMetadata? PackageMetadata(string file)
         {
             try
             {

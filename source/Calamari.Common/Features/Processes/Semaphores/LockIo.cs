@@ -25,7 +25,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
             return fileSystem.FileExists(lockFilePath);
         }
 
-        public FileLock ReadLock(string lockFilePath)
+        public IFileLock ReadLock(string lockFilePath)
         {
             try
             {
@@ -34,13 +34,10 @@ namespace Calamari.Common.Features.Processes.Semaphores
                     using (var streamReader = new StreamReader(stream))
                     {
                         var obj = JObject.Load(new JsonTextReader(streamReader));
-                        var lockContent = new FileLock
-                        {
-                            ProcessId = obj["ProcessId"].ToObject<long>(),
-                            ProcessName = obj["ProcessName"].ToString(),
-                            Timestamp = obj["Timestamp"].ToObject<long>(),
-                            ThreadId = obj["ThreadId"].ToObject<int>()
-                        };
+                        var lockContent = new FileLock(obj["ProcessId"].ToObject<long>(), 
+                            obj["ProcessName"].ToString(),
+                            obj["ThreadId"].ToObject<int>(),
+                            obj["Timestamp"].ToObject<long>());
                         if (lockContent.BelongsToCurrentProcessAndThread())
                             return lockContent;
                         return new OtherProcessOwnsFileLock(lockContent);
@@ -75,7 +72,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                     var currentContent = ReadLock(lockFilePath);
                     if (Equals(currentContent, fileLock))
                     {
-                        if (currentContent.Timestamp == fileLock.Timestamp)
+                        if ((currentContent as FileLock)?.Timestamp == fileLock.Timestamp)
                             return true;
                         fileMode = FileMode.Create;
                     }

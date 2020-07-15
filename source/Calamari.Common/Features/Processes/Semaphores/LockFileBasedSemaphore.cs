@@ -8,11 +8,11 @@ namespace Calamari.Common.Features.Processes.Semaphores
 {
     public class LockFileBasedSemaphore : ISemaphore
     {
-        public enum AquireLockAction
+        public enum AcquireLockAction
         {
-            DontAquireLock,
-            AquireLock,
-            ForciblyAquireLock
+            DontAcquireLock,
+            AcquireLock,
+            ForciblyAcquireLock
         }
 
         readonly ILockIo lockIo;
@@ -47,67 +47,70 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
         TimeSpan LockTimeout { get; }
 
-        public string Name { get; set; }
+        public string Name { get; }
 
         string LockFilePath { get; }
 
-        public AquireLockAction ShouldAquireLock(FileLock fileLock)
+        public AcquireLockAction ShouldAcquireLock(IFileLock fileLock)
         {
             if (lockIo.LockExists(LockFilePath))
             {
                 //Someone else owns the lock
-                if (fileLock.GetType() == typeof(OtherProcessHasExclusiveLockOnFileLock))
+                if (fileLock is OtherProcessHasExclusiveLockOnFileLock)
                     //we couldn't read the file as some other process has it open exlusively
-                    return AquireLockAction.DontAquireLock;
+                    return AcquireLockAction.DontAcquireLock;
 
-                if (fileLock.GetType() == typeof(UnableToDeserialiseLockFile))
+                if (fileLock is UnableToDeserialiseLockFile nonDeserialisedLockFile)
                 {
-                    var nonDeserialisedLockFile = (UnableToDeserialiseLockFile)fileLock;
                     if ((DateTime.Now - nonDeserialisedLockFile.CreationTime).TotalSeconds > LockTimeout.TotalSeconds)
                     {
                         log.Warn("Lock file existed but was not readable, and has existed for longer than lock timeout. Taking lock.");
-                        return AquireLockAction.AquireLock;
+                        return AcquireLockAction.AcquireLock;
                     }
 
-                    return AquireLockAction.DontAquireLock;
+                    return AcquireLockAction.DontAcquireLock;
                 }
 
                 //the file no longer exists
-                if (fileLock.GetType() == typeof(MissingFileLock))
-                    return AquireLockAction.AquireLock;
+                if (fileLock is MissingFileLock)
+                    return AcquireLockAction.AcquireLock;
 
+                var concreteFileLock = fileLock as FileLock;
+                if (concreteFileLock == null)
+                    return AcquireLockAction.AcquireLock;
+                
                 //This lock belongs to this process - we can reacquire the lock
-                if (fileLock.BelongsToCurrentProcessAndThread())
-                    return AquireLockAction.AquireLock;
+                if (concreteFileLock.BelongsToCurrentProcessAndThread())
+                    return AcquireLockAction.AcquireLock;
 
-                if (!processFinder.ProcessIsRunning((int)fileLock.ProcessId, fileLock.ProcessName))
+                if (!processFinder.ProcessIsRunning((int)concreteFileLock.ProcessId, concreteFileLock.ProcessName ?? ""))
                 {
-                    log.Warn($"Process {fileLock.ProcessId}, thread {fileLock.ThreadId} had lock, but appears to have crashed. Taking lock.");
+                    log.Warn($"Process {concreteFileLock.ProcessId}, thread {concreteFileLock.ThreadId} had lock, but appears to have crashed. Taking lock.");
 
-                    return AquireLockAction.AquireLock;
+                    return AcquireLockAction.AcquireLock;
                 }
 
-                var lockWriteTime = new DateTime(fileLock.Timestamp);
+                var lockWriteTime = new DateTime(concreteFileLock.Timestamp);
                 //The lock has not timed out - we can't acquire it
                 if (!(Math.Abs((DateTime.Now - lockWriteTime).TotalSeconds) > LockTimeout.TotalSeconds))
-                    return AquireLockAction.DontAquireLock;
+                    return AcquireLockAction.DontAcquireLock;
 
-                log.Warn($"Forcibly taking lock from process {fileLock.ProcessId}, thread {fileLock.ThreadId} as lock has timed out. If this happens regularly, please contact Octopus Support.");
+                log.Warn($"Forcibly taking lock from process {concreteFileLock.ProcessId}, thread {concreteFileLock.ThreadId} as lock has timed out. If this happens regularly, please contact Octopus Support.");
 
-                return AquireLockAction.ForciblyAquireLock;
+                return AcquireLockAction.ForciblyAcquireLock;
             }
 
-            return AquireLockAction.AquireLock;
+            return AcquireLockAction.AcquireLock;
         }
 
         public bool TryAcquireLock()
         {
             var lockContent = lockIo.ReadLock(LockFilePath);
-            var response = ShouldAquireLock(lockContent);
-            if (response == AquireLockAction.ForciblyAquireLock)
+            var response = ShouldAcquireLock(lockContent);
+            if (response == AcquireLockAction.ForciblyAcquireLock)
                 lockIo.DeleteLock(LockFilePath);
 
-            if (response == AquireLockAction.AquireLock || response == AquireLockAction.ForciblyAquireLock)
+            if (response == AcquireLockAction.AcquireLock || response == AcquireLockAction.ForciblyAcquireLock)
                 return lockIo.WriteLock(LockFilePath, CreateLockContent());
 
             return false;
@@ -123,13 +126,10 @@ namespace Calamari.Common.Features.Processes.Semaphores
         static FileLock CreateLockContent()
         {
             var process = Process.GetCurrentProcess();
-            return new FileLock
-            {
-                ProcessId = process.Id,
-                Timestamp = DateTime.Now.Ticks,
-                ProcessName = process.ProcessName,
-                ThreadId = Thread.CurrentThread.ManagedThreadId
-            };
+            return new FileLock(process.Id,
+                process.ProcessName,
+                Thread.CurrentThread.ManagedThreadId,
+                DateTime.Now.Ticks);
         }
 
         public bool WaitOne(int millisecondsToWait)

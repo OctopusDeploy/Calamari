@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -10,19 +9,17 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-using Calamari.Util;
 
 namespace Calamari.Commands
 {
     [Command("apply-delta", Description = "Applies a delta file to a package to create a new version of the package")]
     public class ApplyDeltaCommand : Command
     {
-        string basisFileName;
-        string fileHash;
-        string deltaFileName;
-        string newFileName;
+        string? basisFileName;
+        string? fileHash;
+        string? deltaFileName;
+        string? newFileName;
         bool showProgress;
         bool skipVerification;
         
@@ -77,7 +74,7 @@ namespace Calamari.Commands
                 if(showProgress)
                     octoDiff.Flag("progress");
 
-                log.InfoFormat("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash, newFilePath);
+                log.InfoFormat("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash ?? string.Empty, newFilePath);
 
                 var result = factory.Execute();
                 if (result.ExitCode != 0)

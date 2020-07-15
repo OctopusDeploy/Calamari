@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -8,8 +9,8 @@ namespace Calamari.Common.Plumbing.FileSystem
 {
     public interface ICalamariFileSystem
     {
-        bool FileExists(string path);
-        bool DirectoryExists(string path);
+        bool FileExists([NotNullWhen(true)]string? path);
+        bool DirectoryExists(string? path);
         bool DirectoryIsEmpty(string path);
         void DeleteFile(string path, FailureOptions options = FailureOptions.ThrowOnFailure);
         void DeleteDirectory(string path);
@@ -22,8 +23,8 @@ namespace Calamari.Common.Plumbing.FileSystem
         long GetFileSize(string path);
         string ReadFile(string path);
         string ReadFile(string path, out Encoding encoding);
-        void OverwriteFile(string path, string contents);
-        void OverwriteFile(string path, string contents, Encoding encoding);
+        void OverwriteFile(string path, string? contents);
+        void OverwriteFile(string path, string? contents, Encoding encoding);
         Stream OpenFile(string path, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
         Stream OpenFile(string path, FileMode mode = FileMode.OpenOrCreate, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
         Stream CreateTemporaryFile(string extension, out string path);

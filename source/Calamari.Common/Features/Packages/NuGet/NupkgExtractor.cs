@@ -3,6 +3,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Plumbing.Logging;
@@ -108,7 +109,8 @@ namespace Calamari.Common.Features.Packages.NuGet
             return Path.GetExtension(path).Equals(".nuspec", StringComparison.OrdinalIgnoreCase);
         }
 
-        static string UnescapePath(string path)
+        [return: NotNullIfNotNull("path")]
+        static string? UnescapePath(string? path)
         {
             if (path != null && path.IndexOf('%') > -1)
                 try

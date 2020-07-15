@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Reflection;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
@@ -13,14 +12,11 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
 {
-    // Note about moving this class: GetFetchScript method uses the namespace of this class as part of the 
+    // Note about moving this class: GetFetchScript method uses the namespace of this class as part of the
     // get Embedded Resource to find the DockerPull scripts. If you move this file, be sure look at that method
     // and make sure it can still find the scripts
     public class DockerImagePackageDownloader : IPackageDownloader
@@ -62,8 +58,8 @@ namespace Calamari.Integration.Packages.Download
 
         static string GetFullImageName(string packageId, IVersion version, Uri feedUri)
         {
-            return feedUri.Host.Equals(DockerHubRegistry) 
-                ? $"{packageId}:{version}" 
+            return feedUri.Host.Equals(DockerHubRegistry)
+                ? $"{packageId}:{version}"
                 : $"{feedUri.Authority}{feedUri.AbsolutePath.TrimEnd('/')}/{packageId}:{version}";
         }
 
@@ -82,7 +78,7 @@ namespace Calamari.Integration.Packages.Download
             return $"{feedUri.Host}:{feedUri.Port}";
         }
 
-        void PerformPull(string username, string password, string fullImageName, string feed)
+        void PerformPull(string? username, string? password, string fullImageName, string feed)
         {
             var file = GetFetchScript();
             using (new TemporaryFile(file))
@@ -94,6 +90,8 @@ namespace Calamari.Integration.Packages.Download
                 clone["FeedUri"] = feed;
 
                 var result = scriptEngine.Execute(new Script(file), clone, commandLineRunner, environmentVariables);
+                if (result == null)
+                    throw new CommandException("Null result attempting to pull Docker image");
                 if (result.ExitCode != 0)
                     throw new CommandException("Unable to pull Docker image");
             }
@@ -126,7 +124,7 @@ namespace Calamari.Integration.Packages.Download
         }
 
 
-        (string username, string password) ExtractCredentials(ICredentials feedCredentials, Uri feedUri)
+        (string? username, string? password) ExtractCredentials(ICredentials feedCredentials, Uri feedUri)
         {
             if (feedCredentials == null)
             {

@@ -41,7 +41,7 @@ namespace Calamari.Common.Features.Deployment.Journal
         {
         }
 
-        internal JournalEntry(string id,
+        internal JournalEntry(string? id,
             string? environmentId,
             string? tenantId,
             string? projectId,
@@ -87,14 +87,14 @@ namespace Calamari.Common.Features.Deployment.Journal
         {
         }
 
-        public string Id { get; }
-        public string EnvironmentId { get; }
-        public string TenantId { get; }
-        public string ProjectId { get; }
-        public string RetentionPolicySet { get; }
+        public string? Id { get; }
+        public string? EnvironmentId { get; }
+        public string? TenantId { get; }
+        public string? ProjectId { get; }
+        public string? RetentionPolicySet { get; }
         public DateTime? InstalledOn { get; }
-        public string ExtractedTo { get; }
-        public string CustomInstallationDirectory { get; }
+        public string? ExtractedTo { get; }
+        public string? CustomInstallationDirectory { get; }
         public bool WasSuccessful { get; }
 
         public ICollection<DeployedPackage> Packages { get; }

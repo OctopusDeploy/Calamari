@@ -22,11 +22,11 @@ namespace Calamari.Common
 {
     public abstract class CalamariFlavourProgram
     {
-        protected readonly ILog log;
+        protected readonly ILog Log;
 
         protected CalamariFlavourProgram(ILog log)
         {
-            this.log = log;
+            Log = log;
         }
 
         protected virtual int Run(string[] args)
@@ -36,14 +36,14 @@ namespace Calamari.Common
                 SecurityProtocols.EnableAllSecurityProtocols();
                 var options = CommonOptions.Parse(args);
 
-                log.Verbose($"Calamari Version: {GetType().Assembly.GetInformationalVersion()}");
+                Log.Verbose($"Calamari Version: {GetType().Assembly.GetInformationalVersion()}");
 
                 if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
                     return 0;
 
                 var envInfo = string.Join($"{Environment.NewLine}  ",
                     EnvironmentHelper.SafelyGetEnvironmentInformation());
-                log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
+                Log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
 
                 EnvironmentHelper.SetEnvironmentVariable("OctopusCalamariWorkingDirectory",
                     Environment.CurrentDirectory);
@@ -86,7 +86,7 @@ namespace Calamari.Common
             builder.Register(c => c.Resolve<VariablesFactory>().Create(options)).As<IVariables>().SingleInstance();
             builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
             builder.RegisterType<VariableLogger>().AsSelf();
-            builder.RegisterInstance(log).As<ILog>().SingleInstance();
+            builder.RegisterInstance(Log).As<ILog>().SingleInstance();
             builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
             builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
             builder.RegisterType<FileSubstituter>().As<IFileSubstituter>();

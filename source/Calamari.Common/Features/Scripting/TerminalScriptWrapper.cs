@@ -33,7 +33,7 @@ namespace Calamari.Common.Features.Scripting
             return true;
         }
 
-        public CommandResult ExecuteScript(Script script,
+        public CommandResult? ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string>? environmentVars)

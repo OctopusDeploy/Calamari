@@ -31,7 +31,7 @@ namespace Calamari.Common.Plumbing.Logging
                         continue;
 
                     var exFileNotFound = loaderException as FileNotFoundException;
-                    if (!string.IsNullOrEmpty(exFileNotFound.FusionLog))
+                    if (!string.IsNullOrEmpty(exFileNotFound?.FusionLog))
                         log.Error(exFileNotFound.FusionLog);
                 }
 

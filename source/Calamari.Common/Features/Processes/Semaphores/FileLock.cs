@@ -5,20 +5,31 @@ using System.Threading;
 
 namespace Calamari.Common.Features.Processes.Semaphores
 {
+    public interface IFileLock
+    {}
+    
     [DataContract]
-    public class FileLock
+    public class FileLock : IFileLock
     {
-        [DataMember]
-        public long ProcessId { get; set; }
+        public FileLock(long processId, string processName, int threadId, long timestamp)
+        {
+            ProcessId = processId;
+            ProcessName = processName;
+            ThreadId = threadId;
+            Timestamp = timestamp;
+        }
 
         [DataMember]
-        public long Timestamp { get; set; }
+        public long ProcessId { get; }
 
         [DataMember]
-        public string ProcessName { get; set; }
+        public long Timestamp { get; internal set; }
 
         [DataMember]
-        public int ThreadId { get; set; }
+        public string ProcessName { get; }
+
+        [DataMember]
+        public int ThreadId { get; }
 
         protected bool Equals(FileLock other)
         {
@@ -27,7 +38,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                 ThreadId == other.ThreadId;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj))
                 return false;
@@ -49,7 +60,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
             }
         }
 
-        public virtual bool BelongsToCurrentProcessAndThread()
+        public bool BelongsToCurrentProcessAndThread()
         {
             return ProcessId == Process.GetCurrentProcess().Id && ThreadId == Thread.CurrentThread.ManagedThreadId;
         }

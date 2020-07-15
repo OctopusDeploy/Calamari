@@ -6,7 +6,6 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
 using Octopus.Versioning;
 
 namespace Calamari.Commands
@@ -15,7 +14,6 @@ namespace Calamari.Commands
     public class FindPackageCommand : Command
     {
         readonly ILog log;
-        readonly ICalamariFileSystem fileSystem;
         readonly IPackageStore packageStore;
         string packageId;
         string rawPackageVersion;
@@ -26,7 +24,6 @@ namespace Calamari.Commands
         public FindPackageCommand(ILog log, ICalamariFileSystem fileSystem, IPackageStore packageStore)
         {
             this.log = log;
-            this.fileSystem = fileSystem;
             this.packageStore = packageStore;
             Options.Add("packageId=", "Package ID to find", v => packageId = v);
             Options.Add("packageVersion=", "Package version to find", v => rawPackageVersion = v);
@@ -52,15 +49,11 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(rawPackageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
 
-            if (!VersionFactory.TryCreateVersion(rawPackageVersion, out IVersion version, versionFormat))
-            {
+            var version = VersionFactory.TryCreateVersion(rawPackageVersion, versionFormat);
+            if (version == null)
                 throw new CommandException($"Package version '{rawPackageVersion}' is not a valid {versionFormat} version string. Please pass --packageVersionFormat with a different version type.");
-            }
-
-            ;
 
             var package = packageStore.GetPackage(packageId, version, packageHash);
-
             if (package == null)
             {
                 log.Verbose($"Package {packageId} version {version} hash {packageHash} has not been uploaded.");

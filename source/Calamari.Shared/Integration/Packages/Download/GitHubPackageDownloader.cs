@@ -4,12 +4,11 @@ using System.Linq;
 using System.Net;
 using System.Net.Cache;
 using System.Threading;
+using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
@@ -49,7 +48,7 @@ namespace Calamari.Integration.Packages.Download
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
         {
-            
+
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
 
@@ -67,7 +66,7 @@ namespace Calamari.Integration.Packages.Download
         }
 
 
-        private void SplitPackageId(string packageId, out string owner, out string repo)
+        private void SplitPackageId(string packageId, out string? owner, out string repo)
         {
             var parts = packageId.Split(OwnerRepoSeperator);
             if (parts.Length > 1)
@@ -83,7 +82,7 @@ namespace Calamari.Integration.Packages.Download
         }
 
 
-        PackagePhysicalFileMetadata SourceFromCache(string packageId, IVersion version, string cacheDirectory)
+        PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
             Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
 
@@ -97,7 +96,10 @@ namespace Calamari.Integration.Packages.Download
 
                 if (string.Equals(package.PackageId, packageId, StringComparison.OrdinalIgnoreCase) && package.Version.Equals(version))
                 {
-                    return PackagePhysicalFileMetadata.Build(file, package);
+                    var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(file, package);
+                    if (packagePhysicalFileMetadata == null)
+                        throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
+                    return packagePhysicalFileMetadata;
                 }
             }
 
@@ -119,15 +121,15 @@ namespace Calamari.Integration.Packages.Download
             fileSystem.EnsureDirectoryExists(cacheDirectory);
             freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
-            SplitPackageId(packageId, out string owner, out string repository);
+            SplitPackageId(packageId, out var owner, out var repository);
             if (string.IsNullOrWhiteSpace(owner) || string.IsNullOrWhiteSpace(repository))
             {
                 throw new InvalidOperationException(
                     "Invalid PackageId for GitHub feed. Expecting format `<owner>/<repo>`");
             }
-            
+
             var page = 0;
-            JArray req = null;
+            JArray? req = null;
             while (req == null || (req.Count != 0 &&  req.Count < 1000))
             {
                 var uri = feedUri.AbsoluteUri + $"repos/{Uri.EscapeUriString(owner)}/{Uri.EscapeUriString(repository)}/tags?page={++page}&per_page=1000";
@@ -139,7 +141,9 @@ namespace Calamari.Integration.Packages.Download
 
                 foreach (var tag in req)
                 {
-                    if (!TryParseVersion((string) tag["name"], out IVersion v) || !version.Equals(v)) continue;
+                    var v = TryParseVersion((string)tag["name"]);
+                    if (v == null || !version.Equals(v))
+                        continue;
 
                     var zipball = (string) tag["zipball_url"];
                     return DownloadFile(zipball, cacheDirectory, packageId, version, feedCredentials, maxDownloadAttempts, downloadAttemptBackoff);
@@ -150,20 +154,15 @@ namespace Calamari.Integration.Packages.Download
         }
 
 
-        static bool TryParseVersion(string input, out IVersion version)
+        static IVersion? TryParseVersion(string input)
         {
             if (input == null)
-            {
-                version = null;
-                return false;
-            }
+                return null;
 
             if (input[0].Equals('v') || input[0].Equals('V'))
-            {
                 input = input.Substring(1);
-            }
 
-            return VersionFactory.TryCreateVersion(input, out version, VersionFormat.Semver);
+            return VersionFactory.TryCreateVersion(input, VersionFormat.Semver);
         }
 
         PackagePhysicalFileMetadata DownloadFile(string uri, string cacheDirectory, string packageId, IVersion version,
@@ -193,7 +192,10 @@ namespace Calamari.Integration.Packages.Download
                         client.DownloadFileWithProgress(uri, tempPath, (progress, total) => log.Progress(progress, $"Downloading {packageId} v{version}"));
 
                         DeNestContents(tempPath, localDownloadName);
-                        return PackagePhysicalFileMetadata.Build(localDownloadName);
+                        var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
+                        if (packagePhysicalFileMetadata == null)
+                            throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
+                        return packagePhysicalFileMetadata;
                     }
                 }
                 catch (WebException)
@@ -253,7 +255,7 @@ namespace Calamari.Integration.Packages.Download
                     TimeSpan t = DateTime.UtcNow - new DateTime(1970, 1, 1);
                     secondsToWait = reset - (int)t.TotalSeconds;
                 }
-                
+
                 throw new Exception($"GitHub request rate limit has been hit. Try operation again in  {secondsToWait} seconds. " +
                                     $"Unauthenticated users can perform 10 search requests and 60 non search HTTP requests to GitHub per minute per IP address." +
                                     $"It is reccomended that you provide credentials to increase this limit.");
@@ -315,7 +317,7 @@ namespace Calamari.Integration.Packages.Download
         }
     }
 
-    
+
 
 
 }

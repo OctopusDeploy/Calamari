@@ -14,7 +14,7 @@ namespace Calamari.Common.Features.Scripting
     {
         static readonly string CopyWorkingDirectoryVariable = "Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo";
 
-        public CommandResult Execute(Script script,
+        public CommandResult? Execute(Script script,
             IVariables variables,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string>? environmentVars = null)
@@ -25,7 +25,7 @@ namespace Calamari.Common.Features.Scripting
 
             var prepared = PrepareExecution(script, variables, environmentVariablesIncludingProxy);
 
-            CommandResult result = null;
+            CommandResult? result = null;
             foreach (var execution in prepared)
             {
                 if (variables.IsSet(CopyWorkingDirectoryVariable))

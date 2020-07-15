@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -40,7 +41,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             throw new CommandException(string.Format("ScriptCS.exe was not found at '{0}'", executable));
         }
 
-        public static string FormatCommandArguments(string bootstrapFile, string scriptParameters)
+        public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
         {
             scriptParameters = RetrieveParameterValues(scriptParameters);
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
@@ -49,11 +50,10 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             return commandArguments.ToString();
         }
 
-        static string RetrieveParameterValues(string scriptParameters)
+        [return: NotNullIfNotNull("scriptParameters")]
+        static string? RetrieveParameterValues(string? scriptParameters)
         {
-            if (scriptParameters == null)
-                return null;
-            return scriptParameters.Trim()
+            return scriptParameters?.Trim()
                 .TrimStart('-')
                 .Trim();
         }
@@ -133,7 +133,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             return $"System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(\"{Convert.ToBase64String(bytes)}\"), 0, {bytes.Length})";
         }
 
-        static string EncryptVariable(string value)
+        static string EncryptVariable(string? value)
         {
             if (value == null)
                 return "null;";

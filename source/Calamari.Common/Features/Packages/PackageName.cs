@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -54,7 +55,10 @@ namespace Calamari.Common.Features.Packages
         /// <param name="version"></param>
         /// <param name="extension"></param>
         /// <returns></returns>
-        static bool TryParseUnsafeFileName(string fileName, out string packageId, out IVersion version, out string extension)
+        static bool TryParseUnsafeFileName(string fileName,
+            [NotNullWhen(true)]out string? packageId,
+            [NotNullWhen(true)]out IVersion? version,
+            [NotNullWhen(true)]out string? extension)
         {
             packageId = null;
             version = null;
@@ -99,7 +103,8 @@ namespace Calamari.Common.Features.Packages
             if (!packageIdMatch.Success || !versionMatch.Success || !extensionMatch.Success)
                 return false;
 
-            if (!VersionFactory.TryCreateSemanticVersion(versionMatch.Value, out version, true))
+            version = VersionFactory.TryCreateSemanticVersion(versionMatch.Value, true);
+            if (version == null)
                 return false;
 
             packageId = packageIdMatch.Value;
@@ -122,9 +127,9 @@ namespace Calamari.Common.Features.Packages
         }
 
         static bool TryParseEncodedFileName(string fileName,
-            out string packageId,
-            out IVersion version,
-            out string extension)
+            [NotNullWhen(true)]out string? packageId,
+            [NotNullWhen(true)]out IVersion? version,
+            [NotNullWhen(true)]out string? extension)
         {
             packageId = null;
             version = null;

@@ -13,10 +13,10 @@ namespace Calamari.Tests.Helpers
     {
         public TestProgram(InMemoryLog log) : base(log)
         {
-            Log = log;
+            TestLog = log;
         }
 
-        public InMemoryLog Log { get; }
+        internal InMemoryLog TestLog { get; }
         ICommandWithArgs CommandOverride { get; set; }
         public bool StubWasCalled { get; set; }
         public IVariables VariablesOverride { get; set; }
@@ -44,10 +44,10 @@ namespace Calamari.Tests.Helpers
             // Register CommandOverride so it shows up first in IEnumerable
             if (CommandOverride != null)
                 builder.RegisterInstance(CommandOverride).As<ICommandWithArgs>();
-            
+
             base.ConfigureContainer(builder, options);
 
-            // Register after base so Singleton gets overridden 
+            // Register after base so Singleton gets overridden
             if (VariablesOverride != null)
                 builder.RegisterInstance(VariablesOverride).As<IVariables>();
         }

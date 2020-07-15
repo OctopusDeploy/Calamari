@@ -76,9 +76,9 @@ namespace Calamari.Common.Features.Processes
             string executable,
             string arguments,
             string workingDirectory,
-            Dictionary<string, string> environmentVars,
-            string userName,
-            SecureString password,
+            Dictionary<string, string>? environmentVars,
+            string? userName,
+            SecureString? password,
             Action<string> output,
             Action<string> error)
         {
@@ -174,7 +174,7 @@ namespace Calamari.Common.Features.Processes
             }
         }
 
-        static void RunProcessWithCredentials(ProcessStartInfo processStartInfo, string userName, SecureString password)
+        static void RunProcessWithCredentials(ProcessStartInfo processStartInfo, string? userName, SecureString? password)
         {
             if (string.IsNullOrEmpty(userName) || password == null)
                 return;

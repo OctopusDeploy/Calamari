@@ -8,8 +8,8 @@ namespace Calamari.Common.Commands
     {
         public RunningDeployment(string packageFilePath, IVariables variables)
         {
-            this.PackageFilePath = new PathToPackage(packageFilePath);
-            this.Variables = variables;
+            PackageFilePath = new PathToPackage(packageFilePath);
+            Variables = variables;
         }
 
         public PathToPackage PackageFilePath { get; }
@@ -38,10 +38,12 @@ namespace Calamari.Common.Commands
 
         public DeploymentWorkingDirectory CurrentDirectoryProvider { get; set; }
 
-        public string? CurrentDirectory =>
+        public string CurrentDirectory =>
             CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory
-                ? string.IsNullOrWhiteSpace(StagingDirectory) ? Environment.CurrentDirectory : StagingDirectory
-                : CustomDirectory;
+                ? string.IsNullOrWhiteSpace(StagingDirectory)
+                    ? Environment.CurrentDirectory
+                    : StagingDirectory
+                : CustomDirectory ?? throw new InvalidOperationException("Current directory is not set for the deployment");
 
         public IVariables Variables { get; }
 

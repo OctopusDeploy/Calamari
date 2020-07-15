@@ -32,7 +32,7 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            var packageFile = variables.GetPathToPrimaryPackage(fileSystem, true);
+            var packageFile = variables.GetPathToPrimaryPackage(fileSystem);
             
             var journal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
             

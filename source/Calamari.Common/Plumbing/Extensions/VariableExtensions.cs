@@ -8,15 +8,12 @@ namespace Calamari.Common.Plumbing.Extensions
 {
     public static class VariableExtensions
     {
-        public static PathToPackage GetPathToPrimaryPackage(this IVariables variables, ICalamariFileSystem fileSystem, bool required)
+        public static PathToPackage GetPathToPrimaryPackage(this IVariables variables, ICalamariFileSystem fileSystem)
         {
             var path = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
 
             if (string.IsNullOrEmpty(path))
-                if (required)
-                    throw new CommandException($"The `{TentacleVariables.CurrentDeployment.PackageFilePath}` was not specified or blank. This is likely a bug in Octopus, please contact Octopus support.");
-                else
-                    return null;
+                throw new CommandException($"The `{TentacleVariables.CurrentDeployment.PackageFilePath}` was not specified or blank. This is likely a bug in Octopus, please contact Octopus support.");
 
             path = CrossPlatform.ExpandPathEnvironmentVariables(path);
             if (!fileSystem.FileExists(path))

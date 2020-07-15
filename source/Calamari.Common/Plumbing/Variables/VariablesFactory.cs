@@ -140,7 +140,7 @@ namespace Calamari.Common.Plumbing.Variables
             }
         }
 
-        static string DecryptWithMachineKey(string base64EncodedEncryptedVariables, string password)
+        static string DecryptWithMachineKey(string base64EncodedEncryptedVariables, string? password)
         {
             try
             {

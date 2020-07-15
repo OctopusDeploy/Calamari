@@ -13,43 +13,43 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
     public class LockFileBasedSemaphoreFixture
     {
         [Test]
-        public void AttemptsToAquireLockIfLockFileDoesNotExist()
+        public void AttemptsToAcquireLockIfLockFileDoesNotExist()
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
-            var fileLock = new FileLock();
+            var fileLock = new FileLock(System.Diagnostics.Process.GetCurrentProcess().Id, Guid.NewGuid().ToString(), Thread.CurrentThread.ManagedThreadId, DateTime.Now.Ticks);
             lockIo.LockExists(Arg.Any<string>()).Returns(false);
-            var result = semaphore.ShouldAquireLock(fileLock);
-            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AquireLockAction.AquireLock));
+            var result = semaphore.ShouldAcquireLock(fileLock);
+            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AcquireLockAction.AcquireLock));
         }
 
         [Test]
-        public void DoesNotAttemptToAquireLockIfLockFileIsLockedByOtherProcess()
+        public void DoesNotAttemptToAcquireLockIfLockFileIsLockedByOtherProcess()
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new OtherProcessHasExclusiveLockOnFileLock();
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
-            var result = semaphore.ShouldAquireLock(fileLock);
-            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AquireLockAction.DontAquireLock));
+            var result = semaphore.ShouldAcquireLock(fileLock);
+            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AcquireLockAction.DontAcquireLock));
         }
 
         [Test]
-        public void DoesNotAttemptToAquireLockIfWeCantDeserialise()
+        public void DoesNotAttemptToAcquireLockIfWeCantDeserialise()
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
             var fileLock = new UnableToDeserialiseLockFile(DateTime.Now);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
-            var result = semaphore.ShouldAquireLock(fileLock);
-            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AquireLockAction.DontAquireLock));
+            var result = semaphore.ShouldAcquireLock(fileLock);
+            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AcquireLockAction.DontAcquireLock));
         }
 
         [Test]
-        public void AttemptsToAquireLockIfWeCantDeserialiseButFileIsOlderThanLockTimeout()
+        public void AttemptsToAcquireLockIfWeCantDeserialiseButFileIsOlderThanLockTimeout()
         {
             var log = new InMemoryLog();
             var lockIo = Substitute.For<ILockIo>();
@@ -57,13 +57,13 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), log);
             var fileLock = new UnableToDeserialiseLockFile(DateTime.Now.Subtract(TimeSpan.FromMinutes(5)));
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
-            var result = semaphore.ShouldAquireLock(fileLock);
-            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AquireLockAction.AquireLock));
+            var result = semaphore.ShouldAcquireLock(fileLock);
+            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AcquireLockAction.AcquireLock));
             log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Warn && m.FormattedMessage == "Lock file existed but was not readable, and has existed for longer than lock timeout. Taking lock.");
         }
 
         [Test]
-        public void AttemptsToAquireLockIfWeCantFindLockFile()
+        public void AttemptsToAcquireLockIfWeCantFindLockFile()
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
@@ -72,28 +72,24 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             //when we check for the lock file, it exists
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             //but when we read it, its been released
-            var result = semaphore.ShouldAquireLock(fileLock);
-            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AquireLockAction.AquireLock));
+            var result = semaphore.ShouldAcquireLock(fileLock);
+            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AcquireLockAction.AcquireLock));
         }
 
         [Test]
-        public void AttemptsToAquireLockIfItBelongsToUs()
+        public void AttemptsToAcquireLockIfItBelongsToUs()
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
-            var fileLock = new FileLock
-            {
-                ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
-                ThreadId = Thread.CurrentThread.ManagedThreadId
-            };
+            var fileLock = new FileLock(System.Diagnostics.Process.GetCurrentProcess().Id, Guid.NewGuid().ToString(), Thread.CurrentThread.ManagedThreadId, DateTime.Now.Ticks);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
-            var result = semaphore.ShouldAquireLock(fileLock);
-            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AquireLockAction.AquireLock));
+            var result = semaphore.ShouldAcquireLock(fileLock);
+            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AcquireLockAction.AcquireLock));
         }
 
         [Test]
-        public void AttemptsToAquireLockIfOtherProcessIsNoLongerRunning()
+        public void AttemptsToAcquireLockIfOtherProcessIsNoLongerRunning()
         {
             var log = new InMemoryLog();
             var lockIo = Substitute.For<ILockIo>();
@@ -102,34 +98,29 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
 
             processFinder.ProcessIsRunning(Arg.Any<int>(), Arg.Any<string>()).Returns(false);
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, processFinder, log);
-            var fileLock = new FileLock
-            {
-                ProcessId = -1,
-                ThreadId = -2,
-                ProcessName = Guid.NewGuid().ToString()
-            };
+            var fileLock = new FileLock(-1, Guid.NewGuid().ToString(), -2, DateTime.Now.Ticks);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
-            var result = semaphore.ShouldAquireLock(fileLock);
-            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AquireLockAction.AquireLock));
+            var result = semaphore.ShouldAcquireLock(fileLock);
+            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AcquireLockAction.AcquireLock));
             log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Warn && m.FormattedMessage == "Process -1, thread -2 had lock, but appears to have crashed. Taking lock.");
         }
 
         [Test]
-        public void DoesNotAttemptToAquireLockIfOwnedBySomeoneElseAndLockHasNotTimedOut()
+        public void DoesNotAttemptToAcquireLockIfOwnedBySomeoneElseAndLockHasNotTimedOut()
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
             var processFinder = Substitute.For<IProcessFinder>();
             processFinder.ProcessIsRunning(Arg.Any<int>(), Arg.Any<string>()).Returns(true);
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, processFinder, new InMemoryLog());
-            var fileLock = new FileLock { Timestamp = DateTime.Now.Ticks };
+            var fileLock = new FileLock(0, Guid.NewGuid().ToString(), 0, DateTime.Now.Ticks);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
-            var result = semaphore.ShouldAquireLock(fileLock);
-            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AquireLockAction.DontAquireLock));
+            var result = semaphore.ShouldAcquireLock(fileLock);
+            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AcquireLockAction.DontAcquireLock));
         }
 
         [Test]
-        public void AttemptsToForciblyAquireLockIfOwnedBySomeoneElseAndLockHasTimedOut()
+        public void AttemptsToForciblyAcquireLockIfOwnedBySomeoneElseAndLockHasTimedOut()
         {
             var log = new InMemoryLog();
             var lockIo = Substitute.For<ILockIo>();
@@ -137,10 +128,10 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var processFinder = Substitute.For<IProcessFinder>();
             processFinder.ProcessIsRunning(Arg.Any<int>(), Arg.Any<string>()).Returns(true);
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, processFinder, log);
-            var fileLock = new FileLock { Timestamp = (DateTime.Now.Subtract(TimeSpan.FromMinutes(5))).Ticks };
+            var fileLock = new FileLock(0, Guid.NewGuid().ToString(), 0, DateTime.Now.Subtract(TimeSpan.FromMinutes(5)).Ticks);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
-            var result = semaphore.ShouldAquireLock(fileLock);
-            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AquireLockAction.ForciblyAquireLock));
+            var result = semaphore.ShouldAcquireLock(fileLock);
+            Assert.That(result, Is.EqualTo(LockFileBasedSemaphore.AcquireLockAction.ForciblyAcquireLock));
             log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Warn && m.FormattedMessage == "Forcibly taking lock from process 0, thread 0 as lock has timed out. If this happens regularly, please contact Octopus Support.");
         }
 
@@ -153,7 +144,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             processFinder.ProcessIsRunning(Arg.Any<int>(), Arg.Any<string>()).Returns(true);
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, processFinder, new InMemoryLog());
             //not setting processid/threadid, therefore its someone elses
-            var fileLock = new FileLock { Timestamp = (DateTime.Now.Subtract(TimeSpan.FromMinutes(5))).Ticks };
+            var fileLock = new FileLock(0, Guid.NewGuid().ToString(), 0, DateTime.Now.Subtract(TimeSpan.FromMinutes(5)).Ticks);
             lockIo.ReadLock(Arg.Any<string>()).Returns(fileLock);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             lockIo.WriteLock(Arg.Any<string>(), Arg.Any<FileLock>()).Returns(true);
@@ -171,11 +162,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var processFinder = Substitute.For<IProcessFinder>();
             processFinder.ProcessIsRunning(Arg.Any<int>(), Arg.Any<string>()).Returns(true);
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, processFinder, new InMemoryLog());
-            var fileLock = new FileLock
-            {
-                ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
-                ThreadId = Thread.CurrentThread.ManagedThreadId
-            };
+            var fileLock = new FileLock(System.Diagnostics.Process.GetCurrentProcess().Id, Guid.NewGuid().ToString(), Thread.CurrentThread.ManagedThreadId, DateTime.Now.Ticks);
             lockIo.ReadLock(Arg.Any<string>()).Returns(fileLock);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             lockIo.WriteLock(Arg.Any<string>(), Arg.Any<FileLock>()).Returns(true);
@@ -186,16 +173,12 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         }
 
         [Test]
-        public void CanReleaseLockIfWeCanAquireIt()
+        public void CanReleaseLockIfWeCanAcquireIt()
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
-            var fileLock = new FileLock
-            {
-                ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
-                ThreadId = Thread.CurrentThread.ManagedThreadId
-            };
+            var fileLock = new FileLock(System.Diagnostics.Process.GetCurrentProcess().Id, Guid.NewGuid().ToString(), Thread.CurrentThread.ManagedThreadId, DateTime.Now.Ticks);
             lockIo.ReadLock(Arg.Any<string>()).Returns(fileLock);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             lockIo.WriteLock(Arg.Any<string>(), Arg.Any<FileLock>()).Returns(true);
@@ -204,16 +187,12 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         }
 
         [Test]
-        public void CannotReleaseLockIfWeCannotAquireIt()
+        public void CannotReleaseLockIfWeCannotAcquireIt()
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
-            var fileLock = new FileLock
-            {
-                ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
-                ThreadId = Thread.CurrentThread.ManagedThreadId
-            };
+            var fileLock = new FileLock(System.Diagnostics.Process.GetCurrentProcess().Id, Guid.NewGuid().ToString(), Thread.CurrentThread.ManagedThreadId, DateTime.Now.Ticks);
             lockIo.ReadLock(Arg.Any<string>()).Returns(fileLock);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             //failed to write the lock file (ie, someone else got in first)
@@ -228,11 +207,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
-            var fileLock = new FileLock
-            {
-                ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
-                ThreadId = Thread.CurrentThread.ManagedThreadId
-            };
+            var fileLock = new FileLock(System.Diagnostics.Process.GetCurrentProcess().Id, Guid.NewGuid().ToString(), Thread.CurrentThread.ManagedThreadId, DateTime.Now.Ticks);
             lockIo.ReadLock(Arg.Any<string>()).Returns(fileLock);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             //failed to write the lock file (ie, someone else got in first)
@@ -247,16 +222,12 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         }
 
         [Test]
-        public void WaitOneWithTimeoutDoesNotWaitIfCanAquireLock()
+        public void WaitOneWithTimeoutDoesNotWaitIfCanAcquireLock()
         {
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
-            var fileLock = new FileLock
-            {
-                ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
-                ThreadId = Thread.CurrentThread.ManagedThreadId
-            };
+            var fileLock = new FileLock(System.Diagnostics.Process.GetCurrentProcess().Id, Guid.NewGuid().ToString(), Thread.CurrentThread.ManagedThreadId, DateTime.Now.Ticks);
             lockIo.ReadLock(Arg.Any<string>()).Returns(fileLock);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             lockIo.WriteLock(Arg.Any<string>(), Arg.Any<FileLock>()).Returns(true);
@@ -275,11 +246,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
-            var fileLock = new FileLock
-            {
-                ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
-                ThreadId = Thread.CurrentThread.ManagedThreadId
-            };
+            var fileLock = new FileLock(System.Diagnostics.Process.GetCurrentProcess().Id, Guid.NewGuid().ToString(), Thread.CurrentThread.ManagedThreadId, DateTime.Now.Ticks);
             lockIo.ReadLock(Arg.Any<string>()).Returns(fileLock);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             lockIo.WriteLock(Arg.Any<string>(), Arg.Any<FileLock>()).Returns(false, false, false, true);
@@ -298,11 +265,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var lockIo = Substitute.For<ILockIo>();
             var name = Guid.NewGuid().ToString();
             var semaphore = new LockFileBasedSemaphore(name, TimeSpan.FromSeconds(30), lockIo, Substitute.For<IProcessFinder>(), new InMemoryLog());
-            var fileLock = new FileLock
-            {
-                ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
-                ThreadId = Thread.CurrentThread.ManagedThreadId
-            };
+            var fileLock = new FileLock(System.Diagnostics.Process.GetCurrentProcess().Id, Guid.NewGuid().ToString(), Thread.CurrentThread.ManagedThreadId, DateTime.Now.Ticks);
             lockIo.ReadLock(Arg.Any<string>()).Returns(fileLock);
             lockIo.LockExists(Arg.Any<string>()).Returns(true);
             lockIo.WriteLock(Arg.Any<string>(), Arg.Any<FileLock>()).Returns(false, false, true);

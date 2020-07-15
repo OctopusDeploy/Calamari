@@ -33,9 +33,9 @@ namespace Calamari.Util
             return UniquifyString(input, isInUse, " (#{0:n0})", 2);
         }
 
-        public static string Normalize(string input)
+        public static string? Normalize(string input)
         {
-            return input == null ? null : input.Trim().ToLowerInvariant();
+            return input?.Trim().ToLowerInvariant();
         }
     }
 }

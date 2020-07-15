@@ -17,7 +17,7 @@ namespace Calamari.Common.Features.Scripting
     {
         ScriptSyntax[] GetSupportedTypes();
 
-        CommandResult Execute(
+        CommandResult? Execute(
             Script script,
             IVariables variables,
             ICommandLineRunner commandLineRunner,
@@ -38,7 +38,7 @@ namespace Calamari.Common.Features.Scripting
             return ScriptSyntaxHelper.GetPreferenceOrderedScriptSyntaxesForEnvironment();
         }
 
-        public CommandResult Execute(
+        public CommandResult? Execute(
             Script script,
             IVariables variables,
             ICommandLineRunner commandLineRunner,

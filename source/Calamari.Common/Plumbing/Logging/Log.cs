@@ -82,7 +82,7 @@ namespace Calamari.Common.Plumbing.Logging
     public abstract class AbstractLog : ILog
     {
         readonly object sync = new object();
-        string stdOutMode;
+        string? stdOutMode;
 
         protected abstract void StdOut(string message);
         protected abstract void StdErr(string message);

@@ -6,14 +6,13 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
+using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.Java;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Exceptions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning;
 using Octopus.Versioning.Maven;
@@ -25,12 +24,12 @@ namespace Calamari.Integration.Packages.Download
     /// </summary>
     public class MavenPackageDownloader : IPackageDownloader
     {
-   
         /// <summary>
         /// These are extensions that can be handled by extractors other than the Java one. We accept these
         /// because not all artifacts from Maven will be used by Java.
         /// </summary>
-        public static readonly string[] AdditionalExtensions = {".nupkg", ".tar.bz2", ".tar.bz", ".tbz", ".tgz", ".tar.gz", ".tar.Z", ".tar"};
+        public static readonly string[] AdditionalExtensions = { ".nupkg", ".tar.bz2", ".tar.bz", ".tbz", ".tgz", ".tar.gz", ".tar.Z", ".tar" };
+
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
 
         readonly ICalamariFileSystem fileSystem;
@@ -66,7 +65,13 @@ namespace Calamari.Integration.Packages.Download
                 }
             }
 
-            return DownloadPackage(packageId, version, feedUri, feedCredentials, cacheDirectory, maxDownloadAttempts, downloadAttemptBackoff);
+            return DownloadPackage(packageId,
+                version,
+                feedUri,
+                feedCredentials,
+                cacheDirectory,
+                maxDownloadAttempts,
+                downloadAttemptBackoff);
         }
 
         /// <summary>
@@ -76,7 +81,7 @@ namespace Calamari.Integration.Packages.Download
         /// <param name="version">The desired version</param>
         /// <param name="cacheDirectory">The location of cached files</param>
         /// <returns>The path to a cached version of the file, or null if none are found</returns>
-        PackagePhysicalFileMetadata SourceFromCache(string packageId, IVersion version, string cacheDirectory)
+        PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
             Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
 
@@ -93,9 +98,7 @@ namespace Calamari.Integration.Packages.Download
                 var nugetVerMatches = package.Version.Equals(version);
 
                 if (idMatches && (nugetVerMatches || versionExactMatch))
-                {
                     return PackagePhysicalFileMetadata.Build(file, package);
-                }
             }
 
             return null;
@@ -133,8 +136,12 @@ namespace Calamari.Integration.Packages.Download
             freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
 
             var mavenPackageId = MavenPackageID.CreatePackageIdFromOctopusInput(packageId, version);
-            
-            var snapshotMetadata = GetSnapshotMetadata(mavenPackageId,  feedUri,  feedCredentials,  maxDownloadAttempts, downloadAttemptBackoff);
+
+            var snapshotMetadata = GetSnapshotMetadata(mavenPackageId,
+                feedUri,
+                feedCredentials,
+                maxDownloadAttempts,
+                downloadAttemptBackoff);
 
             var found = FirstToRespond(mavenPackageId, feedUri, feedCredentials, snapshotMetadata);
             Log.VerboseFormat("Found package {0} v{1}", packageId, version);
@@ -164,7 +171,7 @@ namespace Calamari.Integration.Packages.Download
             string cacheDirectory,
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff,
-            XmlDocument snapshotMetadata)
+            XmlDocument? snapshotMetadata)
         {
             Guard.NotNull(mavenGavFirst, "mavenGavFirst can not be null");
             Guard.NotNullOrWhiteSpace(packageId, "packageId can not be null");
@@ -173,34 +180,35 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNull(feedUri, "feedUri can not be null");
 
             var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, "." + mavenGavFirst.Packaging));
-            var downloadUrl = feedUri.ToString().TrimEnd('/') + (snapshotMetadata == null
-                                  ? mavenGavFirst.DefaultArtifactPath
-                                  : mavenGavFirst.SnapshotArtifactPath(GetLatestSnapshotRelease(
-                                      snapshotMetadata,
-                                      mavenGavFirst.Packaging,
-                                      mavenGavFirst.Classifier,
-                                      mavenGavFirst.Version)));
+            var downloadUrl = feedUri.ToString().TrimEnd('/') +
+                (snapshotMetadata == null
+                    ? mavenGavFirst.DefaultArtifactPath
+                    : mavenGavFirst.SnapshotArtifactPath(GetLatestSnapshotRelease(
+                        snapshotMetadata,
+                        mavenGavFirst.Packaging,
+                        mavenGavFirst.Classifier,
+                        mavenGavFirst.Version)));
 
             for (var retry = 0; retry < maxDownloadAttempts; ++retry)
-            {
                 try
                 {
                     Log.Verbose($"Downloading Attempt {downloadUrl} TO {localDownloadName}");
-                    using (var client = new WebClient() {Credentials = feedCredentials})
+                    using (var client = new WebClient
+                        { Credentials = feedCredentials })
                     {
                         client.DownloadFile(downloadUrl, localDownloadName);
-                        return PackagePhysicalFileMetadata.Build(localDownloadName);
+                        var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
+                        if (packagePhysicalFileMetadata == null)
+                            throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
+                        return packagePhysicalFileMetadata;
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     if (retry == maxDownloadAttempts)
-                    {
                         throw new MavenDownloadException("Failed to download the Maven artifact.\r\nLast Exception Message: " + ex.Message);
-                    }
                     Thread.Sleep(downloadAttemptBackoff);
                 }
-            }
 
             throw new MavenDownloadException("Failed to download the Maven artifact");
         }
@@ -211,10 +219,10 @@ namespace Calamari.Integration.Packages.Download
         /// </summary>
         /// <returns>The details of the first (and only) artifact to respond to a head request</returns>
         MavenPackageID FirstToRespond(
-            MavenPackageID mavenPackageId, 
-            Uri feedUri, 
+            MavenPackageID mavenPackageId,
+            Uri feedUri,
             ICredentials feedCredentials,
-            XmlDocument snapshotMetadata)
+            XmlDocument? snapshotMetadata)
         {
             Guard.NotNull(mavenPackageId, "mavenPackageId can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
@@ -227,9 +235,9 @@ namespace Calamari.Integration.Packages.Download
                 .Select(extension =>
                 {
                     var packageId = new MavenPackageID(
-                        mavenPackageId.Group, 
+                        mavenPackageId.Group,
                         mavenPackageId.Artifact,
-                        mavenPackageId.Version, 
+                        mavenPackageId.Version,
                         Regex.Replace(extension, "^\\.", ""),
                         mavenPackageId.Classifier);
                     var result = MavenPackageExists(packageId, feedUri, feedCredentials, snapshotMetadata);
@@ -241,43 +249,41 @@ namespace Calamari.Integration.Packages.Download
                     };
                 });
 
-
             var firstFound = fileChecks.FirstOrDefault(res => res.Found);
             if (firstFound != null)
-            {
                 return firstFound.MavenPackageId;
-            }
 
             throw new MavenDownloadException($"Failed to find the Maven artifact.\r\nReceived Error(s):\r\n{string.Join("\r\n", errors.Distinct().ToList())}");
         }
 
         /// <summary>
-        /// Performs the actual HTTP head request to check for the presence of a maven artifact with a 
+        /// Performs the actual HTTP head request to check for the presence of a maven artifact with a
         /// given extension.
         /// </summary>
         /// <returns>true if the package exists, and false otherwise</returns>
-        (bool Found, string ErrorMsg) MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri, ICredentials feedCredentials, XmlDocument snapshotMetadata)
+        (bool Found, string ErrorMsg) MavenPackageExists(MavenPackageID mavenGavParser, Uri feedUri, ICredentials feedCredentials, XmlDocument? snapshotMetadata)
         {
-            var uri = feedUri.ToString().TrimEnd('/') + (snapshotMetadata == null
-                          ? mavenGavParser.DefaultArtifactPath
-                          : mavenGavParser.SnapshotArtifactPath(
-                              GetLatestSnapshotRelease(
-                                  snapshotMetadata,
-                                  mavenGavParser.Packaging,
-                                  mavenGavParser.Classifier,
-                                  mavenGavParser.Version)));
+            var uri = feedUri.ToString().TrimEnd('/') +
+                (snapshotMetadata == null
+                    ? mavenGavParser.DefaultArtifactPath
+                    : mavenGavParser.SnapshotArtifactPath(
+                        GetLatestSnapshotRelease(
+                            snapshotMetadata,
+                            mavenGavParser.Packaging,
+                            mavenGavParser.Classifier,
+                            mavenGavParser.Version)));
 
             try
             {
                 var req = WebRequest.Create(uri);
                 req.Method = "HEAD";
                 req.Credentials = feedCredentials;
-                using (var response = (HttpWebResponse) req.GetResponse())
+                using (var response = (HttpWebResponse)req.GetResponse())
                 {
-                    return (((int) response.StatusCode >= 200 && (int) response.StatusCode <= 299), $"Unexpected Response: {response.StatusCode}");
+                    return ((int)response.StatusCode >= 200 && (int)response.StatusCode <= 299, $"Unexpected Response: {response.StatusCode}");
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return (false, $"Failed to download {uri}\n" + ex.Message);
             }
@@ -288,8 +294,8 @@ namespace Calamari.Integration.Packages.Download
         /// the filenames of snapshot versions.
         /// </summary>
         /// <returns>The snapshot maven-metadata.xml file if it exists, and a null result otherwise</returns>
-        XmlDocument GetSnapshotMetadata(
-            MavenPackageID mavenPackageID, 
+        XmlDocument? GetSnapshotMetadata(
+            MavenPackageID mavenPackageID,
             Uri feedUri,
             ICredentials feedCredentials,
             int maxDownloadAttempts,
@@ -297,7 +303,6 @@ namespace Calamari.Integration.Packages.Download
         {
             var url = feedUri.ToString().TrimEnd('/') + mavenPackageID.GroupVersionMetadataPath;
             for (var retry = 0; retry < maxDownloadAttempts; ++retry)
-            {
                 try
                 {
                     var request = WebRequest.Create(url);
@@ -305,50 +310,46 @@ namespace Calamari.Integration.Packages.Download
                     using (var response = (HttpWebResponse)request.GetResponse())
                     {
                         if (response.IsSuccessStatusCode() || (int)response.StatusCode == 404)
-                        {
                             using (var respStream = response.GetResponseStream())
                             {
                                 var xmlDoc = new XmlDocument();
                                 xmlDoc.Load(respStream);
                                 return xmlDoc;
                             }
-                        }
                     }
 
                     return null;
                 }
                 catch (WebException ex) when (ex.Response is HttpWebResponse response &&
-                                              response.StatusCode == HttpStatusCode.NotFound)
+                    response.StatusCode == HttpStatusCode.NotFound)
                 {
                     return null;
                 }
                 catch (Exception ex)
                 {
                     if (retry == maxDownloadAttempts)
-                    {
-                        throw new MavenDownloadException("Unable to retrieve Maven Snapshot Metadata.\r\nLast Exception Message: "+ ex.Message);
-                    }
+                        throw new MavenDownloadException("Unable to retrieve Maven Snapshot Metadata.\r\nLast Exception Message: " + ex.Message);
                     Thread.Sleep(downloadAttemptBackoff);
                 }
-            }
 
             return null;
         }
 
         //Shared code with Server. Should live in Common Location
-        public string GetLatestSnapshotRelease(XmlDocument snapshotMetadata, string extension, string classifier, string defaultVersion = "")
+        public string GetLatestSnapshotRelease(XmlDocument? snapshotMetadata, string? extension, string? classifier, string defaultVersion)
         {
-            return snapshotMetadata.ToEnumerable()
-                       .Select(doc => doc.DocumentElement?.SelectSingleNode("./*[local-name()='versioning']"))
-                       .Select(node => node?.SelectNodes("./*[local-name()='snapshotVersions']/*[local-name()='snapshotVersion']"))
-                       .Where(nodes => nodes != null)
-                       .SelectMany(nodes => nodes.Cast<XmlNode>())
-                       .Where(node => (node.SelectSingleNode("./*[local-name()='extension']")?.InnerText.Trim() ?? "").Equals(extension.Trim(), StringComparison.OrdinalIgnoreCase))
-                       // Classifier is optional, and the XML element does not exists if the artifact has no classifier
-                       .Where(node => classifier == null || (node.SelectSingleNode("./*[local-name()='classifier']")?.InnerText.Trim() ?? "").Equals(classifier.Trim(), StringComparison.OrdinalIgnoreCase))
-                       .OrderByDescending(node => node.SelectSingleNode("./*[local-name()='updated']")?.InnerText)
-                       .Select(node => node.SelectSingleNode("./*[local-name()='value']")?.InnerText)
-                       .FirstOrDefault() ?? defaultVersion;
+            return snapshotMetadata?.ToEnumerable()
+                    .Select(doc => doc.DocumentElement?.SelectSingleNode("./*[local-name()='versioning']"))
+                    .Select(node => node?.SelectNodes("./*[local-name()='snapshotVersions']/*[local-name()='snapshotVersion']"))
+                    .Where(nodes => nodes != null)
+                    .SelectMany(nodes => nodes.Cast<XmlNode>())
+                    .Where(node => (node.SelectSingleNode("./*[local-name()='extension']")?.InnerText.Trim() ?? "").Equals(extension?.Trim(), StringComparison.OrdinalIgnoreCase))
+                    // Classifier is optional, and the XML element does not exists if the artifact has no classifier
+                    .Where(node => classifier == null || (node.SelectSingleNode("./*[local-name()='classifier']")?.InnerText.Trim() ?? "").Equals(classifier.Trim(), StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(node => node.SelectSingleNode("./*[local-name()='updated']")?.InnerText)
+                    .Select(node => node.SelectSingleNode("./*[local-name()='value']")?.InnerText)
+                    .FirstOrDefault() ??
+                defaultVersion;
         }
     }
 }

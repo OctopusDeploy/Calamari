@@ -2,7 +2,7 @@ using System;
 
 namespace Calamari.Common.Features.Processes.Semaphores
 {
-    public class OtherProcessHasExclusiveLockOnFileLock : FileLock
+    public class OtherProcessHasExclusiveLockOnFileLock : IFileLock
     {
     }
 }

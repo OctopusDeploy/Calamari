@@ -132,10 +132,6 @@ namespace Calamari.Common.Plumbing.Commands.Options
     [Serializable]
     public class OptionException : Exception
     {
-        public OptionException()
-        {
-        }
-
         public OptionException(string message, string optionName)
             : base(message)
         {

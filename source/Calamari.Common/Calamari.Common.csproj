@@ -22,6 +22,9 @@
       <LangVersion>8</LangVersion>
       <Nullable>enable</Nullable>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
+        <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
+    </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
         <PackageReference Include="Autofac" Version="4.8.0" />
@@ -54,11 +57,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Octopus.Versioning" Version="4.1.8" />
+      <PackageReference Include="Octopus.Versioning" Version="4.2.1" />
       <PackageReference Include="Octostache" Version="2.7.0" />
       <PackageReference Include="SharpCompress" Version="0.24.0" />
-      <PackageReference Include="YamlDotNet" Version="8.1.0" />
-        <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+      <PackageReference Include="YamlDotNet" Version="8.1.2" />
+      <PackageReference Include="System.ValueTuple" Version="4.4.0" />
 
     </ItemGroup>
 

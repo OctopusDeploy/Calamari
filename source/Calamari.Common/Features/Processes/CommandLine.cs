@@ -7,10 +7,10 @@ namespace Calamari.Common.Features.Processes
 {
     public class CommandLine
     {
-        readonly string executable;
-        readonly Func<string[], int> func;
+        readonly string? executable;
+        readonly Func<string[], int>? func;
         readonly List<Arg> args = new List<Arg>();
-        string action;
+        string? action;
         bool useDotnet;
 
         public CommandLine(Func<string[], int> func)
@@ -65,8 +65,11 @@ namespace Calamari.Common.Features.Processes
         public CommandLineInvocation Build()
         {
             var argLine = new List<Arg>();
-
+            
             var actualExe = executable;
+
+            if (actualExe == null)
+                throw new InvalidOperationException("Executable was not specified");
 
             if (useDotnet)
             {
@@ -81,6 +84,8 @@ namespace Calamari.Common.Features.Processes
 
         public LibraryCallInvocation BuildLibraryCall()
         {
+            if (func == null)
+                throw new InvalidOperationException("Library call function was not specified");
             return new LibraryCallInvocation(func, args.Select(b => b.Build(false)).ToArray());
         }
 
@@ -91,8 +96,8 @@ namespace Calamari.Common.Features.Processes
 
         class Arg
         {
-            string Name { get; set; }
-            object Value { get; set; }
+            string? Name { get; set; }
+            object? Value { get; set; }
             bool Flag { get; set; }
             bool IsRaw { get; set; }
 
@@ -102,7 +107,7 @@ namespace Calamari.Common.Features.Processes
                     { Name = name, Value = value };
             }
 
-            public static Arg MakePositional(object value)
+            public static Arg MakePositional(object? value)
             {
                 return new Arg
                     { Value = value, Flag = false };
@@ -140,7 +145,7 @@ namespace Calamari.Common.Features.Processes
                 return string.IsNullOrWhiteSpace(Name) ? sval : $"-{Normalize(Name)} {sval}";
             }
 
-            static string Normalize(string text)
+            static string Normalize(string? text)
             {
                 if (text == null)
                     throw new ArgumentNullException(nameof(text));

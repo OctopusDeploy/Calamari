@@ -16,7 +16,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
     public class WindowsPowerShellBootstrapper : PowerShellBootstrapper
     {
         const string EnvPowerShellPath = "PowerShell.exe";
-        static string powerShellPath;
+        static string? powerShellPath;
 
         public override bool AllowImpersonation()
         {

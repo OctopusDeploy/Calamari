@@ -67,12 +67,12 @@ namespace Calamari.Common.Plumbing.FileSystem
         ///     </item>
         /// </list>
         /// </summary>
-        public string Pattern { get; set; }
+        public string? Pattern { get; }
 
         /// <summary>
         /// Gets or sets a value indicating an action to be performed when an error occurs during pattern matching.
         /// </summary>
-        public Action<string> ErrorLog { get; set; }
+        public Action<string>? ErrorLog { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating that a running pattern match should be cancelled.
@@ -129,12 +129,10 @@ namespace Calamari.Common.Plumbing.FileSystem
         /// Performs a pattern match.
         /// </summary>
         /// <param name="pattern">The pattern to be matched.</param>
-        /// <param name="ignoreCase">true if case should be ignored; false, otherwise.</param>
-        /// <param name="dirOnly">true if only directories shoud be matched; false, otherwise.</param>
         /// <returns>The matched <see cref="FileSystemInfo" /> objects</returns>
-        public static IEnumerable<FileSystemInfo> Expand(string pattern, bool ignoreCase = true, bool dirOnly = false)
+        public static IEnumerable<FileSystemInfo> Expand(string pattern)
         {
-            return new Glob(pattern) { IgnoreCase = ignoreCase, DirectoriesOnly = dirOnly }.Expand();
+            return new Glob(pattern) { IgnoreCase = true, DirectoriesOnly = false }.Expand();
         }
 
         /// <summary>
@@ -171,7 +169,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             return regexOrString;
         }
 
-        IEnumerable<FileSystemInfo> Expand(string path, bool dirOnly)
+        IEnumerable<FileSystemInfo> Expand(string? path, bool dirOnly)
         {
             if (Cancelled)
                 yield break;
@@ -183,7 +181,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             // but only if ignoring case because FileSystemInfo.Exists always ignores case.
             if (IgnoreCase && path.IndexOfAny(GlobCharacters) < 0)
             {
-                FileSystemInfo fsi = null;
+                FileSystemInfo? fsi = null;
                 var exists = false;
 
                 try
@@ -198,12 +196,12 @@ namespace Calamari.Common.Plumbing.FileSystem
                         throw;
                 }
 
-                if (exists)
+                if (exists && fsi != null) // fsi will always be not null when exists is true, but the code analysis can't see that
                     yield return fsi;
                 yield break;
             }
 
-            string parent = null;
+            string? parent;
 
             try
             {
@@ -219,7 +217,7 @@ namespace Calamari.Common.Plumbing.FileSystem
 
             if (parent == null)
             {
-                DirectoryInfo dir = null;
+                DirectoryInfo? dir = null;
 
                 try
                 {
@@ -264,8 +262,9 @@ namespace Calamari.Common.Plumbing.FileSystem
 
             if (child == "**")
             {
-                foreach (DirectoryInfo dir in Expand(parent, true).DistinctBy(d => d.FullName))
+                foreach (var fileSystemInfo in Expand(parent, true).DistinctBy(d => d.FullName))
                 {
+                    var dir = (DirectoryInfo)fileSystemInfo;
                     DirectoryInfo[] recursiveDirectories;
 
                     try
@@ -289,10 +288,11 @@ namespace Calamari.Common.Plumbing.FileSystem
                 yield break;
             }
 
-            var childRegexes = Ungroup(child).Select(s => CreateRegexOrString(s)).ToList();
+            var childRegexes = Ungroup(child).Select(CreateRegexOrString).ToList();
 
-            foreach (DirectoryInfo parentDir in Expand(parent, true).DistinctBy(d => d.FullName))
+            foreach (var fileSystemInfo in Expand(parent, true).DistinctBy(d => d.FullName))
             {
+                var parentDir = (DirectoryInfo)fileSystemInfo;
                 IEnumerable<FileSystemInfo> fileSystemEntries;
 
                 try
@@ -434,7 +434,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         /// </returns>
         public override string ToString()
         {
-            return Pattern;
+            return Pattern ?? string.Empty;
         }
 
         /// <summary>
@@ -445,7 +445,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         /// </returns>
         public override int GetHashCode()
         {
-            return Pattern.GetHashCode();
+            return Pattern?.GetHashCode() ?? 0;
         }
 
         /// <summary>
@@ -467,7 +467,7 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         static IEnumerable<DirectoryInfo> GetDirectories(DirectoryInfo root)
         {
-            DirectoryInfo[] subDirs = null;
+            DirectoryInfo[] subDirs;
 
             try
             {
@@ -504,13 +504,13 @@ namespace Calamari.Common.Plumbing.FileSystem
                 }
             }
 
-            public Regex Regex { get; }
+            public Regex? Regex { get; }
             public string Pattern { get; }
             public bool IgnoreCase { get; }
 
             public bool IsMatch(string input)
             {
-                return Regex != null ? Regex.IsMatch(input) : Pattern.Equals(input, IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+                return Regex?.IsMatch(input) ?? Pattern.Equals(input, IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
             }
         }
     }
