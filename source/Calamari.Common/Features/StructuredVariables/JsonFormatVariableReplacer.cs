@@ -82,10 +82,13 @@ namespace Calamari.Common.Features.StructuredVariables
 
         void MapObject(JToken j, bool first = false)
         {
-            if (key == null)
-                throw new InvalidOperationException("Path has not been pushed");
             if (!first)
+            {
+                if (key == null)
+                    throw new InvalidOperationException("Path has not been pushed");
+            
                 map[key] = t => j.Replace(JToken.Parse(t));
+            }
 
             foreach (var property in j.Children<JProperty>())
                 MapProperty(property);
@@ -175,10 +178,13 @@ namespace Calamari.Common.Features.StructuredVariables
 
         void MapArray(JContainer array, bool first = false)
         {
-            if (key == null)
-                throw new InvalidOperationException("Path has not been pushed");
             if (!first)
+            {
+                if (key == null)
+                    throw new InvalidOperationException("Path has not been pushed");
+            
                 map[key] = t => array.Replace(JToken.Parse(t));
+            }
 
             for (var index = 0; index < array.Count; index++)
             {
