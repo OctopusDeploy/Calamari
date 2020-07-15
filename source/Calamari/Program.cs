@@ -10,7 +10,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Journal;
-using Calamari.HealthChecks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using NuGet;
@@ -44,7 +43,7 @@ namespace Calamari
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
             // Setting extensions here as in the new Modularity world we don't register extensions
-            // and GetAllAssembliesToRegister doesn't get passed CommonOptions 
+            // and GetAllAssembliesToRegister doesn't get passed CommonOptions
             extensions = options.Extensions;
             
             base.ConfigureContainer(builder, options);
@@ -52,11 +51,6 @@ namespace Calamari
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
-
-            builder.RegisterAssemblyTypes(GetExtensionAssemblies().ToArray())
-                .AssignableTo<IDoesDeploymentTargetTypeHealthChecks>()
-                .As<IDoesDeploymentTargetTypeHealthChecks>()
-                .SingleInstance();
 
             builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
                 .AssignableTo<ICommandWithArgs>()
