@@ -4,9 +4,7 @@ using System.Linq;
 using FluentValidation;
 using Octopus.Data.Model;
 using Octopus.Server.Extensibility.HostServices.Mapping;
-using Octostache;
 using Sashimi.Server.Contracts.Accounts;
-using Sashimi.Server.Contracts.ServiceMessages;
 
 namespace Sashimi.Aws.Accounts
 {
@@ -14,27 +12,14 @@ namespace Sashimi.Aws.Accounts
     {
         public AccountDetails CreateViaServiceMessage(IDictionary<string, string> properties)
         {
-            AmazonWebServicesAccountDetails accountDetails = new AmazonWebServicesAccountDetails();
-            accountDetails.AccessKey = properties[CreateAwsAccountServiceMessagePropertyNames.AccessKey];
-            accountDetails.SecretKey = properties[CreateAwsAccountServiceMessagePropertyNames.SecretKey].ToSensitiveString();
-            return accountDetails;
-        }
+            properties.TryGetValue(CreateAwsAccountServiceMessagePropertyNames.AccessKey, out var accessKey);
+            properties.TryGetValue(CreateAwsAccountServiceMessagePropertyNames.SecretKey, out var secretKey);
 
-        public ServiceMessageValidationResult IsServiceMessageValid(IDictionary<string, string> properties, VariableDictionary variables)
-        {
-            var secretValid = properties.ContainsPropertyWithValue(CreateAwsAccountServiceMessagePropertyNames.SecretKey);
-            var accessValid = properties.ContainsPropertyWithValue(CreateAwsAccountServiceMessagePropertyNames.AccessKey);
-
-            if (!(secretValid && accessValid))
+            return new AmazonWebServicesAccountDetails
             {
-                var messages = new List<string>();
-                if (!secretValid) messages.Add("Secret Key is missing or invalid");
-                if (!accessValid) messages.Add("Access Key is missing or invalid");
-
-                return ServiceMessageValidationResult.Invalid(messages);
-            }
-
-            return ServiceMessageValidationResult.Valid;
+                AccessKey = accessKey,
+                SecretKey = secretKey?.ToSensitiveString()
+            };
         }
 
         public string AuditEntryDescription => "AWS Account";

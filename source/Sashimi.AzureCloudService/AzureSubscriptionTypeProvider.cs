@@ -3,20 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentValidation;
 using Octopus.Server.Extensibility.HostServices.Mapping;
-using Octostache;
 using Sashimi.Server.Contracts.Accounts;
-using Sashimi.Server.Contracts.ServiceMessages;
 
 namespace Sashimi.AzureCloudService
 {
     class AzureSubscriptionTypeProvider : IAccountTypeProvider
     {
         public AccountDetails CreateViaServiceMessage(IDictionary<string, string> properties)
-        {
-            throw new NotImplementedException();
-        }
-
-        public ServiceMessageValidationResult IsServiceMessageValid(IDictionary<string, string> messageProperties, VariableDictionary variables)
         {
             throw new NotImplementedException();
         }
