@@ -1,28 +1,13 @@
 ﻿using Autofac;
 using Calamari.Commands.Support;
-using Calamari.Integration.Proxies;
-using Calamari.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using Calamari.Commands;
-using Calamari.Common.Features.Scripting;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
-using Calamari.HealthChecks;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.Substitutions;
-using Calamari.Util.Environments;
-using Calamari.Variables;
-using Calamari.Plumbing;
 using NuGet;
 
 namespace Calamari
@@ -34,7 +19,7 @@ namespace Calamari
         protected Program(ILog log) : base(log)
         {
         }
-        
+
         public static int Main(string[] args)
         {
             return new Program(ConsoleLog.Instance).Run(args);
@@ -54,19 +39,14 @@ namespace Calamari
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
             // Setting extensions here as in the new Modularity world we don't register extensions
-            // and GetAllAssembliesToRegister doesn't get passed CommonOptions 
+            // and GetAllAssembliesToRegister doesn't get passed CommonOptions
             extensions = options.Extensions;
-            
+
             base.ConfigureContainer(builder, options);
-            
+
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
-
-            builder.RegisterAssemblyTypes(GetExtensionAssemblies().ToArray())
-                .AssignableTo<IDoesDeploymentTargetTypeHealthChecks>()
-                .As<IDoesDeploymentTargetTypeHealthChecks>()
-                .SingleInstance();
 
             builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
                 .AssignableTo<ICommandWithArgs>()
@@ -88,9 +68,9 @@ namespace Calamari
             {
                 yield return assembly;
             }
-            
+
             yield return typeof(ApplyDeltaCommand).Assembly; // Calamari.Shared
-            
+
             var extensionAssemblies = GetExtensionAssemblies();
             foreach (var extensionAssembly in extensionAssemblies)
             {
