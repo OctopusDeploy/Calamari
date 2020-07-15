@@ -3,6 +3,7 @@ using System.IO;
 using Calamari.Common.Features.StructuredVariables;
 using NUnit.Framework;
 using YamlDotNet.Core;
+using YamlDotNet.Core.Events;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables
 {
@@ -56,9 +57,9 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                 while (parser.MoveNext())
                 {
                     var found = classifier.Process(parser.Current);
-                    if (found is YamlScalarValueNode scalarValue)
+                    if (found is YamlNode<Scalar> scalarValue)
                     {
-                        result.Add((scalarValue.Path, scalarValue.Value));
+                        result.Add((scalarValue.Path, scalarValue.Event.Value));
                     }
                 }
             }

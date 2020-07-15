@@ -83,7 +83,6 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
         public override string PathToPowerShellExecutable(IVariables variables)
         {
             var customVersion = variables[PowerShellVariables.CustomPowerShellVersion];
-            var customVersionIsDefined = !string.IsNullOrEmpty(customVersion);
             try
             {
                 var availablePowerShellVersions = new[]
@@ -121,9 +120,8 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                     .Select(p => p.path)
                     .FirstOrDefault();
 
-                if (customVersionIsDefined && latestPowerShellVersionDirectory == null)
-                    throw new PowerShellVersionNotFoundException(customVersion,
-                        availablePowerShellVersions.Select(v => v.versionId));
+                if (!string.IsNullOrEmpty(customVersion) && latestPowerShellVersionDirectory == null)
+                    throw new PowerShellVersionNotFoundException(customVersion, availablePowerShellVersions.Select(v => v.versionId));
 
                 if (latestPowerShellVersionDirectory == null)
                     return EnvPowerShellPath;
