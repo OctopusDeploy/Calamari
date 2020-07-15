@@ -73,9 +73,9 @@ namespace Calamari.Common.Features.Packages.NuGet
         {
             // Using the SharpCompress PreserveFileTime option caused an exception when unpacking
             // NuGet packages on Linux. So we set the LastModifiedTime ourselves.
-            if (entry.LastModifiedTime.HasValue &&
-                entry.LastModifiedTime.Value != DateTime.MinValue &&
-                entry.LastModifiedTime.Value.ToUniversalTime() <= DateTime.UtcNow)
+            if (entry.LastModifiedTime.HasValue
+                && entry.LastModifiedTime.Value != DateTime.MinValue
+                && entry.LastModifiedTime.Value.ToUniversalTime() <= DateTime.UtcNow)
                 try
                 {
                     File.SetLastWriteTimeUtc(targetFile, entry.LastModifiedTime.Value.ToUniversalTime());
@@ -100,8 +100,8 @@ namespace Calamari.Common.Features.Packages.NuGet
 
         static bool IsExcludedPath(string path)
         {
-            return ExcludePaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)) ||
-                path.EndsWith(ExcludeExtension, StringComparison.OrdinalIgnoreCase);
+            return ExcludePaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase))
+                   || path.EndsWith(ExcludeExtension, StringComparison.OrdinalIgnoreCase);
         }
 
         static bool IsManifest(string path)
