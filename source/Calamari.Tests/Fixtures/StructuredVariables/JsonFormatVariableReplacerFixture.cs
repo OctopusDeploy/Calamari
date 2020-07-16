@@ -16,166 +16,181 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         [Test]
         public void ShouldReplaceInSimpleFile()
         {
-            var variables = new CalamariVariables();
-            variables.Set("MyMessage", "Hello world");
-            variables.Set("EmailSettings:SmtpHost", "localhost");
-            variables.Set("EmailSettings:SmtpPort", "23");
-            variables.Set("EmailSettings:DefaultRecipients:To", "paul@octopus.com");
-            variables.Set("EmailSettings:DefaultRecipients:Cc", "henrik@octopus.com");
-
-            var replaced = Replace(variables, existingFile: "appsettings.simple.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "MyMessage", "Hello world" },
+                                    { "EmailSettings:SmtpHost", "localhost" },
+                                    { "EmailSettings:SmtpPort", "23" },
+                                    { "EmailSettings:DefaultRecipients:To", "paul@octopus.com" },
+                                    { "EmailSettings:DefaultRecipients:Cc", "henrik@octopus.com" }
+                                },
+                                existingFile: "appsettings.simple.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldIgnoreOctopusPrefix()
         {
-            var variables = new CalamariVariables();
-            variables.Set("MyMessage", "Hello world!");
-            variables.Set("IThinkOctopusIsGreat", "Yes, I do!");
-            variables.Set("OctopusRocks", "This is ignored");
-            variables.Set("Octopus.Rocks", "So is this");
-            variables.Set("Octopus:Section", "Should work");
-
-            var replaced = Replace(variables, existingFile: "appsettings.ignore-octopus.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "MyMessage", "Hello world!" },
+                                    { "IThinkOctopusIsGreat", "Yes, I do!" },
+                                    { "OctopusRocks", "This is ignored" },
+                                    { "Octopus.Rocks", "So is this" },
+                                    { "Octopus:Section", "Should work" }
+                                },
+                                existingFile: "appsettings.ignore-octopus.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldReplaceVariablesInTopLevelArray()
         {
-            var variables = new CalamariVariables();
-            variables.Set("0:Property", "NewValue");
-
-            var replaced = Replace(variables, existingFile: "appsettings.top-level-array.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "0:Property", "NewValue" }
+                                },
+                                existingFile: "appsettings.top-level-array.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldKeepExistingValues()
         {
-            var variables = new CalamariVariables();
-            variables.Set("MyMessage", "Hello world!");
-            variables.Set("EmailSettings:SmtpPort", "24");
-            variables.Set("EmailSettings:DefaultRecipients:Cc", "damo@octopus.com");
-
-            var replaced = Replace(variables, existingFile: "appsettings.existing-expected.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "MyMessage", "Hello world!" },
+                                    { "EmailSettings:SmtpPort", "24" },
+                                    { "EmailSettings:DefaultRecipients:Cc", "damo@octopus.com" }
+                                },
+                                existingFile: "appsettings.existing-expected.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldMatchAndReplaceIgnoringCase()
         {
-            var variables = new CalamariVariables();
-            variables.Set("mymessage", "Hello! world!");
-            variables.Set("EmailSettings:Defaultrecipients:To", "mark@octopus.com");
-            variables.Set("EmailSettings:defaultRecipients:Cc", "henrik@octopus.com");
-
-            var replaced = Replace(variables, existingFile: "appsettings.simple.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "mymessage", "Hello! world!" },
+                                    { "EmailSettings:Defaultrecipients:To", "mark@octopus.com" },
+                                    { "EmailSettings:defaultRecipients:Cc", "henrik@octopus.com" }
+                                },
+                                existingFile: "appsettings.simple.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldReplaceWithAnEmptyString()
         {
-            var variables = new CalamariVariables();
-            variables.Set("MyMessage", "");
-
-            var replaced = Replace(variables, existingFile: "appsettings.single.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "MyMessage", "" }
+                                },
+                                existingFile: "appsettings.single.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldReplaceWithNull()
         {
-            var variables = new CalamariVariables();
-            variables.Set("MyMessage", null);
-
-            var replaced = Replace(variables, existingFile: "appsettings.single.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "MyMessage", null }
+                                },
+                                existingFile: "appsettings.single.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldReplaceWithColonInName()
         {
-            var variables = new CalamariVariables();
-            variables.Set("EnvironmentVariables:Hosting:Environment", "Production");
-
-            var replaced = Replace(variables, existingFile: "appsettings.colon-in-name.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "EnvironmentVariables:Hosting:Environment", "Production" }
+                                },
+                                existingFile: "appsettings.colon-in-name.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldReplaceWholeObject()
         {
-            var variables = new CalamariVariables();
-            variables.Set("EmailSettings:DefaultRecipients", @"{""To"": ""rob@octopus.com"", ""Cc"": ""henrik@octopus.com""}");
-
-            var replaced = Replace(variables, existingFile: "appsettings.simple.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "EmailSettings:DefaultRecipients", @"{""To"": ""rob@octopus.com"", ""Cc"": ""henrik@octopus.com""}" }
+                                },
+                                existingFile: "appsettings.simple.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldReplaceElementInArray()
         {
-            var variables = new CalamariVariables();
-            variables.Set("EmailSettings:DefaultRecipients:1", "henrik@octopus.com");
-
-            var replaced = Replace(variables, existingFile: "appsettings.array.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "EmailSettings:DefaultRecipients:1", "henrik@octopus.com" }
+                                },
+                                existingFile: "appsettings.array.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldReplacePropertyOfAnElementInArray()
         {
-            var variables = new CalamariVariables();
-            variables.Set("EmailSettings:DefaultRecipients:1:Email", "henrik@octopus.com");
-
-            var replaced = Replace(variables, existingFile: "appsettings.object-array.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "EmailSettings:DefaultRecipients:1:Email", "henrik@octopus.com" }
+                                },
+                                existingFile: "appsettings.object-array.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldReplaceEntireArray()
         {
-            var variables = new CalamariVariables();
-            variables.Set("EmailSettings:DefaultRecipients", @"[""mike@octopus.com"", ""henrik@octopus.com""]");
-
-            var replaced = Replace(variables, existingFile: "appsettings.array.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "EmailSettings:DefaultRecipients", @"[""mike@octopus.com"", ""henrik@octopus.com""]" }
+                                },
+                                existingFile: "appsettings.array.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldReplaceNumber()
         {
-            var variables = new CalamariVariables();
-            variables.Set("EmailSettings:SmtpPort", "8023");
-
-            var replaced = Replace(variables, existingFile: "appsettings.array.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "EmailSettings:SmtpPort", "8023" }
+                                },
+                                existingFile: "appsettings.array.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldReplaceDecimal()
         {
-            var variables = new CalamariVariables();
-            variables.Set("DecimalValue", "50.0");
-            variables.Set("FloatValue", "456e-5");
-            variables.Set("StringValue", "60.0");
-            variables.Set("IntegerValue", "70");
-
-            var replaced = Replace(variables, existingFile: "appsettings.decimals.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "DecimalValue", "50.0" },
+                                    { "FloatValue", "456e-5" },
+                                    { "StringValue", "60.0" },
+                                    { "IntegerValue", "70" }
+                                },
+                                existingFile: "appsettings.decimals.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
 
         [Test]
         public void ShouldReplaceBoolean()
         {
-            var variables = new CalamariVariables();
-            variables.Set("EmailSettings:UseProxy", "true");
-
-            var replaced = Replace(variables, existingFile: "appsettings.array.json");
-            this.Assent(replaced, TestEnvironment.AssentJsonDeepCompareConfiguration);
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "EmailSettings:UseProxy", "true" }
+                                },
+                                existingFile: "appsettings.array.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
     }
 }
