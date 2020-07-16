@@ -9,15 +9,11 @@ using YamlDotNet.Core.Events;
 
 namespace Calamari.Common.Features.StructuredVariables
 {
-    public interface IYamlFormatVariableReplacer : IFileFormatVariableReplacer
+    public class YamlFormatVariableReplacer : IFileFormatVariableReplacer
     {
-    }
+        public string SupportedFormat => "YAML";
 
-    public class YamlFormatVariableReplacer : IYamlFormatVariableReplacer
-    {
-        public string FileFormatName => "YAML";
-
-        public bool TryModifyFile(string filePath, IVariables variables)
+        public void ModifyFile(string filePath, IVariables variables)
         {
             var variablesByKey = variables
                 .DistinctBy(v => v.Key)
@@ -26,75 +22,68 @@ namespace Calamari.Common.Features.StructuredVariables
             // Read and transform the input file
             var outputEvents = new List<ParsingEvent>();
             (IYamlNode startEvent, string replacementValue)? structureWeAreReplacing = null;
-            try
+
+            using (var reader = new StreamReader(filePath))
             {
-                using (var reader = new StreamReader(filePath))
+                var parser = new Parser(reader);
+                var classifier = new YamlEventStreamClassifier();
+                while (parser.MoveNext())
                 {
-                    var parser = new Parser(reader);
-                    var classifier = new YamlEventStreamClassifier();
-                    while (parser.MoveNext())
+                    var ev = parser.Current;
+                    if (ev == null)
+                        continue;
+
+                    var node = classifier.Process(ev);
+
+                    if (structureWeAreReplacing == null)
                     {
-                        var ev = parser.Current;
-                        if (ev == null)
-                            continue;
+                        // Not replacing: searching for things to replace, copying events to output.
 
-                        var node = classifier.Process(ev);
-
-                        if (structureWeAreReplacing == null)
+                        if (node is YamlNode<Scalar> scalar
+                            && variablesByKey.TryGetValue(scalar.Path, out string newValue))
                         {
-                            // Not replacing: searching for things to replace, copying events to output.
-
-                            if (node is YamlNode<Scalar> scalar
-                                && variablesByKey.TryGetValue(scalar.Path, out string newValue))
-                            {
-                                // TODO ZDY: Preserve input document types for explicit tags, ambiguous inputs - currently preserves decorations only 
-                                outputEvents.Add(scalar.Event.ReplaceValue(newValue));
-                            }
-                            else if (node is YamlNode<MappingStart> mappingStart
-                                     && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
-                            {
-                                structureWeAreReplacing = (mappingStart, mappingReplacement);
-                            }
-                            else if (node is YamlNode<SequenceStart> sequenceStart
-                                     && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
-                            {
-                                structureWeAreReplacing = (sequenceStart, sequenceReplacement);
-                            }
-                            else
-                            {
-                                outputEvents.Add(node.Event);
-                            }
+                            // TODO ZDY: Preserve input document types for explicit tags, ambiguous inputs - currently preserves decorations only 
+                            outputEvents.Add(scalar.Event.ReplaceValue(newValue));
+                        }
+                        else if (node is YamlNode<MappingStart> mappingStart
+                                 && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
+                        {
+                            structureWeAreReplacing = (mappingStart, mappingReplacement);
+                        }
+                        else if (node is YamlNode<SequenceStart> sequenceStart
+                                 && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
+                        {
+                            structureWeAreReplacing = (sequenceStart, sequenceReplacement);
                         }
                         else
                         {
-                            // Replacing: searching for the end of the structure we're replacing. No output until then.
+                            outputEvents.Add(node.Event);
+                        }
+                    }
+                    else
+                    {
+                        // Replacing: searching for the end of the structure we're replacing. No output until then.
 
-                            if (node is YamlNode<MappingEnd>
-                                && structureWeAreReplacing.Value.startEvent is YamlNode<MappingStart> mappingStart
-                                && structureWeAreReplacing.Value.startEvent.Path == node.Path)
-                            {
-                                outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
-                                                                    mappingStart.Event.Anchor,
-                                                                    mappingStart.Event.Tag));
-                                structureWeAreReplacing = null;
-                            }
-                            else if (node is YamlNode<SequenceEnd>
-                                     && structureWeAreReplacing.Value.startEvent is YamlNode<SequenceStart> sequenceStart
-                                     && structureWeAreReplacing.Value.startEvent.Path == node.Path)
-                            {
-                                outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
-                                                                    sequenceStart.Event.Anchor,
-                                                                    sequenceStart.Event.Tag));
-                                structureWeAreReplacing = null;
-                            }
+                        if (node is YamlNode<MappingEnd>
+                            && structureWeAreReplacing.Value.startEvent is YamlNode<MappingStart> mappingStart
+                            && structureWeAreReplacing.Value.startEvent.Path == node.Path)
+                        {
+                            outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
+                                                                mappingStart.Event.Anchor,
+                                                                mappingStart.Event.Tag));
+                            structureWeAreReplacing = null;
+                        }
+                        else if (node is YamlNode<SequenceEnd>
+                                 && structureWeAreReplacing.Value.startEvent is YamlNode<SequenceStart> sequenceStart
+                                 && structureWeAreReplacing.Value.startEvent.Path == node.Path)
+                        {
+                            outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
+                                                                sequenceStart.Event.Anchor,
+                                                                sequenceStart.Event.Tag));
+                            structureWeAreReplacing = null;
                         }
                     }
                 }
-            }
-            catch (SyntaxErrorException)
-            {
-                // TODO ZDY: Report where the problem was in the input file
-                return false;
             }
 
             // Write the replacement file
@@ -112,7 +101,6 @@ namespace Calamari.Common.Features.StructuredVariables
             }
 
             File.WriteAllText(filePath, outputText);
-            return true;
         }
 
         List<ParsingEvent> ParseFragment(string value, string anchor, string tag)

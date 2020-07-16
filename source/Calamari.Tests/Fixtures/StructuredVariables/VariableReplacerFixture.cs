@@ -24,8 +24,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 
             using (new TemporaryFile(temp))
             {
-                var success = replacer.TryModifyFile(temp, variables);
-                success.Should().BeTrue();
+                replacer.ModifyFile(temp, variables);
                 return File.ReadAllText(temp);
             }
         }

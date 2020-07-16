@@ -5,8 +5,9 @@ namespace Calamari.Common.Features.StructuredVariables
 {
     public interface IFileFormatVariableReplacer
     {
-        string FileFormatName { get; }
+        // TODO: should be the same type as StructuredConfigVariablesModel.Format
+        string SupportedFormat { get; }
 
-        bool TryModifyFile(string filePath, IVariables variables);
+        void ModifyFile(string filePath, IVariables variables);
     }
 }

@@ -77,10 +77,10 @@ namespace Calamari.Azure.CloudServices.Commands
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var jsonVariablesReplacer = new StructuredConfigVariableReplacer(
-                new JsonFormatVariableReplacer(), 
-                new YamlFormatVariableReplacer());
-
+            var structuredConfigVariableService = new StructuredConfigVariablesService(
+                fileSystem,
+                StructuredConfigVariablesFileFormats.AllReplacers
+            );
             var conventions = new List<IConvention>
             {
                 new SwapAzureDeploymentConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
@@ -95,7 +95,7 @@ namespace Calamari.Azure.CloudServices.Commands
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
-                new JsonConfigurationVariablesConvention(jsonVariablesReplacer, fileSystem),
+                new JsonConfigurationVariablesConvention(structuredConfigVariableService),
                 new PackagedScriptConvention(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
                 new RePackageCloudServiceConvention(fileSystem),

@@ -9,33 +9,19 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.Common.Features.StructuredVariables
 {
-    public interface IJsonFormatVariableReplacer : IFileFormatVariableReplacer
+    public class JsonFormatVariableReplacer : IFileFormatVariableReplacer
     {
-    }
+        public string SupportedFormat => "JSON";
 
-    public class JsonFormatVariableReplacer : IJsonFormatVariableReplacer
-    {
-        public string FileFormatName => "JSON";
-
-        public bool TryModifyFile(string filePath, IVariables variables)
+        public void ModifyFile(string filePath, IVariables variables)
         {
-            JToken root;
-            try
-            {
-                root = LoadJson(filePath);
-            }
-            catch (JsonReaderException)
-            {
-                // File was not valid JSON.
-                return false;
-            }
+            var root = LoadJson(filePath);
 
             var map = new JsonUpdateMap();
             map.Load(root);
             map.Update(variables);
 
             SaveJson(filePath, root);
-            return true;
         }
 
         static JToken LoadJson(string jsonFilePath)
