@@ -18,6 +18,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Octopus.CoreParsers.Hcl" Version="1.0.7" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="4.1.2-ref-fix-common-n0003" />
+    <PackageReference Include="Sashimi.Server.Contracts" Version="4.1.2" />
   </ItemGroup>
 </Project>
