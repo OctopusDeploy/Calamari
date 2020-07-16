@@ -1,6 +1,4 @@
-﻿using Autofac;
-
-namespace Calamari.Tests
+﻿namespace Calamari.Tests
 {
     class TestProgramWrapper
     {
