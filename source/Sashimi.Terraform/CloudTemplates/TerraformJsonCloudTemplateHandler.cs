@@ -18,9 +18,9 @@ namespace Sashimi.Terraform.CloudTemplates
         }
 
         public bool CanHandleTemplate(string providerId, string template)
-            => TerraformConstants.CloudTemplateProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase) &&
-                formatIdentifier.IsJson(template);
-
+        {
+            return TerraformConstants.CloudTemplateProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase) && formatIdentifier.IsJson(template);
+        }
 
         public Metadata ParseTypes(string template)
         {
@@ -28,16 +28,17 @@ namespace Sashimi.Terraform.CloudTemplates
 
             var jTokenDict = GetVariables(template);
             var properties = jTokenDict.Select(p => new PropertyMetadata
-            {
-                DisplayInfo = new DisplayInfo
-                {
-                    Description = p.Value.SelectToken("description")?.ToString(),
-                    Label = p.Key,
-                    Required = true,
-                },
-                Type = GetType(p.Value),
-                Name = p.Key,
-            }).ToList();
+                                       {
+                                           DisplayInfo = new DisplayInfo
+                                           {
+                                               Description = p.Value.SelectToken("description")?.ToString(),
+                                               Label = p.Key,
+                                               Required = true
+                                           },
+                                           Type = GetType(p.Value),
+                                           Name = p.Key
+                                       })
+                                       .ToList();
 
             return new Metadata
             {
@@ -56,8 +57,8 @@ namespace Sashimi.Terraform.CloudTemplates
         {
             var parameters = GetVariables(template);
             return parameters
-                .Select(x => new KeyValuePair<string, object?>(x.Key, GetDefaultValue(x.Value)))
-                .ToDictionary(x => x.Key, x => x.Value);
+                   .Select(x => new KeyValuePair<string, object?>(x.Key, GetDefaultValue(x.Value)))
+                   .ToDictionary(x => x.Key, x => x.Value);
         }
 
         static object? GetDefaultValue(JToken argValue)
@@ -76,9 +77,7 @@ namespace Sashimi.Terraform.CloudTemplates
         {
             var type = token.SelectToken("type");
             if (type != null)
-            {
                 return TerraformDataTypes.MapToType(type.ToString());
-            }
 
             // We can determine the type from the default value
             var defaultValue = token.SelectToken("default");
@@ -105,7 +104,7 @@ namespace Sashimi.Terraform.CloudTemplates
 
             var tokenDictionary = new Dictionary<string, JToken>();
 
-            foreach (var (key, value) in (JObject) variables)
+            foreach (var (key, value) in (JObject)variables)
             {
                 if (value == null)
                     throw new Exception($"{nameof(JToken)} with key '{key}' has a null value.");

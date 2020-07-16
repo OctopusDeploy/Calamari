@@ -1,4 +1,4 @@
-
+using System;
 using System.Runtime.CompilerServices;
 
-[assembly:InternalsVisibleTo("Sashimi.Terraform.Tests")]
+[assembly: InternalsVisibleTo("Sashimi.Terraform.Tests")]

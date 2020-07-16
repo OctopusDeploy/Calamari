@@ -1,4 +1,5 @@
-﻿using Sashimi.Server.Contracts.CloudTemplates;
+﻿using System;
+using Sashimi.Server.Contracts.CloudTemplates;
 
 namespace Sashimi.Terraform.ActionHandler
 {

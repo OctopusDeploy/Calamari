@@ -11,8 +11,9 @@ namespace Sashimi.Terraform.CloudTemplates
     class TerraformHclCloudTemplateHandler : ICloudTemplateHandler
     {
         public bool CanHandleTemplate(string providerId, string template)
-            => TerraformConstants.CloudTemplateProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase) &&
-                HclFormatIdentifier.IsHcl(template);
+        {
+            return TerraformConstants.CloudTemplateProviderId.Equals(providerId, StringComparison.OrdinalIgnoreCase) && HclFormatIdentifier.IsHcl(template);
+        }
 
         public Metadata ParseTypes(string template)
         {
@@ -20,16 +21,17 @@ namespace Sashimi.Terraform.CloudTemplates
 
             var hclElements = GetVariables(template);
             var properties = hclElements.Select(p => new PropertyMetadata
-            {
-                DisplayInfo = new DisplayInfo
-                {
-                    Description = GetDefaultDescription(p),
-                    Label = p.Value,
-                    Required = true,
-                },
-                Type = GetType(p),
-                Name = p.Value,
-            }).ToList();
+                                        {
+                                            DisplayInfo = new DisplayInfo
+                                            {
+                                                Description = GetDefaultDescription(p),
+                                                Label = p.Value,
+                                                Required = true
+                                            },
+                                            Type = GetType(p),
+                                            Name = p.Value
+                                        })
+                                        .ToList();
 
             return new Metadata
             {
@@ -48,18 +50,19 @@ namespace Sashimi.Terraform.CloudTemplates
         {
             var parameters = GetVariables(template);
             return parameters?
-                .Select(x => new KeyValuePair<string, object?>(
-                    x.Value, 
-                    GetDefaultValue(x))
-                )
-                .ToDictionary(x => x.Key, x => x.Value) ?? new Dictionary<string, object?>();
+                   .Select(x => new KeyValuePair<string, object?>(
+                                                                  x.Value,
+                                                                  GetDefaultValue(x))
+                          )
+                   .ToDictionary(x => x.Key, x => x.Value)
+                   ?? new Dictionary<string, object?>();
         }
 
         string? GetDefaultValue(HclElement argValue)
         {
             return argValue.Children?.FirstOrDefault(child => child.Name == "default")?.ToString(true, 0);
         }
-        
+
         string? GetDefaultDescription(HclElement argValue)
         {
             return argValue.Children?.FirstOrDefault(child => child.Name == "description")?.Value;
@@ -74,14 +77,12 @@ namespace Sashimi.Terraform.CloudTemplates
         {
             var type = token.Children?.FirstOrDefault(child => child.Name == "type");
             if (type != null)
-            {
                 return TerraformDataTypes.MapToType(type.Value);
-            }
 
             // We can determine the type from the default value
             var defaultValue = token.Children?.FirstOrDefault(child => child.Name == "default");
             if (defaultValue == null) return "string";
-            
+
             switch (defaultValue.Type)
             {
                 case HclElement.ListType:
@@ -93,7 +94,7 @@ namespace Sashimi.Terraform.CloudTemplates
             }
 
             // Otherwise we default to a string
-            return "string";            
+            return "string";
         }
 
         static IList<HclElement> GetVariables(string template)
@@ -101,9 +102,9 @@ namespace Sashimi.Terraform.CloudTemplates
             if (template == null) return new List<HclElement>();
 
             return HclParser.HclTemplate.Parse(HclParser.NormalizeLineEndings(template))
-                .Children
-                .Where(child => child.Name == "variable")
-                .ToList();
+                            .Children
+                            .Where(child => child.Name == "variable")
+                            .ToList();
         }
     }
 }

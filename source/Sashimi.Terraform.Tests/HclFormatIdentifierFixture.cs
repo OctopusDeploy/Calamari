@@ -4,7 +4,6 @@ using FluentAssertions;
 using NUnit.Framework;
 using Sashimi.Terraform.CloudTemplates;
 using Sashimi.Tests.Shared;
-using Sashimi.Tests.Shared.Extensions;
 
 namespace Sashimi.Terraform.Tests
 {
@@ -15,7 +14,8 @@ namespace Sashimi.Terraform.Tests
         {
             var template = File.ReadAllText(TestEnvironment.GetTestPath("HclFormatIdentifierFixture_main.tf"));
             HclFormatIdentifier.IsHcl(template)
-                .Should().BeTrue();
+                               .Should()
+                               .BeTrue();
         }
 
         [TestCase(null)]
@@ -24,7 +24,8 @@ namespace Sashimi.Terraform.Tests
         public void DoesNotExplodeOnInvalid(string template)
         {
             HclFormatIdentifier.IsHcl(template)
-                .Should().BeFalse();
+                               .Should()
+                               .BeFalse();
         }
     }
 }

@@ -61,12 +61,12 @@ namespace Sashimi.Terraform.ActionHandler
         static List<string> GetPropertiesAsList(JObject parsedProperties, Metadata metadata, Func<string?, JProperty, string> getVariableValue)
         {
             var properties = parsedProperties
-                // get the populated properties
-                .Properties()
-                .ToList()
-                // convert each property to a string, list or map, preserving any variable substitutions
-                .Select(prop => getVariableValue(GetPropertyType(metadata, prop.Name), prop))
-                .ToList();
+                             // get the populated properties
+                             .Properties()
+                             .ToList()
+                             // convert each property to a string, list or map, preserving any variable substitutions
+                             .Select(prop => getVariableValue(GetPropertyType(metadata, prop.Name), prop))
+                             .ToList();
             return properties;
         }
 
@@ -79,9 +79,9 @@ namespace Sashimi.Terraform.ActionHandler
         static void RemoveEmptyVariables(JObject variables)
         {
             var emptyProperties = variables
-                .Properties()
-                .Where(p => !p.HasValues || string.IsNullOrEmpty(p.Value.ToString()))
-                .ToArray();
+                                  .Properties()
+                                  .Where(p => !p.HasValues || string.IsNullOrEmpty(p.Value.ToString()))
+                                  .ToArray();
             foreach (var property in emptyProperties)
                 variables.Remove(property.Name);
         }
@@ -95,9 +95,7 @@ namespace Sashimi.Terraform.ActionHandler
         static string GetJsonVariableValue(string? propertyType, JProperty property)
         {
             if (propertyType != null && propertyType.StartsWith(TerraformDataTypes.RawPrefix))
-            {
                 return "\"" + HclParser.EscapeString(property.Name) + "\": " + property.Value;
-            }
 
             return "\"" + HclParser.EscapeString(property.Name) + "\": \"" + HclParser.EscapeString(property.Value.ToString()) + "\"";
         }
@@ -111,9 +109,7 @@ namespace Sashimi.Terraform.ActionHandler
         static string GetHclVariableValue(string? propertyType, JProperty property)
         {
             if (propertyType != null && propertyType.StartsWith(TerraformDataTypes.RawPrefix))
-            {
                 return HclParser.EscapeString(property.Name) + " = " + property.Value;
-            }
 
             return HclParser.EscapeString(property.Name) + " = \"" + HclParser.EscapeString(property.Value.ToString()) + "\"";
         }
@@ -121,9 +117,9 @@ namespace Sashimi.Terraform.ActionHandler
         public static string? GetPropertyType(Metadata metadata, string property)
         {
             return metadata.Types.FirstOrDefault(type => type.Name == TerraformDataTypes.TerraformTemplateTypeName)
-                ?.Properties
-                .FirstOrDefault(prop => prop.Name == property)
-                ?.Type;
+                           ?.Properties
+                           .FirstOrDefault(prop => prop.Name == property)
+                           ?.Type;
         }
     }
 }

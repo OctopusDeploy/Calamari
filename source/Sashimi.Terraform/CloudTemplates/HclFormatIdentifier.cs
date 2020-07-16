@@ -7,7 +7,8 @@ namespace Sashimi.Terraform.CloudTemplates
     static class HclFormatIdentifier
     {
         public static bool IsHcl(string template)
-            => !string.IsNullOrWhiteSpace(template) && 
-                HclParser.HclTemplate.TryParse(HclParser.NormalizeLineEndings(template)).WasSuccessful;
+        {
+            return !string.IsNullOrWhiteSpace(template) && HclParser.HclTemplate.TryParse(HclParser.NormalizeLineEndings(template)).WasSuccessful;
+        }
     }
 }

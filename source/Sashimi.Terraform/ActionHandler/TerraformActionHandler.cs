@@ -17,7 +17,7 @@ namespace Sashimi.Terraform.ActionHandler
         public static readonly CalamariFlavour CalamariTerraform = new CalamariFlavour("Calamari.Terraform");
 
         readonly ICloudTemplateHandlerFactory cloudTemplateHandlerFactory;
-        
+
         public TerraformActionHandler(ICloudTemplateHandlerFactory cloudTemplateHandlerFactory)
         {
             this.cloudTemplateHandlerFactory = cloudTemplateHandlerFactory;
@@ -31,16 +31,14 @@ namespace Sashimi.Terraform.ActionHandler
         public bool ShowInStepTemplatePickerUI => true;
         public bool WhenInAChildStepRunInTheContextOfTheTargetMachine => false;
         public bool CanRunOnDeploymentTarget => false;
-        public ActionHandlerCategory[] Categories => new[] {ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Terraform};
+        public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Terraform };
 
         public IActionHandlerResult Execute(IActionHandlerContext context)
         {
             var builder = context.CalamariCommand(CalamariTerraform, ToolCommand);
 
             if (context.DeploymentTargetType.SelectValueOr(targetType => targetType != DeploymentTargetType.Ssh, true))
-            {
                 builder.WithTool(TerraformTools.TerraformCli);
-            }
 
             var isInPackage = KnownVariableValues.Action.Script.ScriptSource.Package.Equals(context.Variables.Get(KnownVariables.Action.Script.ScriptSource), StringComparison.OrdinalIgnoreCase);
             if (isInPackage)
@@ -53,14 +51,10 @@ namespace Sashimi.Terraform.ActionHandler
                 var templateParametersRaw = context.Variables.GetRaw(TerraformSpecialVariables.Action.Terraform.TemplateParameters);
 
                 if (string.IsNullOrEmpty(template))
-                {
                     throw new KnownDeploymentFailureException("No template supplied");
-                }
 
                 if (string.IsNullOrEmpty(templateParametersRaw))
-                {
                     throw new KnownDeploymentFailureException("No template parameters applied");
-                }
 
                 var templateHandler = cloudTemplateHandlerFactory.GetHandler(TerraformConstants.CloudTemplateProviderId, template);
 
@@ -72,13 +66,13 @@ namespace Sashimi.Terraform.ActionHandler
                 var templateParameters = TerraformVariableFileGenerator.ConvertStringPropsToObjects(templateFormat, context.Variables, templateParametersRaw, metadata);
 
                 builder.WithDataFileNoBom(
-                        template,
-                        templateFormat == TerraformTemplateFormat.Json ? TerraformSpecialVariables.JsonTemplateFile : TerraformSpecialVariables.HclTemplateFile
-                    )
-                    .WithDataFileNoBom(
-                        templateParameters,
-                        templateFormat == TerraformTemplateFormat.Json ? TerraformSpecialVariables.JsonVariablesFile : TerraformSpecialVariables.HclVariablesFile
-                    );
+                                          template,
+                                          templateFormat == TerraformTemplateFormat.Json ? TerraformSpecialVariables.JsonTemplateFile : TerraformSpecialVariables.HclTemplateFile
+                                         )
+                       .WithDataFileNoBom(
+                                          templateParameters,
+                                          templateFormat == TerraformTemplateFormat.Json ? TerraformSpecialVariables.JsonVariablesFile : TerraformSpecialVariables.HclVariablesFile
+                                         );
             }
 
             return builder.Execute();

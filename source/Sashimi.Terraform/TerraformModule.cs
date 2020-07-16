@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using Autofac;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.CloudTemplates;
@@ -17,7 +17,7 @@ namespace Sashimi.Terraform
         {
             base.Load(builder);
 
-            builder.RegisterType<TerraformJsonCloudTemplateHandler>().As<ICloudTemplateHandler>().SingleInstance();           
+            builder.RegisterType<TerraformJsonCloudTemplateHandler>().As<ICloudTemplateHandler>().SingleInstance();
             builder.RegisterType<TerraformHclCloudTemplateHandler>().As<ICloudTemplateHandler>().SingleInstance();
 
             builder.RegisterType<TerraformApplyActionHandler>().As<IActionHandler>().AsSelf().InstancePerLifetimeScope();

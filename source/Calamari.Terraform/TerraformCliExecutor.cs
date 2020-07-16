@@ -15,7 +15,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Terraform
 {
-    internal class TerraformCliExecutor : IDisposable
+    class TerraformCliExecutor : IDisposable
     {
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
@@ -23,36 +23,34 @@ namespace Calamari.Terraform
         readonly RunningDeployment deployment;
         readonly IVariables variables;
         readonly Dictionary<string, string> environmentVariables;
-        Dictionary<string, string> defaultEnvironmentVariables;
         readonly string templateDirectory;
         readonly string logPath;
+        Dictionary<string, string> defaultEnvironmentVariables;
 
         public TerraformCliExecutor(
             ILog log,
-            ICalamariFileSystem fileSystem, 
+            ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
             RunningDeployment deployment,
             Dictionary<string, string> environmentVariables
-            )
+        )
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.deployment = deployment;
-            this.variables = deployment.Variables;
+            variables = deployment.Variables;
             this.environmentVariables = environmentVariables;
-            this.logPath = Path.Combine(deployment.CurrentDirectory, "terraform.log");
+            logPath = Path.Combine(deployment.CurrentDirectory, "terraform.log");
 
             templateDirectory = variables.Get(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, deployment.CurrentDirectory);
 
-            if (!String.IsNullOrEmpty(templateDirectory))
+            if (!string.IsNullOrEmpty(templateDirectory))
             {
                 var templateDirectoryTemp = Path.Combine(deployment.CurrentDirectory, templateDirectory);
 
                 if (!Directory.Exists(templateDirectoryTemp))
-                {
                     throw new Exception($"Directory {templateDirectory} does not exist.");
-                }
 
                 templateDirectory = templateDirectoryTemp;
             }
@@ -67,6 +65,25 @@ namespace Calamari.Terraform
         }
 
         public string ActionParams => variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams);
+
+        /// <summary>
+        /// Create a list of -var-file arguments from the newline separated list of variable files
+        /// </summary>
+        public string TerraformVariableFiles
+        {
+            get
+            {
+                var varFilesAsString = deployment.Variables.Get(TerraformSpecialVariables.Action.Terraform.VarFiles);
+
+                if (varFilesAsString == null) return null;
+
+                var varFiles = Regex.Split(varFilesAsString, "\r?\n")
+                                    .Select(var => $"-var-file=\"{var}\"")
+                                    .ToList();
+
+                return string.Join(" ", varFiles);
+            }
+        }
 
         public CommandResult ExecuteCommand(params string[] arguments)
         {
@@ -98,16 +115,12 @@ namespace Calamari.Terraform
                 var crashLogPath = Path.Combine(deployment.CurrentDirectory, "crash.log");
 
                 if (fileSystem.FileExists(logPath))
-                {
                     log.NewOctopusArtifact(fileSystem.GetFullPath(logPath), fileSystem.GetFileName(logPath), fileSystem.GetFileSize(logPath));
-                }
 
                 //When terraform crashes, the information would be contained in the crash.log file. We should attach this since
                 //we don't want to blow that information away in case it provides something relevant https://www.terraform.io/docs/internals/debugging.html#interpreting-a-crash-log
                 if (fileSystem.FileExists(crashLogPath))
-                {
                     log.NewOctopusArtifact(fileSystem.GetFullPath(crashLogPath), fileSystem.GetFileName(crashLogPath), fileSystem.GetFileSize(crashLogPath));
-                }
             }
         }
 
@@ -115,12 +128,9 @@ namespace Calamari.Terraform
         {
             var environmentVar = defaultEnvironmentVariables;
             if (environmentVariables != null)
-            {
                 environmentVar.AddRange(environmentVariables);
-            }
 
-            var terraformExecutable = variables.Get(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable) ??
-                                      $"terraform{(CalamariEnvironment.IsRunningOnWindows ? ".exe" : String.Empty)}";
+            var terraformExecutable = variables.Get(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable) ?? $"terraform{(CalamariEnvironment.IsRunningOnWindows ? ".exe" : string.Empty)}";
             var captureOutput = new CaptureInvocationOutputSink();
             var commandLineInvocation = new CommandLineInvocation(terraformExecutable, arguments)
             {
@@ -134,7 +144,7 @@ namespace Calamari.Terraform
 
             var commandResult = commandLineRunner.Execute(commandLineInvocation);
 
-            result = String.Join("\n", captureOutput.Infos);
+            result = string.Join("\n", captureOutput.Infos);
 
             return commandResult;
         }
@@ -145,12 +155,15 @@ namespace Calamari.Terraform
             var allowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
 
             ExecuteCommandInternal(
-                new[] {$"init -no-color -get-plugins={allowPluginDownloads.ToString().ToLower()} {initParams}"}, out _, true).VerifySuccess();
+                                   new[] { $"init -no-color -get-plugins={allowPluginDownloads.ToString().ToLower()} {initParams}" },
+                                   out _,
+                                   true)
+                .VerifySuccess();
         }
 
         void LogVersion()
         {
-            ExecuteCommandInternal(new[] {$"--version"}, out _, true)
+            ExecuteCommandInternal(new[] { "--version" }, out _, true)
                 .VerifySuccess();
         }
 
@@ -160,56 +173,21 @@ namespace Calamari.Terraform
 
             if (!string.IsNullOrWhiteSpace(workspace))
             {
-                ExecuteCommandInternal(new[] {"workspace list"}, out var results, true).VerifySuccess();
+                ExecuteCommandInternal(new[] { "workspace list" }, out var results, true).VerifySuccess();
 
                 foreach (var line in results.Split('\n'))
                 {
                     var workspaceName = line.Trim('*', ' ');
                     if (workspaceName.Equals(workspace))
                     {
-                        ExecuteCommandInternal(new[] {$"workspace select \"{workspace}\""}, out _, true).VerifySuccess();
+                        ExecuteCommandInternal(new[] { $"workspace select \"{workspace}\"" }, out _, true).VerifySuccess();
                         return;
                     }
                 }
 
-                ExecuteCommandInternal(new[] {$"workspace new \"{workspace}\""}, out _, true).VerifySuccess();
+                ExecuteCommandInternal(new[] { $"workspace new \"{workspace}\"" }, out _, true).VerifySuccess();
             }
         }
-
-        class CaptureInvocationOutputSink : ICommandInvocationOutputSink
-        {
-            public List<string> Infos { get; } = new List<string>();
-
-            public void WriteInfo(string line)
-            {
-                Infos.Add(line);
-            }
-
-            public void WriteError(string line)
-            {
-            }
-        }
-
-
-        /// <summary>
-        /// Create a list of -var-file arguments from the newline separated list of variable files 
-        /// </summary>
-        public string TerraformVariableFiles 
-        {
-            get
-            {
-                var varFilesAsString = deployment.Variables.Get(TerraformSpecialVariables.Action.Terraform.VarFiles);
-
-                if (varFilesAsString == null) return null;
-
-                var varFiles = Regex.Split(varFilesAsString, "\r?\n")
-                    .Select(var => $"-var-file=\"{var}\"")
-                    .ToList();
-
-                return string.Join(" ", varFiles);
-            } 
-        }
-            
 
         void InitializeTerraformEnvironmentVariables()
         {
@@ -226,11 +204,23 @@ namespace Calamari.Terraform
             fileSystem.EnsureDirectoryExists(pluginsPath);
 
             if (!string.IsNullOrEmpty(customPluginDir))
-            {
                 fileSystem.CopyDirectory(customPluginDir, pluginsPath);
-            }
 
             defaultEnvironmentVariables.Add("TF_PLUGIN_CACHE_DIR", pluginsPath);
+        }
+
+        class CaptureInvocationOutputSink : ICommandInvocationOutputSink
+        {
+            public List<string> Infos { get; } = new List<string>();
+
+            public void WriteInfo(string line)
+            {
+                Infos.Add(line);
+            }
+
+            public void WriteError(string line)
+            {
+            }
         }
     }
 }
