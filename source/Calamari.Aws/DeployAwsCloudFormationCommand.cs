@@ -1,7 +1,4 @@
 ﻿using System;
-using Calamari.Commands.Support;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,8 +8,13 @@ using Calamari.Aws.Deployment.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Aws.Util;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
-using Calamari.Deployment;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities;
 

@@ -1,4 +1,7 @@
-﻿namespace Calamari.AzureCloudService
+﻿using Calamari.Common;
+using Calamari.Common.Plumbing.Logging;
+
+namespace Calamari.AzureCloudService
 {
     public class Program : CalamariFlavourProgram
     {

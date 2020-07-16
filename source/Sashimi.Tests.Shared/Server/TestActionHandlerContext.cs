@@ -1,12 +1,12 @@
 ﻿using System;
-using Calamari;
+using Calamari.Common;
 using Octopus.CoreUtilities;
+using Octopus.Diagnostics;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.Variables;
-using ILog = Octopus.Diagnostics.ILog;
 
 namespace Sashimi.Tests.Shared.Server
 {

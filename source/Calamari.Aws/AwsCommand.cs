@@ -10,7 +10,9 @@ using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Util;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Aws
 {

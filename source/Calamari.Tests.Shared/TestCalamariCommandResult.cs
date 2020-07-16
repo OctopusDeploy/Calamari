@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Calamari.Integration.ServiceMessages;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Tests.Shared.LogParser;
 
 namespace Calamari.Tests.Shared
@@ -8,7 +8,7 @@ namespace Calamari.Tests.Shared
     {
         public TestCalamariCommandResult(int exitCode, IReadOnlyDictionary<string, TestOutputVariable> outputVariables,
             IReadOnlyList<TestScriptOutputAction> outputActions, IReadOnlyList<ServiceMessage> serviceMessages,
-            string resultMessage, IReadOnlyList<CollectedArtifact> artifacts, string fullLog)
+            string? resultMessage, IReadOnlyList<CollectedArtifact> artifacts, string fullLog)
         {
             ExitCode = exitCode;
             OutputVariables = outputVariables;
@@ -27,7 +27,7 @@ namespace Calamari.Tests.Shared
         public IReadOnlyList<ServiceMessage> ServiceMessages { get; }
         public TestExecutionOutcome Outcome => WasSuccessful ? TestExecutionOutcome.Successful : TestExecutionOutcome.Unsuccessful;
         public bool WasSuccessful => ExitCode == 0;
-        public string ResultMessage { get; }
+        public string? ResultMessage { get; }
         public int ExitCode { get; }
     }
 }

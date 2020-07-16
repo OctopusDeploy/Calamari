@@ -1,5 +1,6 @@
 ﻿using System;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Variables;
 using Hyak.Common;
 using Microsoft.WindowsAzure.Management.Compute;
 

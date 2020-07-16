@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Tests.Shared.Helpers
 {

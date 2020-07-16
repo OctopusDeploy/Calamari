@@ -9,6 +9,7 @@ using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration.CloudFormation;
+using Calamari.Common.Plumbing;
 using Octopus.CoreUtilities;
 
 namespace Calamari.Aws.Deployment.CloudFormation

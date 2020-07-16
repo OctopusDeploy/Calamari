@@ -2,8 +2,10 @@
 using System.Fabric;
 using System.Fabric.Security;
 using System.Security.Cryptography.X509Certificates;
-using Calamari.Commands.Support;
-using Calamari.Util;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace Calamari.AzureServiceFabric

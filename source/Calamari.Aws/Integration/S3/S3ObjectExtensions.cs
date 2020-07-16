@@ -3,8 +3,9 @@ using System.Linq;
 using Amazon.S3.Model;
 using System;
 using System.Security.Cryptography;
-using Calamari.Integration.FileSystem;
-using Calamari.Util;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
 using Octopus.CoreUtilities;
 using Tag = Amazon.S3.Model.Tag;
 

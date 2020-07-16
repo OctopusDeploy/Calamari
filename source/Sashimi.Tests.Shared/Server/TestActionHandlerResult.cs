@@ -8,7 +8,7 @@ namespace Sashimi.Tests.Shared.Server
     public class TestActionHandlerResult : IActionHandlerResult
     {
         public TestActionHandlerResult(int exitCode, IReadOnlyDictionary<string, TestOutputVariable> outputVariables,
-            IEnumerable<TestScriptOutputAction> outputActions, IEnumerable<Calamari.Integration.ServiceMessages.ServiceMessage> serviceMessages,
+            IEnumerable<TestScriptOutputAction> outputActions, IEnumerable<Calamari.Common.Plumbing.ServiceMessages.ServiceMessage> serviceMessages,
             string? resultMessage, IReadOnlyList<CollectedArtifact> artifacts, string fullLog)
         {
             ExitCode = exitCode;

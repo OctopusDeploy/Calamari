@@ -309,7 +309,7 @@ namespace Calamari.Tests.Shared
             {
             }
 
-            public ILogContext CreateChild(string[] sensitiveValues = null)
+            public ILogContext CreateChild(string[]? sensitiveValues = null)
             {
                 return this;
             }

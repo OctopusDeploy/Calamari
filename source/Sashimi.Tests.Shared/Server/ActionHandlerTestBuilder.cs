@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using Autofac;
-using Calamari;
-using Calamari.Tests.Shared;
+using Calamari.Common;
 using FluentAssertions;
+using Octopus.Diagnostics;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 
@@ -67,7 +67,7 @@ namespace Sashimi.Tests.Shared.Server
             builder.RegisterAssemblyModules(actionHandlerType.Assembly);
             builder.RegisterModule<ServerModule>();
             var container = builder.Build();
-            var context = new TestActionHandlerContext<TCalamariProgram>(container.Resolve<Octopus.Diagnostics.ILog>());
+            var context = new TestActionHandlerContext<TCalamariProgram>(container.Resolve<ILog>());
 
             foreach (var arrangeAction in arrangeActions)
             {
