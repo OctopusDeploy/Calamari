@@ -25,8 +25,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
             // Read and transform the input file
             var outputEvents = new List<ParsingEvent>();
-            IYamlNode startOfStructureWeAreReplacing = null;
-            string replacementValue = null;
+            (IYamlNode startEvent, string replacementValue)? structureWeAreReplacing = null;
             try
             {
                 using (var reader = new StreamReader(filePath))
@@ -42,7 +41,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
                         var node = classifier.Process(ev);
 
-                        if (startOfStructureWeAreReplacing == null)
+                        if (structureWeAreReplacing == null)
                         {
                             // Not replacing: searching for things to replace, copying events to output.
 
@@ -52,15 +51,15 @@ namespace Calamari.Common.Features.StructuredVariables
                                 outputEvent = scalar.Event.ReplaceValue(newValue);
                             }
                             else if (node is YamlNode<MappingStart> mappingStart
-                                     && variablesByKey.TryGetValue(mappingStart.Path, out replacementValue))
+                                     && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
                             {
-                                startOfStructureWeAreReplacing = mappingStart;
+                                structureWeAreReplacing = (mappingStart, mappingReplacement);
                                 outputEvent = null;
                             }
                             else if (node is YamlNode<SequenceStart> sequenceStart
-                                     && variablesByKey.TryGetValue(sequenceStart.Path, out replacementValue))
+                                     && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
                             {
-                                startOfStructureWeAreReplacing = sequenceStart;
+                                structureWeAreReplacing = (sequenceStart, sequenceReplacement);
                                 outputEvent = null;
                             }
                             else
@@ -73,34 +72,34 @@ namespace Calamari.Common.Features.StructuredVariables
                             // Replacing: searching for the end of the structure we're replacing. No output until then.
 
                             if (node is YamlNode<MappingEnd> mappingEnd
-                                && startOfStructureWeAreReplacing is YamlNode<MappingStart> mappingStart
-                                && startOfStructureWeAreReplacing.Path == node.Path)
+                                && structureWeAreReplacing.Value.startEvent is YamlNode<MappingStart> mappingStart
+                                && structureWeAreReplacing.Value.startEvent.Path == node.Path)
                             {
                                 outputEvent = new Scalar(
                                     mappingStart.Event.Anchor,
                                     mappingStart.Event.Tag,
-                                    replacementValue,
+                                    structureWeAreReplacing.Value.replacementValue,
                                     ScalarStyle.DoubleQuoted,
                                     isPlainImplicit: true,
                                     isQuotedImplicit: true,
                                     mappingStart.Event.Start,
                                     mappingStart.Event.End);
-                                startOfStructureWeAreReplacing = null;
+                                structureWeAreReplacing = null;
                             }
                             else if (node is YamlNode<SequenceEnd> sequenceEnd
-                                     && startOfStructureWeAreReplacing is YamlNode<SequenceStart> sequenceStart
-                                     && startOfStructureWeAreReplacing.Path == node.Path)
+                                     && structureWeAreReplacing.Value.startEvent is YamlNode<SequenceStart> sequenceStart
+                                     && structureWeAreReplacing.Value.startEvent.Path == node.Path)
                             {
                                 outputEvent = new Scalar(
                                     sequenceStart.Event.Anchor,
                                     sequenceStart.Event.Tag,
-                                    replacementValue,
+                                    structureWeAreReplacing.Value.replacementValue,
                                     ScalarStyle.DoubleQuoted,
                                     isPlainImplicit: true,
                                     isQuotedImplicit: true,
                                     sequenceStart.Event.Start,
                                     sequenceStart.Event.End);
-                                startOfStructureWeAreReplacing = null;
+                                structureWeAreReplacing = null;
                             }
                             else
                             {
