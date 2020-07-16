@@ -68,34 +68,22 @@ namespace Calamari.Common.Features.StructuredVariables
                         {
                             // Replacing: searching for the end of the structure we're replacing. No output until then.
 
-                            if (node is YamlNode<MappingEnd> mappingEnd
+                            if (node is YamlNode<MappingEnd>
                                 && structureWeAreReplacing.Value.startEvent is YamlNode<MappingStart> mappingStart
                                 && structureWeAreReplacing.Value.startEvent.Path == node.Path)
                             {
-                                outputEvents.Add(new Scalar(
-                                    mappingStart.Event.Anchor,
-                                    mappingStart.Event.Tag,
-                                    structureWeAreReplacing.Value.replacementValue,
-                                    ScalarStyle.DoubleQuoted,
-                                    isPlainImplicit: true,
-                                    isQuotedImplicit: true,
-                                    mappingStart.Event.Start,
-                                    mappingStart.Event.End));
+                                outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
+                                                                    mappingStart.Event.Anchor,
+                                                                    mappingStart.Event.Tag));
                                 structureWeAreReplacing = null;
                             }
-                            else if (node is YamlNode<SequenceEnd> sequenceEnd
+                            else if (node is YamlNode<SequenceEnd>
                                      && structureWeAreReplacing.Value.startEvent is YamlNode<SequenceStart> sequenceStart
                                      && structureWeAreReplacing.Value.startEvent.Path == node.Path)
                             {
-                                outputEvents.Add(new Scalar(
-                                    sequenceStart.Event.Anchor,
-                                    sequenceStart.Event.Tag,
-                                    structureWeAreReplacing.Value.replacementValue,
-                                    ScalarStyle.DoubleQuoted,
-                                    isPlainImplicit: true,
-                                    isQuotedImplicit: true,
-                                    sequenceStart.Event.Start,
-                                    sequenceStart.Event.End));
+                                outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
+                                                                    sequenceStart.Event.Anchor,
+                                                                    sequenceStart.Event.Tag));
                                 structureWeAreReplacing = null;
                             }
                         }
@@ -124,6 +112,39 @@ namespace Calamari.Common.Features.StructuredVariables
 
             File.WriteAllText(filePath, outputText);
             return true;
+        }
+
+        List<ParsingEvent> ParseFragment(string value, string anchor, string tag)
+        {
+            var result = new List<ParsingEvent>();
+            try
+            {
+                using (var reader = new StringReader(value))
+                {
+                    var parser = new Parser(reader);
+                    while (parser.MoveNext())
+                    {
+                        var ev = parser.Current;
+                        if (ev != null && !(ev is StreamStart || ev is StreamEnd || ev is DocumentStart || ev is DocumentEnd))
+                            result.Add(ev);
+                    }
+                }
+            }
+            catch
+            {
+                // The input could not be recognized as a structure. Falling back to treating it as a string.
+                return new List<ParsingEvent>
+                {
+                    new Scalar(anchor,
+                               tag,
+                               value,
+                               ScalarStyle.DoubleQuoted,
+                               isPlainImplicit: true,
+                               isQuotedImplicit: true)
+                };
+            }
+
+            return result;
         }
     }
 }

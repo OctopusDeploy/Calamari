@@ -1,0 +1,13 @@
+﻿null1: ~
+bool1: true
+int1: 99
+float1: 1.99
+str1: 'true'
+str2: '~'
+obj1:
+  fruit: apple
+  animal: sloth
+seq1:
+- scissors
+- paper
+- rock

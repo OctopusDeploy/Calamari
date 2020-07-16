@@ -1,0 +1,12 @@
+﻿null1: null
+bool1: false
+int1: 1
+float1: 0.67
+str1: 'false'
+str2: 'null'
+obj1:
+  key1: one
+  key2: two
+seq1:
+- foo
+- bar
