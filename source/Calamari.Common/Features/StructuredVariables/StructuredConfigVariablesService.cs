@@ -98,7 +98,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
         void DoReplacement(IVariables variables, string filePath, string format)
         {
-            var replacer = replacers.FirstOrDefault(r => r.SupportedFormat == format);
+            var replacer = replacers.FirstOrDefault(r => r.SupportedFormat.Equals(format, StringComparison.OrdinalIgnoreCase));
             if (replacer == null)
             {
                 // File format not supported.
