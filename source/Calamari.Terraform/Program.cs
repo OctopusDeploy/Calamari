@@ -1,3 +1,6 @@
+using Calamari.Common;
+using Calamari.Common.Plumbing.Logging;
+
 namespace Calamari.Terraform
 {
     public class Program : CalamariFlavourProgram

@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Terraform
 {
