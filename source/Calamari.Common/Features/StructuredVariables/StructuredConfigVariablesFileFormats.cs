@@ -4,7 +4,6 @@ namespace Calamari.Common.Features.StructuredVariables
 {
     public static class StructuredConfigVariablesFileFormats
     {
-        // TODO: ask if we should use static readonly instead, or a tiny type, or an enum.
         public const string Json = "Json";
         
         public const string Yaml = "Yaml";
