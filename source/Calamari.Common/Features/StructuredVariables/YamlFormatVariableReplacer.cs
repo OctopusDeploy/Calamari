@@ -37,7 +37,6 @@ namespace Calamari.Common.Features.StructuredVariables
                         var ev = parser.Current;
                         if (ev == null)
                             continue;
-                        ParsingEvent outputEvent;
 
                         var node = classifier.Process(ev);
 
@@ -48,23 +47,21 @@ namespace Calamari.Common.Features.StructuredVariables
                             if (node is YamlNode<Scalar> scalar
                                 && variablesByKey.TryGetValue(scalar.Path, out string newValue))
                             {
-                                outputEvent = scalar.Event.ReplaceValue(newValue);
+                                outputEvents.Add(scalar.Event.ReplaceValue(newValue));
                             }
                             else if (node is YamlNode<MappingStart> mappingStart
                                      && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
                             {
                                 structureWeAreReplacing = (mappingStart, mappingReplacement);
-                                outputEvent = null;
                             }
                             else if (node is YamlNode<SequenceStart> sequenceStart
                                      && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
                             {
                                 structureWeAreReplacing = (sequenceStart, sequenceReplacement);
-                                outputEvent = null;
                             }
                             else
                             {
-                                outputEvent = node.Event;
+                                outputEvents.Add(node.Event);
                             }
                         }
                         else
@@ -75,7 +72,7 @@ namespace Calamari.Common.Features.StructuredVariables
                                 && structureWeAreReplacing.Value.startEvent is YamlNode<MappingStart> mappingStart
                                 && structureWeAreReplacing.Value.startEvent.Path == node.Path)
                             {
-                                outputEvent = new Scalar(
+                                outputEvents.Add(new Scalar(
                                     mappingStart.Event.Anchor,
                                     mappingStart.Event.Tag,
                                     structureWeAreReplacing.Value.replacementValue,
@@ -83,14 +80,14 @@ namespace Calamari.Common.Features.StructuredVariables
                                     isPlainImplicit: true,
                                     isQuotedImplicit: true,
                                     mappingStart.Event.Start,
-                                    mappingStart.Event.End);
+                                    mappingStart.Event.End));
                                 structureWeAreReplacing = null;
                             }
                             else if (node is YamlNode<SequenceEnd> sequenceEnd
                                      && structureWeAreReplacing.Value.startEvent is YamlNode<SequenceStart> sequenceStart
                                      && structureWeAreReplacing.Value.startEvent.Path == node.Path)
                             {
-                                outputEvent = new Scalar(
+                                outputEvents.Add(new Scalar(
                                     sequenceStart.Event.Anchor,
                                     sequenceStart.Event.Tag,
                                     structureWeAreReplacing.Value.replacementValue,
@@ -98,17 +95,10 @@ namespace Calamari.Common.Features.StructuredVariables
                                     isPlainImplicit: true,
                                     isQuotedImplicit: true,
                                     sequenceStart.Event.Start,
-                                    sequenceStart.Event.End);
+                                    sequenceStart.Event.End));
                                 structureWeAreReplacing = null;
                             }
-                            else
-                            {
-                                outputEvent = null;
-                            }
                         }
-
-                        if (outputEvent != null)
-                            outputEvents.Add(outputEvent);
                     }
                 }
             }
