@@ -11,7 +11,7 @@ namespace Calamari.Common.Features.StructuredVariables
 {
     public class JsonFormatVariableReplacer : IFileFormatVariableReplacer
     {
-        public string SupportedFormat => "JSON";
+        public string SupportedFormat => StructuredConfigVariablesFileFormats.Json;
 
         public void ModifyFile(string filePath, IVariables variables)
         {

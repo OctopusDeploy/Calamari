@@ -11,7 +11,7 @@ namespace Calamari.Common.Features.StructuredVariables
 {
     public class YamlFormatVariableReplacer : IFileFormatVariableReplacer
     {
-        public string SupportedFormat => "YAML";
+        public string SupportedFormat => StructuredConfigVariablesFileFormats.Yaml;
 
         public void ModifyFile(string filePath, IVariables variables)
         {
