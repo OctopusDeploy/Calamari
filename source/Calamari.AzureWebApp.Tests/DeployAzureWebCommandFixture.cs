@@ -116,7 +116,7 @@ namespace Calamari.AzureWebApp.Tests
                 })
                 .Execute();
 
-            var packagePath = TestEnvironment.GetTestPath("Packages", "BrokenApplication.1.0.0.nupkg");
+            var packagePath = TestEnvironment.GetTestPath("Packages", "BrokenApp");
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
                 .WithArrange(context =>
@@ -124,7 +124,7 @@ namespace Calamari.AzureWebApp.Tests
                     AddDefaults(context, webAppName);
                     context.Variables.Add(SpecialVariables.Action.Azure.AppOffline, bool.TrueString);
 
-                    context.WithPackage(packagePath);
+                    context.WithFilesToCopy(packagePath);
                 })
                 .Execute();
 
