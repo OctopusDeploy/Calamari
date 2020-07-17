@@ -58,7 +58,7 @@ namespace Calamari.Common.Features.Scripting
                 }
             }
 
-            return result;
+            return result!;
         }
 
         protected abstract IEnumerable<ScriptExecution> PrepareExecution(Script script,

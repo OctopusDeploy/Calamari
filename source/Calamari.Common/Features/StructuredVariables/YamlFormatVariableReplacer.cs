@@ -37,7 +37,6 @@ namespace Calamari.Common.Features.StructuredVariables
                         var ev = parser.Current;
                         if (ev == null)
                             continue;
-                        ParsingEvent? outputEvent;
 
                         var node = classifier.Process(ev);
 
@@ -48,67 +47,47 @@ namespace Calamari.Common.Features.StructuredVariables
                             if (node is YamlNode<Scalar> scalar
                                 && variablesByKey.TryGetValue(scalar.Path, out string newValue))
                             {
-                                outputEvent = scalar.Event.ReplaceValue(newValue);
+                                // TODO ZDY: Preserve input document types for explicit tags, ambiguous inputs - currently preserves decorations only
+                                outputEvents.Add(scalar.Event.ReplaceValue(newValue));
                             }
                             else if (node is YamlNode<MappingStart> mappingStart
                                      && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
                             {
                                 structureWeAreReplacing = (mappingStart, mappingReplacement);
-                                outputEvent = null;
                             }
                             else if (node is YamlNode<SequenceStart> sequenceStart
                                      && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
                             {
                                 structureWeAreReplacing = (sequenceStart, sequenceReplacement);
-                                outputEvent = null;
                             }
                             else
                             {
-                                outputEvent = node.Event;
+                                outputEvents.Add(node.Event);
                             }
                         }
                         else
                         {
                             // Replacing: searching for the end of the structure we're replacing. No output until then.
 
-                            if (node is YamlNode<MappingEnd> mappingEnd
+                            if (node is YamlNode<MappingEnd>
                                 && structureWeAreReplacing.Value.startEvent is YamlNode<MappingStart> mappingStart
                                 && structureWeAreReplacing.Value.startEvent.Path == node.Path)
                             {
-                                outputEvent = new Scalar(
-                                    mappingStart.Event.Anchor,
-                                    mappingStart.Event.Tag,
-                                    structureWeAreReplacing.Value.replacementValue,
-                                    ScalarStyle.DoubleQuoted,
-                                    isPlainImplicit: true,
-                                    isQuotedImplicit: true,
-                                    mappingStart.Event.Start,
-                                    mappingStart.Event.End);
+                                outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
+                                                                    mappingStart.Event.Anchor,
+                                                                    mappingStart.Event.Tag));
                                 structureWeAreReplacing = null;
                             }
-                            else if (node is YamlNode<SequenceEnd> sequenceEnd
+                            else if (node is YamlNode<SequenceEnd>
                                      && structureWeAreReplacing.Value.startEvent is YamlNode<SequenceStart> sequenceStart
                                      && structureWeAreReplacing.Value.startEvent.Path == node.Path)
                             {
-                                outputEvent = new Scalar(
-                                    sequenceStart.Event.Anchor,
-                                    sequenceStart.Event.Tag,
-                                    structureWeAreReplacing.Value.replacementValue,
-                                    ScalarStyle.DoubleQuoted,
-                                    isPlainImplicit: true,
-                                    isQuotedImplicit: true,
-                                    sequenceStart.Event.Start,
-                                    sequenceStart.Event.End);
+                                outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
+                                                                    sequenceStart.Event.Anchor,
+                                                                    sequenceStart.Event.Tag));
                                 structureWeAreReplacing = null;
                             }
-                            else
-                            {
-                                outputEvent = null;
-                            }
                         }
-
-                        if (outputEvent != null)
-                            outputEvents.Add(outputEvent);
                     }
                 }
             }
@@ -134,6 +113,39 @@ namespace Calamari.Common.Features.StructuredVariables
 
             File.WriteAllText(filePath, outputText);
             return true;
+        }
+
+        List<ParsingEvent> ParseFragment(string value, string? anchor, string? tag)
+        {
+            var result = new List<ParsingEvent>();
+            try
+            {
+                using (var reader = new StringReader(value))
+                {
+                    var parser = new Parser(reader);
+                    while (parser.MoveNext())
+                    {
+                        var ev = parser.Current;
+                        if (ev != null && !(ev is StreamStart || ev is StreamEnd || ev is DocumentStart || ev is DocumentEnd))
+                            result.Add(ev);
+                    }
+                }
+            }
+            catch
+            {
+                // The input could not be recognized as a structure. Falling back to treating it as a string.
+                return new List<ParsingEvent>
+                {
+                    new Scalar(anchor,
+                               tag,
+                               value,
+                               ScalarStyle.DoubleQuoted,
+                               isPlainImplicit: true,
+                               isQuotedImplicit: true)
+                };
+            }
+
+            return result;
         }
     }
 }
