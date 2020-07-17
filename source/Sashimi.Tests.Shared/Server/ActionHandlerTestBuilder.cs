@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Autofac;
 using Calamari;
+using Calamari.Common.Variables;
 using Calamari.Common;
 using FluentAssertions;
 using Octopus.Diagnostics;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
+using KnownVariables = Sashimi.Server.Contracts.KnownVariables;
 
 namespace Sashimi.Tests.Shared.Server
 {
@@ -39,11 +42,59 @@ namespace Sashimi.Tests.Shared.Server
             return new ActionHandlerTestBuilder<TCalamari>(actionHandlerType);
         }
 
-        public static TestActionHandlerContext<TCalamariProgram> WithPackage<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string path)
+        public static TestActionHandlerContext<TCalamariProgram> WithFilesToCopy<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string path)
         {
-            context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(path));
+            if (File.Exists(path))
+            {
+                context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(path));
+            }
+            else
+            {
+                context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, path);
+            }
+
             context.Variables.Add(KnownVariables.Action.Packages.PackageId, path);
             context.Variables.Add(KnownVariables.Action.Packages.FeedId, "FeedId");
+
+            return context;
+        }
+
+        public static TestActionHandlerContext<TCalamariProgram> WithPackage<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string packagePath)
+        {
+            context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(packagePath));
+            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(packagePath);
+            var fileNameChunks = fileNameWithoutExtension.Split('.').Reverse().ToArray();
+            string? packageVersion = null;
+            var idx = 0;
+            for (; idx < fileNameChunks.Length; idx++)
+            {
+                var fileNameChunk = fileNameChunks[idx];
+
+                if (Int32.TryParse(fileNameChunk, out _))
+                {
+                    packageVersion = packageVersion == null
+                        ? fileNameChunk
+                        : $"{fileNameChunk}.{packageVersion}";
+
+                    continue;
+                }
+                break;
+            }
+
+            string? packageId = null;
+            for (; idx < fileNameChunks.Length; idx++)
+            {
+                var fileNameChunk = fileNameChunks[idx];
+
+                packageId = packageId == null
+                    ? fileNameChunk
+                    : $"{fileNameChunk}.{packageId}";
+            }
+
+            context.Variables.Add(TentacleVariables.CurrentDeployment.PackageFilePath, packagePath);
+            context.Variables.Add("Octopus.Action.Package.PackageId", packageId);
+            context.Variables.Add("Octopus.Action.Package.PackageVersion", packageVersion);
+            context.Variables.Add("Octopus.Action.Package.FeedId", "FeedId");
 
             return context;
         }

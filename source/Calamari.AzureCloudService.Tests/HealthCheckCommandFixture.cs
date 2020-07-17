@@ -38,7 +38,7 @@ namespace Calamari.AzureCloudService.Tests
             }
             finally
             {
-                client.HostedServices.DeleteAsync(serviceName).Ignore();
+                await client.HostedServices.DeleteAsync(serviceName);
             }
         }
 

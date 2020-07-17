@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Calamari.Commands.Support;
+using Calamari.Common.Variables;
 using Calamari.CommonTemp;
 using Calamari.Integration.FileSystem;
 using Calamari.Common;
@@ -46,10 +48,58 @@ namespace Calamari.Tests.Shared
             return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
         }
 
-        public static CommandTestBuilderContext WithPackage(this CommandTestBuilderContext context, string path)
+        public static CommandTestBuilderContext WithFilesToCopy(this CommandTestBuilderContext context, string path)
         {
-            context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(path));
+            if (File.Exists(path))
+            {
+                context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(path));
+            }
+            else
+            {
+                context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, path);
+            }
+
             context.Variables.Add("Octopus.Action.Package.PackageId", path);
+            context.Variables.Add("Octopus.Action.Package.FeedId", "FeedId");
+
+            return context;
+        }
+
+        public static CommandTestBuilderContext WithPackage(this CommandTestBuilderContext context, string packagePath)
+        {
+            context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(packagePath));
+            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(packagePath);
+            var fileNameChunks = fileNameWithoutExtension.Split('.').Reverse().ToArray();
+            string? packageVersion = null;
+            var idx = 0;
+            for (; idx < fileNameChunks.Length; idx++)
+            {
+                var fileNameChunk = fileNameChunks[idx];
+
+                if (Int32.TryParse(fileNameChunk, out _))
+                {
+                    packageVersion = packageVersion == null
+                        ? fileNameChunk
+                        : $"{fileNameChunk}.{packageVersion}";
+
+                    continue;
+                }
+                break;
+            }
+
+            string? packageId = null;
+            for (; idx < fileNameChunks.Length; idx++)
+            {
+                var fileNameChunk = fileNameChunks[idx];
+
+                packageId = packageId == null
+                    ? fileNameChunk
+                    : $"{fileNameChunk}.{packageId}";
+            }
+
+            context.Variables.Add(TentacleVariables.CurrentDeployment.PackageFilePath, packagePath);
+            context.Variables.Add("Octopus.Action.Package.PackageId", packageId);
+            context.Variables.Add("Octopus.Action.Package.PackageVersion", packageVersion);
             context.Variables.Add("Octopus.Action.Package.FeedId", "FeedId");
 
             return context;
@@ -118,7 +168,7 @@ namespace Calamari.Tests.Shared
                     contents.CopyTo(fileStream);
                 }
 
-                if (context.withStagedPackageArgument)
+                if (!context.withStagedPackageArgument)
                 {
                     var packageId = context.Variables.GetRaw("Octopus.Action.Package.PackageId");
                     if (File.Exists(packageId))
@@ -126,7 +176,7 @@ namespace Calamari.Tests.Shared
                         var fileName = new FileInfo(packageId).Name;
                         File.Copy(packageId, Path.Combine(workingPath, fileName));
                     }
-                    else
+                    else if (Directory.Exists(packageId))
                     {
                         Copy(packageId, workingPath);
                     }

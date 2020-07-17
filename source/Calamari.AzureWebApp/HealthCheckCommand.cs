@@ -38,7 +38,7 @@ namespace Calamari.AzureWebApp
 
         async Task ConfirmWebAppExists(AzureServicePrincipalAccount servicePrincipalAccount, string resourceGroupName, string siteAndSlotName)
         {
-            using (var webSiteClient = servicePrincipalAccount.CreateWebSiteManagementClient())
+            using (var webSiteClient = await servicePrincipalAccount.CreateWebSiteManagementClient())
             {
                 var matchingSite = await webSiteClient.WebApps.GetAsync(resourceGroupName, siteAndSlotName);
                 if (matchingSite == null)

@@ -37,7 +37,7 @@ namespace Sashimi.Aws.Tests.RunScript
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.S3.BucketName, bucketName);
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.S3.TargetMode, "EntirePackage");
                     context.WithAwsAccount();
-                    context.WithPackage(path);
+                    context.WithFilesToCopy(path);
                     context.Variables.Add(
                         AwsSpecialVariables.Action.Aws.S3.PackageOptions,
                         JsonConvert.SerializeObject(new S3PackageProperties
@@ -73,7 +73,7 @@ namespace Sashimi.Aws.Tests.RunScript
                     context.Variables.Add(SpecialVariables.Action.Aws.UseInstanceRole, bool.FalseString);
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.S3.BucketName, bucketName);
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.S3.TargetMode, S3TargetMode.FileSelections.ToString());
-                    context.WithPackage(path);
+                    context.WithFilesToCopy(path);
                     context.WithAwsAccount();
                     context.Variables.Add(
                         AwsSpecialVariables.Action.Aws.S3.FileSelections,

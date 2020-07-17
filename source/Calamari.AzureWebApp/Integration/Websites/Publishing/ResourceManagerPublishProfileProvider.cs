@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Calamari.AzureWebApp.Util;
@@ -16,9 +15,9 @@ using Microsoft.Rest.TransientFaultHandling;
 
 namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 {
-    class ResourceManagerPublishProfileProvider
+    internal class ResourceManagerPublishProfileProvider
     {
-        public static WebDeployPublishSettings GetPublishProperties(AzureServicePrincipalAccount account, string resourceGroupName, AzureTargetSite azureTargetSite)
+        public static async Task<WebDeployPublishSettings> GetPublishProperties(AzureServicePrincipalAccount account, string resourceGroupName, AzureTargetSite azureTargetSite)
         {
             if (account.ResourceManagementEndpointBaseUri != DefaultVariables.ResourceManagementEndpoint)
                 Log.Info("Using override for resource management endpoint - {0}", account.ResourceManagementEndpointBaseUri);
@@ -26,7 +25,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             if (account.ActiveDirectoryEndpointBaseUri != DefaultVariables.ActiveDirectoryEndpoint)
                 Log.Info("Using override for Azure Active Directory endpoint - {0}", account.ActiveDirectoryEndpointBaseUri);
 
-            var token = ServicePrincipal.GetAuthorizationToken(account.TenantId, account.ClientId, account.Password, account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri);
+            var token = await ServicePrincipal.GetAuthorizationToken(account.TenantId, account.ClientId, account.Password, account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri);
             var baseUri = new Uri(account.ResourceManagementEndpointBaseUri);
             using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token))
 			{
@@ -43,12 +42,12 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 Site matchingSite;
                 if (string.IsNullOrWhiteSpace(resourceGroupName))
                 {
-                    matchingSite = FindSiteByNameWithRetry(account, azureTargetSite, webSiteClient) ?? throw new CommandException(GetSiteNotFoundExceptionMessage(account, azureTargetSite));
+                    matchingSite = await FindSiteByNameWithRetry(account, azureTargetSite, webSiteClient) ?? throw new CommandException(GetSiteNotFoundExceptionMessage(account, azureTargetSite));
                     resourceGroupName = matchingSite.ResourceGroup;
                 }
                 else
                 {
-                    var site = webSiteClient.WebApps.Get(resourceGroupName, azureTargetSite.Site);
+                    var site = await webSiteClient.WebApps.GetAsync(resourceGroupName, azureTargetSite.Site);
                     Log.Verbose("Found site:");
                     LogSite(site);
 
@@ -66,7 +65,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                     Log.Verbose($"Using the deployment slot {azureTargetSite.Slot}");
                 }
 
-                return GetWebDeployPublishProfile(webSiteClient, resourceGroupName, matchingSite.Name, azureTargetSite.HasSlot ? azureTargetSite.Slot : null).GetAwaiter().GetResult();
+                return await GetWebDeployPublishProfile(webSiteClient, resourceGroupName, matchingSite.Name, azureTargetSite.HasSlot ? azureTargetSite.Slot : null);
             }
         }
 
@@ -103,14 +102,14 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             return new WebDeployPublishSettings(profile.Site, new SitePublishProfile(profile.Username, profile.Password, new Uri(profile.PublishUrl)));
         }
 
-        static Site FindSiteByNameWithRetry(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite,
+        static async Task<Site> FindSiteByNameWithRetry(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite,
             WebSiteManagementClient webSiteClient)
         {
             Site matchingSite = null;
             var retry = AzureRetryTracker.GetDefaultRetryTracker();
             while (retry.Try() && matchingSite == null)
             {
-                var sites = webSiteClient.WebApps.List();
+                var sites = await webSiteClient.WebApps.ListAsync();
                 var matchingSites = sites.Where(webApp =>
                     string.Equals(webApp.Name, azureTargetSite.Site, StringComparison.OrdinalIgnoreCase)).ToList();
 
@@ -141,7 +140,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                         }
 
                         matchingSite = null;
-                        Thread.Sleep(retry.Sleep());
+                        await Task.Delay(retry.Sleep());
                     }
                     else
                     {
@@ -153,17 +152,17 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             return matchingSite;
         }
 
-        private static string GetSiteNotFoundExceptionMessage(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite, string resourceGroupName = null)
+        static string GetSiteNotFoundExceptionMessage(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite, string resourceGroupName = null)
         {
-            bool hasResourceGroup = !string.IsNullOrWhiteSpace(resourceGroupName);
-            StringBuilder sb = new StringBuilder($"Could not find Azure WebSite '{azureTargetSite.Site}'");
+            var hasResourceGroup = !string.IsNullOrWhiteSpace(resourceGroupName);
+            var sb = new StringBuilder($"Could not find Azure WebSite '{azureTargetSite.Site}'");
             sb.Append(hasResourceGroup ? $" in resource group '{resourceGroupName}'" : string.Empty);
             sb.Append($" in subscription '{account.SubscriptionNumber}'.");
             sb.Append(hasResourceGroup ? string.Empty : " Please supply a Resource Group name.");
             return sb.ToString();
         }
 
-        private static void LogFoundSites(List<Site> sites)
+        static void LogFoundSites(List<Site> sites)
         {
             if (sites.Any())
             {
@@ -175,7 +174,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             }
         }
 
-        private static void LogSite(Site site)
+        static void LogSite(Site site)
         {
             if (site != null)
             {

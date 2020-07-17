@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.AzureWebApp.Util;
@@ -27,7 +26,7 @@ namespace Calamari.AzureWebApp
             return true;
         }
 
-        public Task Execute(RunningDeployment deployment)
+        public async Task Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
 
@@ -51,23 +50,21 @@ namespace Calamari.AzureWebApp
                 : string.Empty;
             log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
 
-            var publishSettings = GetPublishProfile(variables);
+            var publishSettings = await GetPublishProfile(variables);
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
             try
             {
                 originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
                 ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
-                DeployToAzure(deployment, targetSite, variables, publishSettings);
+                await DeployToAzure(deployment, targetSite, variables, publishSettings);
             }
             finally
             {
                 ServicePointManager.ServerCertificateValidationCallback = originalServerCertificateValidationCallback;
             }
-
-            return this.CompletedTask();
         }
 
-        void DeployToAzure(RunningDeployment deployment, AzureTargetSite targetSite,
+        async Task DeployToAzure(RunningDeployment deployment, AzureTargetSite targetSite,
             IVariables variables,
             WebDeployPublishSettings publishSettings)
         {
@@ -102,7 +99,7 @@ namespace Calamari.AzureWebApp
                                 ex.Message);
                         }
 
-                        Thread.Sleep(retry.Sleep());
+                        await Task.Delay(retry.Sleep());
                     }
                     else
                     {
@@ -128,7 +125,7 @@ namespace Calamari.AzureWebApp
             return false;
         }
 
-        WebDeployPublishSettings GetPublishProfile(IVariables variables)
+        Task<WebDeployPublishSettings> GetPublishProfile(IVariables variables)
         {
             var account = new AzureServicePrincipalAccount(variables);
             var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
@@ -142,8 +139,8 @@ namespace Calamari.AzureWebApp
 
         string BuildPath(AzureTargetSite site, IVariables variables)
         {
-            var relativePath = (variables.Get(SpecialVariables.Action.Azure.PhysicalPath) ?? "").TrimStart('\\');
-            return relativePath != ""
+            var relativePath = variables.Get(SpecialVariables.Action.Azure.PhysicalPath, String.Empty).TrimStart('\\');
+            return relativePath != String.Empty
                 ? site.Site + "\\" + relativePath
                 : site.Site;
         }
@@ -175,7 +172,7 @@ namespace Calamari.AzureWebApp
             {
                 WhatIf = false,
                 UseChecksum = variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum),
-                DoNotDelete = !variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles),
+                DoNotDelete = !variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles)
             };
 
             ApplyAppOfflineDeploymentRule(syncOptions, variables);
@@ -209,9 +206,9 @@ namespace Calamari.AzureWebApp
                 for (var i = 0; i < preservePaths.Count; i++)
                 {
                     var path = preservePaths[i];
-                    syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteFiles_" + i, "Delete", "filePath", path,
+                    syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteFiles_{i}", "Delete", "filePath", path,
                         null));
-                    syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDir_" + i, "Delete", "dirPath", path, null));
+                    syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteDir_{i}", "Delete", "dirPath", path, null));
                 }
             }
         }

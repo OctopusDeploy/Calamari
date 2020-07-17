@@ -85,10 +85,5 @@ namespace Calamari.CommonTemp
 
             return this.CompletedTask();
         }
-
-        public static string GetScriptName(string deploymentStage, ScriptSyntax scriptSyntax)
-        {
-            return "Octopus.Action.CustomScripts." + deploymentStage + "." + scriptSyntax.FileExtension();
-        }
     }
 }

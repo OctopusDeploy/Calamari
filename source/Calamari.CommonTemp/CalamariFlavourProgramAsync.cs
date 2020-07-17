@@ -62,7 +62,7 @@ namespace Calamari.CommonTemp
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IBehaviour>()
                 .AsSelf()
-                .SingleInstance();
+                .InstancePerDependency();
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<ICommandAsync>()

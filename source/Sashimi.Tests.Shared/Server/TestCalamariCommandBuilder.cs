@@ -158,7 +158,7 @@ namespace Sashimi.Tests.Shared.Server
                 contents.CopyTo(fileStream);
             }
 
-            if (withStagedPackageArgument)
+            if (!withStagedPackageArgument)
             {
                 var packageId = variables.GetRaw(KnownVariables.Action.Packages.PackageId);
                 if (File.Exists(packageId))
@@ -166,7 +166,7 @@ namespace Sashimi.Tests.Shared.Server
                     var fileName = new FileInfo(packageId).Name;
                     File.Copy(packageId, Path.Combine(workingPath, fileName));
                 }
-                else
+                else if (Directory.Exists(packageId))
                 {
                     Copy(packageId, workingPath);
                 }

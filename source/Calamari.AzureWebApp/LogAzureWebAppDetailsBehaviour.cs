@@ -38,7 +38,7 @@ namespace Calamari.AzureWebApp
                 var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
                 var account = new AzureServicePrincipalAccount(variables);
 
-                var client = account.CreateWebSiteManagementClient();
+                var client = await account.CreateWebSiteManagementClient();
                 var site = await client.WebApps.GetAsync(resourceGroupName, siteAndSlotName);
                 if (site != null)
                 {
