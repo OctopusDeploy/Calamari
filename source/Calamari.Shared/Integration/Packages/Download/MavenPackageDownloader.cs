@@ -198,9 +198,8 @@ namespace Calamari.Integration.Packages.Download
                     {
                         client.DownloadFile(downloadUrl, localDownloadName);
                         var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
-                        if (packagePhysicalFileMetadata == null)
-                            throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
-                        return packagePhysicalFileMetadata;
+                        return packagePhysicalFileMetadata
+                            ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
                     }
                 }
                 catch (Exception ex)
