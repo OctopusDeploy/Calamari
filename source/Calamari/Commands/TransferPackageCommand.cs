@@ -32,10 +32,12 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            var packageFile = variables.GetPathToPrimaryPackage(fileSystem);
-            
+            var packageFile = variables.GetPathToPrimaryPackage(fileSystem, true);
+            if (packageFile == null) // required: true in the above call means it will throw rather than return null, but there's no way to tell the compiler that. And ! doesn't work in older frameworks
+                throw new CommandException("Package File path could not be determined");
+
             var journal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
-            
+
             var conventions = new List<IConvention>
             {
                 new AlreadyInstalledConvention(log, journal),
