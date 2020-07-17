@@ -194,5 +194,22 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "appsettings.array.json"),
                         TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
+
+        [Test]
+        public void ShouldFallBackToStringIfTypePreservationFails()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "null2num", "33" },
+                                    { "null2obj", @"{""x"": 1}" },
+                                    { "bool2num", "52" },
+                                    { "num2null", "null" },
+                                    { "num2bool", "true" },
+                                    { "num2arr", "[1]" },
+                                    { "str2bool", "false" }
+                                },
+                                "types-fall-back.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+        }
     }
 }

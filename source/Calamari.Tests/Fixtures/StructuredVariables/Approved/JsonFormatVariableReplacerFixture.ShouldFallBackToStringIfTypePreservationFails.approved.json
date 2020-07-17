@@ -1,0 +1,9 @@
+{
+  "null2num": "33",
+  "null2obj": "{\"x\": 1}",
+  "bool2num": "52",
+  "num2null": "null",
+  "num2bool": "true",
+  "num2arr": "[1]",
+  "str2bool": "false"
+}
