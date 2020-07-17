@@ -1,10 +1,10 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
-using Calamari.Commands.Support;
-using Calamari.Common.Variables;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.CommonTemp;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
 
 namespace Calamari.AzureCloudService
 {

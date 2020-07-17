@@ -5,9 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.AzureCloudService.CloudServicePackage;
 using Calamari.AzureCloudService.CloudServicePackage.ManifestSchema;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.CommonTemp;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
 
 namespace Calamari.AzureCloudService
 {

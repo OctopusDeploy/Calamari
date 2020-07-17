@@ -1,4 +1,6 @@
-﻿namespace Calamari.CommonTemp
+﻿using Calamari.Common.Plumbing.Variables;
+
+namespace Calamari.CommonTemp
 {
     internal interface IConfigurationVariablesReplacer
     {

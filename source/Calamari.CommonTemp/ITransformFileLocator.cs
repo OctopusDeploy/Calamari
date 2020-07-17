@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Calamari.Deployment;
+using Calamari.Common.Commands;
 
 namespace Calamari.CommonTemp
 {

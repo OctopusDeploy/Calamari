@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Shared;
 using Calamari.Tests.Shared.Helpers;
 using FluentAssertions;

@@ -9,7 +9,7 @@
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Calamari.Common" Version="13.0.9" />
+        <PackageReference Include="Calamari.Common" Version="14.0.0" />
     </ItemGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
         <DefineConstants>$(DefineConstants);USE_OCTOPUS_XMLT</DefineConstants>

@@ -6,7 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Calamari.AzureWebApp.Util;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
@@ -17,13 +18,20 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 {
     internal class ResourceManagerPublishProfileProvider
     {
-        public static async Task<WebDeployPublishSettings> GetPublishProperties(AzureServicePrincipalAccount account, string resourceGroupName, AzureTargetSite azureTargetSite)
+        readonly ILog log;
+
+        public ResourceManagerPublishProfileProvider(ILog log)
+        {
+            this.log = log;
+        }
+
+        public async Task<WebDeployPublishSettings> GetPublishProperties(AzureServicePrincipalAccount account, string resourceGroupName, AzureTargetSite azureTargetSite)
         {
             if (account.ResourceManagementEndpointBaseUri != DefaultVariables.ResourceManagementEndpoint)
-                Log.Info("Using override for resource management endpoint - {0}", account.ResourceManagementEndpointBaseUri);
+                log.InfoFormat("Using override for resource management endpoint - {0}", account.ResourceManagementEndpointBaseUri);
 
             if (account.ActiveDirectoryEndpointBaseUri != DefaultVariables.ActiveDirectoryEndpoint)
-                Log.Info("Using override for Azure Active Directory endpoint - {0}", account.ActiveDirectoryEndpointBaseUri);
+                log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", account.ActiveDirectoryEndpointBaseUri);
 
             var token = await ServicePrincipal.GetAuthorizationToken(account.TenantId, account.ClientId, account.Password, account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri);
             var baseUri = new Uri(account.ResourceManagementEndpointBaseUri);
@@ -38,7 +46,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
                 resourcesClient.HttpClient.BaseAddress = baseUri;
 
-                Log.Verbose($"Looking up site {azureTargetSite.Site} {(string.IsNullOrWhiteSpace(resourceGroupName) ? string.Empty : $"in resourceGroup {resourceGroupName}")}");
+                log.Verbose($"Looking up site {azureTargetSite.Site} {(string.IsNullOrWhiteSpace(resourceGroupName) ? string.Empty : $"in resourceGroup {resourceGroupName}")}");
                 Site matchingSite;
                 if (string.IsNullOrWhiteSpace(resourceGroupName))
                 {
@@ -48,8 +56,8 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 else
                 {
                     var site = await webSiteClient.WebApps.GetAsync(resourceGroupName, azureTargetSite.Site);
-                    Log.Verbose("Found site:");
-                    LogSite(site);
+                    log.Verbose("Found site:");
+                    logSite(site);
 
                     matchingSite = site ?? throw new CommandException(GetSiteNotFoundExceptionMessage(account, azureTargetSite, resourceGroupName));
                 }
@@ -62,14 +70,13 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 // step for backwards compatibility with older Azure steps.
                 if (azureTargetSite.HasSlot)
                 {
-                    Log.Verbose($"Using the deployment slot {azureTargetSite.Slot}");
+                    log.Verbose($"Using the deployment slot {azureTargetSite.Slot}");
                 }
 
                 return await GetWebDeployPublishProfile(webSiteClient, resourceGroupName, matchingSite.Name, azureTargetSite.HasSlot ? azureTargetSite.Slot : null);
             }
         }
-
-        static async Task<WebDeployPublishSettings> GetWebDeployPublishProfile(WebSiteManagementClient webSiteClient, string resourceGroupName, string site, string slot = null)
+        async Task<WebDeployPublishSettings> GetWebDeployPublishProfile(WebSiteManagementClient webSiteClient, string resourceGroupName, string site, string slot = null)
         {
             var options = new CsmPublishingProfileOptions {Format = "WebDeploy"};
             var stream = await (slot == null
@@ -101,8 +108,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 
             return new WebDeployPublishSettings(profile.Site, new SitePublishProfile(profile.Username, profile.Password, new Uri(profile.PublishUrl)));
         }
-
-        static async Task<Site> FindSiteByNameWithRetry(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite,
+        async Task<Site> FindSiteByNameWithRetry(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite,
             WebSiteManagementClient webSiteClient)
         {
             Site matchingSite = null;
@@ -113,7 +119,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 var matchingSites = sites.Where(webApp =>
                     string.Equals(webApp.Name, azureTargetSite.Site, StringComparison.OrdinalIgnoreCase)).ToList();
 
-                LogFoundSites(sites.ToList());
+                logFoundSites(sites.ToList());
 
                 if (!matchingSites.Any())
                 {
@@ -135,7 +141,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                     {
                         if (retry.ShouldLogWarning())
                         {
-                            Log.Warn(
+                            log.Warn(
                                 $"Azure Site query failed to return the resource group, trying again in {retry.Sleep().TotalMilliseconds:n0} ms.");
                         }
 
@@ -151,8 +157,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 
             return matchingSite;
         }
-
-        static string GetSiteNotFoundExceptionMessage(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite, string resourceGroupName = null)
+        string GetSiteNotFoundExceptionMessage(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite, string resourceGroupName = null)
         {
             var hasResourceGroup = !string.IsNullOrWhiteSpace(resourceGroupName);
             var sb = new StringBuilder($"Could not find Azure WebSite '{azureTargetSite.Site}'");
@@ -161,27 +166,25 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             sb.Append(hasResourceGroup ? string.Empty : " Please supply a Resource Group name.");
             return sb.ToString();
         }
-
-        static void LogFoundSites(List<Site> sites)
+        void logFoundSites(List<Site> sites)
         {
             if (sites.Any())
             {
-                Log.Verbose("Found sites:");
+                log.Verbose("Found sites:");
                 foreach (var site in sites)
                 {
-                    LogSite(site);
+                    logSite(site);
                 }
             }
         }
-
-        static void LogSite(Site site)
+        void logSite(Site site)
         {
             if (site != null)
             {
                 string resourceGroup = string.IsNullOrWhiteSpace(site.ResourceGroup)
                     ? string.Empty
                     : $"{site.ResourceGroup} / ";
-                Log.Verbose($"\t{resourceGroup}{site.Name}");
+                log.Verbose($"\t{resourceGroup}{site.Name}");
             }
         }
     }

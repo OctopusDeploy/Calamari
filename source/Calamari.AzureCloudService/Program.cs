@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Autofac;
-using Calamari.Common;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.AzureCloudService

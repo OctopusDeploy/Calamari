@@ -4,6 +4,7 @@ using Octopus.Web.XmlTransform;
 using Microsoft.Web.XmlTransform;
 #endif
 using System;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.CommonTemp.ConfigurationTransforms
 {

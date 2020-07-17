@@ -1,5 +1,7 @@
 using System.Threading.Tasks;
-using Calamari.Common;
+using Autofac;
+using Calamari.AzureWebApp.Integration.Websites.Publishing;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.AzureWebApp
@@ -8,6 +10,12 @@ namespace Calamari.AzureWebApp
     {
         public Program(ILog log) : base(log)
         {
+        }
+
+        protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
+        {
+            base.ConfigureContainer(builder, options);
+            builder.RegisterType<ResourceManagerPublishProfileProvider>().SingleInstance();
         }
 
         public static Task<int> Main(string[] args)

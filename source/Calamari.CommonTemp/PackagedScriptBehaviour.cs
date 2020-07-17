@@ -1,8 +1,9 @@
 ﻿using System.Threading.Tasks;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.CommonTemp
 {

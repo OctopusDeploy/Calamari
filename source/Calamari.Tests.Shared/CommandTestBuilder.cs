@@ -4,10 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Calamari.Commands.Support;
-using Calamari.Common.Variables;
 using Calamari.CommonTemp;
-using Calamari.Integration.FileSystem;
 using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
@@ -16,7 +13,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Shared.Helpers;
 using Calamari.Tests.Shared.LogParser;
 using FluentAssertions;
-using KnownVariables = Calamari.Common.Variables.KnownVariables;
+using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 
 namespace Calamari.Tests.Shared
 {

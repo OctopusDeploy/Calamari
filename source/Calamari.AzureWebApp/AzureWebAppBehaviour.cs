@@ -6,8 +6,10 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.AzureWebApp.Util;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.CommonTemp;
-using Calamari.Deployment;
 using Microsoft.Web.Deployment;
 
 namespace Calamari.AzureWebApp
@@ -15,10 +17,12 @@ namespace Calamari.AzureWebApp
     internal class AzureWebAppBehaviour : IDeployBehaviour
     {
         readonly ILog log;
+        readonly ResourceManagerPublishProfileProvider resourceManagerPublishProfileProvider;
 
-        public AzureWebAppBehaviour(ILog log)
+        public AzureWebAppBehaviour(ILog log, ResourceManagerPublishProfileProvider resourceManagerPublishProfileProvider)
         {
             this.log = log;
+            this.resourceManagerPublishProfileProvider = resourceManagerPublishProfileProvider;
         }
 
         public bool IsEnabled(RunningDeployment context)
@@ -132,7 +136,7 @@ namespace Calamari.AzureWebApp
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(siteAndSlotName, slotName);
 
-            return ResourceManagerPublishProfileProvider.GetPublishProperties(account,
+            return resourceManagerPublishProfileProvider.GetPublishProperties(account,
                 variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty),
                 targetSite);
         }

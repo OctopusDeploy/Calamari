@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 

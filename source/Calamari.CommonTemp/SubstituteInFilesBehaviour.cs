@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using Calamari.Common.Variables;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.CommonTemp
 {

@@ -1,7 +1,8 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Text;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.CommonTemp
 {

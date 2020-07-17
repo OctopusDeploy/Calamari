@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Calamari.Commands.Support;
 using Calamari.CommonTemp;
-using Calamari.Deployment;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.WebSites;
 
 namespace Calamari.AzureWebApp

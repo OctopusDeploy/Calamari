@@ -2,9 +2,10 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
-using Calamari.Deployment;
-using Calamari.Extensions;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.CommonTemp
 {

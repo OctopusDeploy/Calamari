@@ -11,9 +11,6 @@
     <ItemGroup>
         <PackageReference Include="Calamari.Common" Version="14.0.2" />
         <PackageReference Include="Calamari.Common" Version="14.0.0" />
-        <PackageReference Include="Calamari.Common" Version="13.0.8" />
-        <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.7" />
-        <PackageReference Include="Calamari.Common" Version="13.0.9" />
         <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
         <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
         <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">

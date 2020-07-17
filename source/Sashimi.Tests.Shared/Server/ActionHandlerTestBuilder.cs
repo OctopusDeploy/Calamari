@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Autofac;
-using Calamari;
-using Calamari.Common.Variables;
 using Calamari.Common;
+using Calamari.Common.Plumbing.Variables;
 using FluentAssertions;
 using Octopus.Diagnostics;
-using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using KnownVariables = Sashimi.Server.Contracts.KnownVariables;
 

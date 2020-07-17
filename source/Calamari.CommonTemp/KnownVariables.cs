@@ -1,4 +1,5 @@
-﻿using Calamari.Integration.Scripting;
+﻿using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Extensions;
 
 namespace Calamari.CommonTemp
 {

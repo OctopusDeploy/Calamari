@@ -1,5 +1,5 @@
 ﻿using System;
-using Calamari.Integration.Retry;
+using Calamari.Common.Plumbing.Retry;
 
 namespace Calamari.AzureWebApp.Util
 {

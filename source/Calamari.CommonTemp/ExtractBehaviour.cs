@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
 
 namespace Calamari.CommonTemp
 {

@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using Calamari.Deployment;
+using Calamari.Common.Commands;
 
 namespace Calamari.CommonTemp
 {

@@ -6,19 +6,19 @@ using System.Threading.Tasks;
 using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.Variables;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Proxies;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.CommonTemp.ConfigurationTransforms;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Proxies;
-using Calamari.Integration.Substitutions;
-using Calamari.Plumbing;
-using Calamari.Util.Environments;
-using Calamari.Variables;
 
 namespace Calamari.CommonTemp
 {

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
 using Calamari.CommonTemp;
 
 namespace Calamari.AzureWebApp
