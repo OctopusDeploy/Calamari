@@ -9,7 +9,7 @@ namespace Calamari.Common.Features.Processes
 {
     public class CommandLineInvocation
     {
-        string workingDirectory;
+        string? workingDirectory;
 
         public CommandLineInvocation(string executable, params string[] arguments)
         {
@@ -21,11 +21,11 @@ namespace Calamari.Common.Features.Processes
 
         public string Arguments { get; }
 
-        public string UserName { get; set; }
+        public string? UserName { get; set; }
 
-        public SecureString Password { get; set; }
+        public SecureString? Password { get; set; }
 
-        public Dictionary<string, string> EnvironmentVars { get; set; }
+        public Dictionary<string, string>? EnvironmentVars { get; set; }
 
         /// <summary>
         /// Prevent this execution from starting if another execution is running that also has this set to true.
@@ -46,7 +46,7 @@ namespace Calamari.Common.Features.Processes
         /// <summary>
         /// Add a non-standard output destination for the execution output
         /// </summary>
-        public ICommandInvocationOutputSink AdditionalInvocationOutputSink { get; set; }
+        public ICommandInvocationOutputSink? AdditionalInvocationOutputSink { get; set; }
 
         /// <summary>
         /// The initial working-directory for the invocation.

@@ -12,7 +12,7 @@ namespace Calamari.Integration.ConfigurationTransforms
 {
     public class VerboseTransformLogger : IXmlTransformationLogger
     {
-        public event LogDelegate Error;
+        public event LogDelegate? Error;
         readonly TransformLoggingOptions transformLoggingOptions;
         readonly ILog log;
 

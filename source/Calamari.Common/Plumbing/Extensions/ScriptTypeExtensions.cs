@@ -22,7 +22,7 @@ namespace Calamari.Common.Plumbing.Extensions
             var scriptTypeField = typeof(ScriptSyntax).GetFields()
                 .SingleOrDefault(
                     field => field.GetCustomAttributes(typeof(FileExtensionAttribute), false)
-                        .Any(attr => ((FileExtensionAttribute)attr).Extension == extension.ToLower()));
+                        .Any(attr => ((FileExtensionAttribute)attr).Extension == extension?.ToLower()));
 
             if (scriptTypeField != null)
                 return (ScriptSyntax)scriptTypeField.GetValue(null);

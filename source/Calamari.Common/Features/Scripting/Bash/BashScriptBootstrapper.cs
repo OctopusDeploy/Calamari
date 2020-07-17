@@ -64,7 +64,7 @@ namespace Calamari.Common.Features.Scripting.Bash
                 });
         }
 
-        static string DecryptValueCommand(string value)
+        static string DecryptValueCommand(string? value)
         {
             var encrypted = VariableEncryptor.Encrypt(value ?? "");
             var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);

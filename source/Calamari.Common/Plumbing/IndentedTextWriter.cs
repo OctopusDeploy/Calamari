@@ -476,13 +476,12 @@ namespace Calamari.Common.Plumbing
     {
         readonly IndentedTextWriter writer;
         readonly int indent;
-        string s;
+        string? s;
 
         internal Indentation(IndentedTextWriter writer, int indent)
         {
             this.writer = writer;
             this.indent = indent;
-            s = null;
         }
 
         internal string IndentationString

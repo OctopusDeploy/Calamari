@@ -8,7 +8,7 @@ namespace Calamari.Common.Plumbing.Extensions
 {
     public static class VariableExtensions
     {
-        public static PathToPackage GetPathToPrimaryPackage(this IVariables variables, ICalamariFileSystem fileSystem, bool required)
+        public static PathToPackage? GetPathToPrimaryPackage(this IVariables variables, ICalamariFileSystem fileSystem, bool required)
         {
             var path = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
 

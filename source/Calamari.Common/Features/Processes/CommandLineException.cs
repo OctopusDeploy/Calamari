@@ -8,8 +8,8 @@ namespace Calamari.Common.Features.Processes
         public CommandLineException(
             string commandLine,
             int exitCode,
-            string additionalInformation,
-            string workingDirectory = null)
+            string? additionalInformation,
+            string? workingDirectory = null)
             : base(FormatMessage(commandLine, exitCode, additionalInformation, workingDirectory))
         {
         }
@@ -17,8 +17,8 @@ namespace Calamari.Common.Features.Processes
         static string FormatMessage(
             string commandLine,
             int exitCode,
-            string additionalInformation,
-            string workingDirectory)
+            string? additionalInformation,
+            string? workingDirectory)
         {
             var sb = new StringBuilder("The following command: ");
             sb.AppendLine(commandLine);

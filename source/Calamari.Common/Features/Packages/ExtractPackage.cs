@@ -23,7 +23,7 @@ namespace Calamari.Common.Features.Packages
             this.log = log;
         }
 
-        public void ExtractToStagingDirectory(PathToPackage pathToPackage, IPackageExtractor customPackageExtractor = null)
+        public void ExtractToStagingDirectory(PathToPackage pathToPackage, IPackageExtractor? customPackageExtractor = null)
         {
             var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
             fileSystem.EnsureDirectoryExists(targetPath);
@@ -36,18 +36,19 @@ namespace Calamari.Common.Features.Packages
             Extract(pathToPackage, targetPath, null);
         }
 
-        public void ExtractToApplicationDirectory(PathToPackage pathToPackage, IPackageExtractor customPackageExtractor = null)
+        public void ExtractToApplicationDirectory(PathToPackage pathToPackage, IPackageExtractor? customPackageExtractor = null)
         {
             var metadata = PackageName.FromFile(pathToPackage);
             var targetPath = ApplicationDirectory.GetApplicationDirectory(metadata, variables, fileSystem);
             Extract(pathToPackage, targetPath, customPackageExtractor);
         }
 
-        void Extract(PathToPackage pathToPackage, string targetPath, IPackageExtractor customPackageExtractor)
+        void Extract(PathToPackage pathToPackage, string targetPath, IPackageExtractor? customPackageExtractor)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(pathToPackage))
+                var path = (string?)pathToPackage;
+                if (string.IsNullOrWhiteSpace(path))
                 {
                     log.Verbose("No package path defined. Skipping package extraction.");
                     return;
@@ -56,7 +57,7 @@ namespace Calamari.Common.Features.Packages
                 log.Verbose("Extracting package to: " + targetPath);
 
                 var extractorToUse = customPackageExtractor ?? combinedPackageExtractor;
-                var filesExtracted = extractorToUse.Extract(pathToPackage, targetPath);
+                var filesExtracted = extractorToUse.Extract(path, targetPath);
 
                 log.Verbose("Extracted " + filesExtracted + " files");
 

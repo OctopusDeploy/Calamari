@@ -10,7 +10,7 @@ namespace Calamari.Common.Features.Processes
 {
     public class WindowStationAndDesktopAccess
     {
-        public static void GrantAccessToWindowStationAndDesktop(string username, string domainName = null)
+        public static void GrantAccessToWindowStationAndDesktop(string username, string? domainName = null)
         {
             const int windowStationAllAccess = 0x000f037f;
             GrantAccess(username, domainName, GetProcessWindowStation(), windowStationAllAccess);
@@ -18,7 +18,7 @@ namespace Calamari.Common.Features.Processes
             GrantAccess(username, domainName, GetThreadDesktop(GetCurrentThreadId()), desktopRightsAllAccess);
         }
 
-        static void GrantAccess(string username, string domainName, IntPtr handle, int accessMask)
+        static void GrantAccess(string username, string? domainName, IntPtr handle, int accessMask)
         {
             SafeHandle safeHandle = new NoopSafeHandle(handle);
             var security =

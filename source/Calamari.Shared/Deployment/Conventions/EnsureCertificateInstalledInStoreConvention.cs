@@ -3,7 +3,6 @@ using System.Security.Cryptography.X509Certificates;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Certificates;
-using Octostache;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -11,12 +10,12 @@ namespace Calamari.Deployment.Conventions
     {
         private readonly ICertificateStore certificateStore;
         private readonly string certificateIdVariableName;
-        private readonly string storeLocationVariableName;
-        private readonly string storeNameVariableName;
+        private readonly string? storeLocationVariableName;
+        private readonly string? storeNameVariableName;
 
         public EnsureCertificateInstalledInStoreConvention(
             ICertificateStore certificateStore,
-            string certificateIdVariableName, string storeLocationVariableName = null, string storeNameVariableName = null)
+            string certificateIdVariableName, string? storeLocationVariableName = null, string? storeNameVariableName = null)
         {
             this.certificateStore = certificateStore;
             this.certificateIdVariableName = certificateIdVariableName;

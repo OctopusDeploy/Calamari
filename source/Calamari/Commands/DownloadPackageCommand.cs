@@ -38,9 +38,9 @@ namespace Calamari.Commands
         private VersionFormat versionFormat = VersionFormat.Semver;
 
         public DownloadPackageCommand(
-            IScriptEngine scriptEngine, 
-            IFreeSpaceChecker freeSpaceChecker, 
-            IVariables variables, 
+            IScriptEngine scriptEngine,
+            IFreeSpaceChecker freeSpaceChecker,
+            IVariables variables,
             ICalamariFileSystem fileSystem,
 			ICommandLineRunner commandLineRunner,
             ILog log)
@@ -89,20 +89,26 @@ namespace Calamari.Commands
             try
             {
                 CheckArguments(
-                    packageId, 
-                    packageVersion, 
-                    feedId, 
-                    feedUri, 
-                    feedUsername, 
-                    feedPassword, 
-                    maxDownloadAttempts, 
-                    attemptBackoffSeconds, 
-                    out var version, 
-                    out var uri, 
-                    out var parsedMaxDownloadAttempts, 
+                    packageId,
+                    packageVersion,
+                    feedId,
+                    feedUri,
+                    feedUsername,
+                    feedPassword,
+                    maxDownloadAttempts,
+                    attemptBackoffSeconds,
+                    out var version,
+                    out var uri,
+                    out var parsedMaxDownloadAttempts,
                     out var parsedAttemptBackoff);
 
-                var pkg = new PackageDownloaderStrategy(log, scriptEngine, fileSystem, freeSpaceChecker, commandLineRunner, variables).DownloadPackage(
+                var packageDownloaderStrategy = new PackageDownloaderStrategy(log,
+                    scriptEngine,
+                    fileSystem,
+                    freeSpaceChecker,
+                    commandLineRunner,
+                    variables);
+                var pkg = packageDownloaderStrategy.DownloadPackage(
                     packageId,
                     version,
                     feedId,
@@ -139,17 +145,17 @@ namespace Calamari.Commands
 
         // ReSharper disable UnusedParameter.Local
         void CheckArguments(
-            string packageId, 
-            string packageVersion, 
-            string feedId, 
-            string feedUri, 
-            string feedUsername, 
+            string packageId,
+            string packageVersion,
+            string feedId,
+            string feedUri,
+            string feedUsername,
             string feedPassword,
-            string maxDownloadAttempts, 
-            string attemptBackoffSeconds, 
-            out IVersion version, 
-            out Uri uri, 
-            out int parsedMaxDownloadAttempts, 
+            string maxDownloadAttempts,
+            string attemptBackoffSeconds,
+            out IVersion version,
+            out Uri uri,
+            out int parsedMaxDownloadAttempts,
             out TimeSpan parsedAttemptBackoff)
         {
             Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
@@ -157,9 +163,10 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
             Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
 
-            if (!VersionFactory.TryCreateVersion(packageVersion, out version, versionFormat))
+            version = VersionFactory.TryCreateVersion(packageVersion, versionFormat);
+            if (version == null)
             {
-                throw new CommandException($"Package version '{packageVersion}' specified is not a valid version string"); 
+                throw new CommandException($"Package version '{packageVersion}' specified is not a valid version string");
             }
 
             if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))

@@ -1,22 +1,18 @@
 ﻿using System;
 using System.Net;
-using System.Net.Http;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
 {
     /// <summary>
     /// This class knows how to interpret a package id and request a download
-    /// from a specific downloader implementation. 
+    /// from a specific downloader implementation.
     /// </summary>
     public class PackageDownloaderStrategy
     {
@@ -30,8 +26,8 @@ namespace Calamari.Integration.Packages.Download
         public PackageDownloaderStrategy(
             ILog log,
             IScriptEngine engine,
-            ICalamariFileSystem fileSystem, 
-            IFreeSpaceChecker freeSpaceChecker, 
+            ICalamariFileSystem fileSystem,
+            IFreeSpaceChecker freeSpaceChecker,
             ICommandLineRunner commandLineRunner,
             IVariables variables
             )
@@ -43,7 +39,7 @@ namespace Calamari.Integration.Packages.Download
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
         }
-        
+
         public PackagePhysicalFileMetadata DownloadPackage(
             string packageId,
             IVersion version,
@@ -55,7 +51,7 @@ namespace Calamari.Integration.Packages.Download
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
         {
-            IPackageDownloader downloader = null;
+            IPackageDownloader? downloader = null;
             switch (feedType)
             {
                 case FeedType.Maven:
@@ -81,12 +77,12 @@ namespace Calamari.Integration.Packages.Download
 
             return downloader.DownloadPackage(
                 packageId,
-                version, 
-                feedId, 
-                feedUri, 
-                feedCredentials, 
-                forcePackageDownload, 
-                maxDownloadAttempts, 
+                version,
+                feedId,
+                feedUri,
+                feedCredentials,
+                forcePackageDownload,
+                maxDownloadAttempts,
                 downloadAttemptBackoff);
         }
     }

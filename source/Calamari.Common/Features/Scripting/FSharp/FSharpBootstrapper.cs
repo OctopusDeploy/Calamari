@@ -40,7 +40,7 @@ namespace Calamari.Common.Features.Scripting.FSharp
             throw new CommandException(string.Format("fsi.exe was not found at '{0}'", executable));
         }
 
-        public static string FormatCommandArguments(string bootstrapFile, string scriptParameters)
+        public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
         {
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();

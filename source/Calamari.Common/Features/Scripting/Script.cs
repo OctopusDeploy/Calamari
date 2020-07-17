@@ -4,12 +4,7 @@ namespace Calamari.Common.Features.Scripting
 {
     public class Script
     {
-        public Script(string file)
-            : this(file, null)
-        {
-        }
-
-        public Script(string file, string parameters)
+        public Script(string? file, string? parameters = null)
         {
             if (string.IsNullOrEmpty(file))
                 throw new InvalidScriptException("File can not be null or empty.");
@@ -18,6 +13,6 @@ namespace Calamari.Common.Features.Scripting
         }
 
         public string File { get; }
-        public string Parameters { get; }
+        public string? Parameters { get; }
     }
 }

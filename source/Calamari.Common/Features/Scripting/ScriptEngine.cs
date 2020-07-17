@@ -17,11 +17,11 @@ namespace Calamari.Common.Features.Scripting
     {
         ScriptSyntax[] GetSupportedTypes();
 
-        CommandResult Execute(
+        CommandResult? Execute(
             Script script,
             IVariables variables,
             ICommandLineRunner commandLineRunner,
-            Dictionary<string, string> environmentVars = null);
+            Dictionary<string, string>? environmentVars = null);
     }
 
     public class ScriptEngine : IScriptEngine
@@ -38,11 +38,11 @@ namespace Calamari.Common.Features.Scripting
             return ScriptSyntaxHelper.GetPreferenceOrderedScriptSyntaxesForEnvironment();
         }
 
-        public CommandResult Execute(
+        public CommandResult? Execute(
             Script script,
             IVariables variables,
             ICommandLineRunner commandLineRunner,
-            Dictionary<string, string> environmentVars = null)
+            Dictionary<string, string>? environmentVars = null)
         {
             var syntax = script.File.ToScriptType();
             return BuildWrapperChain(syntax, variables)

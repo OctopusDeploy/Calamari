@@ -5,7 +5,7 @@ namespace Calamari.Integration.ConfigurationTransforms
 {
     public class XmlConfigTransformDefinition
     {
-        private readonly string definition;
+        readonly string definition;
 
         public XmlConfigTransformDefinition(string definition)
         {
@@ -45,7 +45,7 @@ namespace Calamari.Integration.ConfigurationTransforms
         }
 
         public string TransformPattern { get; private set; }
-        public string SourcePattern { get; private set; }
+        public string? SourcePattern { get; private set; }
         public bool IsTransformWildcard { get; private set; }
         public bool IsSourceWildcard { get; private set; }
         public bool Advanced { get; private set; }

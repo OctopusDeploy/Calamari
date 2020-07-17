@@ -8,8 +8,8 @@ namespace Calamari.Common.Commands
     {
         public RunningDeployment(string packageFilePath, IVariables variables)
         {
-            this.PackageFilePath = new PathToPackage(packageFilePath);
-            this.Variables = variables;
+            PackageFilePath = new PathToPackage(packageFilePath);
+            Variables = variables;
         }
 
         public PathToPackage PackageFilePath { get; }
@@ -17,7 +17,7 @@ namespace Calamari.Common.Commands
         /// <summary>
         /// Gets the directory that Tentacle extracted the package to.
         /// </summary>
-        public string StagingDirectory
+        public string? StagingDirectory
         {
             get => Variables.Get(KnownVariables.OriginalPackageDirectoryPath);
             set => Variables.Set(KnownVariables.OriginalPackageDirectoryPath, value);
@@ -27,7 +27,7 @@ namespace Calamari.Common.Commands
         /// Gets the custom installation directory for this package, as selected by the user.
         /// If the user didn't choose a custom directory, this will return <see cref="StagingDirectory" /> instead.
         /// </summary>
-        public string CustomDirectory
+        public string? CustomDirectory
         {
             get
             {
@@ -40,8 +40,10 @@ namespace Calamari.Common.Commands
 
         public string CurrentDirectory =>
             CurrentDirectoryProvider == DeploymentWorkingDirectory.StagingDirectory
-                ? string.IsNullOrWhiteSpace(StagingDirectory) ? Environment.CurrentDirectory : StagingDirectory
-                : CustomDirectory;
+                ? string.IsNullOrWhiteSpace(StagingDirectory)
+                    ? Environment.CurrentDirectory
+                    : StagingDirectory
+                : CustomDirectory ?? throw new InvalidOperationException("Current directory is not set for the deployment");
 
         public IVariables Variables { get; }
 

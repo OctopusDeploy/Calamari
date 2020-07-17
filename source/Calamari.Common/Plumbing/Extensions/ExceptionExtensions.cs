@@ -5,9 +5,9 @@ namespace Calamari.Common.Plumbing.Extensions
 {
     public static class ExceptionExtensions
     {
-        public static string PrettyPrint(this Exception ex, StringBuilder sb = null)
+        public static string PrettyPrint(this Exception ex, StringBuilder? sb = null)
         {
-            sb = sb ?? new StringBuilder();
+            sb ??= new StringBuilder();
 
             sb.AppendLine(ex.Message);
             sb.AppendLine(ex.GetType().FullName);

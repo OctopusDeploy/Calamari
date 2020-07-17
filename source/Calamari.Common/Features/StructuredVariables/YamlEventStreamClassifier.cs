@@ -19,7 +19,7 @@ namespace Calamari.Common.Features.StructuredVariables
         }
 
         public YamlStructure Type { get; }
-        public string MappingKey { get; set; }
+        public string? MappingKey { get; set; }
         public int SequenceIndex { get; set; } = -1;
     }
 
@@ -127,7 +127,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public IYamlNode Process(ParsingEvent ev)
         {
-            IYamlNode classifiedNode = null;
+            IYamlNode? classifiedNode = null;
 
             if (stack.TopIsSequence() && (ev is MappingStart || ev is SequenceStart || ev is Scalar))
             {

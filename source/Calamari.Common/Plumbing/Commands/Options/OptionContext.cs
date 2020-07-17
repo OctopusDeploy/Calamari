@@ -131,13 +131,13 @@ namespace Calamari.Common.Plumbing.Commands.Options
     {
         public OptionContext(OptionSet set)
         {
-            this.OptionSet = set;
+            OptionSet = set;
             OptionValues = new OptionValueCollection(this);
         }
 
-        public Option Option { get; set; }
+        public Option? Option { get; set; }
 
-        public string OptionName { get; set; }
+        public string? OptionName { get; set; }
 
         public int OptionIndex { get; set; }
 

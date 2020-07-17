@@ -82,7 +82,7 @@ namespace Calamari.Common.Plumbing.Logging
     public abstract class AbstractLog : ILog
     {
         readonly object sync = new object();
-        string stdOutMode;
+        string? stdOutMode;
 
         protected abstract void StdOut(string message);
         protected abstract void StdErr(string message);
@@ -193,7 +193,7 @@ namespace Calamari.Common.Plumbing.Logging
             VerboseFormat("##octopus[deltaVerification error=\"{0}\"]", ConvertServiceMessageValue(error));
         }
 
-        public string FormatLink(string uri, string description = null)
+        public string FormatLink(string uri, string? description = null)
         {
             return $"[{description ?? uri}]({uri})";
         }

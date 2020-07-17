@@ -7,7 +7,7 @@ namespace Calamari.Common.Plumbing.ServiceMessages
     {
         readonly Dictionary<string, string> properties;
 
-        public ServiceMessage(string name, Dictionary<string, string> properties = null)
+        public ServiceMessage(string name, Dictionary<string, string>? properties = null)
         {
             this.Name = name;
             this.properties = properties ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -17,7 +17,7 @@ namespace Calamari.Common.Plumbing.ServiceMessages
 
         public IDictionary<string, string> Properties => properties;
 
-        public string GetValue(string key)
+        public string? GetValue(string key)
         {
             string s;
             return properties.TryGetValue(key, out s) ? s : null;

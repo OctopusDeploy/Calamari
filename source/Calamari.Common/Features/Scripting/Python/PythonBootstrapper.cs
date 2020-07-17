@@ -29,7 +29,7 @@ namespace Calamari.Common.Features.Scripting.Python
             InstallDependenciesScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(PythonBootstrapper).Namespace + ".InstallDependencies.py");
         }
 
-        public static string FormatCommandArguments(string bootstrapFile, string scriptParameters)
+        public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
         {
             var encryptionKey = ToHex(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
@@ -65,7 +65,7 @@ namespace Calamari.Common.Features.Scripting.Python
                 });
         }
 
-        static string DecryptValueCommand(string value)
+        static string DecryptValueCommand(string? value)
         {
             var encrypted = VariableEncryptor.Encrypt(value ?? "");
             var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);

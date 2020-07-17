@@ -282,7 +282,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
             get
             {
                 AssertValid(index);
-                return index >= values.Count ? null : values[index];
+                return values[index];
             }
             set => values[index] = value;
         }
@@ -295,10 +295,7 @@ namespace Calamari.Common.Plumbing.Commands.Options
                 throw new ArgumentOutOfRangeException("index");
             if (c.Option.OptionValueType == OptionValueType.Required &&
                 index >= values.Count)
-                throw new OptionException(string.Format(
-                        "Missing required value for option '{0}'.",
-                        c.OptionName),
-                    c.OptionName);
+                throw new OptionException(string.Format("Missing required value for option '{0}'.", c.OptionName), c.OptionName ?? string.Empty);
         }
 
         #endregion

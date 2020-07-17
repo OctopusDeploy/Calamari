@@ -24,7 +24,7 @@ namespace Calamari.Common.Features.Deployment.Journal
             this.variables = variables;
         }
 
-        string JournalPath => variables.Get(TentacleVariables.Agent.JournalPath);
+        string? JournalPath => variables.Get(TentacleVariables.Agent.JournalPath);
 
         public void AddJournalEntry(JournalEntry entry)
         {
@@ -63,7 +63,7 @@ namespace Calamari.Common.Features.Deployment.Journal
             return GetLatestInstallation(retentionPolicySubset, null, null);
         }
 
-        public JournalEntry GetLatestInstallation(string retentionPolicySubset, string packageId, string packageVersion)
+        public JournalEntry GetLatestInstallation(string retentionPolicySubset, string? packageId, string? packageVersion)
         {
             return GetAllJournalEntries()
                 .Where(e =>
@@ -82,8 +82,8 @@ namespace Calamari.Common.Features.Deployment.Journal
         }
 
         public JournalEntry GetLatestSuccessfulInstallation(string retentionPolicySubset,
-            string packageId,
-            string packageVersion)
+            string? packageId,
+            string? packageVersion)
         {
             return GetAllJournalEntries()
                 .Where(e =>
@@ -113,6 +113,9 @@ namespace Calamari.Common.Features.Deployment.Journal
 
         void Write(IEnumerable<XElement> elements)
         {
+            if (string.IsNullOrWhiteSpace(JournalPath))
+                throw new InvalidOperationException("JournalPath has not been set");
+
             fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(JournalPath));
 
             var tempPath = JournalPath + ".temp-" + Guid.NewGuid() + ".xml";

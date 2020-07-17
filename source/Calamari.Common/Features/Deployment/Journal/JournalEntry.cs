@@ -41,14 +41,14 @@ namespace Calamari.Common.Features.Deployment.Journal
         {
         }
 
-        internal JournalEntry(string id,
-            string environmentId,
-            string tenantId,
-            string projectId,
-            string retentionPolicySet,
-            DateTime installedOn,
-            string extractedTo,
-            string customInstallationDirectory,
+        internal JournalEntry(string? id,
+            string? environmentId,
+            string? tenantId,
+            string? projectId,
+            string? retentionPolicySet,
+            DateTime? installedOn,
+            string? extractedTo,
+            string? customInstallationDirectory,
             bool wasSuccessful,
             IEnumerable<DeployedPackage> packages)
         {
@@ -87,14 +87,14 @@ namespace Calamari.Common.Features.Deployment.Journal
         {
         }
 
-        public string Id { get; }
-        public string EnvironmentId { get; }
-        public string TenantId { get; }
-        public string ProjectId { get; }
-        public string RetentionPolicySet { get; }
-        public DateTime InstalledOn { get; }
-        public string ExtractedTo { get; }
-        public string CustomInstallationDirectory { get; }
+        public string? Id { get; }
+        public string? EnvironmentId { get; }
+        public string? TenantId { get; }
+        public string? ProjectId { get; }
+        public string? RetentionPolicySet { get; }
+        public DateTime? InstalledOn { get; }
+        public string? ExtractedTo { get; }
+        public string? CustomInstallationDirectory { get; }
         public bool WasSuccessful { get; }
 
         public ICollection<DeployedPackage> Packages { get; }
@@ -109,7 +109,7 @@ namespace Calamari.Common.Features.Deployment.Journal
                 new XAttribute("EnvironmentId", EnvironmentId ?? string.Empty),
                 new XAttribute("TenantId", TenantId ?? string.Empty),
                 new XAttribute("ProjectId", ProjectId ?? string.Empty),
-                new XAttribute("InstalledOn", InstalledOn.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)),
+                new XAttribute("InstalledOn", InstalledOn?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)),
                 new XAttribute("RetentionPolicySet", RetentionPolicySet ?? string.Empty),
                 new XAttribute("ExtractedTo", ExtractedTo ?? string.Empty),
                 new XAttribute("CustomInstallationDirectory", CustomInstallationDirectory ?? string.Empty),
@@ -118,7 +118,7 @@ namespace Calamari.Common.Features.Deployment.Journal
             );
         }
 
-        static DateTime ParseDate(string s)
+        static DateTime ParseDate(string? s)
         {
             DateTime value;
             if (s != null &&
@@ -147,7 +147,7 @@ namespace Calamari.Common.Features.Deployment.Journal
             throw new Exception(string.Format("Could not parse date from '{0}'", s));
         }
 
-        static bool? ParseBool(string s)
+        static bool? ParseBool(string? s)
         {
             if (!string.IsNullOrWhiteSpace(s) && bool.TryParse(s, out var b))
                 return b;

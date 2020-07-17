@@ -1,11 +1,9 @@
 using System;
 using System.Linq;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.Variables
 {
@@ -27,14 +25,14 @@ namespace Calamari.Tests.Fixtures.Variables
             program.VariablesOverride = variables;
             program.RunStubCommand();
 
-            var messages = program.Log.Messages;
-            var messagesAsString = string.Join(Environment.NewLine, program.Log.Messages.Select(m => m.FormattedMessage));
+            var messages = program.TestLog.Messages;
+            var messagesAsString = string.Join(Environment.NewLine, program.TestLog.Messages.Select(m => m.FormattedMessage));
 
             //Assert raw variables were output
             messages.Should().Contain(m => m.Level == InMemoryLog.Level.Warn && m.FormattedMessage == $"{KnownVariables.PrintVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
             messagesAsString.Should().Contain("The following variables are available:");
             messagesAsString.Should().Contain($"[{variableName}] = '{rawVariableValue}'");
- 
+
             //Assert evaluated variables were output
             messages.Should().Contain(m => m.Level == InMemoryLog.Level.Warn && m.FormattedMessage == $"{KnownVariables.PrintEvaluatedVariables} is enabled. This should only be used for debugging problems with variables, and then disabled again for normal deployments.");
             messagesAsString.Should().Contain("The following evaluated variables are available:");

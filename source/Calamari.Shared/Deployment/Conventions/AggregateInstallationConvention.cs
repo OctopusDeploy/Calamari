@@ -6,18 +6,18 @@ namespace Calamari.Deployment.Conventions
 {
     public class AggregateInstallationConvention: IInstallConvention
     {
-        private readonly IInstallConvention[] conventions;
+        readonly IInstallConvention[] conventions;
 
         public AggregateInstallationConvention(params IInstallConvention[] conventions)
         {
             this.conventions = conventions;
         }
-        
+
         public AggregateInstallationConvention(IEnumerable<IInstallConvention> conventions)
         {
-            conventions = conventions?.ToArray() ?? new IInstallConvention[0];
+            this.conventions = conventions?.ToArray() ?? new IInstallConvention[0];
         }
-        
+
         public void Install(RunningDeployment deployment)
         {
             foreach (var convention in conventions)

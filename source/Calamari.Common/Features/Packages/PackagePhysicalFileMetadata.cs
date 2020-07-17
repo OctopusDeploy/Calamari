@@ -18,12 +18,12 @@ namespace Calamari.Common.Features.Packages
         public string Hash { get; }
         public long Size { get; }
 
-        public static PackagePhysicalFileMetadata Build(string fullFilePath)
+        public static PackagePhysicalFileMetadata? Build(string fullFilePath)
         {
             return Build(fullFilePath, PackageName.FromFile(fullFilePath));
         }
 
-        public static PackagePhysicalFileMetadata Build(string fullFilePath, PackageFileNameMetadata identity)
+        public static PackagePhysicalFileMetadata? Build(string fullFilePath, PackageFileNameMetadata? identity)
         {
             if (identity == null)
                 return null;

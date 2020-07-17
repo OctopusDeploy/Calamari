@@ -44,11 +44,11 @@ namespace Calamari.Common.Plumbing.Commands
 
         public class Variables
         {
-            public string VariablesFile { get; internal set; }
+            public string? VariablesFile { get; internal set; }
             public List<string> SensitiveVariablesFiles { get; } = new List<string>();
-            public string SensitiveVariablesPassword { get; internal set; }
-            public string OutputVariablesFile { get; internal set; }
-            public string OutputVariablesPassword { get; internal set; }
+            public string? SensitiveVariablesPassword { get; internal set; }
+            public string? OutputVariablesFile { get; internal set; }
+            public string? OutputVariablesPassword { get; internal set; }
         }
     }
 }

@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -11,8 +9,6 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 
 namespace Calamari.Integration.Scripting
 {
@@ -41,15 +37,13 @@ namespace Calamari.Integration.Scripting
             {
                 log.VerboseFormat("Executing '{0}'", script);
                 var result = scriptEngine.Execute(new Script(script), deployment.Variables, commandLineRunner);
+                if (result == null)
+                    throw new CommandException(string.Format("Script '{0}' returned null. Deployment terminated.", script));
                 if (result.ExitCode != 0)
-                {
                     throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}. Deployment terminated.", script, result.ExitCode));
-                }
 
                 if (result.HasErrors && deployment.Variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))
-                {
                     throw new CommandException($"Script '{script}' returned zero exit code but had error output. Deployment terminated.");
-                }
             }
         }
 

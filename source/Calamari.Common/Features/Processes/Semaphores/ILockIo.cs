@@ -6,7 +6,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
     {
         string GetFilePath(string lockName);
         bool LockExists(string lockFilePath);
-        FileLock ReadLock(string lockFilePath);
+        IFileLock ReadLock(string lockFilePath);
         bool WriteLock(string lockFilePath, FileLock fileLock);
         void DeleteLock(string lockFilePath);
     }

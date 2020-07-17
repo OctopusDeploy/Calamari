@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
@@ -110,7 +109,8 @@ namespace Calamari.Integration.Packages.NuGet
             if (json.TryGetValue("version", out versionToken) &&
                 versionToken.Type == JTokenType.String)
             {
-                if (VersionFactory.TryCreateSemanticVersion((string)versionToken, out var version)  && version.Major == 3)
+                var version = VersionFactory.TryCreateSemanticVersion((string)versionToken);
+                if (version != null && version.Major == 3)
                 {
                     return true;
                 }

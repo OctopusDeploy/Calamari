@@ -11,7 +11,7 @@ namespace Calamari.Common.Features.Scripting.Python
     {
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
-            Dictionary<string, string> environmentVars = null)
+            Dictionary<string, string>? environmentVars = null)
         {
             var executable = PythonBootstrapper.FindPythonExecutable();
             var workingDirectory = Path.GetDirectoryName(script.File);

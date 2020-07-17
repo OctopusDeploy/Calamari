@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Text;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -10,10 +8,6 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Util;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -47,8 +41,8 @@ namespace Calamari.Deployment.Conventions
                 var scriptBody = deployment.Variables.Get(scriptName, out error);
                 if (!string.IsNullOrEmpty(error))
                     Log.VerboseFormat(
-                        "Parsing script for phase {0} with Octostache returned the following error: `{1}`", 
-                        deploymentStage, 
+                        "Parsing script for phase {0} with Octostache returned the following error: `{1}`",
+                        deploymentStage,
                         error);
 
                 if (string.IsNullOrWhiteSpace(scriptBody))
@@ -66,6 +60,8 @@ namespace Calamari.Deployment.Conventions
                 // Execute the script
                 Log.VerboseFormat("Executing '{0}'", scriptFile);
                 var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
+                if (result == null)
+                    throw new CommandException(string.Format("Script '{0}' returned null. Deployment terminated.", scriptFile));
 
                 if (result.ExitCode != 0)
                 {

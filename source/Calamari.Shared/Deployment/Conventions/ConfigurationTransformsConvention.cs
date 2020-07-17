@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.FileSystem;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -18,7 +19,7 @@ namespace Calamari.Deployment.Conventions
         private readonly ITransformFileLocator transformFileLocator;
         readonly ILog log;
 
-        public ConfigurationTransformsConvention(ICalamariFileSystem fileSystem, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog log = null)
+        public ConfigurationTransformsConvention(ICalamariFileSystem fileSystem, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog? log = null)
         {
             this.fileSystem = fileSystem;
             this.configurationTransformer = configurationTransformer;
@@ -64,18 +65,13 @@ namespace Calamari.Deployment.Conventions
             {
                 result.Add(new XmlConfigTransformDefinition("Release"));
 
-                var environment = deployment.Variables.Get(
-                    DeploymentEnvironment.Name);
+                var environment = deployment.Variables.Get(DeploymentEnvironment.Name);
                 if (!string.IsNullOrWhiteSpace(environment))
-                {
                     result.Add(new XmlConfigTransformDefinition(environment));
-                }
                 
                 var tenant = deployment.Variables.Get(DeploymentVariables.Tenant.Name);
                 if (!string.IsNullOrWhiteSpace(tenant))
-                {
                     result.Add(new XmlConfigTransformDefinition(tenant));
-                }
             }
             return result;
         }
@@ -201,9 +197,10 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        static string GetFileName(string path)
+        [return: NotNullIfNotNull("path")]
+        static string? GetFileName(string? path)
         {
-            return Path.GetFileName(path) ?? string.Empty;
+            return Path.GetFileName(path);
         }
 
         private List<string> MatchingFiles(RunningDeployment deployment, string[] sourceExtensions)

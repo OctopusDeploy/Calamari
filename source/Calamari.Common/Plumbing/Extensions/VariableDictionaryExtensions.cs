@@ -5,7 +5,7 @@ namespace Calamari.Common.Plumbing.Extensions
 {
     public static class VariableDictionaryExtensions
     {
-        public static void SetOutputVariable(this IVariables variables, string name, string value)
+        public static void SetOutputVariable(this IVariables variables, string name, string? value)
         {
             variables.Set(name, value);
 

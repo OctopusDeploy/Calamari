@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Integration.FileSystem;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
@@ -79,7 +75,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var fileContent = $"{{\"__type\":\"FileLock:#Calamari.Integration.Processes.Semaphores\",\"ProcessId\":{currentProcess.Id},\"ProcessName\":\"{currentProcess.ProcessName}\",\"ThreadId\":{Thread.CurrentThread.ManagedThreadId},\"Timestamp\":636114372739676700}}";
             fileSystem.OpenFileExclusively(lockFilePath, FileMode.Open, FileAccess.Read)
                       .Returns(x => new MemoryStream(Encoding.UTF8.GetBytes(fileContent)));
-            var result = lockIo.ReadLock(lockFilePath);
+            var result = lockIo.ReadLock(lockFilePath) as FileLock;
             Assert.That(result, Is.InstanceOf<FileLock>());
             Assert.That(result.ProcessId, Is.EqualTo(currentProcess.Id));
             Assert.That(result.ProcessName, Is.EqualTo(currentProcess.ProcessName));
@@ -97,7 +93,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var fileContent = $"{{\"__type\":\"FileLock:#Calamari.Integration.Processes.Semaphores\",\"ProcessId\":{currentProcess.Id + 1},\"ProcessName\":\"{currentProcess.ProcessName}\",\"ThreadId\":{Thread.CurrentThread.ManagedThreadId},\"Timestamp\":636114372739676700}}";
             fileSystem.OpenFileExclusively(lockFilePath, FileMode.Open, FileAccess.Read)
                       .Returns(x => new MemoryStream(Encoding.UTF8.GetBytes(fileContent)));
-            var result = lockIo.ReadLock(lockFilePath);
+            var result = lockIo.ReadLock(lockFilePath) as OtherProcessOwnsFileLock;
             Assert.That(result, Is.InstanceOf<OtherProcessOwnsFileLock>());
             Assert.That(result.ProcessId, Is.EqualTo(currentProcess.Id + 1));
             Assert.That(result.ProcessName, Is.EqualTo(currentProcess.ProcessName));
@@ -126,7 +122,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var fileContent = $"{{\"__type\":\"FileLock:#Calamari.Integration.Processes.Semaphores\",\"ProcessId\":{currentProcess.Id},\"ProcessName\":\"{currentProcess.ProcessName}\",\"ThreadId\":{Thread.CurrentThread.ManagedThreadId},\"Timestamp\":636114372739676700}}";
             fileSystem.OpenFileExclusively(lockFilePath, FileMode.Open, FileAccess.Read)
                       .Returns(x => new MemoryStream(Encoding.UTF8.GetBytes(fileContent)));
-            var lockFile = lockIo.ReadLock(lockFilePath);
+            var lockFile = (FileLock)lockIo.ReadLock(lockFilePath);
             lockIo.WriteLock(lockFilePath, lockFile);
         }
 
@@ -141,7 +137,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             var fileContent = $"{{\"__type\":\"FileLock:#Calamari.Integration.Processes.Semaphores\",\"ProcessId\":{currentProcess.Id},\"ProcessName\":\"{currentProcess.ProcessName}\",\"ThreadId\":{Thread.CurrentThread.ManagedThreadId},\"Timestamp\":636114372739676700}}";
             fileSystem.OpenFileExclusively(lockFilePath, FileMode.Open, FileAccess.Read)
                       .Returns(x => new MemoryStream(Encoding.UTF8.GetBytes(fileContent)));
-            var lockFile = lockIo.ReadLock(lockFilePath);
+            var lockFile = (FileLock)lockIo.ReadLock(lockFilePath);
             lockFile.Timestamp = lockFile.Timestamp + 1;
             fileSystem.OpenFileExclusively(lockFilePath, FileMode.Create, FileAccess.Write)
                       .Returns(x => new MemoryStream());
@@ -163,7 +159,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
                       .Returns(x => new MemoryStream(Encoding.UTF8.GetBytes("non deserialisable content")), x => new MemoryStream(Encoding.UTF8.GetBytes(expectedFileContent)));
             fileSystem.OpenFileExclusively(lockFilePath, FileMode.CreateNew, FileAccess.Write)
                       .Returns(x => new MemoryStream());
-            var result = lockIo.WriteLock(lockFilePath, new FileLock() { ProcessId = currentProcess.Id, ProcessName = currentProcess.ProcessName, ThreadId = Thread.CurrentThread.ManagedThreadId, Timestamp = 636114372739676700 });
+            var result = lockIo.WriteLock(lockFilePath, new FileLock(currentProcess.Id, currentProcess.ProcessName, Thread.CurrentThread.ManagedThreadId, 636114372739676700));
             fileSystem.Received().DeleteFile(lockFilePath);
             Assert.That(result, Is.True);
         }
@@ -178,7 +174,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             fileSystem.OpenFileExclusively(lockFilePath, Arg.Any<FileMode>(), Arg.Any<FileAccess>())
                 .Returns(x => { throw new IOException("Sharing exception"); });
             var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
-            var result = lockIo.WriteLock(lockFilePath, new FileLock() { ProcessId = currentProcess.Id, ProcessName = currentProcess.ProcessName, ThreadId = Thread.CurrentThread.ManagedThreadId, Timestamp = 636114372739676700 });
+            var result = lockIo.WriteLock(lockFilePath, new FileLock(currentProcess.Id, currentProcess.ProcessName, Thread.CurrentThread.ManagedThreadId, 636114372739676700));
             Assert.That(result, Is.False);
         }
 
@@ -192,7 +188,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             fileSystem.OpenFileExclusively(lockFilePath, Arg.Any<FileMode>(), Arg.Any<FileAccess>())
                 .Returns(x => { throw new Exception("Unknown exception"); });
             var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
-            var result = lockIo.WriteLock(lockFilePath, new FileLock() { ProcessId = currentProcess.Id, ProcessName = currentProcess.ProcessName, ThreadId = Thread.CurrentThread.ManagedThreadId, Timestamp = 636114372739676700 });
+            var result = lockIo.WriteLock(lockFilePath, new FileLock(currentProcess.Id, currentProcess.ProcessName, Thread.CurrentThread.ManagedThreadId, 636114372739676700));
             Assert.That(result, Is.False);
         }
     }

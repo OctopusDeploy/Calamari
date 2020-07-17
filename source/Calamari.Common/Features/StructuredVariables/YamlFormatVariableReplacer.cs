@@ -47,7 +47,7 @@ namespace Calamari.Common.Features.StructuredVariables
                             if (node is YamlNode<Scalar> scalar
                                 && variablesByKey.TryGetValue(scalar.Path, out string newValue))
                             {
-                                // TODO ZDY: Preserve input document types for explicit tags, ambiguous inputs - currently preserves decorations only 
+                                // TODO ZDY: Preserve input document types for explicit tags, ambiguous inputs - currently preserves decorations only
                                 outputEvents.Add(scalar.Event.ReplaceValue(newValue));
                             }
                             else if (node is YamlNode<MappingStart> mappingStart
@@ -115,7 +115,7 @@ namespace Calamari.Common.Features.StructuredVariables
             return true;
         }
 
-        List<ParsingEvent> ParseFragment(string value, string anchor, string tag)
+        List<ParsingEvent> ParseFragment(string value, string? anchor, string? tag)
         {
             var result = new List<ParsingEvent>();
             try

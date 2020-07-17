@@ -8,7 +8,7 @@ namespace Calamari.Common.Plumbing.FileSystem
     {
         void Copy(string temporaryReplacement, string originalFile, bool overwrite);
         void Delete(string path);
-        bool Exists(string path);
+        bool Exists(string? path);
         byte[] ReadAllBytes(string path);
         void WriteAllBytes(string filePath, byte[] data);
         void Move(string sourceFile, string destination);
@@ -21,7 +21,7 @@ namespace Calamari.Common.Plumbing.FileSystem
     {
         void CreateDirectory(string path);
         void Delete(string path, bool recursive);
-        bool Exists(string path);
+        bool Exists(string? path);
         string[] GetFileSystemEntries(string path);
         IEnumerable<string> EnumerateDirectories(string path);
         IEnumerable<string> EnumerateDirectoriesRecursively(string path);
@@ -37,7 +37,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             File.Delete(path);
         }
 
-        public bool Exists(string path)
+        public bool Exists(string? path)
         {
             return File.Exists(path);
         }
@@ -90,7 +90,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             Directory.Delete(path, recursive);
         }
 
-        public bool Exists(string path)
+        public bool Exists(string? path)
         {
             return Directory.Exists(path);
         }
@@ -134,7 +134,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             Alphaleonis.Win32.Filesystem.File.Delete(path);
         }
 
-        public bool Exists(string path)
+        public bool Exists(string? path)
         {
             return Alphaleonis.Win32.Filesystem.File.Exists(path);
         }
@@ -187,7 +187,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             Alphaleonis.Win32.Filesystem.Directory.Delete(path, recursive);
         }
 
-        public bool Exists(string path)
+        public bool Exists(string? path)
         {
             return Alphaleonis.Win32.Filesystem.Directory.Exists(path);
         }
