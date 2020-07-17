@@ -113,9 +113,9 @@ namespace Calamari.Common.Features.Deployment.Journal
 
         void Write(IEnumerable<XElement> elements)
         {
-            if (JournalPath == null)
+            if (string.IsNullOrWhiteSpace(JournalPath))
                 throw new InvalidOperationException("JournalPath has not been set");
-            
+
             fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(JournalPath));
 
             var tempPath = JournalPath + ".temp-" + Guid.NewGuid() + ".xml";
