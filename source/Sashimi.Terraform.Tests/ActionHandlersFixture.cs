@@ -88,6 +88,7 @@ namespace Sashimi.Terraform.Tests
 
                 var retry = new RetryTracker(3, TimeSpan.MaxValue, new LimitedExponentialRetryInterval(1000, 30000, 2));
                 while (retry.Try())
+                {
                     try
                     {
                         using (var client = new HttpClient())
@@ -120,10 +121,13 @@ namespace Sashimi.Terraform.Tests
                     catch
                     {
                         if (!retry.CanRetry())
+                        {
                             throw;
+                        }
 
                         await Task.Delay(retry.Sleep());
                     }
+                }
             }
 
             var destinationDirectoryName = TestEnvironment.GetTestPath("TerraformCLIPath");
@@ -335,6 +339,10 @@ namespace Sashimi.Terraform.Tests
         {
             var random = Guid.NewGuid().ToString("N").Substring(0, 6);
             var appName = $"cfe2e-{random}";
+            var expectedHostName = $"{appName}.azurewebsites.net";
+
+            using var temporaryFolder = TemporaryDirectory.Create();
+            CopyAllFiles(TestEnvironment.GetTestPath("Azure"), temporaryFolder.DirectoryPath);
 
             void PopulateVariables(TestActionHandlerContext<Program> _)
             {
@@ -345,46 +353,38 @@ namespace Sashimi.Terraform.Tests
                 _.Variables.Add("app_name", appName);
                 _.Variables.Add("random", random);
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, bool.TrueString);
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, Boolean.TrueString);
+                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
             }
 
-            using (var outputs = ExecuteAndReturnLogOutput(PopulateVariables,
-                                                           "Azure",
-                                                           typeof(TerraformPlanActionHandler),
-                                                           typeof(TerraformApplyActionHandler),
-                                                           typeof(TerraformDestroyActionHandler))
-                .GetEnumerator())
+            var output = ExecuteAndReturnResult(typeof(TerraformPlanActionHandler), PopulateVariables, "Azure");
+            output.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
+
+            output = ExecuteAndReturnResult(typeof(TerraformApplyActionHandler), PopulateVariables, "Azure");
+            output.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
+            output.OutputVariables["TerraformValueOutputs[url]"].Value.Should().Be(expectedHostName);
+            await MakeRequest();
+
+            ExecuteAndReturnResult(typeof(TerraformDestroyActionHandler), PopulateVariables, "Azure");
+            Func<Task> request = async () => await MakeRequest();
+            request.Should().Throw<HttpRequestException>().WithMessage("No such host is known.");
+
+            async Task MakeRequest()
             {
-                outputs.MoveNext();
-                outputs.Current.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
-
-                outputs.MoveNext();
-                outputs.Current.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
-                outputs.Current.OutputVariables["TerraformValueOutputs[url]"].Value.Should().Be($"{appName}.azurewebsites.net");
-
-                using (var client = new HttpClient())
-                {
-                    using (var responseMessage =
-                        await client.GetAsync($"https://{appName}.azurewebsites.net").ConfigureAwait(false))
-                    {
-                        Assert.AreEqual(HttpStatusCode.Forbidden, responseMessage.StatusCode);
-                    }
-                }
-
-                outputs.MoveNext();
-                outputs.Current.FullLog.Should()
-                       .Contain("destroy -force -no-color");
+                using var client = new HttpClient();
+                using var responseMessage = await client.GetAsync($"https://{expectedHostName}").ConfigureAwait(false);
+                responseMessage.StatusCode.Should().Be(HttpStatusCode.Forbidden);
             }
         }
 
         [Test]
         public async Task AWSIntegration()
         {
-            var bucketName = $"cfe2e-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+            var bucketName = $"cfe2e-tf-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+            var expectedUrl = $"https://{bucketName}.s3.amazonaws.com/test.txt";
 
-            var temporaryFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N").Substring(0, 6));
-            Directory.CreateDirectory(temporaryFolder);
-            CopyAllFiles(TestEnvironment.GetTestPath("AWS"), temporaryFolder);
+            using var temporaryFolder = TemporaryDirectory.Create();
+            CopyAllFiles(TestEnvironment.GetTestPath("AWS"), temporaryFolder.DirectoryPath);
 
             void PopulateVariables(TestActionHandlerContext<Program> _)
             {
@@ -396,72 +396,52 @@ namespace Sashimi.Terraform.Tests
                 _.Variables.Add("bucket_name", bucketName);
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "AWS");
-                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder);
+                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
             }
 
-            using (var outputs = ExecuteAndReturnLogOutput(PopulateVariables,
-                                                           "AWS",
-                                                           typeof(TerraformPlanActionHandler),
-                                                           typeof(TerraformApplyActionHandler),
-                                                           typeof(TerraformDestroyActionHandler))
-                .GetEnumerator())
+            var output = ExecuteAndReturnResult(typeof(TerraformPlanActionHandler), PopulateVariables, "AWS");
+            output.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
+
+            output = ExecuteAndReturnResult(typeof(TerraformApplyActionHandler), PopulateVariables, "AWS");
+            output.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
+            output.OutputVariables["TerraformValueOutputs[url]"].Value.Should().Be(expectedUrl);
+
+            string fileData;
+            using (var client = new HttpClient())
+                fileData = await client.GetStringAsync(expectedUrl).ConfigureAwait(false);
+
+            fileData.Should().Be("Hello World from AWS");
+
+            ExecuteAndReturnResult(typeof(TerraformDestroyActionHandler), PopulateVariables, "AWS");
+            using (var client = new HttpClient())
             {
-                outputs.MoveNext();
-                outputs.Current.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
-
-                outputs.MoveNext();
-                outputs.Current.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
-                outputs.Current.OutputVariables["TerraformValueOutputs[url]"].Value.Should().Be($"https://{bucketName}.s3.amazonaws.com/test.txt");
-
-                string fileData;
-                using (var client = new HttpClient())
-                {
-                    fileData = await client.GetStringAsync($"https://{bucketName}.s3.amazonaws.com/test.txt").ConfigureAwait(false);
-                }
-
-                fileData.Should().Be("Hello World from AWS");
-
-                outputs.MoveNext();
-
-                using (var client = new HttpClient())
-                {
-                    var response = await client.GetAsync($"https://{bucketName}.s3.amazonaws.com/test.txt").ConfigureAwait(false);
-
-                    response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-                }
-
-                Directory.Delete(temporaryFolder, true);
+                var response = await client.GetAsync(expectedUrl).ConfigureAwait(false);
+                response.StatusCode.Should().Be(HttpStatusCode.NotFound);
             }
         }
 
         [Test]
         public void PlanDetailedExitCode()
         {
-            using (var stateFileFolder = TemporaryDirectory.Create())
+            using var stateFileFolder = TemporaryDirectory.Create();
+
+            void PopulateVariables(TestActionHandlerContext<Program> _)
             {
-                using var outputs = ExecuteAndReturnLogOutput(
-                                                              _ =>
-                                                              {
-                                                                  _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams,
-                                                                                  $"-state=\"{Path.Combine(stateFileFolder.DirectoryPath, "terraform.tfstate")}\" -refresh=false");
-                                                              },
-                                                              "PlanDetailedExitCode",
-                                                              typeof(TerraformPlanActionHandler),
-                                                              typeof(TerraformApplyActionHandler),
-                                                              typeof(TerraformPlanActionHandler))
-                    .GetEnumerator();
-                outputs.MoveNext();
-                outputs.Current.OutputVariables.ContainsKey("TerraformPlanDetailedExitCode").Should().BeTrue();
-                outputs.Current.OutputVariables["TerraformPlanDetailedExitCode"].Value.Should().Be("2");
-
-                outputs.MoveNext();
-                outputs.Current.FullLog.Should()
-                       .Contain("apply -no-color -auto-approve");
-
-                outputs.MoveNext();
-                outputs.Current.OutputVariables.ContainsKey("TerraformPlanDetailedExitCode").Should().BeTrue();
-                outputs.Current.OutputVariables["TerraformPlanDetailedExitCode"].Value.Should().Be("0");
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams,
+                                $"-state=\"{Path.Combine(stateFileFolder.DirectoryPath, "terraform.tfstate")}\" -refresh=false");
             }
+
+            var output = ExecuteAndReturnResult(typeof(TerraformPlanActionHandler), PopulateVariables, "PlanDetailedExitCode");
+            output.OutputVariables.ContainsKey("TerraformPlanDetailedExitCode").Should().BeTrue();
+            output.OutputVariables["TerraformPlanDetailedExitCode"].Value.Should().Be("2");
+
+            output = ExecuteAndReturnResult(typeof(TerraformApplyActionHandler), PopulateVariables, "PlanDetailedExitCode");
+            output.FullLog.Should()
+                  .Contain("apply -no-color -auto-approve");
+
+            output = ExecuteAndReturnResult(typeof(TerraformPlanActionHandler), PopulateVariables, "PlanDetailedExitCode");
+            output.OutputVariables.ContainsKey("TerraformPlanDetailedExitCode").Should().BeTrue();
+            output.OutputVariables["TerraformPlanDetailedExitCode"].Value.Should().Be("0");
         }
 
         [Test]
@@ -519,7 +499,7 @@ output ""nestedmap"" {
                                                                        _.Variables.Add(KnownVariables.Action.Script.ScriptSource,
                                                                                        KnownVariables.Action.Script.ScriptSourceOptions.Inline);
                                                                    },
-                                                                   string.Empty,
+                                                                   String.Empty,
                                                                    _ =>
                                                                    {
                                                                        _.OutputVariables.ContainsKey("TerraformValueOutputs[nestedlist]").Should().BeTrue();
@@ -542,7 +522,7 @@ data:
       groups:
         - system:bootstrappers
         - system:nodes";
-            string template = string.Format(@"locals {{
+            string template = String.Format(@"locals {{
   config-map-aws-auth = <<CONFIGMAPAWSAUTH
 {0}
 CONFIGMAPAWSAUTH
@@ -560,7 +540,7 @@ output ""config-map-aws-auth"" {{
                                                                        _.Variables.Add(KnownVariables.Action.Script.ScriptSource,
                                                                                        KnownVariables.Action.Script.ScriptSourceOptions.Inline);
                                                                    },
-                                                                   string.Empty,
+                                                                   String.Empty,
                                                                    _ =>
                                                                    {
                                                                        _.OutputVariables.ContainsKey("TerraformValueOutputs[config-map-aws-auth]").Should().BeTrue();
@@ -616,7 +596,7 @@ output ""config-map-aws-auth"" {{
                                                                        _.Variables.Add(KnownVariables.Action.Script.ScriptSource,
                                                                                        KnownVariables.Action.Script.ScriptSourceOptions.Inline);
                                                                    },
-                                                                   string.Empty,
+                                                                   String.Empty,
                                                                    _ =>
                                                                    {
                                                                        _.OutputVariables.ContainsKey("TerraformValueOutputs[ami]").Should().BeTrue();
@@ -651,13 +631,7 @@ output ""config-map-aws-auth"" {{
                                          string folderName,
                                          Action<TestActionHandlerResult>? assert = null)
         {
-            var assertResult = assert ?? (_ => { });
-
-            var result = ExecuteAndReturnLogOutput(populateVariables, folderName, commandType).Single();
-
-            assertResult(result);
-
-            return result.FullLog;
+            return ExecuteAndReturnResult(commandType, populateVariables, folderName, assert).FullLog;
         }
 
         string ExecuteAndReturnLogOutput<T>(Action<TestActionHandlerContext<Program>> populateVariables,
@@ -667,31 +641,33 @@ output ""config-map-aws-auth"" {{
             return ExecuteAndReturnLogOutput(typeof(T), populateVariables, folderName, assert);
         }
 
-        IEnumerable<TestActionHandlerResult> ExecuteAndReturnLogOutput(Action<TestActionHandlerContext<Program>> populateVariables,
-                                                                       string folderName,
-                                                                       params Type[] commandTypes)
+        TestActionHandlerResult ExecuteAndReturnResult(Type commandType, Action<TestActionHandlerContext<Program>> populateVariables, string folderName, Action<TestActionHandlerResult>? assert = null)
         {
+            var assertResult = assert ?? (_ => { });
+
             var terraformFiles = TestEnvironment.GetTestPath(folderName);
 
-            foreach (var commandType in commandTypes)
-                yield return ActionHandlerTestBuilder.Create<Program>(commandType)
-                                                     .WithArrange(context =>
-                                                                  {
-                                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptSource,
-                                                                                            KnownVariables.Action.Script.ScriptSourceOptions.Package);
-                                                                      context.Variables.Add(KnownVariables.Action.Packages.PackageId, terraformFiles);
-                                                                      context.Variables.Add(TerraformSpecialVariables.Calamari.TerraformCliPath,
-                                                                                            Path.GetDirectoryName(customTerraformExecutable));
-                                                                      context.Variables.Add(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
-                                                                                            customTerraformExecutable);
+            var result = ActionHandlerTestBuilder.Create<Program>(commandType)
+                                                 .WithArrange(context =>
+                                                              {
+                                                                  context.Variables.Add(KnownVariables.Action.Script.ScriptSource,
+                                                                                        KnownVariables.Action.Script.ScriptSourceOptions.Package);
+                                                                  context.Variables.Add(KnownVariables.Action.Packages.PackageId, terraformFiles);
+                                                                  context.Variables.Add(TerraformSpecialVariables.Calamari.TerraformCliPath,
+                                                                                        Path.GetDirectoryName(customTerraformExecutable));
+                                                                  context.Variables.Add(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
+                                                                                        customTerraformExecutable);
 
-                                                                      populateVariables(context);
-                                                                  })
-                                                     .WithAssert(result =>
-                                                                 {
-                                                                     Assert.IsTrue(result.WasSuccessful);
-                                                                 })
-                                                     .Execute();
+                                                                  populateVariables(context);
+                                                              })
+                                                 .WithAssert(result =>
+                                                             {
+                                                                 Assert.IsTrue(result.WasSuccessful);
+                                                             })
+                                                 .Execute();
+
+            assertResult(result);
+            return result;
         }
     }
 }
