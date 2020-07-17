@@ -168,7 +168,7 @@ namespace Calamari.Tests.Shared.LogParser
         Action<string> errorTarget;
         readonly List<TestScriptOutputAction> actions = new List<TestScriptOutputAction>();
         readonly List<string> supportedScriptActionNames = new List<string>();
-        readonly Action<int, string?> progressTarget;
+        readonly Action<int, string> progressTarget;
 
         public ScriptOutputFilter(ILogWithContext log)
         {

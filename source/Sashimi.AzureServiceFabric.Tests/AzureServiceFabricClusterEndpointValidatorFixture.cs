@@ -1,3 +1,4 @@
+using System;
 using FluentAssertions;
 using FluentValidation;
 using NUnit.Framework;
@@ -9,14 +10,12 @@ namespace Sashimi.AzureServiceFabric.Tests
 {
     public class AzureServiceFabricClusterEndpointValidatorFixture
     {
-        IValidator sut;
-        AzureServiceFabricClusterEndpoint endpoint;
+        readonly IValidator sut = new AzureServiceFabricClusterEndpointValidator();
+        readonly AzureServiceFabricClusterEndpoint endpoint = new AzureServiceFabricClusterEndpoint();
 
         [SetUp]
         public void Setup()
         {
-            sut = new AzureServiceFabricClusterEndpointValidator();
-            endpoint = new AzureServiceFabricClusterEndpoint();
             endpoint.ConnectionEndpoint = "conn endpoint";
         }
 
@@ -69,7 +68,7 @@ namespace Sashimi.AzureServiceFabric.Tests
             endpoint.ClientCertVariable = "abc";
             endpoint.ServerCertThumbprint = "abc";
             endpoint.AadUserCredentialUsername = "user";
-            endpoint.AadUserCredentialPassword = new SensitiveString("pass");
+            endpoint.AadUserCredentialPassword = "pass".ToSensitiveString();
             var errors = sut.ValidateAndGetErrors(endpoint);
 
             errors.Should().BeEmpty();
