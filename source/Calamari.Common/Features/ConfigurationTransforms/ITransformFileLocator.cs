@@ -1,8 +1,8 @@
+﻿using System;
 using System.Collections.Generic;
 using Calamari.Common.Commands;
-using Calamari.Deployment;
 
-namespace Calamari.Integration.ConfigurationTransforms
+namespace Calamari.Common.Features.ConfigurationTransforms
 {
     public interface ITransformFileLocator
     {

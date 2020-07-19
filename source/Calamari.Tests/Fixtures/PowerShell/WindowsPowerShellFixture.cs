@@ -3,7 +3,6 @@ using System.Linq;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -14,7 +13,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
     public class WindowsPowerShellFixture : PowerShellFixtureBase
     {
         protected override PowerShellEdition PowerShellEdition => PowerShellEdition.Desktop;
-        
+
         [Test]
         [Platform]
         // Windows 2016 (has PowerShell 2) will also match Windows 2019 (no PowerShell 2) so have omitted it.
@@ -36,12 +35,12 @@ namespace Calamari.Tests.Fixtures.PowerShell
             {
                 Assert.Inconclusive("Version 2.0 of PowerShell is not supported on this machine");
             }
-            
+
             output.AssertSuccess();
             output.AssertOutput(expectedLogMessage);
             output.AssertOutput("Hello!");
         }
-        
+
         [Test]
         public void ShouldPrioritizePowerShellScriptsOverOtherSyntaxes()
         {
@@ -56,14 +55,14 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertSuccess();
             output.AssertOutput("Hello PowerShell");
         }
-        
+
         [Test]
         public void IncorrectPowerShellEditionShouldThrowException()
         {
             var nonExistentEdition = "WindowsPowerShell";
             var output = RunScript("Hello.ps1",
                 new Dictionary<string, string>() {{PowerShellVariables.Edition, nonExistentEdition}});
-            
+
             output.result.AssertFailure();
             output.result.AssertErrorOutput("Attempted to use 'WindowsPowerShell' edition of PowerShell, but this edition could not be found. Possible editions: Core, Desktop");
         }

@@ -3,9 +3,6 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -13,7 +10,7 @@ namespace Calamari.Deployment.Conventions
     {
         public RollbackScriptConvention(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
             base(log, scriptFilePrefix, fileSystem, scriptEngine, commandLineRunner)
-        {            
+        {
         }
 
         public void Rollback(RunningDeployment deployment)

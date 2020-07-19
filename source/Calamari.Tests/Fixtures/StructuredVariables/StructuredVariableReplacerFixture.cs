@@ -1,6 +1,7 @@
 ﻿using System;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -20,8 +21,8 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 
             jsonReplacer.TryModifyFile(Arg.Any<string>(), Arg.Any<IVariables>()).Returns(canParseAsJson);
             yamlReplacer.TryModifyFile(Arg.Any<string>(), Arg.Any<IVariables>()).Returns(canParseAsYaml);
-            
-            var replacer = new StructuredConfigVariableReplacer(jsonReplacer, yamlReplacer);
+
+            var replacer = new StructuredConfigVariableReplacer(jsonReplacer, yamlReplacer, new InMemoryLog());
             var variables = new CalamariVariables
             {
                 {StructuredConfigVariableReplacer.FeatureToggleVariableName, "true"}
@@ -29,7 +30,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 
             invocationAssertions(replacer.Invoking(r => r.ModifyFile("path", variables)));
         }
-        
+
         [Test]
         public void ShouldNotThrowIfTheFileCanBeParsedAsJson()
         {
@@ -41,7 +42,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                     .NotThrow()
             );
         }
-        
+
         [Test]
         public void ShouldNotThrowIfTheFileCanBeParsedAsYaml()
         {
@@ -53,7 +54,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                     .NotThrow()
             );
         }
-        
+
         [Test]
         public void ShouldThrowIfTheFileCantBeParsedWithAllReplacers()
         {
@@ -74,8 +75,8 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             var yamlReplacer = Substitute.For<IYamlFormatVariableReplacer>();
 
             jsonReplacer.TryModifyFile(Arg.Any<string>(), Arg.Any<IVariables>()).Returns(true);
-            
-            var replacer = new StructuredConfigVariableReplacer(jsonReplacer, yamlReplacer);
+
+            var replacer = new StructuredConfigVariableReplacer(jsonReplacer, yamlReplacer, new InMemoryLog());
             var variables = new CalamariVariables
             {
                 {StructuredConfigVariableReplacer.FeatureToggleVariableName, "true"}
@@ -83,7 +84,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 
 
             replacer.ModifyFile("path", variables);
-            
+
             yamlReplacer.DidNotReceiveWithAnyArgs().TryModifyFile("", null);
         }
     }

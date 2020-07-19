@@ -4,18 +4,12 @@ using System.IO;
 using System.Linq;
 using Calamari.Commands;
 using Calamari.Integration.Processes;
-using Octostache;
-using Autofac;
-using Calamari.Commands.Support;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Scripting;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Helpers
@@ -29,7 +23,7 @@ namespace Calamari.Tests.Helpers
         {
             Log = new InMemoryLog();
         }
-        
+
         protected CommandLine Calamari()
         {
 #if NETFX
@@ -48,7 +42,7 @@ namespace Calamari.Tests.Helpers
         protected CommandLine OctoDiff()
         {
             var octoDiffExe = OctoDiffCommandLineRunner.FindOctoDiffExecutable();
-            
+
             return new CommandLine(octoDiffExe);
         }
 
@@ -72,10 +66,10 @@ namespace Calamari.Tests.Helpers
 
             foreach(var line in Log.StandardOut)
                 sco.WriteInfo(line);
-           
+
             foreach(var line in Log.StandardError)
                 sco.WriteError(line);
-            
+
             return new CalamariResult(exitCode, capture);
         }
 
@@ -111,7 +105,7 @@ namespace Calamari.Tests.Helpers
             variables.Set(ScriptVariables.ScriptFileName, scriptName);
             variables.Set(ScriptVariables.ScriptBody, File.ReadAllText(GetFixtureResouce("Scripts", scriptName)));
             variables.Set(ScriptVariables.Syntax, scriptName.ToScriptType().ToString());
-            
+
             additionalVariables?.ToList().ForEach(v => variables[v.Key] = v.Value);
 
             using (new TemporaryFile(variablesFile))
@@ -135,7 +129,7 @@ namespace Calamari.Tests.Helpers
                 {
                     cmdBase.Argument("extensions", string.Join(",", extensions));
                 }
-                
+
                 cmdBase = (additionalParameters ?? new Dictionary<string, string>()).Aggregate(cmdBase, (cmd, param) => cmd.Argument(param.Key, param.Value));
 
                 var output = Invoke(cmdBase, variables);

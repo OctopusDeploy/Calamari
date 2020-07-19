@@ -3,9 +3,6 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -16,7 +13,7 @@ namespace Calamari.Deployment.Conventions
     {
         readonly ILog log;
 
-        public PackagedScriptConvention(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) : 
+        public PackagedScriptConvention(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
             base(log, scriptFilePrefix, fileSystem, scriptEngine, commandLineRunner)
         {
             this.log = log;

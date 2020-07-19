@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Calamari.Util
+namespace Calamari.Common.Util
 {
-    public class Uniquifier
+    public static class Uniquifier
     {
         public static string UniquifyString(string input, Func<string, bool> isInUse, string format = "-{0}", int startCounter = 1)
         {
@@ -33,7 +33,7 @@ namespace Calamari.Util
             return UniquifyString(input, isInUse, " (#{0:n0})", 2);
         }
 
-        public static string? Normalize(string input)
+        public static string? Normalize(string? input)
         {
             return input?.Trim().ToLowerInvariant();
         }

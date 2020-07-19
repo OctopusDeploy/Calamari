@@ -1,11 +1,9 @@
 ﻿using Calamari.Common.Commands;
+using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.ConfigurationVariables;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using NSubstitute;
 using NUnit.Framework;
 

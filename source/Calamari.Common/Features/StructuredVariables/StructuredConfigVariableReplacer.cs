@@ -7,15 +7,18 @@ namespace Calamari.Common.Features.StructuredVariables
 {
     public class StructuredConfigVariableReplacer : IStructuredConfigVariableReplacer
     {
+        readonly ILog log;
         public static readonly string FeatureToggleVariableName = "Octopus.Action.StructuredConfigurationFeatureFlag";
 
         readonly IFileFormatVariableReplacer[] replacers;
 
         public StructuredConfigVariableReplacer(
             IJsonFormatVariableReplacer jsonReplacer,
-            IYamlFormatVariableReplacer yamlReplacer
+            IYamlFormatVariableReplacer yamlReplacer,
+            ILog log
         )
         {
+            this.log = log;
             // Order is important. YAML is a superset of JSON, so we want to try to parse
             // documents as JSON before we try YAML, to make sure we don't modify a JSON
             // file with YAML syntax.
@@ -28,13 +31,13 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public void ModifyFile(string filePath, IVariables variables)
         {
-            Log.Info($"Attempting to push variables into structured config file at '{filePath}'");
+            log.Info($"Attempting to push variables into structured config file at '{filePath}'");
 
             // Toggle set of replacers based on feature flag
             IFileFormatVariableReplacer[] replacersToTry;
             if (variables.GetFlag(FeatureToggleVariableName))
             {
-                Log.Info($"Feature toggle flag {FeatureToggleVariableName} detected. Trying replacers for all supported file formats.");
+                log.Info($"Feature toggle flag {FeatureToggleVariableName} detected. Trying replacers for all supported file formats.");
                 replacersToTry = replacers;
             }
             else
@@ -47,7 +50,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 var fileUpdated = replacer.TryModifyFile(filePath, variables);
                 if (fileUpdated)
                 {
-                    Log.Info($"The config file at '{filePath}' was treated as {replacer.FileFormatName} and has been updated.");
+                    log.Info($"The config file at '{filePath}' was treated as {replacer.FileFormatName} and has been updated.");
                     return;
                 }
             }

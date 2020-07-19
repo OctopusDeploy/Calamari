@@ -1,8 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Text;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
@@ -10,12 +9,8 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using FluentAssertions;
 using NSubstitute;
-using NSubstitute.Core.Arguments;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Conventions

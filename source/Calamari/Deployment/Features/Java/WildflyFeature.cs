@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -16,7 +17,7 @@ namespace Calamari.Deployment.Features.Java
 
         public string Name => SpecialVariables.Action.Java.WildFly.Feature;
 
-        public string DeploymentStage => DeploymentStages.BeforeDeploy; 
+        public string DeploymentStage => DeploymentStages.BeforeDeploy;
 
         public void Execute(RunningDeployment deployment)
         {

@@ -1,16 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Deployment;
+using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Integration.Scripting
+namespace Calamari.Common.Features.Scripting
 {
     public class PackagedScriptRunner
     {
@@ -20,7 +19,7 @@ namespace Calamari.Integration.Scripting
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
 
-        public PackagedScriptRunner(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+        protected PackagedScriptRunner(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
             this.log = log;
             this.scriptFilePrefix = scriptFilePrefix;
@@ -37,13 +36,15 @@ namespace Calamari.Integration.Scripting
             {
                 log.VerboseFormat("Executing '{0}'", script);
                 var result = scriptEngine.Execute(new Script(script), deployment.Variables, commandLineRunner);
-                if (result == null)
-                    throw new CommandException(string.Format("Script '{0}' returned null. Deployment terminated.", script));
                 if (result.ExitCode != 0)
+                {
                     throw new CommandException(string.Format("Script '{0}' returned non-zero exit code: {1}. Deployment terminated.", script, result.ExitCode));
+                }
 
-                if (result.HasErrors && deployment.Variables.GetFlag(SpecialVariables.Action.FailScriptOnErrorOutput, false))
+                if (result.HasErrors && deployment.Variables.GetFlag(KnownVariables.Action.FailScriptOnErrorOutput, false))
+                {
                     throw new CommandException($"Script '{script}' returned zero exit code but had error output. Deployment terminated.");
+                }
             }
         }
 
@@ -62,9 +63,9 @@ namespace Calamari.Integration.Scripting
             var supportedScriptExtensions = scriptEngine.GetSupportedTypes();
 
             var files = (from file in FindScripts(deployment)
-                         let preferenceOrdinal = Array.IndexOf(supportedScriptExtensions, file.ToScriptType())
-                         orderby preferenceOrdinal
-                         select file).ToArray();
+                let preferenceOrdinal = Array.IndexOf(supportedScriptExtensions, ScriptTypeExtensions.ToScriptType((string) file))
+                orderby preferenceOrdinal
+                select file).ToArray();
 
             var numFiles = files.Count();
             var selectedFile = files.FirstOrDefault();
@@ -84,9 +85,9 @@ namespace Calamari.Integration.Scripting
             var searchPatterns = supportedScriptExtensions.Select(e => "*." + e.FileExtension()).ToArray();
 
             return from file in fileSystem.EnumerateFiles(deployment.CurrentDirectory, searchPatterns)
-                   let nameWithoutExtension = Path.GetFileNameWithoutExtension(file)
-                   where nameWithoutExtension.Equals(scriptFilePrefix, StringComparison.OrdinalIgnoreCase)
-                   select file;
+                let nameWithoutExtension = Path.GetFileNameWithoutExtension(file)
+                where nameWithoutExtension.Equals(scriptFilePrefix, StringComparison.OrdinalIgnoreCase)
+                select file;
         }
     }
 }

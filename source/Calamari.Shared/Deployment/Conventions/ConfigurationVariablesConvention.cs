@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.ConfigurationVariables;
-using Calamari.Integration.FileSystem;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -40,7 +38,7 @@ namespace Calamari.Deployment.Conventions
                 {
                     Log.VerboseFormat("File '{0}' was interpreted as an XML configuration transform; variable substitution won't be attempted.", configurationFile);
                     continue;
-                }   
+                }
 
                 replacer.ModifyConfigurationFile(configurationFile, deployment.Variables);
             }

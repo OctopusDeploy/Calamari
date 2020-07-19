@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Xml;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
@@ -11,9 +12,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
-using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -25,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Deployment
     {
         // Fixture Depedencies
         TemporaryFile nupkgFile;
-        TemporaryFile tarFile;     
+        TemporaryFile tarFile;
 
         [SetUp]
         public override void SetUp()
@@ -67,7 +66,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             if (!CalamariEnvironment.IsRunningOnMac && !CalamariEnvironment.IsRunningOnNix)
                 Assert.Inconclusive("This test is designed to run on *Nix or Mac.");
-        
+
             var result = DeployPackage();
             result.AssertSuccess();
 
@@ -138,7 +137,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             // The environment app-setting value should have been transformed to 'Production'
             AssertXmlNodeValue(Path.Combine(StagingDirectory, "Production", "Acme.Web", "1.0.0", "web.config"), "configuration/appSettings/add[@key='environment']/@value", "Production");
         }
-        
+
         [Test]
         [Category(TestCategory.ScriptingSupport.FSharp)]
         [Category(TestCategory.ScriptingSupport.ScriptCS)]
@@ -174,7 +173,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             string customInstallDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestInstall");
             FileSystem.EnsureDirectoryExists(customInstallDirectory);
             // Ensure the directory is empty before we start
-            FileSystem.PurgeDirectory(customInstallDirectory, FailureOptions.ThrowOnFailure); 
+            FileSystem.PurgeDirectory(customInstallDirectory, FailureOptions.ThrowOnFailure);
             Variables.Set(PackageVariables.CustomInstallationDirectory, customInstallDirectory );
 
             var result = DeployPackage(deploymentType);
@@ -213,7 +212,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage();
 
             Assert.AreEqual(
-                Path.Combine(StagingDirectory, "Acme.Web\\1.0.0"), 
+                Path.Combine(StagingDirectory, "Acme.Web\\1.0.0"),
                 webServer.GetHomeDirectory(siteName, "/"));
 
             // And remove the website
@@ -354,7 +353,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         private void AssertXmlNodeValue(string xmlFile, string nodeXPath, string value)
         {
-            var configXml = new XmlDocument(); 
+            var configXml = new XmlDocument();
             configXml.LoadXml( FileSystem.ReadFile(xmlFile));
             var node = configXml.SelectSingleNode(nodeXPath);
 

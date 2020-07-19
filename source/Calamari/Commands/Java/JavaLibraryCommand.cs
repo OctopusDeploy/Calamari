@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages.Java;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -40,7 +41,7 @@ namespace Calamari.Commands.Java
             JavaRuntime.VerifyExists();
 
             var embeddedResources = new AssemblyEmbeddedResources();
-            
+
             var conventions = new List<IConvention>
             {
                 new JavaStepConvention(actionType, new JavaRunner(commandLineRunner, variables)),

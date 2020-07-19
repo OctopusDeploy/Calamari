@@ -6,6 +6,7 @@ using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -16,8 +17,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Util;
 
 namespace Calamari.Azure.Commands

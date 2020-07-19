@@ -6,6 +6,9 @@ using Calamari.Azure.CloudServices.Integration;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Features.ConfigurationVariables;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -19,8 +22,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Certificates;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.ConfigurationVariables;
 using Calamari.Integration.EmbeddedResources;
 
 namespace Calamari.Azure.CloudServices.Commands
@@ -74,9 +75,9 @@ namespace Calamari.Azure.CloudServices.Commands
             var certificateStore = new CalamariCertificateStore();
             var cloudCredentialsFactory = new SubscriptionCloudCredentialsFactory(certificateStore);
             var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
-            var transformFileLocator = new TransformFileLocator(fileSystem);
-            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            var transformFileLocator = new TransformFileLocator(fileSystem, log);
+            var replacer = new ConfigurationVariablesReplacer(variables, log);
             var jsonVariablesReplacer = new StructuredConfigVariableReplacer(
                 new JsonFormatVariableReplacer(fileSystem), 
                 new YamlFormatVariableReplacer());

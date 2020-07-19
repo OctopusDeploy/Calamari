@@ -1,14 +1,13 @@
-﻿using System;
-using Calamari.Commands.Support;
+﻿
+using System;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Deployment;
 #if USE_OCTOPUS_XMLT
 using Octopus.Web.XmlTransform;
 #else
 using Microsoft.Web.XmlTransform;
 #endif
 
-namespace Calamari.Integration.ConfigurationTransforms
+namespace Calamari.Common.Features.ConfigurationTransforms
 {
     public class VerboseTransformLogger : IXmlTransformationLogger
     {

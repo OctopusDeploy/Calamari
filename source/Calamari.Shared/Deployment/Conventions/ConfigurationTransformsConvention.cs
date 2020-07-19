@@ -5,10 +5,10 @@ using System.IO;
 using System.Linq;
 using Calamari.Common;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.ConfigurationTransforms;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -16,7 +16,7 @@ namespace Calamari.Deployment.Conventions
     {
         readonly ICalamariFileSystem fileSystem;
         readonly IConfigurationTransformer configurationTransformer;
-        private readonly ITransformFileLocator transformFileLocator;
+        readonly ITransformFileLocator transformFileLocator;
         readonly ILog log;
 
         public ConfigurationTransformsConvention(ICalamariFileSystem fileSystem, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog? log = null)
@@ -36,21 +36,21 @@ namespace Calamari.Deployment.Conventions
 
             var explicitTransforms = GetExplicitTransforms(deployment);
             var automaticTransforms = GetAutomaticTransforms(deployment);
-            var sourceExtensions = GetSourceExtensions(deployment, explicitTransforms);           
+            var sourceExtensions = GetSourceExtensions(deployment, explicitTransforms);
 
             var allTransforms = explicitTransforms.Concat(automaticTransforms).ToList();
             var transformDefinitionsApplied = new List<XmlConfigTransformDefinition>();
             var duplicateTransformDefinitions = new List<XmlConfigTransformDefinition>();
             var transformFilesApplied = new HashSet<Tuple<string, string>>();
             var diagnosticLoggingEnabled = deployment.Variables.GetFlag(SpecialVariables.Package.EnableDiagnosticsConfigTransformationLogging);
-            
+
             if (diagnosticLoggingEnabled)
                 log.Verbose($"Recursively searching for transformation files that match {string.Join(" or ", sourceExtensions)} in folder '{deployment.CurrentDirectory}'");
             foreach (var configFile in MatchingFiles(deployment, sourceExtensions))
             {
                 if (diagnosticLoggingEnabled)
                     log.Verbose($"Found config file '{configFile}'");
-                ApplyTransformations(configFile, allTransforms, transformFilesApplied, 
+                ApplyTransformations(configFile, allTransforms, transformFilesApplied,
                     transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, deployment);
             }
 
@@ -68,7 +68,7 @@ namespace Calamari.Deployment.Conventions
                 var environment = deployment.Variables.Get(DeploymentEnvironment.Name);
                 if (!string.IsNullOrWhiteSpace(environment))
                     result.Add(new XmlConfigTransformDefinition(environment));
-                
+
                 var tenant = deployment.Variables.Get(DeploymentVariables.Tenant.Name);
                 if (!string.IsNullOrWhiteSpace(tenant))
                     result.Add(new XmlConfigTransformDefinition(tenant));
@@ -91,9 +91,9 @@ namespace Calamari.Deployment.Conventions
                 .ToList();
         }
 
-        void ApplyTransformations(string sourceFile, 
-            IEnumerable<XmlConfigTransformDefinition> transformations, 
-            ISet<Tuple<string, string>> transformFilesApplied,  
+        void ApplyTransformations(string sourceFile,
+            IEnumerable<XmlConfigTransformDefinition> transformations,
+            ISet<Tuple<string, string>> transformFilesApplied,
             IList<XmlConfigTransformDefinition> transformDefinitionsApplied,
             IList<XmlConfigTransformDefinition> duplicateTransformDefinitions,
             bool diagnosticLoggingEnabled,
@@ -112,7 +112,7 @@ namespace Calamari.Deployment.Conventions
 
                 try
                 {
-                    ApplyTransformations(sourceFile, transformation, transformFilesApplied, 
+                    ApplyTransformations(sourceFile, transformation, transformFilesApplied,
                                          transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, deployment);
                 }
                 catch (Exception)
@@ -123,9 +123,9 @@ namespace Calamari.Deployment.Conventions
             }
         }
 
-        void ApplyTransformations(string sourceFile, 
-            XmlConfigTransformDefinition transformation, 
-            ISet<Tuple<string, string>> transformFilesApplied, 
+        void ApplyTransformations(string sourceFile,
+            XmlConfigTransformDefinition transformation,
+            ISet<Tuple<string, string>> transformFilesApplied,
             ICollection<XmlConfigTransformDefinition> transformDefinitionsApplied,
             ICollection<XmlConfigTransformDefinition> duplicateTransformDefinitions,
             bool diagnosticLoggingEnabled,
@@ -133,7 +133,7 @@ namespace Calamari.Deployment.Conventions
         {
             if (transformation == null)
                 return;
-            
+
             var transformFileNames = transformFileLocator.DetermineTransformFileNames(sourceFile, transformation, diagnosticLoggingEnabled, deployment)
                 .Distinct()
                 .ToArray();

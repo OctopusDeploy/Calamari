@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.Java;
@@ -93,7 +94,7 @@ namespace Calamari.Commands.Java
             {
                 new AlreadyInstalledConvention(log, journal),
                 // If we are deploying the package exploded then extract directly to the application directory.
-                // Else, if we are going to re-pack, then we extract initially to a temporary directory 
+                // Else, if we are going to re-pack, then we extract initially to a temporary directory
                 deployExploded
                     ? (IInstallConvention)new DelegateInstallConvention(d => extractPackage.ExtractToApplicationDirectory(archiveFile, packageExtractor))
                     : new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(archiveFile, packageExtractor)),

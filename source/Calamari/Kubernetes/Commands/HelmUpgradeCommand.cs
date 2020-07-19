@@ -5,6 +5,7 @@ using System.Linq;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -34,9 +35,9 @@ namespace Calamari.Kubernetes.Commands
         readonly ICommandLineRunner commandLineRunner;
 
         public HelmUpgradeCommand(
-            ILog log, 
-            IScriptEngine scriptEngine, 
-            IDeploymentJournalWriter deploymentJournalWriter, 
+            ILog log,
+            IScriptEngine scriptEngine,
+            IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
 			ICommandLineRunner commandLineRunner,
             ICalamariFileSystem fileSystem,
@@ -54,16 +55,16 @@ namespace Calamari.Kubernetes.Commands
             this.extractPackage = extractPackage;
             this.commandLineRunner = commandLineRunner;
         }
-        
+
         public override int Execute(string[] commandLineArguments)
         {
               Options.Parse(commandLineArguments);
 
             if (!File.Exists(pathToPackage))
                 throw new CommandException("Could not find package file: " + pathToPackage);
-            
+
             ValidateRequiredVariables();
-            
+
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
@@ -75,7 +76,7 @@ namespace Calamari.Kubernetes.Commands
                 new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
             };
             var deployment = new RunningDeployment(pathToPackage, variables);
-            
+
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             try
             {
@@ -98,7 +99,7 @@ namespace Calamari.Kubernetes.Commands
                 throw new CommandException($"The variable `{SpecialVariables.ClusterUrl}` is not provided.");
             }
         }
-        
+
         private IEnumerable<string> FileTargetFactory()
         {
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
@@ -106,10 +107,10 @@ namespace Calamari.Kubernetes.Commands
             {
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
                 var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
-                
+
                 foreach (var path in paths)
                 {
-                    yield return Path.Combine(sanitizedPackageReferenceName, path);    
+                    yield return Path.Combine(sanitizedPackageReferenceName, path);
                 }
             }
         }
