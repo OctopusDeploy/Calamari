@@ -11,7 +11,7 @@ namespace Calamari.Tests.Shared.LogParser
         public string? Hash { get; }
         public string? FileExtension { get; }
 
-        public FoundPackage(string packageId, string? version, string? versionFormat, string? remotePath, string? hash, string? fileExtension)
+        public FoundPackage(string packageId, string version, string? versionFormat, string? remotePath, string? hash, string? fileExtension)
         {
             PackageId = packageId;
 
