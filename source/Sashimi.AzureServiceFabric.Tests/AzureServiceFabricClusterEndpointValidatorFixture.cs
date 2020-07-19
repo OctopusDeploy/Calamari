@@ -10,13 +10,17 @@ namespace Sashimi.AzureServiceFabric.Tests
 {
     public class AzureServiceFabricClusterEndpointValidatorFixture
     {
-        readonly IValidator sut = new AzureServiceFabricClusterEndpointValidator();
-        readonly AzureServiceFabricClusterEndpoint endpoint = new AzureServiceFabricClusterEndpoint();
+        IValidator sut;
+        AzureServiceFabricClusterEndpoint endpoint;
 
         [SetUp]
         public void Setup()
         {
-            endpoint.ConnectionEndpoint = "conn endpoint";
+            sut = new AzureServiceFabricClusterEndpointValidator();
+            endpoint = new AzureServiceFabricClusterEndpoint
+            {
+                ConnectionEndpoint = "conn endpoint"
+            };
         }
 
         [Test]
