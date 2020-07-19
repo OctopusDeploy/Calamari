@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
@@ -15,8 +16,15 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public class JsonFormatVariableReplacer : IJsonFormatVariableReplacer
     {
+        readonly ICalamariFileSystem fileSystem;
+        
         public string FileFormatName => "JSON";
 
+        public JsonFormatVariableReplacer(ICalamariFileSystem fileSystem)
+        {
+            this.fileSystem = fileSystem;
+        }
+        
         public bool TryModifyFile(string filePath, IVariables variables)
         {
             JToken root;
@@ -38,31 +46,21 @@ namespace Calamari.Common.Features.StructuredVariables
             return true;
         }
 
-        static JToken LoadJson(string jsonFilePath)
+        JToken LoadJson(string jsonFilePath)
         {
-            if (!File.Exists(jsonFilePath))
+            if (!fileSystem.FileExists(jsonFilePath))
                 return new JObject();
 
-            if (new FileInfo(jsonFilePath).Length == 0)
+            var fileContents = fileSystem.ReadFile(jsonFilePath);
+            if (fileContents.Length == 0)
                 return new JObject();
 
-            using (var file = new FileStream(jsonFilePath, FileMode.Open, FileAccess.Read))
-            using (var reader = new StreamReader(file))
-            using (var json = new JsonTextReader(reader))
-            {
-                return JToken.ReadFrom(json);
-            }
+            return JToken.Parse(fileContents);
         }
 
-        static void SaveJson(string jsonFilePath, JToken root)
+        void SaveJson(string jsonFilePath, JToken root)
         {
-            using (var file = new FileStream(jsonFilePath, FileMode.Create, FileAccess.Write))
-            using (var writer = new StreamWriter(file))
-            using (var json = new JsonTextWriter(writer))
-            {
-                json.Formatting = Formatting.Indented;
-                root.WriteTo(json);
-            }
+            fileSystem.OverwriteFile(jsonFilePath, root.ToString());
         }
     }
 
