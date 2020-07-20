@@ -98,5 +98,21 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "application.top-level-sequence.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
+        public void ShouldIgnoreOctopusPrefix()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "MyMessage", "Hello world!" },
+                                    { "IThinkOctopusIsGreat", "Yes, I do!" },
+                                    { "Octopus", "Foo: Bar" },
+                                    { "OctopusRocks", "This is ignored" },
+                                    { "Octopus.Rocks", "So is this" },
+                                    { "Octopus:Section", "Should work" }
+                                },
+                                "application.ignore-octopus.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
     }
 }
