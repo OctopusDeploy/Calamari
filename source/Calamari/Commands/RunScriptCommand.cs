@@ -68,7 +68,7 @@ namespace Calamari.Commands
             var structuredConfigVariableReplacer = new StructuredConfigVariableReplacer(
                 new JsonFormatVariableReplacer(fileSystem), 
                 new YamlFormatVariableReplacer());
-            var structuredConfigVariablesService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem);
+            var structuredConfigVariablesService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem, log);
 
             ValidateArguments();
             WriteVariableScriptToFile();

@@ -17,11 +17,16 @@ namespace Calamari.Common.Features.StructuredVariables
     {
         readonly IStructuredConfigVariableReplacer structuredConfigVariableReplacer;
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
-        public StructuredConfigVariablesService(IStructuredConfigVariableReplacer structuredConfigVariableReplacer, ICalamariFileSystem fileSystem)
+        public StructuredConfigVariablesService(
+            IStructuredConfigVariableReplacer structuredConfigVariableReplacer, 
+            ICalamariFileSystem fileSystem,
+            ILog log)
         {
             this.structuredConfigVariableReplacer = structuredConfigVariableReplacer;
             this.fileSystem = fileSystem;
+            this.log = log;
         }
 
         public void ReplaceVariables(RunningDeployment deployment)
@@ -30,7 +35,7 @@ namespace Calamari.Common.Features.StructuredVariables
             {
                 if (fileSystem.DirectoryExists(target))
                 {
-                    Log.Warn($"Skipping JSON variable replacement on '{target}' because it is a directory.");
+                    log.Warn($"Skipping JSON variable replacement on '{target}' because it is a directory.");
                     continue;
                 }
 
@@ -38,13 +43,13 @@ namespace Calamari.Common.Features.StructuredVariables
 
                 if (!matchingFiles.Any())
                 {
-                    Log.Warn($"No files were found that match the replacement target pattern '{target}'");
+                    log.Warn($"No files were found that match the replacement target pattern '{target}'");
                     continue;
                 }
 
                 foreach (var file in matchingFiles)
                 {
-                    Log.Info($"Performing JSON variable replacement on '{file}'");
+                    log.Info($"Performing JSON variable replacement on '{file}'");
                     structuredConfigVariableReplacer.ModifyFile(file, deployment.Variables);
                 }
             }

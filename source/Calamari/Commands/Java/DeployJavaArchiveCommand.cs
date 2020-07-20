@@ -75,7 +75,7 @@ namespace Calamari.Commands.Java
             var structuredConfigVariableReplacer = new StructuredConfigVariableReplacer(
                 new JsonFormatVariableReplacer(fileSystem), 
                 new YamlFormatVariableReplacer());
-            var structuredConfigVariablesService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem);
+            var structuredConfigVariablesService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem, log);
             var jarTools = new JarTool(commandLineRunner, log, variables);
             var packageExtractor = new JarPackageExtractor(jarTools);
             var embeddedResources = new AssemblyEmbeddedResources();

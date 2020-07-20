@@ -81,7 +81,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
             var structuredConfigVariableReplacer = new StructuredConfigVariableReplacer(
                 new JsonFormatVariableReplacer(fileSystem), 
                 new YamlFormatVariableReplacer());
-            var structuredConfigFileService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem);
+            var structuredConfigFileService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem, log);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
 
