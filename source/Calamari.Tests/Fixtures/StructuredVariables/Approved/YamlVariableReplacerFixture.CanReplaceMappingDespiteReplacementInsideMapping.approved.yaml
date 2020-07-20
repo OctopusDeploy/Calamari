@@ -10,4 +10,8 @@ spring:
   datasource: none
   flyway:
     locations: classpath:db/migration/{vendor}
+  loggers:
+  - name: console
+  - name: file
+    pattern: '%n.log'
 environment: development

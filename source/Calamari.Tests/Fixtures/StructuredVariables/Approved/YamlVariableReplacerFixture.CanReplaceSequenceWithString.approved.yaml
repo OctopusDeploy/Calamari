@@ -12,4 +12,8 @@ spring:
       driver-class-name: org.h2.Driver
   flyway:
     locations: classpath:db/migration/{vendor}
+  loggers:
+  - name: console
+  - name: file
+    pattern: '%n.log'
 environment: development
