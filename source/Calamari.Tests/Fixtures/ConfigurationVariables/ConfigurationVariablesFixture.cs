@@ -4,11 +4,9 @@ using System.Xml.XPath;
 using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.ConfigurationVariables
 {
@@ -107,6 +105,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         public void ShouldSuppressExceptionForBadConfig_WhenFlagIsSet()
         {
             variables.AddFlag(KnownVariables.Package.IgnoreVariableReplacementErrors, true);
+            configurationVariablesReplacer = new ConfigurationVariablesReplacer(variables, new InMemoryLog());
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), variables);
         }
 
