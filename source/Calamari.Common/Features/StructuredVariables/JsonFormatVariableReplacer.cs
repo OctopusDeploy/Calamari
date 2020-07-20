@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -17,14 +16,14 @@ namespace Calamari.Common.Features.StructuredVariables
     public class JsonFormatVariableReplacer : IJsonFormatVariableReplacer
     {
         readonly ICalamariFileSystem fileSystem;
-        
-        public string FileFormatName => "JSON";
 
         public JsonFormatVariableReplacer(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
         }
-        
+
+        public string FileFormatName => "JSON";
+
         public bool TryModifyFile(string filePath, IVariables variables)
         {
             JToken root;
@@ -84,7 +83,7 @@ namespace Calamari.Common.Features.StructuredVariables
             {
                 if (key == null)
                     throw new InvalidOperationException("Path has not been pushed");
-            
+
                 map[key] = t => j.Replace(JToken.Parse(t));
             }
 
@@ -138,23 +137,23 @@ namespace Calamari.Common.Features.StructuredVariables
             if (key == null)
                 throw new InvalidOperationException("Path has not been pushed");
             map[key] = t =>
-            {
-                long longvalue;
-                if (long.TryParse(t, out longvalue))
-                {
-                    value.Replace(JToken.FromObject(longvalue));
-                    return;
-                }
+                       {
+                           long longvalue;
+                           if (long.TryParse(t, out longvalue))
+                           {
+                               value.Replace(JToken.FromObject(longvalue));
+                               return;
+                           }
 
-                double doublevalue;
-                if (double.TryParse(t, out doublevalue))
-                {
-                    value.Replace(JToken.FromObject(doublevalue));
-                    return;
-                }
+                           double doublevalue;
+                           if (double.TryParse(t, out doublevalue))
+                           {
+                               value.Replace(JToken.FromObject(doublevalue));
+                               return;
+                           }
 
-                value.Replace(JToken.FromObject(t));
-            };
+                           value.Replace(JToken.FromObject(t));
+                       };
         }
 
         void MapBool(JToken value)
@@ -162,16 +161,16 @@ namespace Calamari.Common.Features.StructuredVariables
             if (key == null)
                 throw new InvalidOperationException("Path has not been pushed");
             map[key] = t =>
-            {
-                bool boolvalue;
-                if (bool.TryParse(t, out boolvalue))
-                {
-                    value.Replace(JToken.FromObject(boolvalue));
-                    return;
-                }
+                       {
+                           bool boolvalue;
+                           if (bool.TryParse(t, out boolvalue))
+                           {
+                               value.Replace(JToken.FromObject(boolvalue));
+                               return;
+                           }
 
-                value.Replace(JToken.FromObject(t));
-            };
+                           value.Replace(JToken.FromObject(t));
+                       };
         }
 
         void MapArray(JContainer array, bool first = false)
@@ -180,7 +179,7 @@ namespace Calamari.Common.Features.StructuredVariables
             {
                 if (key == null)
                     throw new InvalidOperationException("Path has not been pushed");
-            
+
                 map[key] = t => array.Replace(JToken.Parse(t));
             }
 
