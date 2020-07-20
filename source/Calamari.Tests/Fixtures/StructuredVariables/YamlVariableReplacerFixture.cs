@@ -22,6 +22,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 {
                                     { "server:ports:0", "8080" },
                                     { "Spring:H2:Console:Enabled", "false" },
+                                    { "spring:loggers:1:name", "rolling-file" },
                                     { "environment", "production" }
                                 },
                                 "application.yaml"),
