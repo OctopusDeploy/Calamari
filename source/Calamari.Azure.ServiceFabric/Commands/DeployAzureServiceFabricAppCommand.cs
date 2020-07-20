@@ -79,9 +79,10 @@ namespace Calamari.Azure.ServiceFabric.Commands
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
             var replacer = new ConfigurationVariablesReplacer(variables, log);
-            var jsonReplacer = new StructuredConfigVariableReplacer(new JsonFormatVariableReplacer(fileSystem, log), new YamlFormatVariableReplacer(), log);
+            var structuredConfigVariableReplacer = new StructuredConfigVariableReplacer(new JsonFormatVariableReplacer(fileSystem, log), new YamlFormatVariableReplacer(), log);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
+            var structuredConfigFileService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem, log);
 
             var conventions = new List<IConvention>
             {
@@ -95,7 +96,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
-                new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
+                new JsonConfigurationVariablesConvention(structuredConfigFileService),
 
                 // Deploy stage
                 new PackagedScriptConvention(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),

@@ -74,9 +74,10 @@ namespace Calamari.Commands
             var featureClasses = new List<IFeature>();
 
             var replacer = new ConfigurationVariablesReplacer(variables, log);
-            var generator = new StructuredConfigVariableReplacer(new JsonFormatVariableReplacer(fileSystem, log), new YamlFormatVariableReplacer(), log);
+            var structuredConfigVariableReplacer = new StructuredConfigVariableReplacer(new JsonFormatVariableReplacer(fileSystem, log), new YamlFormatVariableReplacer(), log);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
+            var structuredConfigVariablesService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem, log);
             var embeddedResources = new AssemblyEmbeddedResources();
 #if IIS_SUPPORT
             var iis = new InternetInformationServer();
@@ -101,7 +102,7 @@ namespace Calamari.Commands
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
                 new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
                 new ConfigurationVariablesConvention(fileSystem, replacer),
-                new JsonConfigurationVariablesConvention(generator, fileSystem),
+                new JsonConfigurationVariablesConvention(structuredConfigVariablesService),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
