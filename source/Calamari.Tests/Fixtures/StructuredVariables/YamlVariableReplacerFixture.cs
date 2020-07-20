@@ -22,10 +22,11 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 {
                                     { "server:ports:0", "8080" },
                                     { "Spring:H2:Console:Enabled", "false" },
+                                    { "spring:loggers:1:name", "rolling-file" },
                                     { "environment", "production" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                        TestEnvironment.AssentYamlConfiguration);
         }
 
         [Test]
@@ -37,7 +38,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "spring:datasource", "none" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                        TestEnvironment.AssentYamlConfiguration);
         }
 
         [Test]
@@ -48,7 +49,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "server:ports", "none" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                        TestEnvironment.AssentYamlConfiguration);
         }
 
         [Test]
@@ -60,7 +61,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "spring:datasource", "none" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                        TestEnvironment.AssentYamlConfiguration);
         }
 
         [Test]
@@ -69,16 +70,49 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             this.Assent(Replace(new CalamariVariables
                                 {
                                     { "null1", "~" },
+                                    { "null2", "null" },
                                     { "bool1", "true" },
+                                    { "bool2", "no" },
                                     { "int1", "99" },
                                     { "float1", "1.99" },
                                     { "str1", "true" },
                                     { "str2", "~" },
+                                    { "str3", "true" },
+                                    { "str3", "aye" },
+                                    { "str4", "cats.com" },
                                     { "obj1", $"fruit: apple{Environment.NewLine}animal: sloth" },
-                                    { "seq1", $"- scissors{Environment.NewLine}- paper{Environment.NewLine}- rock" }
+                                    { "seq1", $"- scissors{Environment.NewLine}- paper{Environment.NewLine}- rock" },
+                                    { "seq2:0", "Orange" }
                                 },
                                 "types.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                        TestEnvironment.AssentYamlConfiguration);
+        }
+
+        [Test]
+        public void ShouldReplaceVariablesInTopLevelSequence()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "1", "zwei" }
+                                },
+                                "application.top-level-sequence.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
+
+        [Test]
+        public void ShouldIgnoreOctopusPrefix()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "MyMessage", "Hello world!" },
+                                    { "IThinkOctopusIsGreat", "Yes, I do!" },
+                                    { "Octopus", "Foo: Bar" },
+                                    { "OctopusRocks", "This is ignored" },
+                                    { "Octopus.Rocks", "So is this" },
+                                    { "Octopus:Section", "Should work" }
+                                },
+                                "application.ignore-octopus.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
         }
     }
 }

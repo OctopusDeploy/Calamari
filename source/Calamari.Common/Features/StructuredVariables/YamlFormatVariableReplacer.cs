@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using YamlDotNet.Core;
@@ -15,13 +16,16 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public class YamlFormatVariableReplacer : IYamlFormatVariableReplacer
     {
+        readonly Regex octopusReservedVariablePattern = new Regex(@"^Octopus([^:]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
         public string FileFormatName => "YAML";
 
         public bool TryModifyFile(string filePath, IVariables variables)
         {
             var variablesByKey = variables
-                .DistinctBy(v => v.Key)
-                .ToDictionary(v => v.Key, v => v.Value, StringComparer.OrdinalIgnoreCase);
+                                 .Where(v => !octopusReservedVariablePattern.IsMatch(v.Key))
+                                 .DistinctBy(v => v.Key)
+                                 .ToDictionary(v => v.Key, v => v.Value, StringComparer.OrdinalIgnoreCase);
 
             // Read and transform the input file
             var outputEvents = new List<ParsingEvent>();
@@ -45,25 +49,17 @@ namespace Calamari.Common.Features.StructuredVariables
                             // Not replacing: searching for things to replace, copying events to output.
 
                             if (node is YamlNode<Scalar> scalar
-                                && variablesByKey.TryGetValue(scalar.Path, out string newValue))
-                            {
+                                && variablesByKey.TryGetValue(scalar.Path, out var newValue))
                                 // TODO ZDY: Preserve input document types for explicit tags, ambiguous inputs - currently preserves decorations only
                                 outputEvents.Add(scalar.Event.ReplaceValue(newValue));
-                            }
                             else if (node is YamlNode<MappingStart> mappingStart
                                      && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
-                            {
                                 structureWeAreReplacing = (mappingStart, mappingReplacement);
-                            }
                             else if (node is YamlNode<SequenceStart> sequenceStart
                                      && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
-                            {
                                 structureWeAreReplacing = (sequenceStart, sequenceReplacement);
-                            }
                             else
-                            {
                                 outputEvents.Add(node.Event);
-                            }
                         }
                         else
                         {
@@ -103,9 +99,7 @@ namespace Calamari.Common.Features.StructuredVariables
             {
                 var emitter = new Emitter(writer);
                 foreach (var outputEvent in outputEvents)
-                {
                     emitter.Emit(outputEvent);
-                }
 
                 writer.Close();
                 outputText = writer.ToString();
@@ -140,8 +134,8 @@ namespace Calamari.Common.Features.StructuredVariables
                                tag,
                                value,
                                ScalarStyle.DoubleQuoted,
-                               isPlainImplicit: true,
-                               isQuotedImplicit: true)
+                               true,
+                               true)
                 };
             }
 

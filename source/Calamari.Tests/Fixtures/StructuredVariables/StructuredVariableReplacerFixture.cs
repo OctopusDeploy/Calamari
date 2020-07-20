@@ -10,7 +10,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 {
     public class StructuredVariableReplacerFixture
     {
-        private void RunTest(
+        void RunTest(
             bool canParseAsJson,
             bool canParseAsYaml,
             Action<Action> invocationAssertions
@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             var replacer = new StructuredConfigVariableReplacer(jsonReplacer, yamlReplacer, new InMemoryLog());
             var variables = new CalamariVariables
             {
-                {StructuredConfigVariableReplacer.FeatureToggleVariableName, "true"}
+                { StructuredConfigVariableReplacer.FeatureToggleVariableName, "true" }
             };
 
             invocationAssertions(replacer.Invoking(r => r.ModifyFile("path", variables)));
@@ -35,37 +35,37 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         public void ShouldNotThrowIfTheFileCanBeParsedAsJson()
         {
             RunTest(
-                canParseAsJson: true,
-                canParseAsYaml: false,
-                invocation => invocation
-                    .Should()
-                    .NotThrow()
-            );
+                    true,
+                    false,
+                    invocation => invocation
+                                  .Should()
+                                  .NotThrow()
+                   );
         }
 
         [Test]
         public void ShouldNotThrowIfTheFileCanBeParsedAsYaml()
         {
             RunTest(
-                canParseAsJson: false,
-                canParseAsYaml: true,
-                invocation => invocation
-                    .Should()
-                    .NotThrow()
-            );
+                    false,
+                    true,
+                    invocation => invocation
+                                  .Should()
+                                  .NotThrow()
+                   );
         }
 
         [Test]
         public void ShouldThrowIfTheFileCantBeParsedWithAllReplacers()
         {
             RunTest(
-                canParseAsJson: false,
-                canParseAsYaml: false,
-                invocation => invocation
-                    .Should()
-                    .ThrowExactly<Exception>()
-                    .WithMessage("The config file at 'path' couldn't be parsed.")
-            );
+                    false,
+                    false,
+                    invocation => invocation
+                                  .Should()
+                                  .ThrowExactly<Exception>()
+                                  .WithMessage("The config file at 'path' couldn't be parsed.")
+                   );
         }
 
         [Test]
@@ -79,9 +79,8 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             var replacer = new StructuredConfigVariableReplacer(jsonReplacer, yamlReplacer, new InMemoryLog());
             var variables = new CalamariVariables
             {
-                {StructuredConfigVariableReplacer.FeatureToggleVariableName, "true"}
+                { StructuredConfigVariableReplacer.FeatureToggleVariableName, "true" }
             };
-
 
             replacer.ModifyFile("path", variables);
 

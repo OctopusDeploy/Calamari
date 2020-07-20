@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.Linq;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -19,7 +17,6 @@ namespace Calamari.Common.Features.StructuredVariables
             this.log = log;
             this.fileSystem = fileSystem;
         }
-
 
         public string FileFormatName => "JSON";
 
