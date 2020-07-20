@@ -21,6 +21,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             this.Assent(Replace(new CalamariVariables
                                 {
                                     { "server:ports:0", "8080" },
+                                    { "spring:datasource:url", "" },
                                     { "Spring:H2:Console:Enabled", "false" },
                                     { "spring:loggers:1:name", "rolling-file" },
                                     { "environment", "production" }
