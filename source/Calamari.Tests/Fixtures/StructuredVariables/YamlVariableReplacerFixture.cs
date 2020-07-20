@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "environment", "production" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                        TestEnvironment.AssentYamlConfiguration);
         }
 
         [Test]
@@ -37,7 +37,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "spring:datasource", "none" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                        TestEnvironment.AssentYamlConfiguration);
         }
 
         [Test]
@@ -48,7 +48,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "server:ports", "none" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                        TestEnvironment.AssentYamlConfiguration);
         }
 
         [Test]
@@ -60,7 +60,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "spring:datasource", "none" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                        TestEnvironment.AssentYamlConfiguration);
         }
 
         [Test]
@@ -84,7 +84,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "seq2:0", "Orange" }
                                 },
                                 "types.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                        TestEnvironment.AssentYamlConfiguration);
         }
     }
 }
