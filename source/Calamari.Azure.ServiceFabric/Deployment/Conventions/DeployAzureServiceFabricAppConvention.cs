@@ -7,6 +7,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Util;

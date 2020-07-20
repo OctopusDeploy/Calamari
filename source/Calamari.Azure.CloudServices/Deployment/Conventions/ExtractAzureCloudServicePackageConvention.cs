@@ -7,6 +7,7 @@ using Calamari.Azure.CloudServices.Integration.CloudServicePackage.ManifestSchem
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
