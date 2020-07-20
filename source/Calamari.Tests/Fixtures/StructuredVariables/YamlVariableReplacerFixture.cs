@@ -22,6 +22,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 {
                                     { "server:ports:0", "8080" },
                                     { "Spring:H2:Console:Enabled", "false" },
+                                    { "spring:loggers:1:name", "rolling-file" },
                                     { "environment", "production" }
                                 },
                                 "application.yaml"),
@@ -84,6 +85,17 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "seq2:0", "Orange" }
                                 },
                                 "types.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
+
+        [Test]
+        public void ShouldReplaceVariablesInTopLevelSequence()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "1", "zwei" }
+                                },
+                                "application.top-level-sequence.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
 
