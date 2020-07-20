@@ -42,6 +42,11 @@ namespace Calamari.Tests.Helpers
                 return CompareResult.Pass();
             });
 
+        public static readonly Configuration AssentYamlConfiguration = new Configuration()
+                                                                       .UsingNamer(IsCI ? (INamer)new CIAssentNamer() : new SubdirectoryNamer("Approved"))
+                                                                       .SetInteractive(!IsCI)
+                                                                       .UsingExtension("yaml");
+
         public static string GetTestPath(params string[] paths)
         {
             return Path.Combine(CurrentWorkingDirectory, Path.Combine(paths));
