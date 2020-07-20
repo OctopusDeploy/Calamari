@@ -6,7 +6,7 @@ using System.Net;
 using System.Text;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.CommonTemp;
+using Calamari.Common.Util;
 using Microsoft.Azure;
 using Microsoft.WindowsAzure.Management.Storage;
 using Microsoft.WindowsAzure.Storage;

@@ -7,8 +7,8 @@ namespace Calamari.AzureCloudService.CloudServicePackage.ManifestSchema
     public class LayoutDefinition
     {
         public static readonly XName ElementName = PackageDefinition.AzureNamespace + "LayoutDefinition";
-        private static readonly XName NameElementName = PackageDefinition.AzureNamespace + "Name";
-        private static readonly XName LayoutDescriptionElementName = PackageDefinition.AzureNamespace + "LayoutDescription";
+        static readonly XName NameElementName = PackageDefinition.AzureNamespace + "Name";
+        static readonly XName LayoutDescriptionElementName = PackageDefinition.AzureNamespace + "LayoutDescription";
 
         public LayoutDefinition()
         {

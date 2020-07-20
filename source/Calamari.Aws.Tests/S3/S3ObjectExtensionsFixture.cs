@@ -95,7 +95,7 @@ namespace Calamari.Aws.Tests.S3
             Assert.IsTrue(result, "Metadata was found to be equal, but should differ");
         }
 
-        private Action<HeadersCollection> GetKnownSpecialKeyApplier()
+        Action<HeadersCollection> GetKnownSpecialKeyApplier()
         {
             var keys = S3ObjectExtensions.GetKnownSpecialHeaderKeys().Select((x) => new KeyValuePair<string, string>(x, $"value-{Guid.NewGuid()}" )).ToList();
 

@@ -6,10 +6,10 @@ namespace Calamari.AzureCloudService.CloudServicePackage.ManifestSchema
     public class ContentDescription
     {
         public static readonly XName ElementName = PackageDefinition.AzureNamespace + "ContentDescription";
-        private static readonly XName LengthInBytesElementName = PackageDefinition.AzureNamespace + "LengthInBytes";
-        private static readonly XName DataStorePathElementName = PackageDefinition.AzureNamespace + "DataStorePath";
-        private static readonly XName HashAlgorithmElementName = PackageDefinition.AzureNamespace + "IntegrityCheckHashAlgortihm";
-        private static readonly XName HashElementName = PackageDefinition.AzureNamespace + "IntegrityCheckHash";
+        static readonly XName LengthInBytesElementName = PackageDefinition.AzureNamespace + "LengthInBytes";
+        static readonly XName DataStorePathElementName = PackageDefinition.AzureNamespace + "DataStorePath";
+        static readonly XName HashAlgorithmElementName = PackageDefinition.AzureNamespace + "IntegrityCheckHashAlgortihm";
+        static readonly XName HashElementName = PackageDefinition.AzureNamespace + "IntegrityCheckHash";
 
         public ContentDescription()
         {

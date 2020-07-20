@@ -5,7 +5,7 @@
     public class ContentDefinition
     {
         public static readonly XName ElementName = PackageDefinition.AzureNamespace + "ContentDefinition";
-        private static readonly XName NameElementName = PackageDefinition.AzureNamespace + "Name";
+        static readonly XName NameElementName = PackageDefinition.AzureNamespace + "Name";
 
         public ContentDefinition()
         {

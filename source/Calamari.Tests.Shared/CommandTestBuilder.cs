@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Calamari.CommonTemp;
 using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Shared.Helpers;
 using Calamari.Tests.Shared.LogParser;
@@ -20,13 +20,13 @@ namespace Calamari.Tests.Shared
     public static class CommandTestBuilder
     {
         public static CommandTestBuilder<TCalamari> CreateAsync<TCalamari>(string command)
-            where TCalamari : Calamari.CommonTemp.CalamariFlavourProgramAsync
+            where TCalamari : CalamariFlavourProgramAsync
         {
             return new CommandTestBuilder<TCalamari>(command);
         }
 
         public static CommandTestBuilder<TCalamari> CreateAsync<TCommand, TCalamari>()
-            where TCalamari : Calamari.CommonTemp.CalamariFlavourProgramAsync
+            where TCalamari : CalamariFlavourProgramAsync
             where TCommand : PipelineCommand
         {
             return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);

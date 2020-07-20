@@ -11,7 +11,7 @@ using Sashimi.Server.Contracts.Endpoints;
 
 namespace Sashimi.AzureWebApp.Endpoints
 {
-    internal class AzureWebAppDeploymentTargetTypeProvider : IDeploymentTargetTypeProvider
+    class AzureWebAppDeploymentTargetTypeProvider : IDeploymentTargetTypeProvider
     {
         public DeploymentTargetType DeploymentTargetType => AzureWebAppEndpoint.AzureWebAppDeploymentTargetType;
         public Type DomainType => typeof(AzureWebAppEndpoint);

@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.CommonTemp;
 using Microsoft.Azure;
 
 namespace Calamari.AzureCloudService

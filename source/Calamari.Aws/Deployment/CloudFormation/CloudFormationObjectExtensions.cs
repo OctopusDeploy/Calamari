@@ -16,14 +16,14 @@ namespace Calamari.Aws.Deployment.CloudFormation
 {
     public static class CloudFormationObjectExtensions
     {
-        private static readonly HashSet<string> RecognisedCapabilities = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        static readonly HashSet<string> RecognisedCapabilities = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"
         };
 
         // These status indicate that an update or create was not successful.
         // http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
-        private static HashSet<string> UnsuccessfulStackEvents =
+        static HashSet<string> UnsuccessfulStackEvents =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "CREATE_ROLLBACK_COMPLETE",

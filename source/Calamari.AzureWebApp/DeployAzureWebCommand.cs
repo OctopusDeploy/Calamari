@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using Calamari.Common.Commands;
-using Calamari.CommonTemp;
+using Calamari.Common.Plumbing.Pipeline;
 
 namespace Calamari.AzureWebApp
 {

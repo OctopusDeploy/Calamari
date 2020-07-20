@@ -8,13 +8,13 @@ using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.AzureWebApp.Util;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.CommonTemp;
 using Microsoft.Web.Deployment;
 
 namespace Calamari.AzureWebApp
 {
-    internal class AzureWebAppBehaviour : IDeployBehaviour
+    class AzureWebAppBehaviour : IDeployBehaviour
     {
         readonly ILog log;
         readonly ResourceManagerPublishProfileProvider resourceManagerPublishProfileProvider;

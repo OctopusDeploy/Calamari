@@ -11,7 +11,7 @@ using Sashimi.Server.Contracts.Endpoints;
 
 namespace Sashimi.AzureServiceFabric.Endpoints
 {
-    internal class AzureServiceFabricClusterDeploymentTargetTypeProvider : IDeploymentTargetTypeProvider
+    class AzureServiceFabricClusterDeploymentTargetTypeProvider : IDeploymentTargetTypeProvider
     {
         public DeploymentTargetType DeploymentTargetType =>
             AzureServiceFabricClusterEndpoint.AzureServiceFabricClusterDeploymentTargetType;

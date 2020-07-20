@@ -2,8 +2,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.CommonTemp;
+using Calamari.Common.Plumbing.Pipeline;
 
 namespace Calamari.AzureCloudService
 {

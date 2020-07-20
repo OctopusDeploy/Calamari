@@ -33,7 +33,7 @@ namespace Calamari.Aws.Serialization
 
         protected virtual Type DefaultType { get; } = null;
 
-        private static string getMappedPropertyName(IContractResolver resolver, string name)
+        static string getMappedPropertyName(IContractResolver resolver, string name)
         {
             return resolver is DefaultContractResolver result ? result.GetResolvedPropertyName(name) : name;
         }

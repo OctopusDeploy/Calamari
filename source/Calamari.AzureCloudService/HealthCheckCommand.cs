@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Calamari.CommonTemp;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Pipeline;
 using Hyak.Common;
 using Microsoft.WindowsAzure.Management.Compute;
 

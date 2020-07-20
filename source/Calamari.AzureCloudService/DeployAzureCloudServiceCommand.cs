@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Calamari.Common.Commands;
-using Calamari.CommonTemp;
+using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Plumbing.Pipeline;
 
 namespace Calamari.AzureCloudService
 {

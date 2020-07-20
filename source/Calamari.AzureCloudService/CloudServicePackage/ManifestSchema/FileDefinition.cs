@@ -5,7 +5,7 @@
     public class FileDefinition
     {
         public static readonly XName ElementName = PackageDefinition.AzureNamespace + "FileDefinition";
-        private static readonly XName FilePathElementName = PackageDefinition.AzureNamespace + "FilePath";
+        static readonly XName FilePathElementName = PackageDefinition.AzureNamespace + "FilePath";
 
         public FileDefinition()
         {

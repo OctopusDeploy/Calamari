@@ -16,13 +16,13 @@ namespace Sashimi.Tests.Shared.Server
     {
         public static ActionHandlerTestBuilder<TCalamari> CreateAsync<TActionHandler, TCalamari>()
             where TActionHandler : IActionHandler
-            where TCalamari : Calamari.CommonTemp.CalamariFlavourProgramAsync
+            where TCalamari : CalamariFlavourProgramAsync
         {
             return new ActionHandlerTestBuilder<TCalamari>(typeof(TActionHandler));
         }
 
         public static ActionHandlerTestBuilder<TCalamari> CreateAsync<TCalamari>(Type actionHandlerType)
-            where TCalamari : Calamari.CommonTemp.CalamariFlavourProgramAsync
+            where TCalamari : CalamariFlavourProgramAsync
         {
             return new ActionHandlerTestBuilder<TCalamari>(actionHandlerType);
         }

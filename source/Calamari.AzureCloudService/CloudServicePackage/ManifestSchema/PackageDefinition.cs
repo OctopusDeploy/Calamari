@@ -8,8 +8,8 @@ namespace Calamari.AzureCloudService.CloudServicePackage.ManifestSchema
     {
         public static readonly XNamespace AzureNamespace = "http://schemas.microsoft.com/windowsazure";
         public static readonly XName ElementName = AzureNamespace + "PackageDefinition";
-        private static readonly XName PackageContentsElementName = AzureNamespace + "PackageContents";
-        private static readonly XName PackageLayoutsElementName = AzureNamespace + "PackageLayouts";
+        static readonly XName PackageContentsElementName = AzureNamespace + "PackageContents";
+        static readonly XName PackageLayoutsElementName = AzureNamespace + "PackageLayouts";
 
         public PackageDefinition()
         {

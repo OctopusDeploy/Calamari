@@ -6,10 +6,10 @@ namespace Calamari.AzureCloudService.CloudServicePackage.ManifestSchema
     public class FileDescription
     {
         public static readonly XName ElementName = PackageDefinition.AzureNamespace + "FileDescription";
-        private static readonly XName DataContentReferenceElementName = PackageDefinition.AzureNamespace + "DataContentReference";
-        private static readonly XName ReadOnlyElementName = PackageDefinition.AzureNamespace + "ReadOnly";
-        private static readonly XName CreatedTimeElementName = PackageDefinition.AzureNamespace + "CreatedTimeUtc";
-        private static readonly XName ModifiedTimeElementName = PackageDefinition.AzureNamespace + "ModifiedTimeUtc";
+        static readonly XName DataContentReferenceElementName = PackageDefinition.AzureNamespace + "DataContentReference";
+        static readonly XName ReadOnlyElementName = PackageDefinition.AzureNamespace + "ReadOnly";
+        static readonly XName CreatedTimeElementName = PackageDefinition.AzureNamespace + "CreatedTimeUtc";
+        static readonly XName ModifiedTimeElementName = PackageDefinition.AzureNamespace + "ModifiedTimeUtc";
 
         public FileDescription()
         { }

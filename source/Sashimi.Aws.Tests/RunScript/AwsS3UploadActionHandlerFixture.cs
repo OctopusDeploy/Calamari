@@ -118,7 +118,7 @@ namespace Sashimi.Aws.Tests.RunScript
             CleanUpS3Bucket(bucketName, folderPrefix, region);
         }
 
-        private void CleanUpS3Bucket(string bucketName, string folderPrefix, string region)
+        void CleanUpS3Bucket(string bucketName, string folderPrefix, string region)
         {
             ActionHandlerTestBuilder.Create<AwsRunScriptActionHandler, Program>()
                 .WithArrange(context =>

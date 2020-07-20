@@ -2,12 +2,12 @@
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.CommonTemp;
+using Calamari.Common.Plumbing.Pipeline;
 using Microsoft.Azure.Management.WebSites;
 
 namespace Calamari.AzureWebApp
 {
-    internal class LogAzureWebAppDetailsBehaviour : IDeployBehaviour
+    class LogAzureWebAppDetailsBehaviour : IDeployBehaviour
     {
         readonly ILog log;
 

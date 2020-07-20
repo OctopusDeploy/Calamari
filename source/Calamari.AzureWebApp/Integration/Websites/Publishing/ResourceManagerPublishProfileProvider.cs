@@ -16,7 +16,7 @@ using Microsoft.Rest.TransientFaultHandling;
 
 namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 {
-    internal class ResourceManagerPublishProfileProvider
+    class ResourceManagerPublishProfileProvider
     {
         readonly ILog log;
 

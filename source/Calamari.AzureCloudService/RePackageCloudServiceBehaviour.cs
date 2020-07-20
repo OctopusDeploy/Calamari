@@ -10,7 +10,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.CommonTemp;
+using Calamari.Common.Plumbing.Pipeline;
 
 namespace Calamari.AzureCloudService
 {
