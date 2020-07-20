@@ -168,7 +168,7 @@ namespace Calamari.Tests.Shared.LogParser
         Action<string> errorTarget;
         readonly List<TestScriptOutputAction> actions = new List<TestScriptOutputAction>();
         readonly List<string> supportedScriptActionNames = new List<string>();
-        readonly Action<int, string?> progressTarget;
+        readonly Action<int, string> progressTarget;
 
         public ScriptOutputFilter(ILogWithContext log)
         {
@@ -265,7 +265,7 @@ namespace Calamari.Tests.Shared.LogParser
                     var value = serviceMessage.GetValue(ScriptServiceMessageNames.SetVariable.ValueAttribute);
                     bool.TryParse(serviceMessage.GetValue(ScriptServiceMessageNames.SetVariable.SensitiveAttribute), out var isSensitive);
 
-                    if (name != null)
+                    if (name != null && value != null)
                     {
                         testOutputVariables[name] = new TestOutputVariable(name, value, isSensitive);
 
@@ -283,7 +283,7 @@ namespace Calamari.Tests.Shared.LogParser
                 case ScriptServiceMessageNames.Progress.Name:
                 {
                     var message = serviceMessage.GetValue(ScriptServiceMessageNames.Progress.Message);
-                    if (int.TryParse(serviceMessage.GetValue(ScriptServiceMessageNames.Progress.Percentage), out int percentage))
+                    if (message != null && int.TryParse(serviceMessage.GetValue(ScriptServiceMessageNames.Progress.Percentage), out int percentage))
                         using (log.WithinBlock(logContext))
                             progressTarget(percentage, message);
 
@@ -318,7 +318,7 @@ namespace Calamari.Tests.Shared.LogParser
                     var hash = serviceMessage.GetValue(ScriptServiceMessageNames.FoundPackage.HashAttribute);
                     var remotePath = serviceMessage.GetValue(ScriptServiceMessageNames.FoundPackage.RemotePathAttribute);
                     var fileExtension = serviceMessage.GetValue(ScriptServiceMessageNames.FoundPackage.FileExtensionAttribute);
-                    if (id != null)
+                    if (id != null && version != null)
                     {
                         foundPackages.Add(new FoundPackage(id, version, versionFormat, remotePath, hash, fileExtension));
                     }

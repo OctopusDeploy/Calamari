@@ -14,7 +14,7 @@ namespace Sashimi.Azure.Tests.Web
         {
             var action = new AzureEnvironmentsListAction();
 
-            var context = new TestOctoContext();
+            var context = new TestOctoContext(new TestOctoResponse());
             await action.ExecuteAsync(context);
 
             var environments = context.TestResponse.GetResponse<IEnumerable<AzureEnvironmentResource>>();
