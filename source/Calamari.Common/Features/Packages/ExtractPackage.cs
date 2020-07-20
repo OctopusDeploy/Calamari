@@ -23,7 +23,7 @@ namespace Calamari.Common.Features.Packages
             this.log = log;
         }
 
-        public void ExtractToStagingDirectory(PathToPackage pathToPackage, IPackageExtractor? customPackageExtractor = null)
+        public void ExtractToStagingDirectory(PathToPackage? pathToPackage, IPackageExtractor? customPackageExtractor = null)
         {
             var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
             fileSystem.EnsureDirectoryExists(targetPath);
@@ -43,7 +43,7 @@ namespace Calamari.Common.Features.Packages
             Extract(pathToPackage, targetPath, customPackageExtractor);
         }
 
-        void Extract(PathToPackage pathToPackage, string targetPath, IPackageExtractor? customPackageExtractor)
+        void Extract(PathToPackage? pathToPackage, string targetPath, IPackageExtractor? customPackageExtractor)
         {
             try
             {
