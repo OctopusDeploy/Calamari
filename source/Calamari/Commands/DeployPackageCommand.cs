@@ -7,6 +7,7 @@ using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Processes.Semaphores;
@@ -21,7 +22,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Features;
-using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.Iis;
 using Calamari.Integration.Nginx;
 
@@ -74,11 +74,9 @@ namespace Calamari.Commands
             var featureClasses = new List<IFeature>();
 
             var replacer = new ConfigurationVariablesReplacer(variables, log);
-            var generator = new StructuredConfigVariableReplacer(
-                new JsonFormatVariableReplacer(fileSystem), 
-                new YamlFormatVariableReplacer());
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
-            var transformFileLocator = new TransformFileLocator(fileSystem);
+            var generator = new StructuredConfigVariableReplacer(new JsonFormatVariableReplacer(fileSystem, log), new YamlFormatVariableReplacer(), log);
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var embeddedResources = new AssemblyEmbeddedResources();
 #if IIS_SUPPORT
             var iis = new InternetInformationServer();

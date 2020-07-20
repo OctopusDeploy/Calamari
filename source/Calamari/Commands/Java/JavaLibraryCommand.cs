@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages.Java;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -11,7 +12,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Features.Java;
-using Calamari.Integration.EmbeddedResources;
 
 namespace Calamari.Commands.Java
 {

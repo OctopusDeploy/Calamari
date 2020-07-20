@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if !NET40
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -91,3 +92,4 @@ namespace Calamari.Common.Plumbing.Pipeline
         }
     }
 }
+#endif

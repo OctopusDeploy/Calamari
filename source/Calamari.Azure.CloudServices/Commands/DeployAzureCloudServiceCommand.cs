@@ -9,6 +9,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.Deployment;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -22,7 +23,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Certificates;
-using Calamari.Integration.EmbeddedResources;
 
 namespace Calamari.Azure.CloudServices.Commands
 {
@@ -78,9 +78,7 @@ namespace Calamari.Azure.CloudServices.Commands
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var replacer = new ConfigurationVariablesReplacer(variables, log);
-            var jsonVariablesReplacer = new StructuredConfigVariableReplacer(
-                new JsonFormatVariableReplacer(fileSystem), 
-                new YamlFormatVariableReplacer());
+            var jsonVariablesReplacer = new StructuredConfigVariableReplacer(new JsonFormatVariableReplacer(fileSystem, log), new YamlFormatVariableReplacer(), log);
 
             var conventions = new List<IConvention>
             {

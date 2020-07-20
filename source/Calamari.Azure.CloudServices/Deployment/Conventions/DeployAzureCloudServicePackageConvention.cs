@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
@@ -7,7 +8,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.EmbeddedResources;
 
 namespace Calamari.Azure.CloudServices.Deployment.Conventions
 {

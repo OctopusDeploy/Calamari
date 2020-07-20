@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Integration.EmbeddedResources;
 using System.Reflection;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.Extensions;

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Azure.ServiceFabric.Util;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
@@ -11,7 +12,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Integration.EmbeddedResources;
 
 namespace Calamari.Azure.ServiceFabric.Integration
 {

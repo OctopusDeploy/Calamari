@@ -20,14 +20,9 @@ namespace Calamari.Common.Features.StructuredVariables
             this.fileSystem = fileSystem;
         }
 
-        
+
         public string FileFormatName => "JSON";
 
-        public JsonFormatVariableReplacer(ICalamariFileSystem fileSystem)
-        {
-            this.fileSystem = fileSystem;
-        }
-        
         public bool TryModifyFile(string filePath, IVariables variables)
         {
             JToken root;

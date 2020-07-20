@@ -8,6 +8,9 @@ using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Features.ConfigurationVariables;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -17,6 +20,7 @@ using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 
@@ -46,6 +50,9 @@ namespace Calamari.Common
             builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
             builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
+            builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
+            builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
+            builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
@@ -56,11 +63,21 @@ namespace Calamari.Common
                 .SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
+                .AssignableTo<IBehaviour>()
+                .AsSelf()
+                .InstancePerDependency();
+
+            builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<ICommandAsync>()
-                .Where(t => t.GetCustomAttribute<CommandAttribute>()
-                    .Name
+                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
                     .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .Named<ICommandAsync>(t => t.GetCustomAttribute<CommandAttribute>().Name);
+
+            builder.RegisterAssemblyTypes(assemblies)
+                .AssignableTo<PipelineCommand>()
+                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
+                    .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
+                .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>().Name);
         }
 
         Assembly GetProgramAssemblyToRegister()
@@ -78,7 +95,9 @@ namespace Calamari.Common
                 log.Verbose($"Calamari Version: {GetType().Assembly.GetInformationalVersion()}");
 
                 if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
+                {
                     return 0;
+                }
 
                 var envInfo = string.Join($"{Environment.NewLine}  ",
                     EnvironmentHelper.SafelyGetEnvironmentInformation());
@@ -108,20 +127,29 @@ namespace Calamari.Common
         {
             var programAssembly = GetProgramAssemblyToRegister();
             if (programAssembly != null)
+            {
                 yield return programAssembly; // Calamari Flavour
+            }
 
-            yield return typeof(CalamariFlavourProgram).Assembly; // Calamari.Common
+            yield return typeof(CalamariFlavourProgramAsync).Assembly; // Calamari.Common
         }
 
-        Task ResolveAndExecuteCommand(IContainer container, CommonOptions options)
+        Task ResolveAndExecuteCommand(ILifetimeScope container, CommonOptions options)
         {
             try
             {
+                if (container.IsRegisteredWithName<PipelineCommand>(options.Command))
+                {
+                    var pipeline = container.ResolveNamed<PipelineCommand>(options.Command);
+                    var variables = container.Resolve<IVariables>();
+                    return pipeline.Execute(container, variables);
+                }
+
                 var command = container.ResolveNamed<ICommandAsync>(options.Command);
                 return command.Execute();
             }
             catch (Exception e) when (e is ComponentNotRegisteredException ||
-                e is DependencyResolutionException)
+                                      e is DependencyResolutionException)
             {
                 throw new CommandException($"Could not find the command {options.Command}");
             }

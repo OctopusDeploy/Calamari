@@ -2,7 +2,7 @@
 using System.IO;
 using System.Reflection;
 
-namespace Calamari.Integration.EmbeddedResources
+namespace Calamari.Common.Features.EmbeddedResources
 {
     public class AssemblyEmbeddedResources : ICalamariEmbeddedResources
     {
