@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Calamari.Common.Features.StructuredVariables;
 using NUnit.Framework;
@@ -58,9 +59,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                 {
                     var found = classifier.Process(parser.Current);
                     if (found is YamlNode<Scalar> scalarValue)
-                    {
                         result.Add((scalarValue.Path, scalarValue.Event.Value));
-                    }
                 }
             }
 

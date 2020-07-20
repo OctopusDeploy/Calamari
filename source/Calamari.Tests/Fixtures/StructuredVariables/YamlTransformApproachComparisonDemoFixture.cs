@@ -1,10 +1,13 @@
 ﻿using System;
 using System.IO;
 using NUnit.Framework;
+using YamlDotNet.Core;
+using YamlDotNet.Serialization;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables
 {
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     public class YamlTransformApproachComparisonDemoFixture
     {
         [Test]
@@ -14,14 +17,14 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 
             Demo(nameof(YamlDotNetSerializerIdentityTransform), () => YamlDotNetSerializerIdentityTransform(input));
             Demo(nameof(YamlDotNetParserEmitterIdentityTransform),
-                () => YamlDotNetParserEmitterIdentityTransform(input));
+                 () => YamlDotNetParserEmitterIdentityTransform(input));
             //Demo(nameof(SharpYamlSerializerIdentityTransform), () => SharpYamlSerializerIdentityTransform(input));
             //Demo(nameof(SharpYamlParserEmitterIdentityTransform), () => SharpYamlParserEmitterIdentityTransform(input));
         }
 
         public void Demo(string name, Func<string> transform)
         {
-            string output = "";
+            var output = "";
             try
             {
                 output = transform();
@@ -42,9 +45,9 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             using (var textReader = new StringReader(input))
             using (var textWriter = new StringWriter())
             {
-                var deserializer = new YamlDotNet.Serialization.DeserializerBuilder().Build();
+                var deserializer = new DeserializerBuilder().Build();
                 var data = deserializer.Deserialize(textReader);
-                new YamlDotNet.Serialization.Serializer().Serialize(textWriter, data ?? "");
+                new Serializer().Serialize(textWriter, data ?? "");
 
                 textWriter.Close();
                 return textWriter.ToString();
@@ -56,13 +59,11 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             using (var textReader = new StringReader(input))
             using (var textWriter = new StringWriter())
             {
-                var parser = new YamlDotNet.Core.Parser(textReader);
-                var emitter = new YamlDotNet.Core.Emitter(textWriter);
+                var parser = new Parser(textReader);
+                var emitter = new Emitter(textWriter);
                 while (parser.MoveNext())
-                {
                     if (parser.Current != null)
                         emitter.Emit(parser.Current);
-                }
 
                 textWriter.Close();
                 return textWriter.ToString();
