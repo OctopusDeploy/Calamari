@@ -4,7 +4,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Tests.Helpers;
 using NSubstitute;
@@ -34,7 +33,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotRunIfVariableNotSet()
         {
-            var convention = new JsonConfigurationVariablesConvention(configVariableReplacer, fileSystem);
+            var service = new StructuredConfigVariablesService(configVariableReplacer, fileSystem);
+            var convention = new JsonConfigurationVariablesConvention(service);
             convention.Install(deployment);
             configVariableReplacer.DidNotReceiveWithAnyArgs().ModifyFile(null, null);
         }
@@ -45,9 +45,11 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), "appsettings.environment.json")
                 .Returns(new[] {TestEnvironment.ConstructRootedPath("applications" ,"Acme", "1.0.0", "appsettings.environment.json")});
 
-            deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesEnabled, "true");
-            deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesTargets, "appsettings.environment.json");
-            var convention = new JsonConfigurationVariablesConvention(configVariableReplacer, fileSystem);
+            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesEnabled, "true");
+            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "appsettings.environment.json");
+            
+            var service = new StructuredConfigVariablesService(configVariableReplacer, fileSystem);
+            var convention = new JsonConfigurationVariablesConvention(service);
             convention.Install(deployment);
             configVariableReplacer.Received().ModifyFile(TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", "appsettings.environment.json"), deployment.Variables);
         }
@@ -67,10 +69,11 @@ namespace Calamari.Tests.Fixtures.Conventions
             fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), "config.*.json")
                 .Returns(targetFiles.Skip(1).Select(t => TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", t)));
 
-            deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesEnabled, "true");
-            deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesTargets, string.Join(Environment.NewLine, "config.json", "config.*.json"));
+            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesEnabled, "true");
+            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, string.Join(Environment.NewLine, "config.json", "config.*.json"));
 
-            var convention = new JsonConfigurationVariablesConvention(configVariableReplacer, fileSystem);
+            var service = new StructuredConfigVariablesService(configVariableReplacer, fileSystem);
+            var convention = new JsonConfigurationVariablesConvention(service);
             convention.Install(deployment);
 
             foreach (var targetFile in targetFiles)
@@ -83,11 +86,12 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotAttemptToRunOnDirectories()
         {
-            deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesEnabled, "true");
-            deployment.Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesTargets, "approot");
+            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesEnabled, "true");
+            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "approot");
             fileSystem.DirectoryExists(Arg.Any<string>()).Returns(true);
 
-            var convention = new JsonConfigurationVariablesConvention(configVariableReplacer, fileSystem);
+            var service = new StructuredConfigVariablesService(configVariableReplacer, fileSystem);
+            var convention = new JsonConfigurationVariablesConvention(service);
             convention.Install(deployment);
             configVariableReplacer.DidNotReceiveWithAnyArgs().ModifyFile(null, null);
         }

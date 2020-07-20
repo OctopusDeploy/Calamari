@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using Assent;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Deployment;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -25,8 +25,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(SpecialVariables.Package.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(SpecialVariables.Package.JsonConfigurationVariablesTargets, JsonFileName);
+                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
+                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, JsonFileName);
                 Variables.Set("departments:0:employees:0:name", "Jane");
                 Variables.Set("departments:0:employees:1:age", "40");
                 Variables.Set("phone", "0123 456 789");

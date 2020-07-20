@@ -72,9 +72,10 @@ namespace Calamari.Commands.Java
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
 
-            var jsonReplacer = new StructuredConfigVariableReplacer(
+            var structuredConfigVariableReplacer = new StructuredConfigVariableReplacer(
                 new JsonFormatVariableReplacer(fileSystem), 
                 new YamlFormatVariableReplacer());
+            var structuredConfigVariablesService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem);
             var jarTools = new JarTool(commandLineRunner, log, variables);
             var packageExtractor = new JarPackageExtractor(jarTools);
             var embeddedResources = new AssemblyEmbeddedResources();
@@ -102,7 +103,7 @@ namespace Calamari.Commands.Java
                 new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new JsonConfigurationVariablesConvention(jsonReplacer, fileSystem),
+                new JsonConfigurationVariablesConvention(structuredConfigVariablesService),
                 new RePackArchiveConvention(log, fileSystem, jarTools),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
