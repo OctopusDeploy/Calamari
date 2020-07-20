@@ -14,6 +14,7 @@ using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
@@ -53,6 +54,9 @@ namespace Calamari.Common
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
             builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
             builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
+            builder.RegisterType<StructuredConfigVariableReplacer>().As<IStructuredConfigVariableReplacer>();
+            builder.RegisterType<JsonFormatVariableReplacer>().As<IJsonFormatVariableReplacer>();
+            builder.RegisterType<YamlFormatVariableReplacer>().As<IYamlFormatVariableReplacer>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
