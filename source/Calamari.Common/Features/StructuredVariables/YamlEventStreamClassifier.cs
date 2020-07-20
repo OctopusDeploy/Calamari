@@ -40,12 +40,10 @@ namespace Calamari.Common.Features.StructuredVariables
         IEnumerable<string> GetPathComponents()
         {
             foreach (var stackItem in stack.Reverse())
-            {
                 if (stackItem.MappingKey != null)
                     yield return stackItem.MappingKey;
                 else if (stackItem.Type == YamlStructure.Sequence && stackItem.SequenceIndex != -1)
                     yield return stackItem.SequenceIndex.ToString();
-            }
         }
 
         public string GetPath()
@@ -56,7 +54,7 @@ namespace Calamari.Common.Features.StructuredVariables
         public bool TopIsSequence()
         {
             return stack.Count > 0
-                && stack.Peek().Type == YamlStructure.Sequence;
+                   && stack.Peek().Type == YamlStructure.Sequence;
         }
 
         public void TopSequenceIncrementIndex()
@@ -68,8 +66,8 @@ namespace Calamari.Common.Features.StructuredVariables
         public bool TopIsMappingExpectingKey()
         {
             return stack.Count > 0
-                && stack.Peek().Type == YamlStructure.Mapping
-                && stack.Peek().MappingKey == null;
+                   && stack.Peek().Type == YamlStructure.Mapping
+                   && stack.Peek().MappingKey == null;
         }
 
         public void TopMappingKeyStart(string key)
@@ -110,14 +108,14 @@ namespace Calamari.Common.Features.StructuredVariables
         public static Scalar ReplaceValue(this Scalar scalar, string newValue)
         {
             return new Scalar(
-                scalar.Anchor,
-                scalar.Tag,
-                newValue,
-                scalar.Style,
-                scalar.IsPlainImplicit,
-                scalar.IsQuotedImplicit,
-                scalar.Start,
-                scalar.End);
+                              scalar.Anchor,
+                              scalar.Tag,
+                              newValue,
+                              scalar.Style,
+                              scalar.IsPlainImplicit,
+                              scalar.IsQuotedImplicit,
+                              scalar.Start,
+                              scalar.End);
         }
     }
 
@@ -130,9 +128,7 @@ namespace Calamari.Common.Features.StructuredVariables
             IYamlNode? classifiedNode = null;
 
             if (stack.TopIsSequence() && (ev is MappingStart || ev is SequenceStart || ev is Scalar))
-            {
                 stack.TopSequenceIncrementIndex();
-            }
 
             switch (ev)
             {
