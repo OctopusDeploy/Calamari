@@ -114,5 +114,17 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "application.ignore-octopus.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
+        public void ShouldExpandOctopusVariableReferences()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "Server.Port", "8080" },
+                                    { "Server:Ports:0", "#{Server.Port}" }
+                                },
+                                "application.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
     }
 }

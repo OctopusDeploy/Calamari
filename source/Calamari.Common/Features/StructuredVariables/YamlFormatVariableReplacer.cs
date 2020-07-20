@@ -25,7 +25,9 @@ namespace Calamari.Common.Features.StructuredVariables
             var variablesByKey = variables
                                  .Where(v => !octopusReservedVariablePattern.IsMatch(v.Key))
                                  .DistinctBy(v => v.Key)
-                                 .ToDictionary(v => v.Key, v => v.Value, StringComparer.OrdinalIgnoreCase);
+                                 .ToDictionary<KeyValuePair<string, string>, string, Func<string>>(v => v.Key,
+                                                                                                   v => () => variables.Get(v.Key),
+                                                                                                   StringComparer.OrdinalIgnoreCase);
 
             // Read and transform the input file
             var outputEvents = new List<ParsingEvent>();
@@ -51,13 +53,13 @@ namespace Calamari.Common.Features.StructuredVariables
                             if (node is YamlNode<Scalar> scalar
                                 && variablesByKey.TryGetValue(scalar.Path, out var newValue))
                                 // TODO ZDY: Preserve input document types for explicit tags, ambiguous inputs - currently preserves decorations only
-                                outputEvents.Add(scalar.Event.ReplaceValue(newValue));
+                                outputEvents.Add(scalar.Event.ReplaceValue(newValue()));
                             else if (node is YamlNode<MappingStart> mappingStart
                                      && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
-                                structureWeAreReplacing = (mappingStart, mappingReplacement);
+                                structureWeAreReplacing = (mappingStart, mappingReplacement());
                             else if (node is YamlNode<SequenceStart> sequenceStart
                                      && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
-                                structureWeAreReplacing = (sequenceStart, sequenceReplacement);
+                                structureWeAreReplacing = (sequenceStart, sequenceReplacement());
                             else
                                 outputEvents.Add(node.Event);
                         }

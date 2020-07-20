@@ -211,5 +211,17 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "types-fall-back.json"),
                         TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
+
+        [Test]
+        public void ShouldExpandOctopusVariableReferences()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "Smtp.Host", "mail.example.com" },
+                                    { "EmailSettings:SmtpHost", "#{Smtp.Host}" }
+                                },
+                                "appsettings.simple.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+        }
     }
 }
