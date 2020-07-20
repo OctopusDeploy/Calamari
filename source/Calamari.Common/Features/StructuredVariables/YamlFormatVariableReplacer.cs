@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using YamlDotNet.Core;
@@ -15,11 +16,14 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public class YamlFormatVariableReplacer : IYamlFormatVariableReplacer
     {
+        readonly Regex octopusReservedVariablePattern = new Regex(@"^Octopus([^:]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
         public string FileFormatName => "YAML";
 
         public bool TryModifyFile(string filePath, IVariables variables)
         {
             var variablesByKey = variables
+                                 .Where(v => !octopusReservedVariablePattern.IsMatch(v.Key))
                                  .DistinctBy(v => v.Key)
                                  .ToDictionary(v => v.Key, v => v.Value, StringComparer.OrdinalIgnoreCase);
 
