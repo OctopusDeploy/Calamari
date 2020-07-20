@@ -66,7 +66,7 @@ namespace Calamari.Commands
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonVariableReplacer = new StructuredConfigVariableReplacer(
-                new JsonFormatVariableReplacer(), 
+                new JsonFormatVariableReplacer(fileSystem), 
                 new YamlFormatVariableReplacer());
 
             ValidateArguments();

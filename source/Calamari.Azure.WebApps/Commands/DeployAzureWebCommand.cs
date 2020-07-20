@@ -66,7 +66,7 @@ namespace Calamari.Azure.WebApps.Commands
             var fileSystem = new WindowsPhysicalFileSystem();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
             var jsonReplacer = new StructuredConfigVariableReplacer(
-                new JsonFormatVariableReplacer(), 
+                new JsonFormatVariableReplacer(fileSystem), 
                 new YamlFormatVariableReplacer());
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);

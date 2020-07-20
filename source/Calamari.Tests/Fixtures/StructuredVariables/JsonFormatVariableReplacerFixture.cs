@@ -1,6 +1,7 @@
 ﻿using Assent;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Features.StructuredVariables;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -9,7 +10,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
     [TestFixture]
     public class JsonFormatVariableReplacerFixture : VariableReplacerFixture
     {
-        public JsonFormatVariableReplacerFixture() : base(new JsonFormatVariableReplacer())
+        public JsonFormatVariableReplacerFixture() : base(new JsonFormatVariableReplacer(CalamariPhysicalFileSystem.GetPhysicalFileSystem()))
         {
         }
 

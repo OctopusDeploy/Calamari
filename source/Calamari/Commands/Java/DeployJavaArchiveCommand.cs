@@ -73,7 +73,7 @@ namespace Calamari.Commands.Java
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
 
             var jsonReplacer = new StructuredConfigVariableReplacer(
-                new JsonFormatVariableReplacer(), 
+                new JsonFormatVariableReplacer(fileSystem), 
                 new YamlFormatVariableReplacer());
             var jarTools = new JarTool(commandLineRunner, log, variables);
             var packageExtractor = new JarPackageExtractor(jarTools);
