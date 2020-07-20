@@ -69,13 +69,19 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             this.Assent(Replace(new CalamariVariables
                                 {
                                     { "null1", "~" },
+                                    { "null2", "null" },
                                     { "bool1", "true" },
+                                    { "bool2", "no" },
                                     { "int1", "99" },
                                     { "float1", "1.99" },
                                     { "str1", "true" },
                                     { "str2", "~" },
+                                    { "str3", "true" },
+                                    { "str3", "aye" },
+                                    { "str4", "cats.com" },
                                     { "obj1", $"fruit: apple{Environment.NewLine}animal: sloth" },
-                                    { "seq1", $"- scissors{Environment.NewLine}- paper{Environment.NewLine}- rock" }
+                                    { "seq1", $"- scissors{Environment.NewLine}- paper{Environment.NewLine}- rock" },
+                                    { "seq2:0", "Orange" }
                                 },
                                 "types.yaml"),
                         TestEnvironment.AssentConfiguration);
