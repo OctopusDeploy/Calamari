@@ -4,8 +4,9 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -23,7 +24,8 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         void RunAdditionalPathsTest(
             bool fileExistsInPath, 
             bool fileExistsInAdditionalPath,
-            Action<IStructuredConfigVariableReplacer> assertions)
+            Action<IStructuredConfigVariableReplacer> replacerAssertions = null,
+            Action<InMemoryLog> logAssertions = null)
         {
             var fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.FileExists(ConfigFileInCurrentPath).Returns(fileExistsInPath);
@@ -34,7 +36,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                       .Returns(fileExistsInAdditionalPath ? new[]{ ConfigFileInAdditionalPath } : new string[0]);
             
             var replacer = Substitute.For<IStructuredConfigVariableReplacer>();
-            var log = Substitute.For<ILog>();
+            var log = new InMemoryLog();
             var service = new StructuredConfigVariablesService(replacer, fileSystem, log);
 
             var variables = new CalamariVariables();
@@ -47,12 +49,13 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory
             };
-            
+
             service.ReplaceVariables(deployment);
 
-            assertions(replacer);
+            replacerAssertions?.Invoke(replacer);
+            logAssertions?.Invoke(log);
         }
-        
+
         [Test]
         public void ReplacesVariablesInAdditionalPathIfFileMatchedInWorkingDirectory()
         {
@@ -85,6 +88,16 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             }
             
             RunAdditionalPathsTest(true, false, Assertions);
+        }
+        
+        [Test]
+        public void LogAWarningIfNoMatchingFileIsFoundInAnyPath()
+        {
+            void Assertions(InMemoryLog log)
+            {
+                log.Messages.Should().Contain(message => message.FormattedMessage == $"No files were found that match the replacement target pattern '{FileName}'");
+            }
+            RunAdditionalPathsTest(false, false, logAssertions: Assertions);
         }
     }
 }
