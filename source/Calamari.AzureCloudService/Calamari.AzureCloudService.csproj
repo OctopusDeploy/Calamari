@@ -8,8 +8,7 @@
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Calamari.Common" Version="14.0.2" />
-        <PackageReference Include="Calamari.Common" Version="14.0.0" />
+        <PackageReference Include="Calamari.Common" Version="14.0.3-john-new-pipelin0005" />
         <Reference Include="WindowsBase" />
         <PackageReference Include="Hyak.Common" Version="1.2.2" />
         <PackageReference Include="Microsoft.Azure.Common" Version="2.2.1" />
