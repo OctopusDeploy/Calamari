@@ -86,5 +86,16 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "types.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
+        public void ShouldReplaceVariablesInTopLevelSequence()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "1", "zwei" }
+                                },
+                                "application.top-level-sequence.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
     }
 }
