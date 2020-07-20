@@ -153,7 +153,7 @@ namespace Calamari.Common.Features.Packages
             }
         }
 
-        public static PackageFileNameMetadata FromFile(string path)
+        public static PackageFileNameMetadata FromFile(string? path)
         {
             var fileName = Path.GetFileName(path) ?? "";
 
@@ -167,7 +167,7 @@ namespace Calamari.Common.Features.Packages
 //                var metaData = new FileSystemNuGetPackage(path);
 //                version = metaData.Version;
 //                packageId = metaData.PackageId;
-                var metaData = new LocalNuGetPackage(path).Metadata;
+                var metaData = new LocalNuGetPackage(path!).Metadata;
                 version = SemVerFactory.CreateVersion(metaData.Version.ToString());
                 packageId = metaData.Id;
             }
