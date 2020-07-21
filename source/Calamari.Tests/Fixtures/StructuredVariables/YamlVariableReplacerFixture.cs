@@ -131,6 +131,18 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
+        public void ShouldReplaceWithEmpty()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "obj1", "{}" },
+                                    { "seq1", "[]" }
+                                },
+                                "types.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
+
+        [Test]
         public void ShouldIgnoreOctopusPrefix()
         {
             this.Assent(Replace(new CalamariVariables
