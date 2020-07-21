@@ -145,6 +145,8 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "application.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
         public void ShouldReplaceWithColonInName()
         {
             this.Assent(Replace(new CalamariVariables
@@ -154,7 +156,5 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "application.colon-in-name.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
-
-        [Test]
     }
 }
