@@ -78,7 +78,7 @@ namespace Calamari.Commands
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d, ScriptFileTargetFactory(d).ToList())),
                 // Substitute any user-specified files
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, transformFileLocator, log)),
+                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, ConfigurationTransformer.FromVariables(variables, log), transformFileLocator, log)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, log)),
                 new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(structuredConfigVariablesService)),
                 new ExecuteScriptConvention(scriptEngine, commandLineRunner)

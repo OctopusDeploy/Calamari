@@ -20,10 +20,10 @@ namespace Calamari.Common.Features.Behaviours
         readonly ITransformFileLocator transformFileLocator;
         readonly ILog log;
 
-        public ConfigurationTransformsBehaviour(ICalamariFileSystem fileSystem, IVariables variables, ITransformFileLocator transformFileLocator, ILog log)
+        public ConfigurationTransformsBehaviour(ICalamariFileSystem fileSystem, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog log)
         {
             this.fileSystem = fileSystem;
-            configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            this.configurationTransformer = configurationTransformer;
             this.transformFileLocator = transformFileLocator;
             this.log = log;
         }
