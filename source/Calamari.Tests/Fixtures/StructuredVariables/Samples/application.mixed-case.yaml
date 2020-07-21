@@ -1,0 +1,8 @@
+﻿server:
+  ports:
+  - "5555"
+spring:
+  H2:
+    console:
+      Enabled: "true"
+environment: development

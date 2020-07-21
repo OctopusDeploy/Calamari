@@ -201,7 +201,10 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             this.Assent(Replace(new CalamariVariables
                                 {
                                     { "null2num", "33" },
+                                    { "null2str", "bananas" },
                                     { "null2obj", @"{""x"": 1}" },
+                                    { "null2arr", "[3, 2]" },
+                                    { "bool2null", "null" },
                                     { "bool2num", "52" },
                                     { "num2null", "null" },
                                     { "num2bool", "true" },
