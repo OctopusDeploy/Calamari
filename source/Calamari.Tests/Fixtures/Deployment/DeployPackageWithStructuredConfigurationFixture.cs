@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using Assent;
-using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -152,6 +151,12 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
                 result.AssertOutputContains("Skipping structured variable replacement on '.' because it is a directory.");
+                
+                var unchangedJsonFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileName));
+                var unchangedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
+
+                this.Assent(unchangedJsonFile, TestEnvironment.AssentJsonDeepCompareConfiguration);
+                this.Assent(unchangedYamlFile, TestEnvironment.AssentYamlConfiguration);
             }
         }
         
