@@ -22,11 +22,22 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 {
                                     { "server:ports:0", "8080" },
                                     { "spring:datasource:url", "" },
-                                    { "Spring:H2:Console:Enabled", "false" },
+                                    { "spring:h2:console:enabled", "false" },
                                     { "spring:loggers:1:name", "rolling-file" },
                                     { "environment", "production" }
                                 },
                                 "application.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
+
+        [Test]
+        public void ShouldMatchAndReplaceIgnoringCase()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "Spring:h2:Console:enabled", "false" }
+                                },
+                                "application.mixed-case.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
 
