@@ -126,6 +126,27 @@ namespace Calamari.Common.Features.StructuredVariables
                              scalar.Start,
                              scalar.End);
         }
+
+        public static Scalar ReplaceValueWithString(this Scalar scalar, string newValue)
+        {
+            return newValue != null
+                ? new Scalar(scalar.Anchor,
+                             scalar.Tag,
+                             newValue,
+                             ScalarStyle.SingleQuoted,
+                             true,
+                             true,
+                             scalar.Start,
+                             scalar.End)
+                : new Scalar(scalar.Anchor,
+                             "!!null",
+                             "null",
+                             ScalarStyle.Plain,
+                             true,
+                             false,
+                             scalar.Start,
+                             scalar.End);
+        }
     }
 
     public class YamlEventStreamClassifier

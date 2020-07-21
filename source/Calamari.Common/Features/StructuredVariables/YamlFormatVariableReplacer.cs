@@ -7,6 +7,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
+using YamlDotNet.Serialization.NodeDeserializers;
 
 namespace Calamari.Common.Features.StructuredVariables
 {
@@ -52,15 +53,29 @@ namespace Calamari.Common.Features.StructuredVariables
 
                             if (node is YamlNode<Scalar> scalar
                                 && variablesByKey.TryGetValue(scalar.Path, out var newValue))
-                                outputEvents.Add(scalar.Event.ReplaceValue(newValue()));
+                            {
+                                var replacement = newValue();
+                                var replacementScalar = scalar.Event.ReplaceValue(replacement);
+                                outputEvents.Add(YamlTagResolver.SuitsTag(replacementScalar, YamlTagResolver.ResolveTag(scalar.Event))
+                                                     ? replacementScalar
+                                                     : YamlTagResolver.TryDeserialize<NullNodeDeserializer, object>(replacementScalar).Succeeded
+                                                         ? replacementScalar
+                                                         : scalar.Event.ReplaceValueWithString(replacement));
+                            }
                             else if (node is YamlNode<MappingStart> mappingStart
                                      && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
+                            {
                                 structureWeAreReplacing = (mappingStart, mappingReplacement());
+                            }
                             else if (node is YamlNode<SequenceStart> sequenceStart
                                      && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
+                            {
                                 structureWeAreReplacing = (sequenceStart, sequenceReplacement());
+                            }
                             else
+                            {
                                 outputEvents.Add(node.Event);
+                            }
                         }
                         else
                         {

@@ -171,7 +171,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        public void OutputShouldBeStringEqualToVariableWhenInputTypeDoesNotMatch()
+        public void ShouldFallBackToStringIfTypePreservationFails()
         {
             this.Assent(Replace(new CalamariVariables
                                 {
