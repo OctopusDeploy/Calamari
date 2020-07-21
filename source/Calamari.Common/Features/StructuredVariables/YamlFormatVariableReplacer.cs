@@ -15,7 +15,7 @@ namespace Calamari.Common.Features.StructuredVariables
         readonly Regex octopusReservedVariablePattern = new Regex(@"^Octopus([^:]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public string FileFormatName => StructuredConfigVariablesFileFormats.Yaml;
-
+        
         public bool IsBestReplacerForFileName(string fileName)
         {
             return fileName.EndsWith(".yml") || fileName.EndsWith(".yaml");
@@ -33,7 +33,7 @@ namespace Calamari.Common.Features.StructuredVariables
             // Read and transform the input file
             var outputEvents = new List<ParsingEvent>();
             (IYamlNode startEvent, string replacementValue)? structureWeAreReplacing = null;
-
+            
             using (var reader = new StreamReader(filePath))
             {
                 var parser = new Parser(reader);
@@ -52,14 +52,13 @@ namespace Calamari.Common.Features.StructuredVariables
 
                         if (node is YamlNode<Scalar> scalar
                             && variablesByKey.TryGetValue(scalar.Path, out var newValue))
-                            // TODO ZDY: Preserve input document types for explicit tags, ambiguous inputs - currently preserves decorations only
-                            outputEvents.Add(scalar.Event.ReplaceValue(newValue));
+                            outputEvents.Add(scalar.Event.ReplaceValue(newValue()));
                         else if (node is YamlNode<MappingStart> mappingStart
                                  && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
-                            structureWeAreReplacing = (mappingStart, mappingReplacement);
+                            structureWeAreReplacing = (mappingStart, mappingReplacement());
                         else if (node is YamlNode<SequenceStart> sequenceStart
                                  && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
-                            structureWeAreReplacing = (sequenceStart, sequenceReplacement);
+                            structureWeAreReplacing = (sequenceStart, sequenceReplacement());
                         else
                             outputEvents.Add(node.Event);
                     }
@@ -71,19 +70,10 @@ namespace Calamari.Common.Features.StructuredVariables
                             && structureWeAreReplacing.Value.startEvent is YamlNode<MappingStart> mappingStart
                             && structureWeAreReplacing.Value.startEvent.Path == node.Path)
                         {
-                            // Not replacing: searching for things to replace, copying events to output.
-
-                            if (node is YamlNode<Scalar> scalar
-                                && variablesByKey.TryGetValue(scalar.Path, out var newValue))
-                                outputEvents.Add(scalar.Event.ReplaceValue(newValue()));
-                            else if (node is YamlNode<MappingStart> mappingStart
-                                     && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
-                                structureWeAreReplacing = (mappingStart, mappingReplacement());
-                            else if (node is YamlNode<SequenceStart> sequenceStart
-                                     && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
-                                structureWeAreReplacing = (sequenceStart, sequenceReplacement());
-                            else
-                                outputEvents.Add(node.Event);
+                            outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
+                                                                mappingStart.Event.Anchor,
+                                                                mappingStart.Event.Tag));
+                            structureWeAreReplacing = null;
                         }
                         else if (node is YamlNode<SequenceEnd>
                                  && structureWeAreReplacing.Value.startEvent is YamlNode<SequenceStart> sequenceStart
@@ -97,7 +87,7 @@ namespace Calamari.Common.Features.StructuredVariables
                     }
                 }
             }
-
+            
             // Write the replacement file
             string outputText;
             using (var writer = new StringWriter())
