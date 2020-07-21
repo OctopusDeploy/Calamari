@@ -100,6 +100,25 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
+        public void ShouldReplaceWithNull()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    // Note: although these replacements are unquoted in the output to match input style,
+                                    // YAML strings do not require quotes, so they still string-equal to our variables.
+                                    { "bool1", "null" },
+                                    { "int1", "~" },
+                                    { "float1", "null" },
+                                    { "str1", null },
+                                    { "obj1", "~" },
+                                    { "seq1", "null" },
+                                    { "seq2:0", "~" }
+                                },
+                                "types.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
+
+        [Test]
         public void ShouldIgnoreOctopusPrefix()
         {
             this.Assent(Replace(new CalamariVariables
