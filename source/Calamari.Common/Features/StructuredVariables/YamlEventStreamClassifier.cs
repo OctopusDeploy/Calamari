@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 
 namespace Calamari.Common.Features.StructuredVariables
@@ -107,15 +108,23 @@ namespace Calamari.Common.Features.StructuredVariables
     {
         public static Scalar ReplaceValue(this Scalar scalar, string newValue)
         {
-            return new Scalar(
-                              scalar.Anchor,
-                              scalar.Tag,
-                              newValue,
-                              scalar.Style,
-                              scalar.IsPlainImplicit,
-                              scalar.IsQuotedImplicit,
-                              scalar.Start,
-                              scalar.End);
+            return newValue != null
+                ? new Scalar(scalar.Anchor,
+                             scalar.Tag,
+                             newValue,
+                             scalar.Style,
+                             scalar.IsPlainImplicit,
+                             scalar.IsQuotedImplicit,
+                             scalar.Start,
+                             scalar.End)
+                : new Scalar(scalar.Anchor,
+                             "!!null",
+                             "null",
+                             ScalarStyle.Plain,
+                             true,
+                             false,
+                             scalar.Start,
+                             scalar.End);
         }
     }
 

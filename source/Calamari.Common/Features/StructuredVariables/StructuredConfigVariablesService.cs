@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
@@ -20,7 +21,7 @@ namespace Calamari.Common.Features.StructuredVariables
         readonly ILog log;
 
         public StructuredConfigVariablesService(
-            IStructuredConfigVariableReplacer structuredConfigVariableReplacer, 
+            IStructuredConfigVariableReplacer structuredConfigVariableReplacer,
             ICalamariFileSystem fileSystem,
             ILog log)
         {
@@ -54,7 +55,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 }
             }
         }
-        
+
         List<string> MatchingFiles(RunningDeployment deployment, string target)
         {
             var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
