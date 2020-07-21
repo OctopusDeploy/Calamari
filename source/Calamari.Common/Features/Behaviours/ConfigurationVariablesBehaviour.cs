@@ -10,7 +10,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Behaviours
 {
-    class ConfigurationVariablesBehaviour : IBehaviour
+    public class ConfigurationVariablesBehaviour : IBehaviour
     {
         readonly ICalamariFileSystem fileSystem;
         readonly IConfigurationVariablesReplacer replacer;

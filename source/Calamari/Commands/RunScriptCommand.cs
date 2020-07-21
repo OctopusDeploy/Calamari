@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.Packages;
@@ -62,7 +63,6 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
 
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var replacer = new ConfigurationVariablesReplacer(variables, log);
             var structuredConfigVariableReplacer = new StructuredConfigVariableReplacer(new JsonFormatVariableReplacer(fileSystem, log), new YamlFormatVariableReplacer(), log);
@@ -78,9 +78,9 @@ namespace Calamari.Commands
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d, ScriptFileTargetFactory(d).ToList())),
                 // Substitute any user-specified files
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
-                new ConfigurationVariablesConvention(fileSystem, replacer),
-                new JsonConfigurationVariablesConvention(structuredConfigVariablesService),
+                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, transformFileLocator, log)),
+                new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, log)),
+                new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(structuredConfigVariablesService)),
                 new ExecuteScriptConvention(scriptEngine, commandLineRunner)
             };
 

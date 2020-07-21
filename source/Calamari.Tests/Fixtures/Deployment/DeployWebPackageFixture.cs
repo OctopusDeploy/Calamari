@@ -130,7 +130,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             // Set the environment, and the flag to automatically run config transforms
             Variables.Set(DeploymentEnvironment.Name, "Production");
             Variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-            Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
+            Variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
 
             var result = DeployPackage();
 
@@ -187,7 +187,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [TestCase(DeploymentType.Tar)]
         public void ShouldExecuteFeatureScripts(DeploymentType deploymentType)
         {
-            Variables.Set(SpecialVariables.Package.EnabledFeatures, "Octopus.Features.HelloWorld");
+            Variables.Set(KnownVariables.Package.EnabledFeatures, "Octopus.Features.HelloWorld");
             var result = DeployPackage(deploymentType);
             result.AssertOutput("Hello World!");
         }
@@ -224,7 +224,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldRunConfiguredScripts()
         {
-            Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+            Variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
 
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
             {
@@ -253,7 +253,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [TestCase(DeploymentType.Tar)]
         public void ShouldSkipIfAlreadyInstalled(DeploymentType deploymentType)
         {
-            Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            Variables.Set(KnownVariables.Package.SkipIfAlreadyInstalled, true.ToString());
             Variables.Set(KnownVariables.RetentionPolicySet, "a/b/c/d");
             Variables.Set(PackageVariables.PackageId, "Acme.Web");
             Variables.Set(PackageVariables.PackageVersion, "1.0.0");
@@ -270,7 +270,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldSkipIfAlreadyInstalledWithDifferentPackageType()
         {
-            Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            Variables.Set(KnownVariables.Package.SkipIfAlreadyInstalled, true.ToString());
             Variables.Set(KnownVariables.RetentionPolicySet, "a/b/c/d");
             Variables.Set(PackageVariables.PackageId, "Acme.Web");
             Variables.Set(PackageVariables.PackageVersion, "1.0.0");

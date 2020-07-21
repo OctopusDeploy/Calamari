@@ -7,7 +7,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Behaviours
 {
-    class JsonConfigurationVariablesBehaviour : IBehaviour
+    public class JsonConfigurationVariablesBehaviour : IBehaviour
     {
         readonly IStructuredConfigVariablesService structuredConfigVariablesService;
 

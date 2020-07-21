@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Behaviours
 {
-    class ConfigurationTransformsBehaviour : IBehaviour
+    public class ConfigurationTransformsBehaviour : IBehaviour
     {
         readonly ICalamariFileSystem fileSystem;
         readonly IConfigurationTransformer configurationTransformer;
@@ -206,9 +207,10 @@ namespace Calamari.Common.Features.Behaviours
             }
         }
 
-        static string GetFileName(string path)
+        [return: NotNullIfNotNull("path")]
+        static string? GetFileName(string? path)
         {
-            return Path.GetFileName(path) ?? string.Empty;
+            return Path.GetFileName(path);
         }
 
         List<string> MatchingFiles(RunningDeployment deployment, string[] sourceExtensions)

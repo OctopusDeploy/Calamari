@@ -42,45 +42,79 @@ namespace Calamari.Common.Plumbing.Pipeline
             var pathToPrimaryPackage = variables.GetPathToPrimaryPackage(lifetimeScope.Resolve<ICalamariFileSystem>(), false);
             var deployment = new RunningDeployment(pathToPrimaryPackage, variables);
 
+            try
+            {
+                foreach (var behaviour in GetBehaviours(lifetimeScope, deployment))
+                {
+                    await behaviour;
+
+                    if (deployment.Variables.GetFlag(KnownVariables.Action.SkipRemainingConventions))
+                    {
+                        break;
+                    }
+                }
+            }
+            catch (Exception installException)
+            {
+                Console.Error.WriteLine("Running rollback behaviours...");
+
+                deployment.Error(installException);
+
+                try
+                {
+                    // Rollback behaviours include tasks like DeployFailed.ps1
+                    await ExecuteBehaviour(deployment, lifetimeScope.Resolve<RollbackScriptBehaviour>());
+                }
+                catch (Exception rollbackException)
+                {
+                    Console.Error.WriteLine(rollbackException);
+                }
+
+                throw;
+            }
+        }
+
+        IEnumerable<Task> GetBehaviours(ILifetimeScope lifetimeScope, RunningDeployment deployment)
+        {
             foreach (var behaviour in BeforePackageExtraction(new BeforePackageExtractionResolver(lifetimeScope)))
             {
-                await ExecuteBehaviour(deployment, behaviour);
+                yield return ExecuteBehaviour(deployment, behaviour);
             }
 
-            await ExecuteBehaviour(deployment, lifetimeScope.Resolve<ExtractBehaviour>());
+            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ExtractBehaviour>());
 
             foreach (var behaviour in AfterPackageExtraction(new AfterPackageExtractionResolver(lifetimeScope)))
             {
-                await ExecuteBehaviour(deployment, behaviour);
+                yield return ExecuteBehaviour(deployment, behaviour);
             }
 
-            await ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.PreDeploy)));
-            await ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.PreDeploy)));
+            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.PreDeploy)));
+            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.PreDeploy)));
 
             foreach (var behaviour in PreDeploy(new PreDeployResolver(lifetimeScope)))
             {
-                await ExecuteBehaviour(deployment, behaviour);
+                yield return ExecuteBehaviour(deployment, behaviour);
             }
 
-            await ExecuteBehaviour(deployment, lifetimeScope.Resolve<SubstituteInFilesBehaviour>());
-            await ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfigurationTransformsBehaviour>());
-            await ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfigurationVariablesBehaviour>());
-            await ExecuteBehaviour(deployment, lifetimeScope.Resolve<JsonConfigurationVariablesBehaviour>());
-            await ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.Deploy)));
-            await ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.Deploy)));
+            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<SubstituteInFilesBehaviour>());
+            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfigurationTransformsBehaviour>());
+            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfigurationVariablesBehaviour>());
+            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<JsonConfigurationVariablesBehaviour>());
+            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.Deploy)));
+            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.Deploy)));
 
             foreach (var behaviour in Deploy(new DeployResolver(lifetimeScope)))
             {
-                await ExecuteBehaviour(deployment, behaviour);
+                yield return ExecuteBehaviour(deployment, behaviour);
             }
 
             foreach (var behaviour in PostDeploy(new PostDeployResolver(lifetimeScope)))
             {
-                await ExecuteBehaviour(deployment, behaviour);
+                yield return ExecuteBehaviour(deployment, behaviour);
             }
 
-            await ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.PostDeploy)));
-            await ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.PostDeploy)));
+            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.PostDeploy)));
+            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.PostDeploy)));
         }
 
         static async Task ExecuteBehaviour(RunningDeployment context, IBehaviour behaviour)

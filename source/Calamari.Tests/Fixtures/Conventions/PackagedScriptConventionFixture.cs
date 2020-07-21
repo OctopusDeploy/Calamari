@@ -1,4 +1,5 @@
 ﻿using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
@@ -160,7 +161,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         PackagedScriptConvention CreateConvention(string scriptName)
         {
-            return new PackagedScriptConvention(log, scriptName, fileSystem, scriptEngine, runner);
+            return new PackagedScriptConvention(new PackagedScriptBehaviour(log, scriptName, fileSystem, scriptEngine, runner));
         }
 
         RollbackScriptConvention CreateRollbackConvention(string scriptName)

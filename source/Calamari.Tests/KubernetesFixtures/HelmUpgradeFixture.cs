@@ -299,7 +299,7 @@ namespace Calamari.Tests.KubernetesFixtures
             if (dryRun)
             {
                 // If it's a dry-run we can't fetch the ConfigMap and there's nothing to clean-up
-                Variables.Set(SpecialVariables.Package.EnabledFeatures, "");
+                Variables.Set(KnownVariables.Package.EnabledFeatures, "");
                 return;
             }
 
@@ -316,7 +316,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
 
             Variables.Set(SpecialVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, syntax), script);
-            Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+            Variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
         }
 
         string DeleteCommand(string @namespace, string releaseName)

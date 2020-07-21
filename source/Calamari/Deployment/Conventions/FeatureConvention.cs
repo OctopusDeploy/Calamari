@@ -10,6 +10,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Features;
 
 namespace Calamari.Deployment.Conventions
@@ -68,7 +69,7 @@ namespace Calamari.Deployment.Conventions
 
         protected void Run(RunningDeployment deployment)
         {
-            var features = deployment.Variables.GetStrings(SpecialVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            var features = deployment.Variables.GetStrings(KnownVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
 
             if (!features.Any())
                 return;

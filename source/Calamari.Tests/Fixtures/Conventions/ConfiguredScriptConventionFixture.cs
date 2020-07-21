@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -9,6 +10,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -35,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             scriptEngine.GetSupportedTypes().Returns(new[] { ScriptSyntax.PowerShell });
 
             variables = new CalamariVariables();
-            variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+            variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
 
             deployment = new RunningDeployment("C:\\packages", variables) { StagingDirectory = stagingDirectory };
         }
@@ -103,7 +105,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private ConfiguredScriptConvention CreateConvention(string deployStage)
         {
-            return new ConfiguredScriptConvention(deployStage, fileSystem, scriptEngine, commandLineRunner);
+            return new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(deployStage, new InMemoryLog(), fileSystem, scriptEngine, commandLineRunner));
         }
     }
 }

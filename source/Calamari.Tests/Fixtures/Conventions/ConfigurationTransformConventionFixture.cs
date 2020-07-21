@@ -2,6 +2,7 @@
 using System.Collections;
 using System.IO;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
@@ -20,7 +21,7 @@ namespace Calamari.Tests.Fixtures.Conventions
     public class ConfigurationTransformConventionFixture
     {
         ICalamariFileSystem fileSystem;
-        IConfigurationTransformer configurationTransformer;
+       IConfigurationTransformer configurationTransformer;
         ITransformFileLocator transformFileLocator;
         RunningDeployment deployment;
         IVariables variables;
@@ -37,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             var deployDirectory = BuildConfigPath(null);
 
             variables = new CalamariVariables();
-            variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
+            variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
             variables.Set(KnownVariables.OriginalPackageDirectoryPath, deployDirectory);
 
             deployment = new RunningDeployment(deployDirectory, variables);
@@ -243,7 +244,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             deploymentVariables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, "True");
             deploymentVariables.Set(DeploymentEnvironment.Name, "my-test-env");
             deploymentVariables.Set(SpecialVariables.Package.EnableDiagnosticsConfigTransformationLogging, "True");
-            deploymentVariables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
+            deploymentVariables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
             var runningDeployment = new RunningDeployment(@"c:\temp\MyPackage.1.0.0.nupkg", deploymentVariables);
 
             //mock the world
@@ -264,7 +265,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             var log = new InMemoryLog();
             var transformer = Substitute.For<IConfigurationTransformer>();
             var fileLocator = new TransformFileLocator(calamariFileSystem, log);
-            new ConfigurationTransformsConvention(calamariFileSystem, transformer, fileLocator, log).Install(runningDeployment);
+            new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(calamariFileSystem, runningDeployment.Variables, fileLocator, log)).Install(runningDeployment);
 
             //not completely testing every scenario here, but this is a reasonable half way point to make sure it works without going overboard
             log.Messages.Should().Contain(m => m.Level == InMemoryLog.Level.Verbose && m.FormattedMessage == @"Recursively searching for transformation files that match *.config in folder 'c:\temp'");
@@ -325,7 +326,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private ConfigurationTransformsConvention CreateConvention()
         {
-            return new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator, logs);
+            return new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, transformFileLocator, logs));
         }
 
         private void AssertTransformRun(string configFile, string transformFile)

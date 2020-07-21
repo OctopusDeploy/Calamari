@@ -14,7 +14,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Behaviours
 {
-    class ConfiguredScriptBehaviour : IBehaviour
+    public class ConfiguredScriptBehaviour : IBehaviour
     {
         readonly string deploymentStage;
         readonly ILog log;
@@ -67,6 +67,9 @@ namespace Calamari.Common.Features.Behaviours
                 // Execute the script
                 log.VerboseFormat("Executing '{0}'", scriptFile);
                 var result = scriptEngine.Execute(new Script(scriptFile), context.Variables, commandLineRunner);
+
+                if (result == null)
+                    throw new CommandException($"Script '{scriptFile}' returned null. Deployment terminated.");
 
                 if (result.ExitCode != 0)
                 {

@@ -34,7 +34,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [RequiresWindowsServer2012OrAbove]
         public void ShouldDeployAVhd()
         {
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
@@ -75,10 +75,10 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         [Test]
         [RequiresAdmin]
-        [RequiresWindowsServer2012OrAbove]        
+        [RequiresWindowsServer2012OrAbove]
         public void ShouldDeployAVhdWithTwoPartitions()
         {
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
@@ -130,7 +130,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [RequiresWindowsServer2012OrAbove]
         public void ShouldBlockMountAndOverrideAppPath()
         {
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";

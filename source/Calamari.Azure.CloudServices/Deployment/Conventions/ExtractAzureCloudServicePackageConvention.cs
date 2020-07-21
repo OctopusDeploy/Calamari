@@ -10,8 +10,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Util;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
-using Calamari.Util;
 
 namespace Calamari.Azure.CloudServices.Deployment.Conventions
 {

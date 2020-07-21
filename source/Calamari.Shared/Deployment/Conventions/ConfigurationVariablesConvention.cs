@@ -1,59 +1,23 @@
-﻿using System.Linq;
-using Calamari.Common.Commands;
-using Calamari.Common.Features.ConfigurationVariables;
-using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
+﻿using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
 
 namespace Calamari.Deployment.Conventions
 {
     public class ConfigurationVariablesConvention : IInstallConvention
     {
-        readonly ICalamariFileSystem fileSystem;
-        readonly IConfigurationVariablesReplacer replacer;
+        readonly ConfigurationVariablesBehaviour configurationVariablesBehaviour;
 
-        public ConfigurationVariablesConvention(ICalamariFileSystem fileSystem, IConfigurationVariablesReplacer replacer)
+        public ConfigurationVariablesConvention(ConfigurationVariablesBehaviour configurationVariablesBehaviour)
         {
-            this.fileSystem = fileSystem;
-            this.replacer = replacer;
+            this.configurationVariablesBehaviour = configurationVariablesBehaviour;
         }
 
         public void Install(RunningDeployment deployment)
         {
-            if (deployment.Variables.GetFlag(SpecialVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings) == false)
+            if (configurationVariablesBehaviour.IsEnabled(deployment))
             {
-                return;
+                configurationVariablesBehaviour.Execute(deployment).RunSynchronously();
             }
-
-            var appliedAsTransforms = deployment.Variables.GetStrings(SpecialVariables.AppliedXmlConfigTransforms, '|');
-
-            Log.Verbose("Looking for appSettings, applicationSettings, and connectionStrings in any .config files");
-
-            if (deployment.Variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors))
-                Log.Info("Variable replacement errors are supressed because the variable Octopus.Action.Package.IgnoreVariableReplacementErrors has been set.");
-
-            foreach (var configurationFile in MatchingFiles(deployment))
-            {
-                if (appliedAsTransforms.Contains(configurationFile))
-                {
-                    Log.VerboseFormat("File '{0}' was interpreted as an XML configuration transform; variable substitution won't be attempted.", configurationFile);
-                    continue;
-                }
-
-                replacer.ModifyConfigurationFile(configurationFile, deployment.Variables);
-            }
-        }
-
-        private string[] MatchingFiles(RunningDeployment deployment)
-        {
-            var files = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, "*.config");
-
-            var additional = deployment.Variables.GetStrings(ActionVariables.AdditionalPaths)
-                .Where(s => !string.IsNullOrWhiteSpace(s))
-                .SelectMany(p => fileSystem.EnumerateFilesRecursively(p, "*.config"));
-
-
-            return files.Concat(additional).Distinct().ToArray();
         }
     }
 }
