@@ -16,7 +16,7 @@ namespace Calamari.Deployment.Conventions
         {
             if (jsonConfigurationVariablesBehaviour.IsEnabled(deployment))
             {
-                jsonConfigurationVariablesBehaviour.Execute(deployment).RunSynchronously();
+                jsonConfigurationVariablesBehaviour.Execute(deployment).Wait();
             }
         }
     }

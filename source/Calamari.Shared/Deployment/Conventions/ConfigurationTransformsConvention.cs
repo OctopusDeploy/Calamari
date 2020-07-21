@@ -17,7 +17,7 @@ namespace Calamari.Deployment.Conventions
         {
             if (configurationTransformsBehaviour.IsEnabled(deployment))
             {
-                configurationTransformsBehaviour.Execute(deployment).RunSynchronously();
+                configurationTransformsBehaviour.Execute(deployment).Wait();
             }
         }
     }
