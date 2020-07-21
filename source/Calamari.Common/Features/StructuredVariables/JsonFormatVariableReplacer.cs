@@ -4,16 +4,11 @@ using System.Linq;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Common.Features.StructuredVariables
 {
-    public interface IJsonFormatVariableReplacer : IFileFormatVariableReplacer
-    {
-    }
-
-    public class JsonFormatVariableReplacer : IJsonFormatVariableReplacer
+    public class JsonFormatVariableReplacer : IFileFormatVariableReplacer
     {
         readonly ICalamariFileSystem fileSystem;
 
@@ -22,27 +17,22 @@ namespace Calamari.Common.Features.StructuredVariables
             this.fileSystem = fileSystem;
         }
 
-        public string FileFormatName => "JSON";
+        public string FileFormatName => StructuredConfigVariablesFileFormats.Json;
 
-        public bool TryModifyFile(string filePath, IVariables variables)
+        public bool IsBestReplacerForFileName(string fileName)
         {
-            JToken root;
-            try
-            {
-                root = LoadJson(filePath);
-            }
-            catch (JsonReaderException)
-            {
-                // File was not valid JSON.
-                return false;
-            }
+            return fileName.EndsWith(".json") || fileName.EndsWith(".js");
+        }
+
+        public void ModifyFile(string filePath, IVariables variables)
+        {
+            JToken root = LoadJson(filePath);
 
             var map = new JsonUpdateMap();
             map.Load(root);
             map.Update(variables);
 
             SaveJson(filePath, root);
-            return true;
         }
 
         JToken LoadJson(string jsonFilePath)
