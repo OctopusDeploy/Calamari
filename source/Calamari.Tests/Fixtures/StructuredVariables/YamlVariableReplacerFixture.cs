@@ -126,5 +126,27 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "application.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
+        public void OutputShouldBeStringEqualToVariableWhenInputTypeDoesNotMatch()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    // Note: although these replacements are unquoted in the output to match input style,
+                                    // YAML strings do not require quotes, so they still string-equal to our variables.
+                                    { "null2num", "33" },
+                                    { "null2str", "bananas" },
+                                    { "null2obj", @"{""x"": 1}" },
+                                    { "null2arr", "[3, 2]" },
+                                    { "bool2null", "null" },
+                                    { "bool2num", "52" },
+                                    { "num2null", "null" },
+                                    { "num2bool", "true" },
+                                    { "num2arr", "[1]" },
+                                    { "str2bool", "false" }
+                                },
+                                "types-fall-back.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
     }
 }
