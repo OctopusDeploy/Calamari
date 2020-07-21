@@ -179,5 +179,16 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "types-fall-back.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
+        public void ShouldReplaceWithColonInName()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "spring:h2:console:enabled", "false" }
+                                },
+                                "application.colon-in-name.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
     }
 }
