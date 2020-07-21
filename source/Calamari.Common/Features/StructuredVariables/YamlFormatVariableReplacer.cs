@@ -52,7 +52,6 @@ namespace Calamari.Common.Features.StructuredVariables
 
                             if (node is YamlNode<Scalar> scalar
                                 && variablesByKey.TryGetValue(scalar.Path, out var newValue))
-                                // TODO ZDY: Preserve input document types for explicit tags, ambiguous inputs - currently preserves decorations only
                                 outputEvents.Add(scalar.Event.ReplaceValue(newValue()));
                             else if (node is YamlNode<MappingStart> mappingStart
                                      && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))

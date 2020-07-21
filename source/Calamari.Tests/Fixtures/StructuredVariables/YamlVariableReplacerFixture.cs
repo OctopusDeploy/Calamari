@@ -21,11 +21,23 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             this.Assent(Replace(new CalamariVariables
                                 {
                                     { "server:ports:0", "8080" },
-                                    { "Spring:H2:Console:Enabled", "false" },
+                                    { "spring:datasource:url", "" },
+                                    { "spring:h2:console:enabled", "false" },
                                     { "spring:loggers:1:name", "rolling-file" },
                                     { "environment", "production" }
                                 },
                                 "application.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
+
+        [Test]
+        public void ShouldMatchAndReplaceIgnoringCase()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "Spring:h2:Console:enabled", "false" }
+                                },
+                                "application.mixed-case.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
 
@@ -143,6 +155,28 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "Server:Ports:0", "#{Server.Port}" }
                                 },
                                 "application.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
+
+        [Test]
+        public void OutputShouldBeStringEqualToVariableWhenInputTypeDoesNotMatch()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    // Note: although these replacements are unquoted in the output to match input style,
+                                    // YAML strings do not require quotes, so they still string-equal to our variables.
+                                    { "null2num", "33" },
+                                    { "null2str", "bananas" },
+                                    { "null2obj", @"{""x"": 1}" },
+                                    { "null2arr", "[3, 2]" },
+                                    { "bool2null", "null" },
+                                    { "bool2num", "52" },
+                                    { "num2null", "null" },
+                                    { "num2bool", "true" },
+                                    { "num2arr", "[1]" },
+                                    { "str2bool", "false" }
+                                },
+                                "types-fall-back.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
 
