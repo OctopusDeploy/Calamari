@@ -145,5 +145,16 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "application.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
+        public void ShouldPreserveDirectives()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "spring:h2:console:enabled", "true" }
+                                },
+                                "application.directives.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
     }
 }
