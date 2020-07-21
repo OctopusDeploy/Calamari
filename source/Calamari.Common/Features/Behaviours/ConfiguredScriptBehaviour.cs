@@ -68,9 +68,6 @@ namespace Calamari.Common.Features.Behaviours
                 log.VerboseFormat("Executing '{0}'", scriptFile);
                 var result = scriptEngine.Execute(new Script(scriptFile), context.Variables, commandLineRunner);
 
-                if (result == null)
-                    throw new CommandException($"Script '{scriptFile}' returned null. Deployment terminated.");
-
                 if (result.ExitCode != 0)
                 {
                     throw new CommandException($"{deploymentStage} script returned non-zero exit code: {result.ExitCode}");
