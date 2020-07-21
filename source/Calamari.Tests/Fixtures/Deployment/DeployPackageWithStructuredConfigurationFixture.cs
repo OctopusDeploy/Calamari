@@ -47,7 +47,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
                 Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, YamlFileName);
-                Variables.AddFlag(StructuredConfigVariablesService.FeatureToggleVariableName, true);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -66,7 +66,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
                 Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "doesnt-exist.json");
-                Variables.AddFlag(StructuredConfigVariablesService.FeatureToggleVariableName, true);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -83,7 +83,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
                 Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "values.config");
-                Variables.AddFlag(StructuredConfigVariablesService.FeatureToggleVariableName, true);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -102,7 +102,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
                 Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, $"{JsonFileName}\n{YamlFileName}");
-                Variables.AddFlag(StructuredConfigVariablesService.FeatureToggleVariableName, true);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -123,7 +123,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
                 Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "values.*");
-                Variables.AddFlag(StructuredConfigVariablesService.FeatureToggleVariableName, true);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -146,7 +146,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
                 Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, ".");
-                Variables.AddFlag(StructuredConfigVariablesService.FeatureToggleVariableName, true);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);

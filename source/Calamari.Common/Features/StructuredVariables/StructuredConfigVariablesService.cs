@@ -6,7 +6,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Common.Features.StructuredVariables
 {
@@ -17,8 +16,6 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public class StructuredConfigVariablesService : IStructuredConfigVariablesService
     {
-        public static readonly string FeatureToggleVariableName = "Octopus.Action.StructuredConfigurationFeatureFlag";
-
         readonly IFileFormatVariableReplacer[] replacers;
         readonly IFileFormatVariableReplacer jsonReplacer;
         readonly ICalamariFileSystem fileSystem;
@@ -40,7 +37,7 @@ namespace Calamari.Common.Features.StructuredVariables
         public void ReplaceVariables(RunningDeployment deployment)
         {
             var targets = deployment.Variables.GetPaths(PackageVariables.JsonConfigurationVariablesTargets);
-            var supportNonJsonReplacement = deployment.Variables.GetFlag(FeatureToggleVariableName);
+            var supportNonJsonReplacement = deployment.Variables.GetFlag(ActionVariables.StructuredConfigurationFeatureFlag);
             
             foreach (var target in targets)
             {
@@ -88,7 +85,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 return jsonReplacer;
             }
 
-            log.Info($"Feature toggle flag {FeatureToggleVariableName} detected. Trying replacers for all supported file formats.");
+            log.Info($"Feature toggle flag {ActionVariables.StructuredConfigurationFeatureFlag} detected. Trying replacers for all supported file formats.");
             
             // TODO: when we support explicit specification of file formats, handle that here.
 
