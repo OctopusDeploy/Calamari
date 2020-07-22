@@ -80,9 +80,10 @@ namespace Calamari.Azure.ServiceFabric.Commands
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
             var replacer = new ConfigurationVariablesReplacer(variables, log);
-            var structuredConfigVariableReplacer = new StructuredConfigVariableReplacer(new JsonFormatVariableReplacer(fileSystem, log), new YamlFormatVariableReplacer(), log);
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
+            var structuredConfigFileService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
-            var structuredConfigFileService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem, log);
 
             var conventions = new List<IConvention>
             {
@@ -94,7 +95,7 @@ namespace Calamari.Azure.ServiceFabric.Commands
 
                 // Standard variable and transform replacements
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, ConfigurationTransformer.FromVariables(variables, log), transformFileLocator, log)),
+                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, configurationTransformer, transformFileLocator, log)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, log)),
                 new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(structuredConfigFileService)),
 

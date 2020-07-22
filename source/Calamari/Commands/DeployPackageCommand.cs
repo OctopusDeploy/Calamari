@@ -75,9 +75,10 @@ namespace Calamari.Commands
             var featureClasses = new List<IFeature>();
 
             var replacer = new ConfigurationVariablesReplacer(variables, log);
-            var structuredConfigVariableReplacer = new StructuredConfigVariableReplacer(new JsonFormatVariableReplacer(fileSystem, log), new YamlFormatVariableReplacer(), log);
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
+            var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
-            var structuredConfigVariablesService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem, log);
             var embeddedResources = new AssemblyEmbeddedResources();
 #if IIS_SUPPORT
             var iis = new InternetInformationServer();
@@ -100,7 +101,7 @@ namespace Calamari.Commands
                 new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner)),
                 new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, ConfigurationTransformer.FromVariables(variables, log), transformFileLocator, log)),
+                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, configurationTransformer, transformFileLocator, log)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, log)),
                 new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(structuredConfigVariablesService)),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),

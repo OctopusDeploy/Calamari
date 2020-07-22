@@ -16,27 +16,34 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public class StructuredConfigVariablesService : IStructuredConfigVariablesService
     {
-        readonly IStructuredConfigVariableReplacer structuredConfigVariableReplacer;
+        readonly IFileFormatVariableReplacer[] replacers;
+        readonly IFileFormatVariableReplacer jsonReplacer;
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
         public StructuredConfigVariablesService(
-            IStructuredConfigVariableReplacer structuredConfigVariableReplacer,
+            IEnumerable<IFileFormatVariableReplacer> replacers,
             ICalamariFileSystem fileSystem,
             ILog log)
         {
-            this.structuredConfigVariableReplacer = structuredConfigVariableReplacer;
+            this.replacers = replacers.ToArray();
             this.fileSystem = fileSystem;
             this.log = log;
+
+            jsonReplacer = this.replacers.FirstOrDefault(r => r.FileFormatName == StructuredConfigVariablesFileFormats.Json)
+                           ?? throw new Exception("No JSON replacer was supplied. A JSON replacer is required as a fallback.");
         }
 
         public void ReplaceVariables(RunningDeployment deployment)
         {
-            foreach (var target in deployment.Variables.GetPaths(PackageVariables.JsonConfigurationVariablesTargets))
+            var targets = deployment.Variables.GetPaths(PackageVariables.JsonConfigurationVariablesTargets);
+            var supportNonJsonReplacement = deployment.Variables.GetFlag(ActionVariables.StructuredConfigurationFeatureFlag);
+            
+            foreach (var target in targets)
             {
                 if (fileSystem.DirectoryExists(target))
                 {
-                    log.Warn($"Skipping JSON variable replacement on '{target}' because it is a directory.");
+                    log.Warn($"Skipping structured variable replacement on '{target}' because it is a directory.");
                     continue;
                 }
 
@@ -48,10 +55,12 @@ namespace Calamari.Common.Features.StructuredVariables
                     continue;
                 }
 
-                foreach (var file in matchingFiles)
+                foreach (var filePath in matchingFiles)
                 {
-                    log.Info($"Performing JSON variable replacement on '{file}'");
-                    structuredConfigVariableReplacer.ModifyFile(file, deployment.Variables);
+                    var replacer = GetReplacerForFile(filePath, supportNonJsonReplacement);
+
+                    log.Info($"Performing structured variable replacement on '{filePath}' with file format '{replacer.FileFormatName}'");
+                    replacer.ModifyFile(filePath, deployment.Variables);
                 }
             }
         }
@@ -67,6 +76,28 @@ namespace Calamari.Common.Features.StructuredVariables
             }
 
             return files;
+        }
+
+        IFileFormatVariableReplacer GetReplacerForFile(string filePath, bool supportNonJsonReplacement)
+        {
+            if (!supportNonJsonReplacement)
+            {
+                return jsonReplacer;
+            }
+
+            log.Info($"Feature toggle flag {ActionVariables.StructuredConfigurationFeatureFlag} detected. Trying replacers for all supported file formats.");
+            
+            // TODO: when we support explicit specification of file formats, handle that here.
+
+            var replacer = replacers.FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
+            if (replacer != null)
+            {
+                log.Info($"The config file at '{filePath}' is being handled as format '{replacer.FileFormatName}' because of the filename.");
+                return replacer;
+            }
+            
+            log.Info($"The config file at '{filePath}' is being handled as format '{StructuredConfigVariablesFileFormats.Json}' as a fallback.");
+            return jsonReplacer;
         }
     }
 }

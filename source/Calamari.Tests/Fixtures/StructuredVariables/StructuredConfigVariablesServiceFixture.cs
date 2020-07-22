@@ -20,11 +20,11 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         static readonly string CurrentPath = Path.GetFullPath("/currentPath/");
         static readonly string ConfigFileInCurrentPath = Path.Combine(CurrentPath, FileName);
         static readonly string ConfigFileInAdditionalPath = Path.Combine(AdditionalPath, FileName);
-        
+
         void RunAdditionalPathsTest(
             bool fileExistsInPath, 
             bool fileExistsInAdditionalPath,
-            Action<IStructuredConfigVariableReplacer> replacerAssertions = null,
+            Action<IFileFormatVariableReplacer> replacerAssertions = null,
             Action<InMemoryLog> logAssertions = null)
         {
             var fileSystem = Substitute.For<ICalamariFileSystem>();
@@ -34,10 +34,16 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                       .Returns(fileExistsInPath ? new[]{ ConfigFileInCurrentPath } : new string[0]);
             fileSystem.EnumerateFilesWithGlob(AdditionalPath, FileName)
                       .Returns(fileExistsInAdditionalPath ? new[]{ ConfigFileInAdditionalPath } : new string[0]);
+
+            var replacer = Substitute.For<IFileFormatVariableReplacer>();
+            replacer.FileFormatName.Returns(StructuredConfigVariablesFileFormats.Json);
+            replacer.IsBestReplacerForFileName(Arg.Any<string>()).Returns(true);
             
-            var replacer = Substitute.For<IStructuredConfigVariableReplacer>();
             var log = new InMemoryLog();
-            var service = new StructuredConfigVariablesService(replacer, fileSystem, log);
+            var service = new StructuredConfigVariablesService(new []
+            {
+                replacer
+            }, fileSystem, log);
 
             var variables = new CalamariVariables();
             variables.Set(ActionVariables.AdditionalPaths, AdditionalPath);
@@ -59,7 +65,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         [Test]
         public void ReplacesVariablesInAdditionalPathIfFileMatchedInWorkingDirectory()
         {
-            void Assertions(IStructuredConfigVariableReplacer replacer)
+            void Assertions(IFileFormatVariableReplacer replacer)
             {
                 replacer.Received().ModifyFile(ConfigFileInCurrentPath, Arg.Any<IVariables>());
                 replacer.Received().ModifyFile(ConfigFileInAdditionalPath, Arg.Any<IVariables>());
@@ -71,7 +77,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         [Test]
         public void ReplacesVariablesInAdditionalPathIfFileNotMatchedInWorkingDirectory()
         {
-            void Assertions(IStructuredConfigVariableReplacer replacer)
+            void Assertions(IFileFormatVariableReplacer replacer)
             {
                 replacer.Received().ModifyFile(ConfigFileInAdditionalPath, Arg.Any<IVariables>());
             }
@@ -82,7 +88,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         [Test]
         public void DoesntReplacesVariablesInAdditionalPathIfFileNotMatchedInAdditionalPath()
         {
-            void Assertions(IStructuredConfigVariableReplacer replacer)
+            void Assertions(IFileFormatVariableReplacer replacer)
             {
                 replacer.Received().ModifyFile(ConfigFileInCurrentPath, Arg.Any<IVariables>());
             }

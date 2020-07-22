@@ -30,9 +30,9 @@ namespace Calamari.Azure.CloudServices.Commands
     [Command("deploy-azure-cloud-service", Description = "Extracts and installs an Azure Cloud-Service")]
     public class DeployAzureCloudServiceCommand : Command
     {
-        private PathToPackage pathToPackage;
+        PathToPackage pathToPackage;
         readonly ILog log;
-        private readonly IScriptEngine scriptEngine;
+        readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
         readonly ISubstituteInFiles substituteInFiles;
@@ -76,10 +76,11 @@ namespace Calamari.Azure.CloudServices.Commands
             var certificateStore = new CalamariCertificateStore();
             var cloudCredentialsFactory = new SubscriptionCloudCredentialsFactory(certificateStore);
             var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var replacer = new ConfigurationVariablesReplacer(variables, log);
-            var structuredConfigVariableReplacer = new StructuredConfigVariableReplacer(new JsonFormatVariableReplacer(fileSystem, log), new YamlFormatVariableReplacer(), log);
-            var structuredConfigVariablesService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem, log);
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
+            var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
 
             var conventions = new List<IConvention>
             {
@@ -93,7 +94,7 @@ namespace Calamari.Azure.CloudServices.Commands
                 new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfigureAzureCloudServiceConvention(account, fileSystem, cloudCredentialsFactory, cloudServiceConfigurationRetriever, certificateStore),
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, ConfigurationTransformer.FromVariables(variables, log), transformFileLocator, log)),
+                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, configurationTransformer, transformFileLocator, log)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, log)),
                 new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(structuredConfigVariablesService)),
                 new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner)),

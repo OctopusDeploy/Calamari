@@ -4,7 +4,6 @@ using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
-using FluentAssertions;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables
 {
@@ -25,8 +24,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 
             using (new TemporaryFile(temp))
             {
-                var success = replacer.TryModifyFile(temp, variables);
-                success.Should().BeTrue();
+                replacer.ModifyFile(temp, variables);
                 return File.ReadAllText(temp);
             }
         }

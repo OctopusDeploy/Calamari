@@ -54,7 +54,6 @@ namespace Calamari.Common
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
             builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
             builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
-            builder.RegisterType<StructuredConfigVariableReplacer>().As<IStructuredConfigVariableReplacer>();
             builder.RegisterType<JsonFormatVariableReplacer>().AsImplementedInterfaces();
             builder.RegisterType<YamlFormatVariableReplacer>().AsImplementedInterfaces();
             builder.RegisterType<StructuredConfigVariablesService>().AsImplementedInterfaces();
