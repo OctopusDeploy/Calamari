@@ -7,6 +7,8 @@ namespace Calamari.Common.Features.StructuredVariables
     {
         string FileFormatName { get; }
 
-        bool TryModifyFile(string filePath, IVariables variables);
+        bool IsBestReplacerForFileName(string fileName);
+
+        void ModifyFile(string filePath, IVariables variables);
     }
 }

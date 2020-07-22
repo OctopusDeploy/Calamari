@@ -7,6 +7,8 @@ namespace Calamari.Common.Plumbing.Variables
         public const string Name = "Octopus.Action.Name";
         public const string AdditionalPaths = "Octopus.Action.AdditionalPaths";
 
+        public static readonly string StructuredConfigurationFeatureFlag = "Octopus.Action.StructuredConfigurationFeatureFlag";
+
         public static string GetOutputVariableName(string actionName, string variableName)
         {
             return string.Format("Octopus.Action[{0}].Output.{1}", actionName, variableName);

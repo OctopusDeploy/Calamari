@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Tests.Helpers;
@@ -16,87 +14,40 @@ namespace Calamari.Tests.Fixtures.Conventions
     public class JsonConfigurationVariablesConventionFixture
     {
         RunningDeployment deployment;
-        IStructuredConfigVariableReplacer configVariableReplacer;
-        ICalamariFileSystem fileSystem;
-        ILog log;
-        const string StagingDirectory = "C:\\applications\\Acme\\1.0.0";
+        IStructuredConfigVariablesService service;
 
         [SetUp]
         public void SetUp()
         {
             var variables = new CalamariVariables(); 
-            variables.Set(KnownVariables.OriginalPackageDirectoryPath, TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0"));
+            service = Substitute.For<IStructuredConfigVariablesService>();
             deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), variables);
-            configVariableReplacer = Substitute.For<IStructuredConfigVariableReplacer>();
-            fileSystem = Substitute.For<ICalamariFileSystem>();
-            fileSystem.DirectoryExists(Arg.Any<string>()).Returns(false);
-            log = Substitute.For<ILog>();
         }
 
         [Test]
         public void ShouldNotRunIfVariableNotSet()
         {
-            var service = new StructuredConfigVariablesService(configVariableReplacer, fileSystem, log);
             var convention = new JsonConfigurationVariablesConvention(service);
             convention.Install(deployment);
-            configVariableReplacer.DidNotReceiveWithAnyArgs().ModifyFile(null, null);
+            service.DidNotReceiveWithAnyArgs().ReplaceVariables(deployment);
         }
 
         [Test]
-        public void ShouldFindAndCallModifyOnTargetFile()
+        public void ShouldNotRunIfVariableIsFalse()
         {
-            fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), "appsettings.environment.json")
-                .Returns(new[] {TestEnvironment.ConstructRootedPath("applications" ,"Acme", "1.0.0", "appsettings.environment.json")});
-
-            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesEnabled, "true");
-            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "appsettings.environment.json");
-            
-            var service = new StructuredConfigVariablesService(configVariableReplacer, fileSystem, log);
             var convention = new JsonConfigurationVariablesConvention(service);
+            deployment.Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, false);
             convention.Install(deployment);
-            configVariableReplacer.Received().ModifyFile(TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", "appsettings.environment.json"), deployment.Variables);
+            service.DidNotReceiveWithAnyArgs().ReplaceVariables(deployment);
         }
 
         [Test]
-        public void ShouldFindAndCallModifyOnAllTargetFiles()
+        public void ShouldRunIfVariableIsTrue()
         {
-            var targetFiles = new[]
-            {
-                "config.json",
-                "config.dev.json",
-                "config.prod.json"
-            };
-
-            fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), "config.json")
-                .Returns(new[] {targetFiles[0]}.Select(t => TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", t)));
-            fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), "config.*.json")
-                .Returns(targetFiles.Skip(1).Select(t => TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", t)));
-
-            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesEnabled, "true");
-            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, string.Join(Environment.NewLine, "config.json", "config.*.json"));
-
-            var service = new StructuredConfigVariablesService(configVariableReplacer, fileSystem, log);
             var convention = new JsonConfigurationVariablesConvention(service);
+            deployment.Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
             convention.Install(deployment);
-
-            foreach (var targetFile in targetFiles)
-            {
-                configVariableReplacer.Received()
-                    .ModifyFile(TestEnvironment.ConstructRootedPath("applications", "Acme", "1.0.0", targetFile), deployment.Variables);
-            }
-        }
-
-        [Test]
-        public void ShouldNotAttemptToRunOnDirectories()
-        {
-            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesEnabled, "true");
-            deployment.Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "approot");
-            fileSystem.DirectoryExists(Arg.Any<string>()).Returns(true);
-
-            var service = new StructuredConfigVariablesService(configVariableReplacer, fileSystem, log);
-            var convention = new JsonConfigurationVariablesConvention(service);
-            convention.Install(deployment);
-            configVariableReplacer.DidNotReceiveWithAnyArgs().ModifyFile(null, null);
+            service.Received().ReplaceVariables(deployment);
         }
     }
 }

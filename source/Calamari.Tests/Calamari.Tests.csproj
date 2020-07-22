@@ -103,6 +103,9 @@
     <None Include="Fixtures\Deployment\Packages\Acme.JsonFileOutput\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.StructuredConfigFiles\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Package\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

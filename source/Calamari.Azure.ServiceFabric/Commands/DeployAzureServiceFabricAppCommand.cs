@@ -78,10 +78,8 @@ namespace Calamari.Azure.ServiceFabric.Commands
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var structuredConfigVariableReplacer = new StructuredConfigVariableReplacer(
-                new JsonFormatVariableReplacer(fileSystem), 
-                new YamlFormatVariableReplacer());
-            var structuredConfigFileService = new StructuredConfigVariablesService(structuredConfigVariableReplacer, fileSystem, log);
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem);
+            var structuredConfigFileService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
 
