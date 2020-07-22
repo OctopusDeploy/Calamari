@@ -27,7 +27,7 @@ namespace Sashimi.Tests.Shared.Server
 {
     class TestCalamariCommandBuilder<TCalamariProgram> : ICalamariCommandBuilder where TCalamariProgram : CalamariFlavourProgram
     {
-        const string CalamaribinariesLocationEnvironmentVariable = "CalamariBinaries_RelativePath";
+        const string CalamariBinariesLocationEnvironmentVariable = "CalamariBinaries_RelativePath";
 
         static class InProcOutProcOverride
         {
@@ -300,7 +300,7 @@ namespace Sashimi.Tests.Shared.Server
             if (TestEnvironment.IsCI)
             {
                 //This is where Teamcity puts the Calamari binaries
-                var calamaribinariesFolder = Environment.GetEnvironmentVariable(CalamaribinariesLocationEnvironmentVariable);
+                var calamaribinariesFolder = Environment.GetEnvironmentVariable(CalamariBinariesLocationEnvironmentVariable);
                 return AddExeExtensionIfNecessary(Path.GetFullPath(Path.Combine(sashimiTestFolder, calamaribinariesFolder, calamariFlavour)));
             }
 

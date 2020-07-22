@@ -134,7 +134,7 @@ Task("PublishCalamariProjects")
 });
 
 Task("PublishSashimiTestProjects")
-   .IsDependentOn("Build")
+    .IsDependentOn("Build")
     .Does(() => {
         var projects = GetFiles("./source/**/Sashimi.*.Tests.csproj");
 		foreach(var project in projects)
