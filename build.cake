@@ -133,7 +133,31 @@ Task("PublishCalamariProjects")
         }
 });
 
+Task("PublishSashimiTestProjects")
+   .IsDependentOn("Build")
+    .Does(() => {
+        var projects = GetFiles("./source/**/Sashimi.*Tests*.csproj");
+		foreach(var project in projects)
+        {
+            var sashimiFlavour = project.GetFilenameWithoutExtension().ToString();
+
+                void RunPublish() {
+                     DotNetCorePublish(project.FullPath, new DotNetCorePublishSettings
+		    	    {
+		    	    	Configuration = configuration,
+                        OutputDirectory = $"{publishDir}/{sashimiFlavour}"
+		    	    });
+                }
+
+                RunPublish();
+
+            Console.WriteLine($"{publishDir}/{sashimiFlavour}");
+            Zip($"{publishDir}{sashimiFlavour}", $"{artifactsDir}{sashimiFlavour}.zip");
+        }
+});
+
 Task("PackSashimi")
+    .IsDependentOn("PublishSashimiTestProjects")
     .IsDependentOn("PublishCalamariProjects")
     .Does(() =>
 {
