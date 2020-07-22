@@ -13,7 +13,7 @@ namespace Sashimi.Aws.Tests.CloudFormation
     public class CloudFormationActionHandlerFixture
     {
         const string AwsStackRole = "arn:aws:iam::968802670493:role/e2e_buckets";
-        // BucketName must use the following prefix, otherwise the above stack role will not have permission to access 
+        // BucketName must use the following prefix, otherwise the above stack role will not have permission to access
         const string ValidBucketNamePrefix = "cfe2e-";
         const string StackNamePrefix = "E2ETestStack-";
         const string TransformIncludeLocation = "s3://octopus-e2e-tests/permanent/tags.json";
@@ -42,7 +42,7 @@ namespace Sashimi.Aws.Tests.CloudFormation
                             .WithAwsRegion(AwsRegion)
                             .WithStackRole(AwsStackRole)
                             .WithAwsTemplateInlineSource(template, null);
-                        
+
                         context.Variables.Add(AwsSpecialVariables.Action.Aws.WaitForCompletion, bool.TrueString);
                     })
                     .Execute(false);
@@ -98,7 +98,7 @@ namespace Sashimi.Aws.Tests.CloudFormation
 
             var packageFileName = CreateNugetPackage($"{nameof(RunCloudFormation_PackageWithoutParameters)}", tempFolderPath);
             var pathToPackage = Path.Combine(tempFolderPath, packageFileName);
-            
+
             var result = ActionHandlerTestBuilder.Create<AwsRunCloudFormationActionHandler, Calamari.Aws.Program>()
                 .WithArrange(context =>
                 {
@@ -160,12 +160,12 @@ namespace Sashimi.Aws.Tests.CloudFormation
 
             Directory.Delete(tempFolderPath, true);
         }
-        
+
         [Test]
         public void RunCloudFormation_ChangeSet()
         {
             var bucketName = $"{ValidBucketNamePrefix}{UniqueName.Generate()}";
-            var pathToPackage = TestEnvironment.GetTestPath(@"Packages\CloudFormationS3.1.0.0.nupkg");
+            var pathToPackage = TestEnvironment.GetTestPath(@"Packages/CloudFormationS3.1.0.0.nupkg");
 
             // create bucket
             CreateBucket(stackName, bucketName, pathToPackage);
@@ -252,13 +252,13 @@ namespace Sashimi.Aws.Tests.CloudFormation
                         .WithAwsTemplatePackageSource("bucket.json", "bucket-parameters.json")
                         .WithCloudFormationChangeSets(deferExecution: true)
                         .WithIamCapabilities(new List<string> { "CAPABILITY_IAM"});
-                            
+
                     context.Variables.Add("BucketName", bucketName);
                     context.Variables.Add("TransformIncludeLocation", TransformIncludeLocation);
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.WaitForCompletion, bool.TrueString);
                 })
                 .Execute();
-            
+
             return (result.OutputVariables["AwsOutputs[ChangesetId]"].Value, result.OutputVariables["AwsOutputs[StackId]"].Value);
         }
 
