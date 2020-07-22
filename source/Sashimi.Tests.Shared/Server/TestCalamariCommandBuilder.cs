@@ -264,7 +264,7 @@ namespace Sashimi.Tests.Shared.Server
 
                 ExecutableHelper.AddExecutePermission(calamariFullPath);
 
-                var commandLine = new CommandLine(calamariFullPath);
+                var commandLine = CreateCommandLine(calamariFullPath);
                 foreach (var argument in args)
                     commandLine = commandLine.Argument(argument);
 
@@ -290,6 +290,18 @@ namespace Sashimi.Tests.Shared.Server
                     outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
                     serverInMemoryLog.ToString());
             }
+        }
+
+        static CommandLine CreateCommandLine(string calamariFullPath)
+        {
+            if (!CalamariEnvironment.IsRunningOnWindows && calamariFullPath.EndsWith(".exe"))
+            {
+                var commandLine = new CommandLine("mono");
+                commandLine.Argument(calamariFullPath);
+                return commandLine;
+            }
+
+            return new CommandLine(calamariFullPath);
         }
 
         string GetOutProcCalamariExePath()
