@@ -57,6 +57,7 @@ namespace Calamari.Common
             builder.RegisterType<JsonFormatVariableReplacer>().AsImplementedInterfaces();
             builder.RegisterType<YamlFormatVariableReplacer>().AsImplementedInterfaces();
             builder.RegisterType<StructuredConfigVariablesService>().AsImplementedInterfaces();
+            builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
