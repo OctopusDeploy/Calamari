@@ -77,11 +77,7 @@ namespace Calamari.Azure.CloudServices.Commands
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
             var transformFileLocator = new TransformFileLocator(fileSystem);
             var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var allFileFormatReplacers = new IFileFormatVariableReplacer[]
-            {
-                new JsonFormatVariableReplacer(fileSystem),
-                new YamlFormatVariableReplacer()
-            };
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem);
             var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
 
             var conventions = new List<IConvention>

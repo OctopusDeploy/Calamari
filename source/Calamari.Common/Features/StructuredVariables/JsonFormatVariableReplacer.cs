@@ -21,7 +21,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public bool IsBestReplacerForFileName(string fileName)
         {
-            return fileName.EndsWith(".json") || fileName.EndsWith(".js");
+            return fileName.EndsWith(".json");
         }
 
         public void ModifyFile(string filePath, IVariables variables)

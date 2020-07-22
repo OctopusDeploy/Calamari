@@ -71,11 +71,7 @@ namespace Calamari.Commands.Java
 
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
-            var allFileFormatReplacers = new IFileFormatVariableReplacer[]
-            {
-                new JsonFormatVariableReplacer(fileSystem),
-                new YamlFormatVariableReplacer()
-            };
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem);
             var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
             var jarTools = new JarTool(commandLineRunner, log, variables);
             var packageExtractor = new JarPackageExtractor(jarTools);
