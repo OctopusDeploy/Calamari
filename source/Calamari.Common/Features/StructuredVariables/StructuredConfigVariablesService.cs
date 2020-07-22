@@ -59,8 +59,9 @@ namespace Calamari.Common.Features.StructuredVariables
                 {
                     var replacer = GetReplacerForFile(filePath, supportNonJsonReplacement);
 
-                    log.Info($"Performing structured variable replacement on '{filePath}' with file format '{replacer.FileFormatName}'");
+                    log.Verbose($"Performing structured variable replacement on '{filePath}' with file format '{replacer.FileFormatName}'");
                     replacer.ModifyFile(filePath, deployment.Variables);
+                    log.Info($"Completed structured variable replacement on '{filePath}' with file format '{replacer.FileFormatName}'");
                 }
             }
         }
@@ -92,11 +93,11 @@ namespace Calamari.Common.Features.StructuredVariables
             var replacer = replacers.FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
             if (replacer != null)
             {
-                log.Info($"The config file at '{filePath}' is being handled as format '{replacer.FileFormatName}' because of the filename.");
+                log.Verbose($"The config file at '{filePath}' is being handled as format '{replacer.FileFormatName}' because of the filename.");
                 return replacer;
             }
             
-            log.Info($"The config file at '{filePath}' is being handled as format '{StructuredConfigVariablesFileFormats.Json}' as a fallback.");
+            log.Verbose($"The config file at '{filePath}' is being handled as format '{jsonReplacer.FileFormatName}' as a fallback.");
             return jsonReplacer;
         }
     }
