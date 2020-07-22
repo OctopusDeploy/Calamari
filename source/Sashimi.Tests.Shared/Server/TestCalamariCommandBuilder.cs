@@ -301,19 +301,19 @@ namespace Sashimi.Tests.Shared.Server
             {
                 //This is where Teamcity puts the Calamari binaries
                 var calamaribinariesFolder = Environment.GetEnvironmentVariable(CalamaribinariesLocationEnvironmentVariable);
-                return AddExeIfNecessary(Path.GetFullPath(Path.Combine(sashimiTestFolder, calamaribinariesFolder, calamariFlavour)));
+                return AddExeExtensionIfNecessary(Path.GetFullPath(Path.Combine(sashimiTestFolder, calamaribinariesFolder, calamariFlavour)));
             }
 
             //Running locally - change these to your liking
-            var configuration = "Debug";
-            var targetFramework = "net452";
-            var runtime = "win-x64";
+            var configuration = "Debug"; //Debug;Release
+            var targetFramework = "net452"; //net452;netcoreapp3.1
+            var runtime = "win-x64"; //win-x64;linux-x64;osx-x64;linux-arm;linux-arm64
 
             //When running out of process locally, always publish so we get something runnable for NetCore
             var calamariProjectFolder = Path.GetFullPath(Path.Combine(sashimiTestFolder, "../../../..", calamariFlavour));
             DotNetPublish(calamariProjectFolder, configuration, targetFramework, runtime);
 
-            return AddExeIfNecessary(Path.Combine(calamariProjectFolder, "bin", "Debug", targetFramework, runtime, "publish", calamariFlavour));
+            return AddExeExtensionIfNecessary(Path.Combine(calamariProjectFolder, "bin", "Debug", targetFramework, runtime, "publish", calamariFlavour));
 
             void DotNetPublish(string calamariProjectFolder, string configuration, string targetFramework, string runtime)
             {
@@ -329,7 +329,7 @@ namespace Sashimi.Tests.Shared.Server
                     throw new Exception(stdOut.ToString() + stdError);
             }
 
-            string AddExeIfNecessary(string exePath)
+            string AddExeExtensionIfNecessary(string exePath)
             {
                 if (File.Exists(exePath))
                     return exePath;
@@ -338,7 +338,7 @@ namespace Sashimi.Tests.Shared.Server
                 if (File.Exists(withExeExtension))
                     return withExeExtension;
 
-                throw new Exception($"Calamari exe doesn't exist on disk: '{exePath}'");
+                throw new Exception($"Calamari exe doesn't exist on disk: '{exePath}(.exe)'");
             }
         }
 
