@@ -162,12 +162,14 @@ namespace Calamari.Tests.Fixtures.Deployment
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
                 Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "*.*");
+                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "*.json");
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
+                
                 result.AssertFailure();
+                result.AssertErrorOutput("Unterminated string. Expected delimiter: \". Path '', line 3, position 1.");
             }
         }
         
@@ -183,6 +185,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
+                result.AssertErrorOutput("Newtonsoft.Json.JsonReaderException");
             }
         }
 
