@@ -47,8 +47,8 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 
             var variables = new CalamariVariables();
             variables.Set(ActionVariables.AdditionalPaths, AdditionalPath);
-            variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-            variables.Set(PackageVariables.JsonConfigurationVariablesTargets, FileName);
+            variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+            variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, FileName);
             variables.Set(PackageVariables.CustomInstallationDirectory, CurrentPath);
 
             var deployment = new RunningDeployment(CurrentPath, variables)

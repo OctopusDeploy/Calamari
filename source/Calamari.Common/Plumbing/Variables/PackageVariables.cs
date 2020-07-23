@@ -17,8 +17,6 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string SubstituteInFilesEnabled = "Octopus.Action.SubstituteInFiles.Enabled";
         public static readonly string SubstituteInFilesTargets = "Octopus.Action.SubstituteInFiles.TargetFiles";
         public static readonly string PackageCollection = "Octopus.Action.Package";
-        public static readonly string JsonConfigurationVariablesEnabled = "Octopus.Action.Package.JsonConfigurationVariablesEnabled";
-        public static readonly string JsonConfigurationVariablesTargets = "Octopus.Action.Package.JsonConfigurationVariablesTargets";
 
         public static string IndexedPackageId(string packageReferenceName)
         {

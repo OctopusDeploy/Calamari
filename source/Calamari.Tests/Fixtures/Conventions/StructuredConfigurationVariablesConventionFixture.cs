@@ -11,7 +11,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Conventions
 {
     [TestFixture]
-    public class JsonConfigurationVariablesConventionFixture
+    public class StructuredConfigurationVariablesConventionFixture
     {
         RunningDeployment deployment;
         IStructuredConfigVariablesService service;
@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotRunIfVariableNotSet()
         {
-            var convention = new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(service));
+            var convention = new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(service));
             convention.Install(deployment);
             service.DidNotReceiveWithAnyArgs().ReplaceVariables(deployment);
         }
@@ -35,8 +35,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotRunIfVariableIsFalse()
         {
-            var convention = new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(service));
-            deployment.Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, false);
+            var convention = new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(service));
+            deployment.Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, false);
             convention.Install(deployment);
             service.DidNotReceiveWithAnyArgs().ReplaceVariables(deployment);
         }
@@ -44,8 +44,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldRunIfVariableIsTrue()
         {
-            var convention = new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(service));
-            deployment.Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
+            var convention = new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(service));
+            deployment.Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
             convention.Install(deployment);
             service.Received().ReplaceVariables(deployment);
         }
