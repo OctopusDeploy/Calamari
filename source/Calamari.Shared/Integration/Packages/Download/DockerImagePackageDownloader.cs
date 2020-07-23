@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -11,7 +12,6 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.EmbeddedResources;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download

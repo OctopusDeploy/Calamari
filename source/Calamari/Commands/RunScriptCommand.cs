@@ -7,6 +7,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -17,8 +20,6 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.ConfigurationVariables;
 
 namespace Calamari.Commands
 {
@@ -62,10 +63,10 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
 
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
-            var transformFileLocator = new TransformFileLocator(fileSystem);
-            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem);
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            var transformFileLocator = new TransformFileLocator(fileSystem, log);
+            var replacer = new ConfigurationVariablesReplacer(variables, log);
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
             var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
 
             ValidateArguments();
@@ -78,9 +79,9 @@ namespace Calamari.Commands
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d, ScriptFileTargetFactory(d).ToList())),
                 // Substitute any user-specified files
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
-                new ConfigurationVariablesConvention(fileSystem, replacer),
-                new JsonConfigurationVariablesConvention(structuredConfigVariablesService),
+                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, configurationTransformer, transformFileLocator, log)),
+                new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, log)),
+                new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(structuredConfigVariablesService)),
                 new ExecuteScriptConvention(scriptEngine, commandLineRunner)
             };
 

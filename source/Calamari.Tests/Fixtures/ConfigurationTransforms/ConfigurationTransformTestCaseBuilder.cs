@@ -6,14 +6,10 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Assent;
-using Assent.Namers;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NSubstitute.Core;
@@ -93,7 +89,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             CollectionAssert.AreEquivalent(transformFiles, mostRecentResult);
             return this;
         }
-            
+
         private bool FilesMatch(CallInfo callInfo, string file)
         {
             var filePatterns = callInfo.ArgAt<string[]>(1);
@@ -121,7 +117,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             var realFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             fileSystem.GetRelativePath(Arg.Any<string>(), Arg.Any<string>())
                 .Returns(x => GetRelativePath(x, realFileSystem));
-            var transformFileLocator = new TransformFileLocator(fileSystem);
+            var transformFileLocator = new TransformFileLocator(fileSystem, new InMemoryLog());
             var transform = new XmlConfigTransformDefinition(transformDefinition);
 
             var deploymentVariables = new CalamariVariables();
@@ -248,7 +244,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                     }
                 }
             }
-            
+
             testFixture.Assent(results.ToString(), TestEnvironment.AssentConfiguration, testName, filePath);
         }
 

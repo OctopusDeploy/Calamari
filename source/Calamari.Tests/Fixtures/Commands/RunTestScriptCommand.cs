@@ -6,8 +6,6 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 
 namespace Calamari.Tests.Fixtures.Commands
 {
@@ -35,7 +33,7 @@ namespace Calamari.Tests.Fixtures.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-            
+
             var runner = new CommandLineRunner(ConsoleLog.Instance, variables);
             Log.VerboseFormat("Executing '{0}'", scriptFile);
             var result = scriptEngine.Execute(new Script(scriptFile, ""), variables, runner);

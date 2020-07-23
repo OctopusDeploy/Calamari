@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Calamari.Integration.ConfigurationTransforms
+namespace Calamari.Common.Features.ConfigurationTransforms
 {
     public class XmlConfigTransformDefinition
     {

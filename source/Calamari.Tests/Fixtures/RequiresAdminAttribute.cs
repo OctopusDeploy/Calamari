@@ -1,8 +1,6 @@
 using System;
 using System.Security.Principal;
 using Calamari.Common.Plumbing;
-using Calamari.Deployment;
-using Calamari.Integration.Scripting;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 

@@ -6,6 +6,11 @@ using Calamari.Azure.CloudServices.Integration;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Features.ConfigurationVariables;
+using Calamari.Common.Features.Deployment;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -19,18 +24,15 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Certificates;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.ConfigurationVariables;
-using Calamari.Integration.EmbeddedResources;
 
 namespace Calamari.Azure.CloudServices.Commands
 {
     [Command("deploy-azure-cloud-service", Description = "Extracts and installs an Azure Cloud-Service")]
     public class DeployAzureCloudServiceCommand : Command
     {
-        private PathToPackage pathToPackage;
+        PathToPackage pathToPackage;
         readonly ILog log;
-        private readonly IScriptEngine scriptEngine;
+        readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
         readonly ISubstituteInFiles substituteInFiles;
@@ -74,10 +76,10 @@ namespace Calamari.Azure.CloudServices.Commands
             var certificateStore = new CalamariCertificateStore();
             var cloudCredentialsFactory = new SubscriptionCloudCredentialsFactory(certificateStore);
             var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
-            var transformFileLocator = new TransformFileLocator(fileSystem);
-            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem);
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            var transformFileLocator = new TransformFileLocator(fileSystem, log);
+            var replacer = new ConfigurationVariablesReplacer(variables, log);
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
             var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
 
             var conventions = new List<IConvention>
@@ -88,20 +90,20 @@ namespace Calamari.Azure.CloudServices.Commands
                 new EnsureCloudServicePackageIsCtpFormatConvention(fileSystem),
                 new ExtractAzureCloudServicePackageConvention(log, fileSystem),
                 new ChooseCloudServiceConfigurationFileConvention(fileSystem),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.PreDeploy, log, fileSystem, scriptEngine, commandLineRunner)),
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfigureAzureCloudServiceConvention(account, fileSystem, cloudCredentialsFactory, cloudServiceConfigurationRetriever, certificateStore),
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
-                new ConfigurationVariablesConvention(fileSystem, replacer),
-                new JsonConfigurationVariablesConvention(structuredConfigVariablesService),
-                new PackagedScriptConvention(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, configurationTransformer, transformFileLocator, log)),
+                new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, log)),
+                new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(structuredConfigVariablesService)),
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner)),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.Deploy, log, fileSystem, scriptEngine, commandLineRunner)),
                 new RePackageCloudServiceConvention(fileSystem),
                 new UploadAzureCloudServicePackageConvention(fileSystem, azurePackageUploader, cloudCredentialsFactory),
                 new DeployAzureCloudServicePackageConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner)
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner)),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.PostDeploy, log, fileSystem, scriptEngine, commandLineRunner))
             };
 
             var deployment = new RunningDeployment(pathToPackage, variables);

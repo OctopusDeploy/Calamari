@@ -6,8 +6,6 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 
 namespace Calamari.Aws.Integration
 {
@@ -24,7 +22,7 @@ namespace Calamari.Aws.Integration
             this.log = log;
             this.variables = variables;
         }
-        
+
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
@@ -34,7 +32,7 @@ namespace Calamari.Aws.Integration
             awsEnvironmentVars.AddRange(environmentVars);
 
             return NextWrapper.ExecuteScript(
-                script, scriptSyntax, 
+                script, scriptSyntax,
                 commandLineRunner,
                 awsEnvironmentVars);
         }

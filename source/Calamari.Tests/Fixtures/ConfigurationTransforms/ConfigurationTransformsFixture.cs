@@ -1,14 +1,11 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using FluentAssertions;

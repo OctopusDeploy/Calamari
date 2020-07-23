@@ -1,7 +1,7 @@
 ﻿using System;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.StructuredVariables;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Tests.Helpers;
@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [SetUp]
         public void SetUp()
         {
-            var variables = new CalamariVariables(); 
+            var variables = new CalamariVariables();
             service = Substitute.For<IStructuredConfigVariablesService>();
             deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), variables);
         }
@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotRunIfVariableNotSet()
         {
-            var convention = new JsonConfigurationVariablesConvention(service);
+            var convention = new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(service));
             convention.Install(deployment);
             service.DidNotReceiveWithAnyArgs().ReplaceVariables(deployment);
         }
@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotRunIfVariableIsFalse()
         {
-            var convention = new JsonConfigurationVariablesConvention(service);
+            var convention = new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(service));
             deployment.Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, false);
             convention.Install(deployment);
             service.DidNotReceiveWithAnyArgs().ReplaceVariables(deployment);
@@ -44,7 +44,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldRunIfVariableIsTrue()
         {
-            var convention = new JsonConfigurationVariablesConvention(service);
+            var convention = new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(service));
             deployment.Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
             convention.Install(deployment);
             service.Received().ReplaceVariables(deployment);

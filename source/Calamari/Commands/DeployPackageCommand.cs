@@ -3,7 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Features.ConfigurationVariables;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Processes.Semaphores;
@@ -18,9 +23,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Features;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.ConfigurationVariables;
-using Calamari.Integration.EmbeddedResources;
 using Calamari.Integration.Iis;
 using Calamari.Integration.Nginx;
 
@@ -72,11 +74,11 @@ namespace Calamari.Commands
 
             var featureClasses = new List<IFeature>();
 
-            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem);
+            var replacer = new ConfigurationVariablesReplacer(variables, log);
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
             var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
-            var transformFileLocator = new TransformFileLocator(fileSystem);
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var embeddedResources = new AssemblyEmbeddedResources();
 #if IIS_SUPPORT
             var iis = new InternetInformationServer();
@@ -95,24 +97,24 @@ namespace Calamari.Commands
                 new AlreadyInstalledConvention(log, journal),
                 new DelegateInstallConvention(d => extractPackage.ExtractToApplicationDirectory(pathToPackage)),
                 new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.PreDeploy, log, fileSystem, scriptEngine, commandLineRunner)),
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner)),
                 new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
-                new ConfigurationVariablesConvention(fileSystem, replacer),
-                new JsonConfigurationVariablesConvention(structuredConfigVariablesService),
+                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, configurationTransformer, transformFileLocator, log)),
+                new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, log)),
+                new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(structuredConfigVariablesService)),
                 new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
                 new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner)),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.Deploy, log, fileSystem, scriptEngine, commandLineRunner)),
                 new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
 #if IIS_SUPPORT
                 new LegacyIisWebSiteConvention(fileSystem, iis),
 #endif
                 new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new PackagedScriptConvention(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner)),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.PostDeploy, log, fileSystem, scriptEngine, commandLineRunner)),
                 new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new RollbackScriptConvention(log, DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner),
                 new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources)

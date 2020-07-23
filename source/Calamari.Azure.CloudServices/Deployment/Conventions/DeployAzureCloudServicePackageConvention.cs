@@ -1,7 +1,6 @@
 ﻿using System.IO;
-using System.Reflection;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
@@ -9,10 +8,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 
 namespace Calamari.Azure.CloudServices.Deployment.Conventions
 {
@@ -23,7 +18,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
 
-        public DeployAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
+        public DeployAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources,
             IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
             this.fileSystem = fileSystem;
@@ -53,7 +48,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
             // The user may supply the script, to override behaviour
             if (!fileSystem.FileExists(scriptFile))
             {
-               fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(GetType().Assembly, $"{GetType().Assembly.GetName().Name}.Scripts.DeployAzureCloudService.ps1")); 
+               fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(GetType().Assembly, $"{GetType().Assembly.GetName().Name}.Scripts.DeployAzureCloudService.ps1"));
             }
 
             var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);

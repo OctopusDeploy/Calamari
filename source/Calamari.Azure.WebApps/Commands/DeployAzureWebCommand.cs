@@ -4,6 +4,10 @@ using Calamari.Azure.WebApps.Deployment.Conventions;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Features.ConfigurationVariables;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -16,8 +20,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.ConfigurationVariables;
 
 namespace Calamari.Azure.WebApps.Commands
 {
@@ -64,27 +66,27 @@ namespace Calamari.Azure.WebApps.Commands
             Log.Info("Deploying package:    " + pathToPackage);
 
             var fileSystem = new WindowsPhysicalFileSystem();
-            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem);
+            var replacer = new ConfigurationVariablesReplacer(variables, log);
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
             var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
-            var transformFileLocator = new TransformFileLocator(fileSystem);
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            var transformFileLocator = new TransformFileLocator(fileSystem, log);
 
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.PreDeploy, log, fileSystem, scriptEngine, commandLineRunner)),
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner)),
                 new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
-                new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
-                new ConfigurationVariablesConvention(fileSystem, replacer),
-                new JsonConfigurationVariablesConvention(structuredConfigVariablesService),
-                new PackagedScriptConvention(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, configurationTransformer, transformFileLocator, log)),
+                new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, log)),
+                new JsonConfigurationVariablesConvention(new JsonConfigurationVariablesBehaviour(structuredConfigVariablesService)),
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner)),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.Deploy, log, fileSystem, scriptEngine, commandLineRunner)),
                 new AzureWebAppConvention(log),
                 new LogAzureWebAppDetails(log),
-                new PackagedScriptConvention(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner)),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.PostDeploy, log, fileSystem, scriptEngine, commandLineRunner)),
             };
 
             var deployment = new RunningDeployment(pathToPackage, variables);

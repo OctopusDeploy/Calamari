@@ -3,14 +3,14 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using Calamari.Azure.CloudServices.Integration.CloudServicePackage.ManifestSchema;
-using Calamari.Util;
+using Calamari.Common.Features.ConfigurationVariables;
 
 namespace Calamari.Azure.CloudServices.Integration.CloudServicePackage
 {
     public static class AzureCloudServiceConventions
     {
         public const string RoleLayoutPrefix = "Roles/";
-        public const string CtpFormatPackageDefinitionRelationshipType = "http://schemas.microsoft.com/windowsazure/PackageDefinition/Version/2012/03/15"; 
+        public const string CtpFormatPackageDefinitionRelationshipType = "http://schemas.microsoft.com/windowsazure/PackageDefinition/Version/2012/03/15";
 
         public static PackageDefinition ReadPackageManifest(Package package)
         {

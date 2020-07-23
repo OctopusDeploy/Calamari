@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
@@ -13,11 +13,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Certificates;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Octostache;
 
 namespace Calamari.Azure.CloudServices.Integration
 {
@@ -85,7 +80,7 @@ namespace Calamari.Azure.CloudServices.Integration
                 }
             }
         }
-      
+
         string CreateContextScriptFile(string workingDirectory)
         {
             var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureCloudServiceContext.ps1");

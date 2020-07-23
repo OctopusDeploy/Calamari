@@ -1,4 +1,6 @@
-﻿namespace Calamari.Deployment
+﻿using System;
+
+namespace Calamari.Common.Features.Deployment
 {
     public static class DeploymentStages
     {

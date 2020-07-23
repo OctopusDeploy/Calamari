@@ -1,14 +1,12 @@
 ﻿using System.IO;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.ConfigurationVariables;
-using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.ConfigurationVariables
 {
@@ -16,17 +14,18 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
     public class ConfigurationVariablesFixture : CalamariFixture
     {
         ConfigurationVariablesReplacer configurationVariablesReplacer;
+        CalamariVariables variables;
 
         [SetUp]
         public void SetUp()
         {
-            configurationVariablesReplacer = new ConfigurationVariablesReplacer();
+            variables = new CalamariVariables();
+            configurationVariablesReplacer = new ConfigurationVariablesReplacer(variables, new InMemoryLog());
         }
 
         [Test]
         public void DoesNotAddXmlHeader()
         {
-            var variables = new CalamariVariables();
             variables.Set("WelcomeMessage", "Hello world");
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
@@ -38,7 +37,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [Test]
         public void SupportsNamespaces()
         {
-            var variables = new CalamariVariables();
             variables.Set("WelcomeMessage", "Hello world");
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
@@ -55,7 +53,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [Test]
         public void ReplacesAppSettings()
         {
-            var variables = new CalamariVariables();
             variables.Set("WelcomeMessage", "Hello world");
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
@@ -72,7 +69,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [Test]
         public void ReplacesStronglyTypedAppSettings()
         {
-            var variables = new CalamariVariables();
             variables.Set("WelcomeMessage", "Hello world");
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
@@ -87,14 +83,13 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [Test]
         public void ReplacesConnectionStrings()
         {
-            var variables = new CalamariVariables();
             variables.Set("MyDb1", "Server=foo");
             variables.Set("MyDb2", "Server=bar&bar=123");
-            
+
             var text = PerformTest(GetFixtureResouce("Samples", "App.config"), variables);
 
             var contents = XDocument.Parse(text);
-            
+
             Assert.AreEqual("Server=foo", contents.XPathSelectElement("//connectionStrings/add[@name='MyDb1']").Attribute("connectionString").Value);
             Assert.AreEqual("Server=bar&bar=123", contents.XPathSelectElement("//connectionStrings/add[@name='MyDb2']").Attribute("connectionString").Value);
         }
@@ -103,15 +98,14 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [ExpectedException(typeof (System.Xml.XmlException))]
         public void ShouldThrowExceptionForBadConfig()
         {
-            var variables = new CalamariVariables();
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), variables);
         }
 
         [Test]
-        public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
+        public void ShouldSuppressExceptionForBadConfig_WhenFlagIsSet()
         {
-            configurationVariablesReplacer = new ConfigurationVariablesReplacer(true);
-            var variables = new CalamariVariables();
+            variables.AddFlag(KnownVariables.Package.IgnoreVariableReplacementErrors, true);
+            configurationVariablesReplacer = new ConfigurationVariablesReplacer(variables, new InMemoryLog());
             PerformTest(GetFixtureResouce("Samples", "Bad.config"), variables);
         }
 
@@ -119,7 +113,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         {
             var temp = Path.GetTempFileName();
             File.Copy(sampleFile, temp, true);
-            
+
             using (new TemporaryFile(temp))
             {
                 configurationVariablesReplacer.ModifyConfigurationFile(temp, variables);

@@ -1,10 +1,6 @@
 using System;
-using System.ComponentModel;
-using System.Linq;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
-using Calamari.Integration.Scripting;
-using Octostache;
 
 namespace Calamari.Deployment
 {
@@ -42,9 +38,9 @@ namespace Calamari.Deployment
 
         public static readonly string RetentionPolicyItemsToKeep = "OctopusRetentionPolicyItemsToKeep";
         public static readonly string RetentionPolicyDaysToKeep = "OctopusRetentionPolicyDaysToKeep";
-        
+
         public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
-        
+
         public static class Bootstrapper
         {
             public static string ModulePaths = "Octopus.Calamari.Bootstrapper.ModulePaths";
@@ -67,7 +63,6 @@ namespace Calamari.Deployment
         public static class Package
         {
             public static readonly string ShouldDownloadOnTentacle = "Octopus.Action.Package.DownloadOnTentacle";
-            public static readonly string EnabledFeatures = "Octopus.Action.EnabledFeatures";
             public static readonly string UpdateIisWebsite = "Octopus.Action.Package.UpdateIisWebsite";
             public static readonly string UpdateIisWebsiteName = "Octopus.Action.Package.UpdateIisWebsiteName";
             public static readonly string AutomaticallyUpdateAppSettingsAndConnectionStrings = "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings";
@@ -77,7 +72,6 @@ namespace Calamari.Deployment
             public static readonly string SuppressConfigTransformationLogging = "Octopus.Action.Package.SuppressConfigTransformationLogging";
             public static readonly string EnableDiagnosticsConfigTransformationLogging = "Octopus.Action.Package.EnableDiagnosticsConfigTransformationLogging";
             public static readonly string AdditionalXmlConfigurationTransforms = "Octopus.Action.Package.AdditionalXmlConfigurationTransforms";
-            public static readonly string SkipIfAlreadyInstalled = "Octopus.Action.Package.SkipIfAlreadyInstalled";
             public static readonly string IgnoreVariableReplacementErrors = "Octopus.Action.Package.IgnoreVariableReplacementErrors";
             public static readonly string RunPackageScripts = "Octopus.Action.Package.RunScripts";
         }
@@ -88,7 +82,7 @@ namespace Calamari.Deployment
             {
                 return $"Octopus.Action.Package[{key}].ExtractedPath";
             }
-            
+
             public static string PackageFileName(string key)
             {
                 return $"Octopus.Action.Package[{key}].PackageFileName";
@@ -117,12 +111,12 @@ namespace Calamari.Deployment
         public static class Action
         {
             public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
-            public const string FailScriptOnErrorOutput = "Octopus.Action.FailScriptOnErrorOutput";            
+            public const string FailScriptOnErrorOutput = "Octopus.Action.FailScriptOnErrorOutput";
 
             public static class IisWebSite
             {
-                public static readonly string DeployAsWebSite = "Octopus.Action.IISWebSite.CreateOrUpdateWebSite"; 
-                public static readonly string DeployAsWebApplication = "Octopus.Action.IISWebSite.WebApplication.CreateOrUpdate"; 
+                public static readonly string DeployAsWebSite = "Octopus.Action.IISWebSite.CreateOrUpdateWebSite";
+                public static readonly string DeployAsWebApplication = "Octopus.Action.IISWebSite.WebApplication.CreateOrUpdate";
                 public static readonly string DeployAsVirtualDirectory = "Octopus.Action.IISWebSite.VirtualDirectory.CreateOrUpdate";
 
                 public static readonly string ApplicationPoolName = "Octopus.Action.IISWebSite.ApplicationPoolName";
@@ -269,7 +263,7 @@ namespace Calamari.Deployment
             public static class Java
             {
                 public static readonly string JavaLibraryEnvVar = "JavaIntegrationLibraryPackagePath";
-                
+
                 public static readonly string JavaArchiveExtractionDisabled =
                     "Octopus.Action.Java.JavaArchiveExtractionDisabled";
 
@@ -343,7 +337,7 @@ namespace Calamari.Deployment
             {
                 public static readonly string ConfigRoot = "Octopus.Action.Nginx.ConfigurationsDirectory";
                 public static readonly string SslRoot = "Octopus.Action.Nginx.CertificatesDirectory";
-                
+
                 public static class Server
                 {
                     public static readonly string HostName = "Octopus.Action.Nginx.Server.HostName";
@@ -353,7 +347,7 @@ namespace Calamari.Deployment
                 }
             }
         }
-        
+
         public static class Account
         {
             public const string Name = "Octopus.Account.Name";
@@ -370,7 +364,7 @@ namespace Calamari.Deployment
 
         public static class Certificate
         {
-            
+
             public static readonly string PrivateKeyAccessRules =
                 "Octopus.Action.Certificate.PrivateKeyAccessRules";
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Certificates;
@@ -18,8 +19,8 @@ namespace Calamari.Deployment.Features
             if (variables.GetFlag(SpecialVariables.Action.IisWebSite.DeployAsWebSite, false))
             {
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
-                // Any certificate-variables used by IIS bindings must be placed in the 
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
+                // Any certificate-variables used by IIS bindings must be placed in the
                 // LocalMachine certificate store
                 EnsureCertificatesUsedInBindingsAreInStore(variables);
 #endif
@@ -28,7 +29,7 @@ namespace Calamari.Deployment.Features
         }
 
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         static void EnsureCertificatesUsedInBindingsAreInStore(IVariables variables)
         {
             foreach (var binding in GetEnabledBindings(variables))
@@ -82,7 +83,7 @@ namespace Calamari.Deployment.Features
         {
             var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Pfx}"));
             var password = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Password}");
-            var subject = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}"); 
+            var subject = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}");
 
             Log.Info($"Adding certificate '{subject}' into Cert:\\LocalMachine\\My");
 

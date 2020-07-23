@@ -4,13 +4,13 @@ using System.Xml;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
 #if USE_OCTOPUS_XMLT
 using Octopus.Web.XmlTransform;
 #else
 using Microsoft.Web.XmlTransform;
 #endif
-namespace Calamari.Integration.ConfigurationTransforms
+
+namespace Calamari.Common.Features.ConfigurationTransforms
 {
     public class ConfigurationTransformer : IConfigurationTransformer
     {
@@ -20,10 +20,10 @@ namespace Calamari.Integration.ConfigurationTransforms
 
         bool errorEncountered;
 
-        public ConfigurationTransformer(TransformLoggingOptions transformLoggingOptions, ILog? log = null)
+        public ConfigurationTransformer(TransformLoggingOptions transformLoggingOptions, ILog log)
         {
             this.transformLoggingOptions = transformLoggingOptions;
-            calamariLog = log ?? ConsoleLog.Instance;
+            calamariLog = log;
         }
 
         public void PerformTransform(string configFile, string transformFile, string destinationFile)
@@ -53,19 +53,19 @@ namespace Calamari.Integration.ConfigurationTransforms
             logger.Error += delegate { errorEncountered = true; };
             if (transformLoggingOptions.HasFlag(TransformLoggingOptions.DoNotLogVerbose))
             {
-                calamariLog.Verbose($"Verbose XML transformation logging has been turned off because the variable {SpecialVariables.Package.SuppressConfigTransformationLogging} has been set to true.");
+                calamariLog.Verbose($"Verbose XML transformation logging has been turned off because the variable {KnownVariables.Package.SuppressConfigTransformationLogging} has been set to true.");
             }
             if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogExceptionsAsWarnings))
             {
-                calamariLog.Verbose($"XML transformation warnings will be downgraded to information because the variable {SpecialVariables.Package.IgnoreConfigTransformationErrors} has been set to true.");
+                calamariLog.Verbose($"XML transformation warnings will be downgraded to information because the variable {KnownVariables.Package.IgnoreConfigTransformationErrors} has been set to true.");
             }
             if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogExceptionsAsWarnings))
             {
-                calamariLog.Verbose($"XML transformation exceptions will be downgraded to warnings because the variable {SpecialVariables.Package.IgnoreConfigTransformationErrors} has been set to true.");
+                calamariLog.Verbose($"XML transformation exceptions will be downgraded to warnings because the variable {KnownVariables.Package.IgnoreConfigTransformationErrors} has been set to true.");
             }
             if (transformLoggingOptions.HasFlag(TransformLoggingOptions.LogWarningsAsErrors))
             {
-                calamariLog.Verbose($"Warning will be elevated to errors. Prevent this by adding the variable {SpecialVariables.Package.TreatConfigTransformationWarningsAsErrors} and setting it to false.");
+                calamariLog.Verbose($"Warning will be elevated to errors. Prevent this by adding the variable {KnownVariables.Package.TreatConfigTransformationWarningsAsErrors} and setting it to false.");
             }
 
             return logger;
@@ -96,11 +96,11 @@ namespace Calamari.Integration.ConfigurationTransforms
             configurationFileDocument.Save(destinationFile);
         }
 
-        public static ConfigurationTransformer FromVariables(IVariables variables, ILog? log = null)
+        public static ConfigurationTransformer FromVariables(IVariables variables, ILog log)
         {
-            var treatConfigTransformationWarningsAsErrors = variables.GetFlag(SpecialVariables.Package.TreatConfigTransformationWarningsAsErrors, true);
-            var ignoreConfigTransformErrors = variables.GetFlag(SpecialVariables.Package.IgnoreConfigTransformationErrors);
-            var suppressConfigTransformLogging = variables.GetFlag(SpecialVariables.Package.SuppressConfigTransformationLogging);
+            var treatConfigTransformationWarningsAsErrors = variables.GetFlag(KnownVariables.Package.TreatConfigTransformationWarningsAsErrors, true);
+            var ignoreConfigTransformErrors = variables.GetFlag(KnownVariables.Package.IgnoreConfigTransformationErrors);
+            var suppressConfigTransformLogging = variables.GetFlag(KnownVariables.Package.SuppressConfigTransformationLogging);
 
             var transformLoggingOptions = TransformLoggingOptions.None;
 
