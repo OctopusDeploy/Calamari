@@ -80,8 +80,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, YamlFileName);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileName);
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
