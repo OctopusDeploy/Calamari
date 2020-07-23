@@ -41,8 +41,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
             Variables[DeploymentEnvironment.Name] = Environment;
-            Variables[PackageVariables.JsonConfigurationVariablesEnabled] = "True";
-            Variables[PackageVariables.JsonConfigurationVariablesTargets] = "appsettings.json";
+            Variables[ActionVariables.StructuredConfigurationVariablesEnabled] = "True";
+            Variables[ActionVariables.StructuredConfigurationVariablesTargets] = "appsettings.json";
 
             using (var vhd = new TemporaryFile(VhdBuilder.BuildSampleVhd(ServiceName)))
             using (var file = new TemporaryFile(PackageBuilder.BuildSimpleZip(ServiceName, "1.0.0", Path.GetDirectoryName(vhd.FilePath))))
@@ -85,8 +85,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
             Variables[DeploymentEnvironment.Name] = Environment;
-            Variables[PackageVariables.JsonConfigurationVariablesEnabled] = "True";
-            Variables[PackageVariables.JsonConfigurationVariablesTargets] = "appsettings.json";
+            Variables[ActionVariables.StructuredConfigurationVariablesEnabled] = "True";
+            Variables[ActionVariables.StructuredConfigurationVariablesTargets] = "appsettings.json";
 
             Variables["OctopusVhdPartitions[1].ApplicationPath"] = "PathThatDoesNotExist";
 
@@ -137,8 +137,8 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
             Variables[DeploymentEnvironment.Name] = Environment;
-            Variables[PackageVariables.JsonConfigurationVariablesEnabled] = "True";
-            Variables[PackageVariables.JsonConfigurationVariablesTargets] = "appsettings.json";
+            Variables[ActionVariables.StructuredConfigurationVariablesEnabled] = "True";
+            Variables[ActionVariables.StructuredConfigurationVariablesTargets] = "appsettings.json";
 
             Variables["OctopusVhdPartitions[0].Mount"] = "false";
             Variables["OctopusVhdPartitions[1].ApplicationPath"] = "AlternateApplicationPath";

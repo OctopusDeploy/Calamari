@@ -25,8 +25,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, JsonFileName);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, JsonFileName);
                 Variables.Set("departments:0:employees:0:name", "Jane");
                 Variables.Set("departments:0:employees:1:age", "40");
                 Variables.Set("phone", "0123 456 789");

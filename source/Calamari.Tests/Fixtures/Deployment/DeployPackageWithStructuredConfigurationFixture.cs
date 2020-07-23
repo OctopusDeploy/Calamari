@@ -28,8 +28,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, MalformedFileName);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, MalformedFileName);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -45,8 +45,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, YamlFileName);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileName);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -62,8 +62,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, YamlFileName);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileName);
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
@@ -81,8 +81,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "doesnt-exist.json");
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "doesnt-exist.json");
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
@@ -98,8 +98,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, ConfigFileName);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, ConfigFileName);
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
@@ -117,8 +117,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, $"{JsonFileName}\n{YamlFileName}");
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, $"{JsonFileName}\n{YamlFileName}");
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
@@ -138,8 +138,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "values.*");
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "values.*");
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
@@ -161,8 +161,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "*.json");
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "*.json");
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
@@ -178,8 +178,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, $"{JsonFileName}\n{MalformedFileName}");
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, $"{JsonFileName}\n{MalformedFileName}");
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
@@ -194,8 +194,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, ".");
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, ".");
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
@@ -216,8 +216,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, MalformedFileName);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, MalformedFileName);
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 

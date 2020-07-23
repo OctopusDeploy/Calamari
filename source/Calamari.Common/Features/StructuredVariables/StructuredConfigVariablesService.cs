@@ -36,7 +36,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public void ReplaceVariables(RunningDeployment deployment)
         {
-            var targets = deployment.Variables.GetPaths(PackageVariables.JsonConfigurationVariablesTargets);
+            var targets = deployment.Variables.GetPaths(ActionVariables.StructuredConfigurationVariablesTargets);
             var supportNonJsonReplacement = deployment.Variables.GetFlag(ActionVariables.StructuredConfigurationFeatureFlag);
             
             foreach (var target in targets)
