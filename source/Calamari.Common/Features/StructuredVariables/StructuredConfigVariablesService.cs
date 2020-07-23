@@ -17,7 +17,6 @@ namespace Calamari.Common.Features.StructuredVariables
     public class StructuredConfigVariablesService : IStructuredConfigVariablesService
     {
         readonly IFileFormatVariableReplacer jsonReplacer;
-        readonly IFileFormatVariableReplacer[] nonJsonReplacers;
         readonly IFileFormatVariableReplacer[] allReplacers;
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
@@ -34,10 +33,6 @@ namespace Calamari.Common.Features.StructuredVariables
             
             jsonReplacer = replacers.FirstOrDefault(r => r.FileFormatName == StructuredConfigVariablesFileFormats.Json)
                            ?? throw new Exception("No JSON replacer was supplied. A JSON replacer is required as a fallback.");
-            
-            nonJsonReplacers = replacers
-                               .Where(r => r.FileFormatName != StructuredConfigVariablesFileFormats.Json)
-                               .ToArray();
         }
 
         public void ReplaceVariables(RunningDeployment deployment)
@@ -97,7 +92,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
             if (!string.IsNullOrWhiteSpace(specifiedFileFormat))
             {
-                var specifiedReplacer = FindReplacerForFormat(specifiedFileFormat);
+                var specifiedReplacer = TryFindReplacerForFormat(specifiedFileFormat);
 
                 return new []
                 {
@@ -105,7 +100,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 };
             }
             
-            var guessBasedOnFilePath = FindBestReplacerForFilePath(filePath);
+            var guessBasedOnFilePath = FindBestNonJsonReplacerForFilePath(filePath);
             if (guessBasedOnFilePath != null)
             {
                 return new []
@@ -122,7 +117,7 @@ namespace Calamari.Common.Features.StructuredVariables
             };
         }
 
-        IFileFormatVariableReplacer FindReplacerForFormat(string specifiedFileFormat)
+        IFileFormatVariableReplacer TryFindReplacerForFormat(string specifiedFileFormat)
         {
             var specifiedReplacer = allReplacers
                 .FirstOrDefault(r => r.FileFormatName.Equals(specifiedFileFormat, StringComparison.OrdinalIgnoreCase));
@@ -138,9 +133,11 @@ namespace Calamari.Common.Features.StructuredVariables
             return specifiedReplacer;
         }
 
-        IFileFormatVariableReplacer? FindBestReplacerForFilePath(string filePath)
+        IFileFormatVariableReplacer? FindBestNonJsonReplacerForFilePath(string filePath)
         {
-            return nonJsonReplacers.FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
+            return allReplacers
+                   .Where(r => r.FileFormatName != StructuredConfigVariablesFileFormats.Json)
+                   .FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
         }
 
         void DoReplacement(string filePath, IVariables variables, IFileFormatVariableReplacer[] replacersToTry)
