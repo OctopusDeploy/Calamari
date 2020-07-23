@@ -15,6 +15,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         const string YamlFileName = "values.yaml";
         const string JsonFileName = "values.json";
         const string ConfigFileName = "values.config";
+        const string MalformedFileName = "malformed.file";
 
         [SetUp]
         public override void SetUp()
@@ -23,7 +24,24 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
-        public void ShouldNotTreatYamlFileAsYamlUnlessFlagIsSet()
+        public void FailsAndWarnsIfAFileCannotBeParsedWhenFeatureFlagIsNotSet()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
+                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, MalformedFileName);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertFailure();
+
+                // Indicates the file couldn't be parsed.
+                result.AssertErrorOutput("Newtonsoft.Json.JsonReaderException");
+            }
+        }
+        
+        [Test]
+        public void ShouldNotTreatYamlFileAsYamlWhenFeatureFlagIsNotSet()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
@@ -81,14 +99,14 @@ namespace Calamari.Tests.Fixtures.Deployment
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
                 Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
-                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "values.config");
+                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, ConfigFileName);
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
                 
-                var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, "values.config"));
+                var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, ConfigFileName));
 
                 this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonDeepCompareConfiguration);
             }
@@ -139,6 +157,39 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
+        public void FailsIfAnyFileMatchingAGlobFailsToParse()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
+                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, "*.json");
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                
+                result.AssertFailure();
+                result.AssertErrorOutput("Unterminated string. Expected delimiter: \". Path '', line 3, position 1.");
+            }
+        }
+        
+        [Test]
+        public void FailsIfAFileFailsToParseWhenThereAreManyGlobs()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
+                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, $"{JsonFileName}\n{MalformedFileName}");
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertFailure();
+                result.AssertErrorOutput("Newtonsoft.Json.JsonReaderException");
+            }
+        }
+
+        [Test]
         public void SucceedsButWarnsIfTargetIsADirectory()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
@@ -160,6 +211,24 @@ namespace Calamari.Tests.Fixtures.Deployment
             }
         }
         
+        [Test]
+        public void FailsAndWarnsIfAFileCannotBeParsedWhenFeatureFlagIsSet()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
+                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, MalformedFileName);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertFailure();
+
+                // Indicates the file couldn't be parsed.
+                result.AssertErrorOutput("Newtonsoft.Json.JsonReaderException");
+            }
+        }
+
         [TearDown]
         public override void CleanUp()
         {

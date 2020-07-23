@@ -3,7 +3,6 @@ using Calamari.Aws.Deployment.Conventions;
 using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
 using System.Collections.Generic;
 using System.IO;
 using Amazon.CloudFormation;
@@ -48,10 +47,10 @@ namespace Calamari.Aws.Commands
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
-            Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", 
+            Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.",
                 v => waitForComplete = !bool.FalseString.Equals(v, StringComparison.OrdinalIgnoreCase)); //True by default
             Options.Add("stackName=", "The name of the CloudFormation stack.", v => stackName = v);
-            Options.Add("disableRollback=", "True to disable the CloudFormation stack rollback on failure, and False otherwise.", 
+            Options.Add("disableRollback=", "True to disable the CloudFormation stack rollback on failure, and False otherwise.",
                 v => disableRollback = bool.TrueString.Equals(v, StringComparison.OrdinalIgnoreCase)); //False by default
         }
 
@@ -73,21 +72,21 @@ namespace Calamari.Aws.Commands
             {
                 var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
                 var resolvedParameters = templateResolver.MaybeResolve(templateParameterFile, filesInPackage, variables);
-                
+
                 if (templateParameterFile != null && !resolvedParameters.Some())
                     throw new CommandException("Could not find template parameters file: " + templateParameterFile);
-                
+
                 var parameters = CloudFormationParametersFile.Create(resolvedParameters, fileSystem, variables);
                 return CloudFormationTemplate.Create(resolvedTemplate, parameters, fileSystem, variables);
             }
 
             var stackEventLogger = new StackEventLogger(log);
-            
+
             var conventions = new List<IConvention>
             {
                 new LogAwsUserInfoConvention(environment),
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
-                
+
                 //Create or Update the stack using changesets
                 new AggregateInstallationConvention(
                     new GenerateCloudFormationChangesetNameConvention(log),
@@ -98,7 +97,7 @@ namespace Calamari.Aws.Commands
                     new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, () => TemplateFactory().HasOutputs)
                         .When(ImmediateChangesetExecution)
                 ).When(ChangesetsEnabled),
-             
+
                 //Create or update stack using a template (no changesets)
                 new AggregateInstallationConvention(
                         new  DeployAwsCloudFormationConvention(
@@ -134,10 +133,10 @@ namespace Calamari.Aws.Commands
         {
             return !ChangesetsDeferred(deployment);
         }
-        
+
         private bool ChangesetsEnabled(RunningDeployment deployment)
         {
-            return deployment.Variables.Get(SpecialVariables.Package.EnabledFeatures)
+            return deployment.Variables.Get(KnownVariables.Package.EnabledFeatures)
                        ?.Contains(AwsSpecialVariables.CloudFormation.Changesets.Feature) ?? false;
         }
 

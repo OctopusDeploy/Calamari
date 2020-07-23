@@ -1,7 +1,5 @@
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting

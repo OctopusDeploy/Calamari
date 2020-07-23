@@ -1,10 +1,11 @@
-﻿using System.Xml;
+﻿using System;
+using System.Xml;
 
-namespace Calamari.Util
+namespace Calamari.Common.Features.ConfigurationVariables
 {
     public static class XmlUtils
     {
-        private const int MaxCharactersInDocument = (1024*1024*1024); // Max 1GB
+        const int MaxCharactersInDocument = (1024*1024*1024); // Max 1GB
         public static XmlReaderSettings DtdSafeReaderSettings
         {
             get

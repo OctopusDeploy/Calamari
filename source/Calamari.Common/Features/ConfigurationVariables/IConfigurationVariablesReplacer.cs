@@ -1,7 +1,7 @@
+using System;
 using Calamari.Common.Plumbing.Variables;
-using Octostache;
 
-namespace Calamari.Integration.ConfigurationVariables
+namespace Calamari.Common.Features.ConfigurationVariables
 {
     public interface IConfigurationVariablesReplacer
     {

@@ -7,18 +7,19 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Util;
-using Octostache;
 
-namespace Calamari.Integration.ConfigurationVariables
+namespace Calamari.Common.Features.ConfigurationVariables
 {
     public class ConfigurationVariablesReplacer : IConfigurationVariablesReplacer
     {
+        readonly ILog log;
         readonly bool ignoreVariableReplacementErrors;
 
-        public ConfigurationVariablesReplacer(bool ignoreVariableReplacementErrors = false)
+        public ConfigurationVariablesReplacer(IVariables variables, ILog log)
         {
-            this.ignoreVariableReplacementErrors = ignoreVariableReplacementErrors;
+            this.log = log;
+
+            ignoreVariableReplacementErrors = variables.GetFlag(KnownVariables.Package.IgnoreVariableReplacementErrors);
         }
 
         public void ModifyConfigurationFile(string configurationFilePath, IVariables variables)
@@ -30,15 +31,15 @@ namespace Calamari.Integration.ConfigurationVariables
 
                 if (!changes.Any())
                 {
-                    Log.Info("No matching appSetting, applicationSetting, nor connectionString names were found in: {0}", configurationFilePath);
+                    log.InfoFormat("No matching appSetting, applicationSetting, nor connectionString names were found in: {0}", configurationFilePath);
                     return;
                 }
 
-                Log.Info("Updating appSettings, applicationSettings, and connectionStrings in: {0}", configurationFilePath);
+                log.InfoFormat("Updating appSettings, applicationSettings, and connectionStrings in: {0}", configurationFilePath);
 
                 foreach (var change in changes)
                 {
-                    Log.Verbose(change);
+                    log.Verbose(change);
                 }
 
                 WriteXmlDocument(doc, configurationFilePath);
@@ -47,12 +48,12 @@ namespace Calamari.Integration.ConfigurationVariables
             {
                 if (ignoreVariableReplacementErrors)
                 {
-                    Log.Warn(ex.Message);
-                    Log.Warn(ex.StackTrace);
+                    log.Warn(ex.Message);
+                    log.Warn(ex.StackTrace);
                 }
                 else
                 {
-                    Log.ErrorFormat("Exception while replacing configuration-variables in: {0}", configurationFilePath);
+                    log.ErrorFormat("Exception while replacing configuration-variables in: {0}", configurationFilePath);
                     throw;
                 }
             }
@@ -74,8 +75,8 @@ namespace Calamari.Integration.ConfigurationVariables
             {
                 changes.AddRange(
                     ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='appSettings']/*[local-name()='add']", "key", variable, "value", variables).Concat(
-                    ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable, "connectionString", variables).Concat(
-                    ReplaceStonglyTypeApplicationSetting(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable, variables))));
+                        ReplaceAppSettingOrConnectionString(doc, "//*[local-name()='connectionStrings']/*[local-name()='add']", "name", variable, "connectionString", variables).Concat(
+                            ReplaceStronglyTypeApplicationSetting(doc, "//*[local-name()='applicationSettings']//*[local-name()='setting']", "name", variable, variables))));
             }
             return changes;
         }
@@ -123,7 +124,7 @@ namespace Calamari.Integration.ConfigurationVariables
             return changes;
         }
 
-        static IEnumerable<string> ReplaceStonglyTypeApplicationSetting(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, IVariables variables)
+        static IEnumerable<string> ReplaceStronglyTypeApplicationSetting(XNode document, string xpath, string keyAttributeName, string keyAttributeValue, IVariables variables)
         {
             var changes = new List<string>();
 
@@ -141,7 +142,7 @@ namespace Calamari.Integration.ConfigurationVariables
 
             foreach (var setting in settings)
             {
-                changes.Add(string.Format("Setting '{0}' = '{1}'", keyAttributeValue, value));
+                changes.Add($"Setting '{keyAttributeValue}' = '{value}'");
 
                 var valueElement = setting.Elements().FirstOrDefault(e => e.Name.LocalName == "value");
                 if (valueElement == null)

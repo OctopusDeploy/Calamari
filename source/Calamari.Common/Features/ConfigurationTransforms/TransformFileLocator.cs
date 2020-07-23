@@ -5,22 +5,21 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.Integration.ConfigurationTransforms
+namespace Calamari.Common.Features.ConfigurationTransforms
 {
     public class TransformFileLocator : ITransformFileLocator
     {
-        private readonly ICalamariFileSystem fileSystem;
+        readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
-        public TransformFileLocator(ICalamariFileSystem fileSystem, ILog? log = null)
+        public TransformFileLocator(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
-            this.log = log ?? ConsoleLog.Instance;
+            this.log = log;
         }
 
         public IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled, RunningDeployment deployment)

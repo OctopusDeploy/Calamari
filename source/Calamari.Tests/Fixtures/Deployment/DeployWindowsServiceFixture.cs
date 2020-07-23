@@ -13,17 +13,17 @@ namespace Calamari.Tests.Fixtures.Deployment
     public class DeployWindowsServiceFixture : DeployWindowsServiceAbstractFixture
     {
         protected override string ServiceName => "Acme.Service";
-        
+
         [Test]
         public void ShouldDeployAndInstallASimpleService()
         {
             RunDeployment();
         }
-        
+
         [Test]
         public void ShouldDeployAndInstallWhenThereAreSpacesInThePath()
         {
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.CustomDirectory,Octopus.Features.WindowsService";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.CustomDirectory,Octopus.Features.WindowsService";
             var installDir = Path.Combine(CustomDirectory, "A Directory With A Space In It");
             Variables[PackageVariables.CustomInstallationDirectory] = installDir;
 
@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldDeployAndInstallWhenThereAreSpacesInThePathAndArguments()
         {
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.CustomDirectory,Octopus.Features.WindowsService";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.CustomDirectory,Octopus.Features.WindowsService";
             var installDir = Path.Combine(CustomDirectory, "A Directory With A Space In It");
             Variables[PackageVariables.CustomInstallationDirectory] = installDir;
             Variables[SpecialVariables.Action.WindowsService.Arguments] = "\"Argument with Space\" ArgumentWithoutSpace";
@@ -50,7 +50,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             if (!CalamariEnvironment.IsRunningOnWindows)
                 Assert.Inconclusive("Services are only supported on windows");
-            
+
 #if WINDOWS_USER_ACCOUNT_SUPPORT
             TestUserPrincipal userPrincipal = null;
             try
@@ -70,7 +70,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 #else
             Assert.Inconclusive("Not yet able to configure user accounts under netcore to test service accounts");
 #endif
-            
+
         }
     }
 }

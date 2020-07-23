@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Text;
-using Calamari.Commands.Support;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
@@ -12,10 +12,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
@@ -58,7 +54,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 helmVersion = GetVersion();
             }
-            
+
             void DownloadExplicitHelmExecutable()
             {
                 explicitVersionTempDirectory = TemporaryDirectory.Create();
@@ -77,13 +73,13 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             explicitVersionTempDirectory?.Dispose();
         }
-        
+
         [SetUp]
         public virtual void SetUp()
         {
             FileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            // Ensure staging directory exists and is empty 
+            // Ensure staging directory exists and is empty
             StagingDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestStaging");
             FileSystem.EnsureDirectoryExists(StagingDirectory);
             FileSystem.PurgeDirectory(StagingDirectory, FailureOptions.ThrowOnFailure);
@@ -99,24 +95,24 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(PackageVariables.PackageVersion, "0.3.7");
             Variables.Set(PackageVariables.IndexedPackageId(""), $"#{{{PackageVariables.PackageId}}}");
             Variables.Set(PackageVariables.IndexedPackageVersion(""), $"#{{{PackageVariables.PackageVersion}}}");
-            
+
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
             Variables.Set(Kubernetes.SpecialVariables.Helm.ClientVersion, helmVersion.ToString());
-            
+
             //K8S Auth
             Variables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
             Variables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "True");
             Variables.Set(Kubernetes.SpecialVariables.Namespace, Namespace);
             Variables.Set(SpecialVariables.Account.AccountType, "Token");
             Variables.Set(SpecialVariables.Account.Token, ClusterToken);
-            
+
             if (ExplicitExeVersion != null)
                 Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, HelmExePath);
-            
+
             AddPostDeployMessageCheckAndCleanup();
         }
-       
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -125,9 +121,9 @@ namespace Calamari.Tests.KubernetesFixtures
         public void NoValues_EmbededValuesUsed()
         {
             var result = DeployPackage();
-            
+
             result.AssertSuccess();
-            
+
             Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
 
@@ -166,7 +162,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
         }
-        
+
 
         [Test]
         [RequiresNonFreeBSDPlatform]
@@ -182,7 +178,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -197,7 +193,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
         }
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -222,7 +218,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             Assert.AreEqual("Hello FooBar", result.CapturedOutput.OutputVariables["Message"]);
         }
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -270,10 +266,10 @@ namespace Calamari.Tests.KubernetesFixtures
         [Category(TestCategory.PlatformAgnostic)]
         public void Namespace_Override_Used()
         {
-            const string @namespace = "calamari-testing-foo"; 
+            const string @namespace = "calamari-testing-foo";
             Variables.Set(Kubernetes.SpecialVariables.Helm.Namespace, @namespace);
-            AddPostDeployMessageCheckAndCleanup(@namespace); 
-            
+            AddPostDeployMessageCheckAndCleanup(@namespace);
+
             var result = DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
@@ -293,22 +289,22 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
             result.AssertOutputMatches("[helm|\\\\helm\"] upgrade (.*) --dry-run");
         }
-        
+
         protected abstract string ExplicitExeVersion { get; }
 
-        protected string HelmExePath => ExplicitExeVersion == null ? "helm" : Path.Combine(explicitVersionTempDirectory.DirectoryPath, HelmOsPlatform, "helm"); 
+        protected string HelmExePath => ExplicitExeVersion == null ? "helm" : Path.Combine(explicitVersionTempDirectory.DirectoryPath, HelmOsPlatform, "helm");
 
         void AddPostDeployMessageCheckAndCleanup(string explicitNamespace = null, bool dryRun = false)
         {
             if (dryRun)
             {
                 // If it's a dry-run we can't fetch the ConfigMap and there's nothing to clean-up
-                Variables.Set(SpecialVariables.Package.EnabledFeatures, "");
+                Variables.Set(KnownVariables.Package.EnabledFeatures, "");
                 return;
             }
 
-            var @namespace = explicitNamespace ?? Namespace; 
-            
+            var @namespace = explicitNamespace ?? Namespace;
+
             var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace +" -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
             var deleteCommand = DeleteCommand(@namespace, ReleaseName);
@@ -320,7 +316,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
 
             Variables.Set(SpecialVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, syntax), script);
-            Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+            Variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
         }
 
         string DeleteCommand(string @namespace, string releaseName)
@@ -367,13 +363,13 @@ namespace Calamari.Tests.KubernetesFixtures
 
             return ParseVersion(stdout.ToString());
         }
-        
+
         //versionString from "helm version --client --short"
         static HelmVersion ParseVersion(string versionString)
         {
             //eg of output for helm 2: Client: v2.16.1+gbbdfe5e
             //eg of output for helm 3: v3.0.1+g7c22ef9
-            
+
             var indexOfVersionIdentifier = versionString.IndexOf('v');
             if (indexOfVersionIdentifier == -1)
                 throw new FormatException($"Failed to find version identifier from '{versionString}'.");

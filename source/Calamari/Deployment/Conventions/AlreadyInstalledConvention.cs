@@ -18,7 +18,7 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            if (!deployment.Variables.GetFlag(SpecialVariables.Package.SkipIfAlreadyInstalled))
+            if (!deployment.Variables.GetFlag(KnownVariables.Package.SkipIfAlreadyInstalled))
             {
                 return;
             }
@@ -28,7 +28,7 @@ namespace Calamari.Deployment.Conventions
             var policySet = deployment.Variables.Get(KnownVariables.RetentionPolicySet);
 
             var previous = journal.GetLatestInstallation(policySet, id, version);
-            if (previous == null) 
+            if (previous == null)
                 return;
 
             if (!previous.WasSuccessful)

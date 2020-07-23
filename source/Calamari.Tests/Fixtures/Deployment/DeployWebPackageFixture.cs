@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Xml;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
@@ -11,9 +12,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
-using Calamari.Integration.Scripting;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -25,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Deployment
     {
         // Fixture Depedencies
         TemporaryFile nupkgFile;
-        TemporaryFile tarFile;     
+        TemporaryFile tarFile;
 
         [SetUp]
         public override void SetUp()
@@ -67,7 +66,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             if (!CalamariEnvironment.IsRunningOnMac && !CalamariEnvironment.IsRunningOnNix)
                 Assert.Inconclusive("This test is designed to run on *Nix or Mac.");
-        
+
             var result = DeployPackage();
             result.AssertSuccess();
 
@@ -131,14 +130,14 @@ namespace Calamari.Tests.Fixtures.Deployment
             // Set the environment, and the flag to automatically run config transforms
             Variables.Set(DeploymentEnvironment.Name, "Production");
             Variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-            Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
+            Variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
 
             var result = DeployPackage();
 
             // The environment app-setting value should have been transformed to 'Production'
             AssertXmlNodeValue(Path.Combine(StagingDirectory, "Production", "Acme.Web", "1.0.0", "web.config"), "configuration/appSettings/add[@key='environment']/@value", "Production");
         }
-        
+
         [Test]
         [Category(TestCategory.ScriptingSupport.FSharp)]
         [Category(TestCategory.ScriptingSupport.ScriptCS)]
@@ -174,7 +173,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             string customInstallDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestInstall");
             FileSystem.EnsureDirectoryExists(customInstallDirectory);
             // Ensure the directory is empty before we start
-            FileSystem.PurgeDirectory(customInstallDirectory, FailureOptions.ThrowOnFailure); 
+            FileSystem.PurgeDirectory(customInstallDirectory, FailureOptions.ThrowOnFailure);
             Variables.Set(PackageVariables.CustomInstallationDirectory, customInstallDirectory );
 
             var result = DeployPackage(deploymentType);
@@ -188,7 +187,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [TestCase(DeploymentType.Tar)]
         public void ShouldExecuteFeatureScripts(DeploymentType deploymentType)
         {
-            Variables.Set(SpecialVariables.Package.EnabledFeatures, "Octopus.Features.HelloWorld");
+            Variables.Set(KnownVariables.Package.EnabledFeatures, "Octopus.Features.HelloWorld");
             var result = DeployPackage(deploymentType);
             result.AssertOutput("Hello World!");
         }
@@ -213,7 +212,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage();
 
             Assert.AreEqual(
-                Path.Combine(StagingDirectory, "Acme.Web\\1.0.0"), 
+                Path.Combine(StagingDirectory, "Acme.Web\\1.0.0"),
                 webServer.GetHomeDirectory(siteName, "/"));
 
             // And remove the website
@@ -225,7 +224,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldRunConfiguredScripts()
         {
-            Variables.Set(SpecialVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+            Variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
 
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
             {
@@ -254,7 +253,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [TestCase(DeploymentType.Tar)]
         public void ShouldSkipIfAlreadyInstalled(DeploymentType deploymentType)
         {
-            Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            Variables.Set(KnownVariables.Package.SkipIfAlreadyInstalled, true.ToString());
             Variables.Set(KnownVariables.RetentionPolicySet, "a/b/c/d");
             Variables.Set(PackageVariables.PackageId, "Acme.Web");
             Variables.Set(PackageVariables.PackageVersion, "1.0.0");
@@ -271,7 +270,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldSkipIfAlreadyInstalledWithDifferentPackageType()
         {
-            Variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            Variables.Set(KnownVariables.Package.SkipIfAlreadyInstalled, true.ToString());
             Variables.Set(KnownVariables.RetentionPolicySet, "a/b/c/d");
             Variables.Set(PackageVariables.PackageId, "Acme.Web");
             Variables.Set(PackageVariables.PackageVersion, "1.0.0");
@@ -354,7 +353,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         private void AssertXmlNodeValue(string xmlFile, string nodeXPath, string value)
         {
-            var configXml = new XmlDocument(); 
+            var configXml = new XmlDocument();
             configXml.LoadXml( FileSystem.ReadFile(xmlFile));
             var node = configXml.SelectSingleNode(nodeXPath);
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -24,7 +25,7 @@ namespace Calamari.Deployment.Features
             this.nginxServer = nginxServer;
             this.fileSystem = fileSystem;
         }
-        
+
         public void Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
@@ -49,7 +50,7 @@ namespace Calamari.Deployment.Features
                 string.IsNullOrWhiteSpace(variables.Get(SpecialVariables.Action.Nginx.Server.ConfigName))
                     ? variables.Get(PackageVariables.PackageId)
                     : variables.Get(SpecialVariables.Action.Nginx.Server.ConfigName);
-            
+
             nginxServer
                 .WithVirtualServerName(virtualServerName)
                 .WithHostName(variables.Get(SpecialVariables.Action.Nginx.Server.HostName))

@@ -1,24 +1,23 @@
 ﻿using Calamari.Common.Commands;
-using Calamari.Common.Features.StructuredVariables;
-using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Features.Behaviours;
 
 namespace Calamari.Deployment.Conventions
 {
     public class JsonConfigurationVariablesConvention : IInstallConvention
     {
-        readonly IStructuredConfigVariablesService structuredConfigVariablesService;
+        readonly JsonConfigurationVariablesBehaviour jsonConfigurationVariablesBehaviour;
 
-        public JsonConfigurationVariablesConvention(IStructuredConfigVariablesService structuredConfigVariablesService)
+        public JsonConfigurationVariablesConvention(JsonConfigurationVariablesBehaviour jsonConfigurationVariablesBehaviour)
         {
-            this.structuredConfigVariablesService = structuredConfigVariablesService;
+            this.jsonConfigurationVariablesBehaviour = jsonConfigurationVariablesBehaviour;
         }
 
         public void Install(RunningDeployment deployment)
         {
-            if (!deployment.Variables.GetFlag(PackageVariables.JsonConfigurationVariablesEnabled))
-                return;
-
-            structuredConfigVariablesService.ReplaceVariables(deployment);
+            if (jsonConfigurationVariablesBehaviour.IsEnabled(deployment))
+            {
+                jsonConfigurationVariablesBehaviour.Execute(deployment).Wait();
+            }
         }
     }
 }

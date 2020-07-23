@@ -6,13 +6,17 @@ namespace Calamari.Common.Commands
 {
     public class RunningDeployment
     {
-        public RunningDeployment(string packageFilePath, IVariables variables)
+        public RunningDeployment(string? packageFilePath, IVariables variables)
         {
-            PackageFilePath = new PathToPackage(packageFilePath);
+            if (!string.IsNullOrEmpty(packageFilePath))
+            {
+                PackageFilePath = new PathToPackage(packageFilePath);
+            }
+
             Variables = variables;
         }
 
-        public PathToPackage PackageFilePath { get; }
+        public PathToPackage? PackageFilePath { get; }
 
         /// <summary>
         /// Gets the directory that Tentacle extracted the package to.

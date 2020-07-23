@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Deployment.Journal;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
@@ -30,8 +28,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldSkipIfInstalled()
         {
-            variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true, 
+            variables.Set(KnownVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true,
                 new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
 
             RunConvention();
@@ -42,7 +40,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldOnlySkipIfSpecified()
         {
-            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true, 
+            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true,
                 new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
 
             RunConvention();
@@ -53,8 +51,8 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotSkipIfPreviouslyFailed()
         {
-            variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", false, 
+            variables.Set(KnownVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", false,
                 new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
 
             RunConvention();

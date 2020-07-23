@@ -6,8 +6,7 @@ using System.Net;
 using System.Text;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Integration.FileSystem;
-using Calamari.Util;
+using Calamari.Common.Util;
 using Microsoft.Azure;
 using Microsoft.WindowsAzure.Management.Storage;
 using Microsoft.WindowsAzure.Storage;
@@ -25,7 +24,7 @@ namespace Calamari.Azure.CloudServices.Integration
         {
             this.log = log;
         }
-        
+
         public Uri Upload(SubscriptionCloudCredentials credentials, string storageAccountName, string packageFile, string uploadedFileName, string storageEndpointSuffix, string serviceManagementEndpoint)
         {
             var cloudStorage =
@@ -33,7 +32,7 @@ namespace Calamari.Azure.CloudServices.Integration
 
             var blobClient = cloudStorage.CreateCloudBlobClient();
             var container = blobClient.GetContainerReference(OctopusPackagesContainerName);
-            
+
             container.CreateIfNotExists();
 
             var permission = container.GetPermissions();
@@ -92,10 +91,10 @@ namespace Calamari.Azure.CloudServices.Integration
                 }
             };
 
-            blobClient.SetServiceProperties(blobClient.GetServiceProperties(), operationContext: operationContext); 
+            blobClient.SetServiceProperties(blobClient.GetServiceProperties(), operationContext: operationContext);
 
             log.VerboseFormat("Uploading the package to blob storage. The package file is {0}.", fileInfo.Length.ToFileSizeString());
-            
+
             using (var fileReader = fileInfo.OpenRead())
             {
                 var blocklist = new List<string>();
@@ -115,7 +114,7 @@ namespace Calamari.Azure.CloudServices.Integration
                         packageBlob.PutBlockList(blocklist);
                         break;
                     }
-                    
+
                     var blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes(id.ToString(CultureInfo.InvariantCulture).PadLeft(30, '0')));
                     packageBlob.PutBlock(blockId, new MemoryStream(data, 0, read, true), null);
                     blocklist.Add(blockId);

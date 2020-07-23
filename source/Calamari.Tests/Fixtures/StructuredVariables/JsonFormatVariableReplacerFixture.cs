@@ -11,7 +11,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
     [TestFixture]
     public class JsonFormatVariableReplacerFixture : VariableReplacerFixture
     {
-        public JsonFormatVariableReplacerFixture() : base(new JsonFormatVariableReplacer(CalamariPhysicalFileSystem.GetPhysicalFileSystem()))
+        public JsonFormatVariableReplacerFixture() : base(new JsonFormatVariableReplacer(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new InMemoryLog()))
         {
         }
 

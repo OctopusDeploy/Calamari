@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -16,7 +17,7 @@ namespace Calamari.Deployment.Features.Java
 
         public string Name => SpecialVariables.Action.Java.WildFly.Feature;
 
-        public string DeploymentStage => DeploymentStages.BeforeDeploy; 
+        public string DeploymentStage => DeploymentStages.BeforeDeploy;
 
         public void Execute(RunningDeployment deployment)
         {
@@ -25,7 +26,7 @@ namespace Calamari.Deployment.Features.Java
             // Octopus.Features.WildflyDeployCLI was set to True previously,
             // but now we rely on the feature being enabled
             if (!(variables.GetFlag(SpecialVariables.Action.Java.WildFly.Feature) ||
-                  (variables.Get(SpecialVariables.Package.EnabledFeatures) ?? "").Contains(SpecialVariables.Action.Java.WildFly.Feature)))
+                  (variables.Get(KnownVariables.Package.EnabledFeatures) ?? "").Contains(SpecialVariables.Action.Java.WildFly.Feature)))
                 return;
 
             // Environment variables are used to pass parameters to the Java library

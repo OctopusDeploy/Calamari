@@ -2,17 +2,13 @@
 using System.IO;
 using System.Linq;
 using System.Net;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
@@ -29,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static readonly string DockerHubFeedUri = "https://index.docker.io";
         static readonly string DockerTestUsername = "octopustestaccount";
         static readonly string DockerTestPassword = ExternalVariables.Get(ExternalVariable.DockerReaderPassword);
-        
+
         [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
@@ -47,8 +43,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void PackageWithoutCredentials_Loads()
         {
             var downloader = GetDownloader();
-            var pkg = downloader.DownloadPackage("alpine", 
-                new SemanticVersion("3.6.5"), "docker-feed", 
+            var pkg = downloader.DownloadPackage("alpine",
+                new SemanticVersion("3.6.5"), "docker-feed",
                 new Uri(DockerHubFeedUri), null, true, 1,
                 TimeSpan.FromSeconds(3));
 
@@ -65,12 +61,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var version =  new SemanticVersion("7.3.7-alpine");
 
             var downloader = GetDownloader();
-            var pkg = downloader.DownloadPackage(privateImage, 
-                version, 
-                "docker-feed", 
+            var pkg = downloader.DownloadPackage(privateImage,
+                version,
+                "docker-feed",
                 new Uri(DockerHubFeedUri),
-                new NetworkCredential(DockerTestUsername, DockerTestPassword), 
-                true, 
+                new NetworkCredential(DockerTestUsername, DockerTestPassword),
+                true,
                 1,
                 TimeSpan.FromSeconds(3));
 
@@ -85,9 +81,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var downloader = GetDownloader();
             var pkg = downloader.DownloadPackage("octopus-echo",
-                new SemanticVersion("1.1"), 
+                new SemanticVersion("1.1"),
                 "docker-feed",
-                new Uri(AuthFeedUri), 
+                new Uri(AuthFeedUri),
                 new NetworkCredential(FeedUsername, FeedPassword), true, 1,
                 TimeSpan.FromSeconds(3));
 
@@ -101,9 +97,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void PackageWithWrongCredentials_Fails()
         {
             var downloader = GetDownloader();
-            var exception = Assert.Throws<CommandException>(() => downloader.DownloadPackage("octopus-echo", 
-                new SemanticVersion("1.1"), "docker-feed", 
-                new Uri(AuthFeedUri), 
+            var exception = Assert.Throws<CommandException>(() => downloader.DownloadPackage("octopus-echo",
+                new SemanticVersion("1.1"), "docker-feed",
+                new Uri(AuthFeedUri),
                 new NetworkCredential(FeedUsername, "SuperDooper"), true, 1,
                 TimeSpan.FromSeconds(3)));
 
