@@ -2,6 +2,7 @@
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Common.Features.StructuredVariables
@@ -21,18 +22,24 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public bool IsBestReplacerForFileName(string fileName)
         {
-            return fileName.EndsWith(".json");
+            return fileName.EndsWith(".json", StringComparison.InvariantCultureIgnoreCase);
         }
-
+        
         public void ModifyFile(string filePath, IVariables variables)
         {
-            JToken root = LoadJson(filePath);
+            try
+            {
+                JToken root = LoadJson(filePath);
+                var map = new JsonUpdateMap(log);
+                map.Load(root);
+                map.Update(variables);
 
-            var map = new JsonUpdateMap(log);
-            map.Load(root);
-            map.Update(variables);
-
-            SaveJson(filePath, root);
+                SaveJson(filePath, root);
+            }
+            catch (JsonReaderException e)
+            {
+                throw new StructuredConfigFileParseException(e.Message, e);
+            }
         }
 
         JToken LoadJson(string jsonFilePath)

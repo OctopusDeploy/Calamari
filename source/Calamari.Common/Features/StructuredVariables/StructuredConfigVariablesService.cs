@@ -16,22 +16,28 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public class StructuredConfigVariablesService : IStructuredConfigVariablesService
     {
-        readonly IFileFormatVariableReplacer[] replacers;
         readonly IFileFormatVariableReplacer jsonReplacer;
+        readonly IFileFormatVariableReplacer[] nonJsonReplacers;
+        readonly IFileFormatVariableReplacer[] allReplacers;
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
         public StructuredConfigVariablesService(
-            IEnumerable<IFileFormatVariableReplacer> replacers,
+            IFileFormatVariableReplacer[] replacers,
             ICalamariFileSystem fileSystem,
             ILog log)
         {
-            this.replacers = replacers.ToArray();
             this.fileSystem = fileSystem;
             this.log = log;
 
-            jsonReplacer = this.replacers.FirstOrDefault(r => r.FileFormatName == StructuredConfigVariablesFileFormats.Json)
+            allReplacers = replacers;
+            
+            jsonReplacer = replacers.FirstOrDefault(r => r.FileFormatName == StructuredConfigVariablesFileFormats.Json)
                            ?? throw new Exception("No JSON replacer was supplied. A JSON replacer is required as a fallback.");
+            
+            nonJsonReplacers = replacers
+                               .Where(r => r.FileFormatName != StructuredConfigVariablesFileFormats.Json)
+                               .ToArray();
         }
 
         public void ReplaceVariables(RunningDeployment deployment)
@@ -57,10 +63,9 @@ namespace Calamari.Common.Features.StructuredVariables
 
                 foreach (var filePath in matchingFiles)
                 {
-                    var replacer = GetReplacerForFile(filePath, supportNonJsonReplacement);
-
-                    log.Info($"Performing structured variable replacement on '{filePath}' with file format '{replacer.FileFormatName}'");
-                    replacer.ModifyFile(filePath, deployment.Variables);
+                    // TODO: once we allow users to specify a file format, pass it through here.
+                    var replacersToTry = GetReplacersToTryForFile(filePath, null, supportNonJsonReplacement);
+                    DoReplacement(filePath, deployment.Variables, replacersToTry);
                 }
             }
         }
@@ -78,26 +83,99 @@ namespace Calamari.Common.Features.StructuredVariables
             return files;
         }
 
-        IFileFormatVariableReplacer GetReplacerForFile(string filePath, bool supportNonJsonReplacement)
+        IFileFormatVariableReplacer[] GetReplacersToTryForFile(string filePath, string? specifiedFileFormat, bool supportNonJsonReplacement)
         {
             if (!supportNonJsonReplacement)
             {
-                return jsonReplacer;
+                return new []
+                {
+                    jsonReplacer
+                };
             }
 
-            log.Info($"Feature toggle flag {ActionVariables.StructuredConfigurationFeatureFlag} detected. Trying replacers for all supported file formats.");
-            
-            // TODO: when we support explicit specification of file formats, handle that here.
+            log.Info($"Feature toggle flag {ActionVariables.StructuredConfigurationFeatureFlag} detected. Considering replacers for all supported file formats.");
 
-            var replacer = replacers.FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
-            if (replacer != null)
+            if (!string.IsNullOrWhiteSpace(specifiedFileFormat))
             {
-                log.Info($"The config file at '{filePath}' is being handled as format '{replacer.FileFormatName}' because of the filename.");
-                return replacer;
+                var specifiedReplacer = FindReplacerForFormat(specifiedFileFormat);
+
+                return new []
+                {
+                    specifiedReplacer
+                };
             }
             
-            log.Info($"The config file at '{filePath}' is being handled as format '{StructuredConfigVariablesFileFormats.Json}' as a fallback.");
-            return jsonReplacer;
+            var guessBasedOnFilePath = FindBestReplacerForFilePath(filePath);
+            if (guessBasedOnFilePath != null)
+            {
+                return new []
+                {
+                    // For backwards compatibility, always try JSON first.
+                    jsonReplacer,
+                    guessBasedOnFilePath
+                };
+            }
+
+            return new []
+            {
+                jsonReplacer
+            };
+        }
+
+        IFileFormatVariableReplacer FindReplacerForFormat(string specifiedFileFormat)
+        {
+            var specifiedReplacer = allReplacers
+                .FirstOrDefault(r => r.FileFormatName.Equals(specifiedFileFormat, StringComparison.OrdinalIgnoreCase));
+
+            if (specifiedReplacer == null)
+            {
+                var availableFileFormats = string.Join(", ", allReplacers.Select(r => r.FileFormatName));
+                var message = $"The file format specified ({specifiedFileFormat}) is invalid. "
+                              + $"The available options are: {availableFileFormats}";
+                throw new Exception(message);
+            }
+
+            return specifiedReplacer;
+        }
+
+        IFileFormatVariableReplacer? FindBestReplacerForFilePath(string filePath)
+        {
+            return nonJsonReplacers.FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
+        }
+
+        void DoReplacement(string filePath, IVariables variables, IFileFormatVariableReplacer[] replacersToTry)
+        {
+            var namesOfFormatsToTry = string.Join(", ", replacersToTry
+                .Select(r => r.FileFormatName));
+
+            log.Verbose($"Attempting structured variable replacement on file {filePath} with formats: {namesOfFormatsToTry}.");
+
+            var attempts = new List<(string format, StructuredConfigFileParseException exception)>();
+            
+            foreach (var replacer in replacersToTry)
+            {
+                var format = replacer.FileFormatName;
+                
+                try
+                {
+                    log.Verbose($"Attempting structured variable replacement on file {filePath} as {replacer.FileFormatName}");
+                    replacer.ModifyFile(filePath, variables);
+                    log.Info($"Structured variable replacement succeeded on file {filePath} as {replacer.FileFormatName}");
+                    return;
+                }
+                catch (StructuredConfigFileParseException parseException)
+                {
+                    attempts.Add((format, parseException));
+                }
+            }
+
+            log.Warn($"Structured variable replacement failed on file {filePath}.");
+            foreach (var attempt in attempts)
+            {
+                log.Warn($"Syntax error when parsing the file as {attempt.format}: {attempt.exception.Message}");
+            }
+
+            throw new Exception($"The file at {filePath} could not be parsed with any of the formats tried. See logs for more details.");
         }
     }
 }

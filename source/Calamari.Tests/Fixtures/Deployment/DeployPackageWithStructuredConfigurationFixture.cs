@@ -8,6 +8,7 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class DeployPackageWithStructuredConfigurationFixture : DeployPackageFixture
     {
         const string ServiceName = "Acme.StructuredConfigFiles";
@@ -22,7 +23,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             base.SetUp();
         }
-        
+
         [Test]
         public void FailsAndWarnsIfAFileCannotBeParsedWhenFeatureFlagIsNotSet()
         {
@@ -35,8 +36,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
 
-                // Indicates the file couldn't be parsed.
-                result.AssertErrorOutput("Newtonsoft.Json.JsonReaderException");
+                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ?. Path '', line 0, position 0.");
             }
         }
         
@@ -53,10 +53,10 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertFailure();
 
                 // Indicates we tried to parse yaml as JSON.
-                result.AssertErrorOutput("Newtonsoft.Json.JsonReaderException");
+                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: k. Path '', line 0, position 0.");
             }
         }
-        
+
         [Test]
         public void ShouldPerformReplacementInYamlIfFlagIsSet()
         {
@@ -75,7 +75,24 @@ namespace Calamari.Tests.Fixtures.Deployment
                 this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
             }
         }
-        
+
+        [Test]
+        public void JsonShouldBeTriedBeforeOtherFormatsWhenGuessingTheBestFormat()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.AddFlag(PackageVariables.JsonConfigurationVariablesEnabled, true);
+                Variables.Set(PackageVariables.JsonConfigurationVariablesTargets, YamlFileName);
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertSuccess();
+                result.AssertOutputMatches("Attempting structured variable replacement on file .*?values.yaml with formats: Json, Yaml.");
+
+            }
+        }
+
         [Test]
         public void SucceedsButWarnsIfNoFilesMatchTarget()
         {
@@ -92,7 +109,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutputContains("No files were found that match the replacement target pattern 'doesnt-exist.json'");
             }
         }
-        
+
         [Test]
         public void FallsBackToJsonIfUnknownFileExtension()
         {
@@ -111,7 +128,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonDeepCompareConfiguration);
             }
         }
-        
+
         [Test]
         public void CanPerformReplacementOnMultipleTargetFiles()
         {
@@ -132,7 +149,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
             }
         }
-        
+
         [Test]
         public void CanPerformReplacementOnAGlobThatMatchesFilesInDifferentFormats()
         {
@@ -155,7 +172,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonDeepCompareConfiguration);
             }
         }
-        
+
         [Test]
         public void FailsIfAnyFileMatchingAGlobFailsToParse()
         {
@@ -169,7 +186,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 
                 result.AssertFailure();
-                result.AssertErrorOutput("Unterminated string. Expected delimiter: \". Path '', line 3, position 1.");
+                result.AssertOutput("Unterminated string. Expected delimiter: \". Path '', line 3, position 1.");
             }
         }
         
@@ -185,7 +202,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
-                result.AssertErrorOutput("Newtonsoft.Json.JsonReaderException");
+                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ?. Path '', line 0, position 0.");
             }
         }
 
@@ -224,8 +241,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
 
-                // Indicates the file couldn't be parsed.
-                result.AssertErrorOutput("Newtonsoft.Json.JsonReaderException");
+                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ?. Path '', line 0, position 0.");
             }
         }
 
