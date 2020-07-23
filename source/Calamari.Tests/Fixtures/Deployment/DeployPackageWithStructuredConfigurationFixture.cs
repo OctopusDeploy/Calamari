@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
 
-                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ?. Path '', line 0, position 0.");
+                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ^. Path '', line 0, position 0.");
             }
         }
         
@@ -201,7 +201,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
-                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ?. Path '', line 0, position 0.");
+                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ^. Path '', line 0, position 0.");
             }
         }
 
@@ -240,7 +240,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
 
-                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ?. Path '', line 0, position 0.");
+                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ^. Path '', line 0, position 0.");
             }
         }
 
