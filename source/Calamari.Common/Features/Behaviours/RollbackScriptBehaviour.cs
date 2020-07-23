@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment;
@@ -20,7 +21,10 @@ namespace Calamari.Common.Features.Behaviours
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return true;
+            var features = context.Variables.GetStrings(KnownVariables.Package.EnabledFeatures)
+                                  .Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+
+            return features.Contains(KnownVariables.Features.CustomScripts);
         }
 
         public Task Execute(RunningDeployment context)
