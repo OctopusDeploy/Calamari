@@ -8,7 +8,6 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
-    // ReSharper disable once ClassNeverInstantiated.Global
     public class DeployPackageWithStructuredConfigurationFixture : DeployPackageFixture
     {
         const string ServiceName = "Acme.StructuredConfigFiles";

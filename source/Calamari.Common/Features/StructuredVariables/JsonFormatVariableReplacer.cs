@@ -24,7 +24,7 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             return fileName.EndsWith(".json", StringComparison.InvariantCultureIgnoreCase);
         }
-        
+
         public void ModifyFile(string filePath, IVariables variables)
         {
             try
