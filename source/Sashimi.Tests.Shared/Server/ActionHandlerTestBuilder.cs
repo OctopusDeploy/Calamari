@@ -12,14 +12,14 @@ namespace Sashimi.Tests.Shared.Server
 {
     public static class ActionHandlerTestBuilder
     {
-        public static ActionHandlerTestBuilder<TCalamari> Create<TActionHandler, TCalamari>() 
+        public static ActionHandlerTestBuilder<TCalamari> Create<TActionHandler, TCalamari>()
             where TActionHandler : IActionHandler
             where TCalamari : CalamariFlavourProgram
         {
             return new ActionHandlerTestBuilder<TCalamari>(typeof(TActionHandler));
         }
-        
-        public static ActionHandlerTestBuilder<TCalamari> Create<TCalamari>(Type actionHandlerType) 
+
+        public static ActionHandlerTestBuilder<TCalamari> Create<TCalamari>(Type actionHandlerType)
             where TCalamari : CalamariFlavourProgram
         {
             return new ActionHandlerTestBuilder<TCalamari>(actionHandlerType);
@@ -35,8 +35,8 @@ namespace Sashimi.Tests.Shared.Server
             return context;
         }
     }
-    
-    public class ActionHandlerTestBuilder<TCalamariProgram> 
+
+    public class ActionHandlerTestBuilder<TCalamariProgram>
         where TCalamariProgram : CalamariFlavourProgram
     {
         readonly List<Action<TestActionHandlerContext<TCalamariProgram>>> arrangeActions;
@@ -71,7 +71,7 @@ namespace Sashimi.Tests.Shared.Server
 
             foreach (var arrangeAction in arrangeActions)
             {
-                arrangeAction?.Invoke(context);    
+                arrangeAction?.Invoke(context);
             }
 
             TestActionHandlerResult result;
@@ -80,11 +80,13 @@ namespace Sashimi.Tests.Shared.Server
                 var actionHandler = (IActionHandler) container.Resolve(actionHandlerType);
 
                 result = (TestActionHandlerResult) actionHandler.Execute(context);
+
+                Console.WriteLine(result.FullLog);
             }
 
             if (assertWasSuccess)
             {
-                result.WasSuccessful.Should().BeTrue($"{actionHandlerType} execute result was unsuccessful");
+                result.WasSuccessful.Should().BeTrue($"{actionHandlerType} execute result was unsuccessful.");
             }
             assertAction?.Invoke(result);
 
