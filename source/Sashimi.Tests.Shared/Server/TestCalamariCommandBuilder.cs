@@ -262,8 +262,6 @@ namespace Sashimi.Tests.Shared.Server
                 var calamariFullPath = GetOutProcCalamariExePath();
                 Console.WriteLine("Running Calamari OutProc from: "+ calamariFullPath);
 
-                ExecutableHelper.AddExecutePermission(calamariFullPath);
-
                 var commandLine = CreateCommandLine(calamariFullPath);
                 foreach (var argument in args)
                     commandLine = commandLine.Argument(argument);
@@ -301,6 +299,7 @@ namespace Sashimi.Tests.Shared.Server
                 return commandLine;
             }
 
+            ExecutableHelper.AddExecutePermission(calamariFullPath);
             return new CommandLine(calamariFullPath);
         }
 
