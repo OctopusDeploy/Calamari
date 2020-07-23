@@ -69,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutputMatches(@"Transforming '[A-Z]:\\ApplicationPath\\web\.config' using '[A-Z]:\\ApplicationPath\\web\.Production\.config'");
 
                 // json substitutions
-                result.AssertOutputMatches(@"Performing structured variable replacement on '[A-Z]:\\ApplicationPath\\appsettings\.json' with file format 'Json'");
+                result.AssertOutputMatches("Structured variable replacement succeeded on file [A-Z]:\\\\ApplicationPath\\\\appsettings.json with format 'Json'");
             }
         }
 
@@ -121,7 +121,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutputMatches(@"Transforming '[A-Z]:\\ApplicationPath\\web\.config' using '[A-Z]:\\ApplicationPath\\web\.Production\.config'");
 
                 // json substitutions
-                result.AssertOutputMatches(@"Performing structured variable replacement on '[A-Z]:\\ApplicationPath\\appsettings\.json' with file format 'Json'");
+                result.AssertOutputMatches("Structured variable replacement succeeded on file [A-Z]:\\\\ApplicationPath\\\\appsettings.json with format 'Json'");
             }
         }
 
@@ -171,7 +171,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutputMatches(@"Transforming '[A-Z]:\\AlternateApplicationPath\\web\.config' using '[A-Z]:\\AlternateApplicationPath\\web\.Production\.config'");
 
                 // json substitutions
-                result.AssertOutputMatches(@"Performing structured variable replacement on '[A-Z]:\\AlternateApplicationPath\\appsettings\.json' with file format 'Json'");
+                result.AssertOutputMatches("Structured variable replacement succeeded on file [A-Z]:\\\\AlternateApplicationPath\\\\appsettings.json with format 'Json'");
             }
         }
     }

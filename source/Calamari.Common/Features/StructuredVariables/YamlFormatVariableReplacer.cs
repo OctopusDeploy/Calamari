@@ -18,89 +18,97 @@ namespace Calamari.Common.Features.StructuredVariables
         
         public bool IsBestReplacerForFileName(string fileName)
         {
-            return fileName.EndsWith(".yml") || fileName.EndsWith(".yaml");
+            return fileName.EndsWith(".yml", StringComparison.InvariantCultureIgnoreCase) 
+                   || fileName.EndsWith(".yaml", StringComparison.InvariantCultureIgnoreCase);
         }
 
         public void ModifyFile(string filePath, IVariables variables)
         {
-            var variablesByKey = variables
-                                 .Where(v => !octopusReservedVariablePattern.IsMatch(v.Key))
-                                 .DistinctBy(v => v.Key)
-                                 .ToDictionary<KeyValuePair<string, string>, string, Func<string>>(v => v.Key,
-                                                                                                   v => () => variables.Get(v.Key),
-                                                                                                   StringComparer.OrdinalIgnoreCase);
-
-            // Read and transform the input file
-            var outputEvents = new List<ParsingEvent>();
-            (IYamlNode startEvent, string replacementValue)? structureWeAreReplacing = null;
-            
-            using (var reader = new StreamReader(filePath))
+            try
             {
-                var parser = new Parser(reader);
-                var classifier = new YamlEventStreamClassifier();
-                while (parser.MoveNext())
+                var variablesByKey = variables
+                                     .Where(v => !octopusReservedVariablePattern.IsMatch(v.Key))
+                                     .DistinctBy(v => v.Key)
+                                     .ToDictionary<KeyValuePair<string, string>, string, Func<string>>(v => v.Key,
+                                                                                                       v => () => variables.Get(v.Key),
+                                                                                                       StringComparer.OrdinalIgnoreCase);
+
+                // Read and transform the input file
+                var outputEvents = new List<ParsingEvent>();
+                (IYamlNode startEvent, string replacementValue)? structureWeAreReplacing = null;
+
+                using (var reader = new StreamReader(filePath))
                 {
-                    var ev = parser.Current;
-                    if (ev == null)
-                        continue;
-
-                    var node = classifier.Process(ev);
-
-                    if (structureWeAreReplacing == null)
+                    var parser = new Parser(reader);
+                    var classifier = new YamlEventStreamClassifier();
+                    while (parser.MoveNext())
                     {
-                        // Not replacing: searching for things to replace, copying events to output.
+                        var ev = parser.Current;
+                        if (ev == null)
+                            continue;
 
-                        if (node is YamlNode<Scalar> scalar
-                            && variablesByKey.TryGetValue(scalar.Path, out var newValue))
-                            outputEvents.Add(scalar.Event.ReplaceValue(newValue()));
-                        else if (node is YamlNode<MappingStart> mappingStart
-                                 && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
-                            structureWeAreReplacing = (mappingStart, mappingReplacement());
-                        else if (node is YamlNode<SequenceStart> sequenceStart
-                                 && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
-                            structureWeAreReplacing = (sequenceStart, sequenceReplacement());
-                        else
-                            outputEvents.Add(node.Event);
-                    }
-                    else
-                    {
-                        // Replacing: searching for the end of the structure we're replacing. No output until then.
+                        var node = classifier.Process(ev);
 
-                        if (node is YamlNode<MappingEnd>
-                            && structureWeAreReplacing.Value.startEvent is YamlNode<MappingStart> mappingStart
-                            && structureWeAreReplacing.Value.startEvent.Path == node.Path)
+                        if (structureWeAreReplacing == null)
                         {
-                            outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
-                                                                mappingStart.Event.Anchor,
-                                                                mappingStart.Event.Tag));
-                            structureWeAreReplacing = null;
+                            // Not replacing: searching for things to replace, copying events to output.
+
+                            if (node is YamlNode<Scalar> scalar
+                                && variablesByKey.TryGetValue(scalar.Path, out var newValue))
+                                outputEvents.Add(scalar.Event.ReplaceValue(newValue()));
+                            else if (node is YamlNode<MappingStart> mappingStart
+                                     && variablesByKey.TryGetValue(mappingStart.Path, out var mappingReplacement))
+                                structureWeAreReplacing = (mappingStart, mappingReplacement());
+                            else if (node is YamlNode<SequenceStart> sequenceStart
+                                     && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
+                                structureWeAreReplacing = (sequenceStart, sequenceReplacement());
+                            else
+                                outputEvents.Add(node.Event);
                         }
-                        else if (node is YamlNode<SequenceEnd>
-                                 && structureWeAreReplacing.Value.startEvent is YamlNode<SequenceStart> sequenceStart
-                                 && structureWeAreReplacing.Value.startEvent.Path == node.Path)
+                        else
                         {
-                            outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
-                                                                sequenceStart.Event.Anchor,
-                                                                sequenceStart.Event.Tag));
-                            structureWeAreReplacing = null;
+                            // Replacing: searching for the end of the structure we're replacing. No output until then.
+
+                            if (node is YamlNode<MappingEnd>
+                                && structureWeAreReplacing.Value.startEvent is YamlNode<MappingStart> mappingStart
+                                && structureWeAreReplacing.Value.startEvent.Path == node.Path)
+                            {
+                                outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
+                                                                    mappingStart.Event.Anchor,
+                                                                    mappingStart.Event.Tag));
+                                structureWeAreReplacing = null;
+                            }
+                            else if (node is YamlNode<SequenceEnd>
+                                     && structureWeAreReplacing.Value.startEvent is YamlNode<SequenceStart> sequenceStart
+                                     && structureWeAreReplacing.Value.startEvent.Path == node.Path)
+                            {
+                                outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
+                                                                    sequenceStart.Event.Anchor,
+                                                                    sequenceStart.Event.Tag));
+                                structureWeAreReplacing = null;
+                            }
                         }
                     }
                 }
+
+                // Write the replacement file
+                string outputText;
+                using (var writer = new StringWriter())
+                {
+                    var emitter = new Emitter(writer);
+                    foreach (var outputEvent in outputEvents)
+                        emitter.Emit(outputEvent);
+
+                    writer.Close();
+                    outputText = writer.ToString();
+                }
+
+                File.WriteAllText(filePath, outputText);
             }
-            
-            // Write the replacement file
-            string outputText;
-            using (var writer = new StringWriter())
+            catch (SyntaxErrorException e)
             {
-                var emitter = new Emitter(writer);
-                foreach (var outputEvent in outputEvents)
-                    emitter.Emit(outputEvent);
-
-                writer.Close();
-                outputText = writer.ToString();
+                throw new StructuredConfigFileParseException(e.Message, e);
             }
-
-            File.WriteAllText(filePath, outputText);
         }
 
         List<ParsingEvent> ParseFragment(string value, string? anchor, string? tag)
