@@ -158,9 +158,9 @@ namespace Calamari.Common.Features.StructuredVariables
                 
                 try
                 {
-                    log.Verbose($"Attempting structured variable replacement on file {filePath} as {replacer.FileFormatName}");
+                    log.Verbose($"Attempting structured variable replacement on file {filePath} with format '{replacer.FileFormatName}'");
                     replacer.ModifyFile(filePath, variables);
-                    log.Info($"Structured variable replacement succeeded on file {filePath} as {replacer.FileFormatName}");
+                    log.Info($"Structured variable replacement succeeded on file {filePath} with format '{replacer.FileFormatName}'");
                     return;
                 }
                 catch (StructuredConfigFileParseException parseException)
