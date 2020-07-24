@@ -60,12 +60,12 @@ namespace Calamari.AzureCloudService
             var slot = context.Variables.Get(SpecialVariables.Action.Azure.Slot, DeploymentSlot.Staging.ToString());
             var deploymentSlot = (DeploymentSlot)Enum.Parse(typeof(DeploymentSlot), slot);
             var swapIfPossible = context.Variables.GetFlag(SpecialVariables.Action.Azure.SwapIfPossible);
-            var label = $"{context.Variables.Get(ActionVariables.Name)} v{context.Variables.Get(KnownVariables.Release.Number)}";
+            var deploymentLabel = context.Variables.Get(SpecialVariables.Action.Azure.DeploymentLabel, $"{context.Variables.Get(ActionVariables.Name)} v{context.Variables.Get(KnownVariables.Release.Number)}");
 
             log.SetOutputVariable("OctopusAzureServiceName", cloudServiceName, context.Variables);
             log.SetOutputVariable("OctopusAzureStorageAccountName", context.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName), context.Variables);
             log.SetOutputVariable("OctopusAzureSlot", slot, context.Variables);
-            log.SetOutputVariable("OctopusAzureDeploymentLabel", label, context.Variables);
+            log.SetOutputVariable("OctopusAzureDeploymentLabel", deploymentLabel, context.Variables);
             log.SetOutputVariable("OctopusAzureSwapIfPossible", swapIfPossible.ToString(), context.Variables);
 
             var tempDirectory = fileSystem.CreateTemporaryDirectory();
@@ -91,18 +91,18 @@ namespace Calamari.AzureCloudService
 
                 using var azureClient = account.CreateComputeManagementClient(certificate);
                 var deployment = await GetStagingDeployment(azureClient, cloudServiceName);
-                if (deployment != null)
+                if (deployment == null)
                 {
                     log.Verbose("Nothing is deployed in staging");
                 }
                 else
                 {
                     log.Verbose($"Current staging deployment: {deployment.Label}");
-                    if (deployment.Label == label)
+                    if (deployment.Label == deploymentLabel)
                     {
                         log.Verbose("Swapping the staging environment to production");
-                        await azureClient.Deployments.SwapAsync(cloudServiceName, new DeploymentSwapParameters());
-                        log.SetOutputVariable("OctopusAzureCloudServiceDeploymentSwapped", bool.TrueString, context.Variables);
+                        await azureClient.Deployments.SwapAsync(cloudServiceName, new DeploymentSwapParameters { SourceDeployment = deployment.PrivateId });
+                        log.SetOutputVariable(SpecialVariables.Action.Azure.Output.CloudServiceDeploymentSwapped, bool.TrueString, context.Variables);
                     }
                 }
             }
@@ -110,7 +110,7 @@ namespace Calamari.AzureCloudService
             var swapped = context.Variables.GetFlag(SpecialVariables.Action.Azure.Output.CloudServiceDeploymentSwapped);
             if (swapped)
             {
-                context.Variables.Set(KnownVariables.Action.SkipRemainingConventions, "true");
+                context.Variables.Set(KnownVariables.Action.SkipRemainingConventions, bool.TrueString);
             }
         }
     }
