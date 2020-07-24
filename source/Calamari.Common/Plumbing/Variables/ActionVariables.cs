@@ -8,8 +8,10 @@ namespace Calamari.Common.Plumbing.Variables
         public const string AdditionalPaths = "Octopus.Action.AdditionalPaths";
         
         /* We've renamed these two variables from "Json*" to "Structured*" as they're being used with the renamed config feature
-         Structured Configuration Variables. There are issues around supporting two variables when re-naming so for the time being
-         we're going to continue using the old octopus variable names. */
+         Structured Configuration Variables. TThese values appear in deployment process resources sent between clients and the API, 
+         so until we have support for API versioning (https://github.com/OctopusDeploy/Architecture/pull/11), it is not feasible to 
+         change their values without causing a breaking change. For this reason, for the time being we're going to continue using 
+         the old Octopus Variable names. */
         public static readonly string StructuredConfigurationVariablesEnabled = "Octopus.Action.Package.JsonConfigurationVariablesEnabled";
         public static readonly string StructuredConfigurationVariablesTargets = "Octopus.Action.Package.JsonConfigurationVariablesTargets";
         public static readonly string StructuredConfigurationFeatureFlag = "Octopus.Action.StructuredConfigurationFeatureFlag";
