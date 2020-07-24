@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Calamari.Tests.Shared;
 using Calamari.Tests.Shared.Helpers;
 using FluentAssertions;
+using Hyak.Common;
 using Microsoft.Azure;
 using Microsoft.WindowsAzure.Management.Compute;
 using Microsoft.WindowsAzure.Management.Compute.Models;
@@ -133,10 +134,14 @@ namespace Calamari.AzureCloudService.Tests
                                                      })
                                         .WithAssert(result => result.WasSuccessful.Should().BeTrue())
                                         .Execute();
+
+                Func<Task> act = async () => await client.Deployments.GetBySlotAsync(serviceName, DeploymentSlot.Staging);
+
+                (await act.Should().ThrowAsync<CloudException>())
+                   .WithMessage("ResourceNotFound: No deployments were found.");
             }
             finally
             {
-                await client.Deployments.DeleteBySlotAsync(serviceName, DeploymentSlot.Staging);
                 await client.Deployments.DeleteBySlotAsync(serviceName, DeploymentSlot.Production);
                 await client.HostedServices.DeleteAsync(serviceName);
             }
