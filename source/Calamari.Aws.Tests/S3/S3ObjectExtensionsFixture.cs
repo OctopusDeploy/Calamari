@@ -54,7 +54,7 @@ namespace Calamari.Aws.Tests.S3
             var response = new GetObjectMetadataResponse();
             useHeaderValues(response.Headers);
             response.Metadata.Add("Cowabunga", "Baby2");
-            
+
             var result = S3ObjectExtensions.MetadataEq(request.ToCombinedMetadata(), response.ToCombinedMetadata());
             Assert.IsFalse(result, "Metadata comparison was found to be match, but should differ");
         }
@@ -95,7 +95,7 @@ namespace Calamari.Aws.Tests.S3
             Assert.IsTrue(result, "Metadata was found to be equal, but should differ");
         }
 
-        private Action<HeadersCollection> GetKnownSpecialKeyApplier()
+        Action<HeadersCollection> GetKnownSpecialKeyApplier()
         {
             var keys = S3ObjectExtensions.GetKnownSpecialHeaderKeys().Select((x) => new KeyValuePair<string, string>(x, $"value-{Guid.NewGuid()}" )).ToList();
 

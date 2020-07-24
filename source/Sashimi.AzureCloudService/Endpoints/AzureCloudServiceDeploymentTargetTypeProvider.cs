@@ -10,7 +10,7 @@ using Sashimi.Server.Contracts.Endpoints;
 
 namespace Sashimi.AzureCloudService.Endpoints
 {
-    internal class AzureCloudServiceDeploymentTargetTypeProvider : IDeploymentTargetTypeProvider
+    class AzureCloudServiceDeploymentTargetTypeProvider : IDeploymentTargetTypeProvider
     {
         public DeploymentTargetType DeploymentTargetType =>
             AzureCloudServiceEndpoint.AzureCloudServiceDeploymentTargetType;

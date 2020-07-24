@@ -60,7 +60,7 @@ namespace Sashimi.Aws.CloudTemplates
             return parameters?.Select(x => new KeyValuePair<string, object>(x.Key.ToString(), GetDefaultValue(x.Value))).ToDictionary(x => x.Key, x => x.Value) ?? new Dictionary<string, object>();
         }
 
-        private object GetDefaultValue(YamlNode node)
+        object GetDefaultValue(YamlNode node)
         {
             var defaultValue = GetYamlValue(node, "Default");
             return defaultValue;
@@ -81,9 +81,9 @@ namespace Sashimi.Aws.CloudTemplates
             return parameters;
         }
 
-        private Dictionary<string, YamlScalarNode> scalarNodeCache = new Dictionary<string, YamlScalarNode>();
+        Dictionary<string, YamlScalarNode> scalarNodeCache = new Dictionary<string, YamlScalarNode>();
 
-        private YamlScalarNode GetYamlScalarNodeInstance(string nodeName)
+        YamlScalarNode GetYamlScalarNodeInstance(string nodeName)
         {
             YamlScalarNode scalarNode = null;
             if (scalarNodeCache.ContainsKey(nodeName))
@@ -98,7 +98,7 @@ namespace Sashimi.Aws.CloudTemplates
             return scalarNode;
         }
 
-        private string GetYamlValue(YamlNode node, string nodeName)
+        string GetYamlValue(YamlNode node, string nodeName)
         {
             YamlScalarNode scalarNode = GetYamlScalarNodeInstance(nodeName);
             var mappingNode = node as YamlMappingNode;
@@ -110,13 +110,13 @@ namespace Sashimi.Aws.CloudTemplates
             return (mappingNode[scalarNode] as YamlScalarNode).Value;
         }
 
-        private string GetYamlValue(YamlNode node)
+        string GetYamlValue(YamlNode node)
         {
             return (node as YamlScalarNode).Value;
 
         }
 
-        private OptionsMetadata GetOptions(YamlNode node, string nodeName)
+        OptionsMetadata GetOptions(YamlNode node, string nodeName)
         {
             if (node is YamlMappingNode mappingNode && mappingNode.Children.ContainsKey(nodeName))
             {
