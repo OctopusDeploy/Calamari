@@ -41,6 +41,13 @@ namespace Calamari.Common.Features.Behaviours
 
         public Task Execute(RunningDeployment context)
         {
+            ExecuteSync(context);
+
+            return this.CompletedTask();
+        }
+
+        public void ExecuteSync(RunningDeployment context)
+        {
             foreach (ScriptSyntax scriptType in Enum.GetValues(typeof(ScriptSyntax)))
             {
                 var scriptName = KnownVariables.Action.CustomScripts.GetCustomScriptStage(deploymentStage, scriptType);
@@ -84,8 +91,6 @@ namespace Calamari.Common.Features.Behaviours
                     fileSystem.DeleteFile(scriptFile, FailureOptions.IgnoreFailure);
                 }
             }
-
-            return this.CompletedTask();
         }
     }
 }

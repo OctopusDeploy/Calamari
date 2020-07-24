@@ -23,9 +23,14 @@ namespace Calamari.Common.Features.Behaviours
 
         public Task Execute(RunningDeployment context)
         {
-            structuredConfigVariablesService.ReplaceVariables(context);
+            ExecuteSync(context);
 
             return this.CompletedTask();
+        }
+
+        public void ExecuteSync(RunningDeployment context)
+        {
+            structuredConfigVariablesService.ReplaceVariables(context);
         }
     }
 }

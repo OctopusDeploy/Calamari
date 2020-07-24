@@ -37,6 +37,13 @@ namespace Calamari.Common.Features.Behaviours
 
         public Task Execute(RunningDeployment deployment)
         {
+            ExecuteSync(deployment);
+
+            return this.CompletedTask();
+        }
+
+        public void ExecuteSync(RunningDeployment deployment)
+        {
             var explicitTransforms = GetExplicitTransforms(deployment);
             var automaticTransforms = GetAutomaticTransforms(deployment);
             var sourceExtensions = GetSourceExtensions(deployment, explicitTransforms);
@@ -53,14 +60,21 @@ namespace Calamari.Common.Features.Behaviours
             {
                 if (diagnosticLoggingEnabled)
                     log.Verbose($"Found config file '{configFile}'");
-                ApplyTransformations(configFile, allTransforms, transformFilesApplied,
-                    transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, deployment);
+                ApplyTransformations(configFile,
+                                     allTransforms,
+                                     transformFilesApplied,
+                                     transformDefinitionsApplied,
+                                     duplicateTransformDefinitions,
+                                     diagnosticLoggingEnabled,
+                                     deployment);
             }
 
-            LogFailedTransforms(explicitTransforms, automaticTransforms, transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled);
+            LogFailedTransforms(explicitTransforms,
+                                automaticTransforms,
+                                transformDefinitionsApplied,
+                                duplicateTransformDefinitions,
+                                diagnosticLoggingEnabled);
             deployment.Variables.SetStrings(KnownVariables.AppliedXmlConfigTransforms, transformFilesApplied.Select(t => t.Item1), "|");
-
-            return this.CompletedTask();
         }
 
         static List<XmlConfigTransformDefinition> GetAutomaticTransforms(RunningDeployment deployment)

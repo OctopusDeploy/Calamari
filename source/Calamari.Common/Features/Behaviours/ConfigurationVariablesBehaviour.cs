@@ -30,6 +30,13 @@ namespace Calamari.Common.Features.Behaviours
 
         public Task Execute(RunningDeployment context)
         {
+            ExecuteSync(context);
+
+            return this.CompletedTask();
+        }
+
+        public void ExecuteSync(RunningDeployment context)
+        {
             var appliedAsTransforms = context.Variables.GetStrings(KnownVariables.AppliedXmlConfigTransforms, '|');
 
             log.Verbose("Looking for appSettings, applicationSettings, and connectionStrings in any .config files");
@@ -47,8 +54,6 @@ namespace Calamari.Common.Features.Behaviours
 
                 replacer.ModifyConfigurationFile(configurationFile, context.Variables);
             }
-
-            return this.CompletedTask();
         }
 
         string[] MatchingFiles(RunningDeployment deployment)
