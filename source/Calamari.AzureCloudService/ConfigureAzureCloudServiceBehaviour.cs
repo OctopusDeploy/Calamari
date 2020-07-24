@@ -16,7 +16,7 @@ using Microsoft.WindowsAzure.Management.Compute.Models;
 
 namespace Calamari.AzureCloudService
 {
-    public class ConfigureAzureCloudServiceBehaviour : IPreDeployBehaviour
+    class ConfigureAzureCloudServiceBehaviour : IPreDeployBehaviour
     {
         readonly ILog log;
         readonly AzureAccount account;
