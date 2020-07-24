@@ -34,7 +34,7 @@ namespace Calamari.AzureCloudService
             return true;
         }
 
-        public Task Execute(RunningDeployment context)
+        public async Task Execute(RunningDeployment context)
         {
             // Validate we actually have a real path to the real config file since this value is potentially passed via variable or a previous convention
             var configurationFilePath = context.Variables.Get(SpecialVariables.Action.Azure.Output.ConfigurationFile);
@@ -42,36 +42,32 @@ namespace Calamari.AzureCloudService
                 throw new CommandException("Could not find the Azure Cloud Service Configuration file: " + configurationFilePath);
 
             var configuration = XDocument.Parse(fileSystem.ReadFile(configurationFilePath));
-            UpdateConfigurationWithCurrentInstanceCount(configuration, configurationFilePath, context.Variables);
+            await UpdateConfigurationWithCurrentInstanceCount(configuration, configurationFilePath, context.Variables);
             UpdateConfigurationSettings(configuration, context.Variables);
             SaveConfigurationFile(configuration, configurationFilePath);
-
-            return this.CompletedTask();
         }
 
-        XDocument GetConfiguration(string serviceName, DeploymentSlot slot)
+        async Task<XDocument> GetConfiguration(string serviceName, DeploymentSlot slot)
         {
-            using (var client = account.CreateComputeManagementClient(CalamariCertificateStore.GetOrAdd(account.CertificateThumbprint, account.CertificateBytes)))
+            using var client = account.CreateComputeManagementClient(CalamariCertificateStore.GetOrAdd(account.CertificateThumbprint, account.CertificateBytes));
+            try
             {
-                try
-                {
-                    var response = client.Deployments.GetBySlot(serviceName, slot);
+                var response = await client.Deployments.GetBySlotAsync(serviceName, slot);
 
-                    if (response.StatusCode != HttpStatusCode.OK)
-                    {
-                        throw new Exception($"Getting deployment by slot returned HTTP Status Code: {response.StatusCode}");
-                    }
-
-                    return string.IsNullOrEmpty(response.Configuration)
-                        ? null
-                        : XDocument.Parse(response.Configuration);
-                }
-                catch (CloudException exception)
+                if (response.StatusCode != HttpStatusCode.OK)
                 {
-                    log.VerboseFormat("Getting deployments for service '{0}', slot {1}, returned:\n{2}", serviceName,
-                        slot.ToString(), exception.Message);
-                    return null;
+                    throw new Exception($"Getting deployment by slot returned HTTP Status Code: {response.StatusCode}");
                 }
+
+                return string.IsNullOrEmpty(response.Configuration)
+                    ? null
+                    : XDocument.Parse(response.Configuration);
+            }
+            catch (CloudException exception)
+            {
+                log.VerboseFormat("Getting deployments for service '{0}', slot {1}, returned:\n{2}", serviceName,
+                                  slot.ToString(), exception.Message);
+                return null;
             }
         }
 
@@ -107,7 +103,7 @@ namespace Calamari.AzureCloudService
             }
         }
 
-        void UpdateConfigurationWithCurrentInstanceCount(XContainer localConfigurationFile, string configurationFileName, IVariables variables)
+        async Task UpdateConfigurationWithCurrentInstanceCount(XContainer localConfigurationFile, string configurationFileName, IVariables variables)
         {
             if (!variables.GetFlag(SpecialVariables.Action.Azure.UseCurrentInstanceCount))
                 return;
@@ -115,7 +111,7 @@ namespace Calamari.AzureCloudService
             var serviceName = variables.Get(SpecialVariables.Action.Azure.CloudServiceName);
             var slot = (DeploymentSlot)Enum.Parse(typeof(DeploymentSlot), variables.Get(SpecialVariables.Action.Azure.Slot));
 
-            var remoteConfigurationFile = GetConfiguration(serviceName, slot);
+            var remoteConfigurationFile = await GetConfiguration(serviceName, slot);
 
             if (remoteConfigurationFile == null)
             {

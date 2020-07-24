@@ -110,7 +110,7 @@ namespace Calamari.AzureCloudService
         void LogExtractedPackage(string workingDirectory)
         {
             log.Verbose("CSPKG extracted. Working directory contents:");
-            DirectoryLoggingHelper.LogDirectoryContents(log, fileSystem, workingDirectory, "", 0);
+            DirectoryLoggingHelper.LogDirectoryContents(log, fileSystem, workingDirectory, string.Empty);
         }
     }
 }

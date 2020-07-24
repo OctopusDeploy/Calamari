@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Util;
@@ -25,31 +26,31 @@ namespace Calamari.AzureCloudService
             this.log = log;
         }
 
-        public Uri Upload(SubscriptionCloudCredentials credentials, string storageAccountName, string packageFile, string uploadedFileName, string storageEndpointSuffix, string serviceManagementEndpoint)
+        public async Task<Uri> Upload(SubscriptionCloudCredentials credentials, string storageAccountName, string packageFile, string uploadedFileName, string storageEndpointSuffix, string serviceManagementEndpoint)
         {
             var cloudStorage =
-                new CloudStorageAccount(new StorageCredentials(storageAccountName, GetStorageAccountPrimaryKey(credentials, storageAccountName,serviceManagementEndpoint)),storageEndpointSuffix, true);
+                new CloudStorageAccount(new StorageCredentials(storageAccountName, await GetStorageAccountPrimaryKey(credentials, storageAccountName,serviceManagementEndpoint)),storageEndpointSuffix, true);
 
             var blobClient = cloudStorage.CreateCloudBlobClient();
             var container = blobClient.GetContainerReference(OctopusPackagesContainerName);
 
-            container.CreateIfNotExists();
+            await container.CreateIfNotExistsAsync();
 
-            var permission = container.GetPermissions();
+            var permission = await container.GetPermissionsAsync();
             permission.PublicAccess = BlobContainerPublicAccessType.Off;
-            container.SetPermissions(permission);
+            await container.SetPermissionsAsync(permission);
 
             var fileInfo = new FileInfo(packageFile);
 
             var packageBlob = GetUniqueBlobName(uploadedFileName, fileInfo, container);
-            if (packageBlob.Exists())
+            if (await packageBlob.ExistsAsync())
             {
                 log.VerboseFormat("A blob named {0} already exists with the same length, so it will be used instead of uploading the new package.",
                     packageBlob.Name);
                 return packageBlob.Uri;
             }
 
-            UploadBlobInChunks(fileInfo, packageBlob, blobClient);
+            await UploadBlobInChunks(fileInfo, packageBlob, blobClient);
 
             log.Info("Package upload complete");
             return packageBlob.Uri;
@@ -75,14 +76,14 @@ namespace Calamari.AzureCloudService
             return packageBlob;
         }
 
-        void UploadBlobInChunks(FileInfo fileInfo, CloudBlockBlob packageBlob, CloudBlobClient blobClient)
+        async Task UploadBlobInChunks(FileInfo fileInfo, CloudBlockBlob packageBlob, CloudBlobClient blobClient)
         {
             var operationContext = new OperationContext();
             operationContext.ResponseReceived += delegate(object sender, RequestEventArgs args)
             {
                 var statusCode = (int) args.Response.StatusCode;
                 var statusDescription = args.Response.StatusDescription;
-                log.Verbose("Uploading, response received: " + statusCode + " " + statusDescription);
+                log.Verbose($"Uploading, response received: {statusCode} {statusDescription}");
                 if (statusCode >= 400)
                 {
                     log.Error("Error when uploading the package. Azure returned a HTTP status code of: " +
@@ -91,7 +92,7 @@ namespace Calamari.AzureCloudService
                 }
             };
 
-            blobClient.SetServiceProperties(blobClient.GetServiceProperties(), operationContext: operationContext);
+            await blobClient.SetServicePropertiesAsync(blobClient.GetServiceProperties(), new BlobRequestOptions(), operationContext);
 
             log.VerboseFormat("Uploading the package to blob storage. The package file is {0}.", fileInfo.Length.ToFileSizeString());
 
@@ -108,15 +109,15 @@ namespace Calamari.AzureCloudService
                 {
                     id++;
 
-                    var read = fileReader.Read(data, 0, data.Length);
+                    var read = await fileReader.ReadAsync(data, 0, data.Length);
                     if (read == 0)
                     {
-                        packageBlob.PutBlockList(blocklist);
+                        await packageBlob.PutBlockListAsync(blocklist);
                         break;
                     }
 
                     var blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes(id.ToString(CultureInfo.InvariantCulture).PadLeft(30, '0')));
-                    packageBlob.PutBlock(blockId, new MemoryStream(data, 0, read, true), null);
+                    await packageBlob.PutBlockAsync(blockId, new MemoryStream(data, 0, read, true), null);
                     blocklist.Add(blockId);
 
                     uploadedSoFar += read;
@@ -129,17 +130,15 @@ namespace Calamari.AzureCloudService
             log.Verbose("Upload complete");
         }
 
-        string GetStorageAccountPrimaryKey(SubscriptionCloudCredentials credentials, string storageAccountName,string serviceManagementEndpoint)
+        async Task<string> GetStorageAccountPrimaryKey(SubscriptionCloudCredentials credentials, string storageAccountName,string serviceManagementEndpoint)
         {
-            using (var cloudClient = new StorageManagementClient(credentials, new Uri(serviceManagementEndpoint)))
-            {
-                var getKeysResponse = cloudClient.StorageAccounts.GetKeys(storageAccountName);
+            using var cloudClient = new StorageManagementClient(credentials, new Uri(serviceManagementEndpoint));
+            var getKeysResponse = await cloudClient.StorageAccounts.GetKeysAsync(storageAccountName);
 
-                if (getKeysResponse.StatusCode != HttpStatusCode.OK)
-                    throw new Exception(string.Format("GetKeys for storage-account {0} returned HTTP status-code {1}", storageAccountName, getKeysResponse.StatusCode));
+            if (getKeysResponse.StatusCode != HttpStatusCode.OK)
+                throw new Exception($"GetKeys for storage-account {storageAccountName} returned HTTP status-code {getKeysResponse.StatusCode}");
 
-                return getKeysResponse.PrimaryKey;
-            }
+            return getKeysResponse.PrimaryKey;
         }
     }
 }

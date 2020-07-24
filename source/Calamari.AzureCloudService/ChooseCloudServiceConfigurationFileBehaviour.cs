@@ -56,11 +56,11 @@ namespace Calamari.AzureCloudService
                 var path = Path.Combine(deployment.CurrentDirectory, name);
                 if (fileSystem.FileExists(path))
                 {
-                    Log.Verbose("Found Azure Cloud Service Configuration file: " + path);
+                    log.Verbose("Found Azure Cloud Service Configuration file: " + path);
                     return path;
                 }
 
-                Log.Verbose("Azure Cloud Service Configuration file (*.cscfg) not found: " + path);
+                log.Verbose("Azure Cloud Service Configuration file (*.cscfg) not found: " + path);
             }
 
             throw new CommandException(

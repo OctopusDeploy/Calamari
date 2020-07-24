@@ -27,7 +27,7 @@ namespace Calamari.AzureCloudService
             return true;
         }
 
-        public Task Execute(RunningDeployment context)
+        public async Task Execute(RunningDeployment context)
         {
             var package = context.Variables.Get(SpecialVariables.Action.Azure.CloudServicePackagePath);
             log.InfoFormat("Uploading package to Azure blob storage: '{0}'", package);
@@ -42,12 +42,10 @@ namespace Calamari.AzureCloudService
                 context.Variables.Get(SpecialVariables.Action.Azure.StorageEndPointSuffix, DefaultVariables.StorageEndpointSuffix);
             var defaultServiceManagementEndpoint =
                 context.Variables.Get(SpecialVariables.Action.Azure.ServiceManagementEndPoint, DefaultVariables.ServiceManagementEndpoint);
-            var uploadedUri = azurePackageUploader.Upload(credentials, storageAccountName, package, uploadedFileName,storageEndpointSuffix, defaultServiceManagementEndpoint);
+            var uploadedUri = await azurePackageUploader.Upload(credentials, storageAccountName, package, uploadedFileName,storageEndpointSuffix, defaultServiceManagementEndpoint);
 
             log.SetOutputVariable(SpecialVariables.Action.Azure.UploadedPackageUri, uploadedUri.ToString(), context.Variables);
             log.Info($"Package uploaded to {uploadedUri}");
-
-            return this.CompletedTask();
         }
 
         SubscriptionCloudCredentials GetCredentials(IVariables variables)

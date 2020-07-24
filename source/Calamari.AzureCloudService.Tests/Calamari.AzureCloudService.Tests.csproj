@@ -17,4 +17,10 @@
       <ProjectReference Include="..\Calamari.Tests.Shared\Calamari.Tests.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Update="Packages\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project>
