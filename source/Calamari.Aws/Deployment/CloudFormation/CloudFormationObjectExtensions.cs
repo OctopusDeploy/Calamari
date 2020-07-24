@@ -35,29 +35,29 @@ namespace Calamari.Aws.Deployment.CloudFormation
                 "DELETE_FAILED",
                 "CREATE_FAILED"
             };
-        
+
         /// Some statuses indicate that the only way forward is to delete the stack and try again.
         /// Here are some of the explanations of the stack states from the docs.
-        /// 
+        ///
         /// CREATE_FAILED: Unsuccessful creation of one or more stacks. View the stack events to see any associated error
         /// messages. Possible reasons for a failed creation include insufficient permissions to work with all resources
-        /// in the stack, parameter values rejected by an AWS service, or a timeout during resource creation. 
-        ///  	
+        /// in the stack, parameter values rejected by an AWS service, or a timeout during resource creation.
+        ///
         /// DELETE_FAILED: Unsuccessful deletion of one or more stacks. Because the delete failed, you might have some
         /// resources that are still running; however, you cannot work with or update the stack. Delete the stack again
-        /// or view the stack events to see any associated error messages. 
-        /// 
+        /// or view the stack events to see any associated error messages.
+        ///
         /// ROLLBACK_COMPLETE: This status exists only after a failed stack creation. It signifies that all operations
         /// from the partially created stack have been appropriately cleaned up. When in this state, only a delete operation
         /// can be performed.
-        /// 
+        ///
         /// ROLLBACK_FAILED: Unsuccessful removal of one or more stacks after a failed stack creation or after an explicitly
         /// canceled stack creation. Delete the stack or view the stack events to see any associated error messages.
-        /// 
+        ///
         /// UPDATE_ROLLBACK_FAILED: Unsuccessful return of one or more stacks to a previous working state after a failed stack
         /// update. When in this state, you can delete the stack or continue rollback. You might need to fix errors before
-        /// your stack can return to a working state. Or, you can contact customer support to restore the stack to a usable state. 
-        /// 
+        /// your stack can return to a working state. Or, you can contact customer support to restore the stack to a usable state.
+        ///
         /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
         static HashSet<string> UnrecoverableStackStatuses =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -109,7 +109,7 @@ namespace Calamari.Aws.Deployment.CloudFormation
             try
             {
                 var response = await client.DescribeStackEventsAsync(new DescribeStackEventsRequest {StackName = stack.Value});
-                
+
                 return response?
                     .StackEvents.OrderByDescending(stackEvent => stackEvent.Timestamp)
                     .FirstOrDefault(stackEvent => predicate == null || predicate(stackEvent))
@@ -156,13 +156,13 @@ namespace Calamari.Aws.Deployment.CloudFormation
             try
             {
                 var result = await client.DescribeStackAsync(stackArn);
-                
+
                 if (result == null)
                 {
                     return StackStatus.DoesNotExist;
                 }
 
-                if (result.StackStatus == null || 
+                if (result.StackStatus == null ||
                     result.StackStatus.Value.EndsWith("_COMPLETE") ||
                     result.StackStatus.Value.EndsWith("_FAILED"))
                 {
@@ -222,7 +222,7 @@ namespace Calamari.Aws.Deployment.CloudFormation
         {
             Guard.NotNull(stack, "Stack should not be null");
             Guard.NotNull(client, "Client should not be null");
-            
+
             var status = await client.StackExistsAsync(stack, StackStatus.DoesNotExist);
             if (status == StackStatus.DoesNotExist || status == StackStatus.Completed)
             {
@@ -236,7 +236,7 @@ namespace Calamari.Aws.Deployment.CloudFormation
                 action?.Invoke(@event);
             } while (await client.StackExistsAsync(stack, StackStatus.Completed) == StackStatus.InProgress);
         }
-                
+
         /// <summary>
         /// Check the stack event status to determine whether it was successful.
         /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11

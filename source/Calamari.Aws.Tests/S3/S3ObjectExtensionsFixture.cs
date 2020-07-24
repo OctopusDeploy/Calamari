@@ -54,7 +54,7 @@ namespace Calamari.Aws.Tests.S3
             var response = new GetObjectMetadataResponse();
             useHeaderValues(response.Headers);
             response.Metadata.Add("Cowabunga", "Baby2");
-            
+
             var result = S3ObjectExtensions.MetadataEq(request.ToCombinedMetadata(), response.ToCombinedMetadata());
             Assert.IsFalse(result, "Metadata comparison was found to be match, but should differ");
         }
