@@ -128,7 +128,7 @@ Task("PublishCalamariProjects")
                     RunPublish(null, "netfx");
                 }
             }
-            Console.WriteLine($"{publishDir}/{calamariFlavour}");
+            Verbose($"{publishDir}/{calamariFlavour}");
             Zip($"{publishDir}{calamariFlavour}", $"{artifactsDir}{calamariFlavour}.zip");
         }
 });
@@ -151,7 +151,7 @@ Task("PublishSashimiTestProjects")
 
                 RunPublish();
 
-            Console.WriteLine($"{publishDir}/{sashimiFlavour}");
+            Verbose($"{publishDir}/{sashimiFlavour}");
             Zip($"{publishDir}{sashimiFlavour}", $"{artifactsDir}{sashimiFlavour}.zip");
         }
 });
