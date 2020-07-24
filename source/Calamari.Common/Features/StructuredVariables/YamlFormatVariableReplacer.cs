@@ -39,13 +39,17 @@ namespace Calamari.Common.Features.StructuredVariables
 
                 using (var reader = new StreamReader(filePath))
                 {
-                    var parser = new Parser(reader);
+                    var scanner = new Scanner(reader, false);
+                    var parser = new Parser(scanner);
                     var classifier = new YamlEventStreamClassifier();
                     while (parser.MoveNext())
                     {
                         var ev = parser.Current;
                         if (ev == null)
                             continue;
+
+                        if (ev is Comment c)
+                            ev = c.RestoreLeadingSpaces();
 
                         var node = classifier.Process(ev);
 
