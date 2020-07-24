@@ -24,7 +24,7 @@ namespace Sashimi.Aws.Tests.RunScript
             var bucketName = "octopus-e2e-tests";
             var region = "ap-southeast-1";
             var folderPrefix = $"test/{Guid.NewGuid()}/";
-            var path = TestEnvironment.GetTestPath(@"AwsS3Sample\AwsS3Sample.1.0.0.nupkg");
+            var path = TestEnvironment.GetTestPath(@"AwsS3Sample/AwsS3Sample.1.0.0.nupkg");
 
             ActionHandlerTestBuilder.Create<AwsUploadS3ActionHandler, Program>()
                 .WithArrange(context =>
@@ -61,7 +61,7 @@ namespace Sashimi.Aws.Tests.RunScript
             var bucketName = "octopus-e2e-tests";
             var region = "ap-southeast-1";
             var folderPrefix = $"test/{Guid.NewGuid().ToString()}/";
-            var path = TestEnvironment.GetTestPath(@"AwsS3Sample\AwsS3Sample.1.0.0.nupkg");
+            var path = TestEnvironment.GetTestPath(@"AwsS3Sample/AwsS3Sample.1.0.0.nupkg");
 
             ActionHandlerTestBuilder.Create<AwsUploadS3ActionHandler, Program>()
                 .WithArrange(context =>

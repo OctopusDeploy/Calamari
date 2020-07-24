@@ -141,11 +141,13 @@ namespace Sashimi.Tests.Shared.Server
                 var actionHandler = (IActionHandler) container.Resolve(actionHandlerType);
 
                 result = (TestActionHandlerResult) actionHandler.Execute(context);
+
+                Console.WriteLine(result.FullLog);
             }
 
             if (assertWasSuccess)
             {
-                result.WasSuccessful.Should().BeTrue($"{actionHandlerType} execute result was unsuccessful");
+                result.WasSuccessful.Should().BeTrue($"{actionHandlerType} execute result was unsuccessful.");
             }
             assertAction?.Invoke(result);
 

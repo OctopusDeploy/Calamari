@@ -47,10 +47,10 @@ namespace Calamari.Tests.Shared
         [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "Password for DockerHub Test reader account")]
         DockerReaderPassword,
 
-        [EnvironmentVariable("AWS.E2E.AccessKeyId", "AWS E2E Test User Keys")]
+        [EnvironmentVariable("AWS_E2E_AccessKeyId", "AWS E2E Test User Keys")]
         AwsCloudFormationAndS3AccessKey,
 
-        [EnvironmentVariable("AWS.E2E.SecretKeyId", "AWS E2E Test User Keys")]
+        [EnvironmentVariable("AWS_E2E_SecretKeyId", "AWS E2E Test User Keys")]
         AwsCloudFormationAndS3SecretKey
     }
 

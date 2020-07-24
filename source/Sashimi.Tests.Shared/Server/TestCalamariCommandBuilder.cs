@@ -3,23 +3,38 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
+using Calamari;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Tests.Helpers;
 using Calamari.Tests.Shared;
 using Calamari.Tests.Shared.Helpers;
 using Calamari.Tests.Shared.LogParser;
-using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.DeploymentTools;
+using KnownVariables = Sashimi.Server.Contracts.KnownVariables;
 
 namespace Sashimi.Tests.Shared.Server
 {
     class TestCalamariCommandBuilder<TCalamariProgram> : ICalamariCommandBuilder
     {
+        const string CalamariBinariesLocationEnvironmentVariable = "CalamariBinaries_RelativePath";
+
+        static class InProcOutProcOverride
+        {
+            public static readonly string EnvironmentVariable = "Test_Calamari_InProc_OutProc_Override";
+            public static readonly string InProcValue = "InProc";
+            public static readonly string OutProcValue = "OutProc";
+        }
+
         public TestCalamariCommandBuilder(CalamariFlavour calamariFlavour, string calamariCommand)
         {
             CalamariFlavour = calamariFlavour;
@@ -119,7 +134,7 @@ namespace Sashimi.Tests.Shared.Server
 
                     CopyFilesToWorkingFolder(workingPath);
 
-                    return ExecuteActionHandler(args).GetAwaiter().GetResult();
+                    return ExecuteActionHandler(args);
                 }
                 finally
                 {
@@ -170,8 +185,29 @@ namespace Sashimi.Tests.Shared.Server
             }
         }
 
-        async Task<IActionHandlerResult> ExecuteActionHandler(List<string> args)
+        IActionHandlerResult ExecuteActionHandler(List<string> args)
         {
+            var inProcOutProcOverride = Environment.GetEnvironmentVariable(InProcOutProcOverride.EnvironmentVariable);
+            if (!string.IsNullOrEmpty(inProcOutProcOverride))
+            {
+                if (InProcOutProcOverride.InProcValue.Equals(inProcOutProcOverride, StringComparison.OrdinalIgnoreCase))
+                    return ExecuteActionHandlerInProc(args).GetAwaiter().GetResult();
+
+                if (InProcOutProcOverride.OutProcValue.Equals(inProcOutProcOverride, StringComparison.OrdinalIgnoreCase))
+                    return ExecuteActionHandlerOutProc(args);
+
+                throw new Exception($"'{InProcOutProcOverride.EnvironmentVariable}' environment variable must be '{InProcOutProcOverride.InProcValue}' or '{InProcOutProcOverride.OutProcValue}'");
+            }
+
+            if (TestEnvironment.IsCI)
+                return ExecuteActionHandlerOutProc(args);
+
+            return ExecuteActionHandlerInProc(args).GetAwaiter().GetResult();
+        }
+
+        async Task<IActionHandlerResult> ExecuteActionHandlerInProc(List<string> args)
+        {
+            Console.WriteLine("Running Calamari InProc");
             AssertMatchingCalamariFlavour();
 
             var inMemoryLog = new InMemoryLog();
@@ -223,6 +259,113 @@ namespace Sashimi.Tests.Shared.Server
                 outputFilter.TestOutputVariables, outputFilter.Actions,
                 outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
                 serverInMemoryLog.ToString());
+        }
+
+        IActionHandlerResult ExecuteActionHandlerOutProc(List<string> args)
+        {
+            using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
+            {
+                variables.Save(variablesFile.FilePath);
+
+                var calamariFullPath = GetOutProcCalamariExePath();
+                Console.WriteLine("Running Calamari OutProc from: "+ calamariFullPath);
+
+                var commandLine = CreateCommandLine(calamariFullPath);
+                foreach (var argument in args)
+                    commandLine = commandLine.Argument(argument);
+
+                var calamariResult = Invoke(commandLine);
+
+                var capturedOutput = calamariResult.CapturedOutput;
+
+                var serverInMemoryLog = new ServerInMemoryLog();
+
+                var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
+                foreach (var text in capturedOutput.Errors)
+                {
+                    outputFilter.Write(ProcessOutputSource.StdErr, text);
+                }
+
+                foreach (var text in capturedOutput.Infos)
+                {
+                    outputFilter.Write(ProcessOutputSource.StdOut, text);
+                }
+
+                return new TestActionHandlerResult(calamariResult.ExitCode,
+                    outputFilter.TestOutputVariables, outputFilter.Actions,
+                    outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
+                    serverInMemoryLog.ToString());
+            }
+        }
+
+        static CommandLine CreateCommandLine(string calamariFullPath)
+        {
+            if (!CalamariEnvironment.IsRunningOnWindows && calamariFullPath.EndsWith(".exe"))
+            {
+                var commandLine = new CommandLine("mono");
+                commandLine.Argument(calamariFullPath);
+                return commandLine;
+            }
+
+            ExecutableHelper.AddExecutePermission(calamariFullPath);
+            return new CommandLine(calamariFullPath);
+        }
+
+        string GetOutProcCalamariExePath()
+        {
+            var calamariFlavour = typeof(TCalamariProgram).Assembly.GetName().Name;
+            var sashimiTestFolder = Path.GetDirectoryName(typeof(TCalamariProgram).Assembly.FullLocalPath());
+
+            if (TestEnvironment.IsCI)
+            {
+                //This is where Teamcity puts the Calamari binaries
+                var calamaribinariesFolder = Environment.GetEnvironmentVariable(CalamariBinariesLocationEnvironmentVariable);
+                return AddExeExtensionIfNecessary(Path.GetFullPath(Path.Combine(sashimiTestFolder, calamaribinariesFolder, calamariFlavour)));
+            }
+
+            //Running locally - change these to your liking
+            var configuration = "Debug"; //Debug;Release
+            var targetFramework = "net452"; //net452;netcoreapp3.1
+            var runtime = "win-x64"; //win-x64;linux-x64;osx-x64;linux-arm;linux-arm64
+
+            //When running out of process locally, always publish so we get something runnable for NetCore
+            var calamariProjectFolder = Path.GetFullPath(Path.Combine(sashimiTestFolder, "../../../..", calamariFlavour));
+            DotNetPublish(calamariProjectFolder, configuration, targetFramework, runtime);
+
+            return AddExeExtensionIfNecessary(Path.Combine(calamariProjectFolder, "bin", "Debug", targetFramework, runtime, "publish", calamariFlavour));
+
+            void DotNetPublish(string calamariProjectFolder, string configuration, string targetFramework, string runtime)
+            {
+                var stdOut = new StringBuilder();
+                var stdError = new StringBuilder();
+                var result = SilentProcessRunner.ExecuteCommand($"dotnet",
+                    $"publish --framework {targetFramework} --configuration {configuration} --runtime {runtime}",
+                    calamariProjectFolder,
+                    s => stdOut.AppendLine(s),
+                    s => stdError.AppendLine(s));
+
+                if (result.ExitCode != 0)
+                    throw new Exception(stdOut.ToString() + stdError);
+            }
+
+            string AddExeExtensionIfNecessary(string exePath)
+            {
+                if (File.Exists(exePath))
+                    return exePath;
+
+                var withExeExtension = exePath + ".exe";
+                if (File.Exists(withExeExtension))
+                    return withExeExtension;
+
+                throw new Exception($"Calamari exe doesn't exist on disk: '{exePath}(.exe)'");
+            }
+        }
+
+        CalamariResult Invoke(CommandLine command, IVariables? variables = null)
+        {
+            var runner = new TestCommandLineRunner(ConsoleLog.Instance, variables ?? new CalamariVariables());
+            var result = runner.Execute(command.Build());
+            return new CalamariResult(result.ExitCode, runner.Output);
         }
 
         void Copy(string sourcePath, string destinationPath)
