@@ -19,7 +19,7 @@ namespace Calamari.Deployment.Conventions
         {
             if (packagedScriptBehaviour.IsEnabled(deployment))
             {
-                packagedScriptBehaviour.Execute(deployment).Wait();
+                packagedScriptBehaviour.ExecuteSync(deployment);
             }
         }
     }

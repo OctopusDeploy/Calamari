@@ -24,13 +24,18 @@ namespace Calamari.Common.Features.Behaviours
 
         public Task Execute(RunningDeployment context)
         {
+            ExecuteSync(context);
+
+            return this.CompletedTask();
+        }
+
+        public void ExecuteSync(RunningDeployment context)
+        {
             RunPreferredScript(context);
             if (context.Variables.GetFlag(KnownVariables.DeleteScriptsOnCleanup, true))
             {
                 DeleteScripts(context);
             }
-
-            return this.CompletedTask();
         }
     }
 }
