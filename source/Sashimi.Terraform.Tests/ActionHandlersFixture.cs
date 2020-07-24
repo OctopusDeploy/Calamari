@@ -1,12 +1,13 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -34,9 +35,12 @@ namespace Sashimi.Terraform.Tests
         {
             static string GetTerraformFileName(string currentVersion)
             {
-                return CalamariEnvironment.IsRunningOnNix
-                    ? $"terraform_{currentVersion}_linux_amd64.zip"
-                    : $"terraform_{currentVersion}_windows_amd64.zip";
+                if (CalamariEnvironment.IsRunningOnNix)
+                    return $"terraform_{currentVersion}_linux_amd64.zip";
+                if (CalamariEnvironment.IsRunningOnMac)
+                    return $"terraform_{currentVersion}_darwin_amd64.zip";
+
+                return $"terraform_{currentVersion}_windows_amd64.zip";
             }
 
             static async Task<bool> TerraformFileAvailable(string downloadBaseUrl, RetryTracker retry)
@@ -116,6 +120,7 @@ namespace Sashimi.Terraform.Tests
                         customTerraformExecutable = Directory.EnumerateFiles(destination).FirstOrDefault();
                         Console.WriteLine($"Downloaded terraform to {customTerraformExecutable}");
 
+                        ExecutableHelper.AddExecutePermission(customTerraformExecutable);
                         break;
                     }
                     catch
@@ -363,17 +368,34 @@ namespace Sashimi.Terraform.Tests
             output = ExecuteAndReturnResult(typeof(TerraformApplyActionHandler), PopulateVariables, "Azure");
             output.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
             output.OutputVariables["TerraformValueOutputs[url]"].Value.Should().Be(expectedHostName);
-            await MakeRequest();
+            await AssertRequestResponse(HttpStatusCode.Forbidden);
 
             ExecuteAndReturnResult(typeof(TerraformDestroyActionHandler), PopulateVariables, "Azure");
-            Func<Task> request = async () => await MakeRequest();
-            request.Should().Throw<HttpRequestException>().WithMessage("No such host is known.");
 
-            async Task MakeRequest()
+            await AssertResponseIsNotReachable();
+
+            async Task AssertResponseIsNotReachable()
+            {
+                //This will throw on some platforms and return "NotFound" on others
+                try
+                {
+                    await AssertRequestResponse(HttpStatusCode.NotFound);
+                }
+                catch (HttpRequestException ex)
+                {
+                    ex.Message.Should().BeOneOf(
+                                                "No such host is known.",
+                                                "Name or service not known", //Some Linux distros
+                                                "nodename nor servname provided, or not known" //Mac
+                                                );
+                }
+            }
+
+            async Task AssertRequestResponse(HttpStatusCode expectedStatusCode)
             {
                 using var client = new HttpClient();
-                using var responseMessage = await client.GetAsync($"https://{expectedHostName}").ConfigureAwait(false);
-                responseMessage.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+                var response = await client.GetAsync($"https://{expectedHostName}").ConfigureAwait(false);
+                response.StatusCode.Should().Be(expectedStatusCode);
             }
         }
 
@@ -545,9 +567,8 @@ output ""config-map-aws-auth"" {{
                                                                    {
                                                                        _.OutputVariables.ContainsKey("TerraformValueOutputs[config-map-aws-auth]").Should().BeTrue();
                                                                        _.OutputVariables["TerraformValueOutputs[config-map-aws-auth]"]
-                                                                        .Value.Should()
-                                                                        .Be(
-                                                                            $"{expected}{Environment.NewLine}");
+                                                                        .Value?.TrimEnd().Should()
+                                                                        .Be($"{expected}");
                                                                    });
         }
 

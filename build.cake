@@ -128,12 +128,36 @@ Task("PublishCalamariProjects")
                     RunPublish(null, "netfx");
                 }
             }
-            Console.WriteLine($"{publishDir}/{calamariFlavour}");
+            Verbose($"{publishDir}/{calamariFlavour}");
             Zip($"{publishDir}{calamariFlavour}", $"{artifactsDir}{calamariFlavour}.zip");
         }
 });
 
+Task("PublishSashimiTestProjects")
+    .IsDependentOn("Build")
+    .Does(() => {
+        var projects = GetFiles("./source/**/Sashimi.*.Tests.csproj");
+		foreach(var project in projects)
+        {
+            var sashimiFlavour = project.GetFilenameWithoutExtension().ToString();
+
+                void RunPublish() {
+                     DotNetCorePublish(project.FullPath, new DotNetCorePublishSettings
+		    	    {
+		    	    	Configuration = configuration,
+                        OutputDirectory = $"{publishDir}/{sashimiFlavour}"
+		    	    });
+                }
+
+                RunPublish();
+
+            Verbose($"{publishDir}/{sashimiFlavour}");
+            Zip($"{publishDir}{sashimiFlavour}", $"{artifactsDir}{sashimiFlavour}.zip");
+        }
+});
+
 Task("PackSashimi")
+    .IsDependentOn("PublishSashimiTestProjects")
     .IsDependentOn("PublishCalamariProjects")
     .Does(() =>
 {

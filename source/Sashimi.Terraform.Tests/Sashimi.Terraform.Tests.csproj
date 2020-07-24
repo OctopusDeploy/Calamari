@@ -17,7 +17,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
     <PackageReference Include="Octopus.Server.Extensibility.Tests" Version="9.0.11" />
-    <PackageReference Include="Sashimi.Tests.Shared" Version="4.1.2-ref-fix-common-n0003" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="4.1.5" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.21" />
   </ItemGroup>
 
