@@ -44,11 +44,11 @@ namespace Calamari.Tests.Helpers
 
         public bool CalamariFoundPackage { get; protected set; }
 
-        public FoundPackage FoundPackage { get; protected set; }
+        public FoundPackage? FoundPackage { get; protected set; }
 
-        public DeltaPackage DeltaVerification { get; protected set; }
+        public DeltaPackage? DeltaVerification { get; protected set; }
 
-        public string DeltaError { get; protected set; }
+        public string? DeltaError { get; protected set; }
 
         void ParseServiceMessage(ServiceMessage message)
         {
@@ -71,8 +71,13 @@ namespace Calamari.Tests.Helpers
                     var foundPackageHash = message.GetValue(ServiceMessageNames.FoundPackage.HashAttribute);
                     var foundPackageRemotePath = message.GetValue(ServiceMessageNames.FoundPackage.RemotePathAttribute);
                     var fileExtension = message.GetValue(ServiceMessageNames.FoundPackage.FileExtensionAttribute);
-                    FoundPackage = new FoundPackage(foundPackageId, foundPackageVersion, foundPackageVersionFormat, foundPackageRemotePath,
-                        foundPackageHash, fileExtension);
+                    if (foundPackageId != null && foundPackageVersion != null)
+                        FoundPackage = new FoundPackage(foundPackageId,
+                                                        foundPackageVersion,
+                                                        foundPackageVersionFormat,
+                                                        foundPackageRemotePath,
+                                                        foundPackageHash,
+                                                        fileExtension);
                     break;
                 case ServiceMessageNames.PackageDeltaVerification.Name:
                     var pdvHash = message.GetValue(ServiceMessageNames.PackageDeltaVerification.HashAttribute);
@@ -80,7 +85,7 @@ namespace Calamari.Tests.Helpers
                     var pdvRemotePath =
                         message.GetValue(ServiceMessageNames.PackageDeltaVerification.RemotePathAttribute);
                     DeltaError = message.GetValue(ServiceMessageNames.PackageDeltaVerification.Error);
-                    if (pdvHash != null)
+                    if (pdvRemotePath != null && pdvHash != null)
                     {
                         DeltaVerification = new DeltaPackage(pdvRemotePath, pdvHash, long.Parse(pdvSize));
                     }
