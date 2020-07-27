@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Autofac;
 using Calamari.Common;
 using Calamari.Common.Plumbing.Variables;
@@ -57,38 +56,9 @@ namespace Sashimi.Tests.Shared.Server
             return context;
         }
 
-        public static TestActionHandlerContext<TCalamariProgram> WithPackage<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string packagePath)
+        public static TestActionHandlerContext<TCalamariProgram> WithPackage<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string packagePath, string packageId, string packageVersion)
         {
             context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(packagePath));
-            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(packagePath);
-            var fileNameChunks = fileNameWithoutExtension.Split('.').Reverse().ToArray();
-            string? packageVersion = null;
-            var idx = 0;
-            for (; idx < fileNameChunks.Length; idx++)
-            {
-                var fileNameChunk = fileNameChunks[idx];
-
-                if (Int32.TryParse(fileNameChunk, out _))
-                {
-                    packageVersion = packageVersion == null
-                        ? fileNameChunk
-                        : $"{fileNameChunk}.{packageVersion}";
-
-                    continue;
-                }
-                break;
-            }
-
-            string? packageId = null;
-            for (; idx < fileNameChunks.Length; idx++)
-            {
-                var fileNameChunk = fileNameChunks[idx];
-
-                packageId = packageId == null
-                    ? fileNameChunk
-                    : $"{fileNameChunk}.{packageId}";
-            }
-
             context.Variables.Add(TentacleVariables.CurrentDeployment.PackageFilePath, packagePath);
             context.Variables.Add("Octopus.Action.Package.PackageId", packageId);
             context.Variables.Add("Octopus.Action.Package.PackageVersion", packageVersion);

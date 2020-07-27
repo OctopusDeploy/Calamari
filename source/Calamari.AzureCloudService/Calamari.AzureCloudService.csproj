@@ -9,7 +9,6 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Calamari.Common" Version="14.1.1" />
-        <Reference Include="WindowsBase" />
         <PackageReference Include="Hyak.Common" Version="1.2.2" />
         <PackageReference Include="Microsoft.Azure.Common" Version="2.2.1" />
         <PackageReference Include="Microsoft.WindowsAzure.Management.Compute" Version="14.0.0" />

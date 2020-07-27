@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Calamari.Common;
@@ -13,6 +12,12 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Shared.Helpers;
 using Calamari.Tests.Shared.LogParser;
 using FluentAssertions;
+#if NETSTANDARD
+using NuGet.Packaging;
+using NuGet.Versioning;
+#else
+using NuGet;
+#endif
 using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 
 namespace Calamari.Tests.Shared
@@ -62,44 +67,49 @@ namespace Calamari.Tests.Shared
             return context;
         }
 
-        public static CommandTestBuilderContext WithPackage(this CommandTestBuilderContext context, string packagePath)
+        public static CommandTestBuilderContext WithPackage(this CommandTestBuilderContext context, string packagePath, string packageId, string packageVersion)
         {
             context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(packagePath));
-            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(packagePath);
-            var fileNameChunks = fileNameWithoutExtension.Split('.').Reverse().ToArray();
-            string? packageVersion = null;
-            var idx = 0;
-            for (; idx < fileNameChunks.Length; idx++)
-            {
-                var fileNameChunk = fileNameChunks[idx];
-
-                if (Int32.TryParse(fileNameChunk, out _))
-                {
-                    packageVersion = packageVersion == null
-                        ? fileNameChunk
-                        : $"{fileNameChunk}.{packageVersion}";
-
-                    continue;
-                }
-                break;
-            }
-
-            string? packageId = null;
-            for (; idx < fileNameChunks.Length; idx++)
-            {
-                var fileNameChunk = fileNameChunks[idx];
-
-                packageId = packageId == null
-                    ? fileNameChunk
-                    : $"{fileNameChunk}.{packageId}";
-            }
-
             context.Variables.Add(TentacleVariables.CurrentDeployment.PackageFilePath, packagePath);
             context.Variables.Add("Octopus.Action.Package.PackageId", packageId);
             context.Variables.Add("Octopus.Action.Package.PackageVersion", packageVersion);
             context.Variables.Add("Octopus.Action.Package.FeedId", "FeedId");
 
             return context;
+        }
+
+        public static CommandTestBuilderContext WithNewNugetPackage(this CommandTestBuilderContext context, string packageRootPath, string packageId, string packageVersion)
+        {
+            var pathToPackage = Path.Combine(packageRootPath, CreateNugetPackage(packageId, packageVersion, packageRootPath));
+
+            return context.WithPackage(pathToPackage, packageId, packageVersion);
+        }
+
+        static string CreateNugetPackage(string packageId, string packageVersion, string filePath)
+        {
+            var metadata = new ManifestMetadata
+            {
+#if NETSTANDARD
+                Authors = new [] {"octopus@e2eTests"},
+                Version = new NuGetVersion(packageVersion),
+#else
+                Authors = "octopus@e2eTests",
+                Version = packageVersion,
+#endif
+                Id = packageId,
+                Description = nameof(CommandTestBuilder)
+            };
+
+            var packageFileName = $"{packageId}.{metadata.Version}.nupkg";
+
+            var builder = new PackageBuilder();
+            builder.PopulateFiles(filePath, new[] { new ManifestFile { Source = "**" } });
+            builder.Populate(metadata);
+
+            using var stream = File.Open(Path.Combine(filePath, packageFileName), FileMode.OpenOrCreate);
+            builder.Save(stream);
+
+            return packageFileName;
         }
     }
 

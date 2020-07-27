@@ -9,7 +9,6 @@ using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
-using NuGet;
 using NUnit.Framework;
 using HttpClient = System.Net.Http.HttpClient;
 using OperatingSystem = Microsoft.Azure.Management.AppService.Fluent.OperatingSystem;
@@ -300,13 +299,11 @@ namespace Calamari.AzureWebApp.Tests
 
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
 
-            var pathToPackage = Path.Combine(tempPath.DirectoryPath, CreateNugetPackage("Hello", tempPath.DirectoryPath));
-
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
                 .WithArrange(context =>
                 {
                     AddDefaults(context, webAppName);
-                    context.WithPackage(pathToPackage);
+                    context.WithNewNugetPackage(tempPath.DirectoryPath, "Hello", "1.0.0");
                 })
                 .Execute();
 
@@ -368,28 +365,6 @@ namespace Calamari.AzureWebApp.Tests
                 clientSecret);
             context.Variables.Add(SpecialVariables.Action.Azure.WebAppName, webAppName);
             context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroup.Name);
-        }
-
-        static string CreateNugetPackage(string packageId, string filePath)
-        {
-            var metadata = new ManifestMetadata
-            {
-                Authors = "octopus@e2eTests",
-                Version = "1.0.0",
-                Id = packageId,
-                Description = nameof(DeployAzureWebCommandFixture)
-            };
-
-            var packageFileName = $"{packageId}.{metadata.Version}.nupkg";
-
-            var builder = new PackageBuilder();
-            builder.PopulateFiles(filePath, new[] { new ManifestFile { Source = "**" } });
-            builder.Populate(metadata);
-
-            using var stream = File.Open(Path.Combine(filePath, packageFileName), FileMode.OpenOrCreate);
-            builder.Save(stream);
-
-            return packageFileName;
         }
     }
 }
