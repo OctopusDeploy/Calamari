@@ -10,6 +10,7 @@
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
         <PackageReference Include="System.Net.Http" Version="4.3.3" />
+        <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.22" />
     </ItemGroup>
 
     <ItemGroup>
