@@ -1,36 +1,16 @@
-﻿using Sashimi.Server.Contracts;
+﻿using System;
+using Sashimi.Azure.Accounts;
+using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.CommandBuilders;
 
 namespace Sashimi.AzureWebApp
 {
-    public interface IAzurePowerShellModuleConfiguration
-    {
-        string AzurePowerShellModule { get; set; }
-    }
-
-    public class AzurePowerShellModuleConfiguration : IAzurePowerShellModuleConfiguration
-    {
-        readonly IKeyValueStore settings;
-        const string Key = "Octopus.Azure.PowerShellModule";
-
-        public AzurePowerShellModuleConfiguration(IKeyValueStore settings)
-        {
-            this.settings = settings;
-        }
-
-        public string AzurePowerShellModule
-        {
-            get { return settings.Get<string>(Key); }
-            set { settings.Set(Key, value); }
-        }
-    }
-
-    public static class AzureActionHandlerExtensions
+    static class AzureActionHandlerExtensions
     {
         public static ICalamariCommandBuilder WithAzurePowershellConfiguration(
             this ICalamariCommandBuilder builder,
-            IAzurePowerShellModuleConfiguration azurePowerShellModuleConfiguration
+            AzurePowerShellModuleConfiguration azurePowerShellModuleConfiguration
         )
         {
             var configuredPowerShellModulePath = azurePowerShellModuleConfiguration.AzurePowerShellModule;
@@ -46,7 +26,17 @@ namespace Sashimi.AzureWebApp
             return builder.WithAzureCmdlets(context).WithAzureCLI(context);
         }
 
-        public static ICalamariCommandBuilder WithAzureCmdlets(
+        public static ICalamariCommandBuilder WithCheckAccountIsNotManagementCertificate(this ICalamariCommandBuilder builder, IActionHandlerContext context)
+        {
+            if (context.Variables.Get(SpecialVariables.AccountType) != AccountTypes.AzureServicePrincipalAccountType.ToString())
+            {
+                context.Log.Warn("Azure have announced they will be retiring Service Management API support on June 30th 2018. Please switch to using Service Principals for your Octopus Azure accounts https://g.octopushq.com/AzureServicePrincipalAccount");
+            }
+
+            return builder;
+        }
+
+        static ICalamariCommandBuilder WithAzureCmdlets(
             this ICalamariCommandBuilder builder,
             IActionHandlerContext context)
         {
@@ -68,7 +58,7 @@ namespace Sashimi.AzureWebApp
             return builder;
         }
 
-        public static ICalamariCommandBuilder WithAzureCLI(
+        static ICalamariCommandBuilder WithAzureCLI(
             this ICalamariCommandBuilder builder,
             IActionHandlerContext context)
         {

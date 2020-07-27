@@ -13,6 +13,7 @@
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
         <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="10.0.2" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.22" />
+        <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="10.0.4" />
     </ItemGroup>
 
     <ItemGroup>

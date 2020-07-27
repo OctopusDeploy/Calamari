@@ -7,14 +7,43 @@
         <Nullable>enable</Nullable>
         <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <NoDefaultExcludes>true</NoDefaultExcludes>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Azure.Common\Sashimi.Azure.Common.csproj" />
-      <ProjectReference Include="..\Sashimi.Azure.Accounts\Sashimi.Azure.Accounts.csproj" />
-      <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
+        <ProjectReference Include="..\Azure.Common\Sashimi.Azure.Common.csproj" />
+        <ProjectReference Include="..\Sashimi.Azure.Accounts\Sashimi.Azure.Accounts.csproj" />
+        <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <None Include="..\..\artifacts\Calamari.AzureWebApp.zip" LinkBase="tools" Pack="true" PackagePath="tools/" />
+        <None Include="..\..\artifacts\Calamari.AzureWebApp.zip">
+            <Visible>false</Visible>
+            <LinkBase>tools</LinkBase>
+            <Pack>true</Pack>
+            <PackagePath>tools/</PackagePath>
+        </None>
     </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Octopus.Configuration" Version="2.1.0" />
+        <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.0.50" />
+        <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.13.1" />
+    </ItemGroup>
+
+    <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
+        <Message Text="Collecting nupkg packages to bundle with Sashimi module binaries" />
+        <ItemGroup>
+            <PackageFilesRef Include="@(PackageDefinitions)" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))" />
+        </ItemGroup>
+        <PropertyGroup>
+            <PackageFilesRefProperty>@(PackageFilesRef->'%(ResolvedPath)/*.nupkg')</PackageFilesRefProperty>
+        </PropertyGroup>
+        <ItemGroup>
+            <PackageFiles Include="$(PackageFilesRefProperty)" />
+            <Content Include="@(PackageFiles)">
+                <Pack>true</Pack>
+                <PackagePath>contentFiles/any/any/</PackagePath>
+                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            </Content>
+        </ItemGroup>
+    </Target>
 </Project>
