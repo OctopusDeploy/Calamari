@@ -226,5 +226,13 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "comments.yml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
+        public void ShouldPreserveFlowAndBlockStyles()
+        {
+            this.Assent(Replace(new CalamariVariables(),
+                                "flow-and-block-styles.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
     }
 }
