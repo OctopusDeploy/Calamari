@@ -1,6 +1,5 @@
 namespace Sashimi.AzureWebApp
 {
-    //TODO: This is duplicated from Server while we sort out a way for Sashimi to contribute special variables.
     static class SpecialVariables
     {
         public static readonly string AccountType = "Octopus.Account.AccountType";
@@ -15,6 +14,12 @@ namespace Sashimi.AzureWebApp
                 public static readonly string ResourceGroupName = "Octopus.Action.Azure.ResourceGroupName";
                 public static readonly string AccountId = "Octopus.Action.Azure.AccountId";
                 public static readonly string WebAppHealthCheckActionTypeName = "Octopus.HealthCheck.AzureWebApp";
+                public static readonly string WebAppActionTypeName = "Octopus.AzureWebApp";
+                public static readonly string PowershellModulePath = "Octopus.Action.Azure.PowerShellModule";
+                public static readonly string UseBundledAzureModules = "OctopusUseBundledAzureModules";
+                public static readonly string UseBundledAzureCLI = "OctopusUseBundledAzureCLI";
+                public static readonly string OctopusDisableAzureCLI = "OctopusDisableAzureCLI";
+                public static readonly string UseBundledAzureModulesLegacy = "Octopus.Action.Azure.UseBundledAzurePowerShellModules";
             }
         }
     }

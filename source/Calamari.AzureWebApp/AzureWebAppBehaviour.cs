@@ -114,9 +114,9 @@ namespace Calamari.AzureWebApp
         }
 
         bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate,
-            X509Chain chain, SslPolicyErrors sslpolicyerrors)
+            X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            switch (sslpolicyerrors)
+            switch (sslPolicyErrors)
             {
                 case SslPolicyErrors.None:
                     return true;
@@ -200,25 +200,29 @@ namespace Calamari.AzureWebApp
         }
 
         void ApplyPreservePathsDeploymentRule(DeploymentSyncOptions syncOptions,
-            IVariables variables)
+                                              IVariables variables)
         {
             // If PreservePaths variable set, then create SkipDelete rules for each path regex
             var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
-            // ReSharper disable once InvertIf
-            if (preservePaths != null)
+
+            for (var i = 0; i < preservePaths.Count; i++)
             {
-                for (var i = 0; i < preservePaths.Count; i++)
-                {
-                    var path = preservePaths[i];
-                    syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteFiles_{i}", "Delete", "filePath", path,
-                        null));
-                    syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteDir_{i}", "Delete", "dirPath", path, null));
-                }
+                var path = preservePaths[i];
+                syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteFiles_{i}",
+                                                             "Delete",
+                                                             "filePath",
+                                                             path,
+                                                             null));
+                syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteDir_{i}",
+                                                             "Delete",
+                                                             "dirPath",
+                                                             path,
+                                                             null));
             }
         }
 
         void ApplyAppOfflineDeploymentRule(DeploymentSyncOptions syncOptions,
-            IVariables variables)
+                                           IVariables variables)
         {
             // ReSharper disable once InvertIf
             if (variables.GetFlag(SpecialVariables.Action.Azure.AppOffline))
