@@ -129,8 +129,11 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public static Comment RestoreLeadingSpaces(this Comment comment)
         {
+            // The YamlDotNet Parser strips leading spaces, but we can get closer to preserving alignment by
+            // putting some back based on input file offset information.
+            const int outputCommentPrefixLength = 2; // The YamlDotNet Emitter is hard-coded to output `# `
             var leadingSpaces = comment.Start.Line == comment.End.Line
-                ? comment.End.Column - comment.Value.Length - comment.Start.Column - 2
+                ? comment.End.Column - comment.Value.Length - comment.Start.Column - outputCommentPrefixLength
                 : 0;
             return leadingSpaces > 0
                 ? new Comment(new string(' ', leadingSpaces) + comment.Value,
