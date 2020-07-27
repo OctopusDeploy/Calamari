@@ -61,7 +61,7 @@ namespace Calamari.Tests.Shared
                 context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, path);
             }
 
-            context.Variables.Add("Octopus.Action.Package.PackageId", path);
+            context.Variables.Add("Octopus.Test.PackagePath", path);
             context.Variables.Add("Octopus.Action.Package.FeedId", "FeedId");
 
             return context;
@@ -177,7 +177,7 @@ namespace Calamari.Tests.Shared
 
                 if (!context.withStagedPackageArgument)
                 {
-                    var packageId = context.Variables.GetRaw("Octopus.Action.Package.PackageId");
+                    var packageId = context.Variables.GetRaw("Octopus.Test.PackagePath");
                     if (File.Exists(packageId))
                     {
                         var fileName = new FileInfo(packageId).Name;

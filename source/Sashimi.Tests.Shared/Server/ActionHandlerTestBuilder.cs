@@ -50,7 +50,7 @@ namespace Sashimi.Tests.Shared.Server
                 context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, path);
             }
 
-            context.Variables.Add(KnownVariables.Action.Packages.PackageId, path);
+            context.Variables.Add("Octopus.Test.PackagePath", path);
             context.Variables.Add(KnownVariables.Action.Packages.FeedId, "FeedId");
 
             return context;
@@ -60,9 +60,9 @@ namespace Sashimi.Tests.Shared.Server
         {
             context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(packagePath));
             context.Variables.Add(TentacleVariables.CurrentDeployment.PackageFilePath, packagePath);
-            context.Variables.Add("Octopus.Action.Package.PackageId", packageId);
-            context.Variables.Add("Octopus.Action.Package.PackageVersion", packageVersion);
-            context.Variables.Add("Octopus.Action.Package.FeedId", "FeedId");
+            context.Variables.Add(KnownVariables.Action.Packages.PackageId, packageId);
+            context.Variables.Add(KnownVariables.Action.Packages.Version, packageVersion);
+            context.Variables.Add(KnownVariables.Action.Packages.FeedId, "FeedId");
 
             return context;
         }

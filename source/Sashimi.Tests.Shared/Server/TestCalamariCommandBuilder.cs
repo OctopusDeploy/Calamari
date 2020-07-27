@@ -20,7 +20,6 @@ using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.DeploymentTools;
-using KnownVariables = Sashimi.Server.Contracts.KnownVariables;
 
 namespace Sashimi.Tests.Shared.Server
 {
@@ -172,7 +171,7 @@ namespace Sashimi.Tests.Shared.Server
 
             if (!withStagedPackageArgument)
             {
-                var packageId = variables.GetRaw(KnownVariables.Action.Packages.PackageId);
+                var packageId = variables.GetRaw("Octopus.Test.PackagePath");
                 if (File.Exists(packageId))
                 {
                     var fileName = new FileInfo(packageId).Name;
