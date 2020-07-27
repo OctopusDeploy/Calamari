@@ -59,7 +59,7 @@ namespace Calamari.Tests.Helpers
             Assert.That(variable, resolveConstraint);
         }
 
-        public void AssertServiceMessage(string name, IResolveConstraint resolveConstraint = null, Dictionary<string, object> properties = null, string message = "", params object[] args)
+        public void AssertServiceMessage(string name, IResolveConstraint? resolveConstraint = null, Dictionary<string, object>? properties = null, string message = "", params object[] args)
         {
             switch (name)
             {
@@ -93,7 +93,7 @@ namespace Calamari.Tests.Helpers
                 case ServiceMessageNames.PackageDeltaVerification.Name:
                     if (!string.IsNullOrWhiteSpace(message))
                     {
-                        Assert.That(captured.DeltaError.Replace("\r\n", "\n"), Is.EqualTo(message));
+                        Assert.That(captured?.DeltaError?.Replace("\r\n", "\n"), Is.EqualTo(message));
                         break;
                     }
 
@@ -122,7 +122,7 @@ namespace Calamari.Tests.Helpers
             }
         }
 
-        static void AssertServiceMessageValue(string property, object expected, string actual, IResolveConstraint resolveConstraint)
+        static void AssertServiceMessageValue(string property, object expected, string actual, IResolveConstraint? resolveConstraint)
         {
             Assert.That(actual, Is.Not.Null);
             Assert.That(actual, Is.Not.Empty);
@@ -152,7 +152,7 @@ namespace Calamari.Tests.Helpers
             allOutput.Should().Contain(expected);
         }
 
-        public void AssertOutputMatches(string regex, string message = null)
+        public void AssertOutputMatches(string regex, string? message = null)
         {
             var allOutput = string.Join(Environment.NewLine, captured.Infos);
 
