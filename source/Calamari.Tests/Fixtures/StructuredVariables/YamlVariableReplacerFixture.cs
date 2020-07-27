@@ -213,5 +213,16 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "application.directives.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
+        public void ShouldPreserveComments()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "environment:matrix:2:DVersion", "stable" },
+                                },
+                                "comments.yml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
     }
 }
