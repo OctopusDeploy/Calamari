@@ -206,6 +206,8 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         [Test]
         public void ShouldPreserveDirectives()
         {
+            // Note: because YamlDotNet outputs the default directives alongside any custom ones, they have been
+            // included in the input file here to avoid implying we require them to be added.
             this.Assent(Replace(new CalamariVariables
                                 {
                                     { "spring:h2:console:enabled", "true" }

@@ -1,5 +1,7 @@
 ﻿%YAML 1.2
 %TAG !yams! tag:yaml.org,2002:
+%TAG ! !
+%TAG !! tag:yaml.org,2002:
 ---
 server:
   ports:
