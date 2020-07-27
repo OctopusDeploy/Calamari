@@ -244,5 +244,13 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             message.Should().MatchRegex(@"(?i)\bLine\W+4\b");
             message.Should().MatchRegex(@"(?i)\bCol\w*\W+1\b");
         }
+
+        [Test]
+        public void ShouldPreserveFlowAndBlockStyles()
+        {
+            this.Assent(Replace(new CalamariVariables(),
+                                "flow-and-block-styles.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
     }
 }
