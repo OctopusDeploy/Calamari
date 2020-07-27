@@ -12,7 +12,9 @@
 #elif NET452
             return Task.FromResult(0);
 #else
-            return new Task<int>(() => 0);;
+            var task = new Task<int>(() => 0);
+            task.Start();
+            return task;
 #endif
         }
     }
