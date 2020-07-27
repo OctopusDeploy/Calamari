@@ -109,7 +109,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
                 File.WriteAllText(filePath, outputText);
             }
-            catch (SyntaxErrorException e)
+            catch (Exception e) when (e is SyntaxErrorException || e is SemanticErrorException)
             {
                 throw new StructuredConfigFileParseException(e.Message, e);
             }

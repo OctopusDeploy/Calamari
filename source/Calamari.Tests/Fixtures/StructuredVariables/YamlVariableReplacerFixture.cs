@@ -3,6 +3,7 @@ using Assent;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables
@@ -225,6 +226,23 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 },
                                 "comments.yml"),
                         TestEnvironment.AssentYamlConfiguration);
+        }
+
+        [Test]
+        public void ParsingErrorPositionIsReportedToUser()
+        {
+            var message = "";
+            try
+            {
+                Replace(new CalamariVariables(), "broken.yaml");
+            }
+            catch (StructuredConfigFileParseException ex)
+            {
+                message = ex.Message;
+            }
+
+            message.Should().MatchRegex(@"(?i)\bLine\W+4\b");
+            message.Should().MatchRegex(@"(?i)\bCol\w*\W+1\b");
         }
     }
 }
