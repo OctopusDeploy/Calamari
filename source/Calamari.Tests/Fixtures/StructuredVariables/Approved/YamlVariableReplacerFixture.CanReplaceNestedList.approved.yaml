@@ -1,0 +1,10 @@
+﻿pets-config:
+  xyz: asdf
+  somelist:
+  - some element
+  - some other element
+  pets:
+  - name: Susan
+    species: Cuttlefish
+  - name: Craig
+    species: Manta Ray

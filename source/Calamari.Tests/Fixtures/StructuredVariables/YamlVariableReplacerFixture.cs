@@ -252,5 +252,20 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "flow-and-block-styles.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
+        public void CanReplaceNestedList()
+        {
+            var nl = Environment.NewLine;
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    {
+                                        "pets-config:pets",
+                                        $"- name: Susan{nl}  species: Cuttlefish{nl}- name: Craig{nl}  species: Manta Ray"
+                                    }
+                                },
+                                "pets.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
     }
 }
