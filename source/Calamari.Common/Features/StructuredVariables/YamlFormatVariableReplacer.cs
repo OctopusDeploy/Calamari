@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using YamlDotNet.Core;
@@ -34,10 +35,13 @@ namespace Calamari.Common.Features.StructuredVariables
                                                                                                        StringComparer.OrdinalIgnoreCase);
 
                 // Read and transform the input file
+                var (fileText, encoding) = EncodingDetectingFileReader.ReadToEnd(filePath);
+                var lineEnding = fileText.GetMostCommonLineEnding();
+
                 var outputEvents = new List<ParsingEvent>();
                 var indentDetector = new YamlIndentDetector();
 
-                using (var reader = new StreamReader(filePath))
+                using (var reader = new StringReader(fileText))
                 {
                     var scanner = new Scanner(reader, false);
                     var parser = new Parser(scanner);
@@ -99,18 +103,13 @@ namespace Calamari.Common.Features.StructuredVariables
                 }
 
                 // Write the replacement file
-                string outputText;
-                using (var writer = new StringWriter())
+                using (var writer = new StreamWriter(filePath, false, encoding))
                 {
+                    writer.NewLine = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n";
                     var emitter = new Emitter(writer, indentDetector.GetMostCommonIndent());
                     foreach (var outputEvent in outputEvents)
                         emitter.Emit(outputEvent);
-
-                    writer.Close();
-                    outputText = writer.ToString();
                 }
-
-                File.WriteAllText(filePath, outputText);
             }
             catch (Exception e) when (e is SyntaxErrorException || e is SemanticErrorException)
             {
