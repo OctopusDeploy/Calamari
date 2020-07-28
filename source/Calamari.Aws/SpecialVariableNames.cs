@@ -48,10 +48,5 @@ namespace Calamari.Aws
                 }
             }
         }
-
-        public static class Package
-        {
-            public const string Id = "Octopus.Action.Package.PackageId";
-        }
     }
 }
