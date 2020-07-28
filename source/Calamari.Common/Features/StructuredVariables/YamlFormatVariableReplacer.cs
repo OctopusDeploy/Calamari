@@ -35,6 +35,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
                 // Read and transform the input file
                 var outputEvents = new List<ParsingEvent>();
+                var indents = new List<int>();
                 (IYamlNode startEvent, string replacementValue)? structureWeAreReplacing = null;
 
                 using (var reader = new StreamReader(filePath))
@@ -42,11 +43,19 @@ namespace Calamari.Common.Features.StructuredVariables
                     var scanner = new Scanner(reader, false);
                     var parser = new Parser(scanner);
                     var classifier = new YamlEventStreamClassifier();
+                    var lastNestingChangeColumn = 1;
                     while (parser.MoveNext())
                     {
                         var ev = parser.Current;
                         if (ev == null)
                             continue;
+
+                        if (ev.NestingIncrease != 0)
+                        {
+                            if (ev.Start.Column > lastNestingChangeColumn)
+                                indents.Add(ev.Start.Column - lastNestingChangeColumn);
+                            lastNestingChangeColumn = ev.Start.Column;
+                        }
 
                         if (ev is Comment c)
                             ev = c.RestoreLeadingSpaces();
@@ -95,11 +104,17 @@ namespace Calamari.Common.Features.StructuredVariables
                     }
                 }
 
+                var mostCommonIndent = indents.GroupBy(indent => indent)
+                                              .OrderByDescending(group => group.Count())
+                                              .FirstOrDefault()
+                                              ?.Key
+                                       ?? 2;
+
                 // Write the replacement file
                 string outputText;
                 using (var writer = new StringWriter())
                 {
-                    var emitter = new Emitter(writer);
+                    var emitter = new Emitter(writer, mostCommonIndent);
                     foreach (var outputEvent in outputEvents)
                         emitter.Emit(outputEvent);
 

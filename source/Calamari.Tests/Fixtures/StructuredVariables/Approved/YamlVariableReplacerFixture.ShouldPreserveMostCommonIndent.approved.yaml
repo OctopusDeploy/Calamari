@@ -1,0 +1,9 @@
+﻿aaa:
+    this: is
+    less: nested
+bbb:
+    this:
+        is: much more
+    nested:
+    - one
+    - two
