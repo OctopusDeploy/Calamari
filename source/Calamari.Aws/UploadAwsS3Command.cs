@@ -73,10 +73,10 @@ namespace Calamari.Aws
             bucketName = variables.Get(SpecialVariableNames.Aws.S3.BucketName)?.Trim();
             Guard.NotNullOrWhiteSpace(bucketName, "Bucket name should not be null or empty");
 
-            pathToPackage = new PathToPackage(Path.GetFullPath(variables.Get(SpecialVariableNames.Package.Id)));
+            pathToPackage = new PathToPackage(variables.GetPathToPrimaryPackage(fileSystem, false));
             s3TargetMode = GetS3TargetMode(variables.Get(SpecialVariableNames.Aws.S3.TargetMode));
             isMd5HashSupported = HashCalculator.IsAvailableHashingAlgorithm(MD5.Create);
-            
+
             if (s3TargetMode == S3TargetMode.FileSelections)
             {
                 extractPackage.ExtractToStagingDirectory(pathToPackage);
@@ -89,7 +89,7 @@ namespace Calamari.Aws
         async Task EnsureS3BucketExists()
         {
             var client = await amazonS3Client.Value;
-            
+
             if (await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistV2Async(client, bucketName))
             {
                 log.Verbose($"Bucket {bucketName} exists in region {client.Config.RegionEndpoint}. Skipping creation.");
@@ -178,7 +178,7 @@ namespace Calamari.Aws
         {
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FilePath, deployment.PackageFilePath);
-            
+
             foreach (var result in results)
             {
                 if (!result.IsSuccess()) continue;
@@ -281,7 +281,7 @@ namespace Calamari.Aws
 
             var request = CreateRequest(filePath, GetBucketKey(filePath.AsRelativePathFrom(deployment.StagingDirectory), selection), selection);
             LogPutObjectRequest(filePath, request);
-            
+
             return await HandleUploadRequest(client, request, ThrowInvalidFileUpload);
         }
 
@@ -313,7 +313,7 @@ namespace Calamari.Aws
         }
 
         /// <summary>
-        /// Creates an upload file request based on the s3 target properties for a given file and bucket key. 
+        /// Creates an upload file request based on the s3 target properties for a given file and bucket key.
         /// </summary>
         /// <param name="path"></param>
         /// <param name="bucketKey"></param>
@@ -390,7 +390,7 @@ namespace Calamari.Aws
                         ex.Message + "\n");
 
                 if (!perFileUploadErrors.ContainsKey(ex.ErrorCode)) throw;
-                
+
                 errorAction(ex, perFileUploadErrors[ex.ErrorCode](request, ex));
 
                 return new S3UploadResult(request, Maybe<PutObjectResponse>.None);

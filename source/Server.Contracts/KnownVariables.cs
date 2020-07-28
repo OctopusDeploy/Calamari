@@ -106,6 +106,8 @@
                 public static readonly string FeedId = "Octopus.Action.Package.FeedId";
                 public static readonly string NuGetFeedId = "Octopus.Action.Package.NuGetFeedId";
 
+                public static readonly string Version = "Octopus.Action.Package.PackageVersion";
+
                 public static string FeedIdForPackage(string name)
                 {
                     return $"Octopus.Action.Package[{name}].FeedId";

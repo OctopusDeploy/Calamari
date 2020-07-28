@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using Calamari;
-using Calamari.Common;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -21,11 +20,10 @@ using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.DeploymentTools;
-using KnownVariables = Sashimi.Server.Contracts.KnownVariables;
 
 namespace Sashimi.Tests.Shared.Server
 {
-    class TestCalamariCommandBuilder<TCalamariProgram> : ICalamariCommandBuilder where TCalamariProgram : CalamariFlavourProgram
+    class TestCalamariCommandBuilder<TCalamariProgram> : ICalamariCommandBuilder
     {
         const string CalamariBinariesLocationEnvironmentVariable = "CalamariBinaries_RelativePath";
 
@@ -171,15 +169,15 @@ namespace Sashimi.Tests.Shared.Server
                 contents.CopyTo(fileStream);
             }
 
-            if (withStagedPackageArgument)
+            if (!withStagedPackageArgument)
             {
-                var packageId = variables.GetRaw(KnownVariables.Action.Packages.PackageId);
+                var packageId = variables.GetRaw("Octopus.Test.PackagePath");
                 if (File.Exists(packageId))
                 {
                     var fileName = new FileInfo(packageId).Name;
                     File.Copy(packageId, Path.Combine(workingPath, fileName));
                 }
-                else
+                else if (Directory.Exists(packageId))
                 {
                     Copy(packageId, workingPath);
                 }
@@ -192,7 +190,7 @@ namespace Sashimi.Tests.Shared.Server
             if (!string.IsNullOrEmpty(inProcOutProcOverride))
             {
                 if (InProcOutProcOverride.InProcValue.Equals(inProcOutProcOverride, StringComparison.OrdinalIgnoreCase))
-                    return ExecuteActionHandlerInProc(args);
+                    return ExecuteActionHandlerInProc(args).GetAwaiter().GetResult();
 
                 if (InProcOutProcOverride.OutProcValue.Equals(inProcOutProcOverride, StringComparison.OrdinalIgnoreCase))
                     return ExecuteActionHandlerOutProc(args);
@@ -202,11 +200,11 @@ namespace Sashimi.Tests.Shared.Server
 
             if (TestEnvironment.IsCI)
                 return ExecuteActionHandlerOutProc(args);
-            else
-                return ExecuteActionHandlerInProc(args);
+
+            return ExecuteActionHandlerInProc(args).GetAwaiter().GetResult();
         }
 
-        IActionHandlerResult ExecuteActionHandlerInProc(List<string> args)
+        async Task<IActionHandlerResult> ExecuteActionHandlerInProc(List<string> args)
         {
             Console.WriteLine("Running Calamari InProc");
             AssertMatchingCalamariFlavour();
@@ -227,13 +225,22 @@ namespace Sashimi.Tests.Shared.Server
             });
 
             var methodInfo =
-                typeof(CalamariFlavourProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
+                typeof(TCalamariProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
             if (methodInfo == null)
             {
-                throw new Exception("CalamariFlavourProgram.Run method was not found.");
+                throw new Exception($"{typeof(TCalamariProgram).Name}.Run method was not found.");
             }
 
-            var exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+            int exitCode;
+            if (methodInfo.ReturnType.IsGenericType)
+            {
+                exitCode = await (Task<int>) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+            }
+            else
+            {
+                exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+            }
+
             var serverInMemoryLog = new ServerInMemoryLog();
 
             var outputFilter = new ScriptOutputFilter(serverInMemoryLog);

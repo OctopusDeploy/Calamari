@@ -2,19 +2,41 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Shared.Helpers;
 using Calamari.Tests.Shared.LogParser;
 using FluentAssertions;
+#if NETSTANDARD
+using NuGet.Packaging;
+using NuGet.Versioning;
+#else
+using NuGet;
+#endif
+using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 
 namespace Calamari.Tests.Shared
 {
     public static class CommandTestBuilder
     {
+        public static CommandTestBuilder<TCalamari> CreateAsync<TCalamari>(string command)
+            where TCalamari : CalamariFlavourProgramAsync
+        {
+            return new CommandTestBuilder<TCalamari>(command);
+        }
+
+        public static CommandTestBuilder<TCalamari> CreateAsync<TCommand, TCalamari>()
+            where TCalamari : CalamariFlavourProgramAsync
+            where TCommand : PipelineCommand
+        {
+            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+        }
+
         public static CommandTestBuilder<TCalamari> Create<TCalamari>(string command)
             where TCalamari : CalamariFlavourProgram
         {
@@ -28,13 +50,66 @@ namespace Calamari.Tests.Shared
             return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
         }
 
-        public static CommandTestBuilderContext WithPackage(this CommandTestBuilderContext context, string path)
+        public static CommandTestBuilderContext WithFilesToCopy(this CommandTestBuilderContext context, string path)
         {
-            context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(path));
-            context.Variables.Add("Octopus.Action.Package.PackageId", path);
+            if (File.Exists(path))
+            {
+                context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(path));
+            }
+            else
+            {
+                context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, path);
+            }
+
+            context.Variables.Add("Octopus.Test.PackagePath", path);
             context.Variables.Add("Octopus.Action.Package.FeedId", "FeedId");
 
             return context;
+        }
+
+        public static CommandTestBuilderContext WithPackage(this CommandTestBuilderContext context, string packagePath, string packageId, string packageVersion)
+        {
+            context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(packagePath));
+            context.Variables.Add(TentacleVariables.CurrentDeployment.PackageFilePath, packagePath);
+            context.Variables.Add("Octopus.Action.Package.PackageId", packageId);
+            context.Variables.Add("Octopus.Action.Package.PackageVersion", packageVersion);
+            context.Variables.Add("Octopus.Action.Package.FeedId", "FeedId");
+
+            return context;
+        }
+
+        public static CommandTestBuilderContext WithNewNugetPackage(this CommandTestBuilderContext context, string packageRootPath, string packageId, string packageVersion)
+        {
+            var pathToPackage = Path.Combine(packageRootPath, CreateNugetPackage(packageId, packageVersion, packageRootPath));
+
+            return context.WithPackage(pathToPackage, packageId, packageVersion);
+        }
+
+        static string CreateNugetPackage(string packageId, string packageVersion, string filePath)
+        {
+            var metadata = new ManifestMetadata
+            {
+#if NETSTANDARD
+                Authors = new [] {"octopus@e2eTests"},
+                Version = new NuGetVersion(packageVersion),
+#else
+                Authors = "octopus@e2eTests",
+                Version = packageVersion,
+#endif
+                Id = packageId,
+                Description = nameof(CommandTestBuilder)
+            };
+
+            var packageFileName = $"{packageId}.{metadata.Version}.nupkg";
+
+            var builder = new PackageBuilder();
+            builder.PopulateFiles(filePath, new[] { new ManifestFile { Source = "**" } });
+            builder.Populate(metadata);
+
+            using var stream = File.Open(Path.Combine(filePath, packageFileName), FileMode.OpenOrCreate);
+            builder.Save(stream);
+
+            return packageFileName;
         }
     }
 
@@ -62,7 +137,7 @@ namespace Calamari.Tests.Shared
             return this;
         }
 
-        public TestCalamariCommandResult Execute(bool assertWasSuccess = true)
+        public async Task<TestCalamariCommandResult> Execute(bool assertWasSuccess = true)
         {
             var context = new CommandTestBuilderContext();
 
@@ -100,22 +175,22 @@ namespace Calamari.Tests.Shared
                     contents.CopyTo(fileStream);
                 }
 
-                if (context.withStagedPackageArgument)
+                if (!context.withStagedPackageArgument)
                 {
-                    var packageId = context.Variables.GetRaw("Octopus.Action.Package.PackageId");
+                    var packageId = context.Variables.GetRaw("Octopus.Test.PackagePath");
                     if (File.Exists(packageId))
                     {
                         var fileName = new FileInfo(packageId).Name;
                         File.Copy(packageId, Path.Combine(workingPath, fileName));
                     }
-                    else
+                    else if (Directory.Exists(packageId))
                     {
                         Copy(packageId, workingPath);
                     }
                 }
             }
 
-            TestCalamariCommandResult ExecuteActionHandler(List<string> args)
+            async Task<TestCalamariCommandResult> ExecuteActionHandler(List<string> args)
             {
                 var inMemoryLog = new InMemoryLog();
                 var constructor = typeof(TCalamariProgram).GetConstructor(
@@ -133,13 +208,21 @@ namespace Calamari.Tests.Shared
                 });
 
                 var methodInfo =
-                    typeof(CalamariFlavourProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
+                    typeof(TCalamariProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
                 if (methodInfo == null)
                 {
-                    throw new Exception("CalamariFlavourProgram.Run method was not found.");
+                    throw new Exception($"{typeof(TCalamariProgram).Name}.Run method was not found.");
                 }
 
-                var exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+                int exitCode;
+                if (methodInfo.ReturnType.IsGenericType)
+                {
+                    exitCode = await (Task<int>) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+                }
+                else
+                {
+                    exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
+                }
                 var serverInMemoryLog = new ServerInMemoryLog();
 
                 var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
@@ -180,7 +263,7 @@ namespace Calamari.Tests.Shared
 
                     CopyFilesToWorkingFolder(workingPath);
 
-                    result = ExecuteActionHandler(args);
+                    result = await ExecuteActionHandler(args);
                 }
                 finally
                 {

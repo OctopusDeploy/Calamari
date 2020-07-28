@@ -24,7 +24,7 @@ namespace Sashimi.Aws.Tests.RunScript
             var bucketName = "octopus-e2e-tests";
             var region = "ap-southeast-1";
             var folderPrefix = $"test/{Guid.NewGuid()}/";
-            var path = TestEnvironment.GetTestPath(@"AwsS3Sample/AwsS3Sample.1.0.0.nupkg");
+            var path = TestEnvironment.GetTestPath("AwsS3Sample", "AwsS3Sample.1.0.0.nupkg");
 
             ActionHandlerTestBuilder.Create<AwsUploadS3ActionHandler, Program>()
                 .WithArrange(context =>
@@ -37,7 +37,7 @@ namespace Sashimi.Aws.Tests.RunScript
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.S3.BucketName, bucketName);
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.S3.TargetMode, "EntirePackage");
                     context.WithAwsAccount();
-                    context.WithPackage(path);
+                    context.WithPackage(path, "AwsS3Sample", "1.0.0");
                     context.Variables.Add(
                         AwsSpecialVariables.Action.Aws.S3.PackageOptions,
                         JsonConvert.SerializeObject(new S3PackageProperties
@@ -61,7 +61,7 @@ namespace Sashimi.Aws.Tests.RunScript
             var bucketName = "octopus-e2e-tests";
             var region = "ap-southeast-1";
             var folderPrefix = $"test/{Guid.NewGuid().ToString()}/";
-            var path = TestEnvironment.GetTestPath(@"AwsS3Sample/AwsS3Sample.1.0.0.nupkg");
+            var path = TestEnvironment.GetTestPath("AwsS3Sample", "AwsS3Sample.1.0.0.nupkg");
 
             ActionHandlerTestBuilder.Create<AwsUploadS3ActionHandler, Program>()
                 .WithArrange(context =>
@@ -73,7 +73,7 @@ namespace Sashimi.Aws.Tests.RunScript
                     context.Variables.Add(SpecialVariables.Action.Aws.UseInstanceRole, bool.FalseString);
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.S3.BucketName, bucketName);
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.S3.TargetMode, S3TargetMode.FileSelections.ToString());
-                    context.WithPackage(path);
+                    context.WithPackage(path, "AwsS3Sample", "1.0.0");
                     context.WithAwsAccount();
                     context.Variables.Add(
                         AwsSpecialVariables.Action.Aws.S3.FileSelections,
@@ -118,7 +118,7 @@ namespace Sashimi.Aws.Tests.RunScript
             CleanUpS3Bucket(bucketName, folderPrefix, region);
         }
 
-        private void CleanUpS3Bucket(string bucketName, string folderPrefix, string region)
+        void CleanUpS3Bucket(string bucketName, string folderPrefix, string region)
         {
             ActionHandlerTestBuilder.Create<AwsRunScriptActionHandler, Program>()
                 .WithArrange(context =>

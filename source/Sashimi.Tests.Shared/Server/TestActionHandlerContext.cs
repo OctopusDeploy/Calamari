@@ -10,7 +10,7 @@ using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.Tests.Shared.Server
 {
-    public class TestActionHandlerContext<TCalamariProgram> : IActionHandlerContext where TCalamariProgram : CalamariFlavourProgram
+    public class TestActionHandlerContext<TCalamariProgram> : IActionHandlerContext
     {
         readonly ILog log;
 

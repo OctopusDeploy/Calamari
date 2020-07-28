@@ -74,6 +74,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.AzureWebApp.Tests",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.AzureCloudService.Tests", "Calamari.AzureCloudService.Tests\Calamari.AzureCloudService.Tests.csproj", "{41DEE880-5505-43B4-8366-C8B14EC92B17}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureWebApp.Tests", "Calamari.AzureWebApp.Tests\Calamari.AzureWebApp.Tests.csproj", "{5EB8506B-0DDB-490C-A3B7-BCA6098FA4AD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -176,6 +178,10 @@ Global
 		{41DEE880-5505-43B4-8366-C8B14EC92B17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41DEE880-5505-43B4-8366-C8B14EC92B17}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41DEE880-5505-43B4-8366-C8B14EC92B17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EB8506B-0DDB-490C-A3B7-BCA6098FA4AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EB8506B-0DDB-490C-A3B7-BCA6098FA4AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EB8506B-0DDB-490C-A3B7-BCA6098FA4AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EB8506B-0DDB-490C-A3B7-BCA6098FA4AD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -197,6 +203,7 @@ Global
 		{1B20EF4A-DFEB-42DE-A23F-A3AF51E53F56} = {937741D4-BF0F-4073-A101-8E52141FCD28}
 		{E1598B39-5116-473F-8E05-3E2C18791D2D} = {3E14A387-C500-4486-A7AE-BA0C5F95B344}
 		{41DEE880-5505-43B4-8366-C8B14EC92B17} = {937741D4-BF0F-4073-A101-8E52141FCD28}
+		{5EB8506B-0DDB-490C-A3B7-BCA6098FA4AD} = {3E14A387-C500-4486-A7AE-BA0C5F95B344}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F8108764-E787-43A4-A43A-2BB5540615E8}

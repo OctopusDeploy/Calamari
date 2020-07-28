@@ -3,15 +3,29 @@ using System.Collections.Generic;
 using System.IO;
 using Autofac;
 using Calamari.Common;
+using Calamari.Common.Plumbing.Variables;
 using FluentAssertions;
 using Octopus.Diagnostics;
-using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
+using KnownVariables = Sashimi.Server.Contracts.KnownVariables;
 
 namespace Sashimi.Tests.Shared.Server
 {
     public static class ActionHandlerTestBuilder
     {
+        public static ActionHandlerTestBuilder<TCalamari> CreateAsync<TActionHandler, TCalamari>()
+            where TActionHandler : IActionHandler
+            where TCalamari : CalamariFlavourProgramAsync
+        {
+            return new ActionHandlerTestBuilder<TCalamari>(typeof(TActionHandler));
+        }
+
+        public static ActionHandlerTestBuilder<TCalamari> CreateAsync<TCalamari>(Type actionHandlerType)
+            where TCalamari : CalamariFlavourProgramAsync
+        {
+            return new ActionHandlerTestBuilder<TCalamari>(actionHandlerType);
+        }
+
         public static ActionHandlerTestBuilder<TCalamari> Create<TActionHandler, TCalamari>()
             where TActionHandler : IActionHandler
             where TCalamari : CalamariFlavourProgram
@@ -25,11 +39,29 @@ namespace Sashimi.Tests.Shared.Server
             return new ActionHandlerTestBuilder<TCalamari>(actionHandlerType);
         }
 
-        public static TestActionHandlerContext<TCalamariProgram> WithPackage<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string path)
-            where TCalamariProgram : CalamariFlavourProgram
+        public static TestActionHandlerContext<TCalamariProgram> WithFilesToCopy<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string path)
         {
-            context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(path));
-            context.Variables.Add(KnownVariables.Action.Packages.PackageId, path);
+            if (File.Exists(path))
+            {
+                context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(path));
+            }
+            else
+            {
+                context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, path);
+            }
+
+            context.Variables.Add("Octopus.Test.PackagePath", path);
+            context.Variables.Add(KnownVariables.Action.Packages.FeedId, "FeedId");
+
+            return context;
+        }
+
+        public static TestActionHandlerContext<TCalamariProgram> WithPackage<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string packagePath, string packageId, string packageVersion)
+        {
+            context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(packagePath));
+            context.Variables.Add(TentacleVariables.CurrentDeployment.PackageFilePath, packagePath);
+            context.Variables.Add(KnownVariables.Action.Packages.PackageId, packageId);
+            context.Variables.Add(KnownVariables.Action.Packages.Version, packageVersion);
             context.Variables.Add(KnownVariables.Action.Packages.FeedId, "FeedId");
 
             return context;
@@ -37,11 +69,10 @@ namespace Sashimi.Tests.Shared.Server
     }
 
     public class ActionHandlerTestBuilder<TCalamariProgram>
-        where TCalamariProgram : CalamariFlavourProgram
     {
         readonly List<Action<TestActionHandlerContext<TCalamariProgram>>> arrangeActions;
         Action<TestActionHandlerResult>? assertAction;
-        Type actionHandlerType;
+        readonly Type actionHandlerType;
 
         public ActionHandlerTestBuilder(Type actionHandlerType)
         {

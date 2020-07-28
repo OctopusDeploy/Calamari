@@ -10,6 +10,7 @@ using Sashimi.Tests.Shared.Server;
 
 namespace Sashimi.Aws.Tests.CloudFormation
 {
+    [TestFixture]
     public class CloudFormationActionHandlerFixture
     {
         const string AwsStackRole = "arn:aws:iam::968802670493:role/e2e_buckets";
@@ -107,7 +108,7 @@ namespace Sashimi.Aws.Tests.CloudFormation
                         .WithAwsRegion(AwsRegion)
                         .WithStackRole(AwsStackRole)
                         .WithAwsTemplatePackageSource("template.json", null)
-                        .WithPackage(pathToPackage);
+                        .WithFilesToCopy(pathToPackage);
 
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.WaitForCompletion, bool.TrueString);
                 })
@@ -148,7 +149,7 @@ namespace Sashimi.Aws.Tests.CloudFormation
                         .WithAwsRegion(AwsRegion)
                         .WithStackRole(AwsStackRole)
                         .WithAwsTemplatePackageSource(templateFileName, parametersFileName)
-                        .WithPackage(pathToPackage);
+                        .WithFilesToCopy(pathToPackage);
 
                     context.Variables.Add("NameVarParamValue", nameVarParamValue);
                     context.Variables.Add(AwsSpecialVariables.Action.Aws.WaitForCompletion, bool.TrueString);
@@ -165,7 +166,7 @@ namespace Sashimi.Aws.Tests.CloudFormation
         public void RunCloudFormation_ChangeSet()
         {
             var bucketName = $"{ValidBucketNamePrefix}{UniqueName.Generate()}";
-            var pathToPackage = TestEnvironment.GetTestPath(@"Packages/CloudFormationS3.1.0.0.nupkg");
+            var pathToPackage = TestEnvironment.GetTestPath("Packages", "CloudFormationS3.1.0.0.nupkg");
 
             // create bucket
             CreateBucket(stackName, bucketName, pathToPackage);
@@ -212,7 +213,7 @@ namespace Sashimi.Aws.Tests.CloudFormation
                         .WithStackRole(AwsStackRole)
                         .WithCloudFormationChangeSets()
                         .WithAwsTemplatePackageSource("bucket.json", "bucket-parameters.json")
-                        .WithPackage(pathToPackage);
+                        .WithPackage(pathToPackage, "CloudFormationS3", "1.0.0");
 
                     context.Variables.Add("BucketName", bucketName);
                     context.Variables.Add("TransformIncludeLocation", TransformIncludeLocation);
@@ -248,7 +249,7 @@ namespace Sashimi.Aws.Tests.CloudFormation
                         .WithAwsAccount()
                         .WithAwsRegion(AwsRegion)
                         .WithStackRole(AwsStackRole)
-                        .WithPackage(pathToPackage)
+                        .WithPackage(pathToPackage, "CloudFormationS3", "1.0.0")
                         .WithAwsTemplatePackageSource("bucket.json", "bucket-parameters.json")
                         .WithCloudFormationChangeSets(deferExecution: true)
                         .WithIamCapabilities(new List<string> { "CAPABILITY_IAM"});
@@ -274,7 +275,7 @@ namespace Sashimi.Aws.Tests.CloudFormation
                         .WithCloudFormationChangeSets()
                         .WithIamCapabilities(new List<string> { "CAPABILITY_IAM" })
                         .WithAwsTemplatePackageSource("bucket-transform.json", "bucket-parameters.json")
-                        .WithPackage(pathToPackage);
+                        .WithPackage(pathToPackage, "CloudFormationS3", "1.0.0");
 
                     context.Variables.Add("BucketName", bucketName);
                     context.Variables.Add("TransformIncludeLocation", TransformIncludeLocation);

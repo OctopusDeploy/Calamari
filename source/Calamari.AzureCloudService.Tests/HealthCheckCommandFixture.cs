@@ -25,7 +25,7 @@ namespace Calamari.AzureCloudService.Tests
             {
                 await client.HostedServices.CreateAsync(new HostedServiceCreateParameters(serviceName, "test"){ Location = "West US"});
 
-                CommandTestBuilder.Create<HealthCheckCommand, Program>()
+                await CommandTestBuilder.Create<HealthCheckCommand, Program>()
                     .WithArrange(context =>
                     {
                         context.Variables.Add(SpecialVariables.Action.Azure.SubscriptionId, subscriptionId);
@@ -43,7 +43,7 @@ namespace Calamari.AzureCloudService.Tests
         }
 
         [Test]
-        public void CloudService_Is_Not_Found()
+        public Task CloudService_Is_Not_Found()
         {
             var subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             var certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate);
@@ -51,7 +51,7 @@ namespace Calamari.AzureCloudService.Tests
 
             using var managementCertificate = CreateManagementCertificate(certificate);
 
-            CommandTestBuilder.Create<HealthCheckCommand, Program>()
+            return CommandTestBuilder.Create<HealthCheckCommand, Program>()
                 .WithArrange(context =>
                 {
                     context.Variables.Add(SpecialVariables.Action.Azure.SubscriptionId, subscriptionId);
