@@ -12,8 +12,19 @@
 #elif NET452
             return Task.FromResult(0);
 #else
-            return new Task<int>(() => 0);;
+            return Net40CompletedTask;
 #endif
         }
+
+#if NET40
+        static readonly Task Net40CompletedTask = CreateNet40CompletedTask();
+
+        static Task<int> CreateNet40CompletedTask()
+        {
+            var taskCompletionSource = new TaskCompletionSource<int>();
+            taskCompletionSource.SetResult(0);
+            return taskCompletionSource.Task;
+        }
+#endif
     }
 }

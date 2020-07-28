@@ -16,7 +16,7 @@ namespace Calamari.Deployment.Conventions
         {
             if (configurationVariablesBehaviour.IsEnabled(deployment))
             {
-                configurationVariablesBehaviour.ExecuteSync(deployment);
+                configurationVariablesBehaviour.Execute(deployment).Wait();
             }
         }
     }
