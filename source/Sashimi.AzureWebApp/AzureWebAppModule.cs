@@ -23,11 +23,6 @@ namespace Sashimi.AzureWebApp
                             .As<IActionHandler>()
                             .AsSelf()
                             .InstancePerLifetimeScope();
-                     builder.RegisterType<AzurePowerShellModuleConfiguration>()
-                            .InstancePerLifetimeScope();
-                     builder.RegisterType<AzurePowerShellModuleConfigurationCommand>()
-                            .As<IContributeToConfigureCommand>()
-                            .InstancePerLifetimeScope();
                      builder.RegisterType<AzureWebAppPackageContributor>()
                             .As<IContributeToPackageDeployment>()
                             .InstancePerLifetimeScope();

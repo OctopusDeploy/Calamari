@@ -15,7 +15,6 @@ namespace Sashimi.AzureWebApp
                 public static readonly string AccountId = "Octopus.Action.Azure.AccountId";
                 public static readonly string WebAppHealthCheckActionTypeName = "Octopus.HealthCheck.AzureWebApp";
                 public static readonly string WebAppActionTypeName = "Octopus.AzureWebApp";
-                public static readonly string PowershellModulePath = "Octopus.Action.Azure.PowerShellModule";
                 public static readonly string UseBundledAzureModules = "OctopusUseBundledAzureModules";
                 public static readonly string UseBundledAzureCLI = "OctopusUseBundledAzureCLI";
                 public static readonly string OctopusDisableAzureCLI = "OctopusDisableAzureCLI";

@@ -30,18 +30,12 @@
     </ItemGroup>
 
     <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
-        <Message Text="Collecting nupkg packages to bundle with Sashimi module binaries" />
+        <Message Text="Collecting nupkg packages to bundle with Sashimi module binaries" Importance="high" />
         <ItemGroup>
-            <PackageFilesRef Include="@(PackageDefinitions)" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))" />
-        </ItemGroup>
-        <PropertyGroup>
-            <PackageFilesRefProperty>@(PackageFilesRef->'%(ResolvedPath)/*.nupkg')</PackageFilesRefProperty>
-        </PropertyGroup>
-        <ItemGroup>
-            <PackageFiles Include="$(PackageFilesRefProperty)" />
-            <Content Include="@(PackageFiles)">
+            <Content Include="@(PackageDefinitions->'%(ResolvedPath)/%(Name).%(Version).nupkg')" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))">
+                <Link>@(PackageDefinitions->'%(Name).nupkg')</Link>
                 <Pack>true</Pack>
-                <PackagePath>contentFiles/any/any/</PackagePath>
+                <PackagePath>@(PackageDefinitions->'contentFiles/any/any/%(Name).nupkg')</PackagePath>
                 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             </Content>
         </ItemGroup>

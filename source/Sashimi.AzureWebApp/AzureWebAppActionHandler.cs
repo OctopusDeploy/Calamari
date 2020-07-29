@@ -7,7 +7,6 @@ namespace Sashimi.AzureWebApp
 {
     class AzureWebAppActionHandler : IActionHandlerWithAccount
     {
-        readonly AzurePowerShellModuleConfiguration azurePowerShellModuleConfiguration;
         public string Id => SpecialVariables.Action.Azure.WebAppActionTypeName;
         public string Name => "Deploy an Azure Web App";
         public string Description => "Deploy the contents of a package to an Azure Web App.";
@@ -17,11 +16,6 @@ namespace Sashimi.AzureWebApp
         public bool CanRunOnDeploymentTarget => false;
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, AzureConstants.AzureActionHandlerCategory };
         public string[] StepBasedVariableNameForAccountIds { get; } = {SpecialVariables.Action.Azure.AccountId};
-
-        public AzureWebAppActionHandler(AzurePowerShellModuleConfiguration azurePowerShellModuleConfiguration)
-        {
-            this.azurePowerShellModuleConfiguration = azurePowerShellModuleConfiguration;
-        }
 
         public IActionHandlerResult Execute(IActionHandlerContext context)
         {
@@ -33,12 +27,10 @@ namespace Sashimi.AzureWebApp
                     throw new InvalidOperationException($"The machine {context.DeploymentTargetName.SomeOr("<unknown>")} will not be deployed to because it is not an {AzureWebAppEndpoint.AzureWebAppDeploymentTargetType.DisplayName} target.");
             }
 
-
             return context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-web")
                           .WithCheckAccountIsNotManagementCertificate(context)
                           .WithAzureTools(context)
                           .WithStagedPackageArgument()
-                          .WithAzurePowershellConfiguration(azurePowerShellModuleConfiguration)
                           .Execute();
         }
     }

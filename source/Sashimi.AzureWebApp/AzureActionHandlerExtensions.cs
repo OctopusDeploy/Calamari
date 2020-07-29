@@ -8,17 +8,6 @@ namespace Sashimi.AzureWebApp
 {
     static class AzureActionHandlerExtensions
     {
-        public static ICalamariCommandBuilder WithAzurePowershellConfiguration(
-            this ICalamariCommandBuilder builder,
-            AzurePowerShellModuleConfiguration azurePowerShellModuleConfiguration
-        )
-        {
-            var configuredPowerShellModulePath = azurePowerShellModuleConfiguration.AzurePowerShellModule;
-            if (!string.IsNullOrWhiteSpace(configuredPowerShellModulePath))
-                builder.WithVariable(SpecialVariables.Action.Azure.PowershellModulePath, configuredPowerShellModulePath);
-            return builder;
-        }
-
         public static ICalamariCommandBuilder WithAzureTools(
             this ICalamariCommandBuilder builder,
             IActionHandlerContext context)

@@ -9,7 +9,6 @@ using NUnit.Framework;
 using Sashimi.Azure.Accounts;
 using Sashimi.Tests.Shared.Server;
 
-
 namespace Sashimi.AzureWebApp.Tests
 {
     [TestFixture]
