@@ -145,12 +145,9 @@ Task("Pack")
     .Does(() =>
 {
 
-    DoPackage("Calamari", "net40", nugetVersion);
-	DoPackage("Calamari", "net452", nugetVersion, "Cloud");
+    DoPackage("Calamari", "net40", nugetVersion, "net40");
+	DoPackage("Calamari", "net452", nugetVersion, "net452");
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
-
-    // Create a portable .NET Core package
-    DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable");
 
     // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
     foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari\Calamari.csproj"))
