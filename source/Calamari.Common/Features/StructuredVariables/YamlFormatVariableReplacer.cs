@@ -15,10 +15,10 @@ namespace Calamari.Common.Features.StructuredVariables
         readonly Regex octopusReservedVariablePattern = new Regex(@"^Octopus([^:]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public string FileFormatName => StructuredConfigVariablesFileFormats.Yaml;
-        
+
         public bool IsBestReplacerForFileName(string fileName)
         {
-            return fileName.EndsWith(".yml", StringComparison.InvariantCultureIgnoreCase) 
+            return fileName.EndsWith(".yml", StringComparison.InvariantCultureIgnoreCase)
                    || fileName.EndsWith(".yaml", StringComparison.InvariantCultureIgnoreCase);
         }
 
@@ -35,18 +35,21 @@ namespace Calamari.Common.Features.StructuredVariables
 
                 // Read and transform the input file
                 var outputEvents = new List<ParsingEvent>();
-                (IYamlNode startEvent, string replacementValue)? structureWeAreReplacing = null;
+                var indentDetector = new YamlIndentDetector();
 
                 using (var reader = new StreamReader(filePath))
                 {
                     var scanner = new Scanner(reader, false);
                     var parser = new Parser(scanner);
                     var classifier = new YamlEventStreamClassifier();
+                    (IYamlNode startEvent, string replacementValue)? structureWeAreReplacing = null;
                     while (parser.MoveNext())
                     {
                         var ev = parser.Current;
                         if (ev == null)
                             continue;
+
+                        indentDetector.Process(ev);
 
                         if (ev is Comment c)
                             ev = c.RestoreLeadingSpaces();
@@ -99,7 +102,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 string outputText;
                 using (var writer = new StringWriter())
                 {
-                    var emitter = new Emitter(writer);
+                    var emitter = new Emitter(writer, indentDetector.GetMostCommonIndent());
                     foreach (var outputEvent in outputEvents)
                         emitter.Emit(outputEvent);
 

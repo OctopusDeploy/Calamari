@@ -267,5 +267,13 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "pets.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
+        public void ShouldPreserveMostCommonIndent()
+        {
+            this.Assent(Replace(new CalamariVariables { { "bbb:this:is", "much more" } },
+                                "indenting.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
     }
 }
