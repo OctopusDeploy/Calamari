@@ -50,12 +50,18 @@ namespace Calamari.Common.Features.StructuredVariables
                         if (ev == null)
                             continue;
 
-                        if (ev.NestingIncrease != 0)
+                        if (ev.NestingIncrease > 0
+                            && (ev is MappingStart ms && ms.Style != MappingStyle.Flow
+                                || ev is SequenceStart ss && ss.Style != SequenceStyle.Flow))
                         {
-                            if (ev.Start.Column > lastNestingChangeColumn)
-                                indents.Add(ev.Start.Column - lastNestingChangeColumn);
+                            var startColumnChange = ev.Start.Column - lastNestingChangeColumn;
+                            if (startColumnChange >= 2 && startColumnChange <= 9)
+                                indents.Add(startColumnChange);
                             lastNestingChangeColumn = ev.Start.Column;
                         }
+
+                        if (ev.NestingIncrease < 1 && ev.Start.Column < lastNestingChangeColumn)
+                            lastNestingChangeColumn = ev.Start.Column;
 
                         if (ev is Comment c)
                             ev = c.RestoreLeadingSpaces();
