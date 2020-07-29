@@ -15,10 +15,10 @@ namespace Calamari.Common.Features.StructuredVariables
         readonly Regex octopusReservedVariablePattern = new Regex(@"^Octopus([^:]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public string FileFormatName => StructuredConfigVariablesFileFormats.Yaml;
-        
+
         public bool IsBestReplacerForFileName(string fileName)
         {
-            return fileName.EndsWith(".yml", StringComparison.InvariantCultureIgnoreCase) 
+            return fileName.EndsWith(".yml", StringComparison.InvariantCultureIgnoreCase)
                    || fileName.EndsWith(".yaml", StringComparison.InvariantCultureIgnoreCase);
         }
 
@@ -35,33 +35,21 @@ namespace Calamari.Common.Features.StructuredVariables
 
                 // Read and transform the input file
                 var outputEvents = new List<ParsingEvent>();
-                var indents = new List<int>();
-                (IYamlNode startEvent, string replacementValue)? structureWeAreReplacing = null;
+                var indentDetector = new YamlIndentDetector();
 
                 using (var reader = new StreamReader(filePath))
                 {
                     var scanner = new Scanner(reader, false);
                     var parser = new Parser(scanner);
                     var classifier = new YamlEventStreamClassifier();
-                    var lastNestingChangeColumn = 1;
+                    (IYamlNode startEvent, string replacementValue)? structureWeAreReplacing = null;
                     while (parser.MoveNext())
                     {
                         var ev = parser.Current;
                         if (ev == null)
                             continue;
 
-                        if (ev.NestingIncrease > 0
-                            && (ev is MappingStart ms && ms.Style != MappingStyle.Flow
-                                || ev is SequenceStart ss && ss.Style != SequenceStyle.Flow))
-                        {
-                            var startColumnChange = ev.Start.Column - lastNestingChangeColumn;
-                            if (startColumnChange >= 2 && startColumnChange <= 9)
-                                indents.Add(startColumnChange);
-                            lastNestingChangeColumn = ev.Start.Column;
-                        }
-
-                        if (ev.NestingIncrease < 1 && ev.Start.Column < lastNestingChangeColumn)
-                            lastNestingChangeColumn = ev.Start.Column;
+                        indentDetector.Process(ev);
 
                         if (ev is Comment c)
                             ev = c.RestoreLeadingSpaces();
@@ -110,17 +98,11 @@ namespace Calamari.Common.Features.StructuredVariables
                     }
                 }
 
-                var mostCommonIndent = indents.GroupBy(indent => indent)
-                                              .OrderByDescending(group => group.Count())
-                                              .FirstOrDefault()
-                                              ?.Key
-                                       ?? 2;
-
                 // Write the replacement file
                 string outputText;
                 using (var writer = new StringWriter())
                 {
-                    var emitter = new Emitter(writer, mostCommonIndent);
+                    var emitter = new Emitter(writer, indentDetector.GetMostCommonIndent());
                     foreach (var outputEvent in outputEvents)
                         emitter.Emit(outputEvent);
 
