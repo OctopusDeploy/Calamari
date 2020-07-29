@@ -29,23 +29,24 @@ namespace Calamari.Common.Plumbing.Extensions
 
             if (encodingsToTry.Take(encodingsToTry.Length - 1)
                               .Any(encoding => encoding.DecoderFallback != DecoderFallback.ExceptionFallback))
-            {
                 throw new Exception("Encodings prior to the last must have exception fallback enabled.");
-            }
+
+            var bytes = File.ReadAllBytes(path);
 
             Exception lastException = null;
             foreach (var encoding in encodingsToTry)
-            {
                 try
                 {
-                    using (var reader = new StreamReader(path, encoding))
+                    using (var stream = new MemoryStream(bytes))
+                    using (var reader = new StreamReader(stream, encoding))
+                    {
                         return (reader.ReadToEnd(), reader.CurrentEncoding);
+                    }
                 }
                 catch (DecoderFallbackException ex)
                 {
                     lastException = ex;
                 }
-            }
 
             Debug.Assert(lastException != null, nameof(lastException) + " != null");
             throw lastException;
