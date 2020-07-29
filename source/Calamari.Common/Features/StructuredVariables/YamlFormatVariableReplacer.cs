@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -103,13 +104,19 @@ namespace Calamari.Common.Features.StructuredVariables
                 }
 
                 // Write the replacement file
-                using (var writer = new StreamWriter(filePath, false, encoding))
-                {
-                    writer.NewLine = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n";
-                    var emitter = new Emitter(writer, indentDetector.GetMostCommonIndent());
-                    foreach (var outputEvent in outputEvents)
-                        emitter.Emit(outputEvent);
-                }
+                if (EncodingAdaptiveFileWriter.EncoderDoesNotRaiseErrorsForUnsupportedCharacters(encoding))
+                    encoding = Encoding.GetEncoding(encoding.WebName, EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
+
+                EncodingAdaptiveFileWriter.Write(filePath,
+                                                 writer =>
+                                                 {
+                                                     writer.NewLine = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n";
+                                                     var emitter = new Emitter(writer, indentDetector.GetMostCommonIndent());
+                                                     foreach (var outputEvent in outputEvents)
+                                                         emitter.Emit(outputEvent);
+                                                 },
+                                                 encoding,
+                                                 new UTF8Encoding(false));
             }
             catch (Exception e) when (e is SyntaxErrorException || e is SemanticErrorException)
             {

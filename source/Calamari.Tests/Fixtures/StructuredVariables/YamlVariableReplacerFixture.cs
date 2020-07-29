@@ -320,5 +320,12 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-windows1252-dos-nobom.yaml"),
                         TestEnvironment.AssentConfiguration);
         }
+
+        [Test]
+        public void ShouldUpgradeEncodingIfNecessaryToAccomodateVariables()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables{{"dagger", "\uFFE6"}}, "enc-windows1252-dos-nobom.yaml"),
+                        TestEnvironment.AssentConfiguration);
+        }
     }
 }
