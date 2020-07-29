@@ -17,7 +17,7 @@ namespace Calamari.Common.Features.StructuredVariables
                     || ev is SequenceStart ss && ss.Style != SequenceStyle.Flow))
             {
                 var startColumnChange = ev.Start.Column - lastNestingChangeColumn;
-                if (IndentSupportedByEmitter(startColumnChange))
+                if (IndentDoesNotCrashYamlDotNetEmitter(startColumnChange))
                     indents.Add(startColumnChange);
                 lastNestingChangeColumn = ev.Start.Column;
             }
@@ -26,7 +26,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 lastNestingChangeColumn = ev.Start.Column;
         }
 
-        static bool IndentSupportedByEmitter(int indent)
+        static bool IndentDoesNotCrashYamlDotNetEmitter(int indent)
         {
             return indent >= 2 && indent <= 9;
         }
