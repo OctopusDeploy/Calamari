@@ -1,25 +1,8 @@
-﻿using Octopus.CoreUtilities;
-using Sashimi.AzureServiceFabric.Endpoints;
-using Sashimi.Server.Contracts;
-using Sashimi.Server.Contracts.ActionHandlers;
+﻿using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 
 namespace Sashimi.AzureServiceFabric
 {
-    class AzureServiceFabricClusterContributor : IContributeToPackageDeployment
-    {
-        public PackageContributionResult Contribute(DeploymentTargetType deploymentTargetType, IActionHandlerContext context)
-        {
-            if (deploymentTargetType == AzureServiceFabricClusterEndpoint.AzureServiceFabricClusterDeploymentTargetType)
-            {
-                context.Log.Info($"The machine {context.DeploymentTargetName.SomeOr("<unknown>")} will not be deployed to because it is a Service Fabric Cluster.");
-                return PackageContributionResult.SkipPackageDeployment();
-            }
-
-            return PackageContributionResult.DoDefaultPackageDeployment();
-        }
-    }
-
     class AzureServiceFabricAppHealthCheckActionHandler : IActionHandlerWithAccount
     {
         static readonly CalamariFlavour CalamariServiceFabric = new CalamariFlavour("Calamari.AzureServiceFabric");
