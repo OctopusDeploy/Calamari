@@ -165,7 +165,7 @@ Task("PackSashimi")
     {
         Configuration = configuration,
         OutputDirectory = artifactsDir,
-        NoBuild = true,
+        NoBuild = false, // Don't change this flag we need it because of https://github.com/dotnet/msbuild/issues/5566
         IncludeSource = true,
         ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
     });
