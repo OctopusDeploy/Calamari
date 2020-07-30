@@ -108,23 +108,26 @@ namespace Sashimi.Tests.Shared.Server
             TestActionHandlerResult result;
             using (container)
             {
-                var actionHandler = (IActionHandler) container.Resolve(actionHandlerType);
+                var actionHandler = (IActionHandler)container.Resolve(actionHandlerType);
 
-                try
+                if (runOutOfProc)
                 {
-                    if (runOutOfProc)
-                    {
-                        Environment.SetEnvironmentVariable("Test_Calamari_InProc_OutProc_Override", "OutProc");
-                    }
+                    var currentInProcSetting = Environment.GetEnvironmentVariable(TestCalamariCommandBuilder<TCalamariProgram>.InProcOutProcOverride.EnvironmentVariable);
 
-                    result = (TestActionHandlerResult) actionHandler.Execute(context);
+                    try
+                    {
+                        Environment.SetEnvironmentVariable(TestCalamariCommandBuilder<TCalamariProgram>.InProcOutProcOverride.EnvironmentVariable, TestCalamariCommandBuilder<TCalamariProgram>.InProcOutProcOverride.OutProcValue);
+
+                        result = (TestActionHandlerResult)actionHandler.Execute(context);
+                    }
+                    finally
+                    {
+                        Environment.SetEnvironmentVariable(TestCalamariCommandBuilder<TCalamariProgram>.InProcOutProcOverride.EnvironmentVariable, currentInProcSetting);
+                    }
                 }
-                finally
+                else
                 {
-                    if (runOutOfProc)
-                    {
-                        Environment.SetEnvironmentVariable("Test_Calamari_InProc_OutProc_Override", "InProc");
-                    }
+                    result = (TestActionHandlerResult)actionHandler.Execute(context);
                 }
 
                 Console.WriteLine(result.FullLog);

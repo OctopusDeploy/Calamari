@@ -30,7 +30,7 @@ namespace Sashimi.Tests.Shared.Server
     {
         const string CalamariBinariesLocationEnvironmentVariable = "CalamariBinaries_RelativePath";
 
-        static class InProcOutProcOverride
+        public static class InProcOutProcOverride
         {
             public static readonly string EnvironmentVariable = "Test_Calamari_InProc_OutProc_Override";
             public static readonly string InProcValue = "InProc";
