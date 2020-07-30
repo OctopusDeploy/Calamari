@@ -11,6 +11,7 @@ using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using NUnit.Framework;
+using Sashimi.Tests.Shared;
 using Sashimi.Tests.Shared.Server;
 using OperatingSystem = Microsoft.Azure.Management.AppService.Fluent.OperatingSystem;
 
@@ -71,6 +72,7 @@ namespace Sashimi.AzureWebApp.Tests
         }
 
         [Test]
+        [WindowsTest]
         public async Task Deploy_WebApp_Ensure_Tools_Are_Configured()
         {
             var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
@@ -85,8 +87,6 @@ namespace Sashimi.AzureWebApp.Tests
 az --version
 Get-AzureEnvironment");
 
-            Environment.SetEnvironmentVariable("Test_Calamari_InProc_OutProc_Override", "OutProc");
-
             ActionHandlerTestBuilder.CreateAsync<AzureWebAppActionHandler, Program>()
                                     .WithArrange(context =>
                                                  {
@@ -94,9 +94,8 @@ Get-AzureEnvironment");
 
                                                      context.WithFilesToCopy(tempPath.DirectoryPath);
                                                  })
-                                    .Execute();
+                                    .Execute(runInProc: false);
 
-            Environment.SetEnvironmentVariable("Test_Calamari_InProc_OutProc_Override", "InProc");
             await AssertContent(webApp.DefaultHostName, actualText);
         }
 

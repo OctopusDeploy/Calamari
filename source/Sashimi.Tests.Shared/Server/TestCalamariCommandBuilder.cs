@@ -22,6 +22,7 @@ using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.DeploymentTools;
 using Octopus.CoreUtilities;
+using Sashimi.Tests.Shared.Extensions;
 
 namespace Sashimi.Tests.Shared.Server
 {
@@ -117,6 +118,15 @@ namespace Sashimi.Tests.Shared.Server
         public ICalamariCommandBuilder WithVariable(string name, bool value, bool isSensitive = false)
             => throw new NotImplementedException();
 
+        public ICalamariCommandBuilder WithIsolation(ExecutionIsolation executionIsolation)
+            => throw new NotImplementedException();
+
+        public ICalamariCommandBuilder WithIsolationTimeout(TimeSpan mutexTimeout)
+            => throw new NotImplementedException();
+
+        public string Describe()
+            => throw new NotImplementedException();
+
         public IActionHandlerResult Execute()
         {
             using var working = TemporaryDirectory.Create();
@@ -145,6 +155,11 @@ namespace Sashimi.Tests.Shared.Server
 
         List<string> InstallTools(string toolsPath)
         {
+            if (!PlatformDetection.IsRunningOnWindows)
+            {
+                return new List<string>();
+            }
+
             var extractor = new NupkgExtractor(new InMemoryLog());
 
             var modulePaths = new List<string>();
@@ -157,7 +172,7 @@ namespace Sashimi.Tests.Shared.Server
                                          .SelectValueOr(package => package.BootstrapperModulePaths, Enumerable.Empty<string>())
                                          .Select(s => Path.Combine(toolPath, s)));
 
-                var toolPackagePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().FullLocalPath()), $"{tool.Id}.nupkg");
+                var toolPackagePath = Path.Combine(Path.GetDirectoryName(AssemblyExtensions.FullLocalPath(Assembly.GetExecutingAssembly())), $"{tool.Id}.nupkg");
                 if (!File.Exists(toolPackagePath))
                 {
                     throw new Exception($"{tool.Id}.nupkg missing.");
@@ -377,7 +392,7 @@ namespace Sashimi.Tests.Shared.Server
         string GetOutProcCalamariExePath()
         {
             var calamariFlavour = typeof(TCalamariProgram).Assembly.GetName().Name;
-            var sashimiTestFolder = Path.GetDirectoryName(typeof(TCalamariProgram).Assembly.FullLocalPath());
+            var sashimiTestFolder = Path.GetDirectoryName(AssemblyExtensions.FullLocalPath(typeof(TCalamariProgram).Assembly));
 
             if (TestEnvironment.IsCI)
             {
@@ -459,15 +474,6 @@ namespace Sashimi.Tests.Shared.Server
             if (CalamariFlavour?.Id != assemblyName.Name)
                 throw new Exception($"The specified CalamariFlavour '{CalamariFlavour?.Id}' doesn't match that of the program exe '{assemblyName.Name}'");
         }
-
-        public ICalamariCommandBuilder WithIsolation(ExecutionIsolation executionIsolation)
-            => throw new NotImplementedException();
-
-        public ICalamariCommandBuilder WithIsolationTimeout(TimeSpan mutexTimeout)
-            => throw new NotImplementedException();
-
-        public string Describe()
-            => throw new NotImplementedException();
 
         public void SetVariables(TestVariableDictionary variables)
         {

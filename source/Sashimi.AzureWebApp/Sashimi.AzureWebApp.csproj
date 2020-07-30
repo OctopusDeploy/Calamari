@@ -33,6 +33,7 @@
         <Message Text="Collecting nupkg packages to bundle with Sashimi module binaries" Importance="high" />
         <ItemGroup>
             <Content Include="@(PackageDefinitions->'%(ResolvedPath)/%(Name).%(Version).nupkg')" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))">
+                <Visible>false</Visible>
                 <Link>@(PackageDefinitions->'%(Name).nupkg')</Link>
                 <Pack>true</Pack>
                 <PackagePath>@(PackageDefinitions->'contentFiles/any/any/%(Name).nupkg')</PackagePath>
