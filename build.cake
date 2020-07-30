@@ -233,7 +233,7 @@ private void DoPackage(string project, string framework, string version, string 
         publishedTo = Path.Combine(publishedTo, runtimeId);
         publishSettings.OutputDirectory = publishedTo;
         // "portable" is not an actual runtime ID. We're using it to represent the portable .NET core build.
-        publishSettings.Runtime = (runtimeId != null && runtimeId != "portable" && runtimeId != "Cloud") ? runtimeId : null;
+        publishSettings.Runtime = (runtimeId != null && runtimeId != "portable" && runtimeId != "net40" && runtimeId != "net452") ? runtimeId : null;
         packageId = $"{project}.{runtimeId}";
         nugetPackProperties.Add("runtimeId", runtimeId);
     }
