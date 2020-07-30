@@ -27,9 +27,6 @@ namespace Sashimi.AzureWebApp
                      builder.RegisterType<AzureWebAppPackageContributor>()
                             .As<IContributeToPackageDeployment>()
                             .InstancePerLifetimeScope();
-                     builder.RegisterType<AzureWebAppActionHandlerDeploymentActionValidator>()
-                            .As<IDeploymentActionValidator>()
-                            .InstancePerLifetimeScope();
               }
        }
 }
