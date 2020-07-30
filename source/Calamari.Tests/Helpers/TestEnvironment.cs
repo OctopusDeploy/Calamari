@@ -47,6 +47,11 @@ namespace Calamari.Tests.Helpers
                                                                        .SetInteractive(!IsCI)
                                                                        .UsingExtension("yaml");
 
+        public static readonly Configuration AssentXmlConfiguration = new Configuration()
+                                                                       .UsingNamer(IsCI ? (INamer)new CIAssentNamer() : new SubdirectoryNamer("Approved"))
+                                                                       .SetInteractive(!IsCI)
+                                                                       .UsingExtension("xml");
+
         public static string GetTestPath(params string[] paths)
         {
             return Path.Combine(CurrentWorkingDirectory, Path.Combine(paths));
