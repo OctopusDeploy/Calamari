@@ -3,11 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Calamari.Common.Plumbing.Extensions
 {
     public static class StringExtensions
     {
+        public enum LineEnding
+        {
+            Unix,
+            Dos
+        }
+
+        static readonly Regex NewlinesPattern = new Regex(@"(\r)?\n", RegexOptions.Compiled);
+
         public static bool ContainsIgnoreCase(this string originalString, string value)
         {
             return originalString.IndexOf(value, StringComparison.OrdinalIgnoreCase) != -1;
@@ -53,6 +62,18 @@ namespace Calamari.Common.Plumbing.Extensions
         public static string Join(this IEnumerable<string> values, string separator)
         {
             return string.Join(separator, values);
+        }
+
+        public static LineEnding GetMostCommonLineEnding(this string text)
+        {
+            return NewlinesPattern.Matches(text)
+                                  .Cast<Match>()
+                                  .Select(m => m.Groups[1].Success ? LineEnding.Dos : LineEnding.Unix)
+                                  .GroupBy(lineEnding => lineEnding)
+                                  .OrderByDescending(group => group.Count())
+                                  .FirstOrDefault()
+                                  ?.Key
+                   ?? LineEnding.Dos;
         }
     }
 }

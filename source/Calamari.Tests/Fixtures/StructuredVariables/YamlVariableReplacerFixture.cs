@@ -275,5 +275,33 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "indenting.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
         }
+
+        [Test]
+        public void ShouldPreserveEncodingUtf8DosBom()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf8-dos-bom.yaml"),
+                        TestEnvironment.AssentConfiguration);
+        }
+
+        [Test]
+        public void ShouldPreserveEncodingUtf8UnixNoBom()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf8-unix-nobom.yaml"),
+                        TestEnvironment.AssentConfiguration);
+        }
+
+        [Test]
+        public void ShouldPreserveEncodingUtf16DosBom()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf16-dos-bom.yaml"),
+                        TestEnvironment.AssentConfiguration);
+        }
+
+        [Test]
+        public void ShouldPreserveEncodingWindows1252DosNoBom()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-windows1252-dos-nobom.yaml"),
+                        TestEnvironment.AssentConfiguration);
+        }
     }
 }

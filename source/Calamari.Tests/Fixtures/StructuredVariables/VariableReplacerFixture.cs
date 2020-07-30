@@ -16,17 +16,26 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             this.replacer = replacer;
         }
 
-        public string Replace(IVariables variables, string existingFile = null)
+        public string Replace(IVariables variables, string existingFile, Func<string, string> outputFileReader)
         {
             var temp = Path.GetTempFileName();
-            if (existingFile != null)
-                File.Copy(GetFixtureResouce("Samples", existingFile), temp, true);
+            File.Copy(GetFixtureResouce("Samples", existingFile), temp, true);
 
             using (new TemporaryFile(temp))
             {
                 replacer.ModifyFile(temp, variables);
-                return File.ReadAllText(temp);
+                return outputFileReader(temp);
             }
+        }
+
+        public string Replace(IVariables variables, string existingFile)
+        {
+            return Replace(variables, existingFile, File.ReadAllText);
+        }
+
+        public string ReplaceToHex(IVariables variables, string existingFile)
+        {
+            return Replace(variables, existingFile, path => File.ReadAllBytes(path).ToReadableHexDump());
         }
     }
 }
