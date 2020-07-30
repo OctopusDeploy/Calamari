@@ -94,7 +94,7 @@ Get-AzureEnvironment");
 
                                                      context.WithFilesToCopy(tempPath.DirectoryPath);
                                                  })
-                                    .Execute(runInProc: false);
+                                    .Execute(runOutOfProc: true);
 
             await AssertContent(webApp.DefaultHostName, actualText);
         }

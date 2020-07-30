@@ -92,7 +92,7 @@ namespace Sashimi.Tests.Shared.Server
             return this;
         }
 
-        public TestActionHandlerResult Execute(bool assertWasSuccess = true, bool runInProc = true)
+        public TestActionHandlerResult Execute(bool assertWasSuccess = true, bool runOutOfProc = false)
         {
             var builder = new ContainerBuilder();
             builder.RegisterAssemblyModules(actionHandlerType.Assembly);
@@ -112,7 +112,7 @@ namespace Sashimi.Tests.Shared.Server
 
                 try
                 {
-                    if (!runInProc)
+                    if (runOutOfProc)
                     {
                         Environment.SetEnvironmentVariable("Test_Calamari_InProc_OutProc_Override", "OutProc");
                     }
@@ -121,7 +121,7 @@ namespace Sashimi.Tests.Shared.Server
                 }
                 finally
                 {
-                    if (!runInProc)
+                    if (runOutOfProc)
                     {
                         Environment.SetEnvironmentVariable("Test_Calamari_InProc_OutProc_Override", "InProc");
                     }
