@@ -8,7 +8,6 @@ namespace Sashimi.AzureWebApp
         {
             public static class Azure
             {
-
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
                 public static readonly string WebAppSlot = "Octopus.Action.Azure.DeploymentSlot";
                 public static readonly string ResourceGroupName = "Octopus.Action.Azure.ResourceGroupName";
@@ -19,6 +18,7 @@ namespace Sashimi.AzureWebApp
                 public static readonly string UseBundledAzureCLI = "OctopusUseBundledAzureCLI";
                 public static readonly string OctopusDisableAzureCLI = "OctopusDisableAzureCLI";
                 public static readonly string UseBundledAzureModulesLegacy = "Octopus.Action.Azure.UseBundledAzurePowerShellModules";
+                public static readonly string IsLegacyMode = "Octopus.Action.Azure.IsLegacyMode";
             }
         }
     }

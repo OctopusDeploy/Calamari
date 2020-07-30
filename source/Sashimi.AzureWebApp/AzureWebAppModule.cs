@@ -3,6 +3,7 @@ using Octopus.Server.Extensibility.Extensions.Infrastructure.Configuration;
 using Octopus.Server.Extensibility.Extensions.Mappings;
 using Sashimi.AzureWebApp.Endpoints;
 using Sashimi.Server.Contracts.ActionHandlers;
+using Sashimi.Server.Contracts.ActionHandlers.Validation;
 using Sashimi.Server.Contracts.Endpoints;
 
 namespace Sashimi.AzureWebApp
@@ -25,6 +26,9 @@ namespace Sashimi.AzureWebApp
                             .InstancePerLifetimeScope();
                      builder.RegisterType<AzureWebAppPackageContributor>()
                             .As<IContributeToPackageDeployment>()
+                            .InstancePerLifetimeScope();
+                     builder.RegisterType<AzureWebAppActionHandlerDeploymentActionValidator>()
+                            .As<IDeploymentActionValidator>()
                             .InstancePerLifetimeScope();
               }
        }

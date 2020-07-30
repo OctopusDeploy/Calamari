@@ -2,6 +2,7 @@ using FluentAssertions;
 using FluentValidation;
 using NUnit.Framework;
 using Sashimi.AzureWebApp.Endpoints;
+using Sashimi.Server.Contracts;
 using Sashimi.Tests.Shared.Extensions;
 
 namespace Sashimi.AzureWebApp.Tests
