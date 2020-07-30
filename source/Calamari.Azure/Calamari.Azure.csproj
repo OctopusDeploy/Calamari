@@ -17,7 +17,6 @@
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Description>Contains the command-line Calamari tool, plus additional commands for Azure integration.</Description>
-    <ApplicationManifest>Calamari.Azure.exe.manifest</ApplicationManifest>
     <ApplicationIcon />
     <StartupObject />
     <DefineConstants>$(DefineConstants)</DefineConstants>
@@ -46,11 +45,6 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
     <PackageReference Include="Octopus.Dependencies.AzureBinaries" Version="2.9.0" />
     <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.11.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Calamari.Azure.exe.manifest">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <Target Name="GetToolFiles">
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
