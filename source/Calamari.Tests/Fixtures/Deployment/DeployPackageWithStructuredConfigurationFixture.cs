@@ -24,46 +24,12 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        public void FailsAndWarnsIfAFileCannotBeParsedWhenFeatureFlagIsNotSet()
-        {
-            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
-            {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
-                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, MalformedFileName);
-                Variables.Set("key", "new-value");
-
-                var result = DeployPackage(file.FilePath);
-                result.AssertFailure();
-
-                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ^. Path '', line 0, position 0.");
-            }
-        }
-        
-        [Test]
-        public void ShouldNotTreatYamlFileAsYamlWhenFeatureFlagIsNotSet()
-        {
-            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
-            {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
-                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileName);
-                Variables.Set("key", "new-value");
-
-                var result = DeployPackage(file.FilePath);
-                result.AssertFailure();
-
-                // Indicates we tried to parse yaml as JSON.
-                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: k. Path '', line 0, position 0.");
-            }
-        }
-
-        [Test]
         public void ShouldPerformReplacementInYamlIfFlagIsSet()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
                 Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileName);
-                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -82,7 +48,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileName);
-                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -99,7 +64,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "doesnt-exist.json");
-                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -116,7 +80,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, ConfigFileName);
-                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -135,7 +98,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, $"{JsonFileName}\n{YamlFileName}");
-                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -156,7 +118,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "values.*");
-                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -179,7 +140,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "*.json");
-                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -196,7 +156,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, $"{JsonFileName}\n{MalformedFileName}");
-                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -212,7 +171,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, ".");
-                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
@@ -234,7 +192,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, MalformedFileName);
-                Variables.AddFlag(ActionVariables.StructuredConfigurationFeatureFlag, true);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);

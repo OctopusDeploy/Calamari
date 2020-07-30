@@ -38,7 +38,6 @@ namespace Calamari.Common.Features.StructuredVariables
         public void ReplaceVariables(RunningDeployment deployment)
         {
             var targets = deployment.Variables.GetPaths(ActionVariables.StructuredConfigurationVariablesTargets);
-            var supportNonJsonReplacement = deployment.Variables.GetFlag(ActionVariables.StructuredConfigurationFeatureFlag);
             
             foreach (var target in targets)
             {
@@ -59,7 +58,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 foreach (var filePath in matchingFiles)
                 {
                     // TODO: once we allow users to specify a file format, pass it through here.
-                    var replacersToTry = GetReplacersToTryForFile(filePath, null, supportNonJsonReplacement);
+                    var replacersToTry = GetReplacersToTryForFile(filePath, null);
                     DoReplacement(filePath, deployment.Variables, replacersToTry);
                 }
             }
@@ -78,18 +77,8 @@ namespace Calamari.Common.Features.StructuredVariables
             return files;
         }
 
-        IFileFormatVariableReplacer[] GetReplacersToTryForFile(string filePath, string? specifiedFileFormat, bool supportNonJsonReplacement)
+        IFileFormatVariableReplacer[] GetReplacersToTryForFile(string filePath, string? specifiedFileFormat)
         {
-            if (!supportNonJsonReplacement)
-            {
-                return new []
-                {
-                    jsonReplacer
-                };
-            }
-
-            log.Info($"Feature toggle flag {ActionVariables.StructuredConfigurationFeatureFlag} detected. Considering replacers for all supported file formats.");
-
             if (!string.IsNullOrWhiteSpace(specifiedFileFormat))
             {
                 var specifiedReplacer = TryFindReplacerForFormat(specifiedFileFormat);
