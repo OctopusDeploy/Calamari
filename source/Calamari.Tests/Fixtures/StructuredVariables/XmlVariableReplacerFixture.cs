@@ -69,6 +69,39 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
+        public void CanInsertTextIntoAnEmptyElement()
+        {
+            var vars = new CalamariVariables
+            {
+                { "/document/empty", "value<new" }
+            };
+            
+            RunTest(vars, "elements.xml");
+        }
+
+        [Test]
+        public void CanInsertTextIntoASelfClosingElement()
+        {
+            var vars = new CalamariVariables
+            {
+                { "/document/selfclosing", "value<new" }
+            };
+            
+            RunTest(vars, "elements.xml");
+        }
+
+        [Test]
+        public void CanReplaceAnElementsChildrenWhenTheElementHasMixedContent()
+        {
+            var vars = new CalamariVariables
+            {
+                { "/document/mixed", "<newElement />" }
+            };
+            
+            RunTest(vars, "elements.xml");
+        }
+
+        [Test]
         public void CanReplaceAnElementsChildren()
         {
             var vars = new CalamariVariables
