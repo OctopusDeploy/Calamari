@@ -1,15 +1,10 @@
 ﻿using System;
-using System.IO;
-using System.Text;
 using Assent;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
-using YamlDotNet.Core;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables
 {
@@ -21,37 +16,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         {
         }
 
-        public class Document
-        {
-            public string Key { get; set; }
-        }
-        
-        static string EncodeUnicodeCharForYaml(char ch)
-        {
-            var hex2 = ((int)ch).ToString("x4");
-            return $"\\u{hex2}";
-        }
-
-        [Test]
-        [TestCase('a')]
-        [TestCase('b')]
-        [TestCase('c')]
-        [TestCase('d')]
-        [TestCase('&')]
-        [TestCase('Ʉ')]
-        public void Stuff(char input)
-        {
-            var deserializer = new DeserializerBuilder()
-               .WithNamingConvention(CamelCaseNamingConvention.Instance)
-               .Build();
-
-            var encoded = EncodeUnicodeCharForYaml(input);
-            var doc = deserializer.Deserialize<Document>($"key: \"{encoded}\"");
-            var actual = doc.Key;
-            actual.Should().Be(input.ToString());
-
-        }
-        
         [Test]
         public void CanReplaceStringWithString()
         {
