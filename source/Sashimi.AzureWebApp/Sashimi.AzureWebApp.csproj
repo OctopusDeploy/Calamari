@@ -36,6 +36,8 @@
                 <Visible>false</Visible>
                 <Link>@(PackageDefinitions->'%(Name).nupkg')</Link>
                 <Pack>true</Pack>
+                <PackageCopyToOutput>true</PackageCopyToOutput>
+                <PackageFlatten>true</PackageFlatten>
                 <PackagePath>@(PackageDefinitions->'contentFiles/any/any/%(Name).nupkg')</PackagePath>
                 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             </Content>
