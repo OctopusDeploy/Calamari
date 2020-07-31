@@ -80,6 +80,25 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        public void LogsAWarningIfAVariableTreatedAsMarkupIsInvalid()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "values.xml");
+                Variables.Set("/document", "<<<");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertSuccess();
+                result.AssertOutputContains("Could not set the value of the XML element at XPath '/document' to '<<<'. Expected a valid XML fragment. Skipping replacement of this element.");
+                
+                var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, "values.xml"));
+
+                this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
+            }
+        }
+
+        [Test]
         public void JsonShouldBeTriedBeforeOtherFormatsWhenGuessingTheBestFormat()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))

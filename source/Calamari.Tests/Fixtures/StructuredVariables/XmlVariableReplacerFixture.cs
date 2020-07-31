@@ -58,11 +58,55 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        public void CanReplaceAnElement()
+        public void CanReplaceAnElementsText()
         {
             var vars = new CalamariVariables
             {
-                { "/document/setting[@id='id-1']", "value-new" }
+                { "/document/setting[@id='id-1']", "value<new" }
+            };
+            
+            RunTest(vars, "complex.xml");
+        }
+
+        [Test]
+        public void CanReplaceAnElementsChildren()
+        {
+            var vars = new CalamariVariables
+            {
+                { "//moreSettings", "<a /><b />" }
+            };
+            
+            RunTest(vars, "complex.xml");
+        }
+
+        [Test]
+        public void CanReplaceAnElementsChildrenWhenTheNewChildrenHaveNamespaces()
+        {
+            var vars = new CalamariVariables
+            {
+                { "//moreSettings", "<db:a />" }
+            };
+            
+            RunTest(vars, "complex.xml");
+        }
+
+        [Test]
+        public void DoesNotModifyDocumentWhenVariableCannotBeParsedAsMarkup()
+        {
+            var vars = new CalamariVariables
+            {
+                { "//moreSettings", "<<<<" }
+            };
+            
+            RunTest(vars, "complex.xml");
+        }
+
+        [Test]
+        public void DoesntTreatVariableAsMarkupWhenReplacingAnElementThatContainsNoElementChildren()
+        {
+            var vars = new CalamariVariables
+            {
+                { "/document/setting[@id='id-1']", "<a />" }
             };
             
             RunTest(vars, "complex.xml");
@@ -129,6 +173,17 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             var vars = new CalamariVariables
             {
                 { "/document/unique:anotherSetting", "value-new" }
+            };
+            
+            RunTest(vars, "complex.xml");
+        }
+
+        [Test]
+        public void CanUseXPath2Wildcards()
+        {
+            var vars = new CalamariVariables
+            {
+                { "//*:node", "value-new" }
             };
             
             RunTest(vars, "complex.xml");

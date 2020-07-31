@@ -51,7 +51,8 @@ namespace Calamari.Common.Features.StructuredVariables
             {
                 if (IsValidXPath(variable.Key, nsManager))
                 {
-                    var selectedNodes = navigator.XPath2SelectNodes(variable.Key, nsManager);
+                    var xPathExpression = variable.Key;
+                    var selectedNodes = navigator.XPath2SelectNodes(xPathExpression, nsManager);
 
                     foreach (XPathNavigator selectedNode in selectedNodes)
                     {
@@ -72,11 +73,15 @@ namespace Calamari.Common.Features.StructuredVariables
                             case XmlElement element:
                                 if (element.ChildNodes.Count == 1 && element.ChildNodes[0].NodeType == XmlNodeType.CDATA)
                                 {
+                                    // Try to preserve CDatas in the output.
                                     element.ChildNodes[0].Value = variable.Value;
+                                }
+                                else if (ContainsElements(element))
+                                {
+                                    TrySetInnerXml(element, xPathExpression, variable.Value);
                                 }
                                 else
                                 {
-                                    // TODO: consider how to handle this.
                                     element.InnerText = variable.Value;
                                 }
                                 break;
@@ -111,6 +116,24 @@ namespace Calamari.Common.Features.StructuredVariables
             }
         }
 
+        void TrySetInnerXml(XmlElement element, string xpathExpression, string variableValue)
+        {
+            var previousInnerXml = element.InnerXml;
+            
+            try
+            {
+                element.InnerXml = variableValue;
+            }
+            catch (XmlException e)
+            {
+                element.InnerXml = previousInnerXml;
+                log.Warn($"Could not set the value of the XML element at XPath "
+                         + $"'{xpathExpression}' to '{variableValue}'. Expected "
+                         + $"a valid XML fragment. Skipping replacement of this "
+                         + $"element.");
+            }
+        }
+
         class NamespaceDeclaration
         {
             public string Prefix { get; }
@@ -122,6 +145,13 @@ namespace Calamari.Common.Features.StructuredVariables
                 Prefix = prefix;
                 NamespaceUri = namespaceUri;
             }
+        }
+
+        bool ContainsElements(XmlElement element)
+        {
+            return element.ChildNodes
+                          .Cast<XmlNode>()
+                          .Any(n => n.NodeType == XmlNodeType.Element);
         }
         
         XmlNamespaceManager BuildNsManagerFromDocument(XmlDocument doc)
