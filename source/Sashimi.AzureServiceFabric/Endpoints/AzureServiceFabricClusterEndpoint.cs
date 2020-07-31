@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Octopus.Data.Model;
 using Sashimi.Server.Contracts;
@@ -7,7 +8,7 @@ using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.AzureServiceFabric.Endpoints
 {
-    public class AzureServiceFabricClusterEndpoint : Endpoint, IEndpointWithExpandableCertificate, IRunsOnAWorker
+    public class AzureServiceFabricClusterEndpoint : Endpoint, IEndpointWithExpandableCertificate, IRunsOnAWorker, IEndpointWithClientCertificates
     {
         public static readonly DeploymentTargetType AzureServiceFabricClusterDeploymentTargetType = new DeploymentTargetType("AzureServiceFabricCluster", "Azure Service Fabric Cluster");
 
@@ -54,5 +55,7 @@ namespace Sashimi.AzureServiceFabric.Endpoints
             if (!string.IsNullOrEmpty(DefaultWorkerPoolId))
                 yield return (DefaultWorkerPoolId, DocumentType.WorkerPool);
         }
+        
+        public IEnumerable<string> ClientCertificateIds => new[] { ClientCertVariable }.Where(c => !string.IsNullOrEmpty(c)).Cast<string>();
     }
 }
