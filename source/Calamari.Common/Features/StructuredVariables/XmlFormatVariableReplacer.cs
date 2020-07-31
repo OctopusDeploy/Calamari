@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -166,7 +166,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 {
                     var msg = $"The namespace '{ns.NamespaceUri}' could not be mapped to the '{ns.Prefix}' "
                               + $"prefix, as another namespace '{existing}' is already mapped to that "
-                              + $"prefix. XPath selects using this prefix may not return the expected nodes. "
+                              + $"prefix. XPath selectors using this prefix may not return the expected nodes. "
                               + $"You can avoid this by ensuring all namespaces in your document have unique "
                               + $"prefixes.";
                     

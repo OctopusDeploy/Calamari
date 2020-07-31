@@ -64,7 +64,7 @@ namespace Calamari.Tests.Helpers
                 Console.WriteLine("Expected:");
                 Console.WriteLine(approved);
 
-                Console.WriteLine("Replaced:");
+                Console.WriteLine("Received:");
                 Console.WriteLine(received);
                 
                 return CompareResult.Fail("Received XML did not match approved XML.");
