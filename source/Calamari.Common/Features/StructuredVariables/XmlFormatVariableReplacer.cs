@@ -217,11 +217,15 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             try
             {
+                log.Verbose($"Testing validity of xpath selector: {xPath}");
                 XPath2Expression.Compile(xPath, nsResolver);
+                log.Verbose($"xpath selector: {xPath} is valid");
                 return true;
             }
-            catch (XPath2Exception)
+            catch (XPath2Exception e)
             {
+                log.Verbose($"xpath selector: {xPath} is invalid");
+                log.Warn(e.Message);
                 return false;
             }
         }
