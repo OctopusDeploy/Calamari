@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.XPath;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -32,6 +33,18 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public void ModifyFile(string filePath, IVariables variables)
         {
+            if (CalamariEnvironment.IsRunningOnMono)
+            {
+                // The library we use for xpath2.0 support has a bug that only manifests in Mono.
+                // When this bug is fixed we can allow this to run on Mono.
+                // https://github.com/StefH/XPath2.Net/issues/33
+                var message = $"Structured variable replacement failed on file '{filePath}'. "
+                              + "Structured variable replacement on XML files is not supported "
+                              + "on the Mono runtime.";
+                
+                throw new NotSupportedException(message);
+            }
+            
             var fileContents = fileSystem.ReadFile(filePath);
             
             var doc = new XmlDocument();
@@ -52,7 +65,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 if (IsValidXPath(variable.Key, nsManager))
                 {
                     var xPathExpression = variable.Key;
-                    var selectedNodes = navigator.XPath2SelectNodes(xPathExpression, nsManager);
+                    var selectedNodes = navigator.XPath2Select(xPathExpression, nsManager);
 
                     foreach (XPathNavigator selectedNode in selectedNodes)
                     {

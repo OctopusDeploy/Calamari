@@ -12,8 +12,6 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
         [RequiresMono]
         public void ReturnsFileBasedSemaphoreManagerForMono()
         {
-            if (!CalamariEnvironment.IsRunningOnMono)
-                Assert.Ignore("This test is designed to run on mono");
             var result = SemaphoreFactory.Get();
             Assert.That(result, Is.InstanceOf<FileBasedSempahoreManager>());
         }

@@ -1,11 +1,21 @@
-﻿namespace Calamari.Tests.Fixtures
+﻿using Calamari.Common.Plumbing;
+using NUnit.Framework;
+using NUnit.Framework.Interfaces;
+
+namespace Calamari.Tests.Fixtures
 {
-    public class RequiresMonoAttribute : RequiresMinimumMonoVersionAttribute
+    public class RequiresMonoAttribute : TestAttribute, ITestAction
     {
-        public RequiresMonoAttribute() 
-            : base(1, 0, 0)
+        public void BeforeTest(ITest test)
         {
-            
+            if (!CalamariEnvironment.IsRunningOnMono)
+                Assert.Ignore("This test is designed to run on mono");
         }
+
+        public void AfterTest(ITest test)
+        {
+        }
+
+        public ActionTargets Targets { get; }
     }
 }

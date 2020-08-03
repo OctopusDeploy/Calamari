@@ -43,6 +43,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        [RequiresNonMono]
         public void ShouldPerformReplacementInXml()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
@@ -61,6 +62,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        [RequiresNonMono]
         public void IfThereAreDuplicateNsPrefixesTheFirstOneIsUsedAndAWarningIsLogged()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
@@ -80,6 +82,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        [RequiresNonMono]
         public void LogsAWarningIfAVariableTreatedAsMarkupIsInvalid()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
@@ -95,6 +98,22 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, "values.xml"));
 
                 this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
+            }
+        }
+
+        [Test]
+        [RequiresMono]
+        public void FailsIfXmlReplacementIsAttemptedOnMono()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, XmlFileName);
+                Variables.Set("/document/key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertFailure();
+                result.AssertOutputMatches("Structured variable replacement on XML files is not supported on the Mono runtime");
             }
         }
 
