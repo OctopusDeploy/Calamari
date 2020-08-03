@@ -19,7 +19,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void DoesNothingIfThereAreNoVariables()
         {
             var vars = new CalamariVariables();
@@ -27,7 +26,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceAComment()
         {
             var vars = new CalamariVariables
@@ -39,7 +37,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceAnAttribute()
         {
             var vars = new CalamariVariables
@@ -51,7 +48,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceATextNode()
         {
             var vars = new CalamariVariables
@@ -63,7 +59,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceAnElementsText()
         {
             var vars = new CalamariVariables
@@ -75,7 +70,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanInsertTextIntoAnEmptyElement()
         {
             var vars = new CalamariVariables
@@ -87,7 +81,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanInsertTextIntoASelfClosingElement()
         {
             var vars = new CalamariVariables
@@ -99,7 +92,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceAnElementsChildrenWhenTheElementHasMixedContent()
         {
             var vars = new CalamariVariables
@@ -111,7 +103,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceAnElementsChildren()
         {
             var vars = new CalamariVariables
@@ -123,7 +114,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceAnElementsChildrenWhenTheNewChildrenHaveNamespaces()
         {
             var vars = new CalamariVariables
@@ -135,7 +125,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void DoesNotModifyDocumentWhenVariableCannotBeParsedAsMarkup()
         {
             var vars = new CalamariVariables
@@ -147,7 +136,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void DoesntTreatVariableAsMarkupWhenReplacingAnElementThatContainsNoElementChildren()
         {
             var vars = new CalamariVariables
@@ -159,7 +147,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceMultipleElements()
         {
             var vars = new CalamariVariables
@@ -171,7 +158,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceMultipleElementsInDifferentPartsOfTheTree()
         {
             var vars = new CalamariVariables
@@ -183,7 +169,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceCData()
         {
             var vars = new CalamariVariables
@@ -195,7 +180,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceCDataInAnElement()
         {
             var vars = new CalamariVariables
@@ -207,7 +191,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanReplaceProcessingInstructions()
         {
             var vars = new CalamariVariables
@@ -219,7 +202,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanInferNamespacePrefixesFromDocument()
         {
             var vars = new CalamariVariables
@@ -231,7 +213,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void CanUseXPath2Wildcards()
         {
             var vars = new CalamariVariables
@@ -243,7 +224,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void DoesNotThrowOnUnrecognisedNamespace()
         {
             var vars = new CalamariVariables
@@ -255,7 +235,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
-        [RequiresNonMonoAttribute]
         public void UsesTheFirstNamespaceWhenADuplicatePrefixIsFound()
         {
             var vars = new CalamariVariables
@@ -264,21 +243,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             };
             
             RunTest(vars, "duplicate-prefixes.xml");
-        }
-
-        [Test]
-        [RequiresMono]
-        public void ThrowsAnExceptionIfRunOnMono()
-        {
-            var vars = new CalamariVariables
-            {
-                { "/document/setting", "value-new" }
-            };
-
-            Action action = () => Replace(vars, "complex.xml");
-            action.Should()
-                  .Throw<NotSupportedException>()
-                  .WithMessage("*Structured variable replacement on XML files is not supported on the Mono runtime.*");
         }
 
         void RunTest(CalamariVariables vars, 

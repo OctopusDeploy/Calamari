@@ -33,18 +33,6 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public void ModifyFile(string filePath, IVariables variables)
         {
-            if (CalamariEnvironment.IsRunningOnMono)
-            {
-                // The library we use for xpath2.0 support has a bug that only manifests in Mono.
-                // When this bug is fixed we can allow this to run on Mono.
-                // https://github.com/StefH/XPath2.Net/issues/33
-                var message = $"Structured variable replacement failed on file '{filePath}'. "
-                              + "Structured variable replacement on XML files is not supported "
-                              + "on the Mono runtime.";
-                
-                throw new NotSupportedException(message);
-            }
-            
             var fileContents = fileSystem.ReadFile(filePath);
             
             var doc = new XmlDocument();
