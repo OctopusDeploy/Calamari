@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using Calamari.Integration.Packages.Java;
-using Calamari.Integration.Processes;
-using Calamari.Util;
-using Octostache;
+using Calamari.Common.Features.Packages.Java;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Deployment.Features.Java
 {
@@ -22,21 +20,25 @@ namespace Calamari.Deployment.Features.Java
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
         }
-        
+
         /// <summary>
         /// Execute java running the Octopus Deploy Java library
         /// </summary>
-        public void Run(string mainClass, Dictionary<string,string> environmentVariables)
-        {           
+        public void Run(string mainClass, Dictionary<string, string> environmentVariables)
+        {
             var javaLib = variables.Get(SpecialVariables.Action.Java.JavaLibraryEnvVar, "");
-            var result = commandLineRunner.Execute(new CommandLineInvocation(
-                JavaRuntime.CmdPath, 
-                $"-Djdk.logger.finder.error=QUIET -cp calamari.jar {mainClass}",
-                Path.Combine(javaLib, "contentFiles", "any", "any"),
-                environmentVariables));
-            
+            var result = commandLineRunner.Execute(
+                new CommandLineInvocation(
+                    JavaRuntime.CmdPath,
+                    $"-Djdk.logger.finder.error=QUIET -cp calamari.jar {mainClass}"
+                )
+                {
+                    WorkingDirectory = Path.Combine(javaLib, "contentFiles", "any", "any"),
+                    EnvironmentVars = environmentVariables
+                }
+            );
+
             result.VerifySuccess();
         }
     }
-    
 }

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Net;
-using Calamari.Integration.Proxies;
+using Calamari.Common.Plumbing.Proxies;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;

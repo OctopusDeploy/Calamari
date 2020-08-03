@@ -1,15 +1,14 @@
 ﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Certificates;
-using Calamari.Integration.Processes;
-using Octostache;
-
 
 namespace Calamari.Commands
 {
@@ -33,9 +32,9 @@ namespace Calamari.Commands
         void ImportCertificate()
         {
             var certificateVariable = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.CertificateVariable);
-            var pfxBytes = Convert.FromBase64String(GetMandatoryVariable(variables, $"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
-            var password = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Password}");
-            var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
+            var pfxBytes = Convert.FromBase64String(GetMandatoryVariable(variables, $"{certificateVariable}.{CertificateVariables.Properties.Pfx}"));
+            var password = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Password}");
+            var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
             var storeName = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.StoreName);
             var privateKeyExportable = variables.GetFlag(SpecialVariables.Action.Certificate.PrivateKeyExportable, false);
 
@@ -50,7 +49,7 @@ namespace Calamari.Commands
                 if (locationSpecified)
                 {
                     Log.Info(
-                        $"Importing certificate '{variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeLocation}\\{storeName}'");
+                        $"Importing certificate '{variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeLocation}\\{storeName}'");
                     WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeLocation, storeName,
                         privateKeyExportable);
 
@@ -74,7 +73,7 @@ namespace Calamari.Commands
                     }
 
                     Log.Info(
-                        $"Importing certificate '{variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeName}' for user '{storeUser}'");
+                        $"Importing certificate '{variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeName}' for user '{storeUser}'");
                     WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeUser, storeName,
                         privateKeyExportable);
                 }

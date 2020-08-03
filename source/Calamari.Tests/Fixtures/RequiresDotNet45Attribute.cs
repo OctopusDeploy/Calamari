@@ -1,5 +1,5 @@
 ﻿using System;
-using Calamari.Integration.Scripting;
+using Calamari.Common.Plumbing.Extensions;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 

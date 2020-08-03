@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Calamari.Integration.Retry;
+using Calamari.Common.Plumbing.Retry;
 
 namespace Calamari.Azure.Util
 {

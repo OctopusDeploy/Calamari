@@ -1,5 +1,5 @@
 ﻿using System;
-using Octostache;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Util
 {

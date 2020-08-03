@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Calamari.Commands.Support;
-using Calamari.Integration.Packages.Java;
-using Calamari.Integration.Processes;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages.Java;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Deployment.Features.Java.Actions
 {

@@ -1,0 +1,19 @@
+﻿%YAML 1.2
+%TAG !yams! tag:yaml.org,2002:
+%TAG ! !
+%TAG !! tag:yaml.org,2002:
+---
+server:
+  ports:
+  - "5555"
+spring:
+  h2:
+    console:
+      enabled: !yams!bool "true"
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+  loggers:
+  - name: console
+  - name: file
+    pattern: '%n.log'
+environment: development

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Calamari.Hooks;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripts;
 
 namespace Calamari.Tests.Fixtures.Commands
 {

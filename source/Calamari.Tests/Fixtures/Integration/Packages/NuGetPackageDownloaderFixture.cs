@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.NuGet;
 using NSubstitute;

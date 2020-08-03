@@ -1,16 +1,14 @@
 ﻿using System;
+using Calamari.Commands.Support;
+using Calamari.Common.Commands;
 
 namespace Calamari.Aws.Exceptions
 {
     /// <summary>
     /// Represents a failed attempt to query the AWS API
     /// </summary>
-    public class PermissionException : Exception
+    public class PermissionException : CommandException
     {
-        public PermissionException()
-        {
-        }
-
         public PermissionException(string message)
             : base(message)
         {

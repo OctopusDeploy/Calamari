@@ -4,26 +4,29 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Util;
 using Newtonsoft.Json;
-using Octostache;
 
 namespace Calamari.Kubernetes.Conventions
 {
     public class HelmUpgradeConvention : IInstallConvention
     {
+        readonly ILog log;
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
 
-        public HelmUpgradeConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
+        public HelmUpgradeConvention(ILog log, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
         {
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
@@ -81,7 +84,7 @@ namespace Calamari.Kubernetes.Conventions
             SetAdditionalArguments(deployment, sb);
             sb.Append($" \"{releaseName}\" \"{packagePath}\"");
 
-            Log.Verbose(sb.ToString());
+            log.Verbose(sb.ToString());
             return sb.ToString();
         }
 
@@ -109,23 +112,23 @@ namespace Calamari.Kubernetes.Conventions
             }
         }
 
-        static string CustomHelmExecutableFullPath(IVariables variables, string workingDirectory)
+        string CustomHelmExecutableFullPath(IVariables variables, string workingDirectory)
         {
             var helmExecutable = variables.Get(SpecialVariables.Helm.CustomHelmExecutable);
             if (!string.IsNullOrWhiteSpace(helmExecutable))
             {
-                if (variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection)
+                if (variables.GetIndexes(PackageVariables.PackageCollection)
                         .Contains(SpecialVariables.Helm.Packages.CustomHelmExePackageKey) && !Path.IsPathRooted(helmExecutable))
                 {
                     var fullPath = Path.GetFullPath(Path.Combine(workingDirectory, SpecialVariables.Helm.Packages.CustomHelmExePackageKey, helmExecutable));
-                    Log.Info(
+                    log.Info(
                         $"Using custom helm executable at {helmExecutable} from inside package. Full path at {fullPath}");
 
                     return fullPath;
                 }
                 else
                 {
-                    Log.Info($"Using custom helm executable at {helmExecutable}");
+                    log.Info($"Using custom helm executable at {helmExecutable}");
                     return helmExecutable;
                 }
             }
@@ -217,25 +220,25 @@ namespace Calamari.Kubernetes.Conventions
             return Path.Combine(deployment.CurrentDirectory, syntax == ScriptSyntax.PowerShell ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
         }
 
-        static string GetReleaseName(IVariables variables)
+        string GetReleaseName(IVariables variables)
         {
             var validChars = new Regex("[^a-zA-Z0-9-]");
             var releaseName = variables.Get(SpecialVariables.Helm.ReleaseName)?.ToLower();
             if (string.IsNullOrWhiteSpace(releaseName))
             {
-                releaseName = $"{variables.Get(Deployment.SpecialVariables.Action.Name)}-{variables.Get(Deployment.SpecialVariables.Environment.Name)}";
+                releaseName = $"{variables.Get(ActionVariables.Name)}-{variables.Get(DeploymentEnvironment.Name)}";
                 releaseName = validChars.Replace(releaseName, "").ToLowerInvariant();
             }
 
-            Log.SetOutputVariable("ReleaseName", releaseName, variables);
-            Log.Info($"Using Release Name {releaseName}");
+            log.SetOutputVariable("ReleaseName", releaseName, variables);
+            log.Info($"Using Release Name {releaseName}");
             return releaseName;
         }
 
         IEnumerable<string> AdditionalValuesFiles(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            var packageReferenceNames = variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection);
+            var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
             {
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
@@ -243,14 +246,14 @@ namespace Calamari.Kubernetes.Conventions
                 
                 foreach (var providedPath in paths)
                 {
-                    var packageId = variables.Get(Deployment.SpecialVariables.Packages.PackageId(packageReferenceName));
-                    var version = variables.Get(Deployment.SpecialVariables.Packages.PackageVersion(packageReferenceName));
+                    var packageId = variables.Get(PackageVariables.IndexedPackageId(packageReferenceName));
+                    var version = variables.Get(PackageVariables.IndexedPackageVersion(packageReferenceName));
                     var relativePath = Path.Combine(sanitizedPackageReferenceName, providedPath);
                     var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
 
                     if (!files.Any() && string.IsNullOrEmpty(packageReferenceName)) // Chart archives have chart name root directory 
                     {
-                        Log.Verbose($"Unable to find values files at path `{providedPath}`. " +
+                        log.Verbose($"Unable to find values files at path `{providedPath}`. " +
                                     $"Chart package contains root directory with chart name, so looking for values in there.");
                         var chartRelativePath = Path.Combine(fileSystem.RemoveInvalidFileNameChars(packageId), relativePath);
                         files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, chartRelativePath).ToList();
@@ -264,7 +267,7 @@ namespace Calamari.Kubernetes.Conventions
                     foreach (var file in files)
                     {
                         var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
-                        Log.Info($"Including values file `{relative}` from package {packageId} v{version}");
+                        log.Info($"Including values file `{relative}` from package {packageId} v{version}");
                         yield return Path.GetFullPath(file);
                     }
                 }
@@ -273,9 +276,9 @@ namespace Calamari.Kubernetes.Conventions
 
         string GetChartLocation(RunningDeployment deployment)
         {
-            var packagePath = deployment.Variables.Get(Deployment.SpecialVariables.Package.Output.InstallationDirectoryPath);
+            var packagePath = deployment.Variables.Get(PackageVariables.Output.InstallationDirectoryPath);
             
-            var packageId = deployment.Variables.Get(Deployment.SpecialVariables.Package.PackageId);
+            var packageId = deployment.Variables.Get(PackageVariables.PackageId);
 
             if (fileSystem.FileExists(Path.Combine(packagePath, "Chart.yaml")))
             {
@@ -321,22 +324,22 @@ namespace Calamari.Kubernetes.Conventions
             return true;
         }
         
-        static void CheckHelmToolVersion(string customHelmExecutable, HelmVersion selectedVersion)
+        void CheckHelmToolVersion(string customHelmExecutable, HelmVersion selectedVersion)
         {
-            Log.Verbose($"Helm version selected: {selectedVersion}");
+            log.Verbose($"Helm version selected: {selectedVersion}");
 
             StringBuilder stdout = new StringBuilder();
             var result = SilentProcessRunner.ExecuteCommand(customHelmExecutable ?? "helm", "version --client --short", Environment.CurrentDirectory, output => stdout.Append(output), error => { });
 
             if (result.ExitCode != 0)
-                Log.Warn("Unable to retrieve the Helm tool version");
+                log.Warn("Unable to retrieve the Helm tool version");
 
             var toolVersion = HelmVersionParser.ParseVersion(stdout.ToString());
             if (!toolVersion.HasValue)
-                Log.Warn("Unable to parse the Helm tool version text: " + stdout);
+                log.Warn("Unable to parse the Helm tool version text: " + stdout);
             
             if (toolVersion.Value != selectedVersion)
-                Log.Warn($"The Helm tool version '{toolVersion.Value}' ('{stdout}') doesn't match the Helm version selected '{selectedVersion}'");
+                log.Warn($"The Helm tool version '{toolVersion.Value}' ('{stdout}') doesn't match the Helm version selected '{selectedVersion}'");
         }
     }
 }

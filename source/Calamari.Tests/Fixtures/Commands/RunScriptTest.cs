@@ -1,5 +1,4 @@
-﻿using Autofac;
-using Calamari.Integration.Processes;
+﻿using Calamari.Integration.Processes;
 using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
 using System;
@@ -17,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Commands
         [Test]
         public void RunScript()
         {
-            var program = new TestProgram();
+            var program = new TestProgram(new InMemoryLog());
             var retCode = program.RunStubCommand();
             
             retCode.Should().Be(0);

@@ -1,12 +1,12 @@
 using System;
-using System.Diagnostics;
 using System.IO;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.Scripting.WindowsPowerShell;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripting.WindowsPowerShell;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -37,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
                 File.WriteAllText(scriptFile.FilePath, InitializeAndCopyFilesScript(vhdPath, packageDirectory, twoPartitions));
-                var result = ExecuteScript(new PowerShellScriptEngine(), scriptFile.FilePath, new CalamariVariables());
+                var result = ExecuteScript(new PowerShellScriptExecutor(), scriptFile.FilePath, new CalamariVariables());
                 result.AssertSuccess();
             }
 
@@ -51,12 +51,11 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             return tempDirectory;
         }
 
-        private static CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, IVariables variables)
+        private static CalamariResult ExecuteScript(IScriptExecutor psse, string scriptName, IVariables variables)
         {
-            var capture = new CaptureCommandOutput();
-            var runner = new CommandLineRunner(capture);
+            var runner = new TestCommandLineRunner(ConsoleLog.Instance, variables);
             var result = psse.Execute(new Script(scriptName), variables, runner);
-            return new CalamariResult(result.ExitCode, capture);
+            return new CalamariResult(result.ExitCode, runner.Output);
         }
 
         private static string CreateVhdDiskPartScrtipt(string path)

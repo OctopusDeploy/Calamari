@@ -1,8 +1,10 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using Calamari.Common.Plumbing.Commands.Options;
 
 namespace Calamari.Commands.Support
 {
-    public abstract class Command : ICommand
+    public abstract class Command : ICommandWithArgs
     {
         protected Command()
         {
@@ -12,5 +14,6 @@ namespace Calamari.Commands.Support
         protected OptionSet Options { get; private set; }
 
         public abstract int Execute(string[] commandLineArguments);
+
     }
 }

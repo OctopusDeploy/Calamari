@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Net;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Packages.Download;
 using NuGet;
 using SemanticVersion = NuGet.SemanticVersion;

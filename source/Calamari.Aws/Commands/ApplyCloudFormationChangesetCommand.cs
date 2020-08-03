@@ -7,7 +7,11 @@ using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Util;
+using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Processes;
@@ -17,12 +21,14 @@ namespace Calamari.Aws.Commands
     [Command("apply-aws-cloudformation-changeset", Description = "Apply an existing AWS CloudFormation changeset")]
     public class ApplyCloudFormationChangesetCommand: Command
     {
+        readonly ILog log;
         readonly IVariables variables;
         private string packageFile;
         private bool waitForComplete;
         
-        public ApplyCloudFormationChangesetCommand(IVariables variables)
+        public ApplyCloudFormationChangesetCommand(ILog log, IVariables variables)
         {
+            this.log = log;
             this.variables = variables;
             Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
             Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.", v => waitForComplete =  
@@ -33,8 +39,8 @@ namespace Calamari.Aws.Commands
         {
             Options.Parse(commandLineArguments);
 
-            var environment = AwsEnvironmentGeneration.Create(variables).GetAwaiter().GetResult();
-            var stackEventLogger = new StackEventLogger(new LogWrapper());
+            var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
+            var stackEventLogger = new StackEventLogger(log);
 
             IAmazonCloudFormation ClientFactory () => ClientHelpers.CreateCloudFormationClient(environment);
             StackArn StackProvider (RunningDeployment x) => new StackArn(x.Variables.Get(AwsSpecialVariables.CloudFormation.StackName));
@@ -48,8 +54,8 @@ namespace Calamari.Aws.Commands
             };
             
             var deployment = new RunningDeployment(packageFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
             
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             conventionRunner.RunConventions();
             return 0;
         }

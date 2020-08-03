@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Calamari.Deployment;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
-using Calamari.Deployment.Journal;
-using Calamari.Integration.Processes;
-using Calamari.Variables;
+using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -28,41 +28,41 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldSkipIfInstalled()
         {
-            variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true, 
+            variables.Set(KnownVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true,
                 new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
 
             RunConvention();
 
-            Assert.That(variables.Get(SpecialVariables.Action.SkipJournal), Is.EqualTo("true"));
+            Assert.That(variables.Get(KnownVariables.Action.SkipJournal), Is.EqualTo("true"));
         }
 
         [Test]
         public void ShouldOnlySkipIfSpecified()
         {
-            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true, 
+            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", true,
                 new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
 
             RunConvention();
 
-            Assert.That(variables.Get(SpecialVariables.Action.SkipJournal), Is.Null);
+            Assert.That(variables.Get(KnownVariables.Action.SkipJournal), Is.Null);
         }
 
         [Test]
         public void ShouldNotSkipIfPreviouslyFailed()
         {
-            variables.Set(SpecialVariables.Package.SkipIfAlreadyInstalled, true.ToString());
-            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", false, 
+            variables.Set(KnownVariables.Package.SkipIfAlreadyInstalled, true.ToString());
+            previous = new JournalEntry("123", "tenant", "env", "proj", "rp01", DateTime.Now, "C:\\App", "C:\\MyApp", false,
                 new List<DeployedPackage>{new DeployedPackage("pkg", "0.0.9", "C:\\PackageOld.nupkg")});
 
             RunConvention();
 
-            Assert.That(variables.Get(SpecialVariables.Action.SkipJournal), Is.Null);
+            Assert.That(variables.Get(KnownVariables.Action.SkipJournal), Is.Null);
         }
 
         void RunConvention()
         {
-            var convention = new AlreadyInstalledConvention(journal);
+            var convention = new AlreadyInstalledConvention(new InMemoryLog(), journal);
             convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
         }
     }

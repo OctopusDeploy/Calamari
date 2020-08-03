@@ -1,0 +1,15 @@
+﻿aaa:
+  this: is
+  less: nested
+bbb:
+    this:
+        is: more
+    nested:
+    - one
+    - two
+ccc: [1, 2, 3]
+ddd: {one: 1}
+eee: [1, 2, 3]
+fff: {one: 1}
+ggg: [1, 2, 3]
+hhh: {one: 1}

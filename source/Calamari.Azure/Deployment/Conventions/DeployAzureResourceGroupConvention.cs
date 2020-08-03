@@ -6,7 +6,11 @@ using System.Threading;
 using Calamari.Azure.Accounts.Security;
 using Calamari.Azure.Deployment.Integration.ResourceGroups;
 using Calamari.Azure.Integration;
+using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Microsoft.Azure.Management.ResourceManager;
@@ -15,7 +19,6 @@ using Microsoft.Rest;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Octostache;
 
 namespace Calamari.Azure.Deployment.Conventions
 {
@@ -44,18 +47,18 @@ namespace Calamari.Azure.Deployment.Conventions
             var tenantId = variables[SpecialVariables.Action.Azure.TenantId];
             var clientId = variables[SpecialVariables.Action.Azure.ClientId];
             var password = variables[SpecialVariables.Action.Azure.Password];
-            var resourceManagementEndpoint = variables.Get(SpecialVariables.Action.Azure.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
+            var resourceManagementEndpoint = variables.Get(AzureAccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
             if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
                 Log.Info("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
 
-            var activeDirectoryEndPoint = variables.Get(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
+            var activeDirectoryEndPoint = variables.Get(AzureAccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
             if (activeDirectoryEndPoint != DefaultVariables.ActiveDirectoryEndpoint)
                 Log.Info("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndPoint);
 
             var resourceGroupName = variables[SpecialVariables.Action.Azure.ResourceGroupName];
             var deploymentName = !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName])
                     ? variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName]
-                    : GenerateDeploymentNameFromStepName(variables[SpecialVariables.Action.Name]);
+                    : GenerateDeploymentNameFromStepName(variables[ActionVariables.Name]);
             var deploymentMode = (DeploymentMode) Enum.Parse(typeof (DeploymentMode),
                 variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
             var template = templateService.GetSubstitutedTemplateContent(templateFile, filesInPackage, variables); 

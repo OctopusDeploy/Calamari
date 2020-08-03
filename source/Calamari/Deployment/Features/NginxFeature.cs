@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Nginx;
-using Calamari.Integration.Processes;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Octostache;
 
 namespace Calamari.Deployment.Features
 {
     public class NginxFeature : IFeature
     {
+        static readonly string[] RootLocations = { "= /", "/" };
         public string Name => "Octopus.Features.Nginx";
         public string DeploymentStage => DeploymentStages.AfterDeploy;
 
@@ -25,7 +25,7 @@ namespace Calamari.Deployment.Features
             this.nginxServer = nginxServer;
             this.fileSystem = fileSystem;
         }
-        
+
         public void Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
@@ -48,9 +48,9 @@ namespace Calamari.Deployment.Features
              */
             var virtualServerName =
                 string.IsNullOrWhiteSpace(variables.Get(SpecialVariables.Action.Nginx.Server.ConfigName))
-                    ? variables.Get(SpecialVariables.Package.PackageId)
+                    ? variables.Get(PackageVariables.PackageId)
                     : variables.Get(SpecialVariables.Action.Nginx.Server.ConfigName);
-            
+
             nginxServer
                 .WithVirtualServerName(virtualServerName)
                 .WithHostName(variables.Get(SpecialVariables.Action.Nginx.Server.HostName))
@@ -101,9 +101,12 @@ namespace Calamari.Deployment.Features
             var locationsString = variables.Get(SpecialVariables.Action.Nginx.Server.Locations);
             if(string.IsNullOrWhiteSpace(locationsString)) return (null, new List<Location>());
 
-            return TryParseJson<Location>(locationsString, out var locations)
-                ? (locations.FirstOrDefault(l => string.Equals("/", l.Path)), locations.Where(l => !string.Equals("/", l.Path)))
-                : (null, new List<Location>());
+            if (!TryParseJson<Location>(locationsString, out var locations))
+                throw new NginxMissingRootLocationException();
+
+            var rootLocation = locations.FirstOrDefault(l => RootLocations.Contains(l.Path));
+            if (rootLocation == null) throw new NginxMissingRootLocationException();
+            return (rootLocation, locations.Where(l => !string.Equals(rootLocation.Path, l.Path)));
         }
 
         static bool TryParseJson<T>(string json, out IEnumerable<T> items)

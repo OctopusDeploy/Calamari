@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Net;
-using System.Net.Http;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages.Download.Helm;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
 {
     /// <summary>
     /// This class knows how to interpret a package id and request a download
-    /// from a specific downloader implementation. 
+    /// from a specific downloader implementation.
     /// </summary>
     public class PackageDownloaderStrategy
     {
@@ -20,16 +21,25 @@ namespace Calamari.Integration.Packages.Download
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
+        readonly ILog log;
 
-        public PackageDownloaderStrategy(IScriptEngine engine, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, ICommandLineRunner commandLineRunner, IVariables variables)
+        public PackageDownloaderStrategy(
+            ILog log,
+            IScriptEngine engine,
+            ICalamariFileSystem fileSystem,
+            IFreeSpaceChecker freeSpaceChecker,
+            ICommandLineRunner commandLineRunner,
+            IVariables variables
+            )
         {
+            this.log = log;
             this.engine = engine;
             this.fileSystem = fileSystem;
             this.freeSpaceChecker = freeSpaceChecker;
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
         }
-        
+
         public PackagePhysicalFileMetadata DownloadPackage(
             string packageId,
             IVersion version,
@@ -41,7 +51,7 @@ namespace Calamari.Integration.Packages.Download
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
         {
-            IPackageDownloader downloader = null;
+            IPackageDownloader? downloader = null;
             switch (feedType)
             {
                 case FeedType.Maven:
@@ -51,7 +61,7 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new NuGetPackageDownloader(fileSystem, freeSpaceChecker);
                     break;
                 case FeedType.GitHub:
-                    downloader = new GitHubPackageDownloader(fileSystem, freeSpaceChecker);
+                    downloader = new GitHubPackageDownloader(log, fileSystem, freeSpaceChecker);
                     break;
                 case FeedType.Helm:
                     downloader = new HelmChartPackageDownloader(fileSystem);
@@ -67,12 +77,12 @@ namespace Calamari.Integration.Packages.Download
 
             return downloader.DownloadPackage(
                 packageId,
-                version, 
-                feedId, 
-                feedUri, 
-                feedCredentials, 
-                forcePackageDownload, 
-                maxDownloadAttempts, 
+                version,
+                feedId,
+                feedUri,
+                feedCredentials,
+                forcePackageDownload,
+                maxDownloadAttempts,
                 downloadAttemptBackoff);
         }
     }

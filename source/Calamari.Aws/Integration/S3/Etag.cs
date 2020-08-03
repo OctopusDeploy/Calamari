@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using Calamari.Common.Plumbing;
 
 namespace Calamari.Aws.Integration.S3
 {

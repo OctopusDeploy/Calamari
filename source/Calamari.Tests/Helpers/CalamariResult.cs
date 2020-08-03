@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Assent;
-using Calamari.Integration.ServiceMessages;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Util;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
@@ -15,9 +16,9 @@ namespace Calamari.Tests.Helpers
     public class CalamariResult
     {
         private readonly int exitCode;
-        private readonly CaptureCommandOutput captured;
+        private readonly CaptureCommandInvocationOutputSink captured;
 
-        public CalamariResult(int exitCode, CaptureCommandOutput captured)
+        public CalamariResult(int exitCode, CaptureCommandInvocationOutputSink captured)
         {
             this.exitCode = exitCode;
             this.captured = captured;
@@ -28,7 +29,7 @@ namespace Calamari.Tests.Helpers
             get { return exitCode; }
         }
 
-        public CaptureCommandOutput CapturedOutput { get { return captured; } }
+        public CaptureCommandInvocationOutputSink CapturedOutput { get { return captured; } }
 
         public void AssertSuccess()
         {

@@ -1,5 +1,3 @@
-using System;
-
 namespace Calamari.Util
 {
     public static class HelmVersionParser

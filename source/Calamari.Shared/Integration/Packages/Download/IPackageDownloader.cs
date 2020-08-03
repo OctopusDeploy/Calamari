@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using Calamari.Common.Features.Packages;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download

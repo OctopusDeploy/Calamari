@@ -1,4 +1,4 @@
-﻿using Calamari.Integration.ConfigurationTransforms;
+﻿using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;

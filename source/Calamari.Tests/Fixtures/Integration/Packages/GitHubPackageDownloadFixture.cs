@@ -1,11 +1,12 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
@@ -50,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
         public void DownloadsPackageFromGitHub()
         {
-            var downloader = new GitHubPackageDownloader(fileSystem, freeSpaceChecker);
+            var downloader = new GitHubPackageDownloader(new InMemoryLog(), fileSystem, freeSpaceChecker);
 
             var file = downloader.DownloadPackage("OctopusDeploy/Octostache", new SemanticVersion("2.1.8"), "feed-github",
                 new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, FeedPassword), true, 3,
@@ -64,7 +65,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
         public void WillReUseFileIfItExists()
         {
-            var downloader = new GitHubPackageDownloader(fileSystem, freeSpaceChecker);
+            var downloader = new GitHubPackageDownloader(new InMemoryLog(), fileSystem, freeSpaceChecker);
 
             var file1 = downloader.DownloadPackage("OctopusDeploy/Octostache", new SemanticVersion("2.1.7"), "feed-github",
                 new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, FeedPassword), true, 3,
@@ -85,7 +86,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
         public void DownloadsPackageFromGitHubWithDifferentVersionFormat()
         {
-            var downloader = new GitHubPackageDownloader(fileSystem, freeSpaceChecker);
+            var downloader = new GitHubPackageDownloader(new InMemoryLog(), fileSystem, freeSpaceChecker);
 
             var file = downloader.DownloadPackage("octokit/octokit.net", new SemanticVersion("0.28.0"), "feed-github",
                 new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, FeedPassword), true, 3,

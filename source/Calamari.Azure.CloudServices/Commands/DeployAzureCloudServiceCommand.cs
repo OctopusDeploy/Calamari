@@ -3,90 +3,111 @@ using System.IO;
 using Calamari.Azure.CloudServices.Accounts;
 using Calamari.Azure.CloudServices.Deployment.Conventions;
 using Calamari.Azure.CloudServices.Integration;
+using Calamari.Commands;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Features.ConfigurationVariables;
+using Calamari.Common.Features.Deployment;
+using Calamari.Common.Features.EmbeddedResources;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.StructuredVariables;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Certificates;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.ConfigurationVariables;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.JsonVariables;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Integration.Substitutions;
 
 namespace Calamari.Azure.CloudServices.Commands
 {
     [Command("deploy-azure-cloud-service", Description = "Extracts and installs an Azure Cloud-Service")]
     public class DeployAzureCloudServiceCommand : Command
     {
-        private string packageFile;
-        private readonly CombinedScriptEngine scriptEngine;
+        PathToPackage pathToPackage;
+        readonly ILog log;
+        readonly IScriptEngine scriptEngine;
         readonly IVariables variables;
+        readonly ICommandLineRunner commandLineRunner;
+        readonly ISubstituteInFiles substituteInFiles;
+        readonly IExtractPackage extractPackage;
 
-        public DeployAzureCloudServiceCommand(CombinedScriptEngine scriptEngine, IVariables variables)
+        public DeployAzureCloudServiceCommand(
+            ILog log,
+            IScriptEngine scriptEngine,
+            IVariables variables,
+            ICommandLineRunner commandLineRunner,
+            ISubstituteInFiles substituteInFiles,
+            IExtractPackage extractPackage
+        )
         {
-            Options.Add("package=", "Path to the NuGet package to install.", v => packageFile = Path.GetFullPath(v));
+            Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
 
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.variables = variables;
+            this.commandLineRunner = commandLineRunner;
+            this.substituteInFiles = substituteInFiles;
+            this.extractPackage = extractPackage;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
 
-            Guard.NotNullOrWhiteSpace(packageFile, "No package file was specified. Please pass --package YourPackage.nupkg");
+            Guard.NotNullOrWhiteSpace(pathToPackage, "No package file was specified. Please pass --package YourPackage.nupkg");
 
-            if (!File.Exists(packageFile))
-                throw new CommandException("Could not find package file: " + packageFile);    
+            if (!File.Exists(pathToPackage))
+                throw new CommandException("Could not find package file: " + pathToPackage);
 
-            Log.Info("Deploying package:    " + packageFile);
+            Log.Info("Deploying package:    " + pathToPackage);
 
             var account = new AzureAccount(variables);
-            
+
             var fileSystem = new WindowsPhysicalFileSystem();
             var embeddedResources = new AssemblyEmbeddedResources();
-            var commandLineRunner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var azurePackageUploader = new AzurePackageUploader();
+            var azurePackageUploader = new AzurePackageUploader(log);
             var certificateStore = new CalamariCertificateStore();
             var cloudCredentialsFactory = new SubscriptionCloudCredentialsFactory(certificateStore);
             var cloudServiceConfigurationRetriever = new AzureCloudServiceConfigurationRetriever();
-            var substituter = new FileSubstituter(fileSystem);
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables);
-            var transformFileLocator = new TransformFileLocator(fileSystem);
-            var replacer = new ConfigurationVariablesReplacer(variables.GetFlag(SpecialVariables.Package.IgnoreVariableReplacementErrors));
-            var jsonVariablesReplacer = new JsonConfigurationVariableReplacer();
+            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
+            var transformFileLocator = new TransformFileLocator(fileSystem, log);
+            var replacer = new ConfigurationVariablesReplacer(variables, log);
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
+            var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
 
             var conventions = new List<IConvention>
             {
                 new SwapAzureDeploymentConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
-                new ExtractPackageToStagingDirectoryConvention(new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(), fileSystem),
+                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
                 new FindCloudServicePackageConvention(fileSystem),
                 new EnsureCloudServicePackageIsCtpFormatConvention(fileSystem),
-                new ExtractAzureCloudServicePackageConvention(fileSystem),
+                new ExtractAzureCloudServicePackageConvention(log, fileSystem),
                 new ChooseCloudServiceConfigurationFileConvention(fileSystem),
-                new ConfiguredScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.PreDeploy, log, fileSystem, scriptEngine, commandLineRunner)),
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfigureAzureCloudServiceConvention(account, fileSystem, cloudCredentialsFactory, cloudServiceConfigurationRetriever, certificateStore),
-                new SubstituteInFilesConvention(fileSystem, substituter),
-                new ConfigurationTransformsConvention(fileSystem, configurationTransformer, transformFileLocator),
-                new ConfigurationVariablesConvention(fileSystem, replacer),
-                new JsonConfigurationVariablesConvention(jsonVariablesReplacer, fileSystem),
-                new PackagedScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner),
+                new DelegateInstallConvention(d => substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(d)),
+                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, configurationTransformer, transformFileLocator, log)),
+                new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, log)),
+                new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner)),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.Deploy, log, fileSystem, scriptEngine, commandLineRunner)),
                 new RePackageCloudServiceConvention(fileSystem),
                 new UploadAzureCloudServicePackageConvention(fileSystem, azurePackageUploader, cloudCredentialsFactory),
                 new DeployAzureCloudServicePackageConvention(fileSystem, embeddedResources, scriptEngine, commandLineRunner),
-                new PackagedScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner),
-                new ConfiguredScriptConvention(DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner)
+                new PackagedScriptConvention(new PackagedScriptBehaviour(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner)),
+                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.PostDeploy, log, fileSystem, scriptEngine, commandLineRunner))
             };
 
-            var deployment = new RunningDeployment(packageFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
+            var deployment = new RunningDeployment(pathToPackage, variables);
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             conventionRunner.RunConventions();
 
             return 0;

@@ -2,12 +2,15 @@
 using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Packages.Download;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.ServiceMessages;
 using Octopus.Versioning;
 
 namespace Calamari.Commands
@@ -15,10 +18,12 @@ namespace Calamari.Commands
     [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
     public class DownloadPackageCommand : Command
     {
-        private readonly CombinedScriptEngine scriptEngine;
+        private readonly IScriptEngine scriptEngine;
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
+        readonly ICommandLineRunner commandLineRunner;
 
         string packageId;
         string packageVersion;
@@ -32,12 +37,20 @@ namespace Calamari.Commands
         private FeedType feedType = FeedType.NuGet;
         private VersionFormat versionFormat = VersionFormat.Semver;
 
-        public DownloadPackageCommand(CombinedScriptEngine scriptEngine, IFreeSpaceChecker freeSpaceChecker, IVariables variables, ICalamariFileSystem fileSystem)
+        public DownloadPackageCommand(
+            IScriptEngine scriptEngine,
+            IFreeSpaceChecker freeSpaceChecker,
+            IVariables variables,
+            ICalamariFileSystem fileSystem,
+			ICommandLineRunner commandLineRunner,
+            ILog log)
         {
             this.scriptEngine = scriptEngine;
             this.freeSpaceChecker = freeSpaceChecker;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.log = log;
+            this.commandLineRunner = commandLineRunner;
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
             Options.Add("packageVersionFormat=", $"[Optional] Format of version. Options {string.Join(", ", Enum.GetNames(typeof(VersionFormat)))}. Defaults to `{VersionFormat.Semver}`.",
@@ -76,22 +89,26 @@ namespace Calamari.Commands
             try
             {
                 CheckArguments(
-                    packageId, 
-                    packageVersion, 
-                    feedId, 
-                    feedUri, 
-                    feedUsername, 
-                    feedPassword, 
-                    maxDownloadAttempts, 
-                    attemptBackoffSeconds, 
-                    out var version, 
-                    out var uri, 
-                    out var parsedMaxDownloadAttempts, 
+                    packageId,
+                    packageVersion,
+                    feedId,
+                    feedUri,
+                    feedUsername,
+                    feedPassword,
+                    maxDownloadAttempts,
+                    attemptBackoffSeconds,
+                    out var version,
+                    out var uri,
+                    out var parsedMaxDownloadAttempts,
                     out var parsedAttemptBackoff);
 
-                var commandLineRunner = new CommandLineRunner(new ConsoleCommandOutput());
-
-                var pkg = new PackageDownloaderStrategy(scriptEngine, fileSystem, freeSpaceChecker, commandLineRunner, variables).DownloadPackage(
+                var packageDownloaderStrategy = new PackageDownloaderStrategy(log,
+                    scriptEngine,
+                    fileSystem,
+                    freeSpaceChecker,
+                    commandLineRunner,
+                    variables);
+                var pkg = packageDownloaderStrategy.DownloadPackage(
                     packageId,
                     version,
                     feedId,
@@ -102,15 +119,15 @@ namespace Calamari.Commands
                     parsedMaxDownloadAttempts,
                     parsedAttemptBackoff);
 
-                Log.VerboseFormat("Package {0} v{1} successfully downloaded from feed: '{2}'", packageId, version, feedUri);
-                Log.SetOutputVariable("StagedPackage.Hash", pkg.Hash);
-                Log.SetOutputVariable("StagedPackage.Size", pkg.Size.ToString(CultureInfo.InvariantCulture));
-                Log.SetOutputVariable("StagedPackage.FullPathOnRemoteMachine", pkg.FullFilePath);
+                log.VerboseFormat("Package {0} v{1} successfully downloaded from feed: '{2}'", packageId, version, feedUri);
+                log.SetOutputVariableButDoNotAddToVariables("StagedPackage.Hash", pkg.Hash);
+                log.SetOutputVariableButDoNotAddToVariables("StagedPackage.Size", pkg.Size.ToString(CultureInfo.InvariantCulture));
+                log.SetOutputVariableButDoNotAddToVariables("StagedPackage.FullPathOnRemoteMachine", pkg.FullFilePath);
             }
             catch (Exception ex)
             {
-                Log.ErrorFormat("Failed to download package {0} v{1} from feed: '{2}'", packageId, packageVersion, feedUri);
-                return ConsoleFormatter.PrintError(ex);
+                log.ErrorFormat("Failed to download package {0} v{1} from feed: '{2}'", packageId, packageVersion, feedUri);
+                return ConsoleFormatter.PrintError(log, ex);
             }
 
             return 0;
@@ -128,17 +145,17 @@ namespace Calamari.Commands
 
         // ReSharper disable UnusedParameter.Local
         void CheckArguments(
-            string packageId, 
-            string packageVersion, 
-            string feedId, 
-            string feedUri, 
-            string feedUsername, 
+            string packageId,
+            string packageVersion,
+            string feedId,
+            string feedUri,
+            string feedUsername,
             string feedPassword,
-            string maxDownloadAttempts, 
-            string attemptBackoffSeconds, 
-            out IVersion version, 
-            out Uri uri, 
-            out int parsedMaxDownloadAttempts, 
+            string maxDownloadAttempts,
+            string attemptBackoffSeconds,
+            out IVersion version,
+            out Uri uri,
+            out int parsedMaxDownloadAttempts,
             out TimeSpan parsedAttemptBackoff)
         {
             Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
@@ -146,9 +163,10 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
             Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
 
-            if (!VersionFactory.TryCreateVersion(packageVersion, out version, versionFormat))
+            version = VersionFactory.TryCreateVersion(packageVersion, versionFormat);
+            if (version == null)
             {
-                throw new CommandException($"Package version '{packageVersion}' specified is not a valid version string"); 
+                throw new CommandException($"Package version '{packageVersion}' specified is not a valid version string");
             }
 
             if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))

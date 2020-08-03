@@ -2,6 +2,7 @@
 using System.Net;
 using System.Xml.Linq;
 using Calamari.Azure.CloudServices.Accounts;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Certificates;
 using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Management.Compute;

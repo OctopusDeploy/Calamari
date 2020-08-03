@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Azure.WebApps.Util

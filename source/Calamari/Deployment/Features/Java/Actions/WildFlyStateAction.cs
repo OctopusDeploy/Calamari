@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Deployment.Features.Java.Actions
 {

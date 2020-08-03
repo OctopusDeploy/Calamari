@@ -2,14 +2,13 @@
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using Calamari.Deployment;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
 using Calamari.Tests.Helpers;
-using Calamari.Util;
-using Calamari.Variables;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.Substitutions
 {
@@ -27,7 +26,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
             variables["ServerEndpoints[FOREXUAT02].Name"] = "forexuat02.local";
             variables["ServerEndpoints[FOREXUAT02].Port"] = "1566";
             
-            var text = PerformTest(GetFixtureResouce("Samples","Servers.json"), variables).Text;
+            var text = PerformTest(GetFixtureResouce("Samples","Servers.json"), variables).text;
 
             Assert.That(Regex.Replace(text, "\\s+", ""), Is.EqualTo(@"{""Servers"":[{""Name"":""forexuat01.local"",""Port"":1566},{""Name"":""forexuat02.local"",""Port"":1566}]}"));
         }
@@ -38,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var variables = new CalamariVariables();
             variables["fox"] = "replaced fox";
 
-            var text = PerformTest(GetFixtureResouce("Samples", "ParserErrors.txt"), variables).Text;
+            var text = PerformTest(GetFixtureResouce("Samples", "ParserErrors.txt"), variables).text;
 
             // Environment.Newline returning \r\n when running tests on mono, but \n on dotnet core, just replace
             Assert.AreEqual("the quick brown replaced fox jumps over the lazy #{dog\nthe quick brown replaced fox jumps over the lazy #{dog #{", text.Replace("\r\n", "\n"));
@@ -56,8 +55,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
             Assert.AreEqual(Encoding.Unicode, encoding);
-            Assert.AreEqual(Encoding.Unicode, result.Encoding);
-            Assert.True(Regex.Match(result.Text, "\\bLocalCacheFolderName=SpongeBob\\b").Success);
+            Assert.AreEqual(Encoding.Unicode, result.encoding);
+            Assert.True(Regex.Match(result.text, "\\bLocalCacheFolderName=SpongeBob\\b").Success);
         }
 
         [Test]
@@ -66,9 +65,9 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             var filePath = GetFixtureResouce("Samples", "UTF16LE.ini");
             var variables = new CalamariVariables();
-            variables[SpecialVariables.Package.SubstituteInFilesOutputEncoding] = "utf-8";
+            variables[PackageVariables.SubstituteInFilesOutputEncoding] = "utf-8";
 
-            var encoding = (Encoding)PerformTest(filePath, variables).Encoding;
+            var encoding = (Encoding)PerformTest(filePath, variables).encoding;
 
             Encoding fileEncoding;
             FileSystem.ReadFile(filePath, out fileEncoding);
@@ -82,9 +81,9 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
             var filePath = GetFixtureResouce("Samples", "UTF16LE.ini");
             var variables = new CalamariVariables();
-            variables[SpecialVariables.Package.SubstituteInFilesOutputEncoding] = "utf-666";
+            variables[PackageVariables.SubstituteInFilesOutputEncoding] = "utf-666";
 
-            var encoding = (Encoding)PerformTest(filePath, variables).Encoding;
+            var encoding = (Encoding)PerformTest(filePath, variables).encoding;
 
             Encoding fileEncoding;
             FileSystem.ReadFile(filePath, out fileEncoding);
@@ -146,7 +145,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
             Assert.AreEqual(Encoding.Default, encoding);
-            Assert.AreEqual(Encoding.Default, result.Encoding);
+            Assert.AreEqual(Encoding.Default, result.encoding);
         }
 
         [Test]
@@ -161,7 +160,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
             Assert.AreEqual(Encoding.ASCII, encoding);
-            Assert.AreEqual(Encoding.ASCII, result.Encoding);
+            Assert.AreEqual(Encoding.ASCII, result.encoding);
         }
 
         [Test]
@@ -177,8 +176,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
             FileSystem.ReadFile(filePath, out encoding);
             Assert.AreNotEqual(Encoding.UTF8, encoding); //not the static encoder (which does bom)
             Assert.AreEqual(Encoding.UTF8.EncodingName, encoding.EncodingName); //but are both utf-8
-            Assert.AreNotEqual(Encoding.UTF8, result.Encoding); //not the static encoder (which does bom)
-            Assert.AreEqual(Encoding.UTF8.EncodingName, result.Encoding.EncodingName); //but are both utf-8
+            Assert.AreNotEqual(Encoding.UTF8, result.encoding); //not the static encoder (which does bom)
+            Assert.AreEqual(Encoding.UTF8.EncodingName, result.encoding.EncodingName); //but are both utf-8
         }
 
         [Test]
@@ -193,22 +192,19 @@ namespace Calamari.Tests.Fixtures.Substitutions
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
             Assert.AreEqual(Encoding.UTF8, encoding);
-            Assert.AreEqual(Encoding.UTF8, result.Encoding);
+            Assert.AreEqual(Encoding.UTF8, result.encoding);
         }
 
-        dynamic PerformTest(string sampleFile, IVariables variables)
+        (string text, Encoding encoding) PerformTest(string sampleFile, IVariables variables)
         {
             var temp = Path.GetTempFileName();
             using (new TemporaryFile(temp))
             {
-                var substituter = new FileSubstituter(FileSystem);
+                var substituter = new FileSubstituter(new InMemoryLog(), FileSystem);
                 substituter.PerformSubstitution(sampleFile, variables, temp);
                 Encoding encoding;
                 var text = FileSystem.ReadFile(temp, out encoding);
-                return new {
-                    Text = text,
-                    Encoding = encoding
-                };
+                return (text, encoding);
             }
         }
     }

@@ -1,4 +1,6 @@
 using System.IO;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -32,15 +34,15 @@ namespace Calamari.Tests.Fixtures.Deployment
         [RequiresWindowsServer2012OrAbove]
         public void ShouldDeployAVhd()
         {
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
-            Variables[SpecialVariables.Package.SubstituteInFilesTargets] = "web.config";
-            Variables[SpecialVariables.Package.SubstituteInFilesEnabled] = "True";
+            Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
+            Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[SpecialVariables.Environment.Name] = Environment;
-            Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
-            Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
+            Variables[DeploymentEnvironment.Name] = Environment;
+            Variables[ActionVariables.StructuredConfigurationVariablesEnabled] = "True";
+            Variables[ActionVariables.StructuredConfigurationVariablesTargets] = "appsettings.json";
 
             using (var vhd = new TemporaryFile(VhdBuilder.BuildSampleVhd(ServiceName)))
             using (var file = new TemporaryFile(PackageBuilder.BuildSimpleZip(ServiceName, "1.0.0", Path.GetDirectoryName(vhd.FilePath))))
@@ -67,24 +69,24 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutputMatches(@"Transforming '[A-Z]:\\ApplicationPath\\web\.config' using '[A-Z]:\\ApplicationPath\\web\.Production\.config'");
 
                 // json substitutions
-                result.AssertOutputMatches(@"Performing JSON variable replacement on '[A-Z]:\\ApplicationPath\\appsettings\.json'");
+                result.AssertOutputMatches("Structured variable replacement succeeded on file [A-Z]:\\\\ApplicationPath\\\\appsettings.json with format 'Json'");
             }
         }
 
         [Test]
         [RequiresAdmin]
-        [RequiresWindowsServer2012OrAbove]        
+        [RequiresWindowsServer2012OrAbove]
         public void ShouldDeployAVhdWithTwoPartitions()
         {
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
-            Variables[SpecialVariables.Package.SubstituteInFilesTargets] = "web.config";
-            Variables[SpecialVariables.Package.SubstituteInFilesEnabled] = "True";
+            Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
+            Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[SpecialVariables.Environment.Name] = Environment;
-            Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
-            Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
+            Variables[DeploymentEnvironment.Name] = Environment;
+            Variables[ActionVariables.StructuredConfigurationVariablesEnabled] = "True";
+            Variables[ActionVariables.StructuredConfigurationVariablesTargets] = "appsettings.json";
 
             Variables["OctopusVhdPartitions[1].ApplicationPath"] = "PathThatDoesNotExist";
 
@@ -119,7 +121,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutputMatches(@"Transforming '[A-Z]:\\ApplicationPath\\web\.config' using '[A-Z]:\\ApplicationPath\\web\.Production\.config'");
 
                 // json substitutions
-                result.AssertOutputMatches(@"Performing JSON variable replacement on '[A-Z]:\\ApplicationPath\\appsettings\.json'");
+                result.AssertOutputMatches("Structured variable replacement succeeded on file [A-Z]:\\\\ApplicationPath\\\\appsettings.json with format 'Json'");
             }
         }
 
@@ -128,15 +130,15 @@ namespace Calamari.Tests.Fixtures.Deployment
         [RequiresWindowsServer2012OrAbove]
         public void ShouldBlockMountAndOverrideAppPath()
         {
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
-            Variables[SpecialVariables.Package.SubstituteInFilesTargets] = "web.config";
-            Variables[SpecialVariables.Package.SubstituteInFilesEnabled] = "True";
+            Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
+            Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
             Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
-            Variables[SpecialVariables.Environment.Name] = Environment;
-            Variables[SpecialVariables.Package.JsonConfigurationVariablesEnabled] = "True";
-            Variables[SpecialVariables.Package.JsonConfigurationVariablesTargets] = "appsettings.json";
+            Variables[DeploymentEnvironment.Name] = Environment;
+            Variables[ActionVariables.StructuredConfigurationVariablesEnabled] = "True";
+            Variables[ActionVariables.StructuredConfigurationVariablesTargets] = "appsettings.json";
 
             Variables["OctopusVhdPartitions[0].Mount"] = "false";
             Variables["OctopusVhdPartitions[1].ApplicationPath"] = "AlternateApplicationPath";
@@ -169,7 +171,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutputMatches(@"Transforming '[A-Z]:\\AlternateApplicationPath\\web\.config' using '[A-Z]:\\AlternateApplicationPath\\web\.Production\.config'");
 
                 // json substitutions
-                result.AssertOutputMatches(@"Performing JSON variable replacement on '[A-Z]:\\AlternateApplicationPath\\appsettings\.json'");
+                result.AssertOutputMatches("Structured variable replacement succeeded on file [A-Z]:\\\\AlternateApplicationPath\\\\appsettings.json with format 'Json'");
             }
         }
     }

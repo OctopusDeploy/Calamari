@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using Calamari.Integration.Proxies;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Proxies;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -230,7 +231,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         
         void AssertUnauthenticatedSystemProxyUsed(IEnumerable<EnvironmentVariable> output)
         {
-#if !NETCOREAPP2_2
+#if !NETCOREAPP3_1
             AssertUnauthenticatedProxyUsed(output);
 #else
             AssertNoProxyChanges(output);
@@ -239,7 +240,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         
         void AssertAuthenticatedSystemProxyUsed(IEnumerable<EnvironmentVariable> output)
         {
-#if !NETCOREAPP2_2
+#if !NETCOREAPP3_1
             AssertAuthenticatedProxyUsed(output);
 #else
             AssertNoProxyChanges(output);

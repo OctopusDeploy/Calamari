@@ -1,7 +1,6 @@
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting
 {
@@ -15,12 +14,11 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             return cd;
         }
 
-        protected CalamariResult ExecuteScript(IScriptEngine psse, string scriptName, IVariables variables)
+        protected CalamariResult ExecuteScript(IScriptExecutor psse, string scriptName, IVariables variables)
         {
-            var capture = new CaptureCommandOutput();
-            var runner = new CommandLineRunner(capture);
+            var runner = new TestCommandLineRunner(new InMemoryLog(), variables);
             var result = psse.Execute(new Script(scriptName), variables, runner);
-            return new CalamariResult(result.ExitCode, capture);
+            return new CalamariResult(result.ExitCode, runner.Output);
         }
     }
 }

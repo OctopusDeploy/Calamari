@@ -1,12 +1,13 @@
 ﻿using System.IO;
-using System.Reflection;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.EmbeddedResources;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 
 namespace Calamari.Azure.CloudServices.Deployment.Conventions
 {
@@ -33,7 +34,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
             Log.SetOutputVariable("OctopusAzureServiceName", deployment.Variables.Get(SpecialVariables.Action.Azure.CloudServiceName), deployment.Variables);
             Log.SetOutputVariable("OctopusAzureStorageAccountName", deployment.Variables.Get(SpecialVariables.Action.Azure.StorageAccountName), deployment.Variables);
             Log.SetOutputVariable("OctopusAzureSlot", deployment.Variables.Get(SpecialVariables.Action.Azure.Slot), deployment.Variables);
-            Log.SetOutputVariable("OctopusAzureDeploymentLabel", deployment.Variables.Get(SpecialVariables.Action.Name) + " v" + deployment.Variables.Get(SpecialVariables.Release.Number), deployment.Variables);
+            Log.SetOutputVariable("OctopusAzureDeploymentLabel", deployment.Variables.Get(ActionVariables.Name) + " v" + deployment.Variables.Get(SpecialVariables.Release.Number), deployment.Variables);
             Log.SetOutputVariable("OctopusAzureSwapIfPossible", deployment.Variables.Get(SpecialVariables.Action.Azure.SwapIfPossible, defaultValue: false.ToString()), deployment.Variables);
 
             var tempDirectory = fileSystem.CreateTemporaryDirectory();

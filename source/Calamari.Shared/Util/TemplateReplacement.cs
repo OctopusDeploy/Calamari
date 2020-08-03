@@ -1,6 +1,7 @@
 ﻿using System;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Util;
 using Octopus.CoreUtilities.Extensions;
-using Octostache;
 
 namespace Calamari.Util
 {

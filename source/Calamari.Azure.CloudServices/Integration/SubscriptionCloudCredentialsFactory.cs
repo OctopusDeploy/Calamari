@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Certificates;
 using Microsoft.Azure;

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using Calamari.Integration.Processes.Semaphores;
+using Calamari.Common.Features.Processes.Semaphores;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores

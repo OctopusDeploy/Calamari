@@ -1,26 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Journal;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
-using Calamari.Variables;
 
 namespace Calamari.Commands
 {
     [Command("transfer-package", Description = "Copies a deployment package to a specific directory")]
     public class TransferPackageCommand : Command
     {
+        readonly ILog log;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
 
-        public TransferPackageCommand(IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem)
+        public TransferPackageCommand(ILog log, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem)
         {
+            this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.fileSystem = fileSystem;
@@ -28,25 +32,20 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            var packageFile = variables.GetEnvironmentExpandedPath(SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath);
-            if(string.IsNullOrEmpty(packageFile))
-            {
-                throw new CommandException($"No package file was specified. Please provide `{SpecialVariables.Tentacle.CurrentDeployment.PackageFilePath}` variable");
-            }
-
-            if (!fileSystem.FileExists(packageFile))
-                throw new CommandException("Could not find package file: " + packageFile);    
+            var packageFile = variables.GetPathToPrimaryPackage(fileSystem, true);
+            if (packageFile == null) // required: true in the above call means it will throw rather than return null, but there's no way to tell the compiler that. And ! doesn't work in older frameworks
+                throw new CommandException("Package File path could not be determined");
 
             var journal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
-            
+
             var conventions = new List<IConvention>
             {
-                new AlreadyInstalledConvention(journal),
-                new TransferPackageConvention(fileSystem),
+                new AlreadyInstalledConvention(log, journal),
+                new TransferPackageConvention(log, fileSystem),
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             try
             {

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -44,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreatePackage("2.0.0.2")))
             {
                 var store = new PackageStore(
-                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(),
+                    new CombinedPackageExtractor(new InMemoryLog()),
                     CalamariPhysicalFileSystem.GetPhysicalFileSystem()
                     );
 
@@ -61,7 +63,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreatePackage("1.0.0.1", true)))
             {
                 var store = new PackageStore(
-                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(),
+                    new CombinedPackageExtractor(new InMemoryLog()),
                     CalamariPhysicalFileSystem.GetPhysicalFileSystem()
                 );
 
@@ -78,7 +80,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreateEmptyFile("1.0.0.2")))
             {
                 var store = new PackageStore(
-                    new GenericPackageExtractorFactory().createStandardGenericPackageExtractor(),
+                    new CombinedPackageExtractor(new InMemoryLog()),
                     CalamariPhysicalFileSystem.GetPhysicalFileSystem()
                 );
 

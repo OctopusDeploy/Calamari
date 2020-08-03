@@ -1,7 +1,9 @@
-﻿using Calamari.Deployment;
+﻿using Calamari.Common.Commands;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Substitutions;
 
 namespace Calamari.Azure.ServiceFabric.Deployment.Conventions
 {

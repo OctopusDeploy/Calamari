@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting.Python;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting.Python;
-using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using Octopus.CoreUtilities;
@@ -47,17 +47,12 @@ namespace Calamari.Tests.Fixtures
         {
             var executable = PythonBootstrapper.FindPythonExecutable();
             var command = new CommandLine(executable).Argument("--version");
-            var capture = new CaptureCommandOutput();
-            var runner = new CommandLineRunner(
-                new SplitCommandOutput(
-                    new ConsoleCommandOutput(),
-                    new ServiceMessageCommandOutput(new CalamariVariables()),
-                    capture));
+            var runner = new TestCommandLineRunner(new InMemoryLog(), new CalamariVariables());
             var result = runner.Execute(command.Build());
             if (result.ExitCode != 0)
                 return Maybe<Version>.None;
 
-            var allCapturedMessages = capture.AllMessages.Aggregate((a, b) => $"{a}, {b}");
+            var allCapturedMessages = runner.Output.AllMessages.Aggregate((a, b) => $"{a}, {b}");
             var pythonVersionMatch = PythonVersionFinder.Match(allCapturedMessages);
             if (!pythonVersionMatch.Success)
                 return Maybe<Version>.None;

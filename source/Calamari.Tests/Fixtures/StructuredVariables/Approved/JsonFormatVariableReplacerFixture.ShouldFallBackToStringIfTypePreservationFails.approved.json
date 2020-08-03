@@ -1,0 +1,12 @@
+{
+  "null2num": "33",
+  "null2str": "bananas",
+  "null2obj": "{\"x\": 1}",
+  "null2arr": "[3, 2]",
+  "bool2null": "null",
+  "bool2num": "52",
+  "num2null": "null",
+  "num2bool": "true",
+  "num2arr": "[1]",
+  "str2bool": "false"
+}

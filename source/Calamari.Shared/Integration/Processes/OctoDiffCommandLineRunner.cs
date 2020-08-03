@@ -1,33 +1,30 @@
 using System.IO;
 using System.Linq;
 using Calamari.Commands;
-using Calamari.Commands.Support;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Util;
-using System.Reflection;
 using System.Runtime.CompilerServices;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
 
 namespace Calamari.Integration.Processes
 {
     public class OctoDiffCommandLineRunner 
     {
-        readonly IVariables variables;
+        readonly ICommandLineRunner commandLineRunner;
         public CommandLine OctoDiff { get; }
 
-        public OctoDiffCommandLineRunner(IVariables variables)
+        public OctoDiffCommandLineRunner(ICommandLineRunner commandLineRunner)
         {
-            this.variables = variables;
+            this.commandLineRunner = commandLineRunner;
             OctoDiff = new CommandLine(FindOctoDiffExecutable());
         }
 
         public CommandResult Execute()
         {
-            var runner = new CommandLineRunner(new SplitCommandOutput(new ConsoleCommandOutput(), new ServiceMessageCommandOutput(variables)));
-            var result = runner.Execute(OctoDiff.Build());
+            var result = commandLineRunner.Execute(OctoDiff.Build());
             return result;
         }
 
-        public static string FindOctoDiffExecutable([CallerFilePath] string callerPath = null)
+        public static string FindOctoDiffExecutable([CallerFilePath] string? callerPath = null)
         {
             var basePath = Path.GetDirectoryName(typeof(ApplyDeltaCommand).Assembly.Location);
             var executable = Path.GetFullPath(Path.Combine(basePath, "Octodiff.exe"));

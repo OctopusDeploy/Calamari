@@ -1,4 +1,5 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT
+#nullable disable
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -32,7 +33,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
         public static extern SafeCertContextHandle CertDuplicateCertificateContext(IntPtr pCertContext);
 
         [DllImport("Crypt32.dll", CharSet = CharSet.Unicode, SetLastError = true, EntryPoint = "CertGetNameStringW")]
-        public static extern int CertGetNameString(SafeCertContextHandle pCertContext, CertNameType dwType, CertNameFlags dwFlags, [In] ref CertNameStringType pvPara, [Out] StringBuilder pszNameString, int cchNameString); 
+        public static extern int CertGetNameString(SafeCertContextHandle pCertContext, CertNameType dwType, CertNameFlags dwFlags, [In] ref CertNameStringType pvPara, [Out] StringBuilder pszNameString, int cchNameString);
 
         [DllImport("Crypt32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -46,7 +47,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "CryptAcquireContextW")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool CryptAcquireContext(out IntPtr psafeProvHandle, 
+        public static extern bool CryptAcquireContext(out IntPtr psafeProvHandle,
             [MarshalAs(UnmanagedType.LPWStr)] string pszContainer,
             [MarshalAs(UnmanagedType.LPWStr)] string pszProvider,
             int dwProvType, CryptAcquireContextFlags dwFlags);
@@ -125,7 +126,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
 
         internal enum CertificateFindType
         {
-            Sha1Hash = 1 << 16 // CERT_FIND_SHA1_HASH  
+            Sha1Hash = 1 << 16 // CERT_FIND_SHA1_HASH
         }
 
         [Flags]
@@ -136,7 +137,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
             Pkcs7OrX509AsnEncoding = X509AsnEncoding | Pkcs7AsnEncoding
         }
 
-        internal enum CertNameType 
+        internal enum CertNameType
         {
             CERT_NAME_EMAIL_TYPE = 1,
             CERT_NAME_RDN_TYPE = 2,
@@ -149,14 +150,14 @@ namespace Calamari.Integration.Certificates.WindowsNative
         }
 
         [Flags]
-        internal enum CertNameFlags 
+        internal enum CertNameFlags
         {
             None                  = 0x00000000,
             CERT_NAME_ISSUER_FLAG = 0x00000001,
         }
 
         [Flags]
-        internal enum CertNameStringType  
+        internal enum CertNameStringType
         {
             CERT_X500_NAME_STR = 3,
             CERT_NAME_STR_REVERSE_FLAG = 0x02000000,
@@ -203,7 +204,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
         /// </summary>
         public enum CertificateProperty
         {
-            KeyProviderInfo = 2, // CERT_KEY_PROV_INFO_PROP_ID 
+            KeyProviderInfo = 2, // CERT_KEY_PROV_INFO_PROP_ID
             KeyContext = 5, // CERT_KEY_CONTEXT_PROP_ID
         }
 
@@ -220,7 +221,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
         }
 
         [Flags]
-        internal enum CryptAcquireContextFlags 
+        internal enum CryptAcquireContextFlags
         {
             None = 0x00000000,
             Delete = 0x00000010, // CRYPT_DELETEKEYSET
@@ -230,12 +231,12 @@ namespace Calamari.Integration.Certificates.WindowsNative
 
         public enum CspProperties
         {
-            SecurityDescriptor = 0x8 // PP_KEYSET_SEC_DESCR 
+            SecurityDescriptor = 0x8 // PP_KEYSET_SEC_DESCR
         }
 
         public static class NCryptProperties
         {
-            public const string SecurityDescriptor = "Security Descr"; // NCRYPT_SECURITY_DESCR_PROPERTY 
+            public const string SecurityDescriptor = "Security Descr"; // NCRYPT_SECURITY_DESCR_PROPERTY
         }
 
         [Flags]

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
 using Octostache.Templates;
 
@@ -12,11 +14,13 @@ namespace Calamari.Deployment
     {
         readonly RunningDeployment deployment;
         readonly List<IConvention> conventions;
+        readonly ILog log;
 
-        public ConventionProcessor(RunningDeployment deployment, List<IConvention> conventions)
+        public ConventionProcessor(RunningDeployment deployment, List<IConvention> conventions, ILog log)
         {
             this.deployment = deployment;
             this.conventions = conventions;
+            this.log = log;
         }
 
         public void RunConventions()
@@ -32,7 +36,7 @@ namespace Calamari.Deployment
             catch (Exception installException)
             {
                 if (installException is CommandException || installException is RecursiveDefinitionException)
-                    Console.Error.WriteLine(installException.Message);
+                    log.Verbose(installException.ToString());
                 else
                     Console.Error.WriteLine(installException);
 
@@ -50,13 +54,14 @@ namespace Calamari.Deployment
                 }
                 catch (Exception rollbackException)
                 {
-                    if (rollbackException is CommandException)
-                        Console.Error.WriteLine(rollbackException.Message);
-                    else if (rollbackException is RecursiveDefinitionException && rollbackException.Message != installException.Message)
-                        //dont duplicate these error messages
-                        Console.Error.WriteLine(rollbackException.Message);
-                    else if (!(rollbackException is RecursiveDefinitionException))
-                        Console.Error.WriteLine(rollbackException);
+                    //if the "rollback" exception message is identical to the exception we got during "install", dont log it
+                    if (rollbackException.Message != installException.Message)
+                    {
+                        if (rollbackException is CommandException || rollbackException is RecursiveDefinitionException)
+                            log.Verbose(installException.ToString());
+                        else
+                            Console.Error.WriteLine(rollbackException);
+                    }
                 }
                 throw;
             }

@@ -12,12 +12,12 @@
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
   </PropertyGroup>
   <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>net452;netcoreapp2.2</TargetFrameworks>
+    <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>netcoreapp2.2</TargetFrameworks>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.2' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
     <DefineConstants>$(DefineConstants);NETCORE;AZURE_CORE;USE_OCTOPUS_XMLT;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
@@ -26,12 +26,12 @@
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
     <ProjectReference Include="..\Calamari.Azure.Accounts\Calamari.Azure.Accounts.csproj" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
     <PackageReference Include="NSubstitute" Version="2.0.3" />
-    <PackageReference Include="FluentAssertions" Version="5.6.0" />
-    <PackageReference Include="NUnit" Version="3.11.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.12.0" />
-    <PackageReference Include="Assent" Version="1.3.1" />
+    <PackageReference Include="FluentAssertions" Version="5.10.3" />
+    <PackageReference Include="NUnit" Version="3.12.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
+    <PackageReference Include="Assent" Version="1.6.1" />
     <PackageReference Include="Polly" Version="5.4.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
   </ItemGroup>
@@ -64,6 +64,9 @@
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDefaultValue.fsx" />
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDirectValue.fsx" />
     <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloVariableSubstitution.fsx" />
+    <None Include="AzureFixtures\Scripts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\ConfigurationVariables\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -97,7 +100,16 @@
     <None Include="Fixtures\Deployment\Packages\Acme.Web.Tests\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.JsonFileOutput\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.StructuredConfigFiles\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Package\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\Deployment\Packages\Acme.PackageBilingual\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\**">
@@ -109,7 +121,10 @@
     <None Include="Fixtures\Integration\Packages\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\JsonVariables\Samples\**">
+    <None Include="Fixtures\StructuredVariables\Samples\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Fixtures\StructuredVariables\Approved\*.approved.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Nginx\Approved\*.approved.*">
@@ -171,54 +186,6 @@
     <None Update="Fixtures\Commands\Scripts\awsscript.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Terraform\AWS\example.tf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\AWS\example.tfvars">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\AWS\test.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\Azure\example.tf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\Azure\example.tfvars">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\PlanDetailedExitCode\example.tf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\Simple\backend.tfvars">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\TemplateDirectory\SubFolder\example.tf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\Simple\example.tf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\WithOutputSensitiveVariables\example.tf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\WithVariablesSubstitution\example.tf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\WithVariablesSubstitution\terraform.tfvars">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\WithVariablesSubstitution\example.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\WithVariables\example.tfvars">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\WithVariables\example.tf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Terraform\AdditionalParams\example.tf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Fixtures\Nginx\Approved" />
@@ -243,23 +210,23 @@
     </CreateItem>
     <PropertyGroup>
       <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
-      <FSharpCompilerToolsExe Condition="'$(TargetFramework)' == 'netcoreapp2.2'">@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.exe</FSharpCompilerToolsExe>
+      <FSharpCompilerToolsExe Condition="'$(TargetFramework)' == 'netcoreapp3.1'">@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.exe</FSharpCompilerToolsExe>
       <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
-      <ScriptCSExe Condition="'$(TargetFramework)' == 'netcoreapp2.2'">@(ScriptCSRef->'%(ResolvedPath)')/tools/*.exe</ScriptCSExe>
+      <ScriptCSExe Condition="'$(TargetFramework)' == 'netcoreapp3.1'">@(ScriptCSRef->'%(ResolvedPath)')/tools/*.exe</ScriptCSExe>
       <NuGetCommandLine>@(NuGetCommandLineRef->'%(ResolvedPath)')/tools/*.*</NuGetCommandLine>
     </PropertyGroup>
     <ItemGroup>
       <FSharpFiles Include="$(FSharpCompilerTools)" />
-      <FSharpFilesExe Condition="'$(TargetFramework)' == 'netcoreapp2.2'" Include="$(FSharpCompilerToolsExe)" />
+      <FSharpFilesExe Condition="'$(TargetFramework)' == 'netcoreapp3.1'" Include="$(FSharpCompilerToolsExe)" />
       <ScriptCSFiles Include="$(ScriptCS)" />
-      <ScriptCSFilesExe Condition="'$(TargetFramework)' == 'netcoreapp2.2'" Include="$(ScriptCSExe)" />
+      <ScriptCSFilesExe Condition="'$(TargetFramework)' == 'netcoreapp3.1'" Include="$(ScriptCSExe)" />
       <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net452'" />
     </ItemGroup>
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutDir)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net452'" />
-    <Exec Command="chmod +x %(FSharpFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp2.2'" />
-    <Exec Command="chmod +x %(ScriptCSFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp2.2'" />
+    <Exec Command="chmod +x %(FSharpFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp3.1'" />
+    <Exec Command="chmod +x %(ScriptCSFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp3.1'" />
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" Condition="'$(PublishDir)' != ''" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" Condition="'$(PublishDir)' != ''" />
   </Target>

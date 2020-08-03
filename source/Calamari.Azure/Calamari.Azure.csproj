@@ -2,7 +2,7 @@
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net452;netstandard2.1</TargetFrameworks>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Azure</AssemblyName>
     <OutputType>Library</OutputType>
@@ -20,7 +20,7 @@
     <ApplicationManifest>Calamari.Azure.exe.manifest</ApplicationManifest>
     <ApplicationIcon />
     <StartupObject />
-    <DefineConstants>$(DefineConstants);WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants)</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>bin\Debug\</OutputPath>

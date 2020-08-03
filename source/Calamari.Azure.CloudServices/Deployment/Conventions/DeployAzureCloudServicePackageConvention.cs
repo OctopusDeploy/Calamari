@@ -1,12 +1,13 @@
 ﻿using System.IO;
-using System.Reflection;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.EmbeddedResources;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 
 namespace Calamari.Azure.CloudServices.Deployment.Conventions
 {
@@ -17,7 +18,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
 
-        public DeployAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources, 
+        public DeployAzureCloudServicePackageConvention(ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources,
             IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
             this.fileSystem = fileSystem;
@@ -35,7 +36,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
             Log.SetOutputVariable("OctopusAzureSlot", deployment.Variables.Get(SpecialVariables.Action.Azure.Slot), deployment.Variables);
             Log.SetOutputVariable("OctopusAzurePackageUri", deployment.Variables.Get(SpecialVariables.Action.Azure.UploadedPackageUri), deployment.Variables);
 
-            var deploymentLabel = deployment.Variables.Get(SpecialVariables.Action.Azure.DeploymentLabel, defaultValue: deployment.Variables.Get(SpecialVariables.Action.Name) + " v" + deployment.Variables.Get(SpecialVariables.Release.Number));
+            var deploymentLabel = deployment.Variables.Get(SpecialVariables.Action.Azure.DeploymentLabel, defaultValue: deployment.Variables.Get(ActionVariables.Name) + " v" + deployment.Variables.Get(SpecialVariables.Release.Number));
             Log.SetOutputVariable("OctopusAzureDeploymentLabel", deploymentLabel, deployment.Variables);
 
             Log.SetOutputVariable("OctopusAzureSwapIfPossible", deployment.Variables.Get(SpecialVariables.Action.Azure.SwapIfPossible, defaultValue: false.ToString()), deployment.Variables);
@@ -47,7 +48,7 @@ namespace Calamari.Azure.CloudServices.Deployment.Conventions
             // The user may supply the script, to override behaviour
             if (!fileSystem.FileExists(scriptFile))
             {
-               fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(GetType().Assembly, $"{GetType().Assembly.GetName().Name}.Scripts.DeployAzureCloudService.ps1")); 
+               fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(GetType().Assembly, $"{GetType().Assembly.GetName().Name}.Scripts.DeployAzureCloudService.ps1"));
             }
 
             var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);

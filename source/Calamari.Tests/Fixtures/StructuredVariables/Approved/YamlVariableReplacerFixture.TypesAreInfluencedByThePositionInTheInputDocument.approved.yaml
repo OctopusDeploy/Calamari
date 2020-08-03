@@ -1,0 +1,22 @@
+﻿null1: ~
+null2: !!null null
+bool1: true
+bool2: !!bool no
+int1: 99
+float1: 1.99
+str1: 'true'
+str2: '~'
+str3: !!str aye
+str4: !!str cats.com
+obj1:
+  fruit: apple
+  animal: sloth
+seq1:
+- scissors
+- paper
+- rock
+seq2:
+- &flag Orange
+- Beachball
+- Cartoon
+- *flag

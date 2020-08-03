@@ -1,5 +1,6 @@
 using Calamari.Tests.Helpers;
 using Calamari.Tests.Fixtures;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -37,9 +38,8 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(Kubernetes.SpecialVariables.Helm.TillerNamespace, "random-foobar");
 
             var result = DeployPackage();
-            
             result.AssertFailure();
-            result.AssertErrorOutput("Error: could not find tiller");
+            Log.StandardError.Should().ContainMatch("*Error: could not find tiller*");
         }
 
         [Test]

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Amazon.CloudFormation.Model;
 using Calamari.Aws.Exceptions;
+using Calamari.Common.Plumbing.Logging;
 using Octopus.CoreUtilities;
 
 namespace Calamari.Aws.Integration.CloudFormation
@@ -28,7 +29,7 @@ namespace Calamari.Aws.Integration.CloudFormation
             if (!warnings.Contains(errorCode))
             {
                 warnings.Add(errorCode);
-                log.Warn($"{errorCode}: {message}\nFor more information visit {Calamari.Log.Link($"https://g.octopushq.com/AwsCloudFormationDeploy#{errorCode.ToLower()}")}");
+                log.Warn($"{errorCode}: {message}\nFor more information visit {log.FormatLink($"https://g.octopushq.com/AwsCloudFormationDeploy#{errorCode.ToLower()}")}");
                 return true;
             }
 
@@ -96,7 +97,7 @@ namespace Calamari.Aws.Integration.CloudFormation
 
                 throw new RollbackException(
                     "AWS-CLOUDFORMATION-ERROR-0001: CloudFormation stack finished in a rollback or failed state. " +
-                    $"For more information visit {Calamari.Log.Link("https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0001")}");
+                    $"For more information visit {log.FormatLink("https://g.octopushq.com/AwsCloudFormationDeploy#aws-cloudformation-error-0001")}");
             }
         }
     }

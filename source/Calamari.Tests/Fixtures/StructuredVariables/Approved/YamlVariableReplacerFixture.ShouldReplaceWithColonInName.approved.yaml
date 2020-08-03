@@ -1,0 +1,5 @@
+﻿spring:
+  h2:
+    console:
+      enabled: "false"
+  h2:console:enabled: "false"

@@ -6,8 +6,8 @@ using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
-using Calamari.Deployment;
-using Octostache;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Integration.Certificates
 {
@@ -32,14 +32,16 @@ namespace Calamari.Integration.Certificates
 
         public X509Certificate2 GetOrAdd(IVariables variables, string certificateVariable, StoreName storeName, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
-            var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Pfx}"));
-            var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
-            var password = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Password}");
+            var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Pfx}"));
+            var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
+            if (string.IsNullOrWhiteSpace(thumbprint))
+                throw new InvalidOperationException("Certificate thumbprint was not found in variables");
+            var password = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Password}");
 
             return GetOrAdd(thumbprint, pfxBytes, password, new X509Store(storeName, storeLocation));
         }
 
-        static X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, string password, X509Store store)
+        static X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, string? password, X509Store store)
         {
             store.Open(OpenFlags.ReadWrite);
 
@@ -84,14 +86,15 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static X509Certificate2 LoadCertificateWithPrivateKey(string file, string password)
+        static X509Certificate2 LoadCertificateWithPrivateKey(string file, string? password)
         {
             return TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet, true, password)
                 ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet, true, password)
                 ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, true, password)
                 ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet, false, password)
                 ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet, false, password)
-                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, false, password);
+                ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, false, password)
+                ?? throw new InvalidOperationException($"Unable to load certificate from file {file}");
         }
 
         static bool CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(X509Certificate2 certificate, bool log = true)
@@ -161,7 +164,7 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static X509Certificate2 TryLoadCertificate(string file, X509KeyStorageFlags flags, bool requirePrivateKey, string password = null)
+        static X509Certificate2? TryLoadCertificate(string file, X509KeyStorageFlags flags, bool requirePrivateKey, string? password = null)
         {
             try
             {
@@ -217,7 +220,7 @@ namespace Calamari.Integration.Certificates
                 var flag = false;
                 const uint dwFlags = 0u;
                 var num = 0;
-                string text = null;
+                string? text = null;
                 if (CryptAcquireCertificatePrivateKey(cert.Handle, dwFlags, IntPtr.Zero, ref zero, ref num, ref flag))
                 {
                     var intPtr = IntPtr.Zero;
@@ -247,7 +250,7 @@ namespace Calamari.Integration.Certificates
                         }
                     }
                 }
-                
+
                 if (text == null)
                 {
                     throw new InvalidOperationException($"Unable to obtain private key file name, error code: {Marshal.GetLastWin32Error()}");

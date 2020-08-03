@@ -1,35 +1,39 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Packages.Java;
 using Calamari.Integration.Processes;
-using Calamari.Integration.ServiceMessages;
-using Calamari.Util;
 
 namespace Calamari.Commands
 {
     [Command("apply-delta", Description = "Applies a delta file to a package to create a new version of the package")]
     public class ApplyDeltaCommand : Command
     {
-        string basisFileName;
-        string fileHash;
-        string deltaFileName;
-        string newFileName;
+        string? basisFileName;
+        string? fileHash;
+        string? deltaFileName;
+        string? newFileName;
         bool showProgress;
         bool skipVerification;
         
         readonly IFreeSpaceChecker freeSpaceChecker;
         readonly ICalamariFileSystem fileSystem;
-        readonly IVariables variables;
+        readonly ICommandLineRunner commandLineRunner;
+        readonly ILog log;
 
-        public ApplyDeltaCommand(IFreeSpaceChecker freeSpaceChecker, ICalamariFileSystem fileSystem, IVariables variables)
+        public ApplyDeltaCommand(ILog log, IFreeSpaceChecker freeSpaceChecker, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             this.freeSpaceChecker = freeSpaceChecker;
             this.fileSystem = fileSystem;
-            this.variables = variables;
+            this.commandLineRunner = commandLineRunner;
+            this.log = log;
             Options.Add("basisFileName=", "The file that the delta was created for.", v => basisFileName = v);
             Options.Add("fileHash=", "", v => fileHash = v);
             Options.Add("deltaFileName=", "The delta to apply to the basis file", v => deltaFileName = v);
@@ -54,7 +58,7 @@ namespace Calamari.Commands
 
                 var tempNewFilePath = newFilePath + ".partial";
 #if USE_OCTODIFF_EXE
-                var factory = new OctoDiffCommandLineRunner(variables);
+                var factory = new OctoDiffCommandLineRunner(commandLineRunner);
 #else
                 var factory = new OctoDiffLibraryCallRunner();
 #endif
@@ -70,7 +74,7 @@ namespace Calamari.Commands
                 if(showProgress)
                     octoDiff.Flag("progress");
 
-                Log.Info("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash, newFilePath);
+                log.InfoFormat("Applying delta to {0} with hash {1} and storing as {2}", basisFilePath, fileHash ?? string.Empty, newFilePath);
 
                 var result = factory.Execute();
                 if (result.ExitCode != 0)
@@ -86,7 +90,7 @@ namespace Calamari.Commands
             }
             catch (Exception e) when (e is CommandLineException || e is CommandException)
             {
-                Log.ServiceMessages.DeltaVerificationError(e.Message);
+                log.DeltaVerificationError(e.Message);
                 return 0;
             }
 
@@ -94,7 +98,7 @@ namespace Calamari.Commands
             if (package == null)
                 return 0;
 
-            Log.ServiceMessages.DeltaVerification(newFilePath, package.Hash, package.Size);
+            log.DeltaVerification(newFilePath, package.Hash, package.Size);
             return 0;
         }
 

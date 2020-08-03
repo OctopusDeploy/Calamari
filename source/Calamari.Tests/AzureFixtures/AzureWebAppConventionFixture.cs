@@ -2,10 +2,11 @@
 
 using System;
 using Calamari.Azure.WebApps.Deployment.Conventions;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -17,47 +18,48 @@ namespace Calamari.Tests.AzureFixtures
         [Test]
         public void UsingAManagementCertificateCausesAWarning()
         {
-            using (var logs = new ProxyLog())
+            var log = new InMemoryLog();
+            var convention = new AzureWebAppConvention(log);
+
+            var vars = new CalamariVariables();
+            vars.Set(SpecialVariables.Account.AccountType, "AzureSubscription");
+
+            var deployment = new RunningDeployment("", vars);
+
+            // ignore the incomplete setup, we just want to know about whether the warning is logged
+            try
             {
-                var convention = new AzureWebAppConvention();
-
-                var vars = new CalamariVariables();
-                vars.Set(SpecialVariables.Account.AccountType, "AzureSubscription");
-
-                var deployment = new RunningDeployment("", vars);
-
-                // ignore the incomplete setup, we just want to know about whether the warning is logged
-                try
-                {
-                    convention.Install(deployment);
-                }
-                catch(Exception){}
-
-                logs.StdOut.Contains("Use of Management Certificates to deploy Azure Web App services has been deprecated").Should().BeTrue();
+                convention.Install(deployment);
             }
+            catch (Exception)
+            {
+            }
+
+            log.StandardOut.Should().ContainMatch("Use of Management Certificates to deploy Azure Web App services has been deprecated*");
         }
-        
+
         [Test]
         public void UsingAServicePrincipalDoesNotCauseAWarning()
         {
-            using (var logs = new ProxyLog())
+            var log = new InMemoryLog();
+
+            var convention = new AzureWebAppConvention(log);
+
+            var vars = new CalamariVariables();
+            vars.Set(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
+
+            var deployment = new RunningDeployment("", vars);
+
+            // ignore the incomplete setup, we just want to know about whether the warning is logged
+            try
             {
-                var convention = new AzureWebAppConvention();
-
-                var vars = new CalamariVariables();
-                vars.Set(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
-
-                var deployment = new RunningDeployment("", vars);
-
-                // ignore the incomplete setup, we just want to know about whether the warning is logged
-                try
-                {
-                    convention.Install(deployment);
-                }
-                catch(Exception){}
-
-                logs.StdOut.Contains("Use of Management Certificates to deploy Azure Web App services has been deprecated").Should().BeFalse();
+                convention.Install(deployment);
             }
+            catch (Exception)
+            {
+            }
+
+            log.StandardOut.Should().NotContain("Use of Management Certificates to deploy Azure Web App services has been deprecated");
         }
     }
 }
