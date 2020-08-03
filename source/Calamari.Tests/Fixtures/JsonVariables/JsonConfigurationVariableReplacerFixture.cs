@@ -365,6 +365,32 @@ namespace Calamari.Tests.Fixtures.JsonVariables
             AssertJsonEquivalent(replaced, expected);
         }
 
+        [Test]
+        public void ShouldReplaceWholeObjectWithStructure()
+        {
+            const string expected = @"{
+                ""MyMessage"": ""Hello world"",
+                ""EmailSettings"": {
+                    ""SmtpPort"": 23,
+                    ""UseProxy"": false,
+                    ""SmtpHost"": ""localhost"",
+                    ""DefaultRecipients"": [
+                        [ 1, 2, 3 ],
+                        ""address""
+                    ]
+                }
+            }";
+
+            var variables = new CalamariVariables
+            {
+                {"EmailSettings:DefaultRecipients:0", "[1, 2, 3]"},
+                {"EmailSettings:DefaultRecipients:1", "\"address\""}
+            };
+
+            var replaced = Replace(variables, existingFile: "appsettings.object-array.json");
+            AssertJsonEquivalent(replaced, expected);
+        }
+
         string Replace(IVariables variables, string existingFile = null)
         {
             var temp = Path.GetTempFileName();
