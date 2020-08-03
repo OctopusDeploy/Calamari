@@ -190,7 +190,7 @@ namespace Calamari.Testing
                 }
             }
 
-            async Task<TestCalamariCommandResult> ExecuteActionHandler(List<string> args)
+            async Task<TestCalamariCommandResult> ExecuteActionHandler(List<string> args, string workingFolder)
             {
                 var inMemoryLog = new InMemoryLog();
                 var constructor = typeof(TCalamariProgram).GetConstructor(
@@ -224,7 +224,6 @@ namespace Calamari.Testing
                     exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
                 }
                 var serverInMemoryLog = new ServerInMemoryLog();
-
                 var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
                 foreach (var text in inMemoryLog.StandardError)
                 {
@@ -239,7 +238,7 @@ namespace Calamari.Testing
                 return new TestCalamariCommandResult(exitCode,
                     outputFilter.TestOutputVariables, outputFilter.Actions,
                     outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
-                    serverInMemoryLog.ToString());
+                    serverInMemoryLog.ToString(), workingFolder);
             }
 
             foreach (var arrangeAction in arrangeActions)
@@ -263,19 +262,19 @@ namespace Calamari.Testing
 
                     CopyFilesToWorkingFolder(workingPath);
 
-                    result = await ExecuteActionHandler(args);
+                    result = await ExecuteActionHandler(args, workingPath);
+
+                    if (assertWasSuccess)
+                    {
+                        result.WasSuccessful.Should().BeTrue($"{command} execute result was unsuccessful");
+                    }
+                    assertAction?.Invoke(result);
                 }
                 finally
                 {
                     Environment.CurrentDirectory = originalWorkingDirectory;
                 }
             }
-
-            if (assertWasSuccess)
-            {
-                result.WasSuccessful.Should().BeTrue($"{command} execute result was unsuccessful");
-            }
-            assertAction?.Invoke(result);
 
             return result;
         }
