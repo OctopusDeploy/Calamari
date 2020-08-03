@@ -14,7 +14,7 @@ namespace Calamari.Common.Plumbing.Extensions
         static EncodingDetectingFileReader()
         {
 #if NETSTANDARD
-                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // Required to use code pages in .NET Standard
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // Required to use code pages in .NET Standard
 #endif
             DefaultEncodingsToTry = new List<Encoding>
             {
