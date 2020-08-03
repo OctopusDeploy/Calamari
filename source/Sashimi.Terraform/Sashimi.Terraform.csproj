@@ -10,14 +10,38 @@
     <Nullable>enable</Nullable>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\..\artifacts\Calamari.Terraform.zip" LinkBase="tools" Pack="true" PackagePath="tools/" />
     <EmbeddedResource Include="**\*.ps1" />
     <EmbeddedResource Include="**\*.sh" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\artifacts\Calamari.Terraform.zip">
+      <Visible>false</Visible>
+      <LinkBase>tools</LinkBase>
+      <Pack>true</Pack>
+      <PackagePath>tools/</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Octopus.CoreParsers.Hcl" Version="1.0.7" />
+    <PackageReference Include="Octopus.Dependencies.TerraformCLI" Version="1.0.7" />
     <PackageReference Include="Sashimi.Server.Contracts" Version="4.1.5" />
   </ItemGroup>
+
+  <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
+    <Message Text="Collecting nupkg packages to bundle with Sashimi module binaries" />
+    <ItemGroup>
+      <Content Include="@(PackageDefinitions->'%(ResolvedPath)/%(Name).%(Version).nupkg')" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))">
+        <Visible>false</Visible>
+        <Link>@(PackageDefinitions->'%(Name).nupkg')</Link>
+        <Pack>true</Pack>
+        <PackageCopyToOutput>true</PackageCopyToOutput>
+        <PackageFlatten>true</PackageFlatten>
+        <PackagePath>@(PackageDefinitions->'contentFiles/any/any/%(Name).nupkg')</PackagePath>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+  </Target>
 </Project>
