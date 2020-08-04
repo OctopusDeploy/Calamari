@@ -343,6 +343,11 @@ namespace Calamari.Common.Plumbing.FileSystem
             RetryTrackerFileAction(() => WriteAllText(path, contents, encoding), path, "overwrite");
         }
 
+        public void OverwriteFile(string path, byte[] data)
+        {
+            RetryTrackerFileAction(() => WriteAllBytes(path, data), path, "overwrite");
+        }
+
         //File.WriteAllText won't overwrite a hidden file, so implement our own.
         static void WriteAllText(string path, string? contents, Encoding encoding)
         {

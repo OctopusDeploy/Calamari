@@ -244,6 +244,35 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             RunTest(vars, "duplicate-prefixes.xml");
         }
 
+
+        [Test]
+        public void ShouldPreserveEncodingUtf8DosBom()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf8-dos-bom.xml"),
+                        TestEnvironment.AssentConfiguration);
+        }
+
+        [Test]
+        public void ShouldPreserveEncodingUtf8UnixNoBom()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf8-unix-nobom.xml"),
+                        TestEnvironment.AssentConfiguration);
+        }
+
+        [Test]
+        public void ShouldPreserveEncodingUtf16DosBom()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf16-dos-bom.xml"),
+                        TestEnvironment.AssentConfiguration);
+        }
+
+        [Test]
+        public void ShouldPreserveEncodingWindows1252DosNoBom()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-windows1252-dos-nobom.xml"),
+                        TestEnvironment.AssentConfiguration);
+        }
+
         void RunTest(CalamariVariables vars, 
                      string file, 
                      [CallerMemberName] string testName = null,
