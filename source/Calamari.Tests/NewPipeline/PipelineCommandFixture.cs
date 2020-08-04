@@ -106,7 +106,7 @@ namespace Calamari.Tests.NewPipeline
     <appSettings>
         <add key=""Environment"" value=""Test"" />
     </appSettings>
-</configuration>";
+</configuration>".Replace("\r", String.Empty);
                 var targetPath = Path.Combine(tempPath.DirectoryPath, "bar.config");
                 File.WriteAllText(targetPath, @"<configuration>
     <appSettings>
@@ -127,7 +127,7 @@ namespace Calamari.Tests.NewPipeline
                                                      })
                                         .WithAssert(result =>
                                                     {
-                                                        File.ReadAllText(targetPath).Should().Be(expected);
+                                                        File.ReadAllText(targetPath).Replace("\r", String.Empty).Should().Be(expected);
                                                     })
                                         .Execute();
             }
@@ -142,7 +142,7 @@ namespace Calamari.Tests.NewPipeline
     <appSettings>
         <add key=""Environment"" value=""Test"" />
     </appSettings>
-</configuration>";
+</configuration>".Replace("\r", String.Empty);
                 var targetPath = Path.Combine(tempPath.DirectoryPath, "Web.config");
                 File.WriteAllText(targetPath, @"<configuration>
     <appSettings>
@@ -159,7 +159,7 @@ namespace Calamari.Tests.NewPipeline
                                                      })
                                         .WithAssert(result =>
                                                     {
-                                                        File.ReadAllText(targetPath).Should().Be(expected);
+                                                        File.ReadAllText(targetPath).Replace("\r", String.Empty).Should().Be(expected);
                                                     })
                                         .Execute();
             }
@@ -172,7 +172,7 @@ namespace Calamari.Tests.NewPipeline
             {
                 var expected = @"{
   ""Environment"": ""Test""
-}";
+}".Replace("\r", String.Empty);
                 var targetPath = Path.Combine(tempPath.DirectoryPath, "myfile.json");
                 File.WriteAllText(targetPath, @"{
   ""Environment"": ""Dev""
@@ -188,7 +188,7 @@ namespace Calamari.Tests.NewPipeline
                                                      })
                                         .WithAssert(result =>
                                                     {
-                                                        File.ReadAllText(targetPath).Should().Be(expected);
+                                                        File.ReadAllText(targetPath).Replace("\r", String.Empty).Should().Be(expected);
                                                     })
                                         .Execute();
             }
