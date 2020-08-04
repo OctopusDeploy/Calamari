@@ -25,7 +25,7 @@ namespace Sashimi.AzureCloudService
             yield return ("azuresubscriptionaccount", total);
         }
 
-        public IEnumerable<ScriptFunctionRegistration> GetDynamicToolRegistrations()
+        public IEnumerable<ScriptFunctionRegistration> GetScriptFunctionRegistrations()
         {
             yield break;
         }

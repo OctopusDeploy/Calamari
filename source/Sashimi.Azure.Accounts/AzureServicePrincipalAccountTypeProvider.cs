@@ -31,7 +31,7 @@ namespace Sashimi.Azure.Accounts
             yield return ("azureserviceprincipalaccount", total);
         }
 
-        public IEnumerable<ScriptFunctionRegistration> GetDynamicToolRegistrations()
+        public IEnumerable<ScriptFunctionRegistration> GetScriptFunctionRegistrations()
         {
             yield break;
         }

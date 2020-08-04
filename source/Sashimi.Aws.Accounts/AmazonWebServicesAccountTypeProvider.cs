@@ -25,7 +25,7 @@ namespace Sashimi.Aws.Accounts
             yield return ("amazonwebservicesaccount", total);
         }
 
-        public IEnumerable<ScriptFunctionRegistration> GetDynamicToolRegistrations()
+        public IEnumerable<ScriptFunctionRegistration> GetScriptFunctionRegistrations()
         {
             yield break;
         }
