@@ -3,6 +3,8 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Calamari.AzureWebApp;
+using Calamari.Common.Features.Deployment;
+using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Shared;
 using FluentAssertions;
@@ -13,6 +15,7 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using NUnit.Framework;
 using Sashimi.Tests.Shared;
 using Sashimi.Tests.Shared.Server;
+using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 using OperatingSystem = Microsoft.Azure.Management.AppService.Fluent.OperatingSystem;
 
 namespace Sashimi.AzureWebApp.Tests
@@ -29,10 +32,14 @@ namespace Sashimi.AzureWebApp.Tests
         string subscriptionId;
 
         readonly HttpClient client = new HttpClient();
+        TemporaryDirectory azureConfigPath;
 
         [OneTimeSetUp]
         public async Task Setup()
         {
+            azureConfigPath = TemporaryDirectory.Create();
+            Environment.SetEnvironmentVariable("AZURE_CONFIG_DIR", azureConfigPath.DirectoryPath);
+
             clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
             clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
@@ -69,6 +76,7 @@ namespace Sashimi.AzureWebApp.Tests
             {
                 await azure.ResourceGroups.DeleteByNameAsync(resourceGroup.Name);
             }
+            azureConfigPath.Dispose();
         }
 
         [Test]
@@ -76,22 +84,24 @@ namespace Sashimi.AzureWebApp.Tests
         public async Task Deploy_WebApp_Ensure_Tools_Are_Configured()
         {
             var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
-
             var webApp = await CreateWebApp(webAppName);
 
             using var tempPath = TemporaryDirectory.Create();
             const string actualText = "Hello World";
 
             await File.WriteAllTextAsync(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
-            await File.WriteAllTextAsync(Path.Combine(tempPath.DirectoryPath, "PreDeploy.ps1"), @"
+            var psScript = @"
 az --version
-Get-AzureEnvironment");
+Get-AzureEnvironment
+az group list";
+            await File.WriteAllTextAsync(Path.Combine(tempPath.DirectoryPath, "PreDeploy.ps1"), psScript);
 
             ActionHandlerTestBuilder.CreateAsync<AzureWebAppActionHandler, Program>()
                                     .WithArrange(context =>
                                                  {
                                                      AddDefaults(context, webAppName);
-
+                                                     context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
+                                                     context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.Deploy, ScriptSyntax.PowerShell), psScript);
                                                      context.WithFilesToCopy(tempPath.DirectoryPath);
                                                  })
                                     .Execute(runOutOfProc: true);
@@ -118,6 +128,7 @@ Get-AzureEnvironment");
 
         void AddDefaults(TestActionHandlerContext<Program> context, string webAppName)
         {
+            context.Variables.Add(Server.Contracts.KnownVariables.Account.AccountType, "AzureServicePrincipal");
             context.Variables.Add(AzureAccountVariables.SubscriptionId,
                                   subscriptionId);
             context.Variables.Add(AzureAccountVariables.TenantId,
