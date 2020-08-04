@@ -19,7 +19,7 @@ namespace Calamari.AzureWebApp
         {
             base.ConfigureContainer(builder, options);
             builder.RegisterType<ResourceManagerPublishProfileProvider>().SingleInstance();
-            builder.RegisterType<AzureContextScriptWrapper>().As<IScriptWrapper>().SingleInstance();;
+            builder.RegisterType<AzureContextScriptWrapper>().As<IScriptWrapper>().SingleInstance();
         }
 
         public static Task<int> Main(string[] args)
