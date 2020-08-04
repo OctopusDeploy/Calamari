@@ -1,0 +1,66 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
+
+namespace Calamari.Common.Features.FunctionScriptContributions
+{
+    class FunctionAppenderScriptWrapper: IScriptWrapper
+    {
+        readonly IVariables variables;
+        readonly ICalamariFileSystem fileSystem;
+        readonly CodeGenFunctionsRegistry codeGenFunctionsRegistry;
+
+        public FunctionAppenderScriptWrapper(IVariables variables, ICalamariFileSystem fileSystem, CodeGenFunctionsRegistry codeGenFunctionsRegistry)
+        {
+            this.variables = variables;
+            this.fileSystem = fileSystem;
+            this.codeGenFunctionsRegistry = codeGenFunctionsRegistry;
+        }
+
+        public int Priority { get; } = ScriptWrapperPriorities.ToolConfigPriority;
+        public IScriptWrapper NextWrapper { get; set; }
+
+        public bool IsEnabled(ScriptSyntax syntax)
+        {
+            if (String.IsNullOrEmpty(variables.Get("Octopus.Sashimi.ScriptFunctions.Registration")))
+            {
+                return false;
+            }
+
+            return codeGenFunctionsRegistry.SupportedScriptSyntax.Contains(syntax);
+        }
+
+        public CommandResult ExecuteScript(Script script, ScriptSyntax scriptSyntax, ICommandLineRunner commandLineRunner, Dictionary<string, string>? environmentVars)
+        {
+            var workingDirectory = Path.GetDirectoryName(script.File);
+
+            variables.Set("OctopusFunctionAppenderTargetScript", $"{script.File}");
+            variables.Set("OctopusFunctionAppenderTargetScriptParameters", script.Parameters);
+
+            using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
+            {
+                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
+            }
+        }
+
+        string CreateContextScriptFile(string workingDirectory, ScriptSyntax scriptSyntax)
+        {
+            var registrations = variables.Get("Octopus.Sashimi.ScriptFunctions.Registration");
+            var results = JsonConvert.DeserializeObject<IList<ScriptFunctionRegistration>>(registrations);
+
+            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.FunctionAppenderContext.ps1");
+            var contextScript = codeGenFunctionsRegistry.GetCodeGenerator(scriptSyntax).Generate(results);
+            fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
+            return azureContextScriptFile;
+        }
+
+
+    }
+}
