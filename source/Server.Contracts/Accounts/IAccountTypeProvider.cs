@@ -15,5 +15,6 @@ namespace Sashimi.Server.Contracts.Accounts
         IVerifyAccount Verifier { get; }
         ICreateAccountDetailsServiceMessageHandler? CreateAccountDetailsServiceMessageHandler { get; }
         IEnumerable<(string key, object value)> GetFeatureUsage(IAccountMetricContext context);
+        IEnumerable<ScriptFunctionRegistration> GetDynamicToolRegistrations();
     }
 }

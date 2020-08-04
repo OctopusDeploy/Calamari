@@ -18,5 +18,6 @@ namespace Sashimi.Server.Contracts.Endpoints
         IEnumerable<AccountType> SupportedAccountTypes { get; }
         IEnumerable<(string key, object value)> GetFeatureUsage(IEndpointMetricContext context);
         ICreateTargetServiceMessageHandler? CreateTargetServiceMessageHandler { get; }
+        IEnumerable<ScriptFunctionRegistration> GetScriptFunctionRegistrations();
     }
 }

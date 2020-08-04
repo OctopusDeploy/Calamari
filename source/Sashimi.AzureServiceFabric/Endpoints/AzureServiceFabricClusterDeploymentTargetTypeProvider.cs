@@ -46,6 +46,11 @@ namespace Sashimi.AzureServiceFabric.Endpoints
             }
         }
 
+        public IEnumerable<ScriptFunctionRegistration> GetScriptFunctionRegistrations()
+        {
+            yield break;
+        }
+
         public ICreateTargetServiceMessageHandler? CreateTargetServiceMessageHandler { get; } = new AzureServiceFabricClusterServiceMessageHandler();
 
         static IList<ServiceFabricDetails> GetServiceFabricMetrics(
