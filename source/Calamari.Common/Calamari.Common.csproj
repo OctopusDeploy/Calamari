@@ -61,7 +61,7 @@
 
     <ItemGroup>
       <PackageReference Include="Octopus.Versioning" Version="4.2.1" />
-      <PackageReference Include="Octostache" Version="2.7.0" />
+      <PackageReference Include="Octostache" Version="2.8.0" />
       <PackageReference Include="SharpCompress" Version="0.24.0" />
       <PackageReference Include="YamlDotNet" Version="8.1.2" />
       <PackageReference Include="System.ValueTuple" Version="4.4.0" />

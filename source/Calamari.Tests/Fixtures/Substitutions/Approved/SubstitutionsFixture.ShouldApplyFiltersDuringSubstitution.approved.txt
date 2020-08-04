@@ -1,0 +1,9 @@
+JsonEscape: =:'\"\\\r\n\t <>
+XmlEscape: =:&apos;&quot;\
+	 &lt;&gt;
+YamlDoubleQuoteEscape: =:'\"\\\r\n\t <>
+YamlSingleQuoteEscape: =:''"\
+
+	 <>
+PropertiesKeyEscape: \=\:'"\\\r\n\t\ <>
+PropertiesValueEscape: =:'"\\\r\n\t <>
