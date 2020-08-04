@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.XPath;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -32,12 +33,13 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public void ModifyFile(string filePath, IVariables variables)
         {
-            var fileContents = fileSystem.ReadFile(filePath);
+            var (fileText, encoding) = EncodingDetectingFileReader.ReadToEnd(filePath);
+            var lineEnding = fileText.GetMostCommonLineEnding();
             
             var doc = new XmlDocument();
             try
             {
-                doc.LoadXml(fileContents);
+                doc.LoadXml(fileText);
             }
             catch (XmlException e)
             {
@@ -106,13 +108,16 @@ namespace Calamari.Common.Features.StructuredVariables
                 }
             }
 
-            using (var output = new StringWriter())
-            using (var writer = new XmlTextWriter(output))
+            using (var stream = new MemoryStream())
+            using (var textWriter = new StreamWriter(stream, encoding))
+            using (var writer = new XmlTextWriter(textWriter))
             {
+                textWriter.NewLine = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n";
                 writer.Formatting = Formatting.Indented;
-                
+
                 doc.WriteTo(writer);
-                fileSystem.OverwriteFile(filePath, output.ToString());
+                writer.Close();
+                fileSystem.OverwriteFile(filePath, stream.ToArray());
             }
         }
 
