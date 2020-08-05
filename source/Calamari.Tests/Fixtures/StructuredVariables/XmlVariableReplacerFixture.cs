@@ -227,7 +227,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         {
             var vars = new CalamariVariables
             {
-                { "env:something", "value-new" }
+                { "//env:something", "value-new" }
             };
 
             RunTest(vars, "complex.xml");
@@ -242,6 +242,16 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             };
 
             RunTest(vars, "duplicate-prefixes.xml");
+        }
+
+        [Test]
+        public void ShouldIgnoreOctopusPrefix()
+        {
+            var vars = new CalamariVariables
+            {
+                { "Octopus.Release.Id", "999" }
+            };
+            RunTest(vars, "ignore-octopus.xml");
         }
 
         [Test]
