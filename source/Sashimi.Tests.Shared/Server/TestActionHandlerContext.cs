@@ -1,5 +1,4 @@
 ﻿using System;
-using Calamari.Common;
 using Octopus.CoreUtilities;
 using Octopus.Diagnostics;
 using Sashimi.Server.Contracts;
@@ -33,7 +32,7 @@ namespace Sashimi.Tests.Shared.Server
         public ICalamariCommandBuilder CalamariCommand(CalamariFlavour tool, string toolCommand)
         {
             var builder = new TestCalamariCommandBuilder<TCalamariProgram>(tool, toolCommand);
-            
+
             builder.SetVariables(Variables);
 
             return builder;

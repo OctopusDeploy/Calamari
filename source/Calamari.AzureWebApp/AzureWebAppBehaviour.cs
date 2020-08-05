@@ -33,12 +33,6 @@ namespace Calamari.AzureWebApp
         public async Task Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-
-            if (variables.Get(SpecialVariables.Account.AccountType) == "AzureSubscription")
-            {
-                log.Warn("Use of Management Certificates to deploy Azure Web App services has been deprecated by Microsoft and they are progressively disabling them, please update to using a Service Principal. If you receive an error about the app not being found in the subscription then this account type is the most likely cause. See [our documentation](https://g.octopushq.com/AzureTargets#azure-management-certificate) for more details.");
-            }
-
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
             var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
@@ -114,9 +108,9 @@ namespace Calamari.AzureWebApp
         }
 
         bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate,
-            X509Chain chain, SslPolicyErrors sslpolicyerrors)
+            X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            switch (sslpolicyerrors)
+            switch (sslPolicyErrors)
             {
                 case SslPolicyErrors.None:
                     return true;
@@ -200,25 +194,29 @@ namespace Calamari.AzureWebApp
         }
 
         void ApplyPreservePathsDeploymentRule(DeploymentSyncOptions syncOptions,
-            IVariables variables)
+                                              IVariables variables)
         {
             // If PreservePaths variable set, then create SkipDelete rules for each path regex
             var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
-            // ReSharper disable once InvertIf
-            if (preservePaths != null)
+
+            for (var i = 0; i < preservePaths.Count; i++)
             {
-                for (var i = 0; i < preservePaths.Count; i++)
-                {
-                    var path = preservePaths[i];
-                    syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteFiles_{i}", "Delete", "filePath", path,
-                        null));
-                    syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteDir_{i}", "Delete", "dirPath", path, null));
-                }
+                var path = preservePaths[i];
+                syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteFiles_{i}",
+                                                             "Delete",
+                                                             "filePath",
+                                                             path,
+                                                             null));
+                syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteDir_{i}",
+                                                             "Delete",
+                                                             "dirPath",
+                                                             path,
+                                                             null));
             }
         }
 
         void ApplyAppOfflineDeploymentRule(DeploymentSyncOptions syncOptions,
-            IVariables variables)
+                                           IVariables variables)
         {
             // ReSharper disable once InvertIf
             if (variables.GetFlag(SpecialVariables.Action.Azure.AppOffline))
@@ -250,6 +248,5 @@ namespace Calamari.AzureWebApp
                     break;
             }
         }
-
     }
 }
