@@ -5,6 +5,7 @@ using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
@@ -43,8 +44,21 @@ namespace Calamari.Common.Features.FunctionScriptContributions
 
             variables.Set("OctopusFunctionAppenderTargetScript", $"{script.File}");
             variables.Set("OctopusFunctionAppenderTargetScriptParameters", script.Parameters);
+            var copyScriptFile = variables.Get("Octopus.Sashimi.ScriptFunctions.CopyScriptWrapper");
+            var scriptFile = CreateContextScriptFile(workingDirectory, scriptSyntax);
 
-            using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
+            if (!String.IsNullOrEmpty(copyScriptFile))
+            {
+                var destinationFile = copyScriptFile;
+                if (!Path.IsPathRooted(copyScriptFile))
+                {
+                    destinationFile = Path.Combine(workingDirectory, copyScriptFile);
+                }
+
+                File.Copy(scriptFile, destinationFile, true);
+            }
+
+            using (var contextScriptFile = new TemporaryFile(scriptFile))
             {
                 return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
             }
@@ -55,7 +69,7 @@ namespace Calamari.Common.Features.FunctionScriptContributions
             var registrations = variables.Get("Octopus.Sashimi.ScriptFunctions.Registration");
             var results = JsonConvert.DeserializeObject<IList<ScriptFunctionRegistration>>(registrations);
 
-            var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.FunctionAppenderContext.ps1");
+            var azureContextScriptFile = Path.Combine(workingDirectory, $"Octopus.FunctionAppenderContext.{scriptSyntax.FileExtension()}");
             var contextScript = codeGenFunctionsRegistry.GetCodeGenerator(scriptSyntax).Generate(results);
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;

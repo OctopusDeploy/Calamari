@@ -16,15 +16,18 @@ namespace Calamari.Common.Features.FunctionScriptContributions
 
             void TabIndentedAppendLine(string value)
             {
-                var tabs = new string('\t', tabsCount);
-                sb.AppendLine($"{tabs}{value}");
                 switch (value)
                 {
                     case "{":
+                        sb.AppendLine($"{new string('\t', tabsCount)}{value}");
                         tabsCount++;
                         break;
                     case "}":
                         tabsCount--;
+                        sb.AppendLine($"{new string('\t', tabsCount)}{value}");
+                        break;
+                    default:
+                        sb.AppendLine($"{new string('\t', tabsCount)}{value}");
                         break;
                 }
             }
@@ -69,8 +72,8 @@ namespace Calamari.Common.Features.FunctionScriptContributions
 
                         TabIndentedAppendLine("{");
                     }
-                    TabIndentedAppendLine($"${pair.Key} = Convert-ToServiceMessageParameter -name \"{pair.Key}\" -value ${pair.Key}");
-                    TabIndentedAppendLine($"$parameters = $parameters, ${pair.Key} -join ' '");
+                    TabIndentedAppendLine($"$tempParameter = Convert-ToServiceMessageParameter -name \"{pair.Key}\" -value ${pair.Key}");
+                    TabIndentedAppendLine("$parameters = $parameters, $tempParameter -join ' '");
                     if (!String.IsNullOrEmpty(pair.Value.DependsOn))
                     {
                         TabIndentedAppendLine("}");
@@ -79,6 +82,8 @@ namespace Calamari.Common.Features.FunctionScriptContributions
                 TabIndentedAppendLine($"Write-Host \"##octopus[{registration.ServiceMessageName} $($parameters)]\"");
 
                 TabIndentedAppendLine("}");
+
+                TabIndentedAppendLine("");
             }
 
             sb.AppendLine("Write-Verbose \"Invoking target script $OctopusFunctionAppenderTargetScript with $OctopusFunctionAppenderTargetScriptParameters parameters.\"");
