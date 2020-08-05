@@ -1,10 +1,18 @@
+function IsDockerAvailable() {
+    $service = $(Get-Service -Name 'docker' -ErrorAction SilentlyContinue)
+    $serviceRunning = ($service -ne $null -and $service.Status -eq 'Running')
+    $process = $(Get-Process 'com.docker.proxy' -ErrorAction SilentlyContinue)
+    $command = $(Get-Command 'docker' -ErrorAction SilentlyContinue)
+    $dockerAvailable = $command -ne $null -and ($process -ne $null -or $serviceRunning)
+    return $dockerAvailable
+}
+
 $IMAGE=$OctopusParameters["Image"]
 $dockerUsername=$OctopusParameters["DockerUsername"]
 $dockerPassword=$OctopusParameters["DockerPassword"]
 $feedUri=$OctopusParameters["FeedUri"]
 
-$dockerCommandTest = (Get-Command 'docker' -ErrorAction SilentlyContinue)
-if ($dockerCommandTest -eq $null) { 
+if($(IsDockerAvailable) -eq $false) {
   Write-Error "You will need docker installed and running to pull docker images"
   exit 1;
 }
