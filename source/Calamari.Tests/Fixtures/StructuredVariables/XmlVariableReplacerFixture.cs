@@ -31,7 +31,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/comment()", "New Comment" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -42,7 +42,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/setting[@id='id-1']/@id", "id-new" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -53,7 +53,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/setting[@id='id-1']/text()", "value-new" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -64,7 +64,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/setting[@id='id-1']", "value<new" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -75,7 +75,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/empty", "value<new" }
             };
-            
+
             RunTest(vars, "elements.xml");
         }
 
@@ -86,7 +86,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/selfclosing", "value<new" }
             };
-            
+
             RunTest(vars, "elements.xml");
         }
 
@@ -97,7 +97,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/mixed", "<newElement />" }
             };
-            
+
             RunTest(vars, "elements.xml");
         }
 
@@ -108,7 +108,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "//moreSettings", "<a /><b />" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -119,7 +119,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "//moreSettings", "<db:a />" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -130,7 +130,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "//moreSettings", "<<<<" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -141,7 +141,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/setting[@id='id-1']", "<a />" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -152,7 +152,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/setting", "value-new" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -163,7 +163,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "//setting", "value-new" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -174,7 +174,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/setting[@id='id-3']/text()", "value-new" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -185,7 +185,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/setting[@id='id-3']", "value-new" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -196,7 +196,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/processing-instruction('xml-stylesheet')", "value-new" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -207,7 +207,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/unique:anotherSetting", "value-new" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -218,7 +218,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "//*:node", "value-new" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -229,7 +229,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "env:something", "value-new" }
             };
-            
+
             RunTest(vars, "complex.xml");
         }
 
@@ -240,10 +240,9 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "//parent/dupe:node", "value-new" }
             };
-            
+
             RunTest(vars, "duplicate-prefixes.xml");
         }
-
 
         [Test]
         public void ShouldPreserveEncodingUtf8DosBom()
@@ -273,10 +272,12 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                         TestEnvironment.AssentConfiguration);
         }
 
-        void RunTest(CalamariVariables vars, 
-                     string file, 
-                     [CallerMemberName] string testName = null,
-                     [CallerFilePath] string filePath = null)
+        void RunTest(CalamariVariables vars,
+                     string file,
+                     [CallerMemberName]
+                     string testName = null,
+                     [CallerFilePath]
+                     string filePath = null)
         {
             // ReSharper disable once ExplicitCallerInfoArgument
             this.Assent(Replace(vars, file), TestEnvironment.AssentXmlConfiguration, testName, filePath);
