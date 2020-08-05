@@ -145,20 +145,22 @@ Task("Pack")
     .Does(() =>
 {
 
-    DoPackage("Calamari", "net40", nugetVersion, "net40");
-	DoPackage("Calamari", "net452", nugetVersion, "net452");
+    DoCalamariPublish("net40", null);
+	DoCalamariPublish("net452", null);
     Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
 
     // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
     foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari\Calamari.csproj"))
     {
-        DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid);
+        DoCalamariPublish("netcoreapp3.1", rid);
     }
+    
+    DoPackage("Calamari");
 
 	// Create a Zip for each runtime for testing
 	foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
     {
-		var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", nugetVersion, rid);
+		var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", rid);
 		var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
 		Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
     }
@@ -190,7 +192,7 @@ Task("CopyToLocalPackages")
     CopyFiles(Path.Combine(artifactsDir, $"Calamari.*.nupkg"), localPackagesDir);
 });
 
-private string DoPublish(string project, string framework, string version, string runtimeId = null) {
+private string DoPublish(string project, string framework, string runtimeId = null) {
 	var projectDir = Path.Combine("./source", project);
 	var publishedTo = Path.Combine(publishDir, project, framework);
 
@@ -202,25 +204,28 @@ private string DoPublish(string project, string framework, string version, strin
 		ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append($"--verbosity normal")
     };
 
-	 if (!string.IsNullOrEmpty(runtimeId))
-    {
+	if (!string.IsNullOrEmpty(runtimeId))
         publishSettings.OutputDirectory = Path.Combine(publishedTo, runtimeId);
-        // "portable" is not an actual runtime ID. We're using it to represent the portable .NET core build.
-        publishSettings.Runtime = (runtimeId != null && runtimeId != "portable" && runtimeId != "Cloud") ? runtimeId : null;
-    }
+    else
+        publishSettings.OutputDirectory = Path.Combine(publishedTo, framework);
+
+    publishSettings.Runtime = runtimeId != null ? runtimeId : null;
 	DotNetCorePublish(projectDir, publishSettings);
 
 	SignAndTimestampBinaries(publishSettings.OutputDirectory.FullPath);
 	return publishedTo;
 }
 
-
-private void DoPackage(string project, string framework, string version, string runtimeId = null)
+private void DoCalamariPublish(string framework, string runtimeId = null)
 {
-    var publishedTo = Path.Combine(publishDir, project, framework);
-    var projectDir = Path.Combine("./source", project);
-    var packageId = $"{project}";
-    var nugetPackProperties = new Dictionary<string,string>();
+    var publishedTo = Path.Combine(publishDir, "Calamari", framework);
+    var projectDir = Path.Combine("./source", "Calamari");
+    
+    if (!string.IsNullOrEmpty(runtimeId))
+    {
+        publishedTo = Path.Combine(publishDir, "Calamari", runtimeId);
+    }
+
     var publishSettings = new DotNetCorePublishSettings
     {
         Configuration = configuration,
@@ -228,32 +233,24 @@ private void DoPackage(string project, string framework, string version, string 
         Framework = framework,
 		ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append($"--verbosity normal")
     };
-    if (!string.IsNullOrEmpty(runtimeId))
-    {
-        publishedTo = Path.Combine(publishedTo, runtimeId);
-        publishSettings.OutputDirectory = publishedTo;
-        // "portable" is not an actual runtime ID. We're using it to represent the portable .NET core build.
-        publishSettings.Runtime = (runtimeId != null && runtimeId != "portable" && runtimeId != "net40" && runtimeId != "net452") ? runtimeId : null;
-        packageId = $"{project}.{runtimeId}";
-        nugetPackProperties.Add("runtimeId", runtimeId);
-    }
-    var nugetPackSettings = new NuGetPackSettings
-    {
-        Id = packageId,
-        OutputDirectory = artifactsDir,
-		BasePath = publishedTo,
-		Version = nugetVersion,
-		Verbosity = NuGetVerbosity.Normal,
-        Properties = nugetPackProperties
-    };
+    publishSettings.Runtime = runtimeId != null ? runtimeId : null;
 
     DotNetCorePublish(projectDir, publishSettings);
 
     SignAndTimestampBinaries(publishSettings.OutputDirectory.FullPath);
+}
 
-    var nuspec = $"{publishedTo}/{packageId}.nuspec";
-    CopyFile($"{projectDir}/{project}.nuspec", nuspec);
-    NuGetPack(nuspec, nugetPackSettings);
+private void DoPackage(string packageId)
+{
+    var nugetPackSettings = new NuGetPackSettings
+    {
+        Id = packageId,
+        OutputDirectory = artifactsDir,
+		BasePath = Path.Combine(publishDir, "Calamari"),
+		Version = nugetVersion,
+		Verbosity = NuGetVerbosity.Normal
+    };
+    NuGetPack("Calamari.nuspec", nugetPackSettings);
 }
 
 private void SignAndTimestampBinaries(string outputDirectory)

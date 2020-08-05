@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+  <metadata>
+    <id>Calamari</id>
+    <authors>Octopus Deploy</authors>
+    <owners>Octopus Deploy</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</licenseUrl>
+    <projectUrl>https://github.com/OctopusDeploy/Calamari/</projectUrl>
+    <description>Contains the command-line Calamari tool that is used by Tentacle to perform depoyment actions on machines.</description>
+    <language>en-US</language>
+  </metadata>
+</package>
