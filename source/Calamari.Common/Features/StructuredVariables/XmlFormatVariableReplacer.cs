@@ -49,9 +49,8 @@ namespace Calamari.Common.Features.StructuredVariables
             var navigator = doc.CreateNavigator();
 
             foreach (var variable in variables)
-                if (IsValidXPath(variable.Key, nsManager))
+                if (TryGetXPathFromVariableKey(variable.Key, nsManager) is {} xPathExpression)
                 {
-                    var xPathExpression = variable.Key;
                     var selectedNodes = navigator.XPath2SelectNodes(xPathExpression, nsManager);
 
                     foreach (XPathNavigator selectedNode in selectedNodes)
@@ -74,7 +73,7 @@ namespace Calamari.Common.Features.StructuredVariables
                                     // Try to preserve CDatas in the output.
                                     element.ChildNodes[0].Value = variable.Value;
                                 else if (ContainsElements(element))
-                                    TrySetInnerXml(element, xPathExpression, variable.Value);
+                                    TrySetInnerXml(element, variable.Key, variable.Value);
                                 else
                                     element.InnerText = variable.Value;
                                 break;
@@ -180,16 +179,15 @@ namespace Calamari.Common.Features.StructuredVariables
                 }
         }
 
-        bool IsValidXPath(string xPath, IXmlNamespaceResolver nsResolver)
+        XPath2Expression TryGetXPathFromVariableKey(string variableKey, IXmlNamespaceResolver nsResolver)
         {
             try
             {
-                XPath2Expression.Compile(xPath, nsResolver);
-                return true;
+                return XPath2Expression.Compile(variableKey, nsResolver);
             }
             catch (XPath2Exception)
             {
-                return false;
+                return null;
             }
         }
 
