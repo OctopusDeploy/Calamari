@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FluentValidation;
 using Octopus.Server.Extensibility.Extensions.Mappings;
+using Sashimi.Server.Contracts.ServiceMessages;
 
 namespace Sashimi.Server.Contracts.Accounts
 {

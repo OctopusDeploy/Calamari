@@ -1,4 +1,4 @@
-namespace Sashimi.Server.Contracts.Accounts
+namespace Sashimi.Server.Contracts.ServiceMessages
 {
     public interface IServiceMessageHandler
     {
