@@ -8,6 +8,7 @@ using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Endpoints;
+using Sashimi.Server.Contracts.ServiceMessages;
 
 namespace Sashimi.AzureServiceFabric.Endpoints
 {
@@ -18,12 +19,8 @@ namespace Sashimi.AzureServiceFabric.Endpoints
 
         public Type DomainType => typeof(AzureServiceFabricClusterEndpoint);
         public Type ApiType => typeof(ServiceFabricEndpointResource);
-        public IValidator Validator => new AzureServiceFabricClusterEndpointValidator();
-
-        public IActionHandler? HealthCheckActionHandlerForTargetType()
-        {
-            return new AzureServiceFabricAppHealthCheckActionHandler();
-        }
+        public IValidator Validator { get; } = new AzureServiceFabricClusterEndpointValidator();
+        public IActionHandler? HealthCheckActionHandlerForTargetType { get; } = new AzureServiceFabricAppHealthCheckActionHandler();
 
         public IEnumerable<AccountType> SupportedAccountTypes
         {
@@ -49,13 +46,15 @@ namespace Sashimi.AzureServiceFabric.Endpoints
             }
         }
 
+        public ICreateTargetServiceMessageHandler? CreateTargetServiceMessageHandler { get; } = new AzureServiceFabricClusterServiceMessageHandler();
+
         static IList<ServiceFabricDetails> GetServiceFabricMetrics(
             IEnumerable<AzureServiceFabricClusterEndpoint> endpoints)
         {
-            bool isAzure(AzureServiceFabricClusterEndpoint e) =>
+            static bool IsAzure(AzureServiceFabricClusterEndpoint e) =>
                 e.ConnectionEndpoint != null && e.ConnectionEndpoint.Contains("azure.com");
 
-            bool isOnPrem(AzureServiceFabricClusterEndpoint e) =>
+            static bool IsOnPrem(AzureServiceFabricClusterEndpoint e) =>
                 e.ConnectionEndpoint != null && !e.ConnectionEndpoint.Contains("azure.com");
 
             return endpoints
@@ -63,8 +62,8 @@ namespace Sashimi.AzureServiceFabric.Endpoints
                 .Select(x => new ServiceFabricDetails
                 {
                     securitymode = x.Key.ToString(),
-                    azure = x.Count(isAzure),
-                    onprem = x.Count(isOnPrem)
+                    azure = x.Count(IsAzure),
+                    onprem = x.Count(IsOnPrem)
                 })
                 .ToList();
         }

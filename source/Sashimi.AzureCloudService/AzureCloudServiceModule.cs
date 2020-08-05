@@ -23,6 +23,8 @@ namespace Sashimi.AzureCloudService
             builder.RegisterType<CertificateGenerator>().SingleInstance();
             builder.RegisterType<AzureCloudServiceHealthCheckActionHandler>().As<IActionHandler>().AsSelf()
                    .InstancePerLifetimeScope();
+            builder.RegisterType<AzureCloudServiceServiceMessageHandler>().AsSelf()
+                   .InstancePerLifetimeScope();
             builder.RegisterType<AzureCloudServiceDeploymentTargetTypeProvider>()
                    .As<IDeploymentTargetTypeProvider>()
                    .As<IContributeMappings>()
