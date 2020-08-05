@@ -24,6 +24,7 @@
     <DefineConstants>$(DefineConstants);NETFX;AZURE;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;WINDOWS_USER_ACCOUNT_SUPPORT;WINDOWS_REGISTRY_SUPPORT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
     <ProjectReference Include="..\Calamari.Azure.Accounts\Calamari.Azure.Accounts.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />

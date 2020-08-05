@@ -9,7 +9,7 @@ namespace Calamari.Testing
     {
         public TestCalamariCommandResult(int exitCode, IReadOnlyDictionary<string, TestOutputVariable> outputVariables,
             IReadOnlyList<TestScriptOutputAction> outputActions, IReadOnlyList<ServiceMessage> serviceMessages,
-            string? resultMessage, IReadOnlyList<CollectedArtifact> artifacts, string fullLog)
+            string? resultMessage, IReadOnlyList<CollectedArtifact> artifacts, string fullLog, string workingPath)
         {
             ExitCode = exitCode;
             OutputVariables = outputVariables;
@@ -17,10 +17,12 @@ namespace Calamari.Testing
             ServiceMessages = serviceMessages;
             ResultMessage = resultMessage;
             FullLog = fullLog;
+            WorkingPath = workingPath;
             Artifacts = artifacts;
         }
 
         public string FullLog { get; }
+        public string WorkingPath { get; }
 
         public IReadOnlyList<CollectedArtifact> Artifacts { get; }
         public IReadOnlyDictionary<string, TestOutputVariable> OutputVariables { get; }
