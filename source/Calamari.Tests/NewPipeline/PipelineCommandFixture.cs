@@ -14,12 +14,16 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing;
+using Calamari.Tests.Fixtures;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.NewPipeline
 {
     [TestFixture]
+    [RequiresNonFreeBSDPlatform]
+    [Category(TestCategory.PlatformAgnostic)]
     public class PipelineCommandFixture
     {
         readonly string[] defaultScriptStages = { DeploymentStages.PreDeploy, DeploymentStages.Deploy, DeploymentStages.PostDeploy };
