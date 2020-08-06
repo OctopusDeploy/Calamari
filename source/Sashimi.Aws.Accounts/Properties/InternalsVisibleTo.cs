@@ -1,4 +1,4 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly:InternalsVisibleTo("Sashimi.Aws.Tests")]
+[assembly:InternalsVisibleTo("Sashimi.Aws.Accounts.Tests")]
