@@ -76,7 +76,7 @@ namespace Calamari.Common.Features.StructuredVariables
                                 else if (ContainsElements(element))
                                     TrySetInnerXml(element, variable.Key, variableValue);
                                 else
-                                    element.InnerText = variables.Get(variable.Key);
+                                    element.InnerText = variableValue;
                                 break;
 
                             case XmlCharacterData cData:
