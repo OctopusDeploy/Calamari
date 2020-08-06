@@ -87,12 +87,12 @@ namespace Calamari.Common.Features.StructuredVariables
                                 break;
 
                             case XmlNode node:
-                                log.Warn($"Node of type {node.NodeType} not supported");
+                                log.Warn($"XML Node of type '{node.NodeType}' is not supported");
                                 break;
 
                             default:
-                                // TODO: consider whether to silently ignore
-                                throw new Exception($"Can't handle type {selectedNode.GetType().FullName}");
+                                log.Warn($"XPath returned an object of type '{selectedNode.GetType().FullName}', which is not supported");
+                                break;
                         }
                 }
 
