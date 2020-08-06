@@ -12,7 +12,7 @@ namespace Sashimi.Server.Contracts.Variables
         (string value, string errors) TryGet(string variableName);
         T GetEnum<T>(string variableName, T @default) where T : Enum;
         string SaveAsString();
-        string EvaluateIgnoringErrors(string expression);
+        string EvaluateIgnoringErrors(string? expression);
         IList<string> GetStrings(string variableName, params char[] separators);
     }
 }
