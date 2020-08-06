@@ -17,19 +17,12 @@ namespace Calamari.AzureResourceGroup
 {
     class DeployAzureResourceGroupBehaviour : IDeployBehaviour
     {
-        readonly string templateFile;
-        readonly string templateParametersFile;
-        readonly bool filesInPackage;
         readonly TemplateService templateService;
         readonly IResourceGroupTemplateNormalizer parameterNormalizer;
         readonly ILog log;
 
-        public DeployAzureResourceGroupBehaviour(string templateFile, string templateParametersFile, bool filesInPackage,
-                                                 TemplateService templateService, IResourceGroupTemplateNormalizer parameterNormalizer, ILog log)
+        public DeployAzureResourceGroupBehaviour(TemplateService templateService, IResourceGroupTemplateNormalizer parameterNormalizer, ILog log)
         {
-            this.templateFile = templateFile;
-            this.templateParametersFile = templateParametersFile;
-            this.filesInPackage = filesInPackage;
             this.templateService = templateService;
             this.parameterNormalizer = parameterNormalizer;
             this.log = log;
@@ -43,11 +36,21 @@ namespace Calamari.AzureResourceGroup
         public async Task Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            var subscriptionId = variables[SpecialVariables.Action.Azure.SubscriptionId];
-            var tenantId = variables[SpecialVariables.Action.Azure.TenantId];
-            var clientId = variables[SpecialVariables.Action.Azure.ClientId];
-            var password = variables[SpecialVariables.Action.Azure.Password];
+            var subscriptionId = variables[AzureAccountVariables.SubscriptionId];
+            var tenantId = variables[AzureAccountVariables.TenantId];
+            var clientId = variables[AzureAccountVariables.ClientId];
+            var password = variables[AzureAccountVariables.Password];
+
+            var templateFile = variables.Get(SpecialVariables.Action.Azure.Template, "template.json");
+            var templateParametersFile = variables.Get(SpecialVariables.Action.Azure.TemplateParameters, "parameters.json");
+            var filesInPackage = variables.Get(SpecialVariables.Action.Azure.TemplateSource, String.Empty) == "Package";
+            if (filesInPackage)
+            {
+                templateFile = variables.Get(SpecialVariables.Action.Azure.ResourceGroupTemplate);
+                templateParametersFile = variables.Get(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters);
+            }
             var resourceManagementEndpoint = variables.Get(AzureAccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
+
             if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
                 log.InfoFormat("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
 
@@ -86,7 +89,7 @@ namespace Calamari.AzureResourceGroup
             await PollForCompletion(createArmClient, resourceGroupName, deploymentName, variables);
         }
 
-        static string GenerateDeploymentNameFromStepName(string stepName)
+        internal static string GenerateDeploymentNameFromStepName(string stepName)
         {
             var deploymentName = stepName ?? string.Empty;
             deploymentName = deploymentName.ToLower();
@@ -118,7 +121,9 @@ namespace Calamari.AzureResourceGroup
                                                                                                   {
                                                                                                       Properties = new DeploymentProperties
                                                                                                       {
-                                                                                                          Mode = deploymentMode, Template = template, Parameters = parameters
+                                                                                                          Mode = deploymentMode,
+                                                                                                          Template = template,
+                                                                                                          Parameters = parameters
                                                                                                       }
                                                                                                   });
 

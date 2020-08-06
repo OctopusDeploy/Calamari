@@ -11,11 +11,11 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Sashimi.Azure.Accounts\Sashimi.Azure.Accounts.csproj" />
+        <ProjectReference Include="..\Sashimi.AzureScripting\Sashimi.AzureScripting.csproj" />
         <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <None Include="..\..\artifacts\Calamari.AzureResourceGroup.zip" LinkBase="tools" Pack="true" PackagePath="tools/" />
     </ItemGroup>
-
 </Project>

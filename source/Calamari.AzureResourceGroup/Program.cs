@@ -6,6 +6,7 @@ using Calamari.Common;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Util;
 
 namespace Calamari.AzureResourceGroup
 {
@@ -22,6 +23,7 @@ namespace Calamari.AzureResourceGroup
             builder.RegisterType<TemplateService>();
             builder.RegisterType<ResourceGroupTemplateNormalizer>().As<IResourceGroupTemplateNormalizer>();
             builder.RegisterType<AzureContextScriptWrapper>().As<IScriptWrapper>().SingleInstance();
+            builder.RegisterType<TemplateResolver>().As<ITemplateResolver>().SingleInstance();
         }
 
         public static Task<int> Main(string[] args)

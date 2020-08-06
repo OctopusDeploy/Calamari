@@ -1,4 +1,5 @@
 ﻿using System;
+using Sashimi.AzureScripting;
 using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.AzureResourceGroup
@@ -25,13 +26,11 @@ namespace Sashimi.AzureResourceGroup
                                  .WithAzureTools(context);
 
             if (templateInPackage)
-                builder.WithStagedPackageArgument()
-                    .WithArgument("template", template)
-                    .WithArgument("templateParameters", templateParameters);
+                builder.WithStagedPackageArgument();
             else
                 builder
-                    .WithDataFileAsArgument("template", template, "template.json")
-                    .WithDataFileAsArgument("templateParameters", templateParameters, "parameters.json");
+                    .WithDataFile(template, "template.json")
+                    .WithDataFile(templateParameters, "parameters.json");
 
             return builder.Execute();
 
