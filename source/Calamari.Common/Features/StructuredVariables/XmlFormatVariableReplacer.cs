@@ -181,9 +181,11 @@ namespace Calamari.Common.Features.StructuredVariables
 
         XPath2Expression TryGetXPathFromVariableKey(string variableKey, IXmlNamespaceResolver nsResolver)
         {
-            if (!variableKey.Contains("/")) // Prevent simple variable names being recognized as XPath unintentionally
+            // Prevent 'Octopus*' and other unintended variables being recognized as XPath expressions selecting the document node
+            if (!variableKey.Contains("/")
+                && !variableKey.Contains(":"))
                 return null;
-            
+
             try
             {
                 return XPath2Expression.Compile(variableKey, nsResolver);
