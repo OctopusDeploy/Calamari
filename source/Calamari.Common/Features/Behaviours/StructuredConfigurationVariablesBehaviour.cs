@@ -18,7 +18,7 @@ namespace Calamari.Common.Features.Behaviours
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return context.Variables.GetFlag(KnownVariables.Package.JsonConfigurationVariablesEnabled);
+            return context.Variables.GetFlag(ActionVariables.StructuredConfigurationVariablesEnabled);
         }
 
         public Task Execute(RunningDeployment context)

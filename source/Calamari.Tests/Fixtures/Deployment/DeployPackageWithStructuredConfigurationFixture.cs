@@ -23,6 +23,41 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             base.SetUp();
         }
+        
+        [Test]	
+        public void FailsAndWarnsIfAFileCannotBeParsedWhenFallbackFlagIsSet()	
+        {	
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))	
+            {	
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);	
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFallbackFlag, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, MalformedFileName);	
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);	
+                result.AssertFailure();	
+
+                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ^. Path '', line 0, position 0.");	
+            }	
+        }	
+
+        [Test]	
+        public void ShouldNotTreatYamlFileAsYamlWhenFallbackFlagIsSet()	
+        {	
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))	
+            {	
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);	
+                Variables.AddFlag(ActionVariables.StructuredConfigurationFallbackFlag, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileName);	
+                Variables.Set("key", "new-value");	
+
+                var result = DeployPackage(file.FilePath);	
+                result.AssertFailure();	
+
+                // Indicates we tried to parse yaml as JSON.	
+                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: k. Path '', line 0, position 0.");	
+            }	
+        }
 
         [Test]
         public void ShouldPerformReplacementInYaml()

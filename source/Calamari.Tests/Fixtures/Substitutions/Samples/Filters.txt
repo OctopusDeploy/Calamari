@@ -1,0 +1,6 @@
+JsonEscape: #{var | JsonEscape}
+XmlEscape: #{var | XmlEscape}
+YamlDoubleQuoteEscape: #{var | YamlDoubleQuoteEscape}
+YamlSingleQuoteEscape: #{var | YamlSingleQuoteEscape}
+PropertiesKeyEscape: #{var | PropertiesKeyEscape}
+PropertiesValueEscape: #{var | PropertiesValueEscape}

@@ -269,6 +269,23 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
+        public void CanReplaceStructures()
+        {
+            var nl = Environment.NewLine;
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    {"mapping2mapping", $"this: is{nl}new: mapping"},
+                                    {"sequence2sequence", $"- another{nl}- sequence{nl}- altogether"},
+                                    {"mapping2sequence", $"- a{nl}- sequence"},
+                                    {"sequence2mapping", $"  this: now{nl}  has:    keys"},
+                                    {"mapping2string", "no longer a mapping"},
+                                    {"sequence2string", "no longer a sequence"},
+                                },
+                                "structures.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
+
+        [Test]
         public void ShouldPreserveMostCommonIndent()
         {
             this.Assent(Replace(new CalamariVariables { { "bbb:this:is", "much more" } },

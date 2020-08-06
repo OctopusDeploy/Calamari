@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -8,18 +9,23 @@ namespace Calamari.Common.Plumbing.Extensions
 {
     public static class EncodingDetectingFileReader
     {
+        public static readonly ReadOnlyCollection<Encoding> DefaultEncodingsToTry;
+
         static EncodingDetectingFileReader()
         {
 #if NETSTANDARD
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // Required to use code pages in .NET Standard
 #endif
+            DefaultEncodingsToTry = new List<Encoding>
+            {
+                new UTF8Encoding(false, true),
+                Encoding.GetEncoding(1252)
+            }.AsReadOnly();
         }
 
         public static (string text, Encoding encoding) ReadToEnd(string path)
         {
-            return ReadToEnd(path,
-                             new UTF8Encoding(false, true),
-                             Encoding.GetEncoding(1252));
+            return ReadToEnd(path, DefaultEncodingsToTry.ToArray());
         }
 
         public static (string text, Encoding encoding) ReadToEnd(string path, params Encoding[] encodingsToTry)
@@ -28,8 +34,9 @@ namespace Calamari.Common.Plumbing.Extensions
                 throw new Exception("No encodings specified.");
 
             if (encodingsToTry.Take(encodingsToTry.Length - 1)
-                              .Any(encoding => encoding.DecoderFallback != DecoderFallback.ExceptionFallback))
-                throw new Exception("Encodings prior to the last must have exception fallback enabled.");
+                              .FirstOrDefault(DecoderDoesNotRaiseErrorsForUnsupportedCharacters) is { } e)
+                throw new Exception($"The supplied encoding '{e}' does not raise errors for unsupported characters, so the subsequent "
+                                    + "encoder will never be used. Please set DecoderFallback to ExceptionFallback or use Unicode.");
 
             var bytes = File.ReadAllBytes(path);
 
@@ -48,8 +55,15 @@ namespace Calamari.Common.Plumbing.Extensions
                     lastException = ex;
                 }
 
-            Debug.Assert(lastException != null, nameof(lastException) + " != null");
-            throw lastException;
+            throw new Exception("Unable to decode file contents with the specified encodings.", lastException);
+        }
+
+        public static bool DecoderDoesNotRaiseErrorsForUnsupportedCharacters(Encoding encoding)
+        {
+            return encoding.DecoderFallback != DecoderFallback.ExceptionFallback
+                   && !encoding.WebName.StartsWith("utf-")
+                   && !encoding.WebName.StartsWith("unicode")
+                   && !encoding.WebName.StartsWith("ucs-");
         }
     }
 }

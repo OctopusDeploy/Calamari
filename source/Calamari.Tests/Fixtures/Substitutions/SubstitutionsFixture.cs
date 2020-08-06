@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using Assent;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
@@ -29,6 +30,18 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var text = PerformTest(GetFixtureResouce("Samples","Servers.json"), variables).text;
 
             Assert.That(Regex.Replace(text, "\\s+", ""), Is.EqualTo(@"{""Servers"":[{""Name"":""forexuat01.local"",""Port"":1566},{""Name"":""forexuat02.local"",""Port"":1566}]}"));
+        }
+
+        [Test]
+        public void ShouldApplyFiltersDuringSubstitution()
+        {
+            var variables = new CalamariVariables
+            {
+                { "var", "=:'\"\\\r\n\t <>" }
+            };
+            
+            var textAfterReplacement = PerformTest(GetFixtureResouce("Samples", "Filters.txt"), variables).text;
+            this.Assent(textAfterReplacement, TestEnvironment.AssentConfiguration);
         }
 
         [Test]

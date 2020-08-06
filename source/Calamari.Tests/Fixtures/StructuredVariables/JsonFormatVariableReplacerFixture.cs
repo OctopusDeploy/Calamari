@@ -207,6 +207,22 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
+        public void ShouldReplaceStructures()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    {"mapping2mapping", "{\"this\": \"is\", \"new\": \"mapping\"}"},
+                                    {"sequence2sequence", "[ \"another\", \"sequence\", \"altogether\" ]"},
+                                    {"mapping2sequence", "[\"a\",\"sequence\"]"},
+                                    {"sequence2mapping", "{  \"this\": \"now\",  \"has\":    \"keys\" }"},
+                                    {"mapping2string", "\"no longer a mapping\""},
+                                    {"sequence2string", "\"no longer a sequence\""},
+                                },
+                                "structures.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+        }
+
+        [Test]
         public void ShouldFallBackToStringIfTypePreservationFails()
         {
             this.Assent(Replace(new CalamariVariables

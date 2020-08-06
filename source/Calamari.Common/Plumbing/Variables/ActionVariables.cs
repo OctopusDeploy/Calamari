@@ -14,6 +14,7 @@ namespace Calamari.Common.Plumbing.Variables
          the old Octopus Variable names. */
         public static readonly string StructuredConfigurationVariablesEnabled = "Octopus.Action.Package.JsonConfigurationVariablesEnabled";
         public static readonly string StructuredConfigurationVariablesTargets = "Octopus.Action.Package.JsonConfigurationVariablesTargets";
+        public static readonly string StructuredConfigurationFallbackFlag = "Octopus.Action.StructuredConfigurationFallbackFlag";	
 
         public static string GetOutputVariableName(string actionName, string variableName)
         {
