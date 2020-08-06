@@ -1,11 +1,13 @@
-function IsDockerAvailable() {
-    $service = $(Get-Service -Name 'docker' -ErrorAction SilentlyContinue)
-    $serviceRunning = ($service -ne $null -and $service.Status -eq 'Running')
-    $process = $(Get-Process 'com.docker.proxy' -ErrorAction SilentlyContinue)
+ function IsDockerAvailable() {
     $command = $(Get-Command 'docker' -ErrorAction SilentlyContinue)
-    $dockerAvailable = $command -ne $null -and ($process -ne $null -or $serviceRunning)
-    return $dockerAvailable
-}
+    if ($command -eq $null) {
+        Write-Error 'docker command not available'
+        return $false
+    }
+
+    & docker ps 2>$null 
+    return $LASTEXITCODE -eq 0
+} 
 
 $IMAGE=$OctopusParameters["Image"]
 $dockerUsername=$OctopusParameters["DockerUsername"]
