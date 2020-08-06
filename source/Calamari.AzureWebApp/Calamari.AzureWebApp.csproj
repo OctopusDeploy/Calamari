@@ -5,7 +5,7 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <IsPackable>false</IsPackable>
         <OutputType>Exe</OutputType>
-        <RuntimeIdentifiers>win-x64;win7-x86;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <TargetFramework>net452</TargetFramework>
     </PropertyGroup>
     <ItemGroup>

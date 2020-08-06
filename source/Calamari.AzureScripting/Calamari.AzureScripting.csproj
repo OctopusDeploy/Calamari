@@ -5,7 +5,7 @@
         <OutputType>Exe</OutputType>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
-        <RuntimeIdentifiers>win-x64;win7-x86;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <ItemGroup>
