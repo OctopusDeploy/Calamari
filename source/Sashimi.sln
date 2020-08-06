@@ -70,6 +70,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureScripting", "AzureScri
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureScripting", "Calamari.AzureScripting\Calamari.AzureScripting.csproj", "{238BD45A-A67D-474D-847D-87F72B64772F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureScripting", "Sashimi.AzureScripting\Sashimi.AzureScripting.csproj", "{D229E77B-3607-437B-91D0-598BFDD0F091}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureScripting.Tests", "Sashimi.AzureScripting.Tests\Sashimi.AzureScripting.Tests.csproj", "{58C49A1A-6705-4485-BFE3-5CB73FAEC99B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -164,6 +168,14 @@ Global
 		{238BD45A-A67D-474D-847D-87F72B64772F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{238BD45A-A67D-474D-847D-87F72B64772F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{238BD45A-A67D-474D-847D-87F72B64772F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D229E77B-3607-437B-91D0-598BFDD0F091}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D229E77B-3607-437B-91D0-598BFDD0F091}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D229E77B-3607-437B-91D0-598BFDD0F091}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D229E77B-3607-437B-91D0-598BFDD0F091}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58C49A1A-6705-4485-BFE3-5CB73FAEC99B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58C49A1A-6705-4485-BFE3-5CB73FAEC99B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58C49A1A-6705-4485-BFE3-5CB73FAEC99B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58C49A1A-6705-4485-BFE3-5CB73FAEC99B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -183,6 +195,8 @@ Global
 		{41DEE880-5505-43B4-8366-C8B14EC92B17} = {937741D4-BF0F-4073-A101-8E52141FCD28}
 		{5EB8506B-0DDB-490C-A3B7-BCA6098FA4AD} = {3E14A387-C500-4486-A7AE-BA0C5F95B344}
 		{238BD45A-A67D-474D-847D-87F72B64772F} = {3E05AC5A-99C4-4C1A-9099-17AA71E8D644}
+		{D229E77B-3607-437B-91D0-598BFDD0F091} = {3E05AC5A-99C4-4C1A-9099-17AA71E8D644}
+		{58C49A1A-6705-4485-BFE3-5CB73FAEC99B} = {3E05AC5A-99C4-4C1A-9099-17AA71E8D644}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		{54EF951A-AA50-4ED2-BB79-C9CBC70BCA65} = {6288E064-DE6F-4012-B887-64B364482B5C}

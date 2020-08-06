@@ -1,7 +1,7 @@
 ﻿using System;
 using Sashimi.Server.Contracts.DeploymentTools;
 
-namespace Sashimi.AzureWebApp
+namespace Sashimi.AzureScripting
 {
     static class AzureTools
     {
