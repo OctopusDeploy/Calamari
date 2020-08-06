@@ -4,25 +4,18 @@ using System.Linq;
 using FluentValidation;
 using Octopus.Server.Extensibility.HostServices.Mapping;
 using Sashimi.Server.Contracts.Accounts;
+using Sashimi.Server.Contracts.ServiceMessages;
 
 namespace Sashimi.AzureCloudService
 {
     class AzureSubscriptionTypeProvider : IAccountTypeProvider
     {
-        public AccountDetails CreateViaServiceMessage(IDictionary<string, string> properties)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string AuditEntryDescription => $"{AccountType.Value} account";
-        public string ServiceMessageName => "not-implemented";
-
         public AccountType AccountType => AccountTypes.AzureSubscriptionAccountType;
         public Type ModelType => typeof(AzureSubscriptionDetails);
         public Type ApiType => typeof(AzureSubscriptionAccountResource);
-
         public IValidator Validator { get; } = new AzureSubscriptionValidator();
         public IVerifyAccount Verifier { get; } = new AzureSubscriptionAccountVerifier();
+        public ICreateAccountDetailsServiceMessageHandler? CreateAccountDetailsServiceMessageHandler { get; } = null;
 
         public IEnumerable<(string key, object value)> GetFeatureUsage(IAccountMetricContext context)
         {
