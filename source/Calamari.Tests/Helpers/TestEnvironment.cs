@@ -47,6 +47,29 @@ namespace Calamari.Tests.Helpers
                                                                        .SetInteractive(!IsCI)
                                                                        .UsingExtension("yaml");
 
+        public static readonly Configuration AssentXmlConfiguration = new Configuration()
+            .UsingNamer(IsCI ? (INamer)new CIAssentNamer() : new SubdirectoryNamer("Approved"))
+            .SetInteractive(!IsCI)
+            .UsingExtension("xml")
+            .UsingComparer((received, approved) =>
+            {
+                var normalisedReceived = received.Replace("\r\n", "\n");
+                var normalisedApproved = approved.Replace("\r\n", "\n");
+
+                if (normalisedApproved == normalisedReceived)
+                {
+                    return CompareResult.Pass();
+                }
+
+                Console.WriteLine("Expected:");
+                Console.WriteLine(approved);
+
+                Console.WriteLine("Received:");
+                Console.WriteLine(received);
+                
+                return CompareResult.Fail("Received XML did not match approved XML.");
+            });
+
         public static string GetTestPath(params string[] paths)
         {
             return Path.Combine(CurrentWorkingDirectory, Path.Combine(paths));

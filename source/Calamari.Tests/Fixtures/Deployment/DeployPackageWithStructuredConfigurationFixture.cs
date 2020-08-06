@@ -14,6 +14,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         const string ServiceVersion = "1.0.0";
         const string YamlFileName = "values.yaml";
         const string JsonFileName = "values.json";
+        const string XmlFileName = "values.xml";
         const string ConfigFileName = "values.config";
         const string MalformedFileName = "malformed.file";
 
@@ -59,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        public void ShouldPerformReplacementInYamlIfFlagIsSet()
+        public void ShouldPerformReplacementInYaml()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
@@ -73,6 +74,62 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
 
                 this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
+            }
+        }
+
+        [Test]
+        public void ShouldPerformReplacementInXml()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, XmlFileName);
+                Variables.Set("/document/key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertSuccess();
+
+                var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, XmlFileName));
+
+                this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
+            }
+        }
+
+        [Test]
+        public void IfThereAreDuplicateNsPrefixesTheFirstOneIsUsedAndAWarningIsLogged()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "duplicate-prefixes.xml");
+                Variables.Set("//parent/dupe:node", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertSuccess();
+                result.AssertOutputMatches("You can avoid this by ensuring all namespaces in your document have unique prefixes\\.");
+                
+                var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, "duplicate-prefixes.xml"));
+
+                this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
+            }
+        }
+
+        [Test]
+        public void LogsAWarningIfAVariableTreatedAsMarkupIsInvalid()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "values.xml");
+                Variables.Set("/document", "<<<");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertSuccess();
+                result.AssertOutputContains("Could not set the value of the XML element at XPath '/document' to '<<<'. Expected a valid XML fragment. Skipping replacement of this element.");
+                
+                var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, "values.xml"));
+
+                this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
             }
         }
 
@@ -221,7 +278,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
         
         [Test]
-        public void FailsAndWarnsIfAFileCannotBeParsedWhenFeatureFlagIsSet()
+        public void FailsAndWarnsIfAFileCannotBeParsed()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {

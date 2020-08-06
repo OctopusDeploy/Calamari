@@ -127,6 +127,17 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
+        public void ObjectIsNotModifiedIfTheVariableValueCannotBeParsed()
+        {
+            this.Assent(Replace(new CalamariVariables
+                                {
+                                    { "EmailSettings:DefaultRecipients", @"{<<<<" }
+                                },
+                                "appsettings.simple.json"),
+                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+        }
+
+        [Test]
         public void ShouldReplaceElementInArray()
         {
             this.Assent(Replace(new CalamariVariables

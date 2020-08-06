@@ -1,0 +1,10 @@
+3C 64 6F 63 3E 0A 20 20   <doc>^  
+3C 64 61 67 67 65 72 3E   <dagger>
+E2 80 A0 3C 2F 64 61 67   ???</dag
+67 65 72 3E 0A 20 20 3C   ger>^  <
+73 75 6E 6E 69 65 73 3E   sunnies>
+F0 9F 98 8E 3C 2F 73 75   ????</su
+6E 6E 69 65 73 3E 0A 20   nnies>^ 
+20 3C 65 75 72 6F 3E E2    <euro>?
+82 AC 3C 2F 65 75 72 6F   ??</euro
+3E 0A 3C 2F 64 6F 63 3E   >^</doc>

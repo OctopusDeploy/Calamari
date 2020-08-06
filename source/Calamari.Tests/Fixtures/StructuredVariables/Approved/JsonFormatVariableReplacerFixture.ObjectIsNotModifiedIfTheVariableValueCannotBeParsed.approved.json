@@ -1,0 +1,11 @@
+{
+  "MyMessage": "Hello world",
+  "EmailSettings": {
+    "SmtpPort": "23",
+    "SmtpHost": "localhost",
+    "DefaultRecipients": {
+      "To": "paul@octopus.com",
+      "Cc": "mike@octopus.com"
+    }
+  }
+}
