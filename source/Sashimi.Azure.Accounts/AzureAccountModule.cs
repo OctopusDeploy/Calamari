@@ -1,7 +1,6 @@
 using Autofac;
 using Octopus.Server.Extensibility.Extensions.Mappings;
 using Sashimi.Server.Contracts.Accounts;
-using Sashimi.Server.Contracts.ServiceMessages;
 
 namespace Sashimi.Azure.Accounts
 {
@@ -9,7 +8,7 @@ namespace Sashimi.Azure.Accounts
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<AzureServicePrincipalAccountTypeProvider>().As<IServiceMessageHandler>().As<IAccountTypeProvider>().As<IContributeMappings>().SingleInstance();
+            builder.RegisterType<AzureServicePrincipalAccountTypeProvider>().As<IAccountTypeProvider>().As<IContributeMappings>().SingleInstance();
         }
     }
 }
