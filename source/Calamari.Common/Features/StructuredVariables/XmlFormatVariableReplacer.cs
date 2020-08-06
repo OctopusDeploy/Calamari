@@ -137,7 +137,7 @@ namespace Calamari.Common.Features.StructuredVariables
         XmlNamespaceManager BuildNsManagerFromDocument(XmlDocument doc)
         {
             var nsManager = new XmlNamespaceManager(doc.NameTable);
-            var namespaces = GetDeclaredNamespaceUris(doc);
+            var namespaces = GetNamespacesFromNodeAndDescendants(doc);
 
             foreach (var ns in namespaces)
             {
@@ -161,22 +161,21 @@ namespace Calamari.Common.Features.StructuredVariables
             return nsManager;
         }
 
-        IEnumerable<NamespaceDeclaration> GetDeclaredNamespaceUris(XmlNode node)
+        IEnumerable<NamespaceDeclaration> GetNamespacesFromNodeAndDescendants(XmlNode node)
         {
             if (node.Attributes != null)
-                foreach (var attribute in node.Attributes)
-                    if (attribute is XmlAttribute attr)
-                        if (attr.NamespaceURI == "http://www.w3.org/2000/xmlns/")
-                            if (attr.LocalName != "xmlns")
-                                yield return new NamespaceDeclaration(attr.LocalName, attr.Value);
+                foreach (var namespaceFromAttribute in node.Attributes
+                                                           .OfType<XmlAttribute>()
+                                                           .Where(attr =>
+                                                                      attr.NamespaceURI == "http://www.w3.org/2000/xmlns/"
+                                                                      && attr.LocalName != "xmlns")
+                                                           .Select(attr => new NamespaceDeclaration(attr.LocalName, attr.Value)))
+                    yield return namespaceFromAttribute;
 
-            foreach (var child in node.ChildNodes)
-                if (child is XmlNode childNode)
-                {
-                    var declaredNamespacesInChild = GetDeclaredNamespaceUris(childNode);
-                    foreach (var declaredNamespace in declaredNamespacesInChild)
-                        yield return declaredNamespace;
-                }
+            foreach (var namespaceFromDescendants in node.ChildNodes
+                                                         .OfType<XmlNode>()
+                                                         .SelectMany(GetNamespacesFromNodeAndDescendants))
+                yield return namespaceFromDescendants;
         }
 
         XPath2Expression TryGetXPathFromVariableKey(string variableKey, IXmlNamespaceResolver nsResolver)
