@@ -7,17 +7,23 @@ using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.Endpoints;
+using Sashimi.Server.Contracts.ServiceMessages;
 
 namespace Sashimi.AzureCloudService.Endpoints
 {
     class AzureCloudServiceDeploymentTargetTypeProvider : IDeploymentTargetTypeProvider
     {
+        public AzureCloudServiceDeploymentTargetTypeProvider(AzureCloudServiceServiceMessageHandler azureCloudServiceServiceMessageHandler)
+        {
+            CreateTargetServiceMessageHandler = azureCloudServiceServiceMessageHandler;
+        }
+
         public DeploymentTargetType DeploymentTargetType =>
             AzureCloudServiceEndpoint.AzureCloudServiceDeploymentTargetType;
 
         public Type DomainType => typeof(AzureCloudServiceEndpoint);
         public Type ApiType => typeof(CloudServiceEndpointResource);
-        public IValidator Validator => new AzureCloudServiceEndpointValidator();
+        public IValidator Validator { get; } = new AzureCloudServiceEndpointValidator();
 
         public IEnumerable<AccountType> SupportedAccountTypes
         {
@@ -29,10 +35,7 @@ namespace Sashimi.AzureCloudService.Endpoints
             builder.Map<CloudServiceEndpointResource, AzureCloudServiceEndpoint>();
         }
 
-        public IActionHandler? HealthCheckActionHandlerForTargetType()
-        {
-            return new AzureCloudServiceHealthCheckActionHandler();
-        }
+        public IActionHandler? HealthCheckActionHandlerForTargetType { get; } = new AzureCloudServiceHealthCheckActionHandler();
 
         public IEnumerable<(string key, object value)> GetFeatureUsage(IEndpointMetricContext context)
         {
@@ -40,5 +43,7 @@ namespace Sashimi.AzureCloudService.Endpoints
 
             yield return ("azurecloudservices", total);
         }
+
+        public ICreateTargetServiceMessageHandler? CreateTargetServiceMessageHandler { get; }
     }
 }

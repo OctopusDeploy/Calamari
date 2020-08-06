@@ -8,7 +8,7 @@ namespace Sashimi.Azure.Accounts
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<AzureServicePrincipalAccountTypeProvider>().As<IServiceMessageHandler>().As<IAccountTypeProvider>().As<IContributeMappings>().SingleInstance();
+            builder.RegisterType<AzureServicePrincipalAccountTypeProvider>().As<IAccountTypeProvider>().As<IContributeMappings>().SingleInstance();
         }
     }
 }

@@ -8,15 +8,22 @@ using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.Endpoints;
+using Sashimi.Server.Contracts.ServiceMessages;
 
 namespace Sashimi.AzureWebApp.Endpoints
 {
     class AzureWebAppDeploymentTargetTypeProvider : IDeploymentTargetTypeProvider
     {
+        public AzureWebAppDeploymentTargetTypeProvider(AzureWebAppServiceMessageHandler azureWebAppServiceMessageHandler)
+        {
+            CreateTargetServiceMessageHandler = azureWebAppServiceMessageHandler;
+        }
+
         public DeploymentTargetType DeploymentTargetType => AzureWebAppEndpoint.AzureWebAppDeploymentTargetType;
         public Type DomainType => typeof(AzureWebAppEndpoint);
         public Type ApiType => typeof(AzureWebAppEndpointResource);
-        public IValidator Validator => new AzureWebAppEndpointValidator();
+        public IValidator Validator { get; } = new AzureWebAppEndpointValidator();
+
 
         public IEnumerable<AccountType> SupportedAccountTypes
         {
@@ -28,10 +35,7 @@ namespace Sashimi.AzureWebApp.Endpoints
             builder.Map<AzureWebAppEndpointResource, AzureWebAppEndpoint>();
         }
 
-        public IActionHandler? HealthCheckActionHandlerForTargetType()
-        {
-            return new AzureWebAppHealthCheckActionHandler();
-        }
+        public IActionHandler? HealthCheckActionHandlerForTargetType { get; } = new AzureWebAppHealthCheckActionHandler();
 
         public IEnumerable<(string key, object value)> GetFeatureUsage(IEndpointMetricContext context)
         {
@@ -39,5 +43,7 @@ namespace Sashimi.AzureWebApp.Endpoints
 
             yield return ("azurewebapps", total);
         }
+
+        public ICreateTargetServiceMessageHandler? CreateTargetServiceMessageHandler { get; }
     }
 }

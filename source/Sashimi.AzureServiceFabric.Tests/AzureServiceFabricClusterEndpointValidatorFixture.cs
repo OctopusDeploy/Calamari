@@ -1,4 +1,3 @@
-using System;
 using FluentAssertions;
 using FluentValidation;
 using NUnit.Framework;
@@ -48,7 +47,7 @@ namespace Sashimi.AzureServiceFabric.Tests
 
             var errors = sut.ValidateAndGetErrors(endpoint);
 
-            errors.Should().Contain("'Azure AD Credential Type' must not be equal to 'ClientCredential'.");
+            errors.Should().Contain("'Azure AD Credential Type' must be equal to 'UserCredential'.");
         }
 
         [Test]
@@ -87,6 +86,8 @@ namespace Sashimi.AzureServiceFabric.Tests
 
             errors.Should().Contain("'Client Cert Variable' must not be empty.");
             errors.Should().Contain("'Server Cert Thumbprint' must not be empty.");
+            errors.Should().Contain("'Certificate Store Location' must not be empty.");
+            errors.Should().Contain("'Certificate Store Name' must not be empty.");
         }
 
         [Test]
@@ -95,6 +96,8 @@ namespace Sashimi.AzureServiceFabric.Tests
             endpoint.SecurityMode = AzureServiceFabricSecurityMode.SecureClientCertificate;
             endpoint.ClientCertVariable = "abc";
             endpoint.ServerCertThumbprint = "123";
+            endpoint.CertificateStoreLocation = "CertificateStoreLocation";
+            endpoint.CertificateStoreName = "CertificateStoreName";
             var errors = sut.ValidateAndGetErrors(endpoint);
 
             errors.Should().BeEmpty();
