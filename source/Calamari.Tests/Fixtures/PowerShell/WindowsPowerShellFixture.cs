@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             // Let's just use the Hello.ps1 script for something simples
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")), variables);
+                .Argument("script", GetFixtureResource("Scripts", "Hello.ps1")), variables);
 
             if (output.CapturedOutput.AllMessages
                 .Select(line => new string(line.ToCharArray().Where(c => c != '\u0000').ToArray()))

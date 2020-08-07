@@ -81,13 +81,13 @@ namespace Calamari.Tests.Helpers
         }
 
 
-        protected string GetFixtureResouce(params string[] paths)
+        protected string GetFixtureResource(params string[] paths)
         {
             var type = GetType();
-            return GetFixtureResouce(type, paths);
+            return GetFixtureResource(type, paths);
         }
 
-        public static string GetFixtureResouce(Type type, params string[] paths)
+        public static string GetFixtureResource(Type type, params string[] paths)
         {
             var path = type.Namespace.Replace("Calamari.Tests.", String.Empty);
             path = path.Replace('.', Path.DirectorySeparatorChar);
@@ -103,7 +103,7 @@ namespace Calamari.Tests.Helpers
             var variablesFile = Path.GetTempFileName();
             var variables = new CalamariVariables();
             variables.Set(ScriptVariables.ScriptFileName, scriptName);
-            variables.Set(ScriptVariables.ScriptBody, File.ReadAllText(GetFixtureResouce("Scripts", scriptName)));
+            variables.Set(ScriptVariables.ScriptBody, File.ReadAllText(GetFixtureResource("Scripts", scriptName)));
             variables.Set(ScriptVariables.Syntax, scriptName.ToScriptType().ToString());
 
             additionalVariables?.ToList().ForEach(v => variables[v.Key] = v.Value);

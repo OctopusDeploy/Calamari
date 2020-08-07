@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         public string Replace(IVariables variables, string existingFile, Func<string, string> outputFileReader)
         {
             var temp = Path.GetTempFileName();
-            File.Copy(GetFixtureResouce("Samples", existingFile), temp, true);
+            File.Copy(GetFixtureResource("Samples", existingFile), temp, true);
 
             using (new TemporaryFile(temp))
             {

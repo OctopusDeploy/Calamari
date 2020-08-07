@@ -152,7 +152,7 @@ namespace Calamari.Tests.KubernetesFixtures
             //Additional Package
             Variables.Set(PackageVariables.IndexedPackageId("Pack-1"), "CustomValues");
             Variables.Set(PackageVariables.IndexedPackageVersion("Pack-1"), "2.0.0");
-            Variables.Set(PackageVariables.IndexedOriginalPath("Pack-1"), GetFixtureResouce("Charts", "CustomValues.2.0.0.zip"));
+            Variables.Set(PackageVariables.IndexedOriginalPath("Pack-1"), GetFixtureResource("Charts", "CustomValues.2.0.0.zip"));
             Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath("Pack-1"), "values.yaml");
 
             //Variable that will replace packaged value in package
@@ -208,7 +208,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(PackageVariables.IndexedPackageId("Pack-1"), "CustomValues");
             Variables.Set(PackageVariables.IndexedPackageVersion("Pack-1"), "2.0.0");
             Variables.Set(PackageVariables.IndexedOriginalPath("Pack-1"),
-                GetFixtureResouce("Charts", "CustomValues.2.0.0.zip"));
+                GetFixtureResource("Charts", "CustomValues.2.0.0.zip"));
             Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath("Pack-1"), "values.yaml");
 
             //Variable that will replace packaged value in package
@@ -336,7 +336,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                var pkg = GetFixtureResouce("Charts", ChartPackageName);
+                var pkg = GetFixtureResource("Charts", ChartPackageName);
                 Variables.Save(variablesFile.FilePath);
 
                 return InvokeInProcess(Calamari()
