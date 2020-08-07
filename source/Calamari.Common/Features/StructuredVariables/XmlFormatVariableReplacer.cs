@@ -52,38 +52,39 @@ namespace Calamari.Common.Features.StructuredVariables
                 if (TryGetXPathFromVariableKey(variable.Key, nsManager) is {} xPathExpression)
                 {
                     var selectedNodes = navigator.XPath2SelectNodes(xPathExpression, nsManager);
+                    var variableValue = variables.Get(variable.Key);
 
                     foreach (XPathNavigator selectedNode in selectedNodes)
                         switch (selectedNode.UnderlyingObject)
                         {
                             case XmlText text:
-                                text.Data = variable.Value;
+                                text.Data = variableValue;
                                 break;
 
                             case XmlAttribute attribute:
-                                attribute.Value = variable.Value;
+                                attribute.Value = variableValue;
                                 break;
 
                             case XmlComment comment:
-                                comment.Data = variable.Value;
+                                comment.Data = variableValue;
                                 break;
 
                             case XmlElement element:
                                 if (element.ChildNodes.Count == 1 && element.ChildNodes[0].NodeType == XmlNodeType.CDATA)
                                     // Try to preserve CDatas in the output.
-                                    element.ChildNodes[0].Value = variable.Value;
+                                    element.ChildNodes[0].Value = variableValue;
                                 else if (ContainsElements(element))
-                                    TrySetInnerXml(element, variable.Key, variable.Value);
+                                    TrySetInnerXml(element, variable.Key, variableValue);
                                 else
-                                    element.InnerText = variable.Value;
+                                    element.InnerText = variableValue;
                                 break;
 
                             case XmlCharacterData cData:
-                                cData.Data = variable.Value;
+                                cData.Data = variableValue;
                                 break;
 
                             case XmlProcessingInstruction processingInstruction:
-                                processingInstruction.Data = variable.Value;
+                                processingInstruction.Data = variableValue;
                                 break;
 
                             case XmlNode node:

@@ -255,6 +255,18 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
+        public void HandlesVariablesThatReferenceOtherVariables()
+        {
+            var vars = new CalamariVariables
+            {
+                { "/document/selfclosing", "#{a}" },
+                { "a", "#{b}" },
+                { "b", "value-new" },
+            };
+            RunTest(vars, "elements.xml");
+        }
+
+        [Test]
         public void ShouldPreserveEncodingUtf8DosBom()
         {
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf8-dos-bom.xml"),
