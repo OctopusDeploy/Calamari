@@ -14,11 +14,15 @@
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
         <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="10.0.4" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.22" />
+        <PackageReference Include="Assent" Version="1.6.0" />
     </ItemGroup>
 
     <ItemGroup>
         <None Update="Packages\**\*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="AzureResourceGroupActionUtilsFixture.TemplateParameters.approved.txt">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
 </Project>
