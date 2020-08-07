@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest(GetFixtureResouce("Samples", "NoHeader.config"), variables);
+            var text = PerformTest(GetFixtureResource("Samples", "NoHeader.config"), variables);
             Assert.That(text, Does.StartWith("<configuration"));
         }
 
@@ -41,7 +41,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest(GetFixtureResouce("Samples","CrazyNamespace.config"), variables);
+            var text = PerformTest(GetFixtureResource("Samples","CrazyNamespace.config"), variables);
 
             var contents = XDocument.Parse(text);
 
@@ -57,7 +57,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest(GetFixtureResouce("Samples", "App.config"), variables);
+            var text = PerformTest(GetFixtureResource("Samples", "App.config"), variables);
 
             var contents = XDocument.Parse(text);
 
@@ -73,7 +73,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("LogFile", "C:\\Log.txt");
             variables.Set("DatabaseConnection", null);
 
-            var text = PerformTest(GetFixtureResouce("Samples", "StrongTyped.config"), variables);
+            var text = PerformTest(GetFixtureResource("Samples", "StrongTyped.config"), variables);
 
             var contents = XDocument.Parse(text);
 
@@ -86,7 +86,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
             variables.Set("MyDb1", "Server=foo");
             variables.Set("MyDb2", "Server=bar&bar=123");
 
-            var text = PerformTest(GetFixtureResouce("Samples", "App.config"), variables);
+            var text = PerformTest(GetFixtureResource("Samples", "App.config"), variables);
 
             var contents = XDocument.Parse(text);
 
@@ -98,7 +98,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         [ExpectedException(typeof (System.Xml.XmlException))]
         public void ShouldThrowExceptionForBadConfig()
         {
-            PerformTest(GetFixtureResouce("Samples", "Bad.config"), variables);
+            PerformTest(GetFixtureResource("Samples", "Bad.config"), variables);
         }
 
         [Test]
@@ -106,7 +106,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationVariables
         {
             variables.AddFlag(KnownVariables.Package.IgnoreVariableReplacementErrors, true);
             configurationVariablesReplacer = new ConfigurationVariablesReplacer(variables, new InMemoryLog());
-            PerformTest(GetFixtureResouce("Samples", "Bad.config"), variables);
+            PerformTest(GetFixtureResource("Samples", "Bad.config"), variables);
         }
 
         string PerformTest(string sampleFile, IVariables variables)

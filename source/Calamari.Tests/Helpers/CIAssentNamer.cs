@@ -6,7 +6,7 @@ namespace Calamari.Tests.Helpers
     {
         public string GetName(TestMetadata metadata)
         {
-            return CalamariFixture.GetFixtureResouce(
+            return CalamariFixture.GetFixtureResource(
                 metadata.TestFixture.GetType(),
                 "Approved",
                 $"{metadata.TestFixture.GetType().Name}.{metadata.TestName}"

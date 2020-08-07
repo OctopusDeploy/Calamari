@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
             variables["ServerEndpoints[FOREXUAT02].Name"] = "forexuat02.local";
             variables["ServerEndpoints[FOREXUAT02].Port"] = "1566";
             
-            var text = PerformTest(GetFixtureResouce("Samples","Servers.json"), variables).text;
+            var text = PerformTest(GetFixtureResource("Samples","Servers.json"), variables).text;
 
             Assert.That(Regex.Replace(text, "\\s+", ""), Is.EqualTo(@"{""Servers"":[{""Name"":""forexuat01.local"",""Port"":1566},{""Name"":""forexuat02.local"",""Port"":1566}]}"));
         }
@@ -40,7 +40,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
                 { "var", "=:'\"\\\r\n\t <>" }
             };
             
-            var textAfterReplacement = PerformTest(GetFixtureResouce("Samples", "Filters.txt"), variables).text;
+            var textAfterReplacement = PerformTest(GetFixtureResource("Samples", "Filters.txt"), variables).text;
             this.Assent(textAfterReplacement, TestEnvironment.AssentConfiguration);
         }
 
@@ -50,7 +50,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var variables = new CalamariVariables();
             variables["fox"] = "replaced fox";
 
-            var text = PerformTest(GetFixtureResouce("Samples", "ParserErrors.txt"), variables).text;
+            var text = PerformTest(GetFixtureResource("Samples", "ParserErrors.txt"), variables).text;
 
             // Environment.Newline returning \r\n when running tests on mono, but \n on dotnet core, just replace
             Assert.AreEqual("the quick brown replaced fox jumps over the lazy #{dog\nthe quick brown replaced fox jumps over the lazy #{dog #{", text.Replace("\r\n", "\n"));
@@ -59,7 +59,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void ShouldRetainEncodingIfNoneSet()
         {
-            var filePath = GetFixtureResouce("Samples", "UTF16LE.ini");
+            var filePath = GetFixtureResource("Samples", "UTF16LE.ini");
             var variables = new CalamariVariables();
             variables["LocalCacheFolderName"] = "SpongeBob";
 
@@ -76,7 +76,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         public void ShouldOverrideEncodingIfProvided()
         {
 
-            var filePath = GetFixtureResouce("Samples", "UTF16LE.ini");
+            var filePath = GetFixtureResource("Samples", "UTF16LE.ini");
             var variables = new CalamariVariables();
             variables[PackageVariables.SubstituteInFilesOutputEncoding] = "utf-8";
 
@@ -92,7 +92,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         public void ShouldRevertToExistingEncodingIfInvalid()
         {
 
-            var filePath = GetFixtureResouce("Samples", "UTF16LE.ini");
+            var filePath = GetFixtureResource("Samples", "UTF16LE.ini");
             var variables = new CalamariVariables();
             variables[PackageVariables.SubstituteInFilesOutputEncoding] = "utf-666";
 
@@ -107,7 +107,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void ShouldDetectUTF8WithNoBom()
         {
-            var filePath = GetFixtureResouce("Samples", "UTF8.txt");
+            var filePath = GetFixtureResource("Samples", "UTF8.txt");
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
@@ -118,7 +118,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void ShouldDetectUTF8WithBom()
         {
-            var filePath = GetFixtureResouce("Samples", "UTF8BOM.txt");
+            var filePath = GetFixtureResource("Samples", "UTF8BOM.txt");
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
@@ -128,7 +128,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void ShouldDetectASCII()
         {
-            var filePath = GetFixtureResouce("Samples", "ASCII.txt");
+            var filePath = GetFixtureResource("Samples", "ASCII.txt");
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
@@ -139,7 +139,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void ShouldFallBackToDefaultCodePage()
         {
-            var filePath = GetFixtureResouce("Samples", "ANSI.txt");
+            var filePath = GetFixtureResource("Samples", "ANSI.txt");
 
             Encoding encoding;
             FileSystem.ReadFile(filePath, out encoding);
@@ -149,7 +149,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void RetainANSI()
         {
-            var filePath = GetFixtureResouce("Samples", "ANSI.txt");
+            var filePath = GetFixtureResource("Samples", "ANSI.txt");
             var variables = new CalamariVariables();
             variables["LocalCacheFolderName"] = "SpongeBob";
 
@@ -164,7 +164,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void RetainASCII()
         {
-            var filePath = GetFixtureResouce("Samples", "ASCII.txt");
+            var filePath = GetFixtureResource("Samples", "ASCII.txt");
             var variables = new CalamariVariables();
             variables["LocalCacheFolderName"] = "SpongeBob";
 
@@ -179,7 +179,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void RetainUTF8()
         {
-            var filePath = GetFixtureResouce("Samples", "UTF8.txt");
+            var filePath = GetFixtureResource("Samples", "UTF8.txt");
             var variables = new CalamariVariables();
             variables["LocalCacheFolderName"] = "SpongeBob";
 
@@ -196,7 +196,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void RetainUTF8Bom()
         {
-            var filePath = GetFixtureResouce("Samples", "UTF8BOM.txt");
+            var filePath = GetFixtureResource("Samples", "UTF8BOM.txt");
             var variables = new CalamariVariables();
             variables["LocalCacheFolderName"] = "SpongeBob";
 

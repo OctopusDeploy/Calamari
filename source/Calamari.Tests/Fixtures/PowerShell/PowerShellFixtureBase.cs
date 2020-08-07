@@ -56,7 +56,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", ProfileScript)), 
+                .Argument("script", GetFixtureResource("Scripts", ProfileScript)), 
                 variables);
 
             output.AssertSuccess();
@@ -98,7 +98,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "Hello.ps1")));
+                .Argument("script", GetFixtureResource("Scripts", "Hello.ps1")));
 
             output.AssertSuccess();
             output.AssertOutput($"##octopus[stdout-warning]{Environment.NewLine}The `--script` parameter is deprecated.");
@@ -299,7 +299,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce("Scripts", "CanDotSource.ps1")));
+                .Argument("script", GetFixtureResource("Scripts", "CanDotSource.ps1")));
 
             output.AssertSuccess();
             output.AssertOutput("Hello!");
@@ -484,7 +484,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("package", GetFixtureResouce("Packages", "PackagedScript.1.0.0.zip")), variables);
+                .Argument("package", GetFixtureResource("Packages", "PackagedScript.1.0.0.zip")), variables);
 
             output.AssertSuccess();
             output.AssertOutput("Extracting package");
@@ -514,7 +514,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce(Path.Combine("Scripts", "Path With '"), "PathWithSingleQuote.ps1")));
+                .Argument("script", GetFixtureResource(Path.Combine("Scripts", "Path With '"), "PathWithSingleQuote.ps1")));
 
             output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a '");
@@ -526,7 +526,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
-                .Argument("script", GetFixtureResouce(Path.Combine("Scripts", "Path With $"), "PathWithDollar.ps1")));
+                .Argument("script", GetFixtureResource(Path.Combine("Scripts", "Path With $"), "PathWithDollar.ps1")));
 
             output.AssertSuccess();
             output.AssertOutput("Hello from a path containing a $");
