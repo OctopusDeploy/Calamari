@@ -25,7 +25,7 @@ namespace Sashimi.AzureWebApp
             if (!isLegacyAction && context.DeploymentTargetType.Some())
             {
                 if (context.DeploymentTargetType.Value != AzureWebAppEndpoint.AzureWebAppDeploymentTargetType)
-                    throw new InvalidOperationException($"The machine {context.DeploymentTargetName.SomeOr("<unknown>")} will not be deployed to because it is not an {AzureWebAppEndpoint.AzureWebAppDeploymentTargetType.DisplayName} target.");
+                    throw new ControlledActionFailedException($"The machine {context.DeploymentTargetName.SomeOr("<unknown>")} will not be deployed to because it is not an {AzureWebAppEndpoint.AzureWebAppDeploymentTargetType.DisplayName} target.");
             }
 
             return context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-web")
