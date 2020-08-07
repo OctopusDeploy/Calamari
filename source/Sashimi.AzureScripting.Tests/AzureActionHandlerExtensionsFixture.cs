@@ -6,7 +6,7 @@ using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Tests.Shared.Server;
 
-namespace Sashimi.AzureWebApp.Tests
+namespace Sashimi.AzureScripting.Tests
 {
     [TestFixture]
     public class AzureActionHandlerExtensionsFixture
