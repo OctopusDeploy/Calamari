@@ -9,8 +9,6 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
@@ -23,7 +21,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         Desktop,
         Core
     }
-    
+
     public abstract class PowerShellFixtureBase : CalamariFixture
     {
         protected abstract PowerShellEdition PowerShellEdition { get; }
@@ -32,7 +30,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             const string powerShellCoreEdition = "PSEdition                      Core";
             var trimmedOutput = output.CapturedOutput.AllMessages.Select(i => i.TrimEnd());
-            
+
             if (PowerShellEdition == PowerShellEdition.Core)
                 trimmedOutput.Should().Contain(powerShellCoreEdition);
             else
@@ -42,7 +40,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 trimmedOutput.Should().NotContain(powerShellCoreEdition);
             }
         }
-        
+
         [Test]
         [TestCase("true", true)]
         [TestCase("false", false)]
@@ -53,7 +51,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var variables = new CalamariVariables();
             if (executeWithoutProfile != null)
                 variables.Set(PowerShellVariables.ExecuteWithoutProfile, executeWithoutProfile);
-            
+
             var output = InvokeCalamariForPowerShell(calamari => calamari
                 .Action("run-script")
                 .Argument("script", GetFixtureResource("Scripts", ProfileScript)), 
@@ -68,7 +66,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Should().Be(calledWithNoProfile);
             AssertPowerShellEdition(output);
         }
-        
+
         [Test]
         public void ShouldNotCallWithNoProfileWhenVariableNotSet()
         {
@@ -135,7 +133,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             if (IsRunningOnUnixLikeEnvironment)
                 Assert.Inconclusive("outputVariables is provided for offline drops, and is only supported for windows deployments, since it uses DP-API to encrypt and decrypt the output variables");
-            
+
             var outputVariablesFile = Path.GetTempFileName();
 
             var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" };
@@ -205,7 +203,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput(expectedArtifactServiceMessage);
             AssertPowerShellEdition(output);
         }
-        
+
         [Test]
         public void ShouldWriteServiceMessageForUpdateProgress()
         {
@@ -214,7 +212,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
             AssertPowerShellEdition(output);
         }
-        
+
         [Test]
         public void ShouldWriteServiceMessageForUpdateProgressFromPipeline()
         {
@@ -281,8 +279,8 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteVerboseMessageForArtifactsThatDoNotExist()
         {
-            var nonExistantArtifactPath = IsRunningOnUnixLikeEnvironment 
-                ? @"\tmp\NonExistantPath\NonExistantFile.txt" 
+            var nonExistantArtifactPath = IsRunningOnUnixLikeEnvironment
+                ? @"\tmp\NonExistantPath\NonExistantFile.txt"
                 : @"C:\NonExistantPath\NonExistantFile.txt";
             var (output, _) = RunPowerShellScript("WarningForMissingArtifact.ps1", new Dictionary<string, string> {{"ArtifactPath", nonExistantArtifactPath}});
             output.AssertSuccess();
@@ -375,7 +373,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertErrorOutput("The splatting operator '@' cannot be used to reference variables in an expression. '@UCJ' can be used only as an argument to a command. To reference variables in an expression use '$UCJ'.");
             //ensure it logs the stack trace
             output.AssertErrorOutput("at <ScriptBlock>, ");
-            
+
             AssertPowerShellEdition(output);
         }
 
@@ -500,7 +498,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var pingScriptName = IsRunningOnUnixLikeEnvironment
                 ? "Ping.Nix.ps1"
-                : "Ping.Win.ps1"; 
+                : "Ping.Win.ps1";
             var (output, _) = RunPowerShellScript(pingScriptName);
             output.AssertSuccess();
 
@@ -593,16 +591,16 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var variableDictionary = variables ?? new CalamariVariables();
             variableDictionary.Add(PowerShellVariables.Edition, GetPowerShellEditionVariable());
-            
+
             using (var variablesFile = CreateVariablesFile(variableDictionary))
             {
                 var calamariCommand = Calamari();
                 buildCommand(calamariCommand);
                 calamariCommand.Argument("variables", variablesFile.FilePath);
-                return Invoke(calamariCommand);                
+                return Invoke(calamariCommand);
             }
         }
-        
+
         VariableFile CreateVariablesFile(CalamariVariables variables)
         {
             return new VariableFile(variables);
@@ -635,7 +633,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             variablesDictionary.Add(PowerShellVariables.Edition, GetPowerShellEditionVariable());
             return RunScript(scriptName, variablesDictionary, additionalParameters, sensitiveVariablesPassword);
         }
-        
+
         string GetPowerShellEditionVariable()
         {
             switch(PowerShellEdition)
