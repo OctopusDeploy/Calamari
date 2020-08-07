@@ -48,7 +48,7 @@ namespace Sashimi.AzureWebApp.Endpoints
         {
             yield return new ScriptFunctionRegistration("OctopusAzureWebAppTarget",
                                                              "Creates a new Azure WebApp target.",
-                                                             "create-azurewebapptarget",
+                                                             CreateTargetServiceMessageHandler!.ServiceMessageName,
                                                              new Dictionary<string, FunctionParameter>
                                                              {
                                                                  { "name", new FunctionParameter(ParameterType.String) },
