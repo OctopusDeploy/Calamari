@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;

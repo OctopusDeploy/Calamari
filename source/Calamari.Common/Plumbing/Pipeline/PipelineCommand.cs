@@ -20,6 +20,11 @@ namespace Calamari.Common.Plumbing.Pipeline
             return Enumerable.Empty<IBeforePackageExtractionBehaviour>();
         }
 
+        protected virtual IEnumerable<IPackageExtractionBehaviour> PackageExtraction(PackageExtractionResolver resolver)
+        {
+            yield return resolver.Create<ExtractBehaviour>();
+        }
+
         protected virtual IEnumerable<IAfterPackageExtractionBehaviour> AfterPackageExtraction(AfterPackageExtractionResolver resolver)
         {
             return Enumerable.Empty<IAfterPackageExtractionBehaviour>();
@@ -81,7 +86,10 @@ namespace Calamari.Common.Plumbing.Pipeline
                 yield return ExecuteBehaviour(deployment, behaviour);
             }
 
-            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ExtractBehaviour>());
+            foreach (var behaviour in PackageExtraction(new PackageExtractionResolver(lifetimeScope)))
+            {
+                yield return ExecuteBehaviour(deployment, behaviour);
+            }
 
             foreach (var behaviour in AfterPackageExtraction(new AfterPackageExtractionResolver(lifetimeScope)))
             {

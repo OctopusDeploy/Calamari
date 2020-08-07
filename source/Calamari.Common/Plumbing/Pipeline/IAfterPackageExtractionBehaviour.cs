@@ -1,7 +1,6 @@
 ﻿using System;
-using Calamari.Common.Plumbing.Pipeline;
 
-namespace Calamari.Common.Features.Behaviours
+namespace Calamari.Common.Plumbing.Pipeline
 {
     public interface IAfterPackageExtractionBehaviour: IBehaviour
     {
