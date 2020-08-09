@@ -85,9 +85,9 @@ namespace Calamari.Common
                 .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>().Name);
         }
 
-        Assembly GetProgramAssemblyToRegister()
+        protected virtual Assembly[] GetProgramAssembliesToRegister()
         {
-            return GetType().Assembly;
+            return new []{GetType().Assembly};
         }
 
         protected async Task<int> Run(string[] args)
@@ -130,10 +130,11 @@ namespace Calamari.Common
 
         IEnumerable<Assembly> GetAllAssembliesToRegister()
         {
-            var programAssembly = GetProgramAssemblyToRegister();
+            var programAssembly = GetProgramAssembliesToRegister();
             if (programAssembly != null)
             {
-                yield return programAssembly; // Calamari Flavour
+                foreach (var assembly in programAssembly)
+                    yield return assembly; // Calamari Flavour & dependencies
             }
 
             yield return typeof(CalamariFlavourProgramAsync).Assembly; // Calamari.Common
