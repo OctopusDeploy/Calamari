@@ -7,7 +7,6 @@ using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.Journal;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;

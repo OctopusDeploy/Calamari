@@ -1,6 +1,7 @@
-﻿using Calamari.Common.Commands;
+﻿using System;
+using Calamari.Common.Commands;
 
-namespace Calamari.Deployment.Journal
+namespace Calamari.Common.Plumbing.Deployment.Journal
 {
     public interface IDeploymentJournalWriter
     {

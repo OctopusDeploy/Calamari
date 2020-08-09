@@ -8,8 +8,8 @@ using Calamari.Commands;
 using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Deployment.Journal;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using NuGet;
@@ -23,7 +23,7 @@ namespace Calamari
         protected Program(ILog log) : base(log)
         {
         }
-        
+
         public static int Main(string[] args)
         {
             return new Program(ConsoleLog.Instance).Run(args);
@@ -45,9 +45,9 @@ namespace Calamari
             // Setting extensions here as in the new Modularity world we don't register extensions
             // and GetAllAssembliesToRegister doesn't get passed CommonOptions
             extensions = options.Extensions;
-            
+
             base.ConfigureContainer(builder, options);
-            
+
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
@@ -72,9 +72,9 @@ namespace Calamari
             {
                 yield return assembly;
             }
-            
+
             yield return typeof(ApplyDeltaCommand).Assembly; // Calamari.Shared
-            
+
             var extensionAssemblies = GetExtensionAssemblies();
             foreach (var extensionAssembly in extensionAssemblies)
             {

@@ -1,7 +1,6 @@
 ﻿using Calamari.Commands.Support;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Deployment.Journal;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,6 +15,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
