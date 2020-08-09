@@ -10,6 +10,7 @@
 
     <ItemGroup>
       <PackageReference Include="Calamari.Common" Version="14.7.0" />
+      <PackageReference Include="Calamari.Common" Version="14.3.3-frank-runscript0002" />
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="Scripts\*" />

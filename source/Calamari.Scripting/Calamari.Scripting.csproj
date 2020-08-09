@@ -8,4 +8,8 @@
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Calamari.Common" Version="14.3.3-frank-runscript0002" />
+    </ItemGroup>
+
 </Project>

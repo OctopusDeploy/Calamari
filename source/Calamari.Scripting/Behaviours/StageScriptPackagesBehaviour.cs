@@ -1,40 +1,50 @@
-﻿﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Deployment.Conventions
+namespace Calamari.Scripting
 {
-    public class StageScriptPackagesConvention : IInstallConvention
+    public class StageScriptPackagesBehaviour : IAfterPackageExtractionBehaviour
     {
-        private readonly string packagePathContainingScript;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly IPackageExtractor extractor;
+        private readonly ICombinedPackageExtractor extractor;
         private readonly bool forceExtract;
 
-        public StageScriptPackagesConvention(string packagePathContainingScript, ICalamariFileSystem fileSystem, IPackageExtractor extractor, bool forceExtract = false)
+        public StageScriptPackagesBehaviour(ICalamariFileSystem fileSystem, ICombinedPackageExtractor extractor)
         {
-            this.packagePathContainingScript = packagePathContainingScript;
             this.fileSystem = fileSystem;
             this.extractor = extractor;
-            this.forceExtract = forceExtract;
+            this.forceExtract = false;
         }
 
-        public void Install(RunningDeployment deployment)
+        public bool IsEnabled(RunningDeployment context)
         {
+            return true;
+        }
+
+        public Task Execute(RunningDeployment context)
+        {
+            var packagePathContainingScript = context.PackageFilePath;
             // If the script is contained in a package, then extract the containing package in the working directory
             if (!string.IsNullOrWhiteSpace(packagePathContainingScript))
             {
-                ExtractPackage(packagePathContainingScript, deployment.CurrentDirectory);
-                deployment.Variables.Set(KnownVariables.OriginalPackageDirectoryPath, deployment.CurrentDirectory);
+                ExtractPackage(packagePathContainingScript!, context.CurrentDirectory);
+                context.Variables.Set(KnownVariables.OriginalPackageDirectoryPath, context.CurrentDirectory);
             }
 
             // Stage any referenced packages (i.e. packages that don't contain the script)
             // The may or may not be extracted.
-            StagePackageReferences(deployment);
+            StagePackageReferences(context);
+
+            return this.CompletedTask();
         }
 
         void StagePackageReferences(RunningDeployment deployment)
@@ -96,5 +106,6 @@ namespace Calamari.Deployment.Conventions
 
             extractor.Extract(packageFile, extractionDirectory);
         }
+
     }
 }
