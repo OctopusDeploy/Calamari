@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -17,6 +18,22 @@ namespace Calamari.Common.Plumbing.FileSystem
         /// For file operations, try again after 100ms and again every 200ms after that
         /// </summary>
         static readonly LimitedExponentialRetryInterval RetryIntervalForFileOperations = new LimitedExponentialRetryInterval(100, 200, 2);
+
+        public static readonly ReadOnlyCollection<Encoding> DefaultInputEncodingPrecedence;
+
+        static CalamariPhysicalFileSystem()
+        {
+#if NETSTANDARD
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // Required to use code pages in .NET Standard
+#endif
+            DefaultInputEncodingPrecedence = new List<Encoding>
+            {
+                new UTF8Encoding(false, true),
+                Encoding.GetEncoding("windows-1252",
+                                     EncoderFallback.ExceptionFallback /* Detect problems if re-used for output */,
+                                     DecoderFallback.ReplacementFallback)
+            }.AsReadOnly();
+        }
 
         protected IFile File { get; set; } = new StandardFile();
         protected IDirectory Directory { get; set; } = new StandardDirectory();
@@ -219,113 +236,52 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public string ReadFile(string path)
         {
-            Encoding encoding;
-            return ReadFile(path, out encoding);
+            return ReadFile(path, out _);
         }
 
-        //Read a file and detect different encodings. Based on answer from http://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp
-        //but don't try to handle UTF16 without BOM or non-default ANSI codepage.
-        public string ReadFile(string filename, out Encoding encoding)
+        public string ReadFile(string path, out Encoding encoding)
         {
-            var b = File.ReadAllBytes(filename);
+            return ReadFile(path, out encoding, DefaultInputEncodingPrecedence.ToArray());
+        }
 
-            // BOM/signature exists (sourced from http://www.unicode.org/faq/utf_bom.html#bom4)
-            if (b.Length >= 4 && b[0] == 0x00 && b[1] == 0x00 && b[2] == 0xFE && b[3] == 0xFF)
-            {
-                encoding = Encoding.GetEncoding("utf-32BE");
-                return Encoding.GetEncoding("utf-32BE").GetString(b, 4, b.Length - 4);
-            } // UTF-32, big-endian
+        public string ReadFile(string path, out Encoding encoding, params Encoding[] encodingPrecedence)
+        {
+            if (encodingPrecedence.Length < 1)
+                throw new Exception("No encodings specified.");
 
-            if (b.Length >= 4 && b[0] == 0xFF && b[1] == 0xFE && b[2] == 0x00 && b[3] == 0x00)
-            {
-                encoding = Encoding.UTF32;
-                return Encoding.UTF32.GetString(b, 4, b.Length - 4);
-            } // UTF-32, little-endian
+            if (encodingPrecedence.Take(encodingPrecedence.Length - 1)
+                                  .FirstOrDefault(DecoderDoesNotRaiseErrorsForUnsupportedCharacters) is { } e)
+                throw new Exception($"The supplied encoding '{e}' does not raise errors for unsupported characters, so the subsequent "
+                                    + "encoder will never be used. Please set DecoderFallback to ExceptionFallback or use Unicode.");
 
-            if (b.Length >= 2 && b[0] == 0xFE && b[1] == 0xFF)
-            {
-                encoding = Encoding.BigEndianUnicode;
-                return Encoding.BigEndianUnicode.GetString(b, 2, b.Length - 2);
-            } // UTF-16, big-endian
+            var bytes = File.ReadAllBytes(path);
 
-            if (b.Length >= 2 && b[0] == 0xFF && b[1] == 0xFE)
-            {
-                encoding = Encoding.Unicode;
-                return Encoding.Unicode.GetString(b, 2, b.Length - 2);
-            } // UTF-16, little-endian
-
-            if (b.Length >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF)
-            {
-                encoding = Encoding.UTF8;
-                return Encoding.UTF8.GetString(b, 3, b.Length - 3);
-            } // UTF-8
-
-            if (b.Length >= 3 && b[0] == 0x2b && b[1] == 0x2f && b[2] == 0x76)
-            {
-                encoding = Encoding.UTF7;
-                return Encoding.UTF7.GetString(b, 3, b.Length - 3);
-            } // UTF-7
-
-            // Some text files are encoded in UTF8, but have no BOM/signature. Hence
-            // the below manually checks for a UTF8 pattern. This code is based off
-            // the top answer at: http://stackoverflow.com/questions/6555015/check-for-invalid-utf8
-            var i = 0;
-            var utf8 = false;
-            var ascii = true;
-            while (i < b.Length - 4)
-            {
-                if (b[i] <= 0x7F)
+            Exception lastException = null;
+            foreach (var encodingToTry in encodingPrecedence)
+                try
                 {
-                    i += 1;
-                    continue;
-                } // If all characters are below 0x80, then it is valid UTF8, but UTF8 is not 'required'
-
-                if (b[i] >= 0xC2 && b[i] <= 0xDF && b[i + 1] >= 0x80 && b[i + 1] < 0xC0)
+                    using (var stream = new MemoryStream(bytes))
+                    using (var reader = new StreamReader(stream, encodingToTry))
+                    {
+                        var text = reader.ReadToEnd();
+                        encoding = reader.CurrentEncoding;
+                        return text;
+                    }
+                }
+                catch (DecoderFallbackException ex)
                 {
-                    i += 2;
-                    utf8 = true;
-                    ascii = false;
-                    continue;
+                    lastException = ex;
                 }
 
-                if (b[i] >= 0xE0 && b[i] <= 0xF0 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0)
-                {
-                    i += 3;
-                    utf8 = true;
-                    ascii = false;
-                    continue;
-                }
+            throw new Exception("Unable to decode file contents with the specified encodings.", lastException);
+        }
 
-                if (b[i] >= 0xF0 && b[i] <= 0xF4 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0 && b[i + 3] >= 0x80 && b[i + 3] < 0xC0)
-                {
-                    i += 4;
-                    utf8 = true;
-                    ascii = false;
-                    continue;
-                }
-
-                ascii = false;
-                utf8 = false;
-                break;
-            }
-
-            if (ascii)
-            {
-                encoding = Encoding.ASCII;
-                return Encoding.ASCII.GetString(b);
-            }
-
-            if (utf8)
-            {
-                encoding = new UTF8Encoding(false); //UTF8 with no BOM
-                return Encoding.UTF8.GetString(b);
-            }
-
-            // If all else fails, the encoding is probably (though certainly not definitely) the user's local codepage!
-            // this probably something like Windows 1252 on Windows, but is Encoding.Default is UTF8 on Linux so this probably isn't right in Linux.
-            encoding = Encoding.Default;
-
-            return encoding.GetString(b);
+        public static bool DecoderDoesNotRaiseErrorsForUnsupportedCharacters(Encoding encoding)
+        {
+            return encoding.DecoderFallback != DecoderFallback.ExceptionFallback
+                   && !encoding.WebName.StartsWith("utf-")
+                   && !encoding.WebName.StartsWith("unicode")
+                   && !encoding.WebName.StartsWith("ucs-");
         }
 
         public byte[] ReadAllBytes(string path)

@@ -32,7 +32,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public void ModifyFile(string filePath, IVariables variables)
         {
-            var (fileText, encoding) = EncodingDetectingFileReader.ReadToEnd(filePath);
+            var fileText = fileSystem.ReadFile(filePath, out var encoding);
             var lineEnding = fileText.GetMostCommonLineEnding();
 
             var doc = new XmlDocument();
