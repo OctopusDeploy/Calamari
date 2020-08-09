@@ -18,6 +18,7 @@ using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -58,6 +59,7 @@ namespace Calamari.Common
             builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
             builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
             builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
+            builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
