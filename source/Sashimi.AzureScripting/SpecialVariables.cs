@@ -13,6 +13,7 @@ namespace Sashimi.AzureScripting
                 public static readonly string UseBundledAzureModules = "OctopusUseBundledAzureModules";
                 public static readonly string UseBundledAzureCLI = "OctopusUseBundledAzureCLI";
                 public static readonly string UseBundledAzureModulesLegacy = "Octopus.Action.Azure.UseBundledAzurePowerShellModules";
+                public static readonly string AccountId = "Octopus.Action.Azure.AccountId";
             }
         }
     }

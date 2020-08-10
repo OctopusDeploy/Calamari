@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Calamari.Common" Version="14.3.3-frank-runscript0003" />
+      <PackageReference Include="Calamari.Common" Version="14.4.1-frank-runscript0023" />
     </ItemGroup>
 
 </Project>

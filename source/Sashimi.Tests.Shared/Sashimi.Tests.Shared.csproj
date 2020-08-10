@@ -21,6 +21,7 @@
     <PackageReference Include="Calamari.Common" Version="14.7.0" />
     <PackageReference Include="Calamari.Common" Version="14.3.3-frank-runscript0002" />
     <PackageReference Include="Calamari.Common" Version="14.3.3-frank-runscript0003" />
+    <PackageReference Include="Calamari.Common" Version="14.4.1-frank-runscript0023" />
     <PackageReference Include="FluentAssertions" Version="5.10.3" />
     <PackageReference Include="Octostache" Version="2.8.0" />
   </ItemGroup>
