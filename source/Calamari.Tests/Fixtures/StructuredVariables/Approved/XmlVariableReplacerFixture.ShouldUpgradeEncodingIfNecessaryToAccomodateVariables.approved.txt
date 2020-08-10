@@ -1,0 +1,8 @@
+3C 64 6F 63 3E 0D 0A 20   <doc>^^ 
+20 3C 64 61 67 67 65 72    <dagger
+3E EF BF A6 3C 2F 64 61   >???</da
+67 67 65 72 3E 0D 0A 20   gger>^^ 
+20 3C 65 75 72 6F 3E E2    <euro>?
+82 AC 3C 2F 65 75 72 6F   ??</euro
+3E 0D 0A 3C 2F 64 6F 63   >^^</doc
+3E                        >
