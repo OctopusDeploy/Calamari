@@ -349,7 +349,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         }
 
         // File.WriteAllText won't overwrite a hidden file, so implement our own.
-        static void WriteAllText(string path, string? contents, Encoding? encoding = null)
+        public void WriteAllText(string path, string? contents, Encoding? encoding = null)
         {
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
@@ -360,7 +360,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             // length of our new data, but can't overwrite a hidden file,
             // so use FileMode.OpenOrCreate and set the new file length manually.
             using (var fs = new FileStream(path, FileMode.OpenOrCreate))
-            using (var sw = new StreamWriter(fs, encoding))
+            using (var sw = new StreamWriter(fs, encoding ?? new UTF8Encoding(false, true)))
             {
                 sw.Write(contents);
                 sw.Flush();
@@ -500,9 +500,23 @@ namespace Calamari.Common.Plumbing.FileSystem
                 File.Delete(backup);
         }
 
-        public void WriteAllBytes(string filePath, byte[] data)
+        // File.WriteAllBytes won't overwrite a hidden file, so implement our own.
+        public void WriteAllBytes(string path, byte[] bytes)
         {
-            File.WriteAllBytes(filePath, data);
+            if (path == null)
+                throw new ArgumentNullException(nameof(path));
+            if (path.Length <= 0)
+                throw new ArgumentException(path);
+
+            // FileMode.Open causes an existing file to be truncated to the
+            // length of our new data, but can't overwrite a hidden file,
+            // so use FileMode.OpenOrCreate and set the new file length manually.
+            using (var fs = new FileStream(path, FileMode.OpenOrCreate))
+            {
+                fs.Write(bytes, 0, bytes.Length);
+                fs.Flush();
+                fs.SetLength(fs.Position);
+            }
         }
 
         public string RemoveInvalidFileNameChars(string path)

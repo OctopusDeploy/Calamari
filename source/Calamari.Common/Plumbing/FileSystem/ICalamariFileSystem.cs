@@ -26,6 +26,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         void OverwriteFile(string path, string? contents);
         void OverwriteFile(string path, string? contents, Encoding encoding);
         void OverwriteFile(string path, byte[] data);
+        void WriteAllText(string path, string contents, Encoding? encoding = null);
         Stream OpenFile(string path, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
         Stream OpenFile(string path, FileMode mode = FileMode.OpenOrCreate, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
         Stream CreateTemporaryFile(string extension, out string path);
