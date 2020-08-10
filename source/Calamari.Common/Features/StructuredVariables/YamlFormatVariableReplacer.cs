@@ -103,10 +103,6 @@ namespace Calamari.Common.Features.StructuredVariables
                     }
                 }
 
-                // Write the replacement file
-                if (EncodingAdaptiveFileWriter.EncoderDoesNotRaiseErrorsForUnsupportedCharacters(encoding))
-                    encoding = Encoding.GetEncoding(encoding.WebName, EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
-
                 EncodingAdaptiveFileWriter.Write(filePath,
                                                  writer =>
                                                  {
