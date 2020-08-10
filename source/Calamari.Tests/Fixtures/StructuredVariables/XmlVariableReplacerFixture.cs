@@ -294,6 +294,13 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                         TestEnvironment.AssentConfiguration);
         }
 
+        [Test]
+        public void ShouldUpgradeEncodingIfNecessaryToAccomodateVariables()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables{{"/doc/dagger", "\uFFE6"}}, "enc-windows1252-dos-nobom.xml"),
+                        TestEnvironment.AssentConfiguration);
+        }
+
         void RunTest(CalamariVariables vars,
                      string file,
                      [CallerMemberName]
