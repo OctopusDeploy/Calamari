@@ -1,1 +1,3 @@
-† ‡ µ ¢ £ € « » Math: - × ÷ ±
+† ‡ µ ¢ £ € « »
+Math: - × ÷ ±
+LocalCacheFolderName: #{LocalCacheFolderName}
