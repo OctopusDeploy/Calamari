@@ -10,7 +10,7 @@ namespace Calamari.Common.Features.StructuredVariables
             return new IFileFormatVariableReplacer[]
             {
                 new JsonFormatVariableReplacer(fileSystem, log),
-                new YamlFormatVariableReplacer(fileSystem, log),
+                new YamlFormatVariableReplacer(fileSystem),
                 new XmlFormatVariableReplacer(fileSystem, log)
             };
         }
