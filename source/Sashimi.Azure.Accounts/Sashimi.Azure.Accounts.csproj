@@ -9,6 +9,10 @@
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     </PropertyGroup>
 
+    <PropertyGroup>
+      <NoWarn>NU5104</NoWarn>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\Azure.Common\Sashimi.Azure.Common.csproj" />
         <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
