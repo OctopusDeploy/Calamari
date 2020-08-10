@@ -139,7 +139,7 @@ Task("PublishSashimiTestProjects")
         var projects = GetFiles("./source/**/Sashimi.*.Tests.csproj");
 		foreach(var project in projects)
         {
-            var sashimiFlavour = project.GetFilenameWithoutExtension().ToString();
+            var sashimiFlavour = XmlPeek(project, "Project/PropertyGroup/AssemblyName");
 
                 void RunPublish() {
                      DotNetCorePublish(project.FullPath, new DotNetCorePublishSettings
