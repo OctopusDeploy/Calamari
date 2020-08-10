@@ -12,7 +12,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
     public class YamlVariableReplacerFixture : VariableReplacerFixture
     {
         public YamlVariableReplacerFixture()
-            : base(new YamlFormatVariableReplacer())
+            : base(new YamlFormatVariableReplacer(new InMemoryLog()))
         {
         }
 

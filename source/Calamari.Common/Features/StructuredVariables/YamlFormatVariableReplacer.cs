@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
@@ -15,6 +16,13 @@ namespace Calamari.Common.Features.StructuredVariables
     public class YamlFormatVariableReplacer : IFileFormatVariableReplacer
     {
         readonly Regex octopusReservedVariablePattern = new Regex(@"^Octopus([^:]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        readonly ILog log;
+
+        public YamlFormatVariableReplacer(ILog log)
+        {
+            this.log = log;
+        }
 
         public string FileFormatName => StructuredConfigVariablesFileFormats.Yaml;
 
@@ -111,6 +119,7 @@ namespace Calamari.Common.Features.StructuredVariables
                                                      foreach (var outputEvent in outputEvents)
                                                          emitter.Emit(outputEvent);
                                                  },
+                                                 log,
                                                  encoding,
                                                  new UTF8Encoding(false));
             }
