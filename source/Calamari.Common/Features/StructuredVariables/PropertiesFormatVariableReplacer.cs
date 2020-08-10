@@ -52,7 +52,7 @@ namespace Calamari.Common.Features.StructuredVariables
             switch (expr)
             {
                 case KeyValuePairExpression pair:
-                    var logicalName = pair?.Key?.Text?.LogicalValue ?? "";
+                    var logicalName = pair.Key?.Text?.LogicalValue ?? "";
                     if (!IsOctopusVariableName(logicalName) && variables.IsSet(logicalName))
                     {
                         var newEncodedValue = Encode.Value(variables.Get(logicalName));
