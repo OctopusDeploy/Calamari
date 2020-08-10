@@ -243,7 +243,7 @@ function New-OctopusAzureCloudServiceTarget([string]$name, [string]$azureCloudSe
 	$azureDeploymentSlot = Convert-ToServiceMessageParameter -name "azureDeploymentSlot" -value $azureDeploymentSlot
 	$swap = Convert-ToServiceMessageParameter -name "swap" -value $swap
 	$instanceCount = Convert-ToServiceMessageParameter -name "instanceCount" -value $instanceCount
-	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
+	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "octopusAccountIdOrName" -value $octopusAccountIdOrName
 	$octopusRoles = Convert-ToServiceMessageParameter -name "octopusRoles" -value $octopusRoles
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 
@@ -280,7 +280,7 @@ function New-OctopusKubernetesTarget(
 	$octopusServerCertificateIdOrName = Convert-ToServiceMessageParameter -name "serverCertificate" -value $octopusServerCertificateIdOrName
 	$clusterUrl = Convert-ToServiceMessageParameter -name "clusterUrl" -value $clusterUrl
 	$namespace = Convert-ToServiceMessageParameter -name "namespace" -value $namespace
-	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
+	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "octopusAccountIdOrName" -value $octopusAccountIdOrName
 	$octopusRoles = Convert-ToServiceMessageParameter -name "octopusRoles" -value $octopusRoles
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 	$octopusDefaultWorkerPoolIdOrName = Convert-ToServiceMessageParameter -name "defaultWorkerPool" -value $octopusDefaultWorkerPoolIdOrName
