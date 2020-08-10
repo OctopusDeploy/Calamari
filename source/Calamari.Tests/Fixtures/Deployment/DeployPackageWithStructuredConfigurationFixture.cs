@@ -199,7 +199,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 
                 var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, ConfigFileName));
 
-                this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonDeepCompareConfiguration);
+                this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonConfiguration);
             }
         }
 
@@ -218,7 +218,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var extractedPackageUpdatedJsonFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileName));
                 var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
 
-                this.Assent(extractedPackageUpdatedJsonFile, TestEnvironment.AssentJsonDeepCompareConfiguration);
+                this.Assent(extractedPackageUpdatedJsonFile, TestEnvironment.AssentJsonConfiguration);
                 this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
             }
         }
@@ -239,9 +239,9 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
                 var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, ConfigFileName));
 
-                this.Assent(extractedPackageUpdatedJsonFile, TestEnvironment.AssentJsonDeepCompareConfiguration);
+                this.Assent(extractedPackageUpdatedJsonFile, TestEnvironment.AssentJsonConfiguration);
                 this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
-                this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonDeepCompareConfiguration);
+                this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonConfiguration);
             }
         }
 
@@ -292,7 +292,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var unchangedJsonFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileName));
                 var unchangedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
 
-                this.Assent(unchangedJsonFile, TestEnvironment.AssentJsonDeepCompareConfiguration);
+                this.Assent(unchangedJsonFile, TestEnvironment.AssentJsonConfiguration);
                 this.Assent(unchangedYamlFile, TestEnvironment.AssentYamlConfiguration);
             }
         }
