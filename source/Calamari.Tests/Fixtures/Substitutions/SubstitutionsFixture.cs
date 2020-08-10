@@ -28,11 +28,13 @@ namespace Calamari.Tests.Fixtures.Substitutions
         [Test]
         public void ShouldSubstitute()
         {
-            var variables = new CalamariVariables();
-            variables["ServerEndpoints[FOREXUAT01].Name"] = "forexuat01.local";
-            variables["ServerEndpoints[FOREXUAT01].Port"] = "1566";
-            variables["ServerEndpoints[FOREXUAT02].Name"] = "forexuat02.local";
-            variables["ServerEndpoints[FOREXUAT02].Port"] = "1566";
+            var variables = new CalamariVariables
+            {
+                ["ServerEndpoints[FOREXUAT01].Name"] = "forexuat01.local",
+                ["ServerEndpoints[FOREXUAT01].Port"] = "1566",
+                ["ServerEndpoints[FOREXUAT02].Name"] = "forexuat02.local",
+                ["ServerEndpoints[FOREXUAT02].Port"] = "1566"
+            };
 
             var text = PerformTest(GetFixtureResource("Samples", "Servers.json"), variables).text;
 
