@@ -15,12 +15,14 @@ namespace Calamari.Common.Features.StructuredVariables
 {
     public class YamlFormatVariableReplacer : IFileFormatVariableReplacer
     {
-        readonly Regex octopusReservedVariablePattern = new Regex(@"^Octopus([^:]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        static readonly Regex OctopusReservedVariablePattern = new Regex(@"^Octopus([^:]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+        readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
-        public YamlFormatVariableReplacer(ILog log)
+        public YamlFormatVariableReplacer(ICalamariFileSystem fileSystem, ILog log)
         {
+            this.fileSystem = fileSystem;
             this.log = log;
         }
 
@@ -37,14 +39,14 @@ namespace Calamari.Common.Features.StructuredVariables
             try
             {
                 var variablesByKey = variables
-                                     .Where(v => !octopusReservedVariablePattern.IsMatch(v.Key))
+                                     .Where(v => !OctopusReservedVariablePattern.IsMatch(v.Key))
                                      .DistinctBy(v => v.Key)
                                      .ToDictionary<KeyValuePair<string, string>, string, Func<string>>(v => v.Key,
                                                                                                        v => () => variables.Get(v.Key),
                                                                                                        StringComparer.OrdinalIgnoreCase);
 
                 // Read and transform the input file
-                var (fileText, encoding) = EncodingDetectingFileReader.ReadToEnd(filePath);
+                var fileText = fileSystem.ReadFile(filePath, out var encoding);
                 var lineEnding = fileText.GetMostCommonLineEnding();
 
                 var outputEvents = new List<ParsingEvent>();
