@@ -71,27 +71,9 @@ namespace Calamari.Tests.Helpers
             });
 
         public static readonly Configuration AssentPropertiesConfiguration = new Configuration()
-            .UsingNamer(IsCI ? (INamer)new CIAssentNamer() : new SubdirectoryNamer("Approved"))
-            .SetInteractive(!IsCI)
-            .UsingExtension("properties")
-            .UsingComparer((received, approved) =>
-            {
-                var normalisedReceived = received.Replace("\r\n", "\n");
-                var normalisedApproved = approved.Replace("\r\n", "\n");
-
-                if (normalisedApproved == normalisedReceived)
-                {
-                    return CompareResult.Pass();
-                }
-
-                Console.WriteLine("Expected:");
-                Console.WriteLine(approved);
-
-                Console.WriteLine("Received:");
-                Console.WriteLine(received);
-
-                return CompareResult.Fail("Received .properties did not match approved .properties.");
-            });
+                                                                             .UsingNamer(IsCI ? (INamer)new CIAssentNamer() : new SubdirectoryNamer("Approved"))
+                                                                             .SetInteractive(!IsCI)
+                                                                             .UsingExtension("properties");
 
         public static string GetTestPath(params string[] paths)
         {
