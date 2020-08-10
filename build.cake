@@ -136,7 +136,7 @@ Task("PublishCalamariProjects")
 Task("PublishSashimiTestProjects")
     .IsDependentOn("Build")
     .Does(() => {
-        var projects = GetFiles("./source/**/Sashimi.*.Tests.csproj");
+        var projects = GetFiles("./source/**/Sashimi.Tests.csproj");
 		foreach(var project in projects)
         {
             var sashimiFlavour = XmlPeek(project, "Project/PropertyGroup/AssemblyName");
