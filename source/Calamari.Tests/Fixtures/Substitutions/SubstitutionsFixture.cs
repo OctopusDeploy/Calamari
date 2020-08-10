@@ -17,12 +17,14 @@ namespace Calamari.Tests.Fixtures.Substitutions
     public class SubstitutionsFixture : CalamariFixture
     {
         static readonly CalamariPhysicalFileSystem FileSystem = CalamariEnvironment.IsRunningOnWindows ? (CalamariPhysicalFileSystem)new WindowsPhysicalFileSystem() : new NixCalamariPhysicalFileSystem();
+        static readonly Encoding AnsiEncoding;
 
         static SubstitutionsFixture()
         {
 #if NETCORE
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // Required to use code pages in .NET Standard
 #endif
+            AnsiEncoding = Encoding.GetEncoding("windows-1252", EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
         }
 
         [Test]
@@ -155,11 +157,10 @@ namespace Calamari.Tests.Fixtures.Substitutions
             {
                 ["LocalCacheFolderName"] = "SpongeBob"
             };
-            var ansiEncoding = Encoding.GetEncoding(1252, EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
 
-            var result = PerformTest(filePath, variables, ansiEncoding);
+            var result = PerformTest(filePath, variables, AnsiEncoding);
 
-            var input = File.ReadAllText(filePath, ansiEncoding);
+            var input = File.ReadAllText(filePath, AnsiEncoding);
             result.text.Should().Contain("\u00F7"); // Division sign
             result.text.Should().MatchRegex(@"\r\n"); // DOS CRLF
             result.text.Should().Be(input.Replace("#{LocalCacheFolderName}", "SpongeBob"));
@@ -237,6 +238,25 @@ namespace Calamari.Tests.Fixtures.Substitutions
             result.text.Should().Contain(@"plain old ASCII");
             result.text.Should().MatchRegex(@"\r\n"); // DOS CRLF
             result.text.Should().Be(input.Replace("#{LocalCacheFolderName}", "Sp\u00F6ngeB\u00F6b"));
+        }
+        
+        [Test]
+        public void WhenAnsiCannotRepresentOutputUtf8IsUsed()
+        {
+            var filePath = GetFixtureResource("Samples", "ANSI.txt");
+            var variables = new CalamariVariables
+            {
+                ["LocalCacheFolderName"] = "SpőngeBőb"
+            };
+
+            var result = PerformTest(filePath, variables);
+
+            var input = File.ReadAllText(filePath, AnsiEncoding);
+            Assert.AreEqual(0, result.encoding.GetPreamble().Length); // No BOM detected
+            Assert.AreEqual("utf-8", result.encoding.WebName);
+            result.text.Should().Contain("\u00F7"); // Division sign
+            result.text.Should().MatchRegex(@"\r\n"); // DOS CRLF
+            result.text.Should().Be(input.Replace("#{LocalCacheFolderName}", "Sp\u0151ngeB\u0151b"));
         }
 
         (string text, Encoding encoding) PerformTest(string sampleFile, IVariables variables, Encoding expectedResultEncoding = null)
