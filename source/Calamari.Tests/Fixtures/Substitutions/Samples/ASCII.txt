@@ -1,1 +1,2 @@
-This is plain old ASCII text
+This is plain old ASCII text.
+LocalCacheFolderName: #{LocalCacheFolderName}
