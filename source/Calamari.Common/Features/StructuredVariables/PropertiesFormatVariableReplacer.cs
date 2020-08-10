@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Text.RegularExpressions;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using JavaPropertiesParser;
 using JavaPropertiesParser.Expressions;
@@ -13,15 +11,11 @@ namespace Calamari.Common.Features.StructuredVariables
     public class PropertiesFormatVariableReplacer : IFileFormatVariableReplacer
     {
         readonly ICalamariFileSystem fileSystem;
-        readonly ILog log;
 
-        public PropertiesFormatVariableReplacer(ICalamariFileSystem fileSystem, ILog log)
+        public PropertiesFormatVariableReplacer(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
-            this.log = log;
         }
-        
-        readonly Regex octopusReservedVariablePattern = new Regex(@"^Octopus([^:]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public string FileFormatName => StructuredConfigVariablesFileFormats.Properties;
 
@@ -48,6 +42,11 @@ namespace Calamari.Common.Features.StructuredVariables
             }
         }
 
+        bool IsOctopusVariableName(string variableName)
+        {
+            return variableName.StartsWith("Octopus", StringComparison.OrdinalIgnoreCase);
+        }
+
         ITopLevelExpression TryReplaceValue(ITopLevelExpression expr, IVariables variables)
         {
             switch (expr)
@@ -72,11 +71,6 @@ namespace Calamari.Common.Features.StructuredVariables
                 default:
                     return expr;
             }
-        }
-
-        bool IsOctopusVariableName(string name)
-        {
-            return octopusReservedVariablePattern.IsMatch(name);
         }
     }
 }

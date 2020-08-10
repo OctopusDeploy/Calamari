@@ -13,7 +13,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
     public class PropertiesVariableReplacerFixture : VariableReplacerFixture
     {
         public PropertiesVariableReplacerFixture()
-            : base(new PropertiesFormatVariableReplacer(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new InMemoryLog()))
+            : base(new PropertiesFormatVariableReplacer(CalamariPhysicalFileSystem.GetPhysicalFileSystem()))
         {
         }
 
