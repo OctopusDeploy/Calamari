@@ -59,8 +59,8 @@ namespace Calamari.Tests.Fixtures.FunctionCodeGen
 New-MyFunc2 -mystring 'Hello' -myboolean -mynumber 1
 New-MyFunc2 -mystring 'Hello' -mynumber 1";
                                                           context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.Deploy, ScriptSyntax.PowerShell), script);
-                                                          context.Variables.Add("Octopus.Sashimi.ScriptFunctions.Registration", serializedRegistrations);
-                                                          context.Variables.Add("Octopus.Sashimi.ScriptFunctions.CopyScriptWrapper", scriptFile.FilePath);
+                                                          context.Variables.Add(ScriptFunctionsVariables.Registration, serializedRegistrations);
+                                                          context.Variables.Add(ScriptFunctionsVariables.CopyScriptWrapper, scriptFile.FilePath);
                                                       })
                                          .WithAssert(result =>
                                                      {

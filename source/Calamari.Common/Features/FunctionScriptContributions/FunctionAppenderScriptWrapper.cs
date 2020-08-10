@@ -30,7 +30,7 @@ namespace Calamari.Common.Features.FunctionScriptContributions
 
         public bool IsEnabled(ScriptSyntax syntax)
         {
-            if (String.IsNullOrEmpty(variables.Get("Octopus.Sashimi.ScriptFunctions.Registration")))
+            if (String.IsNullOrEmpty(variables.Get(ScriptFunctionsVariables.Registration)))
             {
                 return false;
             }
@@ -44,7 +44,7 @@ namespace Calamari.Common.Features.FunctionScriptContributions
 
             variables.Set("OctopusFunctionAppenderTargetScript", $"{script.File}");
             variables.Set("OctopusFunctionAppenderTargetScriptParameters", script.Parameters);
-            var copyScriptFile = variables.Get("Octopus.Sashimi.ScriptFunctions.CopyScriptWrapper");
+            var copyScriptFile = variables.Get(ScriptFunctionsVariables.CopyScriptWrapper);
             var scriptFile = CreateContextScriptFile(workingDirectory, scriptSyntax);
 
             if (!String.IsNullOrEmpty(copyScriptFile))
@@ -66,7 +66,7 @@ namespace Calamari.Common.Features.FunctionScriptContributions
 
         string CreateContextScriptFile(string workingDirectory, ScriptSyntax scriptSyntax)
         {
-            var registrations = variables.Get("Octopus.Sashimi.ScriptFunctions.Registration");
+            var registrations = variables.Get(ScriptFunctionsVariables.Registration);
             var results = JsonConvert.DeserializeObject<IList<ScriptFunctionRegistration>>(registrations);
 
             var azureContextScriptFile = Path.Combine(workingDirectory, $"Octopus.FunctionAppenderContext.{scriptSyntax.FileExtension()}");
