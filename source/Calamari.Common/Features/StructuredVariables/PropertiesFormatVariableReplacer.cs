@@ -55,8 +55,9 @@ namespace Calamari.Common.Features.StructuredVariables
                     var logicalName = pair.Key?.Text?.LogicalValue ?? "";
                     if (!IsOctopusVariableName(logicalName) && variables.IsSet(logicalName))
                     {
-                        var newEncodedValue = Encode.Value(variables.Get(logicalName));
-                        var newValueExpr = new ValueExpression(new StringValue(newEncodedValue, newEncodedValue));
+                        var logicalValue = variables.Get(logicalName);
+                        var encodedValue = Encode.Value(logicalValue);
+                        var newValueExpr = new ValueExpression(new StringValue(logicalValue, encodedValue));
                         
                         // In cases where a key was specified with neither separator nor value
                         // we have to add a separator, otherwise the value becomes part of the key.
