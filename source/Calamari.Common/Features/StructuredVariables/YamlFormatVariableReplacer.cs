@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
@@ -15,11 +17,11 @@ namespace Calamari.Common.Features.StructuredVariables
     {
         readonly Regex octopusReservedVariablePattern = new Regex(@"^Octopus([^:]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
-        public YamlFormatVariableReplacer(ICalamariFileSystem fileSystem)
+        public YamlFormatVariableReplacer(ILog log)
         {
-            this.fileSystem = fileSystem;
+            this.log = log;
         }
 
         public string FileFormatName => StructuredConfigVariablesFileFormats.Yaml;
@@ -109,7 +111,7 @@ namespace Calamari.Common.Features.StructuredVariables
                     }
                 }
 
-                fileSystem.OverwriteFile(filePath,
+                EncodingAdaptiveFileWriter.Write(filePath,
                                                  writer =>
                                                  {
                                                      writer.NewLine = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n";
@@ -117,7 +119,9 @@ namespace Calamari.Common.Features.StructuredVariables
                                                      foreach (var outputEvent in outputEvents)
                                                          emitter.Emit(outputEvent);
                                                  },
-                                                 encoding);
+                                                 log,
+                                                 encoding,
+                                                 new UTF8Encoding(false));
             }
             catch (Exception e) when (e is SyntaxErrorException || e is SemanticErrorException)
             {

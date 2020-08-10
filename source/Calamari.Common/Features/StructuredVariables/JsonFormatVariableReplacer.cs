@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Text;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -31,19 +29,12 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             try
             {
-                var json = LoadJson(filePath);
+                JToken root = LoadJson(filePath);
                 var map = new JsonUpdateMap(log);
-                map.Load(json.root);
+                map.Load(root);
                 map.Update(variables);
 
-                fileSystem.OverwriteFile(filePath,
-                                         textWriter =>
-                                         {
-                                             textWriter.NewLine = json.lineEnding == StringExtensions.LineEnding.Unix ? "\n" : "\r\n";
-                                             var jsonWriter = new JsonTextWriter(textWriter);
-                                             jsonWriter.Formatting = Formatting.Indented;
-                                             json.root.WriteTo(jsonWriter);
-                                         }, json.encoding);
+                SaveJson(filePath, root);
             }
             catch (JsonReaderException e)
             {
@@ -51,16 +42,21 @@ namespace Calamari.Common.Features.StructuredVariables
             }
         }
 
-        (JToken root, StringExtensions.LineEnding? lineEnding, Encoding? encoding) LoadJson(string jsonFilePath)
+        JToken LoadJson(string jsonFilePath)
         {
             if (!fileSystem.FileExists(jsonFilePath))
-                return (new JObject(), null, null);
+                return new JObject();
 
-            var fileText = fileSystem.ReadFile(jsonFilePath, out var encoding);
-            if (fileText.Length == 0)
-                return (new JObject(), null, null);
+            var fileContents = fileSystem.ReadFile(jsonFilePath);
+            if (fileContents.Length == 0)
+                return new JObject();
 
-            return (JToken.Parse(fileText), fileText.GetMostCommonLineEnding(), encoding);
+            return JToken.Parse(fileContents);
+        }
+
+        void SaveJson(string jsonFilePath, JToken root)
+        {
+            fileSystem.OverwriteFile(jsonFilePath, root.ToString());
         }
     }
 }

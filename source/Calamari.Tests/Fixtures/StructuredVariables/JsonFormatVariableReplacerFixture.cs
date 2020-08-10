@@ -253,40 +253,5 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 "appsettings.simple.json"),
                         TestEnvironment.AssentJsonDeepCompareConfiguration);
         }
-
-        [Test]
-        public void ShouldPreserveEncodingUtf8DosBom()
-        {
-            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf8-dos-bom.json"),
-                        TestEnvironment.AssentConfiguration);
-        }
-
-        [Test]
-        public void ShouldPreserveEncodingUtf8UnixNoBom()
-        {
-            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf8-unix-nobom.json"),
-                        TestEnvironment.AssentConfiguration);
-        }
-
-        [Test]
-        public void ShouldPreserveEncodingUtf16DosBom()
-        {
-            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf16-dos-bom.json"),
-                        TestEnvironment.AssentConfiguration);
-        }
-
-        [Test]
-        public void ShouldPreserveEncodingWindows1252DosNoBom()
-        {
-            this.Assent(ReplaceToHex(new CalamariVariables(), "enc-windows1252-dos-nobom.json"),
-                        TestEnvironment.AssentConfiguration);
-        }
-
-        [Test]
-        public void ShouldUpgradeEncodingIfNecessaryToAccomodateVariables()
-        {
-            this.Assent(ReplaceToHex(new CalamariVariables{{"dagger", "\uFFE6"}}, "enc-windows1252-dos-nobom.json"),
-                        TestEnvironment.AssentConfiguration);
-        }
     }
 }

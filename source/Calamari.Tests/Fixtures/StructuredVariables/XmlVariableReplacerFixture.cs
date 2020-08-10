@@ -261,7 +261,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/selfclosing", "#{a}" },
                 { "a", "#{b}" },
-                { "b", "value-new" }
+                { "b", "value-new" },
             };
             RunTest(vars, "elements.xml");
         }
@@ -291,13 +291,6 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         public void ShouldPreserveEncodingWindows1252DosNoBom()
         {
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-windows1252-dos-nobom.xml"),
-                        TestEnvironment.AssentConfiguration);
-        }
-
-        [Test]
-        public void ShouldUpgradeEncodingIfNecessaryToAccomodateVariables()
-        {
-            this.Assent(ReplaceToHex(new CalamariVariables{{"/doc/dagger", "\uFFE6"}}, "enc-windows1252-dos-nobom.xml"),
                         TestEnvironment.AssentConfiguration);
         }
 
