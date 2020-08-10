@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <document xmlns:db="http://octopus.com/duplicate1" xmlns:unique="http://octopus.com/unique">
     <!-- Comment -->
     <setting id="id-1">value-1</setting>

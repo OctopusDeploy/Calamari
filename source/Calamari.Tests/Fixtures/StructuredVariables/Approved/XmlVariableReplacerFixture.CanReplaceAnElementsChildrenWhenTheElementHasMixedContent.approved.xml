@@ -1,7 +1,6 @@
 <document>
   <selfclosing />
-  <empty>
-  </empty>
+  <empty></empty>
   <mixed>
     <newElement />
   </mixed>

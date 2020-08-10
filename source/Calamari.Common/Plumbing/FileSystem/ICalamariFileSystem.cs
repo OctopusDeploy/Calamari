@@ -23,6 +23,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         long GetFileSize(string path);
         string ReadFile(string path);
         string ReadFile(string path, out Encoding encoding);
+        string ReadAllText(byte[] bytes, out Encoding encoding, ICollection<Encoding> encodingPrecedence);
         void OverwriteFile(string path, string contents, Encoding? encoding = null);
         void OverwriteFile(string path, Action<TextWriter> writeToWriter, Encoding? encoding = null);
         void OverwriteFile(string path, byte[] data);
