@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EmailSettings:DefaultRecipients:Cc", "henrik@octopus.com" }
                                 },
                                 "appsettings.simple.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -42,7 +42,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "Octopus:Section", "Should work" }
                                 },
                                 "appsettings.ignore-octopus.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -53,7 +53,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "0:Property", "NewValue" }
                                 },
                                 "appsettings.top-level-array.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -66,7 +66,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EmailSettings:DefaultRecipients:Cc", "damo@octopus.com" }
                                 },
                                 "appsettings.existing-expected.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -79,7 +79,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EmailSettings:defaultRecipients:Cc", "henrik@octopus.com" }
                                 },
                                 "appsettings.simple.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -90,7 +90,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "MyMessage", "" }
                                 },
                                 "appsettings.single.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -101,7 +101,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "MyMessage", null }
                                 },
                                 "appsettings.single.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -112,7 +112,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EnvironmentVariables:Hosting:Environment", "Production" }
                                 },
                                 "appsettings.colon-in-name.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -123,7 +123,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EmailSettings:DefaultRecipients", @"{""To"": ""rob@octopus.com"", ""Cc"": ""henrik@octopus.com""}" }
                                 },
                                 "appsettings.simple.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -134,7 +134,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EmailSettings:DefaultRecipients", @"{<<<<" }
                                 },
                                 "appsettings.simple.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -145,7 +145,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EmailSettings:DefaultRecipients:1", "henrik@octopus.com" }
                                 },
                                 "appsettings.array.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -156,7 +156,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EmailSettings:DefaultRecipients:1:Email", "henrik@octopus.com" }
                                 },
                                 "appsettings.object-array.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -167,7 +167,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EmailSettings:DefaultRecipients", @"[""mike@octopus.com"", ""henrik@octopus.com""]" }
                                 },
                                 "appsettings.array.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -178,7 +178,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EmailSettings:SmtpPort", "8023" }
                                 },
                                 "appsettings.array.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -192,7 +192,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "IntegerValue", "70" }
                                 },
                                 "appsettings.decimals.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -203,7 +203,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EmailSettings:UseProxy", "true" }
                                 },
                                 "appsettings.array.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -219,7 +219,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     {"sequence2string", "\"no longer a sequence\""},
                                 },
                                 "structures.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -239,7 +239,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "str2bool", "false" }
                                 },
                                 "types-fall-back.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]
@@ -251,7 +251,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "EmailSettings:SmtpHost", "#{Smtp.Host}" }
                                 },
                                 "appsettings.simple.json"),
-                        TestEnvironment.AssentJsonDeepCompareConfiguration);
+                        TestEnvironment.AssentJsonConfiguration);
         }
 
         [Test]

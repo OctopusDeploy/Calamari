@@ -19,28 +19,10 @@ namespace Calamari.Tests.Helpers
             .UsingNamer(IsCI ? (INamer) new CIAssentNamer() : new SubdirectoryNamer("Approved"))
             .SetInteractive(!IsCI);
         
-        public static readonly Configuration AssentJsonDeepCompareConfiguration = new Configuration()
+        public static readonly Configuration AssentJsonConfiguration = new Configuration()
             .UsingNamer(IsCI ? (INamer) new CIAssentNamer() : new SubdirectoryNamer("Approved"))
             .SetInteractive(!IsCI)
-            .UsingExtension("json")
-            .UsingComparer((received, approved) =>
-            {
-                var replacedJson = JToken.Parse(received);
-                var expectedJson = JToken.Parse(approved);
-                
-                if (!JToken.DeepEquals(replacedJson, expectedJson))
-                {
-                    Console.WriteLine("Expected:");
-                    Console.WriteLine(expectedJson.ToString(Formatting.Indented));
-            
-                    Console.WriteLine("Replaced:");
-                    Console.WriteLine(replacedJson.ToString(Formatting.Indented));
-                        
-                    return CompareResult.Fail("Replaced JSON did not match expected JSON");
-                }
-
-                return CompareResult.Pass();
-            });
+            .UsingExtension("json");
 
         public static readonly Configuration AssentYamlConfiguration = new Configuration()
                                                                        .UsingNamer(IsCI ? (INamer)new CIAssentNamer() : new SubdirectoryNamer("Approved"))
@@ -50,25 +32,7 @@ namespace Calamari.Tests.Helpers
         public static readonly Configuration AssentXmlConfiguration = new Configuration()
             .UsingNamer(IsCI ? (INamer)new CIAssentNamer() : new SubdirectoryNamer("Approved"))
             .SetInteractive(!IsCI)
-            .UsingExtension("xml")
-            .UsingComparer((received, approved) =>
-            {
-                var normalisedReceived = received.Replace("\r\n", "\n");
-                var normalisedApproved = approved.Replace("\r\n", "\n");
-
-                if (normalisedApproved == normalisedReceived)
-                {
-                    return CompareResult.Pass();
-                }
-
-                Console.WriteLine("Expected:");
-                Console.WriteLine(approved);
-
-                Console.WriteLine("Received:");
-                Console.WriteLine(received);
-                
-                return CompareResult.Fail("Received XML did not match approved XML.");
-            });
+            .UsingExtension("xml");
 
         public static string GetTestPath(params string[] paths)
         {
