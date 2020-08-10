@@ -333,14 +333,14 @@ namespace Calamari.Common.Plumbing.FileSystem
             return File.ReadAllBytes(path);
         }
 
-        public void OverwriteFile(string path, string? contents)
-        {
-            RetryTrackerFileAction(() => WriteAllText(path, contents), path, "overwrite");
-        }
-
-        public void OverwriteFile(string path, string? contents, Encoding encoding)
+        public void OverwriteFile(string path, string contents, Encoding? encoding = null)
         {
             RetryTrackerFileAction(() => WriteAllText(path, contents, encoding), path, "overwrite");
+        }
+
+        public void OverwriteFile(string path, Action<TextWriter> writeToWriter, Encoding? encoding = null)
+        {
+            RetryTrackerFileAction(() => WriteAllText(path, writeToWriter, encoding), path, "overwrite");
         }
 
         public void OverwriteFile(string path, byte[] data)
@@ -348,41 +348,73 @@ namespace Calamari.Common.Plumbing.FileSystem
             RetryTrackerFileAction(() => WriteAllBytes(path, data), path, "overwrite");
         }
 
-        //File.WriteAllText won't overwrite a hidden file, so implement our own.
-        static void WriteAllText(string path, string? contents, Encoding encoding)
+        public void WriteAllText(string path, string contents, Encoding? encoding = null)
         {
-            if (path == null)
-                throw new ArgumentNullException(nameof(path));
-            if (encoding == null)
-                throw new ArgumentNullException(nameof(encoding));
-            if (path.Length <= 0)
-                throw new ArgumentException(path);
-
-            //FileMode.Open causes an existing file to be truncated to the
-            //length of our new data, but can't overwrite a hidden file,
-            //so use FileMode.OpenOrCreate and set the new file length manually.
-            using (var fs = new FileStream(path, FileMode.OpenOrCreate))
-            using (var sw = new StreamWriter(fs, encoding))
-            {
-                sw.Write(contents);
-                sw.Flush();
-                fs.SetLength(fs.Position);
-            }
+            WriteAllText(path, () => contents, encoding);
         }
 
-        static void WriteAllText(string path, string? contents)
+        void WriteAllText(string path, Func<string> getText, Encoding? encoding = null)
         {
-            if (path == null)
-                throw new ArgumentNullException(nameof(path));
             if (path.Length <= 0)
                 throw new ArgumentException(path);
-            using (var fs = new FileStream(path, FileMode.OpenOrCreate))
-            using (var sw = new StreamWriter(fs))
+
+            var encodingsToTry = new List<Encoding> { new UTF8Encoding(false, true) };
+            if (encoding != null)
+                encodingsToTry.Insert(0, encoding);
+
+            if (encodingsToTry.Take(encodingsToTry.Count - 1)
+                              .FirstOrDefault(EncoderDoesNotRaiseErrorsForUnsupportedCharacters) is { } e)
+                Log.Warn($"The supplied encoding '{e}' does not raise errors for unsupported characters, so the subsequent "
+                         + "encoder will never be used. Please set DecoderFallback to ExceptionFallback or use Unicode.");
+
+            var text = getText();
+
+            byte[] bytes = null;
+            (Encoding encoding, Exception exception)? lastFailure = null;
+            foreach (var currentEncoding in encodingsToTry)
             {
-                sw.Write(contents);
-                sw.Flush();
-                fs.SetLength(fs.Position);
+                if (lastFailure != null)
+                    Log.Warn($"Unable to represent the output with encoding {lastFailure?.encoding.WebName}. Trying next the alternative: {currentEncoding.WebName}.");
+                try
+                {
+                    bytes = currentEncoding.GetPreamble().Concat(currentEncoding.GetBytes(text)).ToArray();
+                    break;
+                }
+                catch (EncoderFallbackException ex)
+                {
+                    lastFailure = (currentEncoding, ex);
+                }
             }
+
+            if (bytes == null)
+            {
+                throw new Exception("Unable to encode text with the specified encodings.", lastFailure?.exception);
+            }
+
+            WriteAllBytes(path, bytes);
+        }
+
+        public void WriteAllText(string path, Action<TextWriter> writeToWriter, Encoding? encoding = null)
+        {
+            WriteAllText(path,
+                         () =>
+                         {
+                             using (var textWriter = new StringWriter())
+                             {
+                                 writeToWriter(textWriter);
+                                 textWriter.Close();
+                                 return textWriter.ToString();
+                             }
+                         },
+                         encoding);
+        }
+
+        public static bool EncoderDoesNotRaiseErrorsForUnsupportedCharacters(Encoding encoding)
+        {
+            return encoding.EncoderFallback != EncoderFallback.ExceptionFallback
+                   && !encoding.WebName.StartsWith("utf-")
+                   && !encoding.WebName.StartsWith("unicode")
+                   && !encoding.WebName.StartsWith("ucs-");
         }
 
         public Stream OpenFile(string path, FileAccess access, FileShare share)
@@ -517,9 +549,23 @@ namespace Calamari.Common.Plumbing.FileSystem
                 File.Delete(backup);
         }
 
-        public void WriteAllBytes(string filePath, byte[] data)
+        // File.WriteAllBytes won't overwrite a hidden file, so implement our own.
+        public void WriteAllBytes(string path, byte[] bytes)
         {
-            File.WriteAllBytes(filePath, data);
+            if (path == null)
+                throw new ArgumentNullException(nameof(path));
+            if (path.Length <= 0)
+                throw new ArgumentException(path);
+
+            // FileMode.Open causes an existing file to be truncated to the
+            // length of our new data, but can't overwrite a hidden file,
+            // so use FileMode.OpenOrCreate and set the new file length manually.
+            using (var fs = new FileStream(path, FileMode.OpenOrCreate))
+            {
+                fs.Write(bytes, 0, bytes.Length);
+                fs.Flush();
+                fs.SetLength(fs.Position);
+            }
         }
 
         public string RemoveInvalidFileNameChars(string path)
