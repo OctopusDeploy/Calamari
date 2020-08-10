@@ -44,4 +44,4 @@
 
 *.approved.* -text
 **/*.Tests/**/Samples/enc-* -text
-**/*.Tests/**/Samples/* -text
+**/*.Tests/Fixtures/Substitutions/Samples/* -text
