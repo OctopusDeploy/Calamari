@@ -23,10 +23,13 @@ namespace Calamari.Common.Plumbing.FileSystem
         long GetFileSize(string path);
         string ReadFile(string path);
         string ReadFile(string path, out Encoding encoding);
-        void OverwriteFile(string path, string? contents);
-        void OverwriteFile(string path, string? contents, Encoding encoding);
+        void OverwriteFile(string path, string contents, Encoding? encoding = null);
+        void OverwriteFile(string path, Func<string> getText, Encoding? encoding = null);
+        void OverwriteFile(string path, Action<TextWriter> writeToWriter, Encoding? encoding = null);
         void OverwriteFile(string path, byte[] data);
         void WriteAllText(string path, string contents, Encoding? encoding = null);
+        void WriteAllText(string path, Func<string> getText, Encoding? encoding = null);
+        void WriteAllText(string path, Action<TextWriter> writeToWriter, Encoding? encoding = null);
         Stream OpenFile(string path, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
         Stream OpenFile(string path, FileMode mode = FileMode.OpenOrCreate, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
         Stream CreateTemporaryFile(string extension, out string path);
