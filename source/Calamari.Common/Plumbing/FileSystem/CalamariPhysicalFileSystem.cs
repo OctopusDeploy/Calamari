@@ -348,36 +348,19 @@ namespace Calamari.Common.Plumbing.FileSystem
             RetryTrackerFileAction(() => WriteAllBytes(path, data), path, "overwrite");
         }
 
-        //File.WriteAllText won't overwrite a hidden file, so implement our own.
-        static void WriteAllText(string path, string? contents, Encoding encoding)
+        // File.WriteAllText won't overwrite a hidden file, so implement our own.
+        static void WriteAllText(string path, string? contents, Encoding? encoding = null)
         {
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
-            if (encoding == null)
-                throw new ArgumentNullException(nameof(encoding));
             if (path.Length <= 0)
                 throw new ArgumentException(path);
 
-            //FileMode.Open causes an existing file to be truncated to the
-            //length of our new data, but can't overwrite a hidden file,
-            //so use FileMode.OpenOrCreate and set the new file length manually.
+            // FileMode.Open causes an existing file to be truncated to the
+            // length of our new data, but can't overwrite a hidden file,
+            // so use FileMode.OpenOrCreate and set the new file length manually.
             using (var fs = new FileStream(path, FileMode.OpenOrCreate))
             using (var sw = new StreamWriter(fs, encoding))
-            {
-                sw.Write(contents);
-                sw.Flush();
-                fs.SetLength(fs.Position);
-            }
-        }
-
-        static void WriteAllText(string path, string? contents)
-        {
-            if (path == null)
-                throw new ArgumentNullException(nameof(path));
-            if (path.Length <= 0)
-                throw new ArgumentException(path);
-            using (var fs = new FileStream(path, FileMode.OpenOrCreate))
-            using (var sw = new StreamWriter(fs))
             {
                 sw.Write(contents);
                 sw.Flush();
