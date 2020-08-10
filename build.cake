@@ -100,7 +100,7 @@ Task("PublishCalamariProjects")
         var projects = GetFiles("./source/**/Calamari.*.csproj");
 		foreach(var project in projects)
         {
-            var calamariFlavour = project.GetFilenameWithoutExtension().ToString();
+            var calamariFlavour = XmlPeek(project, "Project/PropertyGroup/AssemblyName");
 
             var frameworks = XmlPeek(project, "Project/PropertyGroup/TargetFrameworks") ??
                 XmlPeek(project, "Project/PropertyGroup/TargetFramework");

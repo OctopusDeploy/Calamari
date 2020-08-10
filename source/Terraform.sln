@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29920.165
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Terraform", "Calamari.Terraform\Calamari.Terraform.csproj", "{BA1BE5BE-5EF3-4A80-8699-6FE3A0B75A93}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari", "Calamari\Calamari.csproj", "{BA1BE5BE-5EF3-4A80-8699-6FE3A0B75A93}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Terraform", "Sashimi.Terraform\Sashimi.Terraform.csproj", "{42BA1C37-5386-4E02-8A28-1890DA196479}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi", "Sashimi\Sashimi.csproj", "{42BA1C37-5386-4E02-8A28-1890DA196479}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Terraform.Tests", "Sashimi.Terraform.Tests\Sashimi.Terraform.Tests.csproj", "{DF9E0D0B-9BD6-42EF-9B72-C13EDD2ABB4B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi.Tests", "Sashimi.Tests\Sashimi.Tests.csproj", "{DF9E0D0B-9BD6-42EF-9B72-C13EDD2ABB4B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{A5977E44-894E-4B70-AE3A-78B514B44274}"
 	ProjectSection(SolutionItems) = preProject
