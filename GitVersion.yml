@@ -1,1 +1,4 @@
 mode: ContinuousDeployment
+branches:
+  release:
+    is-release-branch: false
