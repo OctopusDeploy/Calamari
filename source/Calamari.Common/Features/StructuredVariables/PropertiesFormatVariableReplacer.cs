@@ -28,7 +28,7 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             try
             {
-                var (fileText, encoding) = EncodingDetectingFileReader.ReadToEnd(filePath);
+                var fileText = fileSystem.ReadFile(filePath, out var encoding);
 
                 var parsed = Parser.Parse(fileText);
                 var updated = parsed.Mutate(expr => TryReplaceValue(expr, variables));

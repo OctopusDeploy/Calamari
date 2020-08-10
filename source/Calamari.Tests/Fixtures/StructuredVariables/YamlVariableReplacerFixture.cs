@@ -1,6 +1,7 @@
 ﻿using System;
 using Assent;
 using Calamari.Common.Features.StructuredVariables;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -12,7 +13,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
     public class YamlVariableReplacerFixture : VariableReplacerFixture
     {
         public YamlVariableReplacerFixture()
-            : base(new YamlFormatVariableReplacer(new InMemoryLog()))
+            : base(new YamlFormatVariableReplacer(CalamariPhysicalFileSystem.GetPhysicalFileSystem()))
         {
         }
 
@@ -222,7 +223,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         {
             this.Assent(Replace(new CalamariVariables
                                 {
-                                    { "environment:matrix:2:DVersion", "stable" },
+                                    { "environment:matrix:2:DVersion", "stable" }
                                 },
                                 "comments.yml"),
                         TestEnvironment.AssentYamlConfiguration);

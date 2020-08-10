@@ -32,7 +32,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public void ModifyFile(string filePath, IVariables variables)
         {
-            var (fileText, encoding) = EncodingDetectingFileReader.ReadToEnd(filePath);
+            var fileText = fileSystem.ReadFile(filePath, out var encoding);
             var lineEnding = fileText.GetMostCommonLineEnding();
 
             var doc = new XmlDocument();
@@ -97,17 +97,19 @@ namespace Calamari.Common.Features.StructuredVariables
                         }
                 }
 
-            using (var stream = new MemoryStream())
-            using (var textWriter = new StreamWriter(stream, encoding))
-            using (var writer = new XmlTextWriter(textWriter))
-            {
-                textWriter.NewLine = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n";
-                writer.Formatting = Formatting.Indented;
+            fileSystem.OverwriteFile(filePath,
+                                     textWriter =>
+                                     {
+                                         using (var writer = new XmlTextWriter(textWriter))
+                                         {
+                                             textWriter.NewLine = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n";
+                                             writer.Formatting = Formatting.Indented;
 
-                doc.WriteTo(writer);
-                writer.Close();
-                fileSystem.OverwriteFile(filePath, stream.ToArray());
-            }
+                                             doc.WriteTo(writer);
+                                             writer.Close();
+                                         }
+                                     },
+                                     encoding);
         }
 
         void TrySetInnerXml(XmlElement element, string xpathExpression, string variableValue)
