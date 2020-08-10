@@ -222,7 +222,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         {
             this.Assent(Replace(new CalamariVariables
                                 {
-                                    { "environment:matrix:2:DVersion", "stable" },
+                                    { "environment:matrix:2:DVersion", "stable" }
                                 },
                                 "comments.yml"),
                         TestEnvironment.AssentYamlConfiguration);
