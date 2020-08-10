@@ -19,7 +19,9 @@ namespace Calamari.Common.Plumbing.Extensions
             DefaultEncodingsToTry = new List<Encoding>
             {
                 new UTF8Encoding(false, true),
-                Encoding.GetEncoding(1252)
+                Encoding.GetEncoding("windows-1252",
+                                     EncoderFallback.ExceptionFallback /* Detect problems if re-used for output */,
+                                     DecoderFallback.ReplacementFallback)
             }.AsReadOnly();
         }
 

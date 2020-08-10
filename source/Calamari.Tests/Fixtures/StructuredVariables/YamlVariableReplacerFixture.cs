@@ -12,7 +12,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
     public class YamlVariableReplacerFixture : VariableReplacerFixture
     {
         public YamlVariableReplacerFixture()
-            : base(new YamlFormatVariableReplacer())
+            : base(new YamlFormatVariableReplacer(new InMemoryLog()))
         {
         }
 
@@ -318,6 +318,13 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         public void ShouldPreserveEncodingWindows1252DosNoBom()
         {
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-windows1252-dos-nobom.yaml"),
+                        TestEnvironment.AssentConfiguration);
+        }
+
+        [Test]
+        public void ShouldUpgradeEncodingIfNecessaryToAccomodateVariables()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables{{"dagger", "\uFFE6"}}, "enc-windows1252-dos-nobom.yaml"),
                         TestEnvironment.AssentConfiguration);
         }
     }
