@@ -338,11 +338,6 @@ namespace Calamari.Common.Plumbing.FileSystem
             RetryTrackerFileAction(() => WriteAllText(path, contents, encoding), path, "overwrite");
         }
 
-        public void OverwriteFile(string path, Func<string> getText, Encoding? encoding = null)
-        {
-            RetryTrackerFileAction(() => WriteAllText(path, getText, encoding), path, "overwrite");
-        }
-
         public void OverwriteFile(string path, Action<TextWriter> writeToWriter, Encoding? encoding = null)
         {
             RetryTrackerFileAction(() => WriteAllText(path, writeToWriter, encoding), path, "overwrite");
@@ -358,7 +353,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             WriteAllText(path, () => contents, encoding);
         }
 
-        public void WriteAllText(string path, Func<string> getText, Encoding? encoding = null)
+        void WriteAllText(string path, Func<string> getText, Encoding? encoding = null)
         {
             if (path.Length <= 0)
                 throw new ArgumentException(path);
