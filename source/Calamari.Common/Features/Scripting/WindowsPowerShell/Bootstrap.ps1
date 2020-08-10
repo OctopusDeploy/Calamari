@@ -227,7 +227,7 @@ function New-OctopusAzureServiceFabricTarget([string]$name, [string]$azureConnec
 	$certificateStoreLocation = Convert-ToServiceMessageParameter -name "certificateStoreLocation" -value $certificateStoreLocation
 	$certificateStoreName = Convert-ToServiceMessageParameter -name "certificateStoreName" -value $certificateStoreName
 	$octopusCertificateIdOrName = Convert-ToServiceMessageParameter -name "certificate" -value $octopusCertificateIdOrName
-	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+	$octopusRoles = Convert-ToServiceMessageParameter -name "octopusRoles" -value $octopusRoles
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 
 	$parameters = $name, $azureConnectionEndpoint, $azureSecurityMode, $azureCertificateThumbprint, $azureActiveDirectoryUsername, $azureActiveDirectoryPassword, $certificateStoreLocation, $certificateStoreName, $octopusCertificateIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
@@ -244,7 +244,7 @@ function New-OctopusAzureCloudServiceTarget([string]$name, [string]$azureCloudSe
 	$swap = Convert-ToServiceMessageParameter -name "swap" -value $swap
 	$instanceCount = Convert-ToServiceMessageParameter -name "instanceCount" -value $instanceCount
 	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
-	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+	$octopusRoles = Convert-ToServiceMessageParameter -name "octopusRoles" -value $octopusRoles
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 
 	$parameters = $name, $azureCloudServiceName, $azureStorageAccount, $azureDeploymentSlot, $swap, $instanceCount, $octopusAccountIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
@@ -281,7 +281,7 @@ function New-OctopusKubernetesTarget(
 	$clusterUrl = Convert-ToServiceMessageParameter -name "clusterUrl" -value $clusterUrl
 	$namespace = Convert-ToServiceMessageParameter -name "namespace" -value $namespace
 	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
-	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+	$octopusRoles = Convert-ToServiceMessageParameter -name "octopusRoles" -value $octopusRoles
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 	$octopusDefaultWorkerPoolIdOrName = Convert-ToServiceMessageParameter -name "defaultWorkerPool" -value $octopusDefaultWorkerPoolIdOrName
 	$skipTlsVerification = Convert-ToServiceMessageParameter -name "skipTlsVerification" -value $skipTlsVerification
