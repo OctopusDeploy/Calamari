@@ -16,6 +16,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         const string JsonFileName = "values.json";
         const string XmlFileName = "values.xml";
         const string ConfigFileName = "values.config";
+        const string PropertiesFileName = "config.properties";
         const string MalformedFileName = "malformed.file";
 
         [SetUp]
@@ -130,6 +131,25 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, "values.xml"));
 
                 this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
+            }
+        }
+
+        [Test]
+        public void ShouldPerformReplacementInProperties()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, PropertiesFileName);
+                Variables.Set("debug", "false");
+                Variables.Set("port", "80");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertSuccess();
+
+                var extractedPackageUpdatedPropertiesFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, PropertiesFileName));
+
+                this.Assent(extractedPackageUpdatedPropertiesFile, TestEnvironment.AssentPropertiesConfiguration);
             }
         }
 
