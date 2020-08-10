@@ -261,7 +261,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             {
                 { "/document/selfclosing", "#{a}" },
                 { "a", "#{b}" },
-                { "b", "value-new" },
+                { "b", "value-new" }
             };
             RunTest(vars, "elements.xml");
         }
