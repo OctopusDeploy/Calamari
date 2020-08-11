@@ -11,6 +11,7 @@
     <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <NoDefaultExcludes>true</NoDefaultExcludes>
+    <ContentTargetFolders>contentFiles</ContentTargetFolders>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="**\*.ps1" />
