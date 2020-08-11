@@ -1,0 +1,1 @@
+This repository contains Sashimi.AzureCloudServices and Calamari.AzureCloudServices. 
