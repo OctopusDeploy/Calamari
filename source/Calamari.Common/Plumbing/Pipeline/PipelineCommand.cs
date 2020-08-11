@@ -42,6 +42,11 @@ namespace Calamari.Common.Plumbing.Pipeline
             return Enumerable.Empty<IPostDeployBehaviour>();
         }
 
+        protected virtual IEnumerable<IOnFinishBehaviour> OnFinish(OnFinishResolver resolver)
+        {
+            return Enumerable.Empty<IOnFinishBehaviour>();
+        }
+
         public async Task Execute(ILifetimeScope lifetimeScope, IVariables variables)
         {
             var pathToPrimaryPackage = variables.GetPathToPrimaryPackage(lifetimeScope.Resolve<ICalamariFileSystem>(), false);
@@ -123,6 +128,11 @@ namespace Calamari.Common.Plumbing.Pipeline
 
             yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.PostDeploy)));
             yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.PostDeploy)));
+
+            foreach (var behaviour in OnFinish(new OnFinishResolver(lifetimeScope)))
+            {
+                yield return ExecuteBehaviour(deployment, behaviour);
+            }
         }
 
         static async Task ExecuteBehaviour(RunningDeployment context, IBehaviour behaviour)

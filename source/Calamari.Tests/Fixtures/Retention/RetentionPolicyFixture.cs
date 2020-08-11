@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Deployment.Journal;
 using Calamari.Deployment.Retention;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Time;

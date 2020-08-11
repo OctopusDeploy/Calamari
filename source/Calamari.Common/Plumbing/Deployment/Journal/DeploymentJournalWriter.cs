@@ -6,7 +6,7 @@ using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Deployment.Journal
+namespace Calamari.Common.Plumbing.Deployment.Journal
 {
     public class DeploymentJournalWriter : IDeploymentJournalWriter
     {
@@ -16,7 +16,7 @@ namespace Calamari.Deployment.Journal
         {
             this.fileSystem = fileSystem;
         }
-        
+
         /// <summary>
         /// Conditionally Write To Journal if there were packages that may need to be cleaned up during retention
         /// </summary>
@@ -28,12 +28,12 @@ namespace Calamari.Deployment.Journal
         {
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, deployment.Variables);
-            
+
             var hasPackages = !string.IsNullOrWhiteSpace(packageFile) ||
                               deployment.Variables.GetIndexes(PackageVariables.PackageCollection).Any();
-            
+
             var canWrite = deployment.Variables.Get(TentacleVariables.Agent.JournalPath) != null;
-            
+
             if(canWrite && hasPackages && !deployment.SkipJournal)
                 journal.AddJournalEntry(new JournalEntry(deployment, wasSuccessful));
         }

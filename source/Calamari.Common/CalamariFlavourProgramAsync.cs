@@ -18,6 +18,7 @@ using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -58,6 +59,7 @@ namespace Calamari.Common
             builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
             builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
             builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
+            builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
@@ -85,9 +87,9 @@ namespace Calamari.Common
                 .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>().Name);
         }
 
-        Assembly GetProgramAssemblyToRegister()
+        protected virtual IEnumerable<Assembly> GetProgramAssembliesToRegister()
         {
-            return GetType().Assembly;
+            yield return GetType().Assembly;
         }
 
         protected async Task<int> Run(string[] args)
@@ -130,11 +132,10 @@ namespace Calamari.Common
 
         IEnumerable<Assembly> GetAllAssembliesToRegister()
         {
-            var programAssembly = GetProgramAssemblyToRegister();
-            if (programAssembly != null)
-            {
-                yield return programAssembly; // Calamari Flavour
-            }
+            var programAssemblies = GetProgramAssembliesToRegister();
+
+            foreach (var assembly in programAssemblies)
+                yield return assembly; // Calamari Flavour & dependencies
 
             yield return typeof(CalamariFlavourProgramAsync).Assembly; // Calamari.Common
         }
