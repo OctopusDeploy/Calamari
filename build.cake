@@ -97,7 +97,7 @@ Task("Test")
 Task("PublishCalamariProjects")
    .IsDependentOn("Build")
     .Does(() => {
-        var projects = GetFiles("./source/**/Calamari.csproj");
+        var projects = GetFiles("./source/**/Calamari*.csproj"); //We need Calamari & Calamari.Tests
 		foreach(var project in projects)
         {
             var calamariFlavour = XmlPeek(project, "Project/PropertyGroup/AssemblyName");
