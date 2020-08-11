@@ -16,7 +16,7 @@
     <EmbeddedResource Include="**\*.ps1" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\artifacts\Calamari.AzureCloudServices.zip">
+    <None Include="..\..\artifacts\Calamari.AzureCloudService.zip">
       <Visible>false</Visible>
       <LinkBase>tools</LinkBase>
       <Pack>true</Pack>
