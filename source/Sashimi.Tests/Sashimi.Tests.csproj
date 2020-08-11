@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Sashimi.AzureServiceFabric.Tests</RootNamespace>
+    <AssemblyName>Sashimi.AzureServiceFabric.Tests</AssemblyName>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari\Calamari.csproj" />
+    <ProjectReference Include="..\Sashimi\Sashimi.csproj" />
+    <PackageReference Include="Assent" Version="1.6.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
+    <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="11.0.0" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="4.1.5" />
+    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.21" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="**/*.tf*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="**/*.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

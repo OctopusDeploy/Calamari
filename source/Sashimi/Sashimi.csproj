@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Sashimi.AzureServiceFabric</AssemblyName>
+    <RootNamespace>Sashimi.AzureServiceFabric</RootNamespace>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <OutputPath>bin\</OutputPath>
+    <Nullable>enable</Nullable>
+    <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="**\*.ps1" />
+    <EmbeddedResource Include="**\*.sh" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\artifacts\Calamari.ServiceFabric.zip">
+      <Visible>false</Visible>
+      <LinkBase>tools</LinkBase>
+      <Pack>true</Pack>
+      <PackagePath>tools/</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Sashimi.Server.Contracts" Version="6.0.2" />
+  </ItemGroup>
+</Project>
