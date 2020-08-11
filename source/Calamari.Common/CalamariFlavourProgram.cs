@@ -6,6 +6,7 @@ using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.FunctionScriptContributions;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -93,8 +94,11 @@ namespace Calamari.Common
             builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
             builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
+            builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
+
+            builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IScriptWrapper>()

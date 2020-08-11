@@ -216,21 +216,6 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
 
-function New-OctopusAzureWebAppTarget([string]$name, [string]$azureWebApp, [string]$azureResourceGroupName, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateIfExisting, [string]$azureWebAppSlot)
-{
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name
- 	$azureWebApp = Convert-ToServiceMessageParameter -name "webAppName" -value $azureWebApp
-    $azureWebAppSlot = Convert-ToServiceMessageParameter -name "webAppSlot" -value $azureWebAppSlot
-    $azureResourceGroupName = Convert-ToServiceMessageParameter -name "resourceGroupName" -value $azureResourceGroupName
-    $octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
-	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
-	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
-
-	$parameters = $name, $azureWebApp, $azureWebAppSlot, $azureResourceGroupName, $octopusAccountIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
-
-    Write-Host "##octopus[create-azurewebapptarget $($parameters)]"
-}
-
 function New-OctopusAzureServiceFabricTarget([string]$name, [string]$azureConnectionEndpoint, [string]$azureSecurityMode, [string]$azureCertificateThumbprint, [string]$azureActiveDirectoryUsername, [string]$azureActiveDirectoryPassword, [string]$certificateStoreLocation, [string]$certificateStoreName, [string]$octopusCertificateIdOrName, [string]$octopusRoles, [switch]$updateIfExisting)
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name
@@ -242,7 +227,7 @@ function New-OctopusAzureServiceFabricTarget([string]$name, [string]$azureConnec
 	$certificateStoreLocation = Convert-ToServiceMessageParameter -name "certificateStoreLocation" -value $certificateStoreLocation
 	$certificateStoreName = Convert-ToServiceMessageParameter -name "certificateStoreName" -value $certificateStoreName
 	$octopusCertificateIdOrName = Convert-ToServiceMessageParameter -name "certificate" -value $octopusCertificateIdOrName
-	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+	$octopusRoles = Convert-ToServiceMessageParameter -name "octopusRoles" -value $octopusRoles
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 
 	$parameters = $name, $azureConnectionEndpoint, $azureSecurityMode, $azureCertificateThumbprint, $azureActiveDirectoryUsername, $azureActiveDirectoryPassword, $certificateStoreLocation, $certificateStoreName, $octopusCertificateIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
@@ -258,8 +243,8 @@ function New-OctopusAzureCloudServiceTarget([string]$name, [string]$azureCloudSe
 	$azureDeploymentSlot = Convert-ToServiceMessageParameter -name "azureDeploymentSlot" -value $azureDeploymentSlot
 	$swap = Convert-ToServiceMessageParameter -name "swap" -value $swap
 	$instanceCount = Convert-ToServiceMessageParameter -name "instanceCount" -value $instanceCount
-	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
-	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "octopusAccountIdOrName" -value $octopusAccountIdOrName
+	$octopusRoles = Convert-ToServiceMessageParameter -name "octopusRoles" -value $octopusRoles
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 
 	$parameters = $name, $azureCloudServiceName, $azureStorageAccount, $azureDeploymentSlot, $swap, $instanceCount, $octopusAccountIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
@@ -295,8 +280,8 @@ function New-OctopusKubernetesTarget(
 	$octopusServerCertificateIdOrName = Convert-ToServiceMessageParameter -name "serverCertificate" -value $octopusServerCertificateIdOrName
 	$clusterUrl = Convert-ToServiceMessageParameter -name "clusterUrl" -value $clusterUrl
 	$namespace = Convert-ToServiceMessageParameter -name "namespace" -value $namespace
-	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "account" -value $octopusAccountIdOrName
-	$octopusRoles = Convert-ToServiceMessageParameter -name "roles" -value $octopusRoles
+	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "octopusAccountIdOrName" -value $octopusAccountIdOrName
+	$octopusRoles = Convert-ToServiceMessageParameter -name "octopusRoles" -value $octopusRoles
 	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
 	$octopusDefaultWorkerPoolIdOrName = Convert-ToServiceMessageParameter -name "defaultWorkerPool" -value $octopusDefaultWorkerPoolIdOrName
 	$skipTlsVerification = Convert-ToServiceMessageParameter -name "skipTlsVerification" -value $skipTlsVerification
@@ -368,7 +353,7 @@ function Update-Progress
 {
 	[CmdletBinding()]
 	param(
-        [int] $percentage, 
+        [int] $percentage,
         [Parameter(ValueFromPipeline=$true)][string]$message
 	)
 
@@ -539,10 +524,10 @@ function Initialize-ProxySettings() {
 		# Calamari ensure both http_proxy and HTTP_PROXY are set, so we don't need to worry about casing
 		if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
 			$octopusProxyUri = New-Object System.Uri($env:HTTP_PROXY)
-            
+
 			# The HTTP_PROXY env variable may also contain credentials.
 			# This is a common enough pattern, but we need to extract the credentials in order to use them
-            
+
 			# But if credentials were explicitly provided, use those ones instead
 			if (-not $hasCredentials) {
 				$credentialsArray = $octopusProxyUri.UserInfo.Split(":")
@@ -555,19 +540,19 @@ function Initialize-ProxySettings() {
 		}
 	}
 
-	#custom proxy		
+	#custom proxy
 	if ($useCustomProxy) {
 		$proxy = New-Object System.Net.WebProxy($octopusProxyUri)
 
 		if ($hasCredentials) {
-			$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)			
+			$proxy.Credentials = New-Object System.Net.NetworkCredential($proxyUsername, $proxyPassword)
 		}
 		else {
 			$proxy.Credentials = New-Object System.Net.NetworkCredential("", "")
 		}
 	}
 	else {
-		#system proxy		
+		#system proxy
 		if ($useDefaultProxy) {
 			# The system proxy should be provided through an environment variable, which has been used to initialize $proxyHost
 			if ($octopusProxyUri -ne $null) {
@@ -596,22 +581,22 @@ function Initialize-ProxySettings() {
 			$proxy = New-Object System.Net.WebProxy
 		}
 	}
-	
-	# In some versions of PowerShell Core (pre version 7.0.0), if a script uses HttpClient 
-	# it won't be automatically be configured with the right proxy. 
+
+	# In some versions of PowerShell Core (pre version 7.0.0), if a script uses HttpClient
+	# it won't be automatically be configured with the right proxy.
 	# This is unavoidable for those versions, see See https://github.com/dotnet/corefx/issues/36553 for more information
 	# We expose an $OctopusProxy variable that can be used to manually configure HttpClient instances, and this variable is documented
 	# For consistency, we expose this variable across all versions of powershell, in case users have other usages of this variable
 	$global:OctopusProxy = $proxy
 	[System.Net.WebRequest]::DefaultWebProxy = $proxy
-	
+
 	if ($PSVersionTable.PSEdition -eq "Core") {
 		if ($PSVersionTable.PsVersion.Major -lt 7) {
 			# HttpClient is used to implement built in cmdlets like Invoke-WebRequest.
 			# Because earlier versions of PowerShell Core don't allow us to set a default proxy for HttpClient,
 			# the cmdlets also don't get a default proxy set either
 			# Fortunately, for these cmdlets we can use $PSDefaultParameterValues to provide the right defaults
-			# We don't use default parameter values in Windows PowerShell because this simplifies things, 
+			# We don't use default parameter values in Windows PowerShell because this simplifies things,
 			# and means that users could change this value globally by modifying just a single property
 			if ($useDefaultProxy -or $useCustomProxy) {
 				if ($octopusProxyUri -ne $null) {
@@ -620,7 +605,7 @@ function Initialize-ProxySettings() {
 					if ($hasCredentials) {
 						$securePassword = ConvertTo-SecureString $proxyPassword -AsPlainText -Force
 						$credentials = New-Object System.Management.Automation.PSCredential -ArgumentList $proxyUsername, $securePassword
-                        
+
 						$PSDefaultParameterValues.Add("Invoke-WebRequest:ProxyCredential", $credentials)
 						$PSDefaultParameterValues.Add("Invoke-RestMethod:ProxyCredential", $credentials)
 					}
@@ -628,7 +613,7 @@ function Initialize-ProxySettings() {
 			}
 		}
 		else {
-			# In versions of PowerShell Core after 7.0.0, there is a mechanism for setting a default proxy on HttpClient 
+			# In versions of PowerShell Core after 7.0.0, there is a mechanism for setting a default proxy on HttpClient
 			# See https://github.com/dotnet/corefx/pull/37333
 			[System.Net.Http.HttpClient]::DefaultProxy = $proxy
 		}
@@ -748,7 +733,7 @@ try
 }
 catch
 {
-	
+
 	[System.Console]::Error.WriteLine("$($error[0].CategoryInfo.Category): $($error[0].Exception.Message)")
 	[System.Console]::Error.WriteLine($error[0].InvocationInfo.PositionMessage)
 	[System.Console]::Error.WriteLine($error[0].ScriptStackTrace)

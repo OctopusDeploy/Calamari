@@ -190,6 +190,9 @@
     <None Update="Fixtures\Commands\Scripts\awsscript.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Fixtures\FunctionCodeGen\Approved\*.approved.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Fixtures\Nginx\Approved" />

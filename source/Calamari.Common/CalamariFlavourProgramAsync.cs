@@ -11,6 +11,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.EmbeddedResources;
+using Calamari.Common.Features.FunctionScriptContributions;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -60,14 +61,17 @@ namespace Calamari.Common
             builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
             builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
+            builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
+            builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
+
             builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<IScriptWrapper>()
-                .Except<TerminalScriptWrapper>()
-                .As<IScriptWrapper>()
-                .SingleInstance();
+                   .AssignableTo<IScriptWrapper>()
+                   .Except<TerminalScriptWrapper>()
+                   .As<IScriptWrapper>()
+                   .SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IBehaviour>()
