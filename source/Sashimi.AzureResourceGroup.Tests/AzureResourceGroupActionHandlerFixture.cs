@@ -58,7 +58,7 @@ namespace Sashimi.AzureResourceGroup.Tests
         }
 
         [Test]
-        public async Task Deploy_with_template_in_package()
+        public void Deploy_with_template_in_package()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
             ActionHandlerTestBuilder.CreateAsync<AzureResourceGroupActionHandler, Program>()
@@ -75,7 +75,7 @@ namespace Sashimi.AzureResourceGroup.Tests
         }
 
         [Test]
-        public async Task Deploy_with_template_inline()
+        public void Deploy_with_template_inline()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
             var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
