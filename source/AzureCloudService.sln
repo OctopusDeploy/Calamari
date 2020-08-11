@@ -18,7 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{A5977E44-894E-4B
 		..\build.ps1 = ..\build.ps1
 		..\CODEOWNERS = ..\CODEOWNERS
 		Directory.Build.props = Directory.Build.props
-		..\gitversion.yml = ..\gitversion.yml
+		..\GitVersion.yml = ..\GitVersion.yml        
 		..\readme.md = ..\readme.md
 	EndProjectSection
 EndProject
