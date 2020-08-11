@@ -77,16 +77,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Azure.Accounts.Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Aws.Accounts.Tests", "Sashimi.Aws.Accounts.Tests\Sashimi.Aws.Accounts.Tests.csproj", "{ABC25247-2CA6-4497-9EDF-97C8B236EF00}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureResourceGroup", "AzureResourceGroup", "{1ED7AAFA-FB4B-429E-A6F1-141E9829D299}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureResourceGroup", "Calamari.AzureResourceGroup\Calamari.AzureResourceGroup.csproj", "{DAA514DB-DAAB-4DCA-A90B-28C2EF2E7F3A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureResourceGroup", "Sashimi.AzureResourceGroup\Sashimi.AzureResourceGroup.csproj", "{7BA65D18-D34B-40FE-BD17-B63FF069A400}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.AzureResourceGroup.Tests", "Sashimi.AzureResourceGroup.Tests\Sashimi.AzureResourceGroup.Tests.csproj", "{AD06E5C9-07F3-4763-A9D0-399078F812B7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureResourceGroup.Tests", "Calamari.AzureResourceGroup.Tests\Calamari.AzureResourceGroup.Tests.csproj", "{0C79D31A-E7DA-4B7A-B97A-9E70B6191ACB}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -197,22 +187,6 @@ Global
 		{ABC25247-2CA6-4497-9EDF-97C8B236EF00}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ABC25247-2CA6-4497-9EDF-97C8B236EF00}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ABC25247-2CA6-4497-9EDF-97C8B236EF00}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DAA514DB-DAAB-4DCA-A90B-28C2EF2E7F3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DAA514DB-DAAB-4DCA-A90B-28C2EF2E7F3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DAA514DB-DAAB-4DCA-A90B-28C2EF2E7F3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DAA514DB-DAAB-4DCA-A90B-28C2EF2E7F3A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7BA65D18-D34B-40FE-BD17-B63FF069A400}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7BA65D18-D34B-40FE-BD17-B63FF069A400}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7BA65D18-D34B-40FE-BD17-B63FF069A400}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7BA65D18-D34B-40FE-BD17-B63FF069A400}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AD06E5C9-07F3-4763-A9D0-399078F812B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AD06E5C9-07F3-4763-A9D0-399078F812B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AD06E5C9-07F3-4763-A9D0-399078F812B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AD06E5C9-07F3-4763-A9D0-399078F812B7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0C79D31A-E7DA-4B7A-B97A-9E70B6191ACB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0C79D31A-E7DA-4B7A-B97A-9E70B6191ACB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0C79D31A-E7DA-4B7A-B97A-9E70B6191ACB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0C79D31A-E7DA-4B7A-B97A-9E70B6191ACB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -234,10 +208,6 @@ Global
 		{238BD45A-A67D-474D-847D-87F72B64772F} = {3E05AC5A-99C4-4C1A-9099-17AA71E8D644}
 		{D229E77B-3607-437B-91D0-598BFDD0F091} = {3E05AC5A-99C4-4C1A-9099-17AA71E8D644}
 		{58C49A1A-6705-4485-BFE3-5CB73FAEC99B} = {3E05AC5A-99C4-4C1A-9099-17AA71E8D644}
-		{DAA514DB-DAAB-4DCA-A90B-28C2EF2E7F3A} = {1ED7AAFA-FB4B-429E-A6F1-141E9829D299}
-		{7BA65D18-D34B-40FE-BD17-B63FF069A400} = {1ED7AAFA-FB4B-429E-A6F1-141E9829D299}
-		{AD06E5C9-07F3-4763-A9D0-399078F812B7} = {1ED7AAFA-FB4B-429E-A6F1-141E9829D299}
-		{0C79D31A-E7DA-4B7A-B97A-9E70B6191ACB} = {1ED7AAFA-FB4B-429E-A6F1-141E9829D299}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F8108764-E787-43A4-A43A-2BB5540615E8}
