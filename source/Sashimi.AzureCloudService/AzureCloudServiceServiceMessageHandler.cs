@@ -111,7 +111,7 @@ namespace Sashimi.AzureCloudService
         internal static class AzureCloudServiceServiceMessageNames
         {
             public const string CreateTargetName = "create-azurecloudservicetarget";
-            public const string AccountIdOrNameAttribute = "account";
+            public const string AccountIdOrNameAttribute = "octopusAccountIdOrName";
             public const string AzureCloudServiceNameAttribute = "azureCloudServiceName";
             public const string AzureStorageAccountAttribute = "azureStorageAccount";
             public const string AzureDeploymentSlotAttribute = "azureDeploymentSlot";

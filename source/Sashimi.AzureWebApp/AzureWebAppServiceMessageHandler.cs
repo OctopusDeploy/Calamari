@@ -99,10 +99,10 @@ namespace Sashimi.AzureWebApp
         internal static class AzureWebAppServiceMessageNames
         {
             public const string CreateTargetName = "create-azurewebapptarget";
-            public const string AccountIdOrNameAttribute = "account";
-            public const string WebAppNameAttribute = "webAppName";
-            public const string ResourceGroupNameAttribute = "resourceGroupName";
-            public const string WebAppSlotNameAttribute = "webAppSlot";
+            public const string AccountIdOrNameAttribute = "octopusAccountIdOrName";
+            public const string WebAppNameAttribute = "azureWebApp";
+            public const string ResourceGroupNameAttribute = "azureResourceGroupName";
+            public const string WebAppSlotNameAttribute = "azureWebAppSlot";
         }
     }
 }
