@@ -10,6 +10,7 @@ namespace Sashimi.AzureScripting
         {
             public static class Azure
             {
+                public static readonly string ActionTypeName = "Octopus.AzurePowerShell";
                 public static readonly string UseBundledAzureModules = "OctopusUseBundledAzureModules";
                 public static readonly string UseBundledAzureCLI = "OctopusUseBundledAzureCLI";
                 public static readonly string UseBundledAzureModulesLegacy = "Octopus.Action.Azure.UseBundledAzurePowerShellModules";
