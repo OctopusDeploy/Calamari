@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Octopus.Diagnostics;
 using Octostache;
 using Sashimi.AzureCloudService.Endpoints;
+using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.Endpoints;
 using Sashimi.Server.Contracts.ServiceMessages;
@@ -19,8 +21,8 @@ namespace Sashimi.AzureCloudService
         }
 
         public string AuditEntryDescription => "Azure Cloud Service Target";
-
         public string ServiceMessageName => AzureCloudServiceServiceMessageNames.CreateTargetName;
+        public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = Enumerable.Empty<ScriptFunctionRegistration>();
 
         public Endpoint BuildEndpoint(IDictionary<string, string> messageProperties,
                                       VariableDictionary variables,

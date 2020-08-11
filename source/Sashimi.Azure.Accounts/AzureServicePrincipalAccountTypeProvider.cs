@@ -4,7 +4,6 @@ using System.Linq;
 using FluentValidation;
 using Octopus.Server.Extensibility.Extensions.Infrastructure.Web.Api;
 using Octopus.Server.Extensibility.HostServices.Mapping;
-using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.ServiceMessages;
 
@@ -29,11 +28,6 @@ namespace Sashimi.Azure.Accounts
             var total = context.GetAccountDetails<AzureServicePrincipalAccountDetails>().Count();
 
             yield return ("azureserviceprincipalaccount", total);
-        }
-
-        public IEnumerable<ScriptFunctionRegistration> GetScriptFunctionRegistrations()
-        {
-            yield break;
         }
 
         public void BuildMappings(IResourceMappingsBuilder builder)

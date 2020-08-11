@@ -44,23 +44,6 @@ namespace Sashimi.AzureWebApp.Endpoints
             yield return ("azurewebapps", total);
         }
 
-        public IEnumerable<ScriptFunctionRegistration> GetScriptFunctionRegistrations()
-        {
-            yield return new ScriptFunctionRegistration("OctopusAzureWebAppTarget",
-                                                             "Creates a new Azure WebApp target.",
-                                                             CreateTargetServiceMessageHandler!.ServiceMessageName,
-                                                             new Dictionary<string, FunctionParameter>
-                                                             {
-                                                                 { "name", new FunctionParameter(ParameterType.String) },
-                                                                 { "webAppName", new FunctionParameter(ParameterType.String) },
-                                                                 { "webAppSlot", new FunctionParameter(ParameterType.String) },
-                                                                 { "resourceGroupName", new FunctionParameter(ParameterType.String) },
-                                                                 { "account", new FunctionParameter(ParameterType.String) },
-                                                                 { "roles", new FunctionParameter(ParameterType.String) },
-                                                                 { "updateIfExisting", new FunctionParameter(ParameterType.Bool) }
-                                                             });
-        }
-
         public ICreateTargetServiceMessageHandler? CreateTargetServiceMessageHandler { get; }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Octopus.Diagnostics;
 using Octostache;
 using Sashimi.AzureWebApp.Endpoints;
+using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.Endpoints;
 using Sashimi.Server.Contracts.ServiceMessages;
@@ -20,6 +21,23 @@ namespace Sashimi.AzureWebApp
 
         public string AuditEntryDescription => "Azure Web App Target";
         public string ServiceMessageName => AzureWebAppServiceMessageNames.CreateTargetName;
+
+        public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = new List<ScriptFunctionRegistration>
+        {
+            new ScriptFunctionRegistration("OctopusAzureWebAppTarget",
+                                           "Creates a new Azure WebApp target.",
+                                           AzureWebAppServiceMessageNames.CreateTargetName, 
+                                           new Dictionary<string, FunctionParameter>
+                                           {
+                                               { "name", new FunctionParameter(ParameterType.String) },
+                                               { "azureWebApp", new FunctionParameter(ParameterType.String) },
+                                               { "azureWebAppSlot", new FunctionParameter(ParameterType.String) },
+                                               { "azureResourceGroupName", new FunctionParameter(ParameterType.String) },
+                                               { "octopusAccountIdOrName", new FunctionParameter(ParameterType.String) },
+                                               { "octopusRoles", new FunctionParameter(ParameterType.String) },
+                                               { "updateIfExisting", new FunctionParameter(ParameterType.Bool) }
+                                           })
+        };
 
         public Endpoint BuildEndpoint(IDictionary<string, string> messageProperties,
                                       VariableDictionary variables,

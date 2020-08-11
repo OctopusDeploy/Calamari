@@ -44,11 +44,6 @@ namespace Sashimi.AzureCloudService.Endpoints
             yield return ("azurecloudservices", total);
         }
 
-        public IEnumerable<ScriptFunctionRegistration> GetScriptFunctionRegistrations()
-        {
-            yield break;
-        }
-
         public ICreateTargetServiceMessageHandler? CreateTargetServiceMessageHandler { get; }
     }
 }
