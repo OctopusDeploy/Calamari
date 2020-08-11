@@ -12,5 +12,7 @@
         in PublishCalamariProjects task. If making changes, be sure to look there to make sure it's all alright still -->
   <ItemGroup>
     <PackageReference Include="Calamari.Common" Version="14.0.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
+    <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
   </ItemGroup>
 </Project>

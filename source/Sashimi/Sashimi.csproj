@@ -17,7 +17,7 @@
     <EmbeddedResource Include="**\*.sh" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\artifacts\Calamari.ServiceFabric.zip">
+    <None Include="..\..\artifacts\Calamari.AzureServiceFabric.zip">
       <Visible>false</Visible>
       <LinkBase>tools</LinkBase>
       <Pack>true</Pack>

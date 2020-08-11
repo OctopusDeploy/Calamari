@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Calamari.ServiceFabric.Tests")]
+[assembly: InternalsVisibleTo("Calamari.AzureServiceFabric.Tests")]
