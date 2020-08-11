@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Octopus.Data.Model;
+using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.ServiceMessages;
 
@@ -9,6 +11,8 @@ namespace Sashimi.Aws.Accounts
     {
         public string AuditEntryDescription => "AWS Account";
         public string ServiceMessageName => CreateAwsAccountServiceMessagePropertyNames.Name;
+        public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = Enumerable.Empty<ScriptFunctionRegistration>();
+
         public AccountDetails CreateAccountDetails(IDictionary<string, string> properties)
         {
             properties.TryGetValue(CreateAwsAccountServiceMessagePropertyNames.AccessKey, out var accessKey);

@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Octopus.Data.Model;
+using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.ServiceMessages;
 
@@ -9,6 +11,7 @@ namespace Sashimi.Azure.Accounts
     {
         public string AuditEntryDescription => "Azure Service Principal account";
         public string ServiceMessageName => CreateAzureAccountServiceMessagePropertyNames.Name;
+        public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = Enumerable.Empty<ScriptFunctionRegistration>();
 
         public AccountDetails CreateAccountDetails(IDictionary<string, string> properties)
         {

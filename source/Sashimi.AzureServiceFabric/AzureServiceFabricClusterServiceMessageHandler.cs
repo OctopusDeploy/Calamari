@@ -4,6 +4,7 @@ using System.Linq;
 using Octopus.Data.Model;
 using Octostache;
 using Sashimi.AzureServiceFabric.Endpoints;
+using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.Endpoints;
 using Sashimi.Server.Contracts.ServiceMessages;
@@ -19,6 +20,7 @@ namespace Sashimi.AzureServiceFabric
 
         public string AuditEntryDescription => "Azure Service Fabric Target";
         public string ServiceMessageName => AzureServiceFabricServiceMessageNames.CreateTargetName;
+        public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = Enumerable.Empty<ScriptFunctionRegistration>();
 
         public Endpoint BuildEndpoint(IDictionary<string, string> messageProperties,
                                       VariableDictionary variables,
