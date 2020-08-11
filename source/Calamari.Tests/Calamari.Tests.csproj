@@ -20,4 +20,9 @@
     <ItemGroup>
       <ProjectReference Include="..\Calamari\Calamari.csproj" />
     </ItemGroup>
+    <ItemGroup>
+        <None Update="Packages\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>

@@ -80,7 +80,14 @@ namespace Calamari.AzureCloudService.Tests
             }
             finally
             {
-                await client.Deployments.DeleteBySlotAsync(serviceName, deploymentSlot);
+                try
+                {
+                    await client.Deployments.DeleteBySlotAsync(serviceName, deploymentSlot);
+                }
+                catch
+                {
+                   // Ignore
+                }
                 await client.HostedServices.DeleteAsync(serviceName);
             }
         }
@@ -136,7 +143,14 @@ namespace Calamari.AzureCloudService.Tests
             }
             finally
             {
-                await client.Deployments.DeleteBySlotAsync(serviceName, DeploymentSlot.Production);
+                try
+                {
+                    await client.Deployments.DeleteBySlotAsync(serviceName, DeploymentSlot.Production);
+                }
+                catch
+                {
+                    // Ignore
+                }
                 await client.HostedServices.DeleteAsync(serviceName);
             }
         }
