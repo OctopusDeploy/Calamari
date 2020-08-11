@@ -6,7 +6,7 @@ using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.AzureWebApp
 {
-    public class AzureWebAppScriptActionOverride : IScriptActionOverride
+    class AzureWebAppScriptActionOverride : IScriptActionOverride
     {
         public ScriptActionOverrideResult ShouldOverride(DeploymentTargetType deploymentTargetType, IActionHandlerContext context)
         {
