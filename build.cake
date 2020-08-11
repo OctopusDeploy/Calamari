@@ -82,6 +82,7 @@ Task("Build")
 
 Task("Test")
     .IsDependentOn("Build")
+    .WithCriteria(BuildSystem.IsLocalBuild)
     .Does(() => {
 		var projects = GetFiles("./source/**/*Tests.csproj");
 
@@ -97,10 +98,10 @@ Task("Test")
 Task("PublishCalamariProjects")
    .IsDependentOn("Build")
     .Does(() => {
-        var projects = GetFiles("./source/**/Calamari.*.csproj");
+        var projects = GetFiles("./source/**/Calamari*.csproj"); //We need Calamari & Calamari.Tests
 		foreach(var project in projects)
         {
-            var calamariFlavour = project.GetFilenameWithoutExtension().ToString();
+            var calamariFlavour = XmlPeek(project, "Project/PropertyGroup/AssemblyName");
 
             var frameworks = XmlPeek(project, "Project/PropertyGroup/TargetFrameworks") ??
                 XmlPeek(project, "Project/PropertyGroup/TargetFramework");
@@ -136,10 +137,10 @@ Task("PublishCalamariProjects")
 Task("PublishSashimiTestProjects")
     .IsDependentOn("Build")
     .Does(() => {
-        var projects = GetFiles("./source/**/Sashimi.*.Tests.csproj");
+        var projects = GetFiles("./source/**/Sashimi.Tests.csproj");
 		foreach(var project in projects)
         {
-            var sashimiFlavour = project.GetFilenameWithoutExtension().ToString();
+            var sashimiFlavour = XmlPeek(project, "Project/PropertyGroup/AssemblyName");
 
                 void RunPublish() {
                      DotNetCorePublish(project.FullPath, new DotNetCorePublishSettings
@@ -183,25 +184,8 @@ Task("CopyToLocalPackages")
     CopyFiles(Path.Combine(artifactsDir, $"Sashimi.*.{nugetVersion}.nupkg"), localPackagesDir);
 });
 
-Task("Publish")
-    .IsDependentOn("Test")
-    .IsDependentOn("PackSashimi")
-    .WithCriteria(BuildSystem.IsRunningOnTeamCity)
-    .Does(() =>
-{
-    var packages = GetFiles($"{artifactsDir}*.{nugetVersion}.nupkg");
-    foreach (var package in packages)
-    {
-        NuGetPush(package, new NuGetPushSettings {
-            Source = "https://f.feedz.io/octopus-deploy/dependencies/nuget",
-            ApiKey = EnvironmentVariable("FeedzIoApiKey")
-        });
-    }
-});
-
 Task("Default")
-    .IsDependentOn("CopyToLocalPackages")
-    .IsDependentOn("Publish");
+    .IsDependentOn("CopyToLocalPackages");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
