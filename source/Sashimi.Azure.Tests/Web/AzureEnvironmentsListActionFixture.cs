@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
+using Octopus.Server.Extensibility.Extensions.Infrastructure.Web.Api;
 using Sashimi.Azure.Web;
 
 namespace Sashimi.Azure.Tests.Web
@@ -14,10 +16,13 @@ namespace Sashimi.Azure.Tests.Web
         {
             var action = new AzureEnvironmentsListAction();
 
-            var context = new TestOctoContext(new TestOctoResponse());
-            await action.ExecuteAsync(context);
+            var request = Substitute.For<IOctoRequest>();
+            var responseProvider = await action.ExecuteAsync(request);
 
-            var environments = context.TestResponse.GetResponse<IEnumerable<AzureEnvironmentResource>>();
+            var response = responseProvider.Response;
+            response.Should().BeOfType<OctoDataResponse>();
+
+            var environments = (IReadOnlyCollection<AzureEnvironmentResource>)((OctoDataResponse) response).Model;
 
             foreach (var azureEnvironmentResource in environments)
             {

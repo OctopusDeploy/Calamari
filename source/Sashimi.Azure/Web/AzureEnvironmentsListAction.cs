@@ -8,6 +8,7 @@ namespace Sashimi.Azure.Web
 {
     class AzureEnvironmentsListAction : IAsyncApiAction
     {
+        static readonly OctopusJsonRegistration<IReadOnlyCollection<AzureEnvironmentResource>> Result = new OctopusJsonRegistration<IReadOnlyCollection<AzureEnvironmentResource>>();
         static readonly IReadOnlyCollection<AzureEnvironmentResource> EnvironmentResources;
 
         static AzureEnvironmentsListAction()
@@ -15,11 +16,9 @@ namespace Sashimi.Azure.Web
             EnvironmentResources = GetEnvironments();
         }
 
-        public Task ExecuteAsync(OctoContext context)
+        public Task<IOctoResponseProvider> ExecuteAsync(IOctoRequest request)
         {
-            context.Response.AsOctopusJson(EnvironmentResources);
-
-            return Task.CompletedTask;
+            return Task.FromResult(Result.Response(EnvironmentResources));
         }
 
         static IReadOnlyCollection<AzureEnvironmentResource> GetEnvironments()
