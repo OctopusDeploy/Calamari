@@ -241,22 +241,20 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public string ReadFile(string path, out Encoding encoding)
         {
-            return ReadFile(path, out encoding, DefaultInputEncodingPrecedence.ToArray());
+            return ReadAllText(ReadAllBytes(path), out encoding, DefaultInputEncodingPrecedence);
         }
 
-        public string ReadFile(string path, out Encoding encoding, params Encoding[] encodingPrecedence)
+        public string ReadAllText(byte[] bytes, out Encoding encoding, ICollection<Encoding> encodingPrecedence)
         {
-            if (encodingPrecedence.Length < 1)
+            if (encodingPrecedence.Count < 1)
                 throw new Exception("No encodings specified.");
 
-            if (encodingPrecedence.Take(encodingPrecedence.Length - 1)
+            if (encodingPrecedence.Take(encodingPrecedence.Count - 1)
                                   .FirstOrDefault(DecoderDoesNotRaiseErrorsForUnsupportedCharacters) is { } e)
                 throw new Exception($"The supplied encoding '{e}' does not raise errors for unsupported characters, so the subsequent "
                                     + "encoder will never be used. Please set DecoderFallback to ExceptionFallback or use Unicode.");
 
-            var bytes = File.ReadAllBytes(path);
-
-            Exception lastException = null;
+            Exception? lastException = null;
             foreach (var encodingToTry in encodingPrecedence)
                 try
                 {
@@ -306,10 +304,10 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public void WriteAllText(string path, string contents, Encoding? encoding = null)
         {
-            WriteAllText(path, () => contents, encoding);
+            WriteAllText(path, writer => writer.Write(contents), encoding);
         }
 
-        void WriteAllText(string path, Func<string> getText, Encoding? encoding = null)
+        public void WriteAllText(string path, Action<TextWriter> writeToWriter, Encoding? encoding = null)
         {
             if (path.Length <= 0)
                 throw new ArgumentException(path);
@@ -323,8 +321,6 @@ namespace Calamari.Common.Plumbing.FileSystem
                 Log.Warn($"The supplied encoding '{e}' does not raise errors for unsupported characters, so the subsequent "
                          + "encoder will never be used. Please set DecoderFallback to ExceptionFallback or use Unicode.");
 
-            var text = getText();
-
             byte[] bytes = null;
             (Encoding encoding, Exception exception)? lastFailure = null;
             foreach (var currentEncoding in encodingsToTry)
@@ -333,7 +329,16 @@ namespace Calamari.Common.Plumbing.FileSystem
                     Log.Warn($"Unable to represent the output with encoding {lastFailure?.encoding.WebName}. Trying next the alternative: {currentEncoding.WebName}.");
                 try
                 {
-                    bytes = currentEncoding.GetPreamble().Concat(currentEncoding.GetBytes(text)).ToArray();
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        using (var textWriter = new StreamWriter(memoryStream, currentEncoding))
+                        {
+                            writeToWriter(textWriter);
+                        }
+
+                        bytes = memoryStream.ToArray();
+                    }
+
                     break;
                 }
                 catch (EncoderFallbackException ex)
@@ -348,21 +353,6 @@ namespace Calamari.Common.Plumbing.FileSystem
             }
 
             WriteAllBytes(path, bytes);
-        }
-
-        public void WriteAllText(string path, Action<TextWriter> writeToWriter, Encoding? encoding = null)
-        {
-            WriteAllText(path,
-                         () =>
-                         {
-                             using (var textWriter = new StringWriter())
-                             {
-                                 writeToWriter(textWriter);
-                                 textWriter.Close();
-                                 return textWriter.ToString();
-                             }
-                         },
-                         encoding);
         }
 
         public static bool EncoderDoesNotRaiseErrorsForUnsupportedCharacters(Encoding encoding)

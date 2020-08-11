@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Xml;
 using System.Xml.XPath;
 using Calamari.Common.Plumbing.Extensions;
@@ -32,7 +33,13 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public void ModifyFile(string filePath, IVariables variables)
         {
-            var fileText = fileSystem.ReadFile(filePath, out var encoding);
+            var encodingPrecedence = new List<Encoding>(CalamariPhysicalFileSystem.DefaultInputEncodingPrecedence);
+
+            var fileBytes = fileSystem.ReadAllBytes(filePath);
+            if (TryGetDeclaredEncoding(fileBytes) is {} declaredEncoding)
+                encodingPrecedence.Insert(0, declaredEncoding);
+
+            var fileText = fileSystem.ReadAllText(fileBytes, out var encoding, encodingPrecedence);
             var lineEnding = fileText.GetMostCommonLineEnding();
 
             var doc = new XmlDocument();
@@ -100,12 +107,15 @@ namespace Calamari.Common.Features.StructuredVariables
             fileSystem.OverwriteFile(filePath,
                                      textWriter =>
                                      {
-                                         using (var writer = new XmlTextWriter(textWriter))
+                                         var xmlWriterSettings = new XmlWriterSettings
                                          {
-                                             textWriter.NewLine = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n";
-                                             writer.Formatting = Formatting.Indented;
-
-                                             doc.WriteTo(writer);
+                                             Indent = true,
+                                             NewLineChars = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n",
+                                             OmitXmlDeclaration = doc.FirstChild.NodeType != XmlNodeType.XmlDeclaration
+                                         };
+                                         using (var writer = XmlWriter.Create(textWriter, xmlWriterSettings))
+                                         {
+                                             doc.Save(writer);
                                              writer.Close();
                                          }
                                      },
@@ -193,6 +203,24 @@ namespace Calamari.Common.Features.StructuredVariables
                 return XPath2Expression.Compile(variableKey, nsResolver);
             }
             catch (XPath2Exception)
+            {
+                return null;
+            }
+        }
+
+        public static Encoding? TryGetDeclaredEncoding(byte[] bytes)
+        {
+            try
+            {
+                using (var stream = new MemoryStream(bytes))
+                using (var xmlReader = XmlReader.Create(stream))
+                {
+                    if (xmlReader.Read() && xmlReader.NodeType == XmlNodeType.XmlDeclaration)
+                        return Encoding.GetEncoding(xmlReader.GetAttribute("encoding"), EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
+                    return null;
+                }
+            }
+            catch
             {
                 return null;
             }

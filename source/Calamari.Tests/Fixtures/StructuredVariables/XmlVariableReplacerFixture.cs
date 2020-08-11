@@ -301,6 +301,25 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                         TestEnvironment.AssentConfiguration);
         }
 
+        [Test]
+        public void ShouldPreserveEncodingIso88592UnixNoBom()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables
+                                     {
+                                         { "//name[14]", "Miko\u0142aj" },
+                                         { "//name[.='Micha\u0142']", "Micha\u0142+"}
+                                     },
+                                     "enc-iso88592-unix-nobom.xml"),
+                        TestEnvironment.AssentConfiguration);
+        }
+
+        [Test]
+        public void ShouldAdaptDeclaredEncodingWhenNecessary()
+        {
+            this.Assent(ReplaceToHex(new CalamariVariables { { "//name[14]", "\u5F20\u4F1F" } }, "enc-iso88592-unix-nobom.xml"),
+                        TestEnvironment.AssentConfiguration);
+        }
+
         void RunTest(CalamariVariables vars,
                      string file,
                      [CallerMemberName]
