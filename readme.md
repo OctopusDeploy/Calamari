@@ -1,0 +1,1 @@
+This repository contains Sashimi.AzureResourceGroup and Calamari.AzureResourceGroup.
