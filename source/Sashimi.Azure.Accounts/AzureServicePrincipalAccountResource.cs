@@ -6,7 +6,7 @@ using Sashimi.Server.Contracts.Accounts;
 
 namespace Sashimi.Azure.Accounts
 {
-    public class AzureServicePrincipalAccountResource : AccountDetailsResource
+    class AzureServicePrincipalAccountResource : AccountDetailsResource
     {
         public override AccountType AccountType => AccountTypes.AzureServicePrincipalAccountType;
 
