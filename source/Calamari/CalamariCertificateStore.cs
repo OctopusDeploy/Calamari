@@ -17,6 +17,11 @@ namespace Calamari.AzureCloudService
             return GetOrAdd(thumbprint, bytes, null, new X509Store("Octopus", StoreLocation.CurrentUser));
         }
 
+        public static X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, StoreName storeName)
+        {
+            return GetOrAdd(thumbprint, bytes, null, new X509Store(storeName, StoreLocation.CurrentUser));
+        }
+
         static X509Certificate2 GetOrAdd(string thumbprint, byte[] bytes, string password, X509Store store)
         {
             store.Open(OpenFlags.ReadWrite);

@@ -6,6 +6,7 @@
         {
             public static class Azure
             {
+                public static readonly string Environment = "Octopus.Action.Azure.Environment";
                 public static readonly string CloudServiceName = "Octopus.Action.Azure.CloudServiceName";
                 public static readonly string ServiceManagementEndPoint = "Octopus.Action.Azure.ServiceManagementEndPoint";
                 public static readonly string SubscriptionId = "Octopus.Action.Azure.SubscriptionId";
