@@ -1,9 +1,10 @@
+using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
 using Calamari.AzureScripting;
 using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.Common;
-using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
 
@@ -19,7 +20,12 @@ namespace Calamari.AzureWebApp
         {
             base.ConfigureContainer(builder, options);
             builder.RegisterType<ResourceManagerPublishProfileProvider>().SingleInstance();
-            builder.RegisterType<AzureContextScriptWrapper>().As<IScriptWrapper>().SingleInstance();
+        }
+
+        protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()
+        {
+            yield return typeof(AzureContextScriptWrapper).Assembly;
+            yield return typeof(Program).Assembly;
         }
 
         public static Task<int> Main(string[] args)
