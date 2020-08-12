@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Octopus.Diagnostics;
 using Octostache;
 using Sashimi.AzureCloudService.Endpoints;
@@ -22,7 +21,24 @@ namespace Sashimi.AzureCloudService
 
         public string AuditEntryDescription => "Azure Cloud Service Target";
         public string ServiceMessageName => AzureCloudServiceServiceMessageNames.CreateTargetName;
-        public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = Enumerable.Empty<ScriptFunctionRegistration>();
+        public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = new List<ScriptFunctionRegistration>
+        {
+            new ScriptFunctionRegistration("OctopusAzureCloudServiceTarget",
+                                           "Creates a new Azure Cloud Service target.",
+                                           AzureCloudServiceServiceMessageNames.CreateTargetName,
+                                           new Dictionary<string, FunctionParameter>
+                                           {
+                                               { AzureCloudServiceServiceMessageNames.NameAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureCloudServiceServiceMessageNames.AzureCloudServiceNameAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureCloudServiceServiceMessageNames.AzureStorageAccountAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureCloudServiceServiceMessageNames.AzureDeploymentSlotAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureCloudServiceServiceMessageNames.SwapAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureCloudServiceServiceMessageNames.InstanceCountAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureCloudServiceServiceMessageNames.AccountIdOrNameAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureCloudServiceServiceMessageNames.RolesAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureCloudServiceServiceMessageNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) }
+                                           })
+        };
 
         public Endpoint BuildEndpoint(IDictionary<string, string> messageProperties,
                                       VariableDictionary variables,
@@ -111,12 +127,15 @@ namespace Sashimi.AzureCloudService
         internal static class AzureCloudServiceServiceMessageNames
         {
             public const string CreateTargetName = "create-azurecloudservicetarget";
+            public const string NameAttribute = "name";
             public const string AccountIdOrNameAttribute = "octopusAccountIdOrName";
             public const string AzureCloudServiceNameAttribute = "azureCloudServiceName";
             public const string AzureStorageAccountAttribute = "azureStorageAccount";
             public const string AzureDeploymentSlotAttribute = "azureDeploymentSlot";
             public const string SwapAttribute = "swap";
             public const string InstanceCountAttribute = "instanceCount";
+            public const string RolesAttribute = "octopusRoles";
+            public const string UpdateIfExistingAttribute = "updateIfExisting";
         }
 
         internal static class AzureCloudServiceEndpointDeploymentSlot
