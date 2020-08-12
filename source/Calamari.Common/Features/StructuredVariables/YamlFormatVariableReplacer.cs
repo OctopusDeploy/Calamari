@@ -133,26 +133,36 @@ namespace Calamari.Common.Features.StructuredVariables
                 using (var reader = new StringReader(value))
                 {
                     var parser = new Parser(reader);
+                    bool added = false;
                     while (parser.MoveNext())
                     {
                         var ev = parser.Current;
                         if (ev != null && !(ev is StreamStart || ev is StreamEnd || ev is DocumentStart || ev is DocumentEnd))
+                        {
                             result.Add(ev);
+                            added = true;
+                        }
                     }
+                    if (!added)
+                        throw new Exception("No content found in fragment");
                 }
             }
             catch
             {
                 // The input could not be recognized as a structure. Falling back to treating it as a string.
-                return new List<ParsingEvent>
-                {
-                    new Scalar(anchor,
-                               tag,
-                               value,
-                               ScalarStyle.DoubleQuoted,
-                               true,
-                               true)
-                };
+                result.Add(value != null
+                               ? new Scalar(anchor,
+                                            tag,
+                                            value,
+                                            ScalarStyle.DoubleQuoted,
+                                            true,
+                                            true)
+                               : new Scalar(anchor,
+                                            tag,
+                                            "null",
+                                            ScalarStyle.Plain,
+                                            true,
+                                            false));
             }
 
             return result;
