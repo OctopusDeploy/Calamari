@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -16,8 +14,6 @@ namespace Calamari.AzureScripting
 {
     public class AzureContextScriptWrapper : IScriptWrapper
     {
-        const string CertificateFileName = "azure_certificate.pfx";
-        const int PasswordSizeBytes = 20;
         const string DefaultAzureEnvironment = "AzureCloud";
 
         readonly ICalamariFileSystem fileSystem;
@@ -62,21 +58,11 @@ namespace Calamari.AzureScripting
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
             {
-                if (variables.Get(SpecialVariables.Account.AccountType) == "AzureServicePrincipal")
-                {
-                    SetOutputVariable("OctopusUseServicePrincipal", true.ToString(), variables);
-                    SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
-                    SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
-                    variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
-                }
-
-                //otherwise use management certificate
-                SetOutputVariable("OctopusUseServicePrincipal", false.ToString(), variables);
-                using (new TemporaryFile(CreateAzureCertificate(workingDirectory)))
-                {
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
-                }
+                SetOutputVariable("OctopusUseServicePrincipal", true.ToString(), variables);
+                SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId), variables);
+                SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId), variables);
+                variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
+                return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
             }
         }
 
@@ -101,35 +87,12 @@ namespace Calamari.AzureScripting
             return azureContextScriptFile;
         }
 
-        string CreateAzureCertificate(string workingDirectory)
-        {
-            var certificateFilePath = Path.Combine(workingDirectory, CertificateFileName);
-            var certificatePassword = GenerateCertificatePassword();
-            var azureCertificate = CalamariCertificateStore.GetOrAdd(variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                                                                     Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
-                                                                     StoreName.My);
-
-            variables.Set("OctopusAzureCertificateFileName", certificateFilePath);
-            variables.Set("OctopusAzureCertificatePassword", certificatePassword);
-
-            fileSystem.WriteAllBytes(certificateFilePath, azureCertificate.Export(X509ContentType.Pfx, certificatePassword));
-            return certificateFilePath;
-        }
-
         static void SetOutputVariable(string name, string value, IVariables variables)
         {
             if (variables.Get(name) != value)
             {
                 Log.SetOutputVariable(name, value, variables);
             }
-        }
-
-        static string GenerateCertificatePassword()
-        {
-            var random = RandomNumberGenerator.Create();
-            var bytes = new byte[PasswordSizeBytes];
-            random.GetBytes(bytes);
-            return Convert.ToBase64String(bytes);
         }
     }
 }
