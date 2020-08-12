@@ -37,9 +37,9 @@ namespace Calamari.Common.Features.StructuredVariables
                 var variablesByKey = variables
                                      .Where(v => !OctopusReservedVariablePattern.IsMatch(v.Key))
                                      .DistinctBy(v => v.Key)
-                                     .ToDictionary<KeyValuePair<string, string>, string, Func<string>>(v => v.Key,
-                                                                                                       v => () => variables.Get(v.Key),
-                                                                                                       StringComparer.OrdinalIgnoreCase);
+                                     .ToDictionary<KeyValuePair<string, string>, string, Func<string?>>(v => v.Key,
+                                                                                                        v => () => variables.Get(v.Key),
+                                                                                                        StringComparer.OrdinalIgnoreCase);
 
                 // Read and transform the input file
                 var fileText = fileSystem.ReadFile(filePath, out var encoding);
@@ -53,7 +53,7 @@ namespace Calamari.Common.Features.StructuredVariables
                     var scanner = new Scanner(reader, false);
                     var parser = new Parser(scanner);
                     var classifier = new YamlEventStreamClassifier();
-                    (IYamlNode startEvent, string replacementValue)? structureWeAreReplacing = null;
+                    (IYamlNode startEvent, string? replacementValue)? structureWeAreReplacing = null;
                     while (parser.MoveNext())
                     {
                         var ev = parser.Current;
@@ -125,7 +125,7 @@ namespace Calamari.Common.Features.StructuredVariables
             }
         }
 
-        List<ParsingEvent> ParseFragment(string value, string? anchor, string? tag)
+        List<ParsingEvent> ParseFragment(string? value, string? anchor, string? tag)
         {
             var result = new List<ParsingEvent>();
             try

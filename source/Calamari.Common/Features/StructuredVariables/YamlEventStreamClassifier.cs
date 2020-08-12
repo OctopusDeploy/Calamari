@@ -106,7 +106,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
     public static class ParsingEventExtensions
     {
-        public static Scalar ReplaceValue(this Scalar scalar, string newValue)
+        public static Scalar ReplaceValue(this Scalar scalar, string? newValue)
         {
             return newValue != null
                 ? new Scalar(scalar.Anchor,
