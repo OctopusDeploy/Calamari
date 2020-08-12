@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -58,8 +59,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
                 foreach (var filePath in matchingFiles)
                 {
-                    // TODO: once we allow users to specify a file format, pass it through here.
-                    var replacersToTry = GetReplacersToTryForFile(filePath, null, onlyPerformJsonReplacement);
+                    var replacersToTry = GetReplacersToTryForFile(filePath, onlyPerformJsonReplacement);
                     DoReplacement(filePath, deployment.Variables, replacersToTry);
                 }
             }
@@ -78,29 +78,26 @@ namespace Calamari.Common.Features.StructuredVariables
             return files;
         }
 
-        IFileFormatVariableReplacer[] GetReplacersToTryForFile(string filePath, string? specifiedFileFormat, bool onlyPerformJsonReplacement)
+        IFileFormatVariableReplacer[] GetReplacersToTryForFile(string filePath, bool onlyPerformJsonReplacement)
         {
-            if (onlyPerformJsonReplacement)	
-            {	
+            if (onlyPerformJsonReplacement)
+            {
+                log.Verbose($"The {ActionVariables.StructuredConfigurationFallbackFlag} flag is set. The file at "
+                            + $"{filePath} will be parsed as JSON.");
+
                 return new []	
                 {	
                     jsonReplacer	
                 };	
             }
-            
-            if (!string.IsNullOrWhiteSpace(specifiedFileFormat))
-            {
-                var specifiedReplacer = TryFindReplacerForFormat(specifiedFileFormat);
 
-                return new []
-                {
-                    specifiedReplacer
-                };
-            }
-            
             var guessBasedOnFilePath = FindBestNonJsonReplacerForFilePath(filePath);
             if (guessBasedOnFilePath != null)
             {
+                log.Verbose($"The file at {filePath} matches a known filename pattern, and will be "
+                            + $"treated as {guessBasedOnFilePath.FileFormatName}. The file will be tried "
+                            + $"as {jsonReplacer.FileFormatName} first for backwards compatibility.");
+
                 return new []
                 {
                     // For backwards compatibility, always try JSON first.
@@ -109,26 +106,12 @@ namespace Calamari.Common.Features.StructuredVariables
                 };
             }
 
+            log.Verbose($"The file at {filePath} will be treated as JSON.");
+
             return new []
             {
                 jsonReplacer
             };
-        }
-
-        IFileFormatVariableReplacer TryFindReplacerForFormat(string specifiedFileFormat)
-        {
-            var specifiedReplacer = allReplacers
-                .FirstOrDefault(r => r.FileFormatName.Equals(specifiedFileFormat, StringComparison.OrdinalIgnoreCase));
-
-            if (specifiedReplacer == null)
-            {
-                var availableFileFormats = string.Join(", ", allReplacers.Select(r => r.FileFormatName));
-                var message = $"The file format specified ({specifiedFileFormat}) is invalid. "
-                              + $"The available options are: {availableFileFormats}";
-                throw new Exception(message);
-            }
-
-            return specifiedReplacer;
         }
 
         IFileFormatVariableReplacer? FindBestNonJsonReplacerForFilePath(string filePath)
@@ -140,37 +123,31 @@ namespace Calamari.Common.Features.StructuredVariables
 
         void DoReplacement(string filePath, IVariables variables, IFileFormatVariableReplacer[] replacersToTry)
         {
-            var namesOfFormatsToTry = string.Join(", ", replacersToTry
-                .Select(r => r.FileFormatName));
-
-            log.Verbose($"Attempting structured variable replacement on file {filePath} with formats: {namesOfFormatsToTry}.");
-
-            var attempts = new List<(string format, StructuredConfigFileParseException exception)>();
-            
-            foreach (var replacer in replacersToTry)
+            for (var r = 0; r < replacersToTry.Length; r++)
             {
+                var replacer = replacersToTry[r];
                 var format = replacer.FileFormatName;
-                
+                var isLastParserToTry = r == replacersToTry.Length - 1;
+
                 try
                 {
-                    log.Verbose($"Attempting structured variable replacement on file {filePath} with format '{replacer.FileFormatName}'");
+                    log.Verbose($"Attempting structured variable replacement on file {filePath} with format {format}");
                     replacer.ModifyFile(filePath, variables);
-                    log.Info($"Structured variable replacement succeeded on file {filePath} with format '{replacer.FileFormatName}'");
+                    log.Info($"Structured variable replacement succeeded on file {filePath} with format {format}");
                     return;
+                }
+                catch (StructuredConfigFileParseException parseException) when (!isLastParserToTry)
+                {
+                    log.Verbose($"The file at {filePath} couldn't be parsed as {format}: {parseException.Message}");
                 }
                 catch (StructuredConfigFileParseException parseException)
                 {
-                    attempts.Add((format, parseException));
+                    var message = $"Structured variable replacement failed on file {filePath}. "
+                                  + $"The file could not be parsed as {format}: {parseException.Message} "
+                                  + "See verbose logs for more details.";
+                    throw new Exception(message);
                 }
             }
-
-            log.Warn($"Structured variable replacement failed on file {filePath}.");
-            foreach (var attempt in attempts)
-            {
-                log.Warn($"Syntax error when parsing the file as {attempt.format}: {attempt.exception.Message}");
-            }
-
-            throw new Exception($"The file at {filePath} could not be parsed with any of the formats tried. See logs for more details.");
         }
     }
 }
