@@ -2,7 +2,10 @@
 // TOOLS
 //////////////////////////////////////////////////////////////////////
 #tool "nuget:?package=GitVersion.CommandLine&version=4.0.0"
+#tool "nuget:?package=TeamCity.Dotnet.Integration&version=1.0.10"
 #addin "Cake.FileHelpers&version=3.2.0"
+#addin "nuget:?package=SharpZipLib&version=1.2.0"
+#addin "nuget:?package=Cake.Compression&version=0.2.4"
 
 using Path = System.IO.Path;
 using IO = System.IO;
@@ -129,7 +132,11 @@ Task("PublishCalamariProjects")
                 }
             }
             Verbose($"{publishDir}/{calamariFlavour}");
-            Zip($"{publishDir}{calamariFlavour}", $"{artifactsDir}{calamariFlavour}.zip");
+            if (calamariFlavour.EndsWith(".Tests")) {
+                TeamCity.PublishArtifacts($"{publishDir}{calamariFlavour}/**/*=>{calamariFlavour}.zip");
+            } else {
+                ZipCompress($"{publishDir}{calamariFlavour}", $"{artifactsDir}{calamariFlavour}.zip", 1);
+            }
         }
 });
 
@@ -152,7 +159,7 @@ Task("PublishSashimiTestProjects")
                 RunPublish();
 
             Verbose($"{publishDir}/{sashimiFlavour}");
-            Zip($"{publishDir}{sashimiFlavour}", $"{artifactsDir}{sashimiFlavour}.zip");
+            TeamCity.PublishArtifacts($"{publishDir}{sashimiFlavour}/**/*=>{sashimiFlavour}.zip");
         }
 });
 
@@ -166,11 +173,16 @@ Task("PackSashimi")
         Configuration = configuration,
         OutputDirectory = artifactsDir,
         NoBuild = false, // Don't change this flag we need it because of https://github.com/dotnet/msbuild/issues/5566
-        IncludeSource = true,
+        IncludeSource = false,
+        IncludeSymbols = false,
         ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
     });
 
-    DeleteFiles(artifactsDir + "*symbols*");
+    var packages = GetFiles($"{artifactsDir}*.{nugetVersion}.nupkg");
+    foreach (var package in packages)
+    {
+        TeamCity.PublishArtifacts(package.FullPath);
+    }
 });
 
 Task("CopyToLocalPackages")
@@ -180,7 +192,7 @@ Task("CopyToLocalPackages")
     .Does(() =>
 {
     CreateDirectory(localPackagesDir);
-    CopyFiles(Path.Combine(artifactsDir, $"Sashimi.*.{nugetVersion}.nupkg"), localPackagesDir);
+    CopyFiles(Path.Combine(artifactsDir, $"*.{nugetVersion}.nupkg"), localPackagesDir);
 });
 
 Task("Publish")
