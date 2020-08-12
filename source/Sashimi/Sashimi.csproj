@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Sashimi.AzureWebApp</AssemblyName>
+		<RootNamespace>Sashimi.AzureWebApp</RootNamespace>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Nullable>enable</Nullable>
+    <OutputPath>bin\</OutputPath>
+    <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi.AzureWebApp</PackageProjectUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\artifacts\Calamari.AzureWebApp.zip">
+      <Visible>false</Visible>
+      <LinkBase>tools</LinkBase>
+      <Pack>true</Pack>
+      <PackagePath>tools/</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Octopus.Configuration" Version="2.1.0" />
+    <PackageReference Include="Sashimi.Azure.Accounts" Version="6.0.2" />
+    <PackageReference Include="Sashimi.Azure.Common" Version="6.0.2" />
+    <PackageReference Include="Sashimi.AzureScripting" Version="6.0.2" />
+  </ItemGroup>
+</Project>

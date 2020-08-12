@@ -1,0 +1,1 @@
+This repository contains Sashimi.AzureWebApp and Calamari.AzureWebApp. 
