@@ -155,21 +155,17 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public void Update(IVariables variables)
         {
-            bool VariableNameIsNotASystemVariable(string v)
+            bool VariableNameIsMappedPath(string v)
             {
-                if (v.StartsWith("Octopus", StringComparison.OrdinalIgnoreCase))
-                {
+                if (v.StartsWith("Octopus", StringComparison.OrdinalIgnoreCase)
+                    && !v.StartsWith("Octopus:", StringComparison.OrdinalIgnoreCase))
                     // Only include variables starting with 'Octopus'
                     // if it also has a colon (:)
-                    if (v.StartsWith("Octopus:", StringComparison.OrdinalIgnoreCase))
-                        return map.ContainsKey(v);
                     return false;
-                }
-
                 return map.ContainsKey(v);
             }
 
-            foreach (var name in variables.GetNames().Where(VariableNameIsNotASystemVariable))
+            foreach (var name in variables.GetNames().Where(VariableNameIsMappedPath))
                 try
                 {
                     map[name](variables.Get(name));
