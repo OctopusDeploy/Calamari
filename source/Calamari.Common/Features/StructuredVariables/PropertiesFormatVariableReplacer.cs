@@ -1,6 +1,7 @@
 ﻿using System;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using JavaPropertiesParser;
 using JavaPropertiesParser.Expressions;
@@ -11,10 +12,12 @@ namespace Calamari.Common.Features.StructuredVariables
     public class PropertiesFormatVariableReplacer : IFileFormatVariableReplacer
     {
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
-        public PropertiesFormatVariableReplacer(ICalamariFileSystem fileSystem)
+        public PropertiesFormatVariableReplacer(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
+            this.log = log;
         }
 
         public string FileFormatName => StructuredConfigVariablesFileFormats.Properties;
@@ -31,7 +34,16 @@ namespace Calamari.Common.Features.StructuredVariables
                 var fileText = fileSystem.ReadFile(filePath, out var encoding);
 
                 var parsed = Parser.Parse(fileText);
-                var updated = parsed.Mutate(expr => TryReplaceValue(expr, variables));
+                var replaced = 0;
+                var updated = parsed.Mutate(expr =>
+                                            {
+                                                var newExpr = TryReplaceValue(expr, variables);
+                                                if (!Equals(newExpr, expr))
+                                                    replaced++;
+                                                return newExpr;
+                                            });
+                if (replaced == 0)
+                    log.Info(StructuredConfigMessages.NoStructuresFound);
                 var serialized = updated.ToString();
 
                 fileSystem.OverwriteFile(filePath, serialized, encoding);
@@ -55,6 +67,8 @@ namespace Calamari.Common.Features.StructuredVariables
                     var logicalName = pair.Key?.Text?.LogicalValue ?? "";
                     if (!IsOctopusVariableName(logicalName) && variables.IsSet(logicalName))
                     {
+                        log.Verbose(StructuredConfigMessages.StructureFound(logicalName));
+                        
                         var logicalValue = variables.Get(logicalName);
                         var encodedValue = Encode.Value(logicalValue);
                         var newValueExpr = new ValueExpression(new StringValue(logicalValue, encodedValue));

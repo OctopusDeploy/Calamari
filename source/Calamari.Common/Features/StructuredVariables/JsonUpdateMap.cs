@@ -165,15 +165,21 @@ namespace Calamari.Common.Features.StructuredVariables
                 return map.ContainsKey(v);
             }
 
+            var replaced = 0;
             foreach (var name in variables.GetNames().Where(VariableNameIsMappedPath))
                 try
                 {
+                    log.Verbose(StructuredConfigMessages.StructureFound(name));
+                    replaced++;
                     map[name](variables.Get(name));
                 }
                 catch (Exception e)
                 {
                     log.WarnFormat("Unable to set value for {0}. The following error occurred: {1}", name, e.Message);
                 }
+
+            if (replaced == 0)
+                log.Info(StructuredConfigMessages.NoStructuresFound);
         }
     }
 }
