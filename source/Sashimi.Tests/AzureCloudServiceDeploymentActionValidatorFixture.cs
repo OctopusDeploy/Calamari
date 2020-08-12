@@ -44,11 +44,46 @@ namespace Sashimi.AzureCloudService.Tests
             result.Errors.Should().Contain(f => f.PropertyName == SpecialVariables.Action.Azure.AccountId);
         }
 
+        [Test]
+        public void ShouldRequireAccountForAzureCloudService()
+        {
+            var context = CreateBareAction(new Dictionary<string, string>
+            {
+                { SpecialVariables.Action.Azure.AccountId, "boo" },
+                { SpecialVariables.Action.Azure.CloudServiceName, "boo" },
+                { SpecialVariables.Action.Azure.StorageAccountName, "boo" },
+                { SpecialVariables.Action.Azure.SwapIfPossible, bool.FalseString },
+                { SpecialVariables.Action.Azure.Slot, "Staging" },
+                { SpecialVariables.Action.Azure.UseCurrentInstanceCount, bool.TrueString }
+            });
+            var result = new AzureCloudServiceActionHandlerValidator().TestValidate(context);
+
+            result.IsValid.Should().BeTrue();
+        }
+
+        [Test]
+        public void ShouldNotRequireAccountForAzureCloudServiceFrom26()
+        {
+            var context = CreateBareAction(new Dictionary<string, string>
+            {
+                { SpecialVariables.Action.Azure.SubscriptionId, "boo" },
+                { SpecialVariables.Action.Azure.CloudServiceName, "boo" },
+                { SpecialVariables.Action.Azure.StorageAccountName, "boo" },
+                { SpecialVariables.Action.Azure.SwapIfPossible, bool.FalseString },
+                { SpecialVariables.Action.Azure.Slot, "Staging" },
+                { SpecialVariables.Action.Azure.UseCurrentInstanceCount, bool.TrueString }
+            });
+            var result = new AzureCloudServiceActionHandlerValidator().TestValidate(context);
+
+            result.IsValid.Should().BeTrue();
+        }
+
         static DeploymentActionValidationContext CreateBareAction(Dictionary<string, string> properties)
         {
             return new DeploymentActionValidationContext(SpecialVariables.Action.Azure.CloudServiceActionTypeName,
                                                          properties,
                                                          new List<PackageReference>());
         }
+
     }
 }
