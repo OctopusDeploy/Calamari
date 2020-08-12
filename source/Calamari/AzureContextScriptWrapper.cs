@@ -57,7 +57,7 @@ namespace Calamari.AzureCloudService
             SetOutputVariable("OctopusAzureEnvironment", azureEnvironment, variables);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
-            using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
+            using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory)))
                 {
@@ -66,21 +66,9 @@ namespace Calamari.AzureCloudService
             }
         }
 
-        string CreateContextScriptFile(string workingDirectory, ScriptSyntax syntax)
+        string CreateContextScriptFile(string workingDirectory)
         {
-            string contextFile;
-            switch (syntax)
-            {
-                case ScriptSyntax.Bash:
-                    contextFile = "AzureContext.sh";
-                    break;
-                case ScriptSyntax.PowerShell:
-                    contextFile = "AzureContext.ps1";
-                    break;
-                default:
-                    throw new InvalidOperationException($"No Azure context wrapper exists for {syntax}");
-            }
-
+            var contextFile = "AzureCloudServicesContext.ps1";
             var azureContextScriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
             var contextScript = embeddedResources.GetEmbeddedResourceText(GetType().Assembly, $"{GetType().Namespace}.Scripts.{contextFile}");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
