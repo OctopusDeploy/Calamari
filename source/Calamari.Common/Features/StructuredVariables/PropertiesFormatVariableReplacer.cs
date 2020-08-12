@@ -38,7 +38,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 var updated = parsed.Mutate(expr =>
                                             {
                                                 var newExpr = TryReplaceValue(expr, variables);
-                                                if (!Equals(newExpr, expr))
+                                                if (!ReferenceEquals(newExpr, expr))
                                                     replaced++;
                                                 return newExpr;
                                             });
