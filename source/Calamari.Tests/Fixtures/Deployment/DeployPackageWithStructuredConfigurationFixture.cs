@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             base.SetUp();
         }
         
-        [Test]	
+        [Test]
         public void FailsAndWarnsIfAFileCannotBeParsedWhenFallbackFlagIsSet()	
         {	
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))	
@@ -36,13 +36,12 @@ namespace Calamari.Tests.Fixtures.Deployment
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);	
-                result.AssertFailure();	
-
-                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ^. Path '', line 0, position 0.");	
+                result.AssertFailure();
+                result.AssertErrorOutput("The file could not be parsed as Json");	
             }	
         }	
 
-        [Test]	
+        [Test]
         public void ShouldNotTreatYamlFileAsYamlWhenFallbackFlagIsSet()	
         {	
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))	
@@ -55,8 +54,8 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);	
                 result.AssertFailure();	
 
-                // Indicates we tried to parse yaml as JSON.	
-                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: k. Path '', line 0, position 0.");	
+                // Indicates we tried to parse yaml as JSON.
+                result.AssertErrorOutput("The file could not be parsed as Json");	
             }	
         }
 
@@ -164,8 +163,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
-                result.AssertOutputMatches("Attempting structured variable replacement on file .*?values.yaml with formats: Json, Yaml.");
-
+                result.AssertOutput("The file will be tried as Json first for backwards compatibility");
+                result.AssertOutputMatches("Structured variable replacement succeeded on file .+? with format Yaml");
             }
         }
 
@@ -257,7 +256,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 
                 result.AssertFailure();
-                result.AssertOutput("Unterminated string. Expected delimiter: \". Path '', line 3, position 1.");
+                result.AssertErrorOutput("The file could not be parsed as Json");
             }
         }
         
@@ -272,7 +271,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
-                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ^. Path '', line 0, position 0.");
+                result.AssertErrorOutput("The file could not be parsed as Json");
             }
         }
 
@@ -308,8 +307,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
-
-                result.AssertOutput("Syntax error when parsing the file as Json: Unexpected character encountered while parsing value: ^. Path '', line 0, position 0.");
+                result.AssertErrorOutput("The file could not be parsed as Json");
             }
         }
 
