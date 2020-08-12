@@ -21,7 +21,7 @@ namespace Sashimi.Aws.Accounts.Tests
         public void Ctor_Properties_ShouldBeInitializedCorrectly()
         {
             serviceMessageHandler.AuditEntryDescription.Should().Be("AWS Account");
-            serviceMessageHandler.ServiceMessageName.Should().Be(CreateAwsAccountServiceMessagePropertyNames.Name);
+            serviceMessageHandler.ServiceMessageName.Should().Be(CreateAwsAccountServiceMessagePropertyNames.CreateAccountName);
         }
 
         [Test]
@@ -33,16 +33,16 @@ namespace Sashimi.Aws.Accounts.Tests
 
             details.Should().BeOfType<AmazonWebServicesAccountDetails>();
             var amazonWebServicesAccountDetails = (AmazonWebServicesAccountDetails)details;
-            amazonWebServicesAccountDetails.AccessKey.Should().Be(properties[CreateAwsAccountServiceMessagePropertyNames.AccessKey]);
-            amazonWebServicesAccountDetails.SecretKey.Should().Be(properties[CreateAwsAccountServiceMessagePropertyNames.SecretKey]);
+            amazonWebServicesAccountDetails.AccessKey.Should().Be(properties[CreateAwsAccountServiceMessagePropertyNames.AccessKeyAttribute]);
+            amazonWebServicesAccountDetails.SecretKey.Should().Be(properties[CreateAwsAccountServiceMessagePropertyNames.SecretKeyAttribute]);
         }
 
         static IDictionary<string, string> GetMessageProperties()
         {
             return new Dictionary<string, string>
             {
-                { CreateAwsAccountServiceMessagePropertyNames.AccessKey, "AccessKey" },
-                { CreateAwsAccountServiceMessagePropertyNames.SecretKey, "SecretKey" }
+                { CreateAwsAccountServiceMessagePropertyNames.AccessKeyAttribute, "AccessKey" },
+                { CreateAwsAccountServiceMessagePropertyNames.SecretKeyAttribute, "SecretKey" }
             };
         }
     }

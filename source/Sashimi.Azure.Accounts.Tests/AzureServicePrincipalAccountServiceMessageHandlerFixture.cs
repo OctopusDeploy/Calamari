@@ -23,7 +23,7 @@ namespace Sashimi.Azure.Accounts.Tests
         public void Ctor_Properties_ShouldBeInitializedCorrectly()
         {
             serviceMessageHandler.AuditEntryDescription.Should().Be("Azure Service Principal account");
-            serviceMessageHandler.ServiceMessageName.Should().Be(CreateAzureAccountServiceMessagePropertyNames.Name);
+            serviceMessageHandler.ServiceMessageName.Should().Be(CreateAzureAccountServiceMessagePropertyNames.CreateAccountName);
         }
 
         [Test]
