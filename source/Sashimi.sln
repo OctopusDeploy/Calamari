@@ -52,6 +52,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureScripting", "AzureScri
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Scripting", "Calamari.Scripting\Calamari.Scripting.csproj", "{EE065FFB-3C93-4568-84D2-90B3A28935BC}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripting", "Scripting", "{B251E41D-A8AF-4787-B179-4413A6F84CA2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Scripting.Tests", "Calamari.Scripting.Tests\Calamari.Scripting.Tests.csproj", "{D9714598-B120-4A5A-9081-87FF30A06192}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -122,6 +126,10 @@ Global
 		{EE065FFB-3C93-4568-84D2-90B3A28935BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE065FFB-3C93-4568-84D2-90B3A28935BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EE065FFB-3C93-4568-84D2-90B3A28935BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9714598-B120-4A5A-9081-87FF30A06192}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9714598-B120-4A5A-9081-87FF30A06192}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9714598-B120-4A5A-9081-87FF30A06192}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9714598-B120-4A5A-9081-87FF30A06192}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -132,6 +140,8 @@ Global
 		{238BD45A-A67D-474D-847D-87F72B64772F} = {2E47DADC-351F-4DC3-BDD2-BA03867B1C69}
 		{D229E77B-3607-437B-91D0-598BFDD0F091} = {2E47DADC-351F-4DC3-BDD2-BA03867B1C69}
 		{58C49A1A-6705-4485-BFE3-5CB73FAEC99B} = {2E47DADC-351F-4DC3-BDD2-BA03867B1C69}
+		{EE065FFB-3C93-4568-84D2-90B3A28935BC} = {B251E41D-A8AF-4787-B179-4413A6F84CA2}
+		{D9714598-B120-4A5A-9081-87FF30A06192} = {B251E41D-A8AF-4787-B179-4413A6F84CA2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F8108764-E787-43A4-A43A-2BB5540615E8}
