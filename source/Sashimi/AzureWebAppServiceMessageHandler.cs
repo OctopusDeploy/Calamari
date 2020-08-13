@@ -26,16 +26,16 @@ namespace Sashimi.AzureWebApp
         {
             new ScriptFunctionRegistration("OctopusAzureWebAppTarget",
                                            "Creates a new Azure WebApp target.",
-                                           AzureWebAppServiceMessageNames.CreateTargetName, 
+                                           AzureWebAppServiceMessageNames.CreateTargetName,
                                            new Dictionary<string, FunctionParameter>
                                            {
-                                               { "name", new FunctionParameter(ParameterType.String) },
-                                               { "azureWebApp", new FunctionParameter(ParameterType.String) },
-                                               { "azureWebAppSlot", new FunctionParameter(ParameterType.String) },
-                                               { "azureResourceGroupName", new FunctionParameter(ParameterType.String) },
-                                               { "octopusAccountIdOrName", new FunctionParameter(ParameterType.String) },
-                                               { "octopusRoles", new FunctionParameter(ParameterType.String) },
-                                               { "updateIfExisting", new FunctionParameter(ParameterType.Bool) }
+                                               { AzureWebAppServiceMessageNames.NameAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureWebAppServiceMessageNames.WebAppNameAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureWebAppServiceMessageNames.WebAppSlotNameAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureWebAppServiceMessageNames.ResourceGroupNameAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureWebAppServiceMessageNames.AccountIdOrNameAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureWebAppServiceMessageNames.RolesAttribute, new FunctionParameter(ParameterType.String) },
+                                               { AzureWebAppServiceMessageNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) }
                                            })
         };
 
@@ -53,7 +53,7 @@ namespace Sashimi.AzureWebApp
 
             messageProperties.TryGetValue(AzureWebAppServiceMessageNames.WebAppNameAttribute, out var wepAppName);
             messageProperties.TryGetValue(AzureWebAppServiceMessageNames.ResourceGroupNameAttribute, out var resourceGroupName);
-            
+
             endpoint.WebAppName = wepAppName;
             endpoint.ResourceGroupName = resourceGroupName;
 
@@ -98,6 +98,9 @@ namespace Sashimi.AzureWebApp
 
         internal static class AzureWebAppServiceMessageNames
         {
+            public const string NameAttribute = "name";
+            public const string RolesAttribute = "octopusRoles";
+            public const string UpdateIfExistingAttribute = "updateIfExisting";
             public const string CreateTargetName = "create-azurewebapptarget";
             public const string AccountIdOrNameAttribute = "octopusAccountIdOrName";
             public const string WebAppNameAttribute = "azureWebApp";
