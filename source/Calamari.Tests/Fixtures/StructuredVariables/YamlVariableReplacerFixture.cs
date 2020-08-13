@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Linq;
+using System.Text.RegularExpressions;
 using Assent;
 using Calamari.Common.Features.StructuredVariables;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -12,9 +13,24 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
     [TestFixture]
     public class YamlVariableReplacerFixture : VariableReplacerFixture
     {
-        public YamlVariableReplacerFixture()
-            : base(new YamlFormatVariableReplacer(CalamariPhysicalFileSystem.GetPhysicalFileSystem()))
+        public YamlVariableReplacerFixture() : base((fs, log) => new YamlFormatVariableReplacer(fs, log))
         {
+        }
+
+        [Test]
+        public void DoesNothingIfThereAreNoVariables()
+        {
+            this.Assent(Replace(new CalamariVariables(), "application.yaml"),
+                        TestEnvironment.AssentYamlConfiguration);
+        }
+
+        [Test]
+        public void DoesNothingIfThereAreNoMatchingVariables()
+        {
+            Replace(new CalamariVariables { { "Non-matching", "variable" } }, "application.yaml");
+
+            Log.MessagesInfoFormatted.Should().Contain(StructuredConfigMessages.NoStructuresFound);
+            Log.MessagesVerboseFormatted.Should().NotContain(m => Regex.IsMatch(m, StructuredConfigMessages.StructureFound(".*")));
         }
 
         [Test]
@@ -30,6 +46,10 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 },
                                 "application.yaml"),
                         TestEnvironment.AssentYamlConfiguration);
+            
+            Log.MessagesVerboseFormatted.Count(m => Regex.IsMatch(m, StructuredConfigMessages.StructureFound(".*"))).Should().Be(5);
+            Log.MessagesVerboseFormatted.Should().Contain(StructuredConfigMessages.StructureFound("spring:h2:console:enabled"));
+            Log.MessagesInfoFormatted.Should().NotContain(StructuredConfigMessages.NoStructuresFound);
         }
 
         [Test]

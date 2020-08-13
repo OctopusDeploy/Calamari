@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Assent;
 using Calamari.Common.Features.StructuredVariables;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables
@@ -12,8 +14,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
     [TestFixture]
     public class XmlVariableReplacerFixture : VariableReplacerFixture
     {
-        public XmlVariableReplacerFixture()
-            : base(new XmlFormatVariableReplacer(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new InMemoryLog()))
+        public XmlVariableReplacerFixture() : base((fs, log) => new XmlFormatVariableReplacer(fs, log))
         {
         }
 
@@ -22,6 +23,15 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         {
             var vars = new CalamariVariables();
             RunTest(vars, "complex.xml");
+        }
+
+        [Test]
+        public void DoesNothingIfThereAreNoMatchingVariables()
+        {
+            Replace(new CalamariVariables { { "Non-matching", "variable" } }, "complex.xml");
+
+            Log.MessagesInfoFormatted.Should().Contain(StructuredConfigMessages.NoStructuresFound);
+            Log.MessagesVerboseFormatted.Should().NotContain(m => Regex.IsMatch(m, StructuredConfigMessages.StructureFound(".*")));
         }
 
         [Test]
@@ -66,6 +76,10 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             };
 
             RunTest(vars, "complex.xml");
+            
+            Log.MessagesVerboseFormatted.Count(m => Regex.IsMatch(m, StructuredConfigMessages.StructureFound(".*"))).Should().Be(1);
+            Log.MessagesVerboseFormatted.Should().Contain(StructuredConfigMessages.StructureFound("/document/setting[@id='id-1']"));
+            Log.MessagesInfoFormatted.Should().NotContain(StructuredConfigMessages.NoStructuresFound);
         }
 
         [Test]

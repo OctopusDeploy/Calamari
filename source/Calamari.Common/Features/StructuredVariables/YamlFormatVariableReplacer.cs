@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
@@ -16,10 +17,12 @@ namespace Calamari.Common.Features.StructuredVariables
         static readonly Regex OctopusReservedVariablePattern = new Regex(@"^Octopus([^:]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
-        public YamlFormatVariableReplacer(ICalamariFileSystem fileSystem)
+        public YamlFormatVariableReplacer(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
+            this.log = log;
         }
 
         public string FileFormatName => StructuredConfigVariablesFileFormats.Yaml;
@@ -34,11 +37,20 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             try
             {
+                void LogReplacement(string key)
+                    => log.Verbose(StructuredConfigMessages.StructureFound(key));
+
+                var replaced = 0;
                 var variablesByKey = variables
                                      .Where(v => !OctopusReservedVariablePattern.IsMatch(v.Key))
                                      .DistinctBy(v => v.Key)
                                      .ToDictionary<KeyValuePair<string, string>, string, Func<string?>>(v => v.Key,
-                                                                                                        v => () => variables.Get(v.Key),
+                                                                                                        v => () =>
+                                                                                                             {
+                                                                                                                 LogReplacement(v.Key);
+                                                                                                                 replaced++;
+                                                                                                                 return variables.Get(v.Key);
+                                                                                                             },
                                                                                                         StringComparer.OrdinalIgnoreCase);
 
                 // Read and transform the input file
@@ -107,6 +119,8 @@ namespace Calamari.Common.Features.StructuredVariables
                             }
                         }
                     }
+                    if (replaced == 0)
+                        log.Info(StructuredConfigMessages.NoStructuresFound);
                 }
 
                 fileSystem.OverwriteFile(filePath,
