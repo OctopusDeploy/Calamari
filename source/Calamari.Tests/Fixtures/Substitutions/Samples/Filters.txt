@@ -1,3 +1,4 @@
+NoFilter: #{var}
 HtmlEscape: #{var | HtmlEscape}
 JsonEscape: #{var | JsonEscape}
 XmlEscape: #{var | XmlEscape}

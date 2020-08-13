@@ -1,3 +1,5 @@
+NoFilter: =:'"\
+	 <>￦
 HtmlEscape: =:&apos;&quot;\
 	 &lt;&gt;￦
 JsonEscape: =:'\"\\\r\n\t <>￦
