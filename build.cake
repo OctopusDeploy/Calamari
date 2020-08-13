@@ -206,7 +206,8 @@ Task("Publish")
     {
         NuGetPush(package, new NuGetPushSettings {
             Source = "https://f.feedz.io/octopus-deploy/dependencies/nuget",
-            ApiKey = EnvironmentVariable("FeedzIoApiKey")
+            ApiKey = EnvironmentVariable("FeedzIoApiKey"),
+            SkipDuplicate = true
         });
     }
 });
