@@ -123,12 +123,10 @@ namespace Calamari.Common.Features.StructuredVariables
 
         void DoReplacement(string filePath, IVariables variables, IFileFormatVariableReplacer[] replacersToTry)
         {
-            for (var r = 0; r < replacersToTry.Length; r++)
+            foreach (var (replacer, isLastReplacer) in replacersToTry.Select((replacer, ii) => (replacer,
+                                                                                                ii == replacersToTry.Length - 1)))
             {
-                var replacer = replacersToTry[r];
                 var format = replacer.FileFormatName;
-                var isLastParserToTry = r == replacersToTry.Length - 1;
-
                 try
                 {
                     log.Verbose($"Attempting structured variable replacement on file {filePath} with format {format}");
@@ -136,7 +134,7 @@ namespace Calamari.Common.Features.StructuredVariables
                     log.Info($"Structured variable replacement succeeded on file {filePath} with format {format}");
                     return;
                 }
-                catch (StructuredConfigFileParseException parseException) when (!isLastParserToTry)
+                catch (StructuredConfigFileParseException parseException) when (!isLastReplacer)
                 {
                     log.Verbose($"The file at {filePath} couldn't be parsed as {format}: {parseException.Message}");
                 }
