@@ -8,6 +8,6 @@ str1: 'false'
 str2: 'null'
 str3: !!str no
 str4: !!str pets.com
-obj1: ''
+obj1: ""
 seq1: null
-seq2: ''
+seq2: ""
