@@ -33,14 +33,6 @@ namespace Calamari.Scripting
 
         IEnumerable<string> ScriptFileTargetFactory(RunningDeployment context)
         {
-            // We should not perform variable-replacement if a file arg is passed in since this deprecated property
-            // should only be coming through if something isn't using the variable-dictionary and hence will
-            // have already been replaced on the server
-            if (WasProvided(context.Variables.Get(ScriptVariables.ScriptFileName)) && !WasProvided(context.PackageFilePath))
-            {
-                yield break;
-            }
-
             var scriptFile = context.Variables.Get(ScriptVariables.ScriptFileName);
             yield return Path.Combine(context.CurrentDirectory, scriptFile);
         }
