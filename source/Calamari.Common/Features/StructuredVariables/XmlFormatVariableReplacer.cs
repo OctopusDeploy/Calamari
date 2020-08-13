@@ -55,6 +55,7 @@ namespace Calamari.Common.Features.StructuredVariables
             var nsManager = BuildNsManagerFromDocument(doc);
             var navigator = doc.CreateNavigator();
 
+            var replaced = 0;
             foreach (var variable in variables)
                 if (TryGetXPathFromVariableKey(variable.Key, nsManager) is {} xPathExpression)
                 {
@@ -62,6 +63,10 @@ namespace Calamari.Common.Features.StructuredVariables
                     var variableValue = variables.Get(variable.Key);
 
                     foreach (XPathNavigator selectedNode in selectedNodes)
+                    {
+                        log.Verbose(StructuredConfigMessages.StructureFound(variable.Key));
+                        replaced++;
+
                         switch (selectedNode.UnderlyingObject)
                         {
                             case XmlText text:
@@ -102,7 +107,10 @@ namespace Calamari.Common.Features.StructuredVariables
                                 log.Warn($"XPath returned an object of type '{selectedNode.GetType().FullName}', which is not supported");
                                 break;
                         }
+                    }
                 }
+            if (replaced == 0)
+                log.Info(StructuredConfigMessages.NoStructuresFound);
 
             fileSystem.OverwriteFile(filePath,
                                      textWriter =>
@@ -130,7 +138,7 @@ namespace Calamari.Common.Features.StructuredVariables
             {
                 element.InnerXml = variableValue;
             }
-            catch (XmlException e)
+            catch (XmlException)
             {
                 element.InnerXml = previousInnerXml;
                 log.Warn("Could not set the value of the XML element at XPath "

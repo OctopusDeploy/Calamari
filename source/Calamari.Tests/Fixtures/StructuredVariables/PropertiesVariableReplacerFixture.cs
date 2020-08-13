@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Assent;
 using Calamari.Common.Features.StructuredVariables;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables
@@ -12,8 +14,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
     [TestFixture]
     public class PropertiesVariableReplacerFixture : VariableReplacerFixture
     {
-        public PropertiesVariableReplacerFixture()
-            : base(new PropertiesFormatVariableReplacer(CalamariPhysicalFileSystem.GetPhysicalFileSystem()))
+        public PropertiesVariableReplacerFixture() : base((fs, log) => new PropertiesFormatVariableReplacer(fs, log))
         {
         }
 
@@ -22,6 +23,15 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         {
             var vars = new CalamariVariables();
             RunTest(vars, "example.properties");
+        }
+
+        [Test]
+        public void DoesNothingIfThereAreNoMatchingVariables()
+        {
+            Replace(new CalamariVariables { { "Non-matching", "variable" } }, "example.properties");
+
+            Log.MessagesInfoFormatted.Should().Contain(StructuredConfigMessages.NoStructuresFound);
+            Log.MessagesVerboseFormatted.Should().NotContain(m => Regex.IsMatch(m, StructuredConfigMessages.StructureFound(".*")));
         }
 
         [Test]
@@ -39,6 +49,10 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                 { "key1", "new-value" }
             };
             RunTest(vars, "example.properties");
+
+            Log.MessagesVerboseFormatted.Count(m => Regex.IsMatch(m, StructuredConfigMessages.StructureFound(".*"))).Should().Be(1);
+            Log.MessagesVerboseFormatted.Should().Contain(StructuredConfigMessages.StructureFound("key1"));
+            Log.MessagesInfoFormatted.Should().NotContain(StructuredConfigMessages.NoStructuresFound);
         }
 
         [Test]

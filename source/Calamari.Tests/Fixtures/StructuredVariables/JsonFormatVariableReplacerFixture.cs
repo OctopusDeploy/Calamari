@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Linq;
+using System.Text.RegularExpressions;
 using Assent;
 using Calamari.Common.Features.StructuredVariables;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables
@@ -11,8 +13,24 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
     [TestFixture]
     public class JsonFormatVariableReplacerFixture : VariableReplacerFixture
     {
-        public JsonFormatVariableReplacerFixture() : base(new JsonFormatVariableReplacer(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new InMemoryLog()))
+        public JsonFormatVariableReplacerFixture() : base((fs, log) => new JsonFormatVariableReplacer(fs, log))
         {
+        }
+
+        [Test]
+        public void DoesNothingIfThereAreNoVariables()
+        {
+            this.Assent(Replace(new CalamariVariables(), "appsettings.simple.json"),
+                        TestEnvironment.AssentJsonConfiguration);
+        }
+
+        [Test]
+        public void DoesNothingIfThereAreNoMatchingVariables()
+        {
+            Replace(new CalamariVariables { { "Non-matching", "variable" } }, "appsettings.simple.json");
+
+            Log.MessagesInfoFormatted.Should().Contain(StructuredConfigMessages.NoStructuresFound);
+            Log.MessagesVerboseFormatted.Should().NotContain(m => Regex.IsMatch(m, StructuredConfigMessages.StructureFound(".*")));
         }
 
         [Test]
@@ -28,6 +46,10 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                 },
                                 "appsettings.simple.json"),
                         TestEnvironment.AssentJsonConfiguration);
+
+            Log.MessagesVerboseFormatted.Count(m => Regex.IsMatch(m, StructuredConfigMessages.StructureFound(".*"))).Should().Be(5);
+            Log.MessagesVerboseFormatted.Should().Contain(StructuredConfigMessages.StructureFound("EmailSettings:SmtpPort"));
+            Log.MessagesInfoFormatted.Should().NotContain(StructuredConfigMessages.NoStructuresFound);
         }
 
         [Test]

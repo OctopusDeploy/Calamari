@@ -2,38 +2,41 @@
 using System.IO;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
 
 namespace Calamari.Tests.Fixtures.StructuredVariables
 {
-    public class VariableReplacerFixture : CalamariFixture
+    public abstract class VariableReplacerFixture : CalamariFixture
     {
-        readonly IFileFormatVariableReplacer replacer;
+        readonly ICalamariFileSystem fileSystem;
+        readonly Func<ICalamariFileSystem, ILog, IFileFormatVariableReplacer> replacerFactory;
 
-        public VariableReplacerFixture(IFileFormatVariableReplacer replacer)
+        protected VariableReplacerFixture(Func<ICalamariFileSystem, ILog, IFileFormatVariableReplacer> replacerFactory)
         {
-            this.replacer = replacer;
+            this.replacerFactory = replacerFactory;
+            fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         }
 
-        public string Replace(IVariables variables, string existingFile, Func<string, string> outputFileReader)
+        string Replace(IVariables variables, string existingFile, Func<string, string> outputFileReader)
         {
             var temp = Path.GetTempFileName();
             File.Copy(GetFixtureResource("Samples", existingFile), temp, true);
 
             using (new TemporaryFile(temp))
             {
-                replacer.ModifyFile(temp, variables);
+                replacerFactory(fileSystem, Log).ModifyFile(temp, variables);
                 return outputFileReader(temp);
             }
         }
 
-        public string Replace(IVariables variables, string existingFile)
+        protected string Replace(IVariables variables, string existingFile)
         {
             return Replace(variables, existingFile, File.ReadAllText);
         }
 
-        public string ReplaceToHex(IVariables variables, string existingFile)
+        protected string ReplaceToHex(IVariables variables, string existingFile)
         {
             return Replace(variables, existingFile, path => File.ReadAllBytes(path).ToReadableHexDump());
         }
