@@ -1,7 +1,10 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
 using FluentAssertions;
 using NUnit.Framework;
 using Assent;
+using Sashimi.Tests.Shared.Extensions;
 using Sashimi.Tests.Shared.Server;
 
 namespace Sashimi.AzureResourceGroup.Tests
@@ -88,7 +91,17 @@ namespace Sashimi.AzureResourceGroup.Tests
             variableDictionary.Set("ATruthyVariable", Boolean.TrueString);
             var result = AzureResourceGroupActionUtils.TemplateParameters(parameterJson, templateTypes, variableDictionary);
 
-            this.Assent(result);
+            this.Assent(result, new Configuration().UsingNamer(new SashimiNamer()));
+        }
+
+        class SashimiNamer : INamer
+        {
+           public string GetName(TestMetadata metadata)
+           {
+              var directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().FullLocalPath());
+
+              return Path.Combine(directoryName, $"{metadata.TestFixture.GetType().Name}.{metadata.TestName}");
+           }
         }
 
         [Test]
