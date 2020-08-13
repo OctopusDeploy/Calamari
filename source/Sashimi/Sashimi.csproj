@@ -27,8 +27,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Portable.BouncyCastle" Version="1.8.4" />
-    <PackageReference Include="Sashimi.AzureScripting" Version="6.0.2" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="6.0.2" />
+    <PackageReference Include="Sashimi.AzureScripting" Version="6.1.1-frank-runscript0017" />
+    <PackageReference Include="Sashimi.Server.Contracts" Version="6.1.1-frank-runscript0017" />
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.7.0" />
     <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0" />
   </ItemGroup>

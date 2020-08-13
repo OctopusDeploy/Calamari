@@ -32,6 +32,9 @@ namespace Sashimi.AzureCloudService
             builder.RegisterType<AzureCloudServicePackageContributor>()
                    .As<IContributeToPackageDeployment>()
                    .InstancePerLifetimeScope();
+            builder.RegisterType<AzureCloudServiceScriptActionOverride>()
+                   .As<IScriptActionOverride>()
+                   .InstancePerLifetimeScope();
         }
     }
 }

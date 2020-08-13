@@ -1,8 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Reflection;
+using System.Threading.Tasks;
 using Autofac;
 using Calamari.Common;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Scripting;
 
 namespace Calamari.AzureCloudService
 {
@@ -22,6 +25,13 @@ namespace Calamari.AzureCloudService
             base.ConfigureContainer(builder, options);
             builder.RegisterType<AzurePackageUploader>().AsSelf();
             builder.RegisterType<AzureAccount>().AsSelf();
+        }
+
+        protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()
+        {
+            yield return typeof(RunScriptCommand).Assembly;
+            yield return typeof(AzureContextScriptWrapper).Assembly;
+            yield return typeof(Program).Assembly;
         }
     }
 }
