@@ -17,7 +17,6 @@ namespace Sashimi.AzureWebApp.Tests
             get
             {
                 yield return typeof(AccountTypes);
-                yield return typeof(AzureServicePrincipalAccountDetails);
                 yield return typeof(AzureWebAppEndpoint);
                 yield return typeof(AzureWebAppEndpointResource);
             }
