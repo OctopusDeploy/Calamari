@@ -48,7 +48,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
         {
             var variables = new CalamariVariables
             {
-                ["var"] = "=:'\"\\\r\n\t <>"
+                ["var"] = "=:'\"\\\r\n\t <>\uFFE6"
             };
 
             var textAfterReplacement = PerformTest(GetFixtureResource("Samples", "Filters.txt"), variables).text;
