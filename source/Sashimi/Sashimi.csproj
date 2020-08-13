@@ -8,7 +8,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <OutputPath>bin\</OutputPath>
     <Nullable>enable</Nullable>
-    <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi.Terraform</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <NoDefaultExcludes>true</NoDefaultExcludes>
   </PropertyGroup>
