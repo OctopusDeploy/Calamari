@@ -10,7 +10,7 @@
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Calamari.AzureScripting" Version="6.0.2" />
+    <PackageReference Include="Calamari.AzureScripting" Version="6.1.0" />
     <PackageReference Include="Calamari.Common" Version="14.7.0" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.21" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
@@ -22,7 +22,7 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
     <PackageReference Include="Sashimi.Server.Contracts">
-      <Version>6.0.2</Version>
+      <Version>6.1.0</Version>
     </PackageReference>
   </ItemGroup>
 </Project>
