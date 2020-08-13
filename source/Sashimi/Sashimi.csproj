@@ -10,10 +10,11 @@
     <Nullable>enable</Nullable>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi.AzureCloudService</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <NoDefaultExcludes>true</NoDefaultExcludes>
-    <ContentTargetFolders>contentFiles</ContentTargetFolders>
   </PropertyGroup>
-  <ItemGroup>
+  <PropertyGroup>
+    <NoWarn>NU5119</NoWarn>
+  </PropertyGroup>
+<ItemGroup>
     <EmbeddedResource Include="**\*.ps1" />
   </ItemGroup>
   <ItemGroup>
