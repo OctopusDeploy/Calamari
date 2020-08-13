@@ -1,3 +1,5 @@
+HtmlEscape: =:&apos;&quot;\
+	 &lt;&gt;
 JsonEscape: =:'\"\\\r\n\t <>
 XmlEscape: =:&apos;&quot;\
 	 &lt;&gt;
@@ -7,3 +9,5 @@ YamlSingleQuoteEscape: =:''"\
 	 <>
 PropertiesKeyEscape: \=\:'"\\\r\n\t\ <>
 PropertiesValueEscape: =:'"\\\r\n\t <>
+UriEscape: =:'%22%5C%0D%0A%09%20%3C%3E
+UriDataEscape: %3D%3A%27%22%5C%0D%0A%09%20%3C%3E
