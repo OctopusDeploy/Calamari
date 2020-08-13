@@ -8,8 +8,9 @@
     <Nullable>enable</Nullable>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi.AzureResourceGroup</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <NoDefaultExcludes>true</NoDefaultExcludes>
-    <ContentTargetFolders>contentFiles</ContentTargetFolders>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>NU5119</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\..\artifacts\Calamari.AzureResourceGroup.zip" LinkBase="tools" Pack="true" PackagePath="tools/" />
