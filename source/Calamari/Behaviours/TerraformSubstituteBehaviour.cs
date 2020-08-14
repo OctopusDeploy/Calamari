@@ -31,13 +31,21 @@ namespace Calamari.Terraform.Behaviours
 
         string[] GetFilesToSubstitute(IVariables variables)
         {
+            var isEnableNoMatchWarningSet = variables.IsSet(PackageVariables.EnableNoMatchWarning);
+            var additionalFileSubstitutions = GetAdditionalFileSubstitutions(variables);
+            if (!isEnableNoMatchWarningSet)
+            {
+                var hasAdditionalSubstitutions = !string.IsNullOrEmpty(additionalFileSubstitutions);
+                variables.AddFlag(PackageVariables.EnableNoMatchWarning, hasAdditionalSubstitutions);
+            }
+
             var result = new List<string>();
 
             var runAutomaticFileSubstitution = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.RunAutomaticFileSubstitution, true);
             if (runAutomaticFileSubstitution)
                 result.AddRange(new[] { "**/*.tf", "**/*.tf.json", "**/*.tfvars", "**/*.tfvars.json" });
 
-            var additionalFileSubstitution = GetAdditionalFileSubstitutions(variables);
+            var additionalFileSubstitution = additionalFileSubstitutions;
             if (!string.IsNullOrWhiteSpace(additionalFileSubstitution))
                 result.AddRange(additionalFileSubstitution.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries));
 

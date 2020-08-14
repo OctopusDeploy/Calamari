@@ -679,7 +679,10 @@ output ""config-map-aws-auth"" {{
 
                                                                                         populateVariables(context);
 
-                                                                                        context.WithFilesToCopy(terraformFiles);
+                                                                                        if (!String.IsNullOrEmpty(folderName))
+                                                                                        {
+                                                                                            context.WithFilesToCopy(terraformFiles);
+                                                                                        }
                                                                                     })
                                                                        .Execute();
 
