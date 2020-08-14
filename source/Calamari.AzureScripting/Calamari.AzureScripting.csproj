@@ -10,10 +10,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Calamari.Common" Version="14.8.0" />
+      <PackageReference Include="Calamari.Common" Version="14.8.1" />
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="Scripts\*" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
+      <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.7.0" />
+      <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
