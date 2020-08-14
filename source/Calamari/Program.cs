@@ -7,6 +7,7 @@ using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.Common;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Scripting;
 
 namespace Calamari.AzureWebApp
 {
@@ -24,6 +25,7 @@ namespace Calamari.AzureWebApp
 
         protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()
         {
+            yield return typeof(RunScriptCommand).Assembly;
             yield return typeof(AzureContextScriptWrapper).Assembly;
             yield return typeof(Program).Assembly;
         }

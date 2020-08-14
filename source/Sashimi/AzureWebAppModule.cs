@@ -28,6 +28,9 @@ namespace Sashimi.AzureWebApp
                      builder.RegisterType<AzureWebAppServiceMessageHandler>()
                             .AsSelf()
                             .InstancePerLifetimeScope();
+                     builder.RegisterType<AzureWebAppScriptActionOverride>()
+                            .As<IScriptActionOverride>()
+                            .InstancePerLifetimeScope();
               }
        }
 }
