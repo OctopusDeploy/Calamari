@@ -2,6 +2,7 @@
 using Sashimi.Azure.Accounts;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
+using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 
 namespace Sashimi.AzureScripting
@@ -25,7 +26,7 @@ namespace Sashimi.AzureScripting
             return builder;
         }
 
-        static ICalamariCommandBuilder WithAzureCmdlets(
+        public static ICalamariCommandBuilder WithAzureCmdlets(
             this ICalamariCommandBuilder builder,
             IActionHandlerContext context)
         {
@@ -47,7 +48,7 @@ namespace Sashimi.AzureScripting
             return builder;
         }
 
-        static ICalamariCommandBuilder WithAzureCLI(
+        public static ICalamariCommandBuilder WithAzureCLI(
             this ICalamariCommandBuilder builder,
             IActionHandlerContext context)
         {

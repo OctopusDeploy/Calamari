@@ -9,15 +9,12 @@
 ##   $OctopusAzureTargetScriptParameters = "..."
 ##   $OctopusUseServicePrincipal = "false"
 ##   $OctopusAzureSubscriptionId = "..."
-##   $OctopusAzureStorageAccountName = "..."
-##   $OctopusAzureCertificateFileName = "..."
-##   $OctopusAzureCertificatePassword = "..."
 ##   $OctopusAzureADTenantId = "..."
 ##   $OctopusAzureADClientId = "..."
 ##   $OctopusAzureADPassword = "..."
 ##   $OctopusAzureEnvironment = "..."
 ##   $OctopusDisableAzureCLI = "..."
-##   $OctopusAzureExtensionsDirectory = "..." 
+##   $OctopusAzureExtensionsDirectory = "..."
 
 $ErrorActionPreference = "Stop"
 
@@ -63,120 +60,102 @@ function Execute-WithRetry([ScriptBlock] $command) {
 Execute-WithRetry{
     pushd $env:OctopusCalamariWorkingDirectory
     try {
-        If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
-            # Authenticate via Service Principal
-            $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
-            $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-            
-            if (Get-Command "Login-AzureRmAccount" -ErrorAction SilentlyContinue)
-            {
-                # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
-                Disable-AzureRMContextAutosave -Scope Process
+        # Authenticate via Service Principal
+        $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
+        $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
 
-                $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvironment
-                if (!$AzureEnvironment)
-                {
-                    Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
-                    exit -2
-                }
+        if (Get-Command "Login-AzureRmAccount" -ErrorAction SilentlyContinue)
+        {
+            # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
+            Disable-AzureRMContextAutosave -Scope Process
 
-                Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
-
-                # Force any output generated to be verbose in Octopus logs.
-                Write-Host "##octopus[stdout-verbose]"
-                Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
-                Write-Host "##octopus[stdout-default]"
-            }
-            elseif (Get-InstalledModule Az -ErrorAction SilentlyContinue)
-            {
-                if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
-                {
-                    # Turn on AzureRm aliasing
-                    # See https://docs.microsoft.com/en-us/powershell/azure/migrate-from-azurerm-to-az?view=azps-3.0.0#enable-azurerm-compatibility-aliases
-                    Enable-AzureRmAlias -Scope Process
-                }
-
-                # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
-                Disable-AzContextAutosave -Scope Process
-
-                $AzureEnvironment = Get-AzEnvironment -Name $OctopusAzureEnvironment
-                if (!$AzureEnvironment)
-                {
-                    Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
-                    exit -2
-                }
-
-                Write-Verbose "Az Modules: Authenticating with Service Principal"
-
-                # Force any output generated to be verbose in Octopus logs.
-                Write-Host "##octopus[stdout-verbose]"
-                Connect-AzAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
-                Write-Host "##octopus[stdout-default]"
-            }
-            
-            If (!$OctopusDisableAzureCLI -or $OctopusDisableAzureCLI -like [Boolean]::FalseString) {
-                try {
-                    # authenticate with the Azure CLI
-                    Write-Host "##octopus[stdout-verbose]"
-
-                    # Config directory is set to make sure that our security is right for the step running it  
-                    # and not using the one in the default config dir to avoid issues with user defined ones 
-                    $env:AZURE_CONFIG_DIR = [System.IO.Path]::Combine($env:OctopusCalamariWorkingDirectory, "azure-cli") 
-                    EnsureDirectoryExists($env:AZURE_CONFIG_DIR) 
- 
-                    # The azure extensions directory is getting overridden above when we set the azure config dir (undocumented behavior). 
-                    # Set the azure extensions directory to the value of $OctopusAzureExtensionsDirectory if specified, 
-                    # otherwise, back to the default value of $HOME\.azure\cliextension.
-                    if($OctopusAzureExtensionsDirectory) 
-                    { 
-                        Write-Host "Setting Azure CLI extensions directory to $OctopusAzureExtensionsDirectory" 
-                        $env:AZURE_EXTENSION_DIR = $OctopusAzureExtensionsDirectory 
-                    } else { 
-                        $env:AZURE_EXTENSION_DIR = "$($HOME)\.azure\cliextensions" 
-                    } 
-
-                    $previousErrorAction = $ErrorActionPreference
-                    $ErrorActionPreference = "Continue"
-
-                    az cloud set --name $OctopusAzureEnvironment 2>$null 3>$null
-                    $ErrorActionPreference = $previousErrorAction
-
-                    Write-Host "Azure CLI: Authenticating with Service Principal"
-
-                    $loginArgs = @();
-                    $loginArgs += @("-u", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId))));
-                    # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
-                    $loginArgs += @("--password", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword))));
-                    $loginArgs += @("--tenant", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId))));
-                    az login --service-principal $loginArgs
-
-                    Write-Host "Azure CLI: Setting active subscription to $OctopusAzureSubscriptionId"
-                    az account set --subscription $OctopusAzureSubscriptionId
-
-                    Write-Host "##octopus[stdout-default]"
-                    Write-Verbose "Successfully authenticated with the Azure CLI"
-                } catch  {
-                    # failed to authenticate with Azure CLI
-                    Write-Verbose "Failed to authenticate with Azure CLI"
-                    Write-Verbose $_.Exception.Message
-                }
-            }
-        } Else {
-            # Authenticate via Management Certificate
-            Write-Verbose "Loading the management certificate"
-            Add-Type -AssemblyName "System"
-            $certificate = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList @($OctopusAzureCertificateFileName, $OctopusAzureCertificatePassword, ([System.Security.Cryptography.X509Certificates.X509KeyStorageFlags] "PersistKeySet", "Exportable"))
-            $AzureEnvironment = Get-AzureEnvironment | Where-Object {$_.Name -eq $OctopusAzureEnvironment}
-
+            $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvironment
             if (!$AzureEnvironment)
             {
-                Write-Error "No Azure environment could be matched given name $OctopusAzureEnvironment"
+                Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
                 exit -2
             }
 
-            $azureProfile = New-AzureProfile -SubscriptionId $OctopusAzureSubscriptionId -StorageAccount $OctopusAzureStorageAccountName -Certificate $certificate -Environment $AzureEnvironment
-            $azureProfile.Save(".\AzureProfile.json")
-            Select-AzureProfile -Profile $azureProfile | Out-Null
+            Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
+
+            # Force any output generated to be verbose in Octopus logs.
+            Write-Host "##octopus[stdout-verbose]"
+            Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+            Write-Host "##octopus[stdout-default]"
+        }
+        elseif (Get-InstalledModule Az -ErrorAction SilentlyContinue)
+        {
+            if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
+            {
+                # Turn on AzureRm aliasing
+                # See https://docs.microsoft.com/en-us/powershell/azure/migrate-from-azurerm-to-az?view=azps-3.0.0#enable-azurerm-compatibility-aliases
+                Enable-AzureRmAlias -Scope Process
+            }
+
+            # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
+            Disable-AzContextAutosave -Scope Process
+
+            $AzureEnvironment = Get-AzEnvironment -Name $OctopusAzureEnvironment
+            if (!$AzureEnvironment)
+            {
+                Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
+                exit -2
+            }
+
+            Write-Verbose "Az Modules: Authenticating with Service Principal"
+
+            # Force any output generated to be verbose in Octopus logs.
+            Write-Host "##octopus[stdout-verbose]"
+            Connect-AzAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+            Write-Host "##octopus[stdout-default]"
+        }
+
+        If (!$OctopusDisableAzureCLI -or $OctopusDisableAzureCLI -like [Boolean]::FalseString) {
+            try {
+                # authenticate with the Azure CLI
+                Write-Host "##octopus[stdout-verbose]"
+
+                # Config directory is set to make sure that our security is right for the step running it
+                # and not using the one in the default config dir to avoid issues with user defined ones
+                $env:AZURE_CONFIG_DIR = [System.IO.Path]::Combine($env:OctopusCalamariWorkingDirectory, "azure-cli")
+                EnsureDirectoryExists($env:AZURE_CONFIG_DIR)
+
+                # The azure extensions directory is getting overridden above when we set the azure config dir (undocumented behavior).
+                # Set the azure extensions directory to the value of $OctopusAzureExtensionsDirectory if specified,
+                # otherwise, back to the default value of $HOME\.azure\cliextension.
+                if($OctopusAzureExtensionsDirectory)
+                {
+                    Write-Host "Setting Azure CLI extensions directory to $OctopusAzureExtensionsDirectory"
+                    $env:AZURE_EXTENSION_DIR = $OctopusAzureExtensionsDirectory
+                } else {
+                    $env:AZURE_EXTENSION_DIR = "$($HOME)\.azure\cliextensions"
+                }
+
+                $previousErrorAction = $ErrorActionPreference
+                $ErrorActionPreference = "Continue"
+
+                az cloud set --name $OctopusAzureEnvironment 2>$null 3>$null
+                $ErrorActionPreference = $previousErrorAction
+
+                Write-Host "Azure CLI: Authenticating with Service Principal"
+
+                $loginArgs = @();
+                $loginArgs += @("-u", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId))));
+                # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
+                $loginArgs += @("--password", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword))));
+                $loginArgs += @("--tenant", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId))));
+                az login --service-principal $loginArgs
+
+                Write-Host "Azure CLI: Setting active subscription to $OctopusAzureSubscriptionId"
+                az account set --subscription $OctopusAzureSubscriptionId
+
+                Write-Host "##octopus[stdout-default]"
+                Write-Verbose "Successfully authenticated with the Azure CLI"
+            } catch  {
+                # failed to authenticate with Azure CLI
+                Write-Verbose "Failed to authenticate with Azure CLI"
+                Write-Verbose $_.Exception.Message
+            }
         }
     }
     finally {
