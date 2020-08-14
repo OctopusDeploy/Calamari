@@ -25,10 +25,5 @@ namespace Calamari.Terraform
                 public const string PlanDetailedExitCode = "TerraformPlanDetailedExitCode";
             }
         }
-
-        public static class Calamari
-        {
-            public static readonly string TerraformCliPath = "Octopus.Calamari.TerraformCliPath";
-        }
     }
 }

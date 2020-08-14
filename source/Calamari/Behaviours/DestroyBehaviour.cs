@@ -1,40 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Plumbing.Pipeline;
 
-namespace Calamari.Terraform
+namespace Calamari.Terraform.Behaviours
 {
-    [Command("destroy-terraform", Description = "Destroys Terraform resources")]
-    public class DestroyCommand : TerraformCommand
+    class DestroyBehaviour : TerraformDeployBehaviour
     {
-        readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-        public DestroyCommand(ILog log,
-                              IVariables variables,
-                              ICalamariFileSystem fileSystem,
-                              ICommandLineRunner commandLineRunner,
-                              ISubstituteInFiles substituteInFiles,
-                              IExtractPackage extractPackage)
-            : base(log,
-                   variables,
-                   fileSystem,
-                   substituteInFiles,
-                   extractPackage)
+        public DestroyBehaviour(ILog log,
+                                ICalamariFileSystem fileSystem,
+                                ICommandLineRunner commandLineRunner) : base(log)
         {
-            this.log = log;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
         }
 
-        protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
+        protected override Task Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
             using (var cli = new TerraformCliExecutor(log,
                                                       fileSystem,
@@ -49,6 +37,8 @@ namespace Calamari.Terraform
                                    cli.ActionParams)
                    .VerifySuccess();
             }
+
+            return this.CompletedTask();
         }
     }
 }
