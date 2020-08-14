@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Octopus.Server.Extensibility.Extensions.Infrastructure.Web.Api;
 
-namespace Sashimi.Azure.Web
+namespace Sashimi.Azure.Accounts.Web
 {
     class AzureEnvironmentsListAction : IAsyncApiAction
     {
@@ -80,12 +81,12 @@ namespace Sashimi.Azure.Web
 
     class AzureEnvironmentResource
     {
-        public string Name { get; set; }
-        public string DisplayName { get; set; }
-        public string AuthenticationEndpoint { get; set; }
-        public string ResourceManagerEndpoint { get; set; }
-        public string GraphEndpoint { get; set; }
-        public string ManagementEndpoint { get; set; }
-        public string StorageEndpointSuffix { get; set; }
+        public string Name { get; set; } = null!;
+        public string DisplayName { get; set; } = null!;
+        public string AuthenticationEndpoint { get; set; } = null!;
+        public string ResourceManagerEndpoint { get; set; } = null!;
+        public string GraphEndpoint { get; set; } = null!;
+        public string ManagementEndpoint { get; set; } = null!;
+        public string StorageEndpointSuffix { get; set; } = null!;
     }
 }

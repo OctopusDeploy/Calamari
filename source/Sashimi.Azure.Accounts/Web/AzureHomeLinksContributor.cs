@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Octopus.Server.Extensibility.HostServices.Web;
 
-namespace Sashimi.Azure.Web
+namespace Sashimi.Azure.Accounts.Web
 {
     class AzureHomeLinksContributor : IHomeLinksContributor
     {

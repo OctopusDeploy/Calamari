@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Octopus.Server.Extensibility.Extensions.Infrastructure.Web.Api;
-using Sashimi.Azure.Web;
+using Sashimi.Azure.Accounts.Web;
 
-namespace Sashimi.Azure.Tests.Web
+namespace Sashimi.Azure.Accounts.Tests.Web
 {
     [TestFixture]
     public class AzureEnvironmentsListActionFixture

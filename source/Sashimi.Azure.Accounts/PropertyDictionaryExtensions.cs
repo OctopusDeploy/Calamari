@@ -1,27 +1,30 @@
 using System;
 using System.Collections.Generic;
 
-static class PropertyDictionaryExtensions
+namespace Sashimi.Azure.Accounts
 {
-    public static bool ContainsPropertyWithValue(this IDictionary<string, string> dictionary, string key)
+    static class PropertyDictionaryExtensions
     {
-        if (!dictionary.ContainsKey(key))
+        public static bool ContainsPropertyWithValue(this IDictionary<string, string> dictionary, string key)
         {
-            return false;
+            if (!dictionary.ContainsKey(key))
+            {
+                return false;
+            }
+
+            string value = dictionary[key];
+            return value != null && !string.IsNullOrEmpty(value);
         }
 
-        string value = dictionary[key];
-        return value != null && !string.IsNullOrEmpty(value);
-    }
-
-    public static bool ContainsPropertyWithGuid(this IDictionary<string, string> dictionary, string key)
-    {
-        if (!ContainsPropertyWithValue(dictionary, key))
+        public static bool ContainsPropertyWithGuid(this IDictionary<string, string> dictionary, string key)
         {
-            return false;
-        }
+            if (!ContainsPropertyWithValue(dictionary, key))
+            {
+                return false;
+            }
 
-        string guid = dictionary[key];
-        return Guid.TryParse(guid, out Guid _);
+            string guid = dictionary[key];
+            return Guid.TryParse(guid, out Guid _);
+        }
     }
 }

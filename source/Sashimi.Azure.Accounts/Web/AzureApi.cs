@@ -2,7 +2,7 @@
 using System.Net.Http;
 using Octopus.Server.Extensibility.Extensions.Infrastructure.Web.Api;
 
-namespace Sashimi.Azure.Web
+namespace Sashimi.Azure.Accounts.Web
 {
     class AzureApi : RegistersEndpoints
     {
