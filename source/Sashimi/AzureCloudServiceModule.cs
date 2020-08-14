@@ -23,6 +23,8 @@ namespace Sashimi.AzureCloudService
                    .InstancePerLifetimeScope();
             builder.RegisterType<AzureCloudServiceActionHandler>().As<IActionHandler>().AsSelf()
                    .InstancePerLifetimeScope();
+            builder.RegisterType<AzureCloudServicePowerShellActionHandler>().As<IActionHandler>().AsSelf()
+                   .InstancePerLifetimeScope();
             builder.RegisterType<AzureCloudServiceServiceMessageHandler>().AsSelf()
                    .InstancePerLifetimeScope();
             builder.RegisterType<AzureCloudServiceDeploymentTargetTypeProvider>()
