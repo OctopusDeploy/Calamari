@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
+using Calamari.AzureScripting;
 using Calamari.Common;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
@@ -29,6 +30,7 @@ namespace Calamari.AzureCloudService
 
         protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()
         {
+            yield return typeof(AzureContextScriptWrapper).Assembly;
             yield return typeof(RunScriptCommand).Assembly;
             yield return typeof(Program).Assembly;
         }
