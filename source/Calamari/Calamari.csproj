@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Calamari.AzureScripting</AssemblyName>
+        <RootNamespace>Calamari.AzureScripting</RootNamespace>
+        <Nullable>enable</Nullable>
+        <OutputType>Exe</OutputType>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+    <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
+        <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
+    </PropertyGroup>
+    <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Calamari.Common" Version="14.8.1" />
+        <PackageReference Include="Calamari.Scripting" Version="8.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Scripts\*" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
+        <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.7.0" />
+        <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="Scripts\AzureContext.ps1" />
+    </ItemGroup>
+</Project>
