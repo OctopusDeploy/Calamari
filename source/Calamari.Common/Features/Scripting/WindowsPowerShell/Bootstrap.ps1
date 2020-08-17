@@ -216,25 +216,6 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
 
-function New-OctopusAzureServiceFabricTarget([string]$name, [string]$azureConnectionEndpoint, [string]$azureSecurityMode, [string]$azureCertificateThumbprint, [string]$azureActiveDirectoryUsername, [string]$azureActiveDirectoryPassword, [string]$certificateStoreLocation, [string]$certificateStoreName, [string]$octopusCertificateIdOrName, [string]$octopusRoles, [switch]$updateIfExisting)
-{
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name
-	$azureConnectionEndpoint = Convert-ToServiceMessageParameter -name "connectionEndpoint" -value $azureConnectionEndpoint
-	$azureSecurityMode = Convert-ToServiceMessageParameter -name "securityMode" -value $azureSecurityMode
-	$azureCertificateThumbprint = Convert-ToServiceMessageParameter -name "certificateThumbprint" -value $azureCertificateThumbprint
-	$azureActiveDirectoryUsername = Convert-ToServiceMessageParameter -name "activeDirectoryUsername" -value $azureActiveDirectoryUsername
-	$azureActiveDirectoryPassword = Convert-ToServiceMessageParameter -name "activeDirectoryPassword" -value $azureActiveDirectoryPassword
-	$certificateStoreLocation = Convert-ToServiceMessageParameter -name "certificateStoreLocation" -value $certificateStoreLocation
-	$certificateStoreName = Convert-ToServiceMessageParameter -name "certificateStoreName" -value $certificateStoreName
-	$octopusCertificateIdOrName = Convert-ToServiceMessageParameter -name "certificate" -value $octopusCertificateIdOrName
-	$octopusRoles = Convert-ToServiceMessageParameter -name "octopusRoles" -value $octopusRoles
-	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
-
-	$parameters = $name, $azureConnectionEndpoint, $azureSecurityMode, $azureCertificateThumbprint, $azureActiveDirectoryUsername, $azureActiveDirectoryPassword, $certificateStoreLocation, $certificateStoreName, $octopusCertificateIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
-
-	Write-Host "##octopus[create-azureservicefabrictarget $($parameters)]"
-}
-
 function Remove-OctopusTarget([string] $targetIdOrName)
 {
 	$targetIdOrName = Convert-ToServiceMessageParameter -name "machine" -value $targetIdOrName
