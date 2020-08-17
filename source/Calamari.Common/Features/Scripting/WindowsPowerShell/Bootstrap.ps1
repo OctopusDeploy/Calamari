@@ -216,23 +216,6 @@ function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSu
     Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
 
-function New-OctopusAzureCloudServiceTarget([string]$name, [string]$azureCloudServiceName, [string]$azureStorageAccount, [string]$azureDeploymentSlot, [string]$swap, [string]$instanceCount, [string]$octopusAccountIdOrName, [string]$octopusRoles, [switch]$updateIfExisting)
-{
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name
-	$azureCloudServiceName = Convert-ToServiceMessageParameter -name "azureCloudServiceName" -value $azureCloudServiceName
-	$azureStorageAccount = Convert-ToServiceMessageParameter -name "azureStorageAccount" -value $azureStorageAccount
-	$azureDeploymentSlot = Convert-ToServiceMessageParameter -name "azureDeploymentSlot" -value $azureDeploymentSlot
-	$swap = Convert-ToServiceMessageParameter -name "swap" -value $swap
-	$instanceCount = Convert-ToServiceMessageParameter -name "instanceCount" -value $instanceCount
-	$octopusAccountIdOrName = Convert-ToServiceMessageParameter -name "octopusAccountIdOrName" -value $octopusAccountIdOrName
-	$octopusRoles = Convert-ToServiceMessageParameter -name "octopusRoles" -value $octopusRoles
-	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
-
-	$parameters = $name, $azureCloudServiceName, $azureStorageAccount, $azureDeploymentSlot, $swap, $instanceCount, $octopusAccountIdOrName, $octopusRoles, $updateIfExistingParameter -join ' '
-
-	Write-Host "##octopus[create-azurecloudservicetarget $($parameters)]"
-}
-
 function Remove-OctopusTarget([string] $targetIdOrName)
 {
 	$targetIdOrName = Convert-ToServiceMessageParameter -name "machine" -value $targetIdOrName
