@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using Calamari.AzureScripting;
 using Calamari.Tests.Shared;
 using NUnit.Framework;
@@ -11,10 +11,10 @@ namespace Sashimi.AzureScripting.Tests
     [TestFixture]
     class AzurePowerShellActionHandlerFixture
     {
-        string clientId;
-        string clientSecret;
-        string tenantId;
-        string subscriptionId;
+        string? clientId;
+        string? clientSecret;
+        string? tenantId;
+        string? subscriptionId;
 
         [OneTimeSetUp]
         public void Setup()

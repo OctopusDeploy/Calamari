@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 using FluentAssertions;
 using FluentValidation.TestHelper;
@@ -11,7 +11,7 @@ namespace Sashimi.AzureScripting.Tests
     [TestFixture]
     public class AzureScriptDeploymentActionValidatorFixture
     {
-        AzurePowerShellActionHandlerValidator validator;
+        AzurePowerShellActionHandlerValidator? validator;
 
         [SetUp]
         public void Setup()

@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using Sashimi.Azure.Accounts;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;

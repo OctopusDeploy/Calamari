@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 

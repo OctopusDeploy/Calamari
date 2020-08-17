@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -38,27 +38,26 @@ namespace Calamari.AzureScripting
 
         public bool IsEnabled(ScriptSyntax syntax) => supportedScriptSyntax.Contains(syntax);
 
-        public IScriptWrapper NextWrapper { get; set; }
+        public IScriptWrapper NextWrapper { get; set; } = null!;
 
         public CommandResult ExecuteScript(Script script,
-            ScriptSyntax scriptSyntax,
-            ICommandLineRunner commandLineRunner,
-            Dictionary<string, string>? environmentVars)
+                                           ScriptSyntax scriptSyntax,
+                                           ICommandLineRunner commandLineRunner,
+                                           Dictionary<string, string>? environmentVars)
         {
-            var workingDirectory = Path.GetDirectoryName(script.File);
+            var workingDirectory = Path.GetDirectoryName(script.File)!;
             variables.Set("OctopusAzureTargetScript", script.File);
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
 
-            SetOutputVariable("OctopusAzureSubscriptionId", variables.Get(SpecialVariables.Action.Azure.SubscriptionId));
-            SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName));
-            var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment);
+            SetOutputVariable("OctopusAzureSubscriptionId", variables.Get(SpecialVariables.Action.Azure.SubscriptionId)!);
+            SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName)!);
+            var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment, DefaultAzureEnvironment)!;
             if (azureEnvironment != DefaultAzureEnvironment)
             {
                 log.InfoFormat("Using Azure Environment override - {0}", azureEnvironment);
             }
             SetOutputVariable("OctopusAzureEnvironment", azureEnvironment);
-
-            SetOutputVariable("OctopusAzureExtensionsDirectory", variables.Get(SpecialVariables.Action.Azure.ExtensionsDirectory));
+            SetOutputVariable("OctopusAzureExtensionsDirectory", variables.Get(SpecialVariables.Action.Azure.ExtensionsDirectory)!);
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
@@ -66,8 +65,8 @@ namespace Calamari.AzureScripting
                 if (variables.Get(SpecialVariables.Account.AccountType) == "AzureServicePrincipal")
                 {
                     SetOutputVariable("OctopusUseServicePrincipal", bool.TrueString);
-                    SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId));
-                    SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId));
+                    SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId)!);
+                    SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId)!);
                     variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
                     return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
                 }
@@ -106,8 +105,8 @@ namespace Calamari.AzureScripting
         {
             var certificateFilePath = Path.Combine(workingDirectory, CertificateFileName);
             var certificatePassword = GenerateCertificatePassword();
-            var azureCertificate = CalamariCertificateStore.GetOrAdd(variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint),
-                                                                     Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)),
+            var azureCertificate = CalamariCertificateStore.GetOrAdd(variables.Get(SpecialVariables.Action.Azure.CertificateThumbprint)!,
+                                                                     Convert.FromBase64String(variables.Get(SpecialVariables.Action.Azure.CertificateBytes)!),
                                                                      StoreName.My);
 
             variables.Set("OctopusAzureCertificateFileName", certificateFilePath);

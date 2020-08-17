@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using NSubstitute;
 using NUnit.Framework;
 using Sashimi.Server.Contracts.ActionHandlers;
