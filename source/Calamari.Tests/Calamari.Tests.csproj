@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <RootNamespace>Calamari.Terraform.Tests</RootNamespace>
-        <AssemblyName>Calamari.Terraform.Tests</AssemblyName>
+        <RootNamespace>Calamari.AzureScripting.Tests</RootNamespace>
+        <AssemblyName>Calamari.AzureScripting.Tests</AssemblyName>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
