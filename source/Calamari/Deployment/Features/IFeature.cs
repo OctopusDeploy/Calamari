@@ -1,4 +1,6 @@
-﻿namespace Calamari.Deployment.Features
+﻿using Calamari.Common.Commands;
+
+namespace Calamari.Deployment.Features
 {
     public interface IFeature
     {

@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Calamari.Common.Features.EmbeddedResources;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Hooks;
 using Calamari.Integration.Certificates;
-using Calamari.Integration.EmbeddedResources;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Octostache;
 
 namespace Calamari.Azure.Integration
 {
@@ -71,6 +71,9 @@ namespace Calamari.Azure.Integration
             }
             SetOutputVariable("OctopusAzureEnvironment", azureEnvironment, variables);
 
+            SetOutputVariable("OctopusAzureExtensionsDirectory",
+                variables.Get(SpecialVariables.Action.Azure.ExtensionsDirectory), variables);
+
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
             {
@@ -91,7 +94,7 @@ namespace Calamari.Azure.Integration
                 }
             }
         }
-      
+
         string CreateContextScriptFile(string workingDirectory, ScriptSyntax syntax)
         {
             string contextFile;
@@ -106,7 +109,7 @@ namespace Calamari.Azure.Integration
                 default:
                     throw new InvalidOperationException($"No Azure context wrapper exists for {syntax}");
             }
-            
+
             var azureContextScriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
             var contextScript = embeddedResources.GetEmbeddedResourceText(GetType().Assembly, $"Calamari.Azure.Scripts.{contextFile}");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);

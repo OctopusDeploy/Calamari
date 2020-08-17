@@ -1,14 +1,13 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Integration.ConfigurationTransforms;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -32,7 +31,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void WebReleaseConfig()
         {
-            var text = PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Release.config"));
+            var text = PerformTest(GetFixtureResource("Samples", "Web.config"), GetFixtureResource("Samples", "Web.Release.config"));
             var contents = XDocument.Parse(text);
 
             Assert.IsNull(GetDebugAttribute(contents));
@@ -52,7 +51,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 #endif
         public void ShouldThrowExceptionForBadConfig()
         {
-            PerformTest(GetFixtureResouce("Samples", "Bad.config"), GetFixtureResouce("Samples", "Web.Release.config"));
+            PerformTest(GetFixtureResource("Samples", "Bad.config"), GetFixtureResource("Samples", "Web.Release.config"));
         }
 
         [Test]
@@ -63,7 +62,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             variables.Set(SpecialVariables.Package.IgnoreConfigTransformationErrors, "true");
             configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
 
-            PerformTest(GetFixtureResouce("Samples", "Bad.config"), GetFixtureResouce("Samples", "Web.Release.config"));
+            PerformTest(GetFixtureResource("Samples", "Bad.config"), GetFixtureResource("Samples", "Web.Release.config"));
         }
 
         [Test]
@@ -71,7 +70,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         [ExpectedException(typeof(CommandException))]
         public void ShouldThrowExceptionForTransformWarnings()
         {
-            PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Warning.config"));
+            PerformTest(GetFixtureResource("Samples", "Web.config"), GetFixtureResource("Samples", "Web.Warning.config"));
         }
 
         [Test]
@@ -82,14 +81,14 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             variables.Set(SpecialVariables.Package.TreatConfigTransformationWarningsAsErrors, "false");
             configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
 
-            PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Warning.config"));
+            PerformTest(GetFixtureResource("Samples", "Web.config"), GetFixtureResource("Samples", "Web.Warning.config"));
         }
 
         [Test]
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldShowMessageWhenResultIsInvalidXml()
         {
-            PerformTest(GetFixtureResouce("Samples", "Web.config"), GetFixtureResouce("Samples", "Web.Empty.config"));
+            PerformTest(GetFixtureResource("Samples", "Web.config"), GetFixtureResource("Samples", "Web.Empty.config"));
             log.Messages.Where(m => m.Level == InMemoryLog.Level.Error)
                 .Select(m => m.MessageFormat)
                 .Should()

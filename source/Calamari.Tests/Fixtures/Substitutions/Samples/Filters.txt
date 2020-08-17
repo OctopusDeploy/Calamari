@@ -1,0 +1,10 @@
+NoFilter: #{var}
+HtmlEscape: #{var | HtmlEscape}
+JsonEscape: #{var | JsonEscape}
+XmlEscape: #{var | XmlEscape}
+YamlDoubleQuoteEscape: #{var | YamlDoubleQuoteEscape}
+YamlSingleQuoteEscape: #{var | YamlSingleQuoteEscape}
+PropertiesKeyEscape: #{var | PropertiesKeyEscape}
+PropertiesValueEscape: #{var | PropertiesValueEscape}
+UriEscape: #{var | UriEscape}
+UriDataEscape: #{var | UriDataEscape}

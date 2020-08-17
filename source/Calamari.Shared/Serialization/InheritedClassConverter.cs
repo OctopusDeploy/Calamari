@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -32,7 +31,7 @@ namespace Calamari.Serialization
         protected virtual void WriteTypeProperty(JsonWriter writer, object value, JsonSerializer serializer)
         { }
 
-        protected virtual Type DefaultType { get; } = null;
+        protected virtual Type? DefaultType { get; } = null;
 
         private static string getMappedPropertyName(IContractResolver resolver, string name)
         {
@@ -40,7 +39,7 @@ namespace Calamari.Serialization
         }
 
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override object? ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.Null)
                 return null;

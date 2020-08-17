@@ -2,6 +2,7 @@
 using System;
 using System.DirectoryServices;
 using System.Linq;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Integration.Iis
 {

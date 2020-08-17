@@ -1,7 +1,9 @@
 ﻿using System.IO;
 using System.Linq;
-using Calamari.Commands.Support;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Iis;
 
 namespace Calamari.Deployment.Conventions
@@ -25,7 +27,7 @@ namespace Calamari.Deployment.Conventions
             var iisSiteName = deployment.Variables.Get(SpecialVariables.Package.UpdateIisWebsiteName);
             if (string.IsNullOrWhiteSpace(iisSiteName))
             {
-                iisSiteName = deployment.Variables.Get(SpecialVariables.Package.PackageId);
+                iisSiteName = deployment.Variables.Get(PackageVariables.PackageId);
             }
 
             var webRoot = GetRootMostDirectoryContainingWebConfig(deployment);

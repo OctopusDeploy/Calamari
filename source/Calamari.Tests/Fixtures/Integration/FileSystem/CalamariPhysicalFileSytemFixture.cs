@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -237,6 +240,28 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
                 var pathToRemove = paths.Pop();
                 fileSystem.DeleteDirectory(pathToRemove);
             }
+        }
+
+        [Test]
+        public void WriteAllTextShouldOverwriteHiddenFileContent()
+        {
+            var path = Path.GetTempFileName();
+            File.WriteAllText(path, "hi there");
+            File.SetAttributes(path, FileAttributes.Hidden);
+            fileSystem.WriteAllText(path, "hi");
+            Assert.AreEqual("hi", File.ReadAllText(path));
+            Assert.AreNotEqual(0, File.GetAttributes(path) & FileAttributes.Hidden);
+        }
+
+        [Test]
+        public void WriteAllBytesShouldOverwriteHiddenFile()
+        {
+            var path = Path.GetTempFileName();
+            File.WriteAllText(path, "hi there");
+            File.SetAttributes(path, FileAttributes.Hidden);
+            fileSystem.WriteAllBytes(path, Encoding.ASCII.GetBytes("hi"));
+            Assert.AreEqual("hi", File.ReadAllText(path));
+            Assert.AreNotEqual(0, File.GetAttributes(path) & FileAttributes.Hidden);
         }
     }
 }

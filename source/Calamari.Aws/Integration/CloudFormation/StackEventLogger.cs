@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Amazon.CloudFormation.Model;
 using Calamari.Aws.Exceptions;
+using Calamari.Common.Plumbing.Logging;
 using Octopus.CoreUtilities;
 
 namespace Calamari.Aws.Integration.CloudFormation

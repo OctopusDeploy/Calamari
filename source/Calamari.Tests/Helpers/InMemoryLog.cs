@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Processes;
 
 namespace Calamari.Tests.Helpers
@@ -11,6 +13,11 @@ namespace Calamari.Tests.Helpers
         public List<Message> Messages { get; } = new List<Message>();
         public List<string> StandardOut { get; } = new List<string>();
         public List<string> StandardError  { get; }= new List<string>();
+
+        public IEnumerable<string> MessagesVerboseFormatted => Messages.Where(m => m.Level == Level.Verbose).Select(m => m.FormattedMessage);
+        public IEnumerable<string> MessagesInfoFormatted => Messages.Where(m => m.Level == Level.Info).Select(m => m.FormattedMessage);
+        public IEnumerable<string> MessagesWarnFormatted => Messages.Where(m => m.Level == Level.Warn).Select(m => m.FormattedMessage);
+        public IEnumerable<string> MessagesErrorFormatted => Messages.Where(m => m.Level == Level.Error).Select(m => m.FormattedMessage);
 
         protected override void StdOut(string message)
         {

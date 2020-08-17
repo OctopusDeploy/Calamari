@@ -1,3 +1,5 @@
+using Calamari.Common.Commands;
+
 namespace Calamari.Deployment.Features.Java.Actions
 {
     public abstract class JavaAction

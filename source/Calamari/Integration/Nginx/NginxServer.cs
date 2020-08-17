@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
 using Newtonsoft.Json.Linq;
 

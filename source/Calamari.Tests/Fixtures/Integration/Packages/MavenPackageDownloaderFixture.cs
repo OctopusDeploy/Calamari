@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Net;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Processes;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NUnit.Framework;
 using Octopus.Versioning;
 
@@ -38,6 +39,18 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 new Uri("https://repo.maven.apache.org/maven2/"), new NetworkCredential("", ""), true, 3, TimeSpan.FromSeconds(3));
 
             Assert.AreEqual("com.google.guava:guava", pkg.PackageId);
+        }
+        
+        [Test]
+        [RequiresMonoVersion480OrAboveForTls12]
+        [RequiresNonFreeBSDPlatform]
+        public void DownloadMavenSourcePackage()
+        {
+            var downloader = new MavenPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new FreeSpaceChecker(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CalamariVariables()));
+            var pkg = downloader.DownloadPackage("com.google.guava:guava:jar:sources", VersionFactory.CreateMavenVersion("22.0"), "feed-maven",
+                new Uri("https://repo.maven.apache.org/maven2/"), new NetworkCredential("", ""), true, 3, TimeSpan.FromSeconds(3));
+
+            Assert.AreEqual("com.google.guava:guava:jar:sources", pkg.PackageId);
         }
     }
 }

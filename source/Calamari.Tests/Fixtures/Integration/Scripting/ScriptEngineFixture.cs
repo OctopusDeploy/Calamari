@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using Calamari.Integration.Scripting;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripts;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using FluentAssertions;

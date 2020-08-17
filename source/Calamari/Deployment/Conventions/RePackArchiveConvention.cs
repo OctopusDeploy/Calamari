@@ -1,7 +1,11 @@
 ﻿using System.IO;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Packages.Java;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Packages.Java;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -40,9 +44,9 @@ namespace Calamari.Deployment.Conventions
 
             var repackedArchiveDirectory = Path.GetDirectoryName(repackedArchivePath);
 
-            deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, repackedArchiveDirectory);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationDirectoryPath, repackedArchiveDirectory, deployment.Variables);
-            Log.SetOutputVariable(SpecialVariables.Package.Output.InstallationPackagePath, repackedArchivePath, deployment.Variables);
+            deployment.Variables.Set(KnownVariables.OriginalPackageDirectoryPath, repackedArchiveDirectory);
+            Log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, repackedArchiveDirectory, deployment.Variables);
+            Log.SetOutputVariable(PackageVariables.Output.InstallationPackagePath, repackedArchivePath, deployment.Variables);
         }
 
         protected string CreateArchive(RunningDeployment deployment)
@@ -53,7 +57,7 @@ namespace Calamari.Deployment.Conventions
                 deployment.Variables,
                 fileSystem);
 
-            var customPackageFileName = deployment.Variables.Get(SpecialVariables.Package.CustomPackageFileName);
+            var customPackageFileName = deployment.Variables.Get(PackageVariables.CustomPackageFileName);
 
             if (!string.IsNullOrWhiteSpace(customPackageFileName))
             {

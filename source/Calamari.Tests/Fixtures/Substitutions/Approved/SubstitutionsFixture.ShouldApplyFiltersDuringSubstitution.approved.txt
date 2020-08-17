@@ -1,0 +1,15 @@
+NoFilter: =:'"\
+	 <>￦
+HtmlEscape: =:&apos;&quot;\
+	 &lt;&gt;￦
+JsonEscape: =:'\"\\\r\n\t <>￦
+XmlEscape: =:&apos;&quot;\
+	 &lt;&gt;￦
+YamlDoubleQuoteEscape: =:'\"\\\r\n\t <>\uffe6
+YamlSingleQuoteEscape: =:''"\
+
+	 <>￦
+PropertiesKeyEscape: \=\:'"\\\r\n\t\ <>\uffe6
+PropertiesValueEscape: =:'"\\\r\n\t <>\uffe6
+UriEscape: =:'%22%5C%0D%0A%09%20%3C%3E%EF%BF%A6
+UriDataEscape: %3D%3A%27%22%5C%0D%0A%09%20%3C%3E%EF%BF%A6

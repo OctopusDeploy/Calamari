@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Linq;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
 using Octopus.Versioning;
 
 namespace Calamari.Commands
@@ -11,7 +14,6 @@ namespace Calamari.Commands
     public class FindPackageCommand : Command
     {
         readonly ILog log;
-        readonly ICalamariFileSystem fileSystem;
         readonly IPackageStore packageStore;
         string packageId;
         string rawPackageVersion;
@@ -22,7 +24,6 @@ namespace Calamari.Commands
         public FindPackageCommand(ILog log, ICalamariFileSystem fileSystem, IPackageStore packageStore)
         {
             this.log = log;
-            this.fileSystem = fileSystem;
             this.packageStore = packageStore;
             Options.Add("packageId=", "Package ID to find", v => packageId = v);
             Options.Add("packageVersion=", "Package version to find", v => rawPackageVersion = v);
@@ -34,6 +35,7 @@ namespace Calamari.Commands
                     {
                         throw new CommandException($"The provided version format `{format}` is not recognised.");
                     }
+
                     versionFormat = format;
                 });
             Options.Add("exactMatch=", "Only return exact matches", v => exactMatchOnly = bool.Parse(v));
@@ -47,13 +49,11 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(rawPackageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
 
-            if (!VersionFactory.TryCreateVersion(rawPackageVersion, out IVersion version, versionFormat))
-            {
+            var version = VersionFactory.TryCreateVersion(rawPackageVersion, versionFormat);
+            if (version == null)
                 throw new CommandException($"Package version '{rawPackageVersion}' is not a valid {versionFormat} version string. Please pass --packageVersionFormat with a different version type.");
-            };
 
             var package = packageStore.GetPackage(packageId, version, packageHash);
-
             if (package == null)
             {
                 log.Verbose($"Package {packageId} version {version} hash {packageHash} has not been uploaded.");
@@ -67,13 +67,14 @@ namespace Calamari.Commands
             }
 
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
-            log.PackageFound(
-                package.PackageId, 
+            LogPackageFound(
+                package.PackageId,
                 package.Version,
-                package.Hash, 
+                package.Hash,
                 package.Extension,
-                package.FullFilePath, 
-                true);
+                package.FullFilePath,
+                true
+            );
             return 0;
         }
 
@@ -86,18 +87,42 @@ namespace Calamari.Commands
                 log.VerboseFormat("No earlier packages for {0} has been uploaded", packageId);
             }
 
-            log.VerboseFormat("Found {0} earlier {1} of {2} on this Tentacle", 
+            log.VerboseFormat("Found {0} earlier {1} of {2} on this Tentacle",
                 nearestPackages.Count, nearestPackages.Count == 1 ? "version" : "versions", packageId);
-            foreach(var nearestPackage in nearestPackages)
+            foreach (var nearestPackage in nearestPackages)
             {
                 log.VerboseFormat("  - {0}: {1}", nearestPackage.Version, nearestPackage.FullFilePath);
-                log.PackageFound(
+                LogPackageFound(
                     nearestPackage.PackageId,
                     nearestPackage.Version,
                     nearestPackage.Hash,
                     nearestPackage.Extension,
-                    nearestPackage.FullFilePath);
+                    nearestPackage.FullFilePath,
+                    false
+                );
             }
+        }
+
+
+        public void LogPackageFound(
+            string packageId,
+            IVersion packageVersion,
+            string packageHash,
+            string packageFileExtension,
+            string packageFullPath,
+            bool exactMatchExists
+        )
+        {
+            if (exactMatchExists)
+                log.Verbose("##octopus[calamari-found-package]");
+
+            log.VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" versionFormat=\"{2}\" hash=\"{3}\" remotePath=\"{4}\" fileExtension=\"{5}\"]",
+                AbstractLog.ConvertServiceMessageValue(packageId),
+                AbstractLog.ConvertServiceMessageValue(packageVersion.ToString()),
+                AbstractLog.ConvertServiceMessageValue(packageVersion.Format.ToString()),
+                AbstractLog.ConvertServiceMessageValue(packageHash),
+                AbstractLog.ConvertServiceMessageValue(packageFullPath),
+                AbstractLog.ConvertServiceMessageValue(packageFileExtension));
         }
     }
 }

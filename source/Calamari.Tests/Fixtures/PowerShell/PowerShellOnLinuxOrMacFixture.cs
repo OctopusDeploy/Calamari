@@ -1,12 +1,12 @@
 using System.IO;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.PowerShell
 {
@@ -18,11 +18,11 @@ namespace Calamari.Tests.Fixtures.PowerShell
         public void SetUp()
         {
             CommandLineRunner clr = new CommandLineRunner(ConsoleLog.Instance, new CalamariVariables());
-            var result = clr.Execute(new CommandLineInvocation("pwsh", "--version") { OutputToLog = false }); 
+            var result = clr.Execute(new CommandLineInvocation("pwsh", "--version") { OutputToLog = false });
             if (result.HasErrors)
                 Assert.Inconclusive("PowerShell Core is not installed on this machine");
         }
-        
+
         [Test]
         public void ShouldRunBashInsteadOfPowerShell()
         {

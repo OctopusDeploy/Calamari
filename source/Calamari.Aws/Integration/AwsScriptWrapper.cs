@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
-using Calamari.Extensions;
-using Calamari.Hooks;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
+using Calamari.CloudAccounts;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Aws.Integration
 {
@@ -19,17 +22,17 @@ namespace Calamari.Aws.Integration
             this.log = log;
             this.variables = variables;
         }
-        
+
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
             var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult().EnvironmentVars;
-            awsEnvironmentVars.MergeDictionaries(environmentVars);
+            awsEnvironmentVars.AddRange(environmentVars);
 
             return NextWrapper.ExecuteScript(
-                script, scriptSyntax, 
+                script, scriptSyntax,
                 commandLineRunner,
                 awsEnvironmentVars);
         }

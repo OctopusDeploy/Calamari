@@ -2,31 +2,32 @@
 using System.IO;
 using System.Linq;
 using System.Net;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Packages.NuGet;
-using Calamari.Integration.Processes;
 using Octopus.Versioning;
+using PackageName = Calamari.Common.Features.Packages.PackageName;
 #if USE_NUGET_V2_LIBS
 using NuGet;
 #else
 using NuGet.Packaging;
-
 #endif
-
 
 namespace Calamari.Integration.Packages.Download
 {
     public class NuGetPackageDownloader : IPackageDownloader
     {
-        private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         const string WhyAmINotAllowedToUseDependencies = "http://octopusdeploy.com/documentation/packaging";
+        static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
 
         public static readonly string DownloadingExtension = ".downloading";
 
-        
         readonly ICalamariFileSystem fileSystem;
         readonly IFreeSpaceChecker freeSpaceChecker;
-        
+
         public NuGetPackageDownloader(ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker)
         {
             this.fileSystem = fileSystem;
@@ -56,15 +57,20 @@ namespace Calamari.Integration.Packages.Download
                 }
             }
 
-            return DownloadPackage(packageId, version, feedUri, feedCredentials, cacheDirectory, maxDownloadAttempts,
+            return DownloadPackage(packageId,
+                version,
+                feedUri,
+                feedCredentials,
+                cacheDirectory,
+                maxDownloadAttempts,
                 downloadAttemptBackoff);
         }
 
-        private PackagePhysicalFileMetadata AttemptToGetPackageFromCache(string packageId, IVersion version, string cacheDirectory)
+        PackagePhysicalFileMetadata? AttemptToGetPackageFromCache(string packageId, IVersion version, string cacheDirectory)
         {
             Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
 
-            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, new [] {".nupkg"}));
+            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, new[] { ".nupkg" }));
 
             foreach (var file in files)
             {
@@ -77,15 +83,13 @@ namespace Calamari.Integration.Packages.Download
                 var nugetVerMatches = package.Version.Equals(version);
 
                 if (idMatches && (nugetVerMatches || versionExactMatch))
-                {
                     return PackagePhysicalFileMetadata.Build(file, package);
-                }
             }
 
             return null;
         }
 
-        private PackagePhysicalFileMetadata DownloadPackage(
+        PackagePhysicalFileMetadata DownloadPackage(
             string packageId,
             IVersion version,
             Uri feedUri,
@@ -101,10 +105,18 @@ namespace Calamari.Integration.Packages.Download
             var fullPathToDownloadTo = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, ".nupkg"));
 
             var downloader = new InternalNuGetPackageDownloader(fileSystem);
-            downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, fullPathToDownloadTo, maxDownloadAttempts, downloadAttemptBackoff);
+            downloader.DownloadPackage(packageId,
+                version,
+                feedUri,
+                feedCredentials,
+                fullPathToDownloadTo,
+                maxDownloadAttempts,
+                downloadAttemptBackoff);
 
             var pkg = PackagePhysicalFileMetadata.Build(fullPathToDownloadTo);
-            
+            if (pkg == null)
+                throw new CommandException($"Package metadata for {packageId}, version {version}, could not be determined");
+
             CheckWhetherThePackageHasDependencies(pkg);
             return pkg;
         }
@@ -118,14 +130,12 @@ namespace Calamari.Integration.Packages.Download
             var dependencies = nuGetMetadata.DependencySets.SelectMany(ds => ds.Dependencies).ToArray();
 #endif
             if (dependencies.Any())
-            {
                 Log.Info(
                     "NuGet packages with dependencies are not currently supported, and dependencies won't be installed on the Tentacle. The package '{0} {1}' appears to have the following dependencies: {2}. For more information please see {3}",
                     pkg.PackageId,
                     pkg.Version,
                     string.Join(", ", dependencies.Select(dependency => $"{dependency.Id}")),
                     WhyAmINotAllowedToUseDependencies);
-            }
         }
     }
 }

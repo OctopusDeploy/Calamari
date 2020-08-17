@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
 using Calamari.Deployment.Features.Java;
 using Calamari.Deployment.Features.Java.Actions;
 

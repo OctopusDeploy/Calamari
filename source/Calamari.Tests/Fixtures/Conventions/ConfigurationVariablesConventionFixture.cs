@@ -1,9 +1,11 @@
-﻿using Calamari.Deployment;
+﻿using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Features.ConfigurationVariables;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.ConfigurationVariables;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Variables;
+using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -34,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotRunIfVariableNotSet()
         {
-            var convention = new ConfigurationVariablesConvention(fileSystem, replacer);
+            var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, new InMemoryLog()));
             convention.Install(deployment);
             replacer.DidNotReceiveWithAnyArgs().ModifyConfigurationFile(null, null);
         }
@@ -43,7 +45,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldFindAndCallDeployScripts()
         {
             deployment.Variables.Set(SpecialVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings, "true");
-            var convention = new ConfigurationVariablesConvention(fileSystem, replacer);
+            var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, new InMemoryLog()));
             convention.Install(deployment);
             replacer.Received().ModifyConfigurationFile("C:\\App\\MyApp\\Web.config", deployment.Variables);
             replacer.Received().ModifyConfigurationFile("C:\\App\\MyApp\\Web.Release.config", deployment.Variables);

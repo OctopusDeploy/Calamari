@@ -4,15 +4,16 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Calamari.Commands.Support;
-using Calamari.Deployment;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
 using Calamari.Util;
 using Newtonsoft.Json;
-using Octostache;
 
 namespace Calamari.Kubernetes.Conventions
 {
@@ -116,7 +117,7 @@ namespace Calamari.Kubernetes.Conventions
             var helmExecutable = variables.Get(SpecialVariables.Helm.CustomHelmExecutable);
             if (!string.IsNullOrWhiteSpace(helmExecutable))
             {
-                if (variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection)
+                if (variables.GetIndexes(PackageVariables.PackageCollection)
                         .Contains(SpecialVariables.Helm.Packages.CustomHelmExePackageKey) && !Path.IsPathRooted(helmExecutable))
                 {
                     var fullPath = Path.GetFullPath(Path.Combine(workingDirectory, SpecialVariables.Helm.Packages.CustomHelmExePackageKey, helmExecutable));
@@ -225,7 +226,7 @@ namespace Calamari.Kubernetes.Conventions
             var releaseName = variables.Get(SpecialVariables.Helm.ReleaseName)?.ToLower();
             if (string.IsNullOrWhiteSpace(releaseName))
             {
-                releaseName = $"{variables.Get(Deployment.SpecialVariables.Action.Name)}-{variables.Get(Deployment.SpecialVariables.Environment.Name)}";
+                releaseName = $"{variables.Get(ActionVariables.Name)}-{variables.Get(DeploymentEnvironment.Name)}";
                 releaseName = validChars.Replace(releaseName, "").ToLowerInvariant();
             }
 
@@ -237,7 +238,7 @@ namespace Calamari.Kubernetes.Conventions
         IEnumerable<string> AdditionalValuesFiles(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            var packageReferenceNames = variables.GetIndexes(Deployment.SpecialVariables.Packages.PackageCollection);
+            var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
             {
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
@@ -245,8 +246,8 @@ namespace Calamari.Kubernetes.Conventions
                 
                 foreach (var providedPath in paths)
                 {
-                    var packageId = variables.Get(Deployment.SpecialVariables.Packages.PackageId(packageReferenceName));
-                    var version = variables.Get(Deployment.SpecialVariables.Packages.PackageVersion(packageReferenceName));
+                    var packageId = variables.Get(PackageVariables.IndexedPackageId(packageReferenceName));
+                    var version = variables.Get(PackageVariables.IndexedPackageVersion(packageReferenceName));
                     var relativePath = Path.Combine(sanitizedPackageReferenceName, providedPath);
                     var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
 
@@ -275,9 +276,9 @@ namespace Calamari.Kubernetes.Conventions
 
         string GetChartLocation(RunningDeployment deployment)
         {
-            var packagePath = deployment.Variables.Get(Deployment.SpecialVariables.Package.Output.InstallationDirectoryPath);
+            var packagePath = deployment.Variables.Get(PackageVariables.Output.InstallationDirectoryPath);
             
-            var packageId = deployment.Variables.Get(Deployment.SpecialVariables.Package.PackageId);
+            var packageId = deployment.Variables.Get(PackageVariables.PackageId);
 
             if (fileSystem.FileExists(Path.Combine(packagePath, "Chart.yaml")))
             {

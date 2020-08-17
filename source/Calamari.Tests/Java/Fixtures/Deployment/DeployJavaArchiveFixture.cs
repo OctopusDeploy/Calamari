@@ -4,16 +4,16 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using Calamari.Commands.Java;
-using Calamari.Deployment;
-using Calamari.Hooks;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Java.Fixtures.Deployment
 {
@@ -41,7 +41,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(applicationDirectory, "DeploymentJournal.xml"));
 
             variables = new VariablesFactory(fileSystem).Create(new CommonOptions("test"));
-            variables.Set(SpecialVariables.Tentacle.Agent.ApplicationDirectoryPath, applicationDirectory);
+            variables.Set(TentacleVariables.Agent.ApplicationDirectoryPath, applicationDirectory);
         }
 
         [TearDown]
@@ -90,8 +90,8 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         public void CanTransformConfigInJar()
         {
             const string configFile = "config.properties";
-            variables.Set(SpecialVariables.Package.SubstituteInFilesEnabled, true.ToString());
-            variables.Set(SpecialVariables.Package.SubstituteInFilesTargets, configFile);
+            variables.Set(PackageVariables.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(PackageVariables.SubstituteInFilesTargets, configFile);
 
             DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
             Assert.AreEqual(0, returnCode);
@@ -104,8 +104,10 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                 log,
                 new ScriptEngine(Enumerable.Empty<IScriptWrapper>()), 
                 variables,
-                CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
-                new CommandLineRunner(log, variables)
+                fileSystem,
+                new CommandLineRunner(log, variables),
+                new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
+                new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log)
             );
             returnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }

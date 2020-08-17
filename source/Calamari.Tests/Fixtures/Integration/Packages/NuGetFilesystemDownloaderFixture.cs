@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
@@ -20,9 +21,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [SetUp]
         public void Setup()
         {
-            rootDir = GetFixtureResouce(this.GetType().Name);
+            rootDir = GetFixtureResource(this.GetType().Name);
             TearDown();
-            Directory.CreateDirectory(GetFixtureResouce(rootDir));
+            Directory.CreateDirectory(GetFixtureResource(rootDir));
         }
 
         [TearDown]
@@ -38,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void FindsAndCopiesNugetPackageWithNugetFileFormat()
         {
             var originalPath = Path.Combine(rootDir, "Acme.Core.1.0.0.0-bugfix.nupkg");
-            File.Copy(GetFixtureResouce("Samples", "Acme.Core.1.0.0.0-bugfix.nupkg"), originalPath);
+            File.Copy(GetFixtureResource("Samples", "Acme.Core.1.0.0.0-bugfix.nupkg"), originalPath);
             var downloadPath = Path.Combine(rootDir, "DummyFile.nupkg");
 
             NuGetFileSystemDownloader.DownloadPackage("Acme.Core", new SemanticVersion("1.0.0.0-bugfix"), new Uri(rootDir), downloadPath);
@@ -48,7 +49,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Test]
         public void IgnoresZipPackages()
         {
-            File.Copy(GetFixtureResouce("Samples", "Acme.Core.1.0.0.0-bugfix.zip"), Path.Combine(rootDir, "Acme.Core.1.0.0.0-bugfix.zip"));
+            File.Copy(GetFixtureResource("Samples", "Acme.Core.1.0.0.0-bugfix.zip"), Path.Combine(rootDir, "Acme.Core.1.0.0.0-bugfix.zip"));
             var downloadPath = Path.Combine(rootDir, "DummyFile.nupkg");
 
             Assert.Throws<Exception>(() =>
@@ -59,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         private string GetFileName()
         {
-            return GetFixtureResouce("Samples", "Acme.Core.1.0.0.0-bugfix.nupkg");
+            return GetFixtureResource("Samples", "Acme.Core.1.0.0.0-bugfix.nupkg");
         }
     }
 }

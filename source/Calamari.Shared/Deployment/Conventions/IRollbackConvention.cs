@@ -1,3 +1,5 @@
+using Calamari.Common.Commands;
+
 namespace Calamari.Deployment.Conventions
 {
     public interface IRollbackConvention : IConvention

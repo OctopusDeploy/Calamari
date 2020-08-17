@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Assent;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Nginx;
-using Calamari.Integration.Processes;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
@@ -214,8 +215,8 @@ namespace Calamari.Tests.Fixtures.Nginx
             var confDirectory = "conf";
             
             var deployment = new RunningDeployment($"C:\\{packageId}.zip", new CalamariVariables());
-            deployment.Variables.Set(SpecialVariables.Package.PackageId, packageId);
-            deployment.Variables.Set(SpecialVariables.Package.Output.InstallationDirectoryPath, $"/var/www/{packageId}");
+            deployment.Variables.Set(PackageVariables.PackageId, packageId);
+            deployment.Variables.Set(PackageVariables.Output.InstallationDirectoryPath, $"/var/www/{packageId}");
             deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.Bindings, httpOnlyBinding);
             deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.Locations, staticContentAndReverseProxyLocations);
             deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.HostName, "www.nginxsampleweb.app");

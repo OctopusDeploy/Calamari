@@ -1,5 +1,4 @@
 mode: ContinuousDeployment
-next-version: 12.0
 branches:
   release:
     is-release-branch: false

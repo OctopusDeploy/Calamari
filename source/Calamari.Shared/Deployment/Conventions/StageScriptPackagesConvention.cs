@@ -1,8 +1,10 @@
 ﻿using System.IO;
 using System.Linq;
-using Calamari.Commands.Support;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -20,17 +22,17 @@ namespace Calamari.Deployment.Conventions
             this.extractor = extractor;
             this.forceExtract = forceExtract;
         }
-        
+
         public void Install(RunningDeployment deployment)
         {
-            // If the script is contained in a package, then extract the containing package in the working directory 
+            // If the script is contained in a package, then extract the containing package in the working directory
             if (!string.IsNullOrWhiteSpace(packagePathContainingScript))
             {
                 ExtractPackage(packagePathContainingScript, deployment.CurrentDirectory);
-                deployment.Variables.Set(SpecialVariables.OriginalPackageDirectoryPath, deployment.CurrentDirectory);
+                deployment.Variables.Set(KnownVariables.OriginalPackageDirectoryPath, deployment.CurrentDirectory);
             }
-            
-            // Stage any referenced packages (i.e. packages that don't contain the script) 
+
+            // Stage any referenced packages (i.e. packages that don't contain the script)
             // The may or may not be extracted.
             StagePackageReferences(deployment);
         }
@@ -38,25 +40,25 @@ namespace Calamari.Deployment.Conventions
         void StagePackageReferences(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            
+
             // No need to check for "default" package since it gets extracted in the current directory in previous step.
-            var packageReferenceNames = variables.GetIndexes(SpecialVariables.Packages.PackageCollection)
+            var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection)
                 .Where(i => !string.IsNullOrEmpty(i));
 
             foreach (var packageReferenceName in packageReferenceNames)
             {
                 Log.Verbose($"Considering '{packageReferenceName}' for extraction");
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
-                
-                var packageOriginalPath = variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName));
-                
+
+                var packageOriginalPath = variables.Get(PackageVariables.IndexedOriginalPath(packageReferenceName));
+
                 if (string.IsNullOrWhiteSpace(packageOriginalPath))
                 {
-                    Log.Info($"Package '{packageReferenceName}' was not acquired");
+                    Log.Info($"Package '{packageReferenceName}' was not acquired or does not require staging");
                     continue;
                 }
-                
-                packageOriginalPath = Path.GetFullPath(variables.Get(SpecialVariables.Packages.OriginalPath(packageReferenceName)));
+
+                packageOriginalPath = Path.GetFullPath(variables.Get(PackageVariables.IndexedOriginalPath(packageReferenceName)));
 
                 // In the case of container images, the original path is not a file-path.  We won't try and extract or move it.
                 if (!fileSystem.FileExists(packageOriginalPath))
@@ -65,7 +67,7 @@ namespace Calamari.Deployment.Conventions
                     continue;
                 }
 
-                var shouldExtract = variables.GetFlag(SpecialVariables.Packages.Extract(packageReferenceName));
+                var shouldExtract = variables.GetFlag(PackageVariables.IndexedExtract(packageReferenceName));
 
                 if (forceExtract || shouldExtract)
                 {
@@ -87,11 +89,11 @@ namespace Calamari.Deployment.Conventions
 
         void ExtractPackage(string packageFile, string extractionDirectory)
         {
-           Log.Info($"Extracting package '{packageFile}' to '{extractionDirectory}'"); 
-            
+           Log.Info($"Extracting package '{packageFile}' to '{extractionDirectory}'");
+
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
-            
+
             extractor.Extract(packageFile, extractionDirectory);
         }
     }

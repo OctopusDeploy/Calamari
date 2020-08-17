@@ -7,6 +7,7 @@ Octopus_K8S_OutputKubeConfig=$(get_octopusvariable "Octopus.Action.Kubernetes.Ou
 Octopus_AccountType=$(get_octopusvariable "Octopus.Account.AccountType")
 Octopus_K8S_KubectlExe=$(get_octopusvariable "Octopus.Action.Kubernetes.CustomKubectlExecutable")
 Octopus_K8S_Client_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.ClientCertificate")
+Octopus_EKS_Use_Instance_Role=$(get_octopusvariable "Octopus.Action.AwsAccount.UseInstanceRole")
 Octopus_K8S_Client_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.CertificatePem")
 Octopus_K8S_Client_Cert_Key=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPem")
 Octopus_K8S_Server_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.CertificateAuthority")
@@ -70,7 +71,7 @@ function setup_context {
     exit 1
   fi
 
-  if [[ -z $Octopus_AccountType && -z $Octopus_K8S_Client_Cert ]]; then
+  if [[ -z $Octopus_AccountType && -z $Octopus_K8S_Client_Cert && ${Octopus_EKS_Use_Instance_Role,,} != "true" ]]; then
     echo >&2 "Kubernetes account type or certificate is missing"
     exit 1
   fi
@@ -119,8 +120,8 @@ function setup_context {
       exit 1
     fi
     
-    Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Client_Cert_Pem" | base64 -w0)
-    Octopus_K8S_Client_Cert_Key_Encoded=$(echo "$Octopus_K8S_Client_Cert_Key" | base64 -w0)
+    Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Client_Cert_Pem" | base64 $base64_args) 
+    Octopus_K8S_Client_Cert_Key_Encoded=$(echo "$Octopus_K8S_Client_Cert_Key" | base64 $base64_args)
     
     set_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPemBase64" $Octopus_K8S_Client_Cert_Key_Encoded -sensitive
     
@@ -134,7 +135,7 @@ function setup_context {
       exit 1
     fi
     
-    Octopus_K8S_Server_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Server_Cert_Pem" | base64 -w0)
+    Octopus_K8S_Server_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Server_Cert_Pem" | base64 $base64_args)
     kubectl config set clusters.octocluster.certificate-authority-data "$Octopus_K8S_Server_Cert_Pem_Encoded"
     else
     kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification
@@ -152,7 +153,7 @@ function setup_context {
     Octopus_K8S_Username=$(get_octopusvariable "Octopus.Account.Username")
     echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using $Octopus_K8S_Username"
     kubectl config set-credentials octouser --username=$Octopus_K8S_Username --password=$(get_octopusvariable "Octopus.Account.Password")
-    elif [[ "$Octopus_AccountType" == "AmazonWebServicesAccount" ]]; then
+    elif [[ "$Octopus_AccountType" == "AmazonWebServicesAccount" || ${Octopus_EKS_Use_Instance_Role,,} = "true" ]]; then
         # kubectl doesn't yet support exec authentication
         # https://github.com/kubernetes/kubernetes/issues/64751
         # so build this manually
@@ -202,8 +203,21 @@ function create_namespace {
 	fi
 }
 
+function set_base64_args {
+    # https://stackoverflow.com/questions/46463027/base64-doesnt-have-w-option-in-mac
+    echo | base64 -w0 > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      # GNU coreutils base64, '-w' supported
+      base64_args='-w0'
+    else
+      # Openssl base64, no wrapping by default
+      base64_args=''
+    fi
+}
+
 echo "##octopus[stdout-verbose]"
 check_app_exists base64
+set_base64_args
 get_kubectl
 configure_kubectl_path
 setup_context

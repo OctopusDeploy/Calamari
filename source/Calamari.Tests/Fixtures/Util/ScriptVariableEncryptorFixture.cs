@@ -1,4 +1,5 @@
-﻿using Calamari.Util;
+﻿using Calamari.Common.Plumbing.Extensions;
+using Calamari.Util;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Util

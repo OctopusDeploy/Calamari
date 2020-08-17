@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using Calamari.Util;

@@ -8,6 +8,7 @@ using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Exceptions;
+using Calamari.Common.Plumbing;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;
@@ -126,6 +127,12 @@ namespace Calamari.Aws.Integration.CloudFormation
                     "The AWS account used to perform the operation does not have the required permissions to query the current state of the CloudFormation stack. " +
                     "This step will complete without waiting for the stack to complete, and will not fail if the stack finishes in an error state.\n " +
                     "Please ensure the current account has permission to perform action 'cloudformation:DescribeStackEvents'" +
+                    ex.Message);
+            }
+            catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "ExpiredToken")
+            {
+                throw new PermissionException(
+                    "Security token has expired. Please increase the session duration and/or check that the system date and time are set correctly. " +
                     ex.Message);
             }
             catch (AmazonCloudFormationException)

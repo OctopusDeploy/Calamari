@@ -5,8 +5,8 @@ using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Iis;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         TemporaryFile packageV2;
         private string uniqueValue;
         private WebServerSevenSupport iis;
-      
+
         [OneTimeSetUp]
         public void Init()
         {
@@ -46,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             iis = new WebServerSevenSupport();
             uniqueValue = "Test_" + Guid.NewGuid().ToString("N");
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
             SampleCertificate.CapiWithPrivateKey.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
 #endif
 
@@ -59,7 +59,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             if (iis.WebSiteExists(uniqueValue)) iis.DeleteWebSite(uniqueValue);
             if (iis.ApplicationPoolExists(uniqueValue)) iis.DeleteApplicationPool(uniqueValue);
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
             SampleCertificate.CapiWithPrivateKey.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
 #endif
 
@@ -83,7 +83,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
             Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -118,7 +118,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -141,7 +141,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             // The variable we are testing
             Variables["Octopus.Action.IISWebSite.ExistingBindings"] = "merge";
-            
+
             const int existingBindingPort = 1083;
             iis.CreateWebSiteOrVirtualDirectory(uniqueValue, null, ".", existingBindingPort);
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
@@ -157,7 +157,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
             Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -188,7 +188,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
             Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -218,7 +218,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
             Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -228,7 +228,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             website.Bindings.Should().NotContain(b => b.EndPoint.Port == existingBindingPort);
             website.Bindings.Should().Contain(b => b.EndPoint.Port == 1082);
         }
-        
+
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldDeployNewVersion()
@@ -241,7 +241,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -270,7 +270,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualDirectory.CreateAsWebApplication"] = "False";
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -288,7 +288,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName"] = uniqueValue;
             Variables["Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath"] = ToFirstLevelPath(uniqueValue);
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -304,16 +304,16 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webApplication";
             Variables["Octopus.Action.IISWebSite.WebApplication.CreateOrUpdate"] = "True";
-                                                 
+
             Variables["Octopus.Action.IISWebSite.WebApplication.WebSiteName"] = uniqueValue;
             Variables["Octopus.Action.IISWebSite.WebApplication.VirtualPath"] = ToFirstLevelPath(uniqueValue);
-                                                 
+
             Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolName"] = uniqueValue;
             Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion"] = "v4.0";
             Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
 
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -349,7 +349,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion"] = "v4.0";
             Variables["Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -378,7 +378,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                     uniqueValue);
                 Variables["Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment"] = "True";
 
-                Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+                Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
                 var result = DeployPackage(packageV1.FilePath);
 
@@ -387,7 +387,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldCreateHttpsBindingUsingCertificatePassedAsVariable()
@@ -411,7 +411,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["AcmeSelfSigned.Pfx"] = SampleCertificate.CapiWithPrivateKey.Base64Bytes();
             Variables["AcmeSelfSigned.Password"] = SampleCertificate.CapiWithPrivateKey.Password;
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             var result = DeployPackage(packageV1.FilePath);
 
@@ -426,7 +426,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.IsTrue(binding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{binding.CertificateStoreName}'");
 
             // Assert the application-pool account was granted access to the certificate private-key
-            var certificate = SampleCertificate.CapiWithPrivateKey.GetCertificateFromStore("MY", StoreLocation.LocalMachine); 
+            var certificate = SampleCertificate.CapiWithPrivateKey.GetCertificateFromStore("MY", StoreLocation.LocalMachine);
             SampleCertificate.AssertIdentityHasPrivateKeyAccess(certificate, new NTAccount("IIS AppPool\\" + uniqueValue), CryptoKeyRights.GenericAll);
 
             Assert.AreEqual(ObjectState.Started, website.State);
@@ -454,7 +454,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["AcmeSelfSigned.Thumbprint"] = SampleCertificate.CapiWithPrivateKey.Thumbprint;
             Variables["AcmeSelfSigned.Pfx"] = SampleCertificate.CapiWithPrivateKey.Base64Bytes();
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             SampleCertificate.CapiWithPrivateKey.EnsureCertificateIsInStore(StoreName.My, StoreLocation.LocalMachine);
 
@@ -493,7 +493,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
             Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
 
             SampleCertificate.CapiWithPrivateKey.EnsureCertificateIsInStore(StoreName.My, StoreLocation.LocalMachine);
 
@@ -529,7 +529,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
             Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
 
-            Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
             Variables["HTTPS Binding Enabled"] = "false";
 
             var result = DeployPackage(packageV1.FilePath);

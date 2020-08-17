@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.Deployment.Journal;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Packages.Download;
 using Calamari.Integration.Time;
 
@@ -135,7 +136,9 @@ namespace Calamari.Deployment.Retention
             {
                 var installedAgo = (clock.GetUtcTime() - journalEntry.InstalledOn);
 
-                if (installedAgo.TotalDays > days)
+                if (journalEntry.InstalledOn == null)
+                    return false;
+                if (installedAgo?.TotalDays > days)
                     return true;
                 
                 var preservedDirectories = (!string.IsNullOrEmpty(journalEntry.ExtractedTo)
@@ -144,7 +147,7 @@ namespace Calamari.Deployment.Retention
                     .Concat(journalEntry.Packages.Select(p => p.DeployedFrom).Where(p => !string.IsNullOrEmpty(p)))
                     .ToList();
 
-                Log.Verbose($"Keeping {FormatList(preservedDirectories)} as it was installed {installedAgo.Days} days and {installedAgo.Hours} hours ago");
+                Log.Verbose($"Keeping {FormatList(preservedDirectories)} as it was installed {installedAgo?.Days} days and {installedAgo?.Hours} hours ago");
 
                 preservedEntries.Add(journalEntry);
                 return false;

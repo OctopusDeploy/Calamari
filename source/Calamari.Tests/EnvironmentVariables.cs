@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Tests
 {
@@ -39,10 +40,10 @@ namespace Calamari.Tests
         [EnvironmentVariable("K8S_OctopusAPITester_Server", "GKS Kubernetes API Test Cluster Url")]
         KubernetesClusterUrl,
         
-        [EnvironmentVariable("Helm_OctopusAPITester_Password", "Helm Password for https://octopusdeploy.jfrog.io")]
+        [EnvironmentVariable("Helm_OctopusAPITester_Password", "Artifactory Test Account")]
         HelmPassword,
         
-        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "Password for DockerHub Test reader account")]
+        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "DockerHub Test Reader Account")]
         DockerReaderPassword,
 
         [EnvironmentVariable("AWS.E2E.AccessKeyId", "AWS E2E Test User Keys")]

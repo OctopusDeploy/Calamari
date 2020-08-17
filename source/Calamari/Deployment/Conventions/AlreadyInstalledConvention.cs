@@ -1,6 +1,7 @@
-﻿using System;
-using System.Linq;
-using Calamari.Deployment.Journal;
+﻿using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -17,17 +18,17 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            if (!deployment.Variables.GetFlag(SpecialVariables.Package.SkipIfAlreadyInstalled))
+            if (!deployment.Variables.GetFlag(KnownVariables.Package.SkipIfAlreadyInstalled))
             {
                 return;
             }
 
-            var id = deployment.Variables.Get(SpecialVariables.Package.PackageId);
-            var version = deployment.Variables.Get(SpecialVariables.Package.PackageVersion);
-            var policySet = deployment.Variables.Get(SpecialVariables.RetentionPolicySet);
+            var id = deployment.Variables.Get(PackageVariables.PackageId);
+            var version = deployment.Variables.Get(PackageVariables.PackageVersion);
+            var policySet = deployment.Variables.Get(KnownVariables.RetentionPolicySet);
 
             var previous = journal.GetLatestInstallation(policySet, id, version);
-            if (previous == null) 
+            if (previous == null)
                 return;
 
             if (!previous.WasSuccessful)
@@ -37,10 +38,10 @@ namespace Calamari.Deployment.Conventions
             else
             {
                 log.Info("The package has already been installed on this machine, so installation will be skipped.");
-                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.InstallationDirectoryPath, previous.ExtractedTo);
-                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Package.Output.DeprecatedInstallationDirectoryPath, previous.ExtractedTo);
+                log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.InstallationDirectoryPath, previous.ExtractedTo);
+                log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.DeprecatedInstallationDirectoryPath, previous.ExtractedTo);
                 deployment.Variables.Set(SpecialVariables.Action.SkipRemainingConventions, "true");
-                deployment.Variables.Set(SpecialVariables.Action.SkipJournal, "true");
+                deployment.SkipJournal = true;
             }
         }
     }

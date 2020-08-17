@@ -1,0 +1,13 @@
+null1: null
+null2: !!null ~
+bool1: false
+bool2: !!bool true
+int1: 1
+float1: 0.67
+str1: 'false'
+str2: 'null'
+str3: !!str no
+str4: !!str pets.com
+obj1: ""
+seq1: null
+seq2: ""

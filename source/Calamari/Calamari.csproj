@@ -20,17 +20,14 @@
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>net452;netcoreapp2.2;net40</TargetFrameworks>
+    <TargetFrameworks>net40;net452;netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>netcoreapp2.2</TargetFrameworks>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
-    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;IIS_SUPPORT;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
+    <DefineConstants>$(DefineConstants);IIS_SUPPORT;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.2' ">
-    <DefineConstants>$(DefineConstants);USE_OCTOPUS_XMLT;USE_SYSTEM_IO_DIRECTORY;USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG</DefineConstants>
   </PropertyGroup>
   <!--
 	The net452 build is the one that pulls in the AWS and Azure extensions. We treat
@@ -39,13 +36,8 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-    <ProjectReference Include="..\Calamari.Azure.CloudServices\Calamari.Azure.CloudServices.csproj" />
-    <ProjectReference Include="..\Calamari.Azure.ServiceFabric\Calamari.Azure.ServiceFabric.csproj" />
-    <ProjectReference Include="..\Calamari.Azure.WebApps\Calamari.Azure.WebApps.csproj" />
-    <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.2' ">
-    <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
   </ItemGroup>
@@ -54,10 +46,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+    <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="Octodiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
-    <PackageReference Include="Octopus.Versioning" Version="4.1.3" />
+    <PackageReference Include="Octopus.Versioning" Version="4.2.1" />
     <PackageReference Include="scriptcs" Version="0.17.1" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
@@ -78,7 +71,7 @@
     <Reference Include="System" />
     <Reference Include="System.Security" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2' OR '$(TargetFramework)' == 'net452' ">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'net452' ">
     <PackageReference Include="Autofac" Version="4.8.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
   </ItemGroup>
@@ -97,7 +90,7 @@
     In netcore 2.1.3, the framework stopped calculating package definitions automatically "for perf"
     (see https://github.com/dotnet/sdk/issues/2342)
     So, we need to add a dependency onto `GetToolFiles` to calculate them first.
-    Unfortunately, RunResolvePackageDependencies doesn't exist for the full fat framework, so we 
+    Unfortunately, RunResolvePackageDependencies doesn't exist for the full fat framework, so we
     define a new empty target if it's not already defined to keep it happy.
   -->
   <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />

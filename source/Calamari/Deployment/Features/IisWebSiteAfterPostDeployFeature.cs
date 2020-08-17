@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
-using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.Iis;
-using Octostache;
 
 namespace Calamari.Deployment.Features
 {
@@ -38,7 +39,7 @@ namespace Calamari.Deployment.Features
                 if (string.IsNullOrWhiteSpace(certificateVariable))
                     continue;
 
-                var thumbprint = variables.Get($"{certificateVariable}.{SpecialVariables.Certificate.Properties.Thumbprint}");
+                var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
                 var privateKeyAccess = CreatePrivateKeyAccessForApplicationPoolAccount(variables);
 
                 // The store-name variable was set by IisWebSiteBeforePostDeploy

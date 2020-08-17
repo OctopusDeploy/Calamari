@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Calamari.Integration.ServiceMessages;
+using Calamari.Common.Plumbing.ServiceMessages;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.ServiceMessages

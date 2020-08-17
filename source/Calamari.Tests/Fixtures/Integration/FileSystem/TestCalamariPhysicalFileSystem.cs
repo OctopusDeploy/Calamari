@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Reflection;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.FileSystem;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem

@@ -1,5 +1,8 @@
 ﻿using System;
 using System.IO;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Tests.Helpers;
@@ -121,7 +124,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void ExtractIgnoresSymbolicLinks()
         {
             var log = new InMemoryLog();
-            var fileName = GetFixtureResouce("Samples", string.Format("{0}.{1}.{2}", PackageId, "1.0.0.0-symlink", "tar.gz"));
+            var fileName = GetFixtureResource("Samples", string.Format("{0}.{1}.{2}", PackageId, "1.0.0.0-symlink", "tar.gz"));
 
             var extractor = new TarGzipPackageExtractor(log);
             var targetDir = GetTargetDir(typeof(TarGzipPackageExtractor), fileName);
@@ -139,7 +142,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         private string GetFileName(string extension)
         {
-            return GetFixtureResouce("Samples", string.Format("{0}.{1}.{2}", PackageId, PackageVersion, extension));
+            return GetFixtureResource("Samples", string.Format("{0}.{1}.{2}", PackageId, PackageVersion, extension));
         }
 
         private string GetTargetDir(Type extractorType, string fileName)

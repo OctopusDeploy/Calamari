@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
-using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;

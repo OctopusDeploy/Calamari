@@ -3,8 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.ServiceProcess;
-using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using NUnit.Framework;
 
@@ -45,8 +45,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         protected void RunDeployment(Action extraAsserts = null)
         {
-            if (string.IsNullOrEmpty(Variables[SpecialVariables.Package.EnabledFeatures]))
-                Variables[SpecialVariables.Package.EnabledFeatures] = "Octopus.Features.WindowsService";
+            if (string.IsNullOrEmpty(Variables[KnownVariables.Package.EnabledFeatures]))
+                Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.WindowsService";
             Variables["Octopus.Action.WindowsService.CreateOrUpdateService"] = "True";
             Variables["Octopus.Action.WindowsService.ServiceAccount"] = "_CUSTOM";
             Variables["Octopus.Action.WindowsService.StartMode"] = "auto";

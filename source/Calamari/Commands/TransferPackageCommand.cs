@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment.Journal;
+using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Plumbing.Deployment.Journal;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Deployment.Journal;
-using Calamari.Extensions;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Processes.Semaphores;
-using Calamari.Variables;
 
 namespace Calamari.Commands
 {
@@ -32,9 +33,11 @@ namespace Calamari.Commands
         public override int Execute(string[] commandLineArguments)
         {
             var packageFile = variables.GetPathToPrimaryPackage(fileSystem, true);
-            
+            if (packageFile == null) // required: true in the above call means it will throw rather than return null, but there's no way to tell the compiler that. And ! doesn't work in older frameworks
+                throw new CommandException("Package File path could not be determined");
+
             var journal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
-            
+
             var conventions = new List<IConvention>
             {
                 new AlreadyInstalledConvention(log, journal),
@@ -42,7 +45,7 @@ namespace Calamari.Commands
             };
 
             var deployment = new RunningDeployment(packageFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             try
             {

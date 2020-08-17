@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using Calamari.Hooks;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.Scripting.WindowsPowerShell;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripting.WindowsPowerShell;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -39,7 +38,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var actual = target.IsEnabled(ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment());
             actual.Should().Be(expected);
         }
-        
+
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)] //note: this would probably work on linux
         [Ignore("Not yet ready for prime time. Tested via Helm tests atm anyway")]
@@ -67,12 +66,12 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 var deploymentVariables = new CalamariVariables();
                 deploymentVariables.Set(SpecialVariables.ClusterUrl, ServerUrl);
-                
+
                 deploymentVariables.Set(SpecialVariables.SkipTlsVerification, "true");
                 deploymentVariables.Set(SpecialVariables.Namespace, "calamari-testing");
                 deploymentVariables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
                 deploymentVariables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
-                
+
                 var output = ExecuteScript(wrapper, temp.FilePath, deploymentVariables);
                 output.AssertSuccess();
             }

@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
 using Calamari.Tests.Fixtures.Deployment.Packages;

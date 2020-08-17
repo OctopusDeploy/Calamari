@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting.Python;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Processes;
-using Calamari.Integration.Scripting.Python;
-using Calamari.Integration.ServiceMessages;
 using Calamari.Tests.Helpers;
-using Calamari.Variables;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using Octopus.CoreUtilities;

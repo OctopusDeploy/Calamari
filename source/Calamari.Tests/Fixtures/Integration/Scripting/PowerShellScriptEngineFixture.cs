@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Scripting;
-using Calamari.Integration.Scripting.WindowsPowerShell;
+using Calamari.Common.Features.Scripting.WindowsPowerShell;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting
@@ -54,7 +54,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 }
             }
         }
-        
+
         [Test]
         [TestCase("true")]
         [TestCase("True")]
@@ -68,7 +68,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             //known bug - https://youtrack.jetbrains.com/issue/RSRP-465549
             if (ScriptingEnvironment.SafelyGetPowerShellVersion().Major != 4)
                 Assert.Inconclusive("This test requires PowerShell 4");
-            
+
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
                 File.WriteAllText(scriptFile.FilePath, "Write-Host $mysecrect");

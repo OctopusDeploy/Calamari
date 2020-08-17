@@ -8,7 +8,11 @@ using Calamari.Aws.Deployment.Conventions;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Util;
+using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Processes;
@@ -50,8 +54,8 @@ namespace Calamari.Aws.Commands
             };
             
             var deployment = new RunningDeployment(packageFile, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions);
             
+            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             conventionRunner.RunConventions();
             return 0;
         }

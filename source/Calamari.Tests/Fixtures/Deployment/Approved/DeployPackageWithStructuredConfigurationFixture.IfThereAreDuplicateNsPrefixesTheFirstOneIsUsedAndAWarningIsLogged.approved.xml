@@ -1,0 +1,8 @@
+<document>
+  <parent xmlns:dupe="duplicate1">
+    <dupe:node>new-value</dupe:node>
+  </parent>
+  <parent xmlns:dupe="duplicate2">
+    <dupe:node>value</dupe:node>
+  </parent>
+</document>

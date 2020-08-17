@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Calamari.Common.Plumbing.Extensions;
 
 namespace Calamari.Util
 {
@@ -19,19 +20,19 @@ namespace Calamari.Util
             FilePath = filePath;
         }
     }
-    
+
     public class RelativeGlobber
     {
         private readonly Func<string, string, IEnumerable<string>> enumerateWithGlob;
         public string WorkingDirectory { get; }
-        
+
         public RelativeGlobber(Func<string, string, IEnumerable<string>> enumerateWithGlob, string workingDirectory)
         {
             this.enumerateWithGlob = enumerateWithGlob;
             WorkingDirectory = workingDirectory;
         }
-        
-        private (string glob, string output) ParsePattern(string pattern)
+
+        private (string glob, string? output) ParsePattern(string pattern)
         {
             var segments = Regex.Split(pattern, "=>");
             var output = segments.Length > 1 ? segments[1].Trim() : null;
@@ -48,8 +49,8 @@ namespace Calamari.Util
 
             return result.Select(x => new RelativeGlobMatch(x, strategy(glob, WorkingDirectory, x).Replace("\\","/"), WorkingDirectory));
         }
-        
-        private Func<string, string, string, string> GetBasePathStrategy(string outputPattern)
+
+        private Func<string, string, string, string> GetBasePathStrategy(string? outputPattern)
         {
             if (string.IsNullOrEmpty(outputPattern))
             {
@@ -60,7 +61,7 @@ namespace Calamari.Util
             {
                 return (pattern, cwd, file) => GetGlobBase(outputPattern, GetBaseSegmentFromGlob(pattern), file.AsRelativePathFrom(cwd));
             }
-            
+
             //Be careful of Path.GetFileName, it will bite you on linux
             return (pattern, cwd, file) => Path.Combine(outputPattern.Replace("*", string.Empty), new Uri(file).Segments.Last());
         }

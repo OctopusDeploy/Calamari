@@ -1,8 +1,11 @@
 using System;
 using System.IO;
+using System.Reflection;
 using Autofac;
 using Calamari.Commands.Support;
-using Octostache;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Tests.Helpers
 {
@@ -10,41 +13,48 @@ namespace Calamari.Tests.Helpers
     {
         public TestProgram(InMemoryLog log) : base(log)
         {
-            Log = log;
+            TestLog = log;
         }
 
-        public InMemoryLog Log { get; }
-        public ICommandWithArguments CommandOverride { get; set; }
+        internal InMemoryLog TestLog { get; }
+        ICommandWithArgs CommandOverride { get; set; }
         public bool StubWasCalled { get; set; }
         public IVariables VariablesOverride { get; set; }
-        
-        public int Run(string[] args)
+
+        public int RunWithArgs(string[] args)
         {
-            var options = CommonOptions.Parse(args);
-            return Run(options);
+            return Run(args);
         }
-        
+
         public int RunStubCommand()
         {
             CommandOverride  = new StubCommand(() => StubWasCalled = true);
-            var commonOptions = new CommonOptions("stub");
-            return Run(commonOptions);
+            return Run(new [] {"stub"});
         }
-        
-        protected override ContainerBuilder BuildContainer(CommonOptions options)
+
+        protected override Assembly GetProgramAssemblyToRegister()
         {
-            var builder = base.BuildContainer(options);
-            builder.RegisterInstance(Log).As<ILog>();
+            // Return Calamari Assembly as it contains the helm commands that needs to be tested.
+            // Don't register Calamari.Test Assembly as the only thing we need to register is the stub command and that's handled below
+            return typeof(Program).Assembly;
+        }
+
+        protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
+        {
+            // Register CommandOverride so it shows up first in IEnumerable
             if (CommandOverride != null)
-                builder.RegisterInstance(CommandOverride).As<ICommandWithArguments>();
+                builder.RegisterInstance(CommandOverride).As<ICommandWithArgs>();
+
+            base.ConfigureContainer(builder, options);
+
+            // Register after base so Singleton gets overridden
             if (VariablesOverride != null)
                 builder.RegisterInstance(VariablesOverride).As<IVariables>();
-            return builder;
         }
     }
 
     [Command("stub")]
-    class StubCommand : ICommandWithArguments
+    class StubCommand : ICommandWithArgs
     {
         readonly Action callback;
 

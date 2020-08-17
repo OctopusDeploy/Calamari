@@ -1,0 +1,5 @@
+﻿<document>
+    <selfclosing />
+    <empty></empty>
+    <mixed>This is <b>some</b> text</mixed>
+</document>

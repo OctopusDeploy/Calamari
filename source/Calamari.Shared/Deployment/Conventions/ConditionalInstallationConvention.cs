@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Common.Commands;
 
 namespace Calamari.Deployment.Conventions
 {
