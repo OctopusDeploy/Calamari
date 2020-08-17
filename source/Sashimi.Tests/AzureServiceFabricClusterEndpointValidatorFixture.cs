@@ -86,8 +86,6 @@ namespace Sashimi.AzureServiceFabric.Tests
 
             errors.Should().Contain("'Client Cert Variable' must not be empty.");
             errors.Should().Contain("'Server Cert Thumbprint' must not be empty.");
-            errors.Should().Contain("'Certificate Store Location' must not be empty.");
-            errors.Should().Contain("'Certificate Store Name' must not be empty.");
         }
 
         [Test]

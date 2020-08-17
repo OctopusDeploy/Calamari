@@ -16,6 +16,12 @@ namespace Sashimi.AzureServiceFabric
                 .SingleInstance();
             builder.RegisterType<AzureServiceFabricAppHealthCheckActionHandler>().As<IActionHandler>().AsSelf()
                 .InstancePerLifetimeScope();
+            builder.RegisterType<AzureServiceFabricAppActionHandler>().As<IActionHandler>().AsSelf()
+                   .InstancePerLifetimeScope();
+            builder.RegisterType<AzureServiceFabricPowerShellActionHandler>().As<IActionHandler>().AsSelf()
+                   .InstancePerLifetimeScope();
+            builder.RegisterType<AzureServiceFabricClusterContributor>().As<IContributeToPackageDeployment>().AsSelf()
+                   .InstancePerLifetimeScope();
         }
     }
 }

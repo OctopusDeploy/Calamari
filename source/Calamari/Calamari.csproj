@@ -8,11 +8,13 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net452</TargetFramework>
   </PropertyGroup>
-  <!-- Cake build looks for xpath Project/PropertyGroup/TargetFrameworks with a fallback of Project/PropertyGroup/TargetFramework
-        in PublishCalamariProjects task. If making changes, be sure to look there to make sure it's all alright still -->
   <ItemGroup>
-    <PackageReference Include="Calamari.Common" Version="14.0.0" />
+    <PackageReference Include="Calamari.Common" Version="14.8.1" />
+    <PackageReference Include="Calamari.Scripting" Version="7.1.0" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
     <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Scripts\*" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-﻿﻿namespace Sashimi.AzureServiceFabric.Endpoints
+﻿namespace Sashimi.AzureServiceFabric.Endpoints
 {
     public enum AzureServiceFabricCredentialType
     {

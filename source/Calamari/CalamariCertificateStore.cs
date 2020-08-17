@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -13,14 +13,14 @@ namespace Calamari.AzureServiceFabric
 {
     static class CalamariCertificateStore
     {
-        public static void EnsureCertficateIsInstalled(IVariables variables, string certificateVariable, string storeName, string storeLocation = "CurrentUser")
+        public static void EnsureCertificateIsInstalled(IVariables variables, string certificateVariable, string storeName, string storeLocation = "CurrentUser")
         {
             var location = (StoreLocation) Enum.Parse(typeof(StoreLocation), storeLocation);
             var name = (StoreName) Enum.Parse(typeof(StoreName), storeName);
             GetOrAdd(variables, certificateVariable, name, location);
         }
 
-        static void GetOrAdd(IVariables variables, string certificateVariable, StoreName storeName, StoreLocation storeLocation = StoreLocation.CurrentUser)
+        public static void GetOrAdd(IVariables variables, string certificateVariable, StoreName storeName, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
             var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Pfx}"));
             var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");

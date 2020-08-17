@@ -16,10 +16,8 @@ namespace Sashimi.AzureServiceFabric.Endpoints
                 () =>
                 {
                     RuleFor(a => a.ClientCertVariable).NotEmpty();
-                    RuleFor(a => a.CertificateStoreLocation).NotEmpty();
-                    RuleFor(a => a.CertificateStoreName).NotEmpty();
                 });
-            
+
             When(a => a.SecurityMode == AzureServiceFabricSecurityMode.SecureAzureAD,
                 () =>
                 {

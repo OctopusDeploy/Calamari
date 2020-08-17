@@ -1,4 +1,4 @@
-﻿﻿using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Octopus.Data.Model;
@@ -55,7 +55,7 @@ namespace Sashimi.AzureServiceFabric.Endpoints
             if (!string.IsNullOrEmpty(DefaultWorkerPoolId))
                 yield return (DefaultWorkerPoolId, DocumentType.WorkerPool);
         }
-        
+
         public IEnumerable<string> ClientCertificateIds => new[] { ClientCertVariable }.Where(c => !string.IsNullOrEmpty(c)).Cast<string>();
     }
 }
