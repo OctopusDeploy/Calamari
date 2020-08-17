@@ -169,18 +169,6 @@ function New-OctopusTokenAccount([string]$name, [string]$token, [switch]$updateI
     Write-Host "##octopus[create-tokenaccount $($parameters)]"
 }
 
-function New-OctopusAwsAccount([string]$name, [string]$secretKey, [string]$accessKey, [switch]$updateIfExisting)
-{
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name
-	$secretKey = Convert-ToServiceMessageParameter -name "secretKey" -value $secretKey
- 	$accessKey = Convert-ToServiceMessageParameter -name "accessKey" -value $accessKey
-	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
-
-	$parameters = $name, $secretKey, $accessKey, $updateIfExistingParameter -join ' '
-
-    Write-Host "##octopus[create-awsaccount $($parameters)]"
-}
-
 function New-OctopusUserPassAccount([string]$name, [string]$username, [string]$password, [switch]$updateIfExisting)
 {
 	$name = Convert-ToServiceMessageParameter -name "name" -value $name
@@ -191,29 +179,6 @@ function New-OctopusUserPassAccount([string]$name, [string]$username, [string]$p
 	$parameters = $name, $username, $password, $updateIfExistingParameter -join ' '
 
     Write-Host "##octopus[create-userpassaccount $($parameters)]"
-}
-
-function New-OctopusAzureServicePrincipalAccount([string]$name, [string]$azureSubscriptionId, [string]$azureApplicationId, [string]$azureTenantId, [string]$azurePassword, [string]$azureEnvironment, [string]$azureBaseUri, [string]$azureResourceManagementBaseUri, [switch]$updateIfExisting)
-{
-	$name = Convert-ToServiceMessageParameter -name "name" -value $name
- 	$azureSubscription = Convert-ToServiceMessageParameter -name "azSubscriptionId" -value $azureSubscriptionId
- 	$azureApplicationId = Convert-ToServiceMessageParameter -name "azApplicationId" -value $azureApplicationId
- 	$azureTenantId = Convert-ToServiceMessageParameter -name "azTenantId" -value $azureTenantId
- 	$azurePassword = Convert-ToServiceMessageParameter -name "azPassword" -value $azurePassword
-	$type = Convert-ToServiceMessageParameter -name "type" -value "serviceprincipal"
-	$updateIfExistingParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $updateIfExisting
-
-	$parameters = $type, $name, $azureSubscription, $azureApplicationId, $azureTenantId, $azurePassword, $updateIfExistingParameter -join ' '
-
-	if (![string]::IsNullOrEmpty($azureEnvironment))
-	{
-		$azureEnvironment = Convert-ToServiceMessageParameter -name "azEnvironment" -value $azureEnvironment
-		$azureBaseUri = Convert-ToServiceMessageParameter -name "azBaseUri" -value $azureBaseUri
-		$azureResourceManagementBaseUri = Convert-ToServiceMessageParameter -name "azResourceManagementBaseUri" -value $azureResourceManagementBaseUri
-		$parameters = $parameters, $azureEnvironment, $azureBaseUri, $azureResourceManagementBaseUri -join ' '
-	}
-
-    Write-Host "##octopus[create-azureaccount $($parameters)]"
 }
 
 function Remove-OctopusTarget([string] $targetIdOrName)
