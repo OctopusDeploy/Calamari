@@ -4,10 +4,8 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
-using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -668,24 +666,25 @@ output ""config-map-aws-auth"" {{
 
             var terraformFiles = TestEnvironment.GetTestPath(folderName);
 
-            var result = ActionHandlerTestBuilder.Create<Program>(commandType)
-                                                 .WithArrange(context =>
-                                                              {
-                                                                  context.Variables.Add(KnownVariables.Action.Script.ScriptSource,
-                                                                                        KnownVariables.Action.Script.ScriptSourceOptions.Package);
-                                                                  context.Variables.Add(KnownVariables.Action.Packages.PackageId, terraformFiles);
-                                                                  context.Variables.Add(TerraformSpecialVariables.Calamari.TerraformCliPath,
-                                                                                        Path.GetDirectoryName(customTerraformExecutable));
-                                                                  context.Variables.Add(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
-                                                                                        customTerraformExecutable);
+            var result = ActionHandlerTestBuilder.CreateAsync<Program>(commandType)
+                                                                       .WithArrange(context =>
+                                                                                    {
+                                                                                        context.Variables.Add(KnownVariables.Action.Script.ScriptSource,
+                                                                                                              KnownVariables.Action.Script.ScriptSourceOptions.Package);
+                                                                                        context.Variables.Add(KnownVariables.Action.Packages.PackageId, terraformFiles);
+                                                                                        context.Variables.Add(TerraformSpecialVariables.Calamari.TerraformCliPath,
+                                                                                                              Path.GetDirectoryName(customTerraformExecutable));
+                                                                                        context.Variables.Add(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
+                                                                                                              customTerraformExecutable);
 
-                                                                  populateVariables(context);
-                                                              })
-                                                 .WithAssert(result =>
-                                                             {
-                                                                 Assert.IsTrue(result.WasSuccessful);
-                                                             })
-                                                 .Execute();
+                                                                                        populateVariables(context);
+
+                                                                                        if (!String.IsNullOrEmpty(folderName))
+                                                                                        {
+                                                                                            context.WithFilesToCopy(terraformFiles);
+                                                                                        }
+                                                                                    })
+                                                                       .Execute();
 
             assertResult(result);
             return result;

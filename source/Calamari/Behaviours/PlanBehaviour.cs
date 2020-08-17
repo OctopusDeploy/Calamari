@@ -1,42 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Plumbing.Pipeline;
 
-namespace Calamari.Terraform
+namespace Calamari.Terraform.Behaviours
 {
-    [Command("plan-terraform", Description = "Plans the creation of a Terraform deployment")]
-    public class PlanCommand : TerraformCommand
+    class PlanBehaviour : TerraformDeployBehaviour
     {
-        readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
 
-        public PlanCommand(ILog log,
-                           IVariables variables,
-                           ICalamariFileSystem fileSystem,
-                           ICommandLineRunner commandLineRunner,
-                           ISubstituteInFiles substituteInFiles,
-                           IExtractPackage extractPackage)
-            : base(log,
-                   variables,
-                   fileSystem,
-                   substituteInFiles,
-                   extractPackage)
+        public PlanBehaviour(ILog log,
+                             ICalamariFileSystem fileSystem,
+                             ICommandLineRunner commandLineRunner) : base(log)
         {
-            this.log = log;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
         }
 
         protected virtual string ExtraParameter => "";
 
-        protected override void Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
+        protected override Task Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables)
         {
             string results;
             using (var cli = new TerraformCliExecutor(log,
@@ -65,6 +53,8 @@ namespace Calamari.Terraform
             log.Info(
                      $"Saving variable 'Octopus.Action[{deployment.Variables["Octopus.Action.StepName"]}].Output.{TerraformSpecialVariables.Action.Terraform.PlanOutput}' with the details of the plan");
             log.SetOutputVariable(TerraformSpecialVariables.Action.Terraform.PlanOutput, results, deployment.Variables);
+
+            return this.CompletedTask();
         }
     }
 }
