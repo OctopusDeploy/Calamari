@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using Octopus.Data.Model;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
@@ -10,13 +9,25 @@ namespace Sashimi.Aws.Accounts
     class AmazonWebServicesAccountServiceMessageHandler : ICreateAccountDetailsServiceMessageHandler
     {
         public string AuditEntryDescription => "AWS Account";
-        public string ServiceMessageName => CreateAwsAccountServiceMessagePropertyNames.Name;
-        public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = Enumerable.Empty<ScriptFunctionRegistration>();
+        public string ServiceMessageName => CreateAwsAccountServiceMessagePropertyNames.CreateAccountName;
+        public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = new List<ScriptFunctionRegistration>
+        {
+            new ScriptFunctionRegistration("OctopusAwsAccount",
+                                           "Creates a new Amazon Web Services Account.",
+                                           CreateAwsAccountServiceMessagePropertyNames.CreateAccountName,
+                                           new Dictionary<string, FunctionParameter>
+                                           {
+                                               { CreateAwsAccountServiceMessagePropertyNames.NameAttribute, new FunctionParameter(ParameterType.String) },
+                                               { CreateAwsAccountServiceMessagePropertyNames.SecretKeyAttribute, new FunctionParameter(ParameterType.String) },
+                                               { CreateAwsAccountServiceMessagePropertyNames.AccessKeyAttribute, new FunctionParameter(ParameterType.String) },
+                                               { CreateAwsAccountServiceMessagePropertyNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) }
+                                           })
+        };
 
         public AccountDetails CreateAccountDetails(IDictionary<string, string> properties)
         {
-            properties.TryGetValue(CreateAwsAccountServiceMessagePropertyNames.AccessKey, out var accessKey);
-            properties.TryGetValue(CreateAwsAccountServiceMessagePropertyNames.SecretKey, out var secretKey);
+            properties.TryGetValue(CreateAwsAccountServiceMessagePropertyNames.AccessKeyAttribute, out var accessKey);
+            properties.TryGetValue(CreateAwsAccountServiceMessagePropertyNames.SecretKeyAttribute, out var secretKey);
 
             return new AmazonWebServicesAccountDetails
             {
@@ -27,9 +38,12 @@ namespace Sashimi.Aws.Accounts
 
         internal static class CreateAwsAccountServiceMessagePropertyNames
         {
-            public const string Name = "create-awsaccount";
-            public const string SecretKey = "secretKey";
-            public const string AccessKey = "accessKey";
+            public const string CreateAccountName = "create-awsaccount";
+
+            public const string UpdateIfExistingAttribute = "updateIfExisting";
+            public const string NameAttribute = "name";
+            public const string SecretKeyAttribute = "secretKey";
+            public const string AccessKeyAttribute = "accessKey";
         }
     }
 }
