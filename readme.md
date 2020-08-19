@@ -1,1 +1,1 @@
-This repository contains all the Sashimis and the Sashimi Contracts. 
+Please see the [Sashimi Wiki](https://github.com/OctopusDeploy/sashimi/wiki)
