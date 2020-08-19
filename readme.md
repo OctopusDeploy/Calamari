@@ -1,1 +1,1 @@
-This repository contains Sashimi.AzureCloudServices and Calamari.AzureCloudServices. 
+Please see the [Sashimi Wiki](https://github.com/OctopusDeploy/sashimi/wiki)
