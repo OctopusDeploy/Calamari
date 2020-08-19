@@ -1,1 +1,1 @@
-This repository contains Sashimi.Terraform and Calamari.Terraform. 
+Please see the [Sashimi Wiki](https://github.com/OctopusDeploy/sashimi/wiki)
