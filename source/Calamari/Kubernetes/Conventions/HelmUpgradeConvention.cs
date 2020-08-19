@@ -278,7 +278,7 @@ namespace Calamari.Kubernetes.Conventions
         {
             var packagePath = deployment.Variables.Get(PackageVariables.Output.InstallationDirectoryPath);
             
-            var packageId = deployment.Variables.Get(PackageVariables.PackageId);
+            var packageId = deployment.Variables.Get(PackageVariables.IndexedPackageId(string.Empty));
 
             if (fileSystem.FileExists(Path.Combine(packagePath, "Chart.yaml")))
             {
