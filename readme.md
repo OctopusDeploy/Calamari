@@ -1,1 +1,1 @@
-This repository contains Sashimi.AzureResourceGroup and Calamari.AzureResourceGroup.
+Please see the [Sashimi Wiki](https://github.com/OctopusDeploy/sashimi/wiki)
