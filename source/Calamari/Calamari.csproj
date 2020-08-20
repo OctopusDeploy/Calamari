@@ -10,7 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Calamari.Common" Version="14.8.1" />
-    <PackageReference Include="Calamari.Scripting" Version="7.1.0" />
+    <PackageReference Include="Calamari.Scripting" Version="8.1.0" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
     <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
   </ItemGroup>
