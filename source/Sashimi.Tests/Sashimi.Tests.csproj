@@ -14,9 +14,9 @@
     <PackageReference Include="nunit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="11.0.0" />
-    <PackageReference Include="Sashimi.Tests.Shared" Version="6.1.0" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="8.1.0" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.22" />
-    <PackageReference Include="Assent" Version="1.6.0" />
+    <PackageReference Include="Assent" Version="1.6.1" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Packages\**\*">
@@ -24,6 +24,6 @@
     </None>
     <None Update="AzureResourceGroupActionUtilsFixture.TemplateParameters.approved.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None> 
+    </None>
   </ItemGroup>
 </Project>
