@@ -294,7 +294,11 @@ namespace Calamari.Kubernetes.Conventions
                 
             }
             
-            // Find the first subdirectory with a Chart.yaml file.
+            /*
+             * Although conventions suggests that the directory inside the helm archive matches the package ID, this
+             * can not be assumed. If the standard locations above failed to locate the Chart.yaml file, loop over
+             * all subdirectories to try and find the file.
+             */
             foreach (var dir in fileSystem.EnumerateDirectories(installDir))
             {
                 if (fileSystem.FileExists(Path.Combine(dir, "Chart.yaml")))
