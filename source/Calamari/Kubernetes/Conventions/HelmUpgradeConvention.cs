@@ -276,22 +276,39 @@ namespace Calamari.Kubernetes.Conventions
 
         string GetChartLocation(RunningDeployment deployment)
         {
-            var packagePath = deployment.Variables.Get(PackageVariables.Output.InstallationDirectoryPath);
-            
+            var installDir = deployment.Variables.Get(PackageVariables.Output.InstallationDirectoryPath);
+
             var packageId = deployment.Variables.Get(PackageVariables.IndexedPackageId(string.Empty));
 
-            if (fileSystem.FileExists(Path.Combine(packagePath, "Chart.yaml")))
+            // Try the root directory
+            if (fileSystem.FileExists(Path.Combine(installDir, "Chart.yaml")))
             {
-                return Path.Combine(packagePath, "Chart.yaml");
+                return Path.Combine(installDir, "Chart.yaml");
             }
 
-            packagePath = Path.Combine(packagePath, packageId);
-            if (!fileSystem.DirectoryExists(packagePath) || !fileSystem.FileExists(Path.Combine(packagePath, "Chart.yaml")))
+            // Try the directory that matches the package id
+            var packageIdPath = Path.Combine(installDir, packageId);
+            if (fileSystem.DirectoryExists(packageIdPath) && fileSystem.FileExists(Path.Combine(packageIdPath, "Chart.yaml")))
             {
-                throw new CommandException($"Unexpected error. Chart.yaml was not found in {packagePath}");
+                return packageIdPath;
+                
             }
-
-            return packagePath;
+            
+            /*
+             * Although conventions suggests that the directory inside the helm archive matches the package ID, this
+             * can not be assumed. If the standard locations above failed to locate the Chart.yaml file, loop over
+             * all subdirectories to try and find the file.
+             */
+            foreach (var dir in fileSystem.EnumerateDirectories(installDir))
+            {
+                if (fileSystem.FileExists(Path.Combine(dir, "Chart.yaml")))
+                {
+                    return dir;
+                }
+            }
+            
+            // Nothing worked
+            throw new CommandException($"Unexpected error. Chart.yaml was not found in {packageIdPath}");
         }
 
         static bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
