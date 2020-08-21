@@ -126,6 +126,25 @@ namespace Calamari.Tests.KubernetesFixtures
 
             Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void MismatchPackageIDAndPathWorks()
+        {
+            Variables.Set(PackageVariables.PackageId, "thisisnotamatch");
+            Variables.Set(PackageVariables.PackageVersion, "0.3.7");
+            Variables.Set(PackageVariables.IndexedPackageId(""), $"#{{{PackageVariables.PackageId}}}");
+            Variables.Set(PackageVariables.IndexedPackageVersion(""), $"#{{{PackageVariables.PackageVersion}}}");
+            
+            var result = DeployPackage();
+
+            result.AssertSuccess();
+
+            Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
+        }
 
         [Test]
         [RequiresNonFreeBSDPlatform]
