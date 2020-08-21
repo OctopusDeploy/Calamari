@@ -127,7 +127,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
         
-        [Test]
+        [Test(Description = "Test the case where the package ID does not match the directory inside the helm archive.")]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
         [RequiresNonMac]
