@@ -63,13 +63,12 @@ Task("Test")
             var testingDestination = Path.Combine(tempTestingPath, Path.GetRandomFileName());
             CopyDirectory(destination, testingDestination);
 
-            // We also need the nuget packages we have just build to be available for this test to work, so we setup a local nuget repo and create a nuget.config
+            // We also need the nuget packages we have just build to be available for this test to work, so we setup a local nuget repo
             var testingDestinationLocalPackage = Path.Combine(tempTestingPath, "LocalPackages");
             CreateDirectory(testingDestinationLocalPackage);
             CopyFiles(Path.Combine(artifactsDir, $"*.{nugetVersion}.nupkg"), testingDestinationLocalPackage);
 
-            RunDotnet("new", $"nugetconfig -o \"{testingDestination}\"");
-            RunDotnet("nuget", $"add source --configfile \"{testingDestination}/nuget.config\" -n Local \"{testingDestinationLocalPackage}\"");
+            RunDotnet("nuget", $"add source --configfile \"{testingDestination}/Sashimi.NamingIsHard/nuget.config\" -n Local \"{testingDestinationLocalPackage}\"");
 
             CakeExecuteScript(Path.Combine(testingDestination, "Sashimi.NamingIsHard", "build.cake"), new CakeSettings {
                     Arguments = new Dictionary<string, string>{
