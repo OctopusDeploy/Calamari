@@ -16,7 +16,7 @@ class MonoTestingProject : Project({
                 ("open SUSE 12" to "SUSE12"),
                 ("CentOS 7" to "CentOS7"),
                 ("Fedora" to "Fedora32"),
-                ("Debian" to "Debian911"),
+                ("Debian" to "Debian913"),
                 ("RHEL 7.2" to "RHEL72")
         )
         for (item in items) {

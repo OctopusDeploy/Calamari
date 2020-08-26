@@ -11,12 +11,12 @@ class NetcoreTestingProject : Project({
     val buildTypesToRegister = sequence {
         val items = listOf(
                 ("Amazon Linux 2" to "AmazonLinux2"),
-                ("Ubuntu 16.04 LTS" to "Ubuntu16"),
+                ("Ubuntu 18.04 LTS" to "Ubuntu18"),
                 ("open SUSE 15.1" to "openSUSE151"),
                 ("open SUSE 12" to "SUSE12"),
                 ("CentOS 7" to "CentOS7"),
                 ("Fedora" to "Fedora32"),
-                ("Debian" to "Debian911"),
+                ("Debian" to "Debian913"),
                 ("RHEL 7.2" to "RHEL72")
         )
         for (item in items) {
