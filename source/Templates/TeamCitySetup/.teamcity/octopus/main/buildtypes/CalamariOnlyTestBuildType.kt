@@ -3,7 +3,7 @@ package octopus.main.buildtypes
 import jetbrains.buildServer.configs.kotlin.v2019_2.BuildType
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.nunit
 
-class NetFxTestBuildType(block: BuildType.() -> Unit) : TestBuildType({
+class CalamariOnlyTestBuildType(block: BuildType.() -> Unit) : TestBuildType({
     steps {
         nunit {
             name = "Run Calamari Tests"

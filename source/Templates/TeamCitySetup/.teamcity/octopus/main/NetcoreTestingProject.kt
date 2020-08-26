@@ -2,7 +2,7 @@ package octopus.main
 
 import jetbrains.buildServer.configs.kotlin.v2019_2.Project
 import jetbrains.buildServer.configs.kotlin.v2019_2.toId
-import octopus.main.buildtypes.NetCoreTestBuildType
+import octopus.main.buildtypes.DotNetTestBuildType
 
 class NetcoreTestingProject : Project({
     var projectName = "Netcore Testing"
@@ -20,7 +20,7 @@ class NetcoreTestingProject : Project({
                 ("RHEL" to "RHEL")
         )
         for (item in items) {
-            yield(NetCoreTestBuildType {
+            yield(DotNetTestBuildType {
                 id(item.second.toId(projectName.toId()))
                 name = item.first
                 params {
@@ -33,7 +33,7 @@ class NetcoreTestingProject : Project({
                 }
             })
         }
-        yield(NetCoreTestBuildType {
+        yield(DotNetTestBuildType {
             id("Windows".toId(projectName.toId()))
             name = "Windows"
             params {
@@ -48,7 +48,7 @@ class NetcoreTestingProject : Project({
                 exists("system.Octopus.DotnetSdk3.1")
             }
         })
-        yield(NetCoreTestBuildType {
+        yield(DotNetTestBuildType {
             id("Mac OSX".toId(projectName.toId()))
             name = "Mac OSX"
             params {

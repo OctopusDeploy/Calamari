@@ -3,8 +3,8 @@ package octopus.main
 import jetbrains.buildServer.configs.kotlin.v2019_2.BuildType
 import jetbrains.buildServer.configs.kotlin.v2019_2.Project
 import jetbrains.buildServer.configs.kotlin.v2019_2.toId
-import octopus.main.buildtypes.NetCoreTestBuildType
-import octopus.main.buildtypes.NetFxTestBuildType
+import octopus.main.buildtypes.DotNetTestBuildType
+import octopus.main.buildtypes.CalamariOnlyTestBuildType
 
 class NetFxTestingProject : Project({
     val projectName = "Windows(NetFx) Testing"
@@ -31,9 +31,9 @@ class NetFxTestingProject : Project({
                 }
             }
             if(item.second.startsWith("2008")) {
-                yield(NetFxTestBuildType(block))
+                yield(CalamariOnlyTestBuildType(block))
             } else {
-                yield(NetCoreTestBuildType(block))
+                yield(DotNetTestBuildType(block))
             }
         }
     }

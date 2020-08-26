@@ -4,7 +4,7 @@ import jetbrains.buildServer.configs.kotlin.v2019_2.BuildStep
 import jetbrains.buildServer.configs.kotlin.v2019_2.BuildType
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.script
 
-class NetCoreTestBuildType(block: BuildType.() -> Unit) : TestBuildType({
+class DotNetTestBuildType(block: BuildType.() -> Unit) : TestBuildType({
     steps {
         script {
             name = "Run Sashimi Tests"
