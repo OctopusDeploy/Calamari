@@ -10,14 +10,14 @@ class NetcoreTestingProject : Project({
 
     val buildTypesToRegister = sequence {
         val items = listOf(
-                ("Amazon Linux 2" to "AmazonLinux2"),
-                ("Ubuntu 18.04 LTS" to "Ubuntu18"),
-                ("open SUSE 15.1" to "openSUSE151"),
-                ("open SUSE 12" to "SUSE12"),
-                ("CentOS 7" to "CentOS7"),
-                ("Fedora" to "Fedora32"),
-                ("Debian" to "Debian913"),
-                ("RHEL 7.2" to "RHEL72")
+                ("Amazon Linux" to "AmazonLinux"),
+                ("Ubuntu" to "Ubuntu"),
+                ("openSUSE Leap" to "openSUSE"),
+                ("SUSE LES" to "SLES"),
+                ("CentOS" to "CentOS"),
+                ("Fedora" to "Fedora"),
+                ("Debian" to "Debian"),
+                ("RHEL" to "RHEL")
         )
         for (item in items) {
             yield(NetCoreTestBuildType {
@@ -27,7 +27,7 @@ class NetcoreTestingProject : Project({
                     param("dotnet_runtime", "linux-x64")
                 }
                 requirements {
-                    equals("system.Octopus.AgentType", item.second)
+                    equals("system.Octopus.OS", item.second)
                     equals("system.Octopus.Purpose", "Test")
                     exists("system.Octopus.DotnetSdk3.1")
                 }
@@ -50,7 +50,7 @@ class NetcoreTestingProject : Project({
         })
         yield(NetCoreTestBuildType {
             id("Mac OSX".toId(projectName.toId()))
-            name = "Mac OSX 10.15.2"
+            name = "Mac OSX"
             params {
                 param("dotnet_runtime", "osx-x64")
             }
