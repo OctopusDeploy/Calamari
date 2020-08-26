@@ -29,7 +29,7 @@ namespace Sashimi.Template.Wrangler
             var csProjFiles = Directory.EnumerateFiles(solutionPath, "*.csproj", SearchOption.AllDirectories);
             var packagesToAdd = new Dictionary<string, string>();
 
-            ProcessUtils.ReadFromDotNetCommand("new", solutionPath, "sln -n Sashimi.NamingIsHard");
+            ProcessUtils.RunDotNetCommand("new", solutionPath, "sln -n Sashimi.NamingIsHard");
 
             foreach (var projFile in csProjFiles)
             {
@@ -52,12 +52,12 @@ namespace Sashimi.Template.Wrangler
                 }
 
                 await File.WriteAllTextAsync(projFile, sb.ToString());
-                ProcessUtils.ReadFromDotNetCommand("sln", solutionPath, $"Sashimi.NamingIsHard.sln add \"{projFile}\"");
+                ProcessUtils.RunDotNetCommand("sln", solutionPath, $"Sashimi.NamingIsHard.sln add \"{projFile}\"");
             }
 
             foreach (var (projFile, packageId) in packagesToAdd)
             {
-                ProcessUtils.ReadFromDotNetCommand("add", solutionPath, $"{projFile} package -n -v {packageVersion} {packageId}");
+                ProcessUtils.RunDotNetCommand("add", solutionPath, $"{projFile} package -n -v {packageVersion} {packageId}");
             }
         }
     }

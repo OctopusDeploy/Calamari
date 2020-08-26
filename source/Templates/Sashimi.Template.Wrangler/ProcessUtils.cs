@@ -6,12 +6,12 @@ namespace Sashimi.Template.Wrangler
 {
     static class ProcessUtils
     {
-        public static void ReadFromDotNetCommand(string command, string workingPath, string args)
+        public static void RunDotNetCommand(string command, string workingPath, string args)
         {
-            ReadOutputFromProcess("dotnet", workingPath, $"{command} {args}");
+            RunProcess("dotnet", workingPath, $"{command} {args}");
         }
 
-        static void ReadOutputFromProcess(string name, string workingPath, string args)
+        static void RunProcess(string name, string workingPath, string args)
         {
             using var process = new Process
             {
