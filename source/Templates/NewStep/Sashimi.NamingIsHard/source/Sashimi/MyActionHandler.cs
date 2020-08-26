@@ -11,7 +11,7 @@ namespace Sashimi.NamingIsHard
                 .Execute();
         }
 
-        public string Id { get; } = "NamingIsHard";
+        public string Id { get; } = SpecialVariables.MyActionHandlerTypeName;
         public string Name { get; } = "NamingIsHard";
         public string Description { get; } = "NamingIsHard";
         public string? Keywords { get; }
