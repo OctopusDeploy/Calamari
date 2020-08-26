@@ -34,19 +34,10 @@ Task("Default")
                 var filename = file.Path.GetFilename().FullPath;
                 var extension = file.Path.GetExtension();
 
-                if(filename == "pom.xml") {
-                    return false;
-                }
-
-                if(filename == "template.json") {
-                    return false;
-                }
-
-                if(extension == ".kt") {
-                    return false;
-                }
-
-                if(extension == ".kts") {
+                if  (filename == "pom.xml"
+                    || filename == "template.json"
+                    || extension == ".kt"
+                    || extension == ".kts") {
                     return false;
                 }
 

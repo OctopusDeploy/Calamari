@@ -11,7 +11,7 @@
     "language": "C#",
     "type": "project"
   },
-  "shortName": "sashimitc",
+  "shortName": "sashimi-teamcity",
   "sourceName": "NamingIsHard",
   "preferNameDirectory": false,
   "primaryOutputs": [
