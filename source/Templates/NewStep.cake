@@ -38,7 +38,7 @@ void DeleteEmptyFolders(string startLocation)
     }
 }
 
-Task("Default")
+Task("Build")
     .Does(() => {
         var templateSolutionPath = Path.Combine(destination, "Sashimi.NamingIsHard");
         EnsureDirectoryExists(templateSolutionPath);
@@ -49,7 +49,11 @@ Task("Default")
         CopyDirectory(templatePath, destination);
         DeleteEmptyFolders(destination);
         RunDotnet($"{source}/Templates/Sashimi.Template.Wrangler/bin/Release/netcoreapp3.1/Sashimi.Template.Wrangler.dll", $"{nugetVersion} {templateSolutionPath}");
+    });
 
+Task("Test")
+    .IsDependentOn("Build")
+    .Does(() => {
         var tempTestingPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         EnsureDirectoryExists(tempTestingPath);
 
@@ -65,7 +69,6 @@ Task("Default")
             CopyFiles(Path.Combine(artifactsDir, $"*.{nugetVersion}.nupkg"), testingDestinationLocalPackage);
 
             RunDotnet("new", $"nugetconfig -o \"{testingDestination}\"");
-            RunDotnet("nuget", $"add source --configfile \"{testingDestination}/nuget.config\" -n FeedzIo https://packages.octopushq.com/dependencies/nuget/index.json");
             RunDotnet("nuget", $"add source --configfile \"{testingDestination}/nuget.config\" -n Local \"{testingDestinationLocalPackage}\"");
 
             CakeExecuteScript(Path.Combine(testingDestination, "Sashimi.NamingIsHard", "build.cake"), new CakeSettings {
@@ -80,6 +83,8 @@ Task("Default")
                                                  });
         }
     });
+Task("Default")
+    .IsDependentOn("Test");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
