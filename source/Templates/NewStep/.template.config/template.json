@@ -11,7 +11,7 @@
     "language": "C#",
     "type": "project"
   },
-  "shortName": "sashimi-create-step",
+  "shortName": "sashimi-step",
   "sourceName": "NamingIsHard",
   "preferNameDirectory": false,
   "primaryOutputs": [
