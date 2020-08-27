@@ -66,6 +66,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Template.Wrangler",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Template.Wrangler.Tests", "Templates\Sashimi.Template.Wrangler.Tests\Sashimi.Template.Wrangler.Tests.csproj", "{5A664A6E-5DE1-4A2B-9487-AE612D60350D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{E6E4F1BE-6E9A-4176-8DA7-38456E52353F}"
+ProjectSection(SolutionItems) = preProject
+	Templates\How to template.md = Templates\How to template.md
+	Templates\NewStep.cake = Templates\NewStep.cake
+	Templates\TeamCitySetup.cake = Templates\TeamCitySetup.cake
+EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -159,6 +166,7 @@ Global
 		{ABEA8114-E8A7-44A4-AFAA-BA0642FE460B} = {FF6F6CB6-8662-4DF5-B4FF-0F259BF6ADE9}
 		{252CC09F-662E-45DA-A28E-027AFB7CE3FE} = {225C56D7-FF8A-4E20-940A-AAABC6C38106}
 		{5A664A6E-5DE1-4A2B-9487-AE612D60350D} = {225C56D7-FF8A-4E20-940A-AAABC6C38106}
+		{E6E4F1BE-6E9A-4176-8DA7-38456E52353F} = {225C56D7-FF8A-4E20-940A-AAABC6C38106}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F8108764-E787-43A4-A43A-2BB5540615E8}
