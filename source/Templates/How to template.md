@@ -6,25 +6,30 @@ Sashimi uses templates distributed via `dotnet new` command to help developers g
 
 # Using templates
 
-### Installing latest templates
+At any point, run ```dotnet new -u``` to see a list of installed templates and where they were installed from.
 
+### Installing latest templates from Feedz.io
+
+For release versions:
 ```bash
-dotnet new -i Sashimi.Templates
+dotnet new -i Sashimi.Templates --nuget-source https://packages.octopushq.com/dependencies/nuget/index.json
+```
+For pre-release versions (where the version is `8.1.1-branch0001`):
+```bash
+dotnet new -i Sashimi.Templates::8.1.1-branch0001 --nuget-source https://packages.octopushq.com/dependencies/nuget/index.json
 ```
 
-### Installing local templates for testing
+### Installing local templates (without packaging) for testing
 
 From a local folder:
 ```bash
 dotnet new -i <sourcecodelocation>/Sashimi/source/Templates
 ```
-From a prerelease nuget package:
-```bash
-dotnet new -i Sashimi.Templates::version-prerelease
-```
 
+Note that you'll still [see usage information](https://stackoverflow.com/questions/56259025/dotnet-new-install-shows-usage-information) after running this.
 ### Uninstalling local templates for testing
 
+Note the folder path needs to be absolute. Run ```dotnet new -u``` to see the command needed to uninstall.
 ```bash
 dotnet new -u <folderpath|nuget package name>
 ```
