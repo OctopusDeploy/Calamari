@@ -36,6 +36,7 @@ namespace Sashimi.Template.Wrangler
             {
                 var sb = new StringBuilder();
 
+                //Strip out project references that need to be converted to package references
                 foreach (var line in File.ReadLines(projFile))
                 {
                     if (!(line.Contains("<ProjectReference Include=\"..\\..\\") || line.Contains("<ProjectReference Include=\"../../")))
