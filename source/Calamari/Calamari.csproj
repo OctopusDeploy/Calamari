@@ -3,7 +3,6 @@
     <AssemblyName>Calamari.AzureServiceFabric</AssemblyName>
     <RootNamespace>Calamari.AzureServiceFabric</RootNamespace>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
     <TargetFramework>net452</TargetFramework>
