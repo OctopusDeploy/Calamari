@@ -3,7 +3,6 @@
     <AssemblyName>Calamari.AzureWebApp</AssemblyName>
     <RootNamespace>Calamari.AzureWebApp</RootNamespace>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
     <TargetFramework>net452</TargetFramework>
