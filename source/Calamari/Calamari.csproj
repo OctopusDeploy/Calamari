@@ -3,7 +3,6 @@
     <AssemblyName>Calamari.Terraform</AssemblyName>
     <RootNamespace>Calamari.Terraform</RootNamespace>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
