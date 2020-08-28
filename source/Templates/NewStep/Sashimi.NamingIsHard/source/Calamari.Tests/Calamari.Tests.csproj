@@ -4,7 +4,6 @@
         <AssemblyName>Calamari.NamingIsHard.Tests</AssemblyName>
         <RootNamespace>Calamari.NamingIsHard.Tests</RootNamespace>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <IsPackable>false</IsPackable>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <TargetFrameworks>net461;netcoreapp3.1</TargetFrameworks>

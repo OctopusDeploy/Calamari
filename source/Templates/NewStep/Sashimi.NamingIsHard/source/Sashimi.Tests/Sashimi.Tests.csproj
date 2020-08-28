@@ -4,7 +4,6 @@
         <AssemblyName>Sashimi.NamingIsHard.Tests</AssemblyName>
         <RootNamespace>Sashimi.NamingIsHard.Tests</RootNamespace>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <IsPackable>false</IsPackable>
     </PropertyGroup>

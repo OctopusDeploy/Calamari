@@ -3,7 +3,6 @@
     <PropertyGroup>
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
