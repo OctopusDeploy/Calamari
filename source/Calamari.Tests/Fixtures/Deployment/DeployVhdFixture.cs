@@ -2,7 +2,6 @@ using System.IO;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -34,15 +33,13 @@ namespace Calamari.Tests.Fixtures.Deployment
         [RequiresWindowsServer2012OrAbove]
         public void ShouldDeployAVhd()
         {
-            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
-            Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
-            Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
+            Variables[KnownVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
             Variables[DeploymentEnvironment.Name] = Environment;
-            Variables[ActionVariables.StructuredConfigurationVariablesEnabled] = "True";
             Variables[ActionVariables.StructuredConfigurationVariablesTargets] = "appsettings.json";
+            Variables[KnownVariables.Package.EnabledFeatures] = $"{KnownVariables.Features.StructuredConfigurationVariables},{KnownVariables.Features.SubstituteInFiles}, {KnownVariables.Features.ConfigurationTransforms},Octopus.Features.Vhd";
 
             using (var vhd = new TemporaryFile(VhdBuilder.BuildSampleVhd(ServiceName)))
             using (var file = new TemporaryFile(PackageBuilder.BuildSimpleZip(ServiceName, "1.0.0", Path.GetDirectoryName(vhd.FilePath))))
@@ -78,15 +75,13 @@ namespace Calamari.Tests.Fixtures.Deployment
         [RequiresWindowsServer2012OrAbove]
         public void ShouldDeployAVhdWithTwoPartitions()
         {
-            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.Vhd,Octopus.Features.ConfigurationTransforms";
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
-            Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
-            Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
+            Variables[KnownVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
             Variables[DeploymentEnvironment.Name] = Environment;
-            Variables[ActionVariables.StructuredConfigurationVariablesEnabled] = "True";
             Variables[ActionVariables.StructuredConfigurationVariablesTargets] = "appsettings.json";
+            Variables[KnownVariables.Package.EnabledFeatures] = $"{KnownVariables.Features.StructuredConfigurationVariables},{KnownVariables.Features.SubstituteInFiles}, {KnownVariables.Features.ConfigurationTransforms},Octopus.Features.Vhd";
 
             Variables["OctopusVhdPartitions[1].ApplicationPath"] = "PathThatDoesNotExist";
 
@@ -134,11 +129,10 @@ namespace Calamari.Tests.Fixtures.Deployment
             Variables[SpecialVariables.Vhd.ApplicationPath] = "ApplicationPath";
             Variables["foo"] = "bar";
             Variables[PackageVariables.SubstituteInFilesTargets] = "web.config";
-            Variables[PackageVariables.SubstituteInFilesEnabled] = "True";
-            Variables[SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
+            Variables[KnownVariables.Package.AutomaticallyRunConfigurationTransformationFiles] = "True";
             Variables[DeploymentEnvironment.Name] = Environment;
-            Variables[ActionVariables.StructuredConfigurationVariablesEnabled] = "True";
             Variables[ActionVariables.StructuredConfigurationVariablesTargets] = "appsettings.json";
+            Variables[KnownVariables.Package.EnabledFeatures] = $"{KnownVariables.Features.StructuredConfigurationVariables},{KnownVariables.Features.SubstituteInFiles},{KnownVariables.Features.ConfigurationTransforms},Octopus.Features.Vhd";
 
             Variables["OctopusVhdPartitions[0].Mount"] = "false";
             Variables["OctopusVhdPartitions[1].ApplicationPath"] = "AlternateApplicationPath";

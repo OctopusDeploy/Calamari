@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.StructuredVariables;
@@ -18,7 +19,10 @@ namespace Calamari.Common.Features.Behaviours
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return context.Variables.GetFlag(ActionVariables.StructuredConfigurationVariablesEnabled);
+            var features = context.Variables.GetStrings(KnownVariables.Package.EnabledFeatures)
+                                  .Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+
+            return features.Contains(KnownVariables.Features.StructuredConfigurationVariables);
         }
 
         public Task Execute(RunningDeployment context)

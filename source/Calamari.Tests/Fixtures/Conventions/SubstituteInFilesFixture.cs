@@ -31,13 +31,13 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             var variables = new CalamariVariables();
             variables.Set(PackageVariables.SubstituteInFilesTargets, glob);
-            variables.Set(PackageVariables.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
 
             var deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("packages"), variables)
             {
                 StagingDirectory = StagingDirectory
             };
-            
+
             var fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.EnumerateFilesWithGlob(StagingDirectory, glob).Returns(new[] { Path.Combine(StagingDirectory, actualMatch) });
 
@@ -47,7 +47,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             substituter.Received().PerformSubstitution(Path.Combine(StagingDirectory, actualMatch), variables);
         }
-        
+
 
     }
 }

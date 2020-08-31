@@ -11,7 +11,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
 using Calamari.Testing;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
@@ -87,7 +86,7 @@ namespace Calamari.Tests.NewPipeline
                 await CommandTestBuilder.CreateAsync<MyCommand, MyProgram>()
                                         .WithArrange(context =>
                                                      {
-                                                         context.Variables.Add(PackageVariables.SubstituteInFilesEnabled, bool.TrueString);
+                                                         context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
                                                          context.Variables.Add(PackageVariables.SubstituteInFilesTargets, glob);
                                                          context.Variables.Add("Hello", "Hello World");
                                                          context.WithFilesToCopy(tempPath.DirectoryPath);
@@ -124,8 +123,8 @@ namespace Calamari.Tests.NewPipeline
                 await CommandTestBuilder.CreateAsync<MyCommand, MyProgram>()
                                         .WithArrange(context =>
                                                      {
-                                                         context.Variables.Add(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
-                                                         context.Variables.Add(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, bool.TrueString);
+                                                         context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationTransforms);
+                                                         context.Variables.Add(KnownVariables.Package.AutomaticallyRunConfigurationTransformationFiles, bool.TrueString);
                                                          context.WithFilesToCopy(tempPath.DirectoryPath);
                                                      })
                                         .WithAssert(result =>
@@ -156,7 +155,7 @@ namespace Calamari.Tests.NewPipeline
                 await CommandTestBuilder.CreateAsync<MyCommand, MyProgram>()
                                         .WithArrange(context =>
                                                      {
-                                                         context.Variables.Add(SpecialVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings, bool.TrueString);
+                                                         context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationTransforms + "," + KnownVariables.Features.ConfigurationVariables);
                                                          context.Variables.Add("Environment", "Test");
                                                          context.WithFilesToCopy(tempPath.DirectoryPath);
                                                      })
@@ -184,7 +183,7 @@ namespace Calamari.Tests.NewPipeline
                 await CommandTestBuilder.CreateAsync<MyCommand, MyProgram>()
                                         .WithArrange(context =>
                                                      {
-                                                         context.Variables.Add(ActionVariables.StructuredConfigurationVariablesEnabled, bool.TrueString);
+                                                         context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                                                          context.Variables.Add(ActionVariables.StructuredConfigurationVariablesTargets, "*.json");
                                                          context.Variables.Add("Environment", "Test");
                                                          context.WithFilesToCopy(tempPath.DirectoryPath);

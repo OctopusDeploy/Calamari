@@ -127,6 +127,25 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
 
+        [Test(Description = "Test the case where the package ID does not match the directory inside the helm archive.")]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void MismatchPackageIDAndHelmArchivePathWorks()
+        {
+            Variables.Set(PackageVariables.PackageId, "thisisnotamatch");
+            Variables.Set(PackageVariables.PackageVersion, "0.3.7");
+            Variables.Set(PackageVariables.IndexedPackageId(""), $"#{{{PackageVariables.PackageId}}}");
+            Variables.Set(PackageVariables.IndexedPackageVersion(""), $"#{{{PackageVariables.PackageVersion}}}");
+
+            var result = DeployPackage();
+
+            result.AssertSuccess();
+
+            Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
+        }
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -316,7 +335,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
 
             Variables.Set(SpecialVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, syntax), script);
-            Variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+            Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
         }
 
         string DeleteCommand(string @namespace, string releaseName)
