@@ -48,7 +48,7 @@ namespace Calamari.Deployment.Features
              */
             var virtualServerName =
                 string.IsNullOrWhiteSpace(variables.Get(SpecialVariables.Action.Nginx.Server.ConfigName))
-                    ? variables.Get(PackageVariables.PackageId)
+                    ? variables.Get(PackageVariables.IndexedPackageId(string.Empty))
                     : variables.Get(SpecialVariables.Action.Nginx.Server.ConfigName);
 
             nginxServer

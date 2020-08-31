@@ -51,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             const string packageId = "Acme.1.1.1";
             variables.Set(SpecialVariables.Package.UpdateIisWebsite, true.ToString());
-            variables.Set(PackageVariables.PackageId, packageId);
+            variables.Set(PackageVariables.IndexedPackageId(string.Empty), packageId);
             fileSystem.FileExists(Path.Combine(stagingDirectory, "Web.config")).Returns(true);
             iis.OverwriteHomeDirectory(packageId, stagingDirectory, false).Returns(true);
 
