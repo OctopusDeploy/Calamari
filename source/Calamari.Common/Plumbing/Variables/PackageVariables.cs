@@ -4,9 +4,10 @@ namespace Calamari.Common.Plumbing.Variables
 {
     public static class PackageVariables
     {
+        const string PackageIdTemplate = "Octopus.Action.Package[{0}].PackageId";
+        const string PackageVersionTemplate = "Octopus.Action.Package[{0}].PackageVersion";
+
         public static readonly string TransferPath = "Octopus.Action.Package.TransferPath";
-        public static readonly string PackageId = "Octopus.Action.Package.PackageId";
-        public static readonly string PackageVersion = "Octopus.Action.Package.PackageVersion";
         public static readonly string OriginalFileName = "Octopus.Action.Package.OriginalFileName";
         public static readonly string CustomInstallationDirectory = "Octopus.Action.Package.CustomInstallationDirectory";
         public static readonly string CustomPackageFileName = "Octopus.Action.Package.CustomPackageFileName";
@@ -18,15 +19,12 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string SubstituteInFilesTargets = "Octopus.Action.SubstituteInFiles.TargetFiles";
         public static readonly string PackageCollection = "Octopus.Action.Package";
 
-        public static string IndexedPackageId(string packageReferenceName)
-        {
-            return $"Octopus.Action.Package[{packageReferenceName}].PackageId";
-        }
+        public static string PackageId => string.Format(PackageIdTemplate, string.Empty);
+        public static string PackageVersion => string.Format(PackageVersionTemplate, string.Empty);
 
-        public static string IndexedPackageVersion(string packageReferenceName)
-        {
-            return $"Octopus.Action.Package[{packageReferenceName}].PackageVersion";
-        }
+        public static string IndexedPackageId(string packageReferenceName) => string.Format(PackageIdTemplate, packageReferenceName);
+
+        public static string IndexedPackageVersion(string packageReferenceName) => string.Format(PackageVersionTemplate, packageReferenceName);
 
         public static string IndexedOriginalPath(string packageReferenceName)
         {

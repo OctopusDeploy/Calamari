@@ -23,8 +23,8 @@ namespace Calamari.Deployment.Conventions
                 return;
             }
 
-            var id = deployment.Variables.Get(PackageVariables.IndexedPackageId(string.Empty));
-            var version = deployment.Variables.Get(PackageVariables.IndexedPackageVersion(string.Empty));
+            var id = deployment.Variables.Get(PackageVariables.PackageId);
+            var version = deployment.Variables.Get(PackageVariables.PackageVersion);
             var policySet = deployment.Variables.Get(KnownVariables.RetentionPolicySet);
 
             var previous = journal.GetLatestInstallation(policySet, id, version);
