@@ -134,9 +134,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             Variables.Set(PackageVariables.PackageId, "thisisnotamatch");
             Variables.Set(PackageVariables.PackageVersion, "0.3.7");
-            Variables.Set(PackageVariables.IndexedPackageId(""), $"#{{{PackageVariables.PackageId}}}");
-            Variables.Set(PackageVariables.IndexedPackageVersion(""), $"#{{{PackageVariables.PackageVersion}}}");
-            
+
             var result = DeployPackage();
 
             result.AssertSuccess();
