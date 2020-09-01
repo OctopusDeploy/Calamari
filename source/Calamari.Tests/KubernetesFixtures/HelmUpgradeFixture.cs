@@ -93,8 +93,6 @@ namespace Calamari.Tests.KubernetesFixtures
             //Chart Pckage
             Variables.Set(PackageVariables.IndexedPackageId(string.Empty), "mychart");
             Variables.Set(PackageVariables.IndexedPackageVersion(string.Empty), "0.3.7");
-            Variables.Set(PackageVariables.IndexedPackageId(""), $"#{{{PackageVariables.PackageId}}}");
-            Variables.Set(PackageVariables.IndexedPackageVersion(""), $"#{{{PackageVariables.PackageVersion}}}");
 
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
