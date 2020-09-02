@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -30,9 +31,7 @@ namespace Calamari.Common.Features.Behaviours
 
         public bool IsEnabled(RunningDeployment deployment)
         {
-            var features = deployment.Variables.GetStrings(KnownVariables.Package.EnabledFeatures).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-
-            return features.Contains(KnownVariables.Features.ConfigurationTransforms);
+            return deployment.Variables.IsFeatureEnabled(KnownVariables.Features.ConfigurationTransforms);
         }
 
         public Task Execute(RunningDeployment deployment)

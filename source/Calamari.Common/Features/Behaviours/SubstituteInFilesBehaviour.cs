@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 
@@ -19,10 +19,7 @@ namespace Calamari.Common.Features.Behaviours
 
         public bool IsEnabled(RunningDeployment context)
         {
-            var features = context.Variables.GetStrings(KnownVariables.Package.EnabledFeatures)
-                                  .Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-
-            return features.Contains(KnownVariables.Features.SubstituteInFiles);
+            return context.Variables.IsFeatureEnabled(KnownVariables.Features.SubstituteInFiles);
         }
 
         public Task Execute(RunningDeployment context)
