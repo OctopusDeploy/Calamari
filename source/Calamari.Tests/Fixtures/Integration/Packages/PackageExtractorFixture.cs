@@ -1,13 +1,19 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.NuGet;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using SharpCompress.Common;
+using SharpCompress.Readers.Tar;
+using SharpCompress.Writers;
+using SharpCompress.Writers.Tar;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
@@ -117,6 +123,46 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             extractor.Extract(fileName, targetDir);
             var folderName = Path.Combine(targetDir, "EmptyFolder");
             Assert.That(Directory.Exists(folderName), Is.True, $"The empty folder '{Path.GetFileName(folderName)}' should have been extracted.");
+        }
+
+        [Test]
+        [TestCase(typeof(TarGzipPackageExtractor), "tar.gz", ArchiveType.Tar, CompressionType.GZip)]
+        [TestCase(typeof(TarPackageExtractor), "tar", ArchiveType.Tar, CompressionType.None)]
+        [TestCase(typeof(TarBzipPackageExtractor), "tar.bz2", ArchiveType.Tar, CompressionType.BZip2)]
+        [TestCase(typeof(ZipPackageExtractor), "zip", ArchiveType.Zip, CompressionType.Deflate)]
+        public void ExtractTakesIntoAccountEncoding(Type extractorType, string extension, ArchiveType archiveType, CompressionType compressionType)
+        {
+            const string characterSetToTest = "âçÿú¢ŤṵﻝﺕﻻⱩῠᾌ";
+
+            var memoryStream = new MemoryStream();
+            memoryStream.WriteByte(1);
+
+            using (var tempFolder = TemporaryDirectory.Create())
+            {
+                var fileName = Path.Combine(tempFolder.DirectoryPath, $"package.{extension}");
+                using (Stream stream = File.OpenWrite(fileName))
+                using (var writer = WriterFactory.Open(stream, archiveType, new WriterOptions(compressionType)
+                {
+                    ArchiveEncoding = new ArchiveEncoding {Default = Encoding.UTF8}
+                }))
+                {
+                    foreach (var c in characterSetToTest)
+                    {
+                        memoryStream.Position = 0;
+                        writer.Write($"{c}", memoryStream);
+                    }
+                }
+
+                var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType, ConsoleLog.Instance);
+                var targetDir = GetTargetDir(extractorType, fileName);
+
+                extractor.Extract(fileName, targetDir);
+
+                foreach (var c in characterSetToTest)
+                {
+                    File.Exists(Path.Combine(targetDir, c.ToString())).Should().BeTrue();
+                }
+            }
         }
 
         [Test]
