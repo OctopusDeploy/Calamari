@@ -24,39 +24,39 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             base.SetUp();
         }
-        
+
         [Test]
-        public void FailsAndWarnsIfAFileCannotBeParsedWhenFallbackFlagIsSet()	
-        {	
-            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))	
-            {	
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);	
+        public void FailsAndWarnsIfAFileCannotBeParsedWhenFallbackFlagIsSet()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFallbackFlag, true);
-                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, MalformedFileName);	
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, MalformedFileName);
                 Variables.Set("key", "new-value");
 
-                var result = DeployPackage(file.FilePath);	
+                var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
-                result.AssertErrorOutput("The file could not be parsed as Json");	
-            }	
-        }	
+                result.AssertErrorOutput("The file could not be parsed as Json");
+            }
+        }
 
         [Test]
-        public void ShouldNotTreatYamlFileAsYamlWhenFallbackFlagIsSet()	
-        {	
-            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))	
-            {	
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);	
+        public void ShouldNotTreatYamlFileAsYamlWhenFallbackFlagIsSet()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.AddFlag(ActionVariables.StructuredConfigurationFallbackFlag, true);
-                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileName);	
-                Variables.Set("key", "new-value");	
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileName);
+                Variables.Set("key", "new-value");
 
-                var result = DeployPackage(file.FilePath);	
-                result.AssertFailure();	
+                var result = DeployPackage(file.FilePath);
+                result.AssertFailure();
 
                 // Indicates we tried to parse yaml as JSON.
-                result.AssertErrorOutput("The file could not be parsed as Json");	
-            }	
+                result.AssertErrorOutput("The file could not be parsed as Json");
+            }
         }
 
         [Test]
@@ -64,7 +64,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileName);
                 Variables.Set("key", "new-value");
 
@@ -82,7 +82,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, XmlFileName);
                 Variables.Set("/document/key", "new-value");
 
@@ -100,14 +100,14 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "duplicate-prefixes.xml");
                 Variables.Set("//parent/dupe:node", "new-value");
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
                 result.AssertOutputMatches("You can avoid this by ensuring all namespaces in your document have unique prefixes\\.");
-                
+
                 var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, "duplicate-prefixes.xml"));
 
                 this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
@@ -119,14 +119,14 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "values.xml");
                 Variables.Set("/document", "<<<");
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
                 result.AssertOutputContains("Could not set the value of the XML element at XPath '/document' to '<<<'. Expected a valid XML fragment. Skipping replacement of this element.");
-                
+
                 var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, "values.xml"));
 
                 this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
@@ -138,7 +138,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, PropertiesFileName);
                 Variables.Set("debug", "false");
                 Variables.Set("port", "80");
@@ -157,7 +157,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileName);
                 Variables.Set("key", "new-value");
 
@@ -173,13 +173,13 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "doesnt-exist.json");
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
-                
+
                 result.AssertOutputContains("No files were found that match the replacement target pattern 'doesnt-exist.json'");
             }
         }
@@ -189,13 +189,13 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, ConfigFileName);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
-                
+
                 var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, ConfigFileName));
 
                 this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonConfiguration);
@@ -207,13 +207,13 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, $"{JsonFileName}\n{YamlFileName}");
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
-                
+
                 var extractedPackageUpdatedJsonFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileName));
                 var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
 
@@ -227,13 +227,13 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "values.*");
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
-                
+
                 var extractedPackageUpdatedJsonFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileName));
                 var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
                 var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, ConfigFileName));
@@ -249,23 +249,23 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, "*.json");
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
-                
+
                 result.AssertFailure();
                 result.AssertErrorOutput("The file could not be parsed as Json");
             }
         }
-        
+
         [Test]
         public void FailsIfAFileFailsToParseWhenThereAreManyGlobs()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, $"{JsonFileName}\n{MalformedFileName}");
                 Variables.Set("key", "new-value");
 
@@ -280,14 +280,14 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, ".");
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
                 result.AssertOutputContains("Skipping structured variable replacement on '.' because it is a directory.");
-                
+
                 var unchangedJsonFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileName));
                 var unchangedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
 
@@ -295,13 +295,13 @@ namespace Calamari.Tests.Fixtures.Deployment
                 this.Assent(unchangedYamlFile, TestEnvironment.AssentYamlConfiguration);
             }
         }
-        
+
         [Test]
         public void FailsAndWarnsIfAFileCannotBeParsed()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, MalformedFileName);
                 Variables.Set("key", "new-value");
 

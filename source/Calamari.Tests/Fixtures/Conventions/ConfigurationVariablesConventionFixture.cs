@@ -44,7 +44,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldFindAndCallDeployScripts()
         {
-            deployment.Variables.Set(SpecialVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings, "true");
+            deployment.Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationVariables);
             var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, new InMemoryLog()));
             convention.Install(deployment);
             replacer.Received().ModifyConfigurationFile("C:\\App\\MyApp\\Web.config", deployment.Variables);

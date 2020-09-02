@@ -90,7 +90,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         public void CanTransformConfigInJar()
         {
             const string configFile = "config.properties";
-            variables.Set(PackageVariables.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
             variables.Set(PackageVariables.SubstituteInFilesTargets, configFile);
 
             DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
@@ -102,7 +102,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         {
             var command = new DeployJavaArchiveCommand(
                 log,
-                new ScriptEngine(Enumerable.Empty<IScriptWrapper>()), 
+                new ScriptEngine(Enumerable.Empty<IScriptWrapper>()),
                 variables,
                 fileSystem,
                 new CommandLineRunner(log, variables),

@@ -38,16 +38,21 @@ namespace Calamari.Tests.Fixtures.Conventions
             var deployDirectory = BuildConfigPath(null);
 
             variables = new CalamariVariables();
-            variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
+            variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationTransforms);
             variables.Set(KnownVariables.OriginalPackageDirectoryPath, deployDirectory);
 
             deployment = new RunningDeployment(deployDirectory, variables);
         }
 
+        void AddConfigurationVariablesFlag()
+        {
+            variables.Set(KnownVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+        }
+
         [Test]
         public void ShouldApplyReleaseTransformIfAutomaticallyRunConfigurationTransformationFilesFlagIsSet()
         {
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+            AddConfigurationVariablesFlag();
 
             CreateConvention().Install(deployment);
 
@@ -57,8 +62,6 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotApplyReleaseTransformIfAutomaticallyRunConfigurationTransformationFilesFlagNotSet()
         {
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
-
             CreateConvention().Install(deployment);
 
             AssertTransformNotRun("bar.config", "bar.Release.config");
@@ -69,7 +72,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             const string environment = "Production";
 
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+            AddConfigurationVariablesFlag();
             variables.Set(DeploymentEnvironment.Name, environment);
 
             CreateConvention().Install(deployment);
@@ -84,7 +87,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string environment = "Production";
             const string tenant = "Tenant-1";
 
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+            AddConfigurationVariablesFlag();
             variables.Set(DeploymentEnvironment.Name, environment);
             variables.Set(DeploymentVariables.Tenant.Name, tenant);
 
@@ -101,7 +104,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             const string environment = "Production";
             const string tenant = "Tenant-1";
 
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+            AddConfigurationVariablesFlag();
             variables.Set(DeploymentEnvironment.Name, environment);
             variables.Set(DeploymentVariables.Tenant.Name, tenant);
 
@@ -130,8 +133,6 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldApplySpecificCustomTransform()
         {
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "foo.bar.config => foo.config");
-            // This will be applied even if the automatically run flag is set to false
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
             CreateConvention().Install(deployment);
 
@@ -166,7 +167,6 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldApplyAdvancedTransformations(string sourceFile, string transformDefinition, string expectedAppliedTransform)
         {
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, transformDefinition.Replace('\\', Path.DirectorySeparatorChar));
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
             CreateConvention().Install(deployment);
 
@@ -178,7 +178,6 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldApplyMultipleWildcardsToSourceFile()
         {
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "*.bar.blah => bar.blah");
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
             CreateConvention().Install(deployment);
 
@@ -191,7 +190,6 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldApplyTransformToMulipleTargetFiles()
         {
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, "bar.blah => *.bar.blah");
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
             CreateConvention().Install(deployment);
 
@@ -208,7 +206,6 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void CaseInsensitiveOnWindows(string pattern, string from, string to)
         {
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, pattern);
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
             CreateConvention().Install(deployment);
 
@@ -226,7 +223,6 @@ namespace Calamari.Tests.Fixtures.Conventions
                 Assert.Ignore("This test is designed to run on *nix");
 
             variables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, pattern);
-            variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, false.ToString());
 
             CreateConvention().Install(deployment);
 
@@ -239,12 +235,12 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             var calamariFileSystem = Substitute.For<ICalamariFileSystem>();
             var deploymentVariables = new CalamariVariables();
+            deploymentVariables.Set(KnownVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
             deploymentVariables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, @"MyPackage.1.0.0.nupkg");
             deploymentVariables.Set(SpecialVariables.Package.AdditionalXmlConfigurationTransforms, @"MyApplication.ProcessingServer.WorkerRole.dll.my-test-env.config => MyApplication.ProcessingServer.WorkerRole.dll.config");
-            deploymentVariables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, "True");
             deploymentVariables.Set(DeploymentEnvironment.Name, "my-test-env");
             deploymentVariables.Set(SpecialVariables.Package.EnableDiagnosticsConfigTransformationLogging, "True");
-            deploymentVariables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
+            deploymentVariables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationTransforms);
             var runningDeployment = new RunningDeployment(@"c:\temp\MyPackage.1.0.0.nupkg", deploymentVariables);
 
             //mock the world
