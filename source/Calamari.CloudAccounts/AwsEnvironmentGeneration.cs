@@ -104,16 +104,23 @@ namespace Calamari.CloudAccounts
             {
                 var proxySettingsFromEnvironment = ProxySettingsInitializer.GetProxySettingsFromEnvironment();
                 Maybe<IWebProxy> proxy = proxySettingsFromEnvironment.CreateProxy();
+                log.Info($"Proxy type: {proxySettingsFromEnvironment.GetType()}");
+                log.Info($"Using proxy: {proxy.Value.GetProxy(new Uri(@"http://asdfasdf.com")).Host}:{proxy.Value.GetProxy(new Uri(@"http://asdfasdf.com")).Port}");
+
                 AmazonSecurityTokenServiceConfig tokenServiceConfig = null;
                 if (proxy.Some())
                 {
                     log.Info($"Proxy type: {proxySettingsFromEnvironment.GetType()}");
+                    var proxyValue = proxy.Value.GetProxy(new Uri("https://blah.com"));
                     log.Info($"Using proxy: {proxy.Value.GetProxy(new Uri(@"http://asdfasdf.com")).Host}:{proxy.Value.GetProxy(new Uri(@"http://asdfasdf.com")).Port}");
-                    HttpClientHandler handler = new HttpClientHandler { Proxy = proxy.Value };
-                    tokenServiceConfig = new AmazonSecurityTokenServiceConfig { HttpClientFactory = new AwsHttpClientFactory(handler) };
+                    tokenServiceConfig = new AmazonSecurityTokenServiceConfig { ProxyHost = proxyValue.Host, ProxyPort = proxyValue.Port };
+                    if (proxy.Value.Credentials != null)
+                    {
+                        tokenServiceConfig.ProxyCredentials = proxy.Value.Credentials;
+                    }
                 }
 
-                await new AmazonSecurityTokenServiceClient(AwsCredentials, clientConfig: tokenServiceConfig).GetCallerIdentityAsync(new GetCallerIdentityRequest());
+                await new AmazonSecurityTokenServiceClient(AwsCredentials, tokenServiceConfig).GetCallerIdentityAsync(new GetCallerIdentityRequest());
                 return true;
 
             }
@@ -221,21 +228,6 @@ namespace Calamari.CloudAccounts
                 request.DurationSeconds = durationSeconds;
 
             return request;
-        }
-
-        public class AwsHttpClientFactory : HttpClientFactory
-        {
-            readonly HttpClientHandler handler;
-
-            public AwsHttpClientFactory(HttpClientHandler handler)
-            {
-                this.handler = handler;
-            }
-
-            public override HttpClient CreateHttpClient(IClientConfig clientConfig)
-            {
-                return new HttpClient(handler);
-            }
         }
     }
 }
