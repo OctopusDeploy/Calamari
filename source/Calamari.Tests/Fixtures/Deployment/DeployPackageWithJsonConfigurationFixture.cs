@@ -19,13 +19,13 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             base.SetUp();
         }
-        
+
         [Test]
         public void ShouldReplaceJsonPropertiesFromVariables()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
-                Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
                 Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, JsonFileName);
                 Variables.Set("departments:0:employees:0:name", "Jane");
                 Variables.Set("departments:0:employees:1:age", "40");
@@ -41,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 this.Assent(extractedPackageUpdatedJsonFile, TestEnvironment.AssentJsonConfiguration);
             }
         }
-        
+
         [TearDown]
         public override void CleanUp()
         {
