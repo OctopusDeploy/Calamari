@@ -96,7 +96,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             Variables.Set("foo", "bar");
             // Enable file substitution and configure the target
-            Variables.Set(PackageVariables.SubstituteInFilesEnabled, true.ToString());
+            Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
             Variables.Set(PackageVariables.SubstituteInFilesTargets, "web.config");
 
             DeployPackage();
@@ -113,7 +113,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             var path = Path.Combine("assets", "README.txt");
 
             // Enable file substitution and configure the target
-            Variables.Set(PackageVariables.SubstituteInFilesEnabled, true.ToString());
+            Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
             Variables.Set(PackageVariables.SubstituteInFilesTargets, path);
 
             DeployPackage();
@@ -129,8 +129,8 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             // Set the environment, and the flag to automatically run config transforms
             Variables.Set(DeploymentEnvironment.Name, "Production");
-            Variables.Set(SpecialVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
-            Variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.ConfigurationTransforms);
+            Variables.Set(KnownVariables.Package.AutomaticallyRunConfigurationTransformationFiles, true.ToString());
+            Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationTransforms);
 
             var result = DeployPackage();
 
@@ -224,7 +224,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldRunConfiguredScripts()
         {
-            Variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+            Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
 
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
             {
