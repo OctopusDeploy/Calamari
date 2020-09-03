@@ -103,16 +103,18 @@ namespace Calamari.CloudAccounts
             try
             {
                 var proxySettingsFromEnvironment = ProxySettingsInitializer.GetProxySettingsFromEnvironment();
-                Maybe<IWebProxy> proxy = proxySettingsFromEnvironment.CreateProxy();
+                var proxy = proxySettingsFromEnvironment.CreateProxy();
                 log.Info($"Proxy type: {proxySettingsFromEnvironment.GetType()}");
 
-                AmazonSecurityTokenServiceConfig tokenServiceConfig = null;
+                 var tokenServiceConfig = new AmazonSecurityTokenServiceConfig();
                 if (proxy.Some())
                 {
-                    log.Info($"Proxy type: {proxySettingsFromEnvironment.GetType()}");
-                    var proxyValue = proxy.Value.GetProxy(new Uri("https://blah.com"));
-                    log.Info($"Using proxy: {proxy.Value.GetProxy(new Uri(@"http://asdfasdf.com")).Host}:{proxy.Value.GetProxy(new Uri(@"http://asdfasdf.com")).Port}");
-                    tokenServiceConfig = new AmazonSecurityTokenServiceConfig { ProxyHost = proxyValue.Host, ProxyPort = proxyValue.Port };
+                    var proxyUri = proxy.Value.GetProxy(new Uri("https://blah.com"));
+                    
+                    log.Info($"Using proxy: {proxyUri.Host}:{proxyUri.Port}");
+                    
+                    tokenServiceConfig.ProxyHost = proxyUri.Host;
+                    tokenServiceConfig.ProxyPort = proxyUri.Port;
                     if (proxy.Value.Credentials != null)
                     {
                         tokenServiceConfig.ProxyCredentials = proxy.Value.Credentials;
@@ -124,8 +126,8 @@ namespace Calamari.CloudAccounts
                 }
 
                 await new AmazonSecurityTokenServiceClient(AwsCredentials, tokenServiceConfig).GetCallerIdentityAsync(new GetCallerIdentityRequest());
+             
                 return true;
-
             }
             catch (AmazonServiceException ex)
             {

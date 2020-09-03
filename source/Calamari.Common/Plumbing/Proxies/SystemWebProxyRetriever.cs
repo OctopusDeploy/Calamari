@@ -14,12 +14,14 @@ namespace Calamari.Common.Plumbing.Proxies
 #if NETFRAMEWORK
             try
             {
-                var TestUri = new Uri("http://test9c7b575efb72442c85f706ef1d64afa6.com");
+                var testUri = new Uri("http://test9c7b575efb72442c85f706ef1d64afa6.com");
 
-                var systemWebProxy = WebRequest.GetSystemWebProxy();
+                var request = (HttpWebRequest)WebRequest.Create(testUri);
 
-                return systemWebProxy.GetProxy(TestUri).Host != TestUri.Host
-                    ? systemWebProxy.AsSome()
+                var proxyUri = request.Proxy.GetProxy(testUri);
+
+                return proxyUri.Host != testUri.Host
+                    ? request.Proxy.AsSome()
                     : Maybe<IWebProxy>.None;
             }
             catch (SocketException)
