@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Amazon;
@@ -7,8 +8,10 @@ using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
+using Octopus.CoreUtilities;
 
 namespace Calamari.CloudAccounts
 {
@@ -99,7 +102,18 @@ namespace Calamari.CloudAccounts
         {
             try
             {
-                await new AmazonSecurityTokenServiceClient(AwsCredentials).GetCallerIdentityAsync(new GetCallerIdentityRequest());
+                var proxySettingsFromEnvironment = ProxySettingsInitializer.GetProxySettingsFromEnvironment();
+                Maybe<IWebProxy> proxy = proxySettingsFromEnvironment.CreateProxy();
+                AmazonSecurityTokenServiceConfig tokenServiceConfig = null;
+                if (proxy.Some())
+                {
+                    log.Info($"Proxy type: {proxySettingsFromEnvironment.GetType()}");
+                    log.Info($"Using proxy: {proxy.Value.GetProxy(new Uri(@"http://asdfasdf.com")).Host}:{proxy.Value.GetProxy(new Uri(@"http://asdfasdf.com")).Port}");
+                    HttpClientHandler handler = new HttpClientHandler { Proxy = proxy.Value };
+                    tokenServiceConfig = new AmazonSecurityTokenServiceConfig { HttpClientFactory = new AwsHttpClientFactory(handler) };
+                }
+
+                await new AmazonSecurityTokenServiceClient(AwsCredentials, clientConfig: tokenServiceConfig).GetCallerIdentityAsync(new GetCallerIdentityRequest());
                 return true;
 
             }
@@ -207,6 +221,21 @@ namespace Calamari.CloudAccounts
                 request.DurationSeconds = durationSeconds;
 
             return request;
+        }
+
+        public class AwsHttpClientFactory : HttpClientFactory
+        {
+            readonly HttpClientHandler handler;
+
+            public AwsHttpClientFactory(HttpClientHandler handler)
+            {
+                this.handler = handler;
+            }
+
+            public override HttpClient CreateHttpClient(IClientConfig clientConfig)
+            {
+                return new HttpClient(handler);
+            }
         }
     }
 }
