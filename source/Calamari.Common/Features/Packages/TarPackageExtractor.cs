@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Common;
 using SharpCompress.Readers;
@@ -30,7 +31,7 @@ namespace Calamari.Common.Features.Packages
                 var compressionStream = GetCompressionStream(inStream);
                 try
                 {
-                    using (var reader = TarReader.Open(compressionStream))
+                    using (var reader = TarReader.Open(compressionStream, new ReaderOptions { ArchiveEncoding = new ArchiveEncoding { Default = Encoding.UTF8 } }))
                     {
                         while (reader.MoveToNextEntry())
                         {
