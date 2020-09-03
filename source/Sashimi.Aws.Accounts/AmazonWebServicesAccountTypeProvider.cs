@@ -10,11 +10,16 @@ namespace Sashimi.Aws.Accounts
 {
     class AmazonWebServicesAccountTypeProvider : IAccountTypeProvider
     {
+        public AmazonWebServicesAccountTypeProvider(AmazonWebServicesAccountVerifier amazonWebServicesAccountVerifier)
+        {
+            Verifier = amazonWebServicesAccountVerifier;
+        }
+
         public AccountType AccountType { get; } = AccountTypes.AmazonWebServicesAccountType;
         public Type ModelType { get; } = typeof(AmazonWebServicesAccountDetails);
         public Type ApiType { get; } = typeof(AmazonWebServicesAccountResource);
         public IValidator Validator { get; } = new AmazonWebServicesAccountValidator();
-        public IVerifyAccount Verifier { get; } = new AmazonWebServicesAccountVerifier();
+        public IVerifyAccount Verifier { get; }
         public ICreateAccountDetailsServiceMessageHandler? CreateAccountDetailsServiceMessageHandler { get; } = new AmazonWebServicesAccountServiceMessageHandler();
 
         public IEnumerable<(string key, object value)> GetFeatureUsage(IAccountMetricContext context)
