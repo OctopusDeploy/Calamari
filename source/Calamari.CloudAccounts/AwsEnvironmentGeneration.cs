@@ -105,7 +105,6 @@ namespace Calamari.CloudAccounts
                 var proxySettingsFromEnvironment = ProxySettingsInitializer.GetProxySettingsFromEnvironment();
                 Maybe<IWebProxy> proxy = proxySettingsFromEnvironment.CreateProxy();
                 log.Info($"Proxy type: {proxySettingsFromEnvironment.GetType()}");
-                log.Info($"Using proxy: {proxy.Value.GetProxy(new Uri(@"http://asdfasdf.com")).Host}:{proxy.Value.GetProxy(new Uri(@"http://asdfasdf.com")).Port}");
 
                 AmazonSecurityTokenServiceConfig tokenServiceConfig = null;
                 if (proxy.Some())
@@ -118,6 +117,10 @@ namespace Calamari.CloudAccounts
                     {
                         tokenServiceConfig.ProxyCredentials = proxy.Value.Credentials;
                     }
+                }
+                else
+                {
+                    log.Info("Unable to load proxy settings.");
                 }
 
                 await new AmazonSecurityTokenServiceClient(AwsCredentials, tokenServiceConfig).GetCallerIdentityAsync(new GetCallerIdentityRequest());
