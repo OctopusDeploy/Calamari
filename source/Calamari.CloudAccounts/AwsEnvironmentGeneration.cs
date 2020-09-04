@@ -102,30 +102,30 @@ namespace Calamari.CloudAccounts
         {
             try
             {
-                var proxySettingsFromEnvironment = ProxySettingsInitializer.GetProxySettingsFromEnvironment();
-                var proxy = proxySettingsFromEnvironment.CreateProxy();
-                log.Info($"Proxy type: {proxySettingsFromEnvironment.GetType()}");
+                //var proxySettingsFromEnvironment = ProxySettingsInitializer.GetProxySettingsFromEnvironment();
+                //var proxy = proxySettingsFromEnvironment.CreateProxy();
+                //log.Info($"Proxy type: {proxySettingsFromEnvironment.GetType()}");
 
-                 var tokenServiceConfig = new AmazonSecurityTokenServiceConfig();
-                if (proxy.Some())
-                {
-                    var proxyUri = proxy.Value.GetProxy(new Uri("https://blah.com"));
+                // var tokenServiceConfig = new AmazonSecurityTokenServiceConfig();
+                //if (proxy.Some())
+                //{
+                //    var proxyUri = proxy.Value.GetProxy(new Uri("https://blah.com"));
                     
-                    log.Info($"Using proxy: {proxyUri.Host}:{proxyUri.Port}");
+                //    log.Info($"Using proxy: {proxyUri.Host}:{proxyUri.Port}");
                     
-                    tokenServiceConfig.ProxyHost = proxyUri.Host;
-                    tokenServiceConfig.ProxyPort = proxyUri.Port;
-                    if (proxy.Value.Credentials != null)
-                    {
-                        tokenServiceConfig.ProxyCredentials = proxy.Value.Credentials;
-                    }
-                }
-                else
-                {
-                    log.Info("Unable to load proxy settings.");
-                }
+                //    tokenServiceConfig.ProxyHost = proxyUri.Host;
+                //    tokenServiceConfig.ProxyPort = proxyUri.Port;
+                //    if (proxy.Value.Credentials != null)
+                //    {
+                //        tokenServiceConfig.ProxyCredentials = proxy.Value.Credentials;
+                //    }
+                //}
+                //else
+                //{
+                //    log.Info("Unable to load proxy settings.");
+                //}
 
-                await new AmazonSecurityTokenServiceClient(AwsCredentials, tokenServiceConfig).GetCallerIdentityAsync(new GetCallerIdentityRequest());
+                await new AmazonSecurityTokenServiceClient(AwsCredentials).GetCallerIdentityAsync(new GetCallerIdentityRequest());
              
                 return true;
             }
