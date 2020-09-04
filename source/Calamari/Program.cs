@@ -10,6 +10,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Proxies;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using NuGet;
@@ -26,6 +27,7 @@ namespace Calamari
 
         public static int Main(string[] args)
         {
+            ProxyInitializer.InitializeDefaultProxy();
             return new Program(ConsoleLog.Instance).Run(args);
         }
 
