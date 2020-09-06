@@ -10,6 +10,7 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string OriginalFileName = "Octopus.Action.Package.OriginalFileName";
         public static readonly string CustomInstallationDirectory = "Octopus.Action.Package.CustomInstallationDirectory";
         public static readonly string CustomPackageFileName = "Octopus.Action.Package.CustomPackageFileName";
+        public static readonly string JavaArchiveCompression = "Octopus.Action.Package.JavaArchiveCompression";
         public static readonly string CustomInstallationDirectoryShouldBePurgedBeforeDeployment = "Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment";
         public static readonly string CustomInstallationDirectoryPurgeExclusions = "Octopus.Action.Package.CustomInstallationDirectoryPurgeExclusions";
         public static readonly string EnableNoMatchWarning = "Octopus.Action.SubstituteInFiles.EnableNoMatchWarning";
