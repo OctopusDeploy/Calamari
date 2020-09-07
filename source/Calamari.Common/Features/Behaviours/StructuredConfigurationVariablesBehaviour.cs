@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.StructuredVariables;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 
@@ -18,7 +19,7 @@ namespace Calamari.Common.Features.Behaviours
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return context.Variables.GetFlag(ActionVariables.StructuredConfigurationVariablesEnabled);
+            return context.Variables.IsFeatureEnabled(KnownVariables.Features.StructuredConfigurationVariables);
         }
 
         public Task Execute(RunningDeployment context)

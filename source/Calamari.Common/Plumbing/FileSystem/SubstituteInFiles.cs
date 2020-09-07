@@ -26,10 +26,6 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public void SubstituteBasedSettingsInSuppliedVariables(RunningDeployment deployment)
         {
-            var substituteInFilesEnabled = variables.GetFlag(PackageVariables.SubstituteInFilesEnabled);
-            if (!substituteInFilesEnabled)
-                return;
-
             var filesToTarget = variables.GetPaths(PackageVariables.SubstituteInFilesTargets);
             Substitute(deployment, filesToTarget);
         }

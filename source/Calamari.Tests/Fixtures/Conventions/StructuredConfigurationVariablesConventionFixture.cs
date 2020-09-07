@@ -36,7 +36,6 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldNotRunIfVariableIsFalse()
         {
             var convention = new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(service));
-            deployment.Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, false);
             convention.Install(deployment);
             service.DidNotReceiveWithAnyArgs().ReplaceVariables(deployment);
         }
@@ -45,7 +44,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldRunIfVariableIsTrue()
         {
             var convention = new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(service));
-            deployment.Variables.AddFlag(ActionVariables.StructuredConfigurationVariablesEnabled, true);
+            deployment.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
             convention.Install(deployment);
             service.Received().ReplaceVariables(deployment);
         }

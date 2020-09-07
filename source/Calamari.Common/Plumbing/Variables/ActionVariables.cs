@@ -6,18 +6,12 @@ namespace Calamari.Common.Plumbing.Variables
     {
         public const string Name = "Octopus.Action.Name";
         public const string AdditionalPaths = "Octopus.Action.AdditionalPaths";
-        
-        /* We've renamed these two variables from "Json*" to "Structured*" as they're being used with the renamed config feature
-         Structured Configuration Variables. TThese values appear in deployment process resources sent between clients and the API, 
-         so until we have support for API versioning (https://github.com/OctopusDeploy/Architecture/pull/11), it is not feasible to 
-         change their values without causing a breaking change. For this reason, for the time being we're going to continue using 
-         the old Octopus Variable names. */
-        public static readonly string StructuredConfigurationVariablesEnabled = "Octopus.Action.Package.JsonConfigurationVariablesEnabled";
+
         public static readonly string StructuredConfigurationVariablesTargets = "Octopus.Action.Package.JsonConfigurationVariablesTargets";
         /* If this flag still exists after 2020.5.0 releases, please reach out to those involved with adding the fallback flag for
-         Structured Configuration in this PR (https://github.com/OctopusDeploy/Calamari/pull/629) so we can assess if the feature 
+         Structured Configuration in this PR (https://github.com/OctopusDeploy/Calamari/pull/629) so we can assess if the feature
          has been stable for long enough to tidy up the fallback flag. */
-        public static readonly string StructuredConfigurationFallbackFlag = "Octopus.Action.StructuredConfigurationFallbackFlag";	
+        public static readonly string StructuredConfigurationFallbackFlag = "Octopus.Action.StructuredConfigurationFallbackFlag";
 
         public static string GetOutputVariableName(string actionName, string variableName)
         {

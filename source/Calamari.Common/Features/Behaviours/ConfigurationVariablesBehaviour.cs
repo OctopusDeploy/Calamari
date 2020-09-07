@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.ConfigurationVariables;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -25,7 +26,7 @@ namespace Calamari.Common.Features.Behaviours
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return context.Variables.GetFlag(KnownVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings);
+            return context.Variables.IsFeatureEnabled(KnownVariables.Features.ConfigurationVariables);
         }
 
         public Task Execute(RunningDeployment context)

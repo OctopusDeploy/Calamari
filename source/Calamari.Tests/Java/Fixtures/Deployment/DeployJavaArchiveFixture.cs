@@ -94,7 +94,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         {
             const string configFile = "config.properties";
             var variables = GenerateVariables();
-            variables.Set(PackageVariables.SubstituteInFilesEnabled, true.ToString());
+            variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
             variables.Set(PackageVariables.SubstituteInFilesTargets, configFile);
 
             DeployPackage(sourcePackage, variables);
@@ -126,7 +126,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         {
             var command = new DeployJavaArchiveCommand(
                 log,
-                new ScriptEngine(Enumerable.Empty<IScriptWrapper>()), 
+                new ScriptEngine(Enumerable.Empty<IScriptWrapper>()),
                 variables,
                 fileSystem,
                 new CommandLineRunner(log, variables),

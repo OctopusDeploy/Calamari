@@ -93,8 +93,6 @@ namespace Calamari.Tests.KubernetesFixtures
             //Chart Pckage
             Variables.Set(PackageVariables.PackageId, "mychart");
             Variables.Set(PackageVariables.PackageVersion, "0.3.7");
-            Variables.Set(PackageVariables.IndexedPackageId(""), $"#{{{PackageVariables.PackageId}}}");
-            Variables.Set(PackageVariables.IndexedPackageVersion(""), $"#{{{PackageVariables.PackageVersion}}}");
 
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
@@ -136,9 +134,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             Variables.Set(PackageVariables.PackageId, "thisisnotamatch");
             Variables.Set(PackageVariables.PackageVersion, "0.3.7");
-            Variables.Set(PackageVariables.IndexedPackageId(""), $"#{{{PackageVariables.PackageId}}}");
-            Variables.Set(PackageVariables.IndexedPackageVersion(""), $"#{{{PackageVariables.PackageVersion}}}");
-            
+
             var result = DeployPackage();
 
             result.AssertSuccess();
@@ -335,7 +331,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
 
             Variables.Set(SpecialVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, syntax), script);
-            Variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+            Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
         }
 
         string DeleteCommand(string @namespace, string releaseName)

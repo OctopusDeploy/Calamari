@@ -49,18 +49,8 @@ namespace Calamari.Common.Features.Deployment.Journal
         {
             var variables = deployment.Variables;
 
-            if (!string.IsNullOrWhiteSpace(variables.Get(PackageVariables.PackageId)))
-                yield return new DeployedPackage(
-                    variables.Get(PackageVariables.PackageId),
-                    variables.Get(PackageVariables.PackageVersion),
-                    deployment.PackageFilePath
-                );
-
             foreach (var packageReferenceName in variables.GetIndexes(PackageVariables.PackageCollection))
             {
-                if (string.IsNullOrEmpty(packageReferenceName) && variables.IsSet(PackageVariables.PackageId))
-                    continue;
-
                 yield return new DeployedPackage(
                     variables.Get(PackageVariables.IndexedPackageId(packageReferenceName)),
                     variables.Get(PackageVariables.IndexedPackageVersion(packageReferenceName)),

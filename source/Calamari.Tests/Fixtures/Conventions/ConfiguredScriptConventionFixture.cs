@@ -37,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             scriptEngine.GetSupportedTypes().Returns(new[] { ScriptSyntax.PowerShell });
 
             variables = new CalamariVariables();
-            variables.Set(KnownVariables.Package.EnabledFeatures, SpecialVariables.Features.CustomScripts);
+            variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
 
             deployment = new RunningDeployment("C:\\packages", variables) { StagingDirectory = stagingDirectory };
         }
