@@ -124,7 +124,7 @@ namespace Calamari.AzureCloudService
                                                                  new DeploymentUpgradeParameters
                                                                  {
                                                                      Label = deploymentLabel,
-                                                                     Configuration = configurationFile,
+                                                                     Configuration = File.ReadAllText(configurationFile),
                                                                      PackageUri = new Uri(packageUri),
                                                                      Mode = DeploymentUpgradeMode.Auto,
                                                                      Force = true

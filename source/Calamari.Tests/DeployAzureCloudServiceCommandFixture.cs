@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Deployment;
@@ -66,6 +67,9 @@ namespace Calamari.AzureCloudService.Tests
                 await client.HostedServices.CreateAsync(new HostedServiceCreateParameters(serviceName, "test") { Location = "West US" });
 
                 await Deploy();
+
+                //Run again to test upgrading an existing slot
+                await Deploy();
             }
             finally
             {
@@ -96,16 +100,7 @@ namespace Calamari.AzureCloudService.Tests
                                                          context.Variables.Add(SpecialVariables.Action.Azure.DeploymentLabel, "v1.0.0");
 
                                                          context.WithPackage(pathToPackage, "Octopus.Sample.AzureCloudService", "5.8.2");
-
-                                                         context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
-                                                         context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PreDeploy, ScriptSyntax.CSharp), "Console.WriteLine(\"Hello from C#\");");
-                                                         context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, ScriptSyntax.FSharp), "printfn \"Hello from F#\"");
                                                      })
-                                        .WithAssert(result =>
-                                                    {
-                                                        result.FullLog.Should().Contain("Hello from C#");
-                                                        result.FullLog.Should().Contain("Hello from F#");
-                                                    })
                                         .Execute();
             }
         }
@@ -170,6 +165,62 @@ namespace Calamari.AzureCloudService.Tests
                     // Ignore
                 }
                 await client.HostedServices.DeleteAsync(serviceName);
+            }
+        }
+
+         [Test]
+        public async Task Deploy_Ensure_Tools_Are_Configured()
+        {
+            var serviceName = $"{nameof(DeployAzureCloudServiceCommandFixture)}-{Guid.NewGuid().ToString("N").Substring(0, 12)}";
+            var deploymentSlot = DeploymentSlot.Staging;
+
+            using var client = new ComputeManagementClient(subscriptionCloudCredentials);
+            try
+            {
+                await client.HostedServices.CreateAsync(new HostedServiceCreateParameters(serviceName, "test") { Location = "West US" });
+
+                await Deploy();
+            }
+            finally
+            {
+                try
+                {
+                    await client.Deployments.DeleteBySlotAsync(serviceName, deploymentSlot);
+                }
+                catch
+                {
+                   // Ignore
+                }
+                await client.HostedServices.DeleteAsync(serviceName);
+            }
+
+            async Task Deploy()
+            {
+                await CommandTestBuilder.CreateAsync<DeployAzureCloudServiceCommand, Program>()
+                                        .WithArrange(context =>
+                                                     {
+                                                         context.Variables.Add(SpecialVariables.Action.Azure.SubscriptionId, subscriptionId);
+                                                         context.Variables.Add(SpecialVariables.Action.Azure.CertificateThumbprint, managementCertificate.Thumbprint);
+                                                         context.Variables.Add(SpecialVariables.Action.Azure.CertificateBytes, certificate);
+                                                         context.Variables.Add(SpecialVariables.Action.Azure.CloudServiceName, serviceName);
+                                                         context.Variables.Add(SpecialVariables.Action.Azure.StorageAccountName, storageName);
+                                                         context.Variables.Add(SpecialVariables.Action.Azure.Slot, deploymentSlot.ToString());
+                                                         context.Variables.Add(SpecialVariables.Action.Azure.SwapIfPossible, bool.FalseString);
+                                                         context.Variables.Add(SpecialVariables.Action.Azure.UseCurrentInstanceCount, bool.FalseString);
+                                                         context.Variables.Add(SpecialVariables.Action.Azure.DeploymentLabel, "v1.0.0");
+
+                                                         context.WithPackage(pathToPackage, "Octopus.Sample.AzureCloudService", "5.8.2");
+
+                                                         context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
+                                                         context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PreDeploy, ScriptSyntax.CSharp), "Console.WriteLine(\"Hello from C#\");");
+                                                         context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, ScriptSyntax.FSharp), "printfn \"Hello from F#\"");
+                                                     })
+                                        .WithAssert(result =>
+                                                    {
+                                                        result.FullLog.Should().Contain("Hello from C#");
+                                                        result.FullLog.Should().Contain("Hello from F#");
+                                                    })
+                                        .Execute();
             }
         }
 
