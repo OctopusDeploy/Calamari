@@ -44,7 +44,7 @@ namespace Sashimi.Azure.Accounts
             {
                 SubscriptionNumber = subscriptionNumber,
                 ClientId = clientId,
-                Password = password?.ToSensitiveString(),
+                Password = password.ToSensitiveString(),
                 TenantId = tenantId
             };
 

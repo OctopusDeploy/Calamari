@@ -32,7 +32,7 @@ namespace Sashimi.Aws.Accounts
             return new AmazonWebServicesAccountDetails
             {
                 AccessKey = accessKey,
-                SecretKey = secretKey?.ToSensitiveString()
+                SecretKey = secretKey.ToSensitiveString()
             };
         }
 
