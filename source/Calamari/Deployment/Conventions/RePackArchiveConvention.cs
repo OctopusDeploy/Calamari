@@ -68,7 +68,9 @@ namespace Calamari.Deployment.Conventions
 
             var stagingDirectory = deployment.CurrentDirectory;
 
-            jarTool.CreateJar(stagingDirectory, targetFilePath);
+            var enableCompression = deployment.Variables.GetFlag(PackageVariables.JavaArchiveCompression, true);
+
+            jarTool.CreateJar(stagingDirectory, targetFilePath, enableCompression);
             log.Info($"Re-packaging archive: '{targetFilePath}'");
 
             return targetFilePath;
