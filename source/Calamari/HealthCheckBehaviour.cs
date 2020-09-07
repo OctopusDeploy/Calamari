@@ -142,7 +142,7 @@ namespace Calamari.AzureServiceFabric
             var authResult = authContext.AcquireTokenAsync(
                                                            aad.ClusterApplication,
                                                            aad.ClientApplication,
-                                                           new UserPasswordCredential(aadUsername, aadPassword)).GetAwaiter().GetResult();
+                                                           new UserCredential(aadUsername, aadPassword)).GetAwaiter().GetResult();
             return authResult.AccessToken;
         }
 
