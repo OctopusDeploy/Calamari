@@ -35,11 +35,11 @@ namespace Calamari.Common.Features.Packages.Java
 
         public void CreateJar(string contentsDirectory, string targetJarPath, bool enableCompression)
         {
-            var compressionFlag = enableCompression ? "" : "-0 ";
+            var compressionFlag = enableCompression ? "" : "0";
             var manifestPath = Path.Combine(contentsDirectory, "META-INF", "MANIFEST.MF");
             var args = File.Exists(manifestPath)
-                ? $"-cp \"{toolsPath}\" sun.tools.jar.Main cvmf {compressionFlag}\"{manifestPath}\" \"{targetJarPath}\" -C \"{contentsDirectory}\" ."
-                : $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf {compressionFlag}\"{targetJarPath}\" -C \"{contentsDirectory}\" .";
+                ? $"-cp \"{toolsPath}\" sun.tools.jar.Main cvmf{compressionFlag} \"{manifestPath}\" \"{targetJarPath}\" -C \"{contentsDirectory}\" ."
+                : $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf{compressionFlag} \"{targetJarPath}\" -C \"{contentsDirectory}\" .";
 
             var createJarCommand = new CommandLineInvocation(JavaRuntime.CmdPath, args)
             {

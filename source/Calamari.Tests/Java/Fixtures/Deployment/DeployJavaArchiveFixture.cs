@@ -20,11 +20,11 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
     [TestFixture]
     public class DeployJavaArchiveFixture : CalamariFixture
     {
-        IVariables variables;
         ICalamariFileSystem fileSystem;
         string applicationDirectory;
         int returnCode;
         InMemoryLog log;
+        string sourcePackage;
 
 
         [SetUp]
@@ -39,9 +39,12 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             fileSystem.PurgeDirectory(applicationDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(applicationDirectory, "DeploymentJournal.xml"));
-
-            variables = new VariablesFactory(fileSystem).Create(new CommonOptions("test"));
-            variables.Set(TentacleVariables.Agent.ApplicationDirectoryPath, applicationDirectory);
+            
+            sourcePackage = TestEnvironment.GetTestPath("Java",
+                                                            "Fixtures",
+                                                            "Deployment",
+                                                            "Packages",
+                                                            "HelloWorld.0.0.1.jar");
         }
 
         [TearDown]
@@ -53,7 +56,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         [Test]
         public void CanDeployJavaArchive()
         {
-            DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
+            DeployPackage(sourcePackage, GenerateVariables());
             Assert.AreEqual(0, returnCode);
 
             //Archive is re-packed
@@ -64,7 +67,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         [Test]
         public void EnsureMetafileDataRepacked()
         {
-            DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
+            DeployPackage(sourcePackage, GenerateVariables());
             Assert.AreEqual(0, returnCode);
 
             var targetFile = Path.Combine(applicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar");
@@ -90,15 +93,36 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         public void CanTransformConfigInJar()
         {
             const string configFile = "config.properties";
+            var variables = GenerateVariables();
             variables.Set(PackageVariables.SubstituteInFilesEnabled, true.ToString());
             variables.Set(PackageVariables.SubstituteInFilesTargets, configFile);
 
-            DeployPackage(TestEnvironment.GetTestPath("Java", "Fixtures", "Deployment", "Packages", "HelloWorld.0.0.1.jar"));
+            DeployPackage(sourcePackage, variables);
             Assert.AreEqual(0, returnCode);
             log.StandardOut.Should().Contain($"Performing variable substitution on '{Path.Combine(Environment.CurrentDirectory, "staging", configFile)}'");
         }
+        
+        [Test]
+        public void CanDeployJavaArchiveUncompressed()
+        {
+            var variables = GenerateVariables();
+            variables.Set(PackageVariables.JavaArchiveCompression, false.ToString());
 
-        protected void DeployPackage(string packageName)
+            DeployPackage(sourcePackage, variables);
+            Assert.AreEqual(0, returnCode);
+
+            // Archive is re-packed
+            var path = Path.Combine(applicationDirectory, "HelloWorld", "0.0.1", "HelloWorld.0.0.1.jar");
+            log.StandardOut.Should().Contain($"Re-packaging archive: '{path}'");
+
+            using (var stream = new FileStream(path, FileMode.Open))
+            using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+            {
+                archive.Entries.All(a => a.CompressedLength == a.Length).Should().BeTrue();
+            }
+        }
+
+        protected void DeployPackage(string packageName, IVariables variables)
         {
             var command = new DeployJavaArchiveCommand(
                 log,
@@ -110,6 +134,13 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                 new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log)
             );
             returnCode = command.Execute(new[] { "--archive", $"{packageName}" });
+        }
+
+        protected IVariables GenerateVariables()
+        {
+            var variables = new VariablesFactory(fileSystem).Create(new CommonOptions("test"));
+            variables.Set(TentacleVariables.Agent.ApplicationDirectoryPath, applicationDirectory);
+            return variables;
         }
     }
 }
