@@ -16,7 +16,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Calamari.Common" Version="14.8.1" />
-        <PackageReference Include="Calamari.Scripting" Version="8.2.0" />
+        <PackageReference Include="Calamari.Scripting" Version="8.2.1" />
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="Scripts\*" />
