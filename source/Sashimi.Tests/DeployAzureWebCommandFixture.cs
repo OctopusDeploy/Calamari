@@ -92,6 +92,7 @@ namespace Sashimi.AzureWebApp.Tests
 
             await File.WriteAllTextAsync(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
             var psScript = @"
+$ErrorActionPreference = 'Continue'
 az --version
 Get-AzureEnvironment
 az group list";
