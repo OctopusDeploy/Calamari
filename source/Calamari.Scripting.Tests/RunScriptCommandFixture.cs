@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Shared;
 using FluentAssertions;
@@ -49,6 +50,43 @@ namespace Calamari.Scripting.Tests
                                                   })
                                      .WithAssert(result => result.FullLog.Should().Contain("Hello World Two"))
                                      .Execute();
+        }
+
+        [Test]
+        public Task EnsureWhenScriptReturnsNonZeroCodeDeploymentFails()
+        {
+            using var tempFolder = TemporaryDirectory.Create();
+            var psScript = "throw 'Error'";
+            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, "myscript.ps1"), psScript);
+
+            return CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
+                                     .WithArrange(context =>
+                                                  {
+                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Inline);
+                                                      context.Variables.Add(KnownVariables.Action.Script.Syntax, ScriptSyntax.PowerShell.ToString());
+                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptBody, psScript);
+                                                  })
+                                     .WithAssert(result => result.WasSuccessful.Should().BeFalse())
+                                     .Execute(false);
+        }
+
+        [Test]
+        public Task EnsureWhenInlineScriptFeatureReturnsNonZeroCodeDeploymentFails()
+        {
+            using var tempFolder = TemporaryDirectory.Create();
+            var psScript = "echo 'Hello'";
+            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, "myscript.ps1"), psScript);
+            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, "PreDeploy.ps1"), "throw 'Error'");
+
+            return CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
+                                     .WithArrange(context =>
+                                                  {
+                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Package);
+                                                      context.Variables.Add("Octopus.Action.Script.ScriptFileName", "myscript.ps1");
+                                                      context.WithFilesToCopy(tempFolder.DirectoryPath);
+                                                  })
+                                     .WithAssert(result => result.WasSuccessful.Should().BeFalse())
+                                     .Execute(false);
         }
     }
 }
