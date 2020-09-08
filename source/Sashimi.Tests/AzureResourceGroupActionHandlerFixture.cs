@@ -109,6 +109,7 @@ namespace Sashimi.AzureResourceGroup.Tests
             var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
             var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
             var psScript = @"
+$ErrorActionPreference = 'Continue'
 az --version
 Get-AzureEnvironment
 az group list";
