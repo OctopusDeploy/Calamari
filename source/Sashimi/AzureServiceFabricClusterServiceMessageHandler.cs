@@ -94,7 +94,7 @@ using Sashimi.Server.Contracts.ServiceMessages;
 
                  azureServiceFabricClusterEndpoint.ServerCertThumbprint = certificateThumbprint;
                  azureServiceFabricClusterEndpoint.AadUserCredentialUsername = activeDirectoryUsername;
-                 azureServiceFabricClusterEndpoint.AadUserCredentialPassword = activeDirectoryPassword?.ToSensitiveString();
+                 azureServiceFabricClusterEndpoint.AadUserCredentialPassword = activeDirectoryPassword.ToSensitiveString();
                  azureServiceFabricClusterEndpoint.AadCredentialType = AzureServiceFabricCredentialType.UserCredential;
              }
 
