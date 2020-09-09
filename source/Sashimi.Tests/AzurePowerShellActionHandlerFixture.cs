@@ -27,6 +27,7 @@ namespace Sashimi.AzureScripting.Tests
 
         [Test]
         [WindowsTest]
+        [RequiresPowerShell5OrAboveAttribute]
         public void ExecuteAnInlinePowerShellScript()
         {
             var psScript = @"
