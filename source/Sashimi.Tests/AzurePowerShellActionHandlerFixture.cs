@@ -31,6 +31,7 @@ namespace Sashimi.AzureScripting.Tests
         public void ExecuteAnInlinePowerShellScript()
         {
             var psScript = @"
+$ErrorActionPreference = 'Continue'
 az --version
 Get-AzureEnvironment
 az group list";
