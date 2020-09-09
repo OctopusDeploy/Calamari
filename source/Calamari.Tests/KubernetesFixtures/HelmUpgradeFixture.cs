@@ -12,6 +12,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Calamari.Testing;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
 using Calamari.Util;

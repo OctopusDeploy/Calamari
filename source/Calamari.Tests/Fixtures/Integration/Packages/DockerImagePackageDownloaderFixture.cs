@@ -9,6 +9,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Packages.Download;
+using Calamari.Testing;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
