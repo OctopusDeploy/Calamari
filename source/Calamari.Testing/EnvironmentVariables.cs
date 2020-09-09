@@ -47,6 +47,12 @@ namespace Calamari.Testing
 
         [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "DockerHub Test Reader Account")]
         DockerReaderPassword,
+
+        [EnvironmentVariable("AWS_E2E_AccessKeyId", "AWS E2E Test User Keys")]
+        AwsCloudFormationAndS3AccessKey,
+
+        [EnvironmentVariable("AWS_E2E_SecretKeyId", "AWS E2E Test User Keys")]
+        AwsCloudFormationAndS3SecretKey
     }
 
     public static class ExternalVariables
