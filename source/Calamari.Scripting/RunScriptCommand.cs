@@ -33,6 +33,7 @@ namespace Calamari.Scripting
         protected override IEnumerable<IOnFinishBehaviour> OnFinish(OnFinishResolver resolver)
         {
             yield return resolver.Create<AddJournalEntryBehaviour>();
+            yield return resolver.Create<ThrowScriptErrorIfNeededBehaviour>();
         }
     }
 }
