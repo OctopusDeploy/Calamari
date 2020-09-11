@@ -66,7 +66,7 @@ namespace Calamari.AzureCloudService.Tests
                 await client.HostedServices.CreateAsync(new HostedServiceCreateParameters(serviceName, "test") { Location = "West US" });
 
                 await Deploy();
-                await EnsureDeploymentStatus(DeploymentStatus.Running);
+                await EnsureDeploymentStatus(DeploymentStatus.Running, client, serviceName, deploymentSlot);
 
                 // Suspend state
                 await client.Deployments.UpdateStatusByDeploymentSlotAsync(serviceName, deploymentSlot, new DeploymentUpdateStatusParameters(UpdatedDeploymentStatus.Suspended));
@@ -74,7 +74,7 @@ namespace Calamari.AzureCloudService.Tests
                 //Run again to test upgrading an existing slot and status should not change
                 await Deploy();
 
-                await EnsureDeploymentStatus(DeploymentStatus.Suspended);
+                await EnsureDeploymentStatus(DeploymentStatus.Suspended, client, serviceName, deploymentSlot);
             }
             finally
             {
@@ -89,11 +89,7 @@ namespace Calamari.AzureCloudService.Tests
                 await client.HostedServices.DeleteAsync(serviceName);
             }
 
-            async Task EnsureDeploymentStatus(DeploymentStatus requiredStatus)
-            {
-                var deployment = await client.Deployments.GetBySlotAsync(serviceName, deploymentSlot);
-                deployment.Status.Should().Be(requiredStatus);
-            }
+
 
             async Task Deploy()
             {
@@ -159,6 +155,8 @@ namespace Calamari.AzureCloudService.Tests
                                                          context.WithPackage(pathToPackage, "Octopus.Sample.AzureCloudService", "6.0.0");
                                                      })
                                         .Execute();
+
+                await EnsureDeploymentStatus(DeploymentStatus.Running, client, serviceName, DeploymentSlot.Production);
 
                 Func<Task> act = async () => await client.Deployments.GetBySlotAsync(serviceName, DeploymentSlot.Staging);
 
@@ -233,6 +231,12 @@ namespace Calamari.AzureCloudService.Tests
                                                     })
                                         .Execute();
             }
+        }
+
+        async Task EnsureDeploymentStatus(DeploymentStatus requiredStatus, ComputeManagementClient client, string serviceName, DeploymentSlot deploymentSlot)
+        {
+            var deployment = await client.Deployments.GetBySlotAsync(serviceName, deploymentSlot);
+            deployment.Status.Should().Be(requiredStatus);
         }
 
         static X509Certificate2 CreateManagementCertificate(string certificate)
