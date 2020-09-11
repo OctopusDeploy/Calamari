@@ -113,7 +113,8 @@ namespace Calamari.AzureCloudService
                                                               Label = deploymentLabel,
                                                               Configuration = File.ReadAllText(configurationFile),
                                                               PackageUri = new Uri(packageUri),
-                                                              Name = Guid.NewGuid().ToString("N")
+                                                              Name = Guid.NewGuid().ToString("N"),
+                                                              StartDeployment = true
                                                           });
             }
             else
