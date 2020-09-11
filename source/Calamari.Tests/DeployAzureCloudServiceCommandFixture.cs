@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Deployment;
@@ -37,7 +36,7 @@ namespace Calamari.AzureCloudService.Tests
             managementCertificate = CreateManagementCertificate(certificate);
             subscriptionCloudCredentials = new CertificateCloudCredentials(subscriptionId, managementCertificate);
             storageClient = new StorageManagementClient(subscriptionCloudCredentials);
-            pathToPackage = TestEnvironment.GetTestPath("Packages", "Octopus.Sample.AzureCloudService.5.8.2.nupkg");
+            pathToPackage = TestEnvironment.GetTestPath("Packages", "Octopus.Sample.AzureCloudService.6.0.0.nupkg");
 
             await storageClient.StorageAccounts.CreateAsync(new StorageAccountCreateParameters(storageName, "test")
             {
@@ -67,22 +66,23 @@ namespace Calamari.AzureCloudService.Tests
                 await client.HostedServices.CreateAsync(new HostedServiceCreateParameters(serviceName, "test") { Location = "West US" });
 
                 await Deploy();
+                await EnsureDeploymentStatus(DeploymentStatus.Running, client, serviceName, deploymentSlot);
 
-                //Run again to test upgrading an existing slot
+                // Suspend state
+                await client.Deployments.UpdateStatusByDeploymentSlotAsync(serviceName, deploymentSlot, new DeploymentUpdateStatusParameters(UpdatedDeploymentStatus.Suspended));
+
+                //Run again to test upgrading an existing slot and status should not change
                 await Deploy();
+
+                await EnsureDeploymentStatus(DeploymentStatus.Suspended, client, serviceName, deploymentSlot);
             }
             finally
             {
-                try
-                {
-                    await client.Deployments.DeleteBySlotAsync(serviceName, deploymentSlot);
-                }
-                catch
-                {
-                   // Ignore
-                }
+                await DeleteDeployment(client, serviceName, deploymentSlot);
                 await client.HostedServices.DeleteAsync(serviceName);
             }
+
+
 
             async Task Deploy()
             {
@@ -99,7 +99,7 @@ namespace Calamari.AzureCloudService.Tests
                                                          context.Variables.Add(SpecialVariables.Action.Azure.UseCurrentInstanceCount, bool.FalseString);
                                                          context.Variables.Add(SpecialVariables.Action.Azure.DeploymentLabel, "v1.0.0");
 
-                                                         context.WithPackage(pathToPackage, "Octopus.Sample.AzureCloudService", "5.8.2");
+                                                         context.WithPackage(pathToPackage, "Octopus.Sample.AzureCloudService", "6.0.0");
                                                      })
                                         .Execute();
             }
@@ -128,7 +128,7 @@ namespace Calamari.AzureCloudService.Tests
                                                          context.Variables.Add(SpecialVariables.Action.Azure.DeploymentLabel, "v1.0.0");
 
 
-                                                         context.WithPackage(pathToPackage, "Octopus.Sample.AzureCloudService", "5.8.2");
+                                                         context.WithPackage(pathToPackage, "Octopus.Sample.AzureCloudService", "6.0.0");
                                                      })
                                         .Execute();
 
@@ -145,9 +145,11 @@ namespace Calamari.AzureCloudService.Tests
                                                          context.Variables.Add(SpecialVariables.Action.Azure.UseCurrentInstanceCount, bool.FalseString);
                                                          context.Variables.Add(SpecialVariables.Action.Azure.DeploymentLabel, "v1.0.0");
 
-                                                         context.WithPackage(pathToPackage, "Octopus.Sample.AzureCloudService", "5.8.2");
+                                                         context.WithPackage(pathToPackage, "Octopus.Sample.AzureCloudService", "6.0.0");
                                                      })
                                         .Execute();
+
+                await EnsureDeploymentStatus(DeploymentStatus.Running, client, serviceName, DeploymentSlot.Production);
 
                 Func<Task> act = async () => await client.Deployments.GetBySlotAsync(serviceName, DeploymentSlot.Staging);
 
@@ -156,14 +158,7 @@ namespace Calamari.AzureCloudService.Tests
             }
             finally
             {
-                try
-                {
-                    await client.Deployments.DeleteBySlotAsync(serviceName, DeploymentSlot.Production);
-                }
-                catch
-                {
-                    // Ignore
-                }
+                await DeleteDeployment(client, serviceName, DeploymentSlot.Production);
                 await client.HostedServices.DeleteAsync(serviceName);
             }
         }
@@ -183,14 +178,7 @@ namespace Calamari.AzureCloudService.Tests
             }
             finally
             {
-                try
-                {
-                    await client.Deployments.DeleteBySlotAsync(serviceName, deploymentSlot);
-                }
-                catch
-                {
-                   // Ignore
-                }
+                await DeleteDeployment(client, serviceName, deploymentSlot);
                 await client.HostedServices.DeleteAsync(serviceName);
             }
 
@@ -209,7 +197,7 @@ namespace Calamari.AzureCloudService.Tests
                                                          context.Variables.Add(SpecialVariables.Action.Azure.UseCurrentInstanceCount, bool.FalseString);
                                                          context.Variables.Add(SpecialVariables.Action.Azure.DeploymentLabel, "v1.0.0");
 
-                                                         context.WithPackage(pathToPackage, "Octopus.Sample.AzureCloudService", "5.8.2");
+                                                         context.WithPackage(pathToPackage, "Octopus.Sample.AzureCloudService", "6.0.0");
 
                                                          context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
                                                          context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PreDeploy, ScriptSyntax.CSharp), "Console.WriteLine(\"Hello from C#\");");
@@ -222,6 +210,37 @@ namespace Calamari.AzureCloudService.Tests
                                                     })
                                         .Execute();
             }
+        }
+
+        static async Task DeleteDeployment(ComputeManagementClient client, string serviceName, DeploymentSlot deploymentSlot)
+        {
+            try
+            {
+                var operation = await client.Deployments.DeleteBySlotAsync(serviceName, deploymentSlot);
+                var maxWait = 30; // 1 minute
+                while (maxWait-- >= 0)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+                    var operationStatus = await client.GetOperationStatusAsync(operation.RequestId);
+
+                    if (operationStatus.Status == OperationStatus.InProgress)
+                    {
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+            catch
+            {
+                // Ignore
+            }
+        }
+
+        async Task EnsureDeploymentStatus(DeploymentStatus requiredStatus, ComputeManagementClient client, string serviceName, DeploymentSlot deploymentSlot)
+        {
+            var deployment = await client.Deployments.GetBySlotAsync(serviceName, deploymentSlot);
+            deployment.Status.Should().Be(requiredStatus);
         }
 
         static X509Certificate2 CreateManagementCertificate(string certificate)
