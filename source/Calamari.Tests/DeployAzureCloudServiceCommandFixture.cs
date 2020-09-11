@@ -78,14 +78,7 @@ namespace Calamari.AzureCloudService.Tests
             }
             finally
             {
-                try
-                {
-                    await client.Deployments.DeleteBySlotAsync(serviceName, deploymentSlot);
-                }
-                catch
-                {
-                   // Ignore
-                }
+                await DeleteDeployment(client, serviceName, deploymentSlot);
                 await client.HostedServices.DeleteAsync(serviceName);
             }
 
@@ -165,14 +158,7 @@ namespace Calamari.AzureCloudService.Tests
             }
             finally
             {
-                try
-                {
-                    await client.Deployments.DeleteBySlotAsync(serviceName, DeploymentSlot.Production);
-                }
-                catch
-                {
-                    // Ignore
-                }
+                await DeleteDeployment(client, serviceName, DeploymentSlot.Production);
                 await client.HostedServices.DeleteAsync(serviceName);
             }
         }
@@ -192,14 +178,7 @@ namespace Calamari.AzureCloudService.Tests
             }
             finally
             {
-                try
-                {
-                    await client.Deployments.DeleteBySlotAsync(serviceName, deploymentSlot);
-                }
-                catch
-                {
-                   // Ignore
-                }
+                await DeleteDeployment(client, serviceName, deploymentSlot);
                 await client.HostedServices.DeleteAsync(serviceName);
             }
 
@@ -230,6 +209,31 @@ namespace Calamari.AzureCloudService.Tests
                                                         result.FullLog.Should().Contain("Hello from F#");
                                                     })
                                         .Execute();
+            }
+        }
+
+        static async Task DeleteDeployment(ComputeManagementClient client, string serviceName, DeploymentSlot deploymentSlot)
+        {
+            try
+            {
+                var operation = await client.Deployments.DeleteBySlotAsync(serviceName, deploymentSlot);
+                var maxWait = 30; // 1 minute
+                while (maxWait-- >= 0)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+                    var operationStatus = await client.GetOperationStatusAsync(operation.RequestId);
+
+                    if (operationStatus.Status == OperationStatus.InProgress)
+                    {
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+            catch
+            {
+                // Ignore
             }
         }
 
