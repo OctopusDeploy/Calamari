@@ -69,7 +69,8 @@ namespace Calamari.AzureCloudService.Tests
                 await EnsureDeploymentStatus(DeploymentStatus.Running, client, serviceName, deploymentSlot);
 
                 // Suspend state
-                await client.Deployments.UpdateStatusByDeploymentSlotAsync(serviceName, deploymentSlot, new DeploymentUpdateStatusParameters(UpdatedDeploymentStatus.Suspended));
+                var operation = await client.Deployments.UpdateStatusByDeploymentSlotAsync(serviceName, deploymentSlot, new DeploymentUpdateStatusParameters(UpdatedDeploymentStatus.Suspended));
+                await WaitForOperation(client, operation);
 
                 //Run again to test upgrading an existing slot and status should not change
                 await Deploy();
@@ -217,23 +218,28 @@ namespace Calamari.AzureCloudService.Tests
             try
             {
                 var operation = await client.Deployments.DeleteBySlotAsync(serviceName, deploymentSlot);
-                var maxWait = 30; // 1 minute
-                while (maxWait-- >= 0)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(2));
-                    var operationStatus = await client.GetOperationStatusAsync(operation.RequestId);
-
-                    if (operationStatus.Status == OperationStatus.InProgress)
-                    {
-                        continue;
-                    }
-
-                    break;
-                }
+                await WaitForOperation(client, operation);
             }
             catch
             {
                 // Ignore
+            }
+        }
+
+        static async Task WaitForOperation(ComputeManagementClient client, OperationStatusResponse operation)
+        {
+            var maxWait = 30; // 1 minute
+            while (maxWait-- >= 0)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2));
+                var operationStatus = await client.GetOperationStatusAsync(operation.RequestId);
+
+                if (operationStatus.Status == OperationStatus.InProgress)
+                {
+                    continue;
+                }
+
+                break;
             }
         }
 
