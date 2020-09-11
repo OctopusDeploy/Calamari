@@ -40,52 +40,52 @@
             {
                 return $"{variableName}.Name";
             }
-            
+
             public static string Type(string variableName)
             {
                 return $"{variableName}.Type";
             }
-            
+
             public static string Thumbprint(string variableName)
             {
                 return $"{variableName}.Thumbprint";
             }
-            
+
             public static string RawOriginal(string variableName)
             {
                 return $"{variableName}.RawOriginal";
             }
-            
+
             public static string Password(string variableName)
             {
                 return $"{variableName}.Password";
             }
-            
+
             public static string Pfx(string variableName)
             {
                 return $"{variableName}.Pfx";
             }
-            
+
             public static string CertificateValue(string variableName)
             {
                 return $"{variableName}.Certificate";
             }
-            
+
             public static string SubjectCommonName(string variableName)
             {
                 return $"{variableName}.SubjectCommonName";
             }
-            
+
             public static string Issuer(string variableName)
             {
                 return $"{variableName}.Issuer";
             }
-            
+
             public static string NotBefore(string variableName)
             {
                 return $"{variableName}.NotBefore";
             }
-            
+
             public static string NotAfter(string variableName)
             {
                 return $"{variableName}.NotAfter";
@@ -191,7 +191,6 @@
 
             public static class SubstituteInFiles
             {
-                public static readonly string Enabled = "Octopus.Action.SubstituteInFiles.Enabled";
                 public static readonly string Targets = "Octopus.Action.SubstituteInFiles.TargetFiles";
                 public static readonly string EnableNoMatchWarning = "Octopus.Action.SubstituteInFiles.EnableNoMatchWarning";
             }
