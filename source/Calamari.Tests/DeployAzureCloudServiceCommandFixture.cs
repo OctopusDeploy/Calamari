@@ -66,15 +66,15 @@ namespace Calamari.AzureCloudService.Tests
                 await client.HostedServices.CreateAsync(new HostedServiceCreateParameters(serviceName, "test") { Location = "West US" });
 
                 await Deploy();
-                await EnsureDeploymentIsRunning(DeploymentStatus.Running);
+                await EnsureDeploymentStatus(DeploymentStatus.Running);
 
                 // Suspend state
                 await client.Deployments.UpdateStatusByDeploymentSlotAsync(serviceName, deploymentSlot, new DeploymentUpdateStatusParameters(UpdatedDeploymentStatus.Suspended));
 
-                //Run again to test upgrading an existing slot nad status should not change
+                //Run again to test upgrading an existing slot and status should not change
                 await Deploy();
 
-                await EnsureDeploymentIsRunning(DeploymentStatus.Suspended);
+                await EnsureDeploymentStatus(DeploymentStatus.Suspended);
             }
             finally
             {
@@ -89,7 +89,7 @@ namespace Calamari.AzureCloudService.Tests
                 await client.HostedServices.DeleteAsync(serviceName);
             }
 
-            async Task EnsureDeploymentIsRunning(DeploymentStatus requiredStatus)
+            async Task EnsureDeploymentStatus(DeploymentStatus requiredStatus)
             {
                 var deployment = await client.Deployments.GetBySlotAsync(serviceName, deploymentSlot);
                 deployment.Status.Should().Be(requiredStatus);
