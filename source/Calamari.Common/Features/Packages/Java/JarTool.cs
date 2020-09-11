@@ -22,7 +22,7 @@ namespace Calamari.Common.Features.Packages.Java
             this.log = log;
 
             /*
-                The precondition script will also set the location of the java libray files
+                The precondition script will also set the location of the java library files
             */
 
             toolsPath = Path.Combine(
@@ -33,12 +33,13 @@ namespace Calamari.Common.Features.Packages.Java
                 "tools.jar");
         }
 
-        public void CreateJar(string contentsDirectory, string targetJarPath)
+        public void CreateJar(string contentsDirectory, string targetJarPath, bool enableCompression)
         {
+            var compressionFlag = enableCompression ? "" : "0";
             var manifestPath = Path.Combine(contentsDirectory, "META-INF", "MANIFEST.MF");
             var args = File.Exists(manifestPath)
-                ? $"-cp \"{toolsPath}\" sun.tools.jar.Main cvmf \"{manifestPath}\" \"{targetJarPath}\" -C \"{contentsDirectory}\" ."
-                : $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf \"{targetJarPath}\" -C \"{contentsDirectory}\" .";
+                ? $"-cp \"{toolsPath}\" sun.tools.jar.Main cvmf{compressionFlag} \"{manifestPath}\" \"{targetJarPath}\" -C \"{contentsDirectory}\" ."
+                : $"-cp \"{toolsPath}\" sun.tools.jar.Main cvf{compressionFlag} \"{targetJarPath}\" -C \"{contentsDirectory}\" .";
 
             var createJarCommand = new CommandLineInvocation(JavaRuntime.CmdPath, args)
             {

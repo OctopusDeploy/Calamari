@@ -4,6 +4,7 @@ using Calamari.Azure.Integration;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Calamari.Testing;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
 using FluentAssertions;

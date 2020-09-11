@@ -2,8 +2,8 @@
 using System.IO;
 using System.Net;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
+using Calamari.Testing;
 using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;

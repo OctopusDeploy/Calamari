@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Linq;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Testing
 {
-
     public enum ExternalVariable
     {
         [EnvironmentVariable("AWS_OctopusAPITester_Access", "AWS - OctopusAPITester")]
@@ -41,10 +42,10 @@ namespace Calamari.Testing
         [EnvironmentVariable("K8S_OctopusAPITester_Server", "GKS Kubernetes API Test Cluster Url")]
         KubernetesClusterUrl,
 
-        [EnvironmentVariable("Helm_OctopusAPITester_Password", "Helm Password for https://octopusdeploy.jfrog.io")]
+        [EnvironmentVariable("Helm_OctopusAPITester_Password", "Artifactory Test Account")]
         HelmPassword,
 
-        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "Password for DockerHub Test reader account")]
+        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "DockerHub Test Reader Account")]
         DockerReaderPassword,
 
         [EnvironmentVariable("AWS_E2E_AccessKeyId", "AWS E2E Test User Keys")]
@@ -56,6 +57,21 @@ namespace Calamari.Testing
 
     public static class ExternalVariables
     {
+        public static void LogMissingVariables()
+        {
+            var missingVariables = Enum.GetValues(typeof(ExternalVariable)).Cast<ExternalVariable>()
+                                       .Select(prop => EnvironmentVariableAttribute.Get(prop))
+                                       .Where(attr => Environment.GetEnvironmentVariable(attr.Name) == null)
+                                       .ToList();
+
+            if (!missingVariables.Any())
+                return;
+
+            Log.Warn($"The following environment variables could not be found: " +
+                     $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}\t\tSource: {var.LastPassName}"))}" +
+                     $"\n\nTests that rely on these variables are likely to fail.");
+        }
+
         public static string Get(ExternalVariable property)
         {
             var attr = EnvironmentVariableAttribute.Get(property);
