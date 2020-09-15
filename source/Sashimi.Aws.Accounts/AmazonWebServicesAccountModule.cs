@@ -8,6 +8,9 @@ namespace Sashimi.Aws.Accounts
     {
         protected override void Load(ContainerBuilder builder)
         {
+            builder.RegisterType<AwsHttpClientFactory>().AsSelf().SingleInstance();
+            builder.RegisterType<AmazonWebServicesAccountVerifier>().AsSelf().SingleInstance();
+
             builder.RegisterType<AmazonWebServicesAccountTypeProvider>().As<IAccountTypeProvider>().As<IContributeMappings>().SingleInstance();
         }
     }
