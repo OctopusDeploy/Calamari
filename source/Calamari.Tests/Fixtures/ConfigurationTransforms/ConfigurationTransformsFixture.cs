@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Assent;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Plumbing.FileSystem;
@@ -30,7 +31,10 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         [Test]
         public void XmlWithNamespacesIsCorrectlyProcessed()
         {
-            PerformTest(GetFixtureResource("Samples", "nlog.config"), GetFixtureResource("Samples", "nlog.Release.config"));
+            var text = PerformTest(GetFixtureResource("Samples", "nlog.config"), GetFixtureResource("Samples", "nlog.Release.config"));
+            var document = XDocument.Parse(text);
+
+            this.Assent(document.ToString(), TestEnvironment.AssentConfiguration);
         }
 
         [Test]
