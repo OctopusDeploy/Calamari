@@ -33,6 +33,11 @@ namespace Calamari.Common.Features.Substitutions
 
             if (!string.IsNullOrEmpty(error))
                 log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
+            if (string.IsNullOrEmpty(result))
+            {
+                log.WarnFormat("Couldn't parsing file '{0}' and Octostache returned no error", sourceFile);
+                return;
+            }
 
             fileSystem.OverwriteFile(targetFile, result, encoding);
         }

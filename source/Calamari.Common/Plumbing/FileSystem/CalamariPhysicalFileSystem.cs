@@ -287,8 +287,10 @@ namespace Calamari.Common.Plumbing.FileSystem
             return File.ReadAllBytes(path);
         }
 
-        public void OverwriteFile(string path, string contents, Encoding? encoding = null)
+        public void OverwriteFile(string path, string? contents, Encoding? encoding = null)
         {
+            if (contents == null)
+                return;
             RetryTrackerFileAction(() => WriteAllText(path, contents, encoding), path, "overwrite");
         }
 
@@ -321,7 +323,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 Log.Warn($"The supplied encoding '{e}' does not raise errors for unsupported characters, so the subsequent "
                          + "encoder will never be used. Please set DecoderFallback to ExceptionFallback or use Unicode.");
 
-            byte[] bytes = null;
+            byte[]? bytes = null;
             (Encoding encoding, Exception exception)? lastFailure = null;
             foreach (var currentEncoding in encodingsToTry)
             {

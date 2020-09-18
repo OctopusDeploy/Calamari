@@ -26,7 +26,7 @@ namespace Calamari.Common.Features.FunctionScriptContributions
         }
 
         public int Priority { get; } = ScriptWrapperPriorities.ToolConfigPriority;
-        public IScriptWrapper NextWrapper { get; set; }
+        public IScriptWrapper? NextWrapper { get; set; }
 
         public bool IsEnabled(ScriptSyntax syntax)
         {
@@ -57,6 +57,9 @@ namespace Calamari.Common.Features.FunctionScriptContributions
 
                 File.Copy(scriptFile, destinationFile, true);
             }
+
+            if (NextWrapper == null)
+                throw new InvalidOperationException("Next script wrapper has not been initialized correctly");
 
             using (var contextScriptFile = new TemporaryFile(scriptFile))
             {

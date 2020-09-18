@@ -10,13 +10,13 @@ namespace Calamari.Common.Plumbing.Variables
         bool IsSet(string name);
         void Set(string name, string? value);
         void SetStrings(string variableName, IEnumerable<string> values, string separator);
-        string GetRaw(string variableName);
+        string? GetRaw(string variableName);
         [return: NotNullIfNotNull("defaultValue")]
         string? Get(string variableName, string? defaultValue = null);
         [return: NotNullIfNotNull("defaultValue")]
-        string? Get(string variableName, out string error, string? defaultValue = null);
-        string Evaluate(string expressionOrVariableOrText, out string error, bool haltOnError = true);
-        string Evaluate(string expressionOrVariableOrText);
+        string? Get(string variableName, out string? error, string? defaultValue = null);
+        string? Evaluate(string expressionOrVariableOrText, out string? error, bool haltOnError = true);
+        string? Evaluate(string expressionOrVariableOrText);
         List<string> GetStrings(string variableName, params char[] separators);
         List<string> GetPaths(string variableName);
         bool GetFlag(string variableName, bool defaultValueIfUnset = false);

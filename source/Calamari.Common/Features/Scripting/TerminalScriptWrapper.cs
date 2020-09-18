@@ -22,7 +22,7 @@ namespace Calamari.Common.Features.Scripting
 
         public int Priority => ScriptWrapperPriorities.TerminalScriptPriority;
 
-        public IScriptWrapper NextWrapper
+        public IScriptWrapper? NextWrapper
         {
             get => throw new MethodAccessException("TerminalScriptWrapper does not have a NextWrapper");
             set => throw new MethodAccessException("TerminalScriptWrapper does not have a NextWrapper");

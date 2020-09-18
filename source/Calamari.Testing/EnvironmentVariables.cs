@@ -61,14 +61,14 @@ namespace Calamari.Testing
         {
             var missingVariables = Enum.GetValues(typeof(ExternalVariable)).Cast<ExternalVariable>()
                                        .Select(prop => EnvironmentVariableAttribute.Get(prop))
-                                       .Where(attr => Environment.GetEnvironmentVariable(attr.Name) == null)
+                                       .Where(attr => Environment.GetEnvironmentVariable(attr!.Name) == null)
                                        .ToList();
 
             if (!missingVariables.Any())
                 return;
 
             Log.Warn($"The following environment variables could not be found: " +
-                     $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}\t\tSource: {var.LastPassName}"))}" +
+                     $"\n{string.Join("\n", missingVariables.Select(var => $" - {var!.Name}\t\tSource: {var.LastPassName}"))}" +
                      $"\n\nTests that rely on these variables are likely to fail.");
         }
 
