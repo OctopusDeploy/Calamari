@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Sashimi.Server.Contracts.ActionHandlers
 {
@@ -22,7 +23,7 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         /// For config-as-code projects, various ID properties can be replaced with their name equivalent. This lookup allows us to inspect potential IdOrName properties.
         /// E.g. Octopus.Action.Email.ToTeamIds, Octopus.Action.Azure.AccountId
         /// </summary>
-        IEnumerable<string> NamedPropertiesLookup { get; }
+        IEnumerable<string> NamedPropertiesLookup => Enumerable.Empty<string>();
 
         IActionHandlerResult Execute(IActionHandlerContext context);
     }
