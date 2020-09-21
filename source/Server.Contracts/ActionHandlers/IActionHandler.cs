@@ -22,7 +22,7 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         /// For config-as-code projects, various ID properties can be replaced with their name equivalent. This lookup allows us to inspect potential IdOrName properties.
         /// E.g. Octopus.Action.Email.ToTeamIds, Octopus.Action.Azure.AccountId
         /// </summary>
-        IEnumerable<string>? NamedPropertiesLookup { get; }
+        IEnumerable<string> NamedPropertiesLookup { get; }
 
         IActionHandlerResult Execute(IActionHandlerContext context);
     }

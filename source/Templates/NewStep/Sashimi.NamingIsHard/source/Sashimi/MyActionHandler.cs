@@ -1,5 +1,7 @@
 ﻿using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Sashimi.NamingIsHard
 {
@@ -19,5 +21,6 @@ namespace Sashimi.NamingIsHard
         public bool WhenInAChildStepRunInTheContextOfTheTargetMachine { get; }
         public bool CanRunOnDeploymentTarget { get; }
         public ActionHandlerCategory[] Categories { get; } = new ActionHandlerCategory[0];
+        public IEnumerable<string> NamedPropertiesLookup => Enumerable.Empty<string>();
     }
 }
