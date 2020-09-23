@@ -32,14 +32,16 @@ namespace Calamari.Common.Features.Substitutions
 #if NETFRAMEWORK
             var fileInfo = new FileInfo(sourceFile);
             log.Verbose($"Is '{sourceFile}' on readonly mode: {fileInfo.IsReadOnly}");
-            log.Verbose($"File Permission Rules:");
-            var aclRules = fileInfo.GetAccessControl().GetAccessRules(true, true, typeof(SecurityIdentifier));
+            log.Verbose("File Permission Rules:");
+            var aclRules = fileInfo.GetAccessControl().GetAccessRules(true, true, typeof(NTAccount));
             foreach (FileSystemAccessRule aclRule in aclRules)
             {
                 log.Verbose($"User: {aclRule?.IdentityReference?.Value}");
                 log.Verbose($"Rights: {aclRule?.FileSystemRights}");
                 log.Verbose($"AllowOrDeny: {aclRule?.AccessControlType}");
             }
+#else
+            Log.Verbose("Unable to get file info due to not running under .Net Framework. Calamari will not print any file info.");
 #endif
             var source = fileSystem.ReadFile(sourceFile, out var sourceFileEncoding);
             var encoding = GetEncoding(variables, sourceFileEncoding);
