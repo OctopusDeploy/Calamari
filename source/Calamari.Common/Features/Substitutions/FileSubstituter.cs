@@ -29,17 +29,18 @@ namespace Calamari.Common.Features.Substitutions
         {
             log.Verbose($"Performing variable substitution on '{sourceFile}'");
 
+#if NETFRAMEWORK
             var fileInfo = new FileInfo(sourceFile);
             log.Verbose($"Is '{sourceFile}' on readonly mode: {fileInfo.IsReadOnly}");
             log.Verbose($"File Permission Rules:");
             var aclRules = fileInfo.GetAccessControl().GetAccessRules(true, true, typeof(NTAccount));
             foreach (FileSystemAccessRule aclRule in aclRules)
             {
-                log.Verbose($"User: {aclRule.IdentityReference.Value}");
-                log.Verbose($"Rights: {aclRule.FileSystemRights}");
-                log.Verbose($"AllowOrDeny: {aclRule.AccessControlType}");
+                log.Verbose($"User: {aclRule?.IdentityReference?.Value}");
+                log.Verbose($"Rights: {aclRule?.FileSystemRights}");
+                log.Verbose($"AllowOrDeny: {aclRule?.AccessControlType}");
             }
-
+#endif
             var source = fileSystem.ReadFile(sourceFile, out var sourceFileEncoding);
             var encoding = GetEncoding(variables, sourceFileEncoding);
 
