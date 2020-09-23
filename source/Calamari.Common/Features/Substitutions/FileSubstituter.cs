@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -26,6 +29,17 @@ namespace Calamari.Common.Features.Substitutions
         {
             log.Verbose($"Performing variable substitution on '{sourceFile}'");
 
+            var fileInfo = new FileInfo(sourceFile);
+            log.Verbose($"Is '{sourceFile}' on readonly mode: {fileInfo.IsReadOnly}");
+            log.Verbose($"File Permission Rules:");
+            var aclRules = fileInfo.GetAccessControl().GetAccessRules(true, true, typeof(NTAccount));
+            foreach (FileSystemAccessRule aclRule in aclRules)
+            {
+                log.Verbose($"User: {aclRule.IdentityReference.Value}");
+                log.Verbose($"Rights: {aclRule.FileSystemRights}");
+                log.Verbose($"AllowOrDeny: {aclRule.AccessControlType}");
+            }
+
             var source = fileSystem.ReadFile(sourceFile, out var sourceFileEncoding);
             var encoding = GetEncoding(variables, sourceFileEncoding);
 
@@ -33,6 +47,7 @@ namespace Calamari.Common.Features.Substitutions
 
             if (!string.IsNullOrEmpty(error))
                 log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
+
 
             fileSystem.OverwriteFile(targetFile, result, encoding);
         }
