@@ -33,7 +33,7 @@ namespace Calamari.Common.Features.Substitutions
             var fileInfo = new FileInfo(sourceFile);
             log.Verbose($"Is '{sourceFile}' on readonly mode: {fileInfo.IsReadOnly}");
             log.Verbose($"File Permission Rules:");
-            var aclRules = fileInfo.GetAccessControl().GetAccessRules(true, true, typeof(NTAccount));
+            var aclRules = fileInfo.GetAccessControl().GetAccessRules(true, true, typeof(SecurityIdentifier));
             foreach (FileSystemAccessRule aclRule in aclRules)
             {
                 log.Verbose($"User: {aclRule?.IdentityReference?.Value}");
