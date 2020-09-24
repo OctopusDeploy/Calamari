@@ -68,7 +68,7 @@ namespace Calamari.Common.Features.Scripting.Bash
             return variables.GetNames()
                 .Select(name =>
                 {
-                    var encryptedValue = VariableEncryptor.Encrypt(variables.Get(name));
+                    var encryptedValue = VariableEncryptor.Encrypt(variables.Get(name) ?? "");
                     var raw = AesEncryption.ExtractIV(encryptedValue, out var iv);
 
                     return new EncryptedVariable(name, Convert.ToBase64String(raw), ToHex(iv));
