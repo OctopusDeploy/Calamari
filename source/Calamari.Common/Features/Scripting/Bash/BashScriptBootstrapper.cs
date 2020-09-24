@@ -39,7 +39,9 @@ namespace Calamari.Common.Features.Scripting.Bash
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".sh");
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
-            builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(variables)));
+            var encryptedVariables = EncryptVariables(variables);
+            builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(encryptedVariables)));
+            builder.Replace("#### SensitiveValueMasks ####", string.Join(LinuxNewLine, GetSensitiveValueMasks(encryptedVariables)));
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -52,21 +54,35 @@ namespace Calamari.Common.Features.Scripting.Bash
             return configurationFile;
         }
 
-        static IEnumerable<string> GetVariableSwitchConditions(IVariables variables)
+        static IEnumerable<string> GetSensitiveValueMasks(IEnumerable<EncryptedVariable> variables)
         {
-            return variables.GetNames().Select(variable =>
+            foreach (var variable in variables)
             {
-                var variableValue = DecryptValueCommand(variables.Get(variable));
-                return string.Format("    \"{1}\"){0}   {2}   ;;{0}", Environment.NewLine, EncodeValue(variable), variableValue);
-            });
+                yield return $@"__mask_sensitive_value ""{variable.EncryptedValue}""";
+                yield return $@"__mask_sensitive_value ""{variable.Iv}""";
+            }
         }
 
-        static string DecryptValueCommand(string value)
+        static IList<EncryptedVariable> EncryptVariables(IVariables variables)
         {
-            var encrypted = VariableEncryptor.Encrypt(value ?? "");
-            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);
-            
-            return $@"decrypt_variable ""{Convert.ToBase64String(rawEncrypted)}"" ""{ToHex(iv)}""";
+            return variables.GetNames()
+                .Select(name =>
+                {
+                    var encryptedValue = VariableEncryptor.Encrypt(variables.Get(name));
+                    var raw = AesEncryption.ExtractIV(encryptedValue, out var iv);
+
+                    return new EncryptedVariable(name, Convert.ToBase64String(raw), ToHex(iv));
+                }).ToList();
+        }
+
+        static IEnumerable<string> GetVariableSwitchConditions(IEnumerable<EncryptedVariable> variables)
+        {
+            return variables
+                .Select(variable =>
+                {
+                    var variableValue = $@"decrypt_variable ""{variable.EncryptedValue}"" ""{variable.Iv}""";
+                    return string.Format("    \"{1}\"){0}   {2}   ;;{0}", Environment.NewLine, EncodeValue(variable.Name), variableValue);
+                });
         }
 
         static string ToHex(byte[] bytes)
@@ -132,6 +148,20 @@ namespace Calamari.Common.Features.Scripting.Bash
                     yield return moduleFilePath;
                 }
             }
+        }
+
+        class EncryptedVariable
+        {
+            public EncryptedVariable(string name, string encryptedValue, string iv)
+            {
+                Name = name;
+                EncryptedValue = encryptedValue;
+                Iv = iv;
+            }
+
+            public string Name { get; }
+            public string EncryptedValue { get; }
+            public string Iv { get; }
         }
     }
 }
