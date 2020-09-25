@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Assent;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Plumbing.FileSystem;
@@ -28,6 +29,15 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
+        public void XmlWithNamespacesIsCorrectlyProcessed()
+        {
+            var text = PerformTest(GetFixtureResource("Samples", "nlog.config"), GetFixtureResource("Samples", "nlog.Release.config"));
+            var document = XDocument.Parse(text);
+
+            this.Assent(document.ToString(), TestEnvironment.AssentConfiguration);
+        }
+
+        [Test]
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void WebReleaseConfig()
         {
@@ -43,12 +53,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 
         [Test]
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
-#if USE_OCTOPUS_XMLT
-        //vs shows ambiguous refence here but it builds and runs fine?
-        [ExpectedException(typeof(Octopus.System.Xml.XmlException))]
-#else
         [ExpectedException(typeof(System.Xml.XmlException))]
-#endif
         public void ShouldThrowExceptionForBadConfig()
         {
             PerformTest(GetFixtureResource("Samples", "Bad.config"), GetFixtureResource("Samples", "Web.Release.config"));

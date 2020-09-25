@@ -1,14 +1,11 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Xml;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-#if USE_OCTOPUS_XMLT
-using Octopus.Web.XmlTransform;
-#else
 using Microsoft.Web.XmlTransform;
-#endif
 
 namespace Calamari.Common.Features.ConfigurationTransforms
 {
@@ -74,26 +71,27 @@ namespace Calamari.Common.Features.ConfigurationTransforms
         void ApplyTransformation(string configFile, string transformFile, string destinationFile, IXmlTransformationLogger logger)
         {
             errorEncountered = false;
-            var transformation = new XmlTransformation(transformFile, logger);
-
-            var configurationFileDocument = new XmlTransformableDocument()
+            using (var transformation = new XmlTransformation(transformFile, logger))
+            using (var configurationFileDocument = new XmlTransformableDocument
             {
                 PreserveWhitespace = true
-            };
-            configurationFileDocument.Load(configFile);
-
-            var success = transformation.Apply(configurationFileDocument);
-            if (!success || errorEncountered)
+            })
             {
-                throw new CommandException($"The XML configuration file {configFile} failed with transformation file {transformFile}.");
-            }
+                configurationFileDocument.Load(configFile);
 
-            if (!configurationFileDocument.ChildNodes.OfType<XmlElement>().Any())
-            {
-                logger.LogWarning("The XML configuration file {0} no longer has a root element and is invalid after being transformed by {1}", new object[] { configFile, transformFile });
-            }
+                var success = transformation.Apply(configurationFileDocument);
+                if (!success || errorEncountered)
+                {
+                    throw new CommandException($"The XML configuration file {configFile} failed with transformation file {transformFile}.");
+                }
 
-            configurationFileDocument.Save(destinationFile);
+                if (!configurationFileDocument.ChildNodes.OfType<XmlElement>().Any())
+                {
+                    logger.LogWarning("The XML configuration file {0} no longer has a root element and is invalid after being transformed by {1}", new object[] { configFile, transformFile });
+                }
+
+                configurationFileDocument.Save(destinationFile);
+            }
         }
 
         public static ConfigurationTransformer FromVariables(IVariables variables, ILog log)
