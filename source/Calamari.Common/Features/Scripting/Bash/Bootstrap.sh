@@ -26,6 +26,17 @@ function decode_servicemessagevalue
 }
 
 # -----------------------------------------------------------------------------
+# Functions to request server masking of sensitive values
+# -----------------------------------------------------------------------------
+function __mask_sensitive_value
+{
+    echo "##octopus[mask value='$(encode_servicemessagevalue "$1")']"
+}
+
+__mask_sensitive_value $sensitiveVariableKey
+#### SensitiveValueMasks ####
+
+# -----------------------------------------------------------------------------
 # Function to decrypt a sensitive variable
 #		Accepts 2 arguments:
 #			string: the value to decrypt (base64 encoded)
