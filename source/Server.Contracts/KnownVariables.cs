@@ -195,5 +195,14 @@
                 public static readonly string EnableNoMatchWarning = "Octopus.Action.SubstituteInFiles.EnableNoMatchWarning";
             }
         }
+
+        public static class Features
+        {
+            public const string CustomScripts = "Octopus.Features.CustomScripts";
+            public const string ConfigurationVariables = "Octopus.Features.ConfigurationVariables";
+            public const string ConfigurationTransforms = "Octopus.Features.ConfigurationTransforms";
+            public const string SubstituteInFiles = "Octopus.Features.SubstituteInFiles";
+            public const string StructuredConfigurationVariables = "Octopus.Features.JsonConfigurationVariables";
+        }
     }
 }
