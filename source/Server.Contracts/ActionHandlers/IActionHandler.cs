@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Sashimi.Server.Contracts.ActionHandlers
+﻿namespace Sashimi.Server.Contracts.ActionHandlers
 {
     /// <summary>
     /// Implementors of this interface must not keep state so that they can be reusable between steps and deployments
