@@ -33,7 +33,7 @@ namespace Sashimi.Server.Contracts.ActionHandlers.Validation
 
                     return firstPackage != null && packages.Count() == 1 &&
                         !string.IsNullOrWhiteSpace(firstPackage.PackageId) &&
-                        !string.IsNullOrWhiteSpace(firstPackage.FeedId);
+                        !string.IsNullOrWhiteSpace(firstPackage.FeedIdOrName?.Value);
 
                 }).WithMessage(errorMessage);
         }
