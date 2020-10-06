@@ -296,6 +296,9 @@ namespace Calamari.Tests.NewPipeline
         {
             protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
             {
+                foreach (var deployBehaviour in base.Deploy(resolver))
+                    yield return deployBehaviour;
+
                 yield return resolver.Create<MyEmptyBehaviour>();
             }
         }
@@ -305,6 +308,9 @@ namespace Calamari.Tests.NewPipeline
         {
             protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
             {
+                foreach (var deployBehaviour in base.Deploy(resolver))
+                    yield return deployBehaviour;
+
                 yield return resolver.Create<MyBadBehaviour>();
             }
         }
