@@ -93,7 +93,7 @@ namespace Calamari.Kubernetes.Commands
             return 0;
         }
 
-        private void ValidateRequiredVariables()
+        void ValidateRequiredVariables()
         {
             if (!variables.IsSet(SpecialVariables.ClusterUrl))
             {
@@ -101,12 +101,20 @@ namespace Calamari.Kubernetes.Commands
             }
         }
 
-        private IEnumerable<string> FileTargetFactory()
+        IEnumerable<string> FileTargetFactory()
         {
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
             {
-                var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
+                var packageRoot = packageReferenceName;
+                if (string.IsNullOrEmpty(packageReferenceName))
+                {
+                    packageRoot = variables.Get(PackageVariables.IndexedPackageId(packageReferenceName));
+                }
+                var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageRoot ?? String.Empty);
+
+                yield return Path.Combine(sanitizedPackageReferenceName, "values.yaml");
+
                 var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
 
                 foreach (var path in paths)
