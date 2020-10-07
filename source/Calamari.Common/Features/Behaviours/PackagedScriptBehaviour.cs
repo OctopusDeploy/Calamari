@@ -11,7 +11,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Behaviours
 {
-    public abstract class PackagedScriptBehaviour : PackagedScriptRunner, IBehaviour
+    public class PackagedScriptBehaviour : PackagedScriptRunner, IBehaviour
     {
         protected PackagedScriptBehaviour(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
             base(log, scriptFilePrefix, fileSystem, scriptEngine, commandLineRunner)

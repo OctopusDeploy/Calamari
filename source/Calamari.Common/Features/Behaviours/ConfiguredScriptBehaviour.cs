@@ -15,7 +15,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Behaviours
 {
-    public abstract class ConfiguredScriptBehaviour : IBehaviour
+    public class ConfiguredScriptBehaviour : IBehaviour
     {
         readonly string deploymentStage;
         readonly ILog log;

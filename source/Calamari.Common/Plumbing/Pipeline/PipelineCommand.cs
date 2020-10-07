@@ -103,7 +103,7 @@ namespace Calamari.Common.Plumbing.Pipeline
                 yield return ExecuteBehaviour(deployment, behaviour);
             }
 
-            foreach (var scriptBehaviour in MaybeIncludeScriptBehaviours<PreDeployPackagedScriptBehaviour, PreDeployConfiguredScriptBehaviour>(lifetimeScope))
+            foreach (var scriptBehaviour in MaybeIncludeBehaviours<PreDeployPackagedScriptBehaviour, PreDeployConfiguredScriptBehaviour>(lifetimeScope))
             {
                 yield return ExecuteBehaviour(deployment, scriptBehaviour);
             }
@@ -118,7 +118,7 @@ namespace Calamari.Common.Plumbing.Pipeline
             yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfigurationVariablesBehaviour>());
             yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<StructuredConfigurationVariablesBehaviour>());
 
-            foreach (var scriptBehaviour in MaybeIncludeScriptBehaviours<DeployPackagedScriptBehaviour, DeployConfiguredScriptBehaviour>(lifetimeScope))
+            foreach (var scriptBehaviour in MaybeIncludeBehaviours<DeployPackagedScriptBehaviour, DeployConfiguredScriptBehaviour>(lifetimeScope))
             {
                 yield return ExecuteBehaviour(deployment, scriptBehaviour);
             }
@@ -133,7 +133,7 @@ namespace Calamari.Common.Plumbing.Pipeline
                 yield return ExecuteBehaviour(deployment, behaviour);
             }
 
-            foreach (var scriptBehaviour in MaybeIncludeScriptBehaviours<PostDeployPackagedScriptBehaviour, PostDeployConfiguredScriptBehaviour>(lifetimeScope))
+            foreach (var scriptBehaviour in MaybeIncludeBehaviours<PostDeployPackagedScriptBehaviour, PostDeployConfiguredScriptBehaviour>(lifetimeScope))
             {
                 yield return ExecuteBehaviour(deployment, scriptBehaviour);
             }
@@ -143,7 +143,7 @@ namespace Calamari.Common.Plumbing.Pipeline
             }
         }
 
-        IEnumerable<IBehaviour> MaybeIncludeScriptBehaviours<TPackagedScriptBehaviour, TConfiguredScriptBehaviour>(ILifetimeScope lifetimeScope)
+        IEnumerable<IBehaviour> MaybeIncludeBehaviours<TPackagedScriptBehaviour, TConfiguredScriptBehaviour>(ILifetimeScope lifetimeScope)
           where TPackagedScriptBehaviour : PackagedScriptBehaviour
             where TConfiguredScriptBehaviour : ConfiguredScriptBehaviour
         {
