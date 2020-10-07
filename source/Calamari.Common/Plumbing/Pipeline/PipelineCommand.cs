@@ -117,8 +117,6 @@ namespace Calamari.Common.Plumbing.Pipeline
             yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfigurationTransformsBehaviour>());
             yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfigurationVariablesBehaviour>());
             yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<StructuredConfigurationVariablesBehaviour>());
-            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.Deploy)));
-            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.Deploy)));
 
             foreach (var scriptBehaviour in MaybeIncludeScriptBehaviours<DeployPackagedScriptBehaviour, DeployConfiguredScriptBehaviour>(lifetimeScope))
             {
@@ -130,19 +128,15 @@ namespace Calamari.Common.Plumbing.Pipeline
                 yield return ExecuteBehaviour(deployment, behaviour);
             }
 
-            foreach (var scriptBehaviour in MaybeIncludeScriptBehaviours<PostDeployPackagedScriptBehaviour, PostDeployConfiguredScriptBehaviour>(lifetimeScope))
-            {
-                yield return ExecuteBehaviour(deployment, scriptBehaviour);
-            }
-
             foreach (var behaviour in PostDeploy(new PostDeployResolver(lifetimeScope)))
             {
                 yield return ExecuteBehaviour(deployment, behaviour);
             }
 
-            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.PostDeploy)));
-            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.PostDeploy)));
-
+            foreach (var scriptBehaviour in MaybeIncludeScriptBehaviours<PostDeployPackagedScriptBehaviour, PostDeployConfiguredScriptBehaviour>(lifetimeScope))
+            {
+                yield return ExecuteBehaviour(deployment, scriptBehaviour);
+            }
             foreach (var behaviour in OnFinish(new OnFinishResolver(lifetimeScope)))
             {
                 yield return ExecuteBehaviour(deployment, behaviour);
