@@ -1,5 +1,6 @@
 ﻿using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
@@ -161,7 +162,15 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         PackagedScriptConvention CreateConvention(string scriptName)
         {
-            return new PackagedScriptConvention(new PackagedScriptBehaviour(log, scriptName, fileSystem, scriptEngine, runner));
+            PackagedScriptBehaviour scriptBehaviour = null;
+            if (scriptName == DeploymentStages.PreDeploy)
+                scriptBehaviour = new PreDeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, runner);
+            else if (scriptName == DeploymentStages.Deploy)
+                scriptBehaviour = new DeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, runner);
+            else if (scriptName == DeploymentStages.PostDeploy)
+                scriptBehaviour = new PostDeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, runner);
+
+            return new PackagedScriptConvention(scriptBehaviour);
         }
 
         RollbackScriptConvention CreateRollbackConvention(string scriptName)

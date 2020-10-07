@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Autofac;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
-using Calamari.Common.Features.Deployment;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -32,14 +31,20 @@ namespace Calamari.Common.Plumbing.Pipeline
 
         protected virtual IEnumerable<IPreDeployBehaviour> PreDeploy(PreDeployResolver resolver)
         {
-            return Enumerable.Empty<IPreDeployBehaviour>();
+            yield return resolver.Create<PreDeployConfiguredScriptBehaviour>();
+            yield return resolver.Create<PreDeployPackagedScriptBehaviour>();
         }
 
-        protected abstract IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver);
+        protected virtual IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
+        {
+            yield return resolver.Create<DeployPackagedScriptBehaviour>();
+            yield return resolver.Create<DeployConfiguredScriptBehaviour>();
+        }
 
         protected virtual IEnumerable<IPostDeployBehaviour> PostDeploy(PostDeployResolver resolver)
         {
-            return Enumerable.Empty<IPostDeployBehaviour>();
+            yield return resolver.Create<PostDeployPackagedScriptBehaviour>();
+            yield return resolver.Create<PostDeployConfiguredScriptBehaviour>();
         }
 
         protected virtual IEnumerable<IOnFinishBehaviour> OnFinish(OnFinishResolver resolver)
