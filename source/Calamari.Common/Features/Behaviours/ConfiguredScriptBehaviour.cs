@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
@@ -84,5 +85,26 @@ namespace Calamari.Common.Features.Behaviours
 
             return this.CompletedTask();
         }
+    }
+
+    public class PreDeployConfiguredScriptBehaviour : ConfiguredScriptBehaviour, IPreDeployBehaviour
+    {
+        public PreDeployConfiguredScriptBehaviour(ILog log, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
+            base(DeploymentStages.PreDeploy, log, fileSystem, scriptEngine, commandLineRunner)
+        { }
+    }
+
+    public class DeployConfiguredScriptBehaviour : ConfiguredScriptBehaviour, IDeployBehaviour
+    {
+        public DeployConfiguredScriptBehaviour(ILog log, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
+            base(DeploymentStages.Deploy, log, fileSystem, scriptEngine, commandLineRunner)
+        { }
+    }
+
+    public class PostDeployConfiguredScriptBehaviour : ConfiguredScriptBehaviour, IPostDeployBehaviour
+    {
+        public PostDeployConfiguredScriptBehaviour(ILog log, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
+            base(DeploymentStages.PostDeploy, log, fileSystem, scriptEngine, commandLineRunner)
+        { }
     }
 }

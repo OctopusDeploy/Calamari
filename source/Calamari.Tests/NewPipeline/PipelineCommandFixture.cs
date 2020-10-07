@@ -283,6 +283,62 @@ namespace Calamari.Tests.NewPipeline
             }
         }
 
+        [Test]
+        public async Task PackagedScriptDoesNotExecute()
+        {
+            using (var tempPath = TemporaryDirectory.Create())
+            {
+                foreach (var stage in defaultScriptStages)
+                {
+                    File.WriteAllText(Path.Combine(tempPath.DirectoryPath, $"{stage}.ps1"), $"echo 'Hello from {stage}'");
+                }
+
+                await CommandTestBuilder.CreateAsync<NoPackagedScriptCommand, MyProgram>()
+                                        .WithArrange(context =>
+                                                     {
+                                                         context.Variables.Add(KnownVariables.Package.RunPackageScripts, bool.TrueString);
+                                                         context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                     })
+                                        .WithAssert(result =>
+                                                    {
+                                                        result.WasSuccessful.Should().BeTrue();
+                                                        foreach (var stage in defaultScriptStages)
+                                                        {
+                                                            result.FullLog.Should().NotContain($"Hello from {stage}");
+                                                        }
+
+                                                    })
+                                        .Execute(true);
+            }
+        }
+
+        [Test]
+        public async Task ConfiguredScriptDoesNotExecute()
+        {
+            using (var tempPath = TemporaryDirectory.Create())
+            {
+                await CommandTestBuilder.CreateAsync<NoConfiguredScriptCommand, MyProgram>()
+                                        .WithArrange(context =>
+                                                     {
+                                                         context.Variables.Add(KnownVariables.Features.CustomScripts, bool.TrueString);
+                                                         foreach (var stage in defaultScriptStages)
+                                                         {
+                                                             context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(stage, ScriptSyntax.PowerShell), $"echo 'Hello from {stage}");
+                                                         }
+                                                     })
+                                        .WithAssert(result =>
+                                                    {
+                                                        result.WasSuccessful.Should().BeTrue();
+                                                        foreach (var stage in defaultScriptStages)
+                                                        {
+                                                            result.FullLog.Should().NotContain($"Hello from {stage}");
+                                                        }
+
+                                                    })
+                                        .Execute(true);
+            }
+        }
+
         class MyProgram : CalamariFlavourProgramAsync
         {
             public MyProgram(ILog log) : base(log)
@@ -317,6 +373,28 @@ namespace Calamari.Tests.NewPipeline
                 yield return resolver.Create<SkipNextBehaviour>();
                 yield return resolver.Create<MyBadBehaviour>();
             }
+        }
+
+        [Command("nopackagedscriptcommand")]
+        class NoPackagedScriptCommand : PipelineCommand
+        {
+            protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
+            {
+                yield break;
+            }
+
+            protected override bool IncludePackagedScriptBehaviour => false;
+        }
+
+        [Command("noconfiguredscriptcommand")]
+        class NoConfiguredScriptCommand : PipelineCommand
+        {
+            protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
+            {
+                yield break;
+            }
+
+            protected override bool IncludeConfiguredScriptBehaviour => false;
         }
 
         [Command("logcommand")]
