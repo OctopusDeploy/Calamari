@@ -83,6 +83,10 @@ New-MyFunc2 -mystring 'Hello' -mynumber 1";
         [Command("mycommand")]
         class MyCommand : PipelineCommand
         {
+            protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
+            {
+                yield break;
+            }
         }
     }
 }
