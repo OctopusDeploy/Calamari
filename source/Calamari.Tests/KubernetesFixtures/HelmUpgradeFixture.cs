@@ -132,10 +132,11 @@ namespace Calamari.Tests.KubernetesFixtures
         [Category(TestCategory.PlatformAgnostic)]
         public void MismatchPackageIDAndHelmArchivePathWorks()
         {
+            var packageName = $"{Variables.Get(PackageVariables.PackageId)}-{Variables.Get(PackageVariables.PackageVersion)}.tgz";
             Variables.Set(PackageVariables.PackageId, "thisisnotamatch");
             Variables.Set(PackageVariables.PackageVersion, "0.3.7");
 
-            var result = DeployPackage();
+            var result = DeployPackage(packageName);
 
             result.AssertSuccess();
 
@@ -362,11 +363,15 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        protected CalamariResult DeployPackage()
+        protected CalamariResult DeployPackage(string packageName = null)
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                var pkg = GetFixtureResource("Charts", $"{Variables.Get(PackageVariables.PackageId)}-{Variables.Get(PackageVariables.PackageVersion)}.tgz");
+                if (packageName == null)
+                {
+                    packageName = $"{Variables.Get(PackageVariables.PackageId)}-{Variables.Get(PackageVariables.PackageVersion)}.tgz";
+                }
+                var pkg = GetFixtureResource("Charts", packageName);
                 Variables.Save(variablesFile.FilePath);
 
                 return InvokeInProcess(Calamari()
