@@ -1,138 +1,119 @@
 ﻿using System;
-
+using System.IO;
+using System.Linq;
 using System.Net;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Calamari.Azure;
-using Calamari.Azure.Publishing;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.WebSites;
-using Microsoft.Identity.Client;
-using NuGet.Protocol;
-
-//using Microsoft.IdentityModel.Clients.ActiveDirectory;
-//using AuthenticationResult = Microsoft.Identity.Client.AuthenticationResult;
+using Microsoft.Azure.Management.WebSites.Models;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Rest;
+using Microsoft.Win32.SafeHandles;
 
 namespace Calamari.AzureWebAppZip
 {
     class AzureWebAppZipBehaviour : IDeployBehaviour
     {
-        readonly ILog log;
-
-        public AzureWebAppZipBehaviour(ILog log)
-        {
-            this.log = log;
-        }
-
         public bool IsEnabled(RunningDeployment context)
         {
             return true;
         }
 
-        public async Task Execute(RunningDeployment deployment)
+        public async Task Execute(RunningDeployment context)
         {
-            var variables = deployment.Variables;
-            var appName = "cmocto"; //variables.Get("appName");
+            var variables = context.Variables;
+            var principalAccount = new ServicePrincipalAccount(variables);
 
-            var targetUrl = $"https://{appName}.scm.azurewebsites.net/api/zipdeploy";
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(
+                variables.Get(SpecialVariables.Action.Azure.WebAppName),
+                variables.Get(SpecialVariables.Action.Azure.WebAppSlot));
 
-            var webClient = new WebClient();
+            var token = await GetAuthTokenAsync(principalAccount);
+            var creds = await GetPublishProfileCredsAsync(targetSite, new TokenCredentials(token), principalAccount,
+                variables);
 
-            var username = "0f91c747-93cf-464e-9a6c-d46c93eef239"; //deployment.Variables.Get(AzureAccountVariables.ClientId);
-            var password = deployment.Variables.Get(AzureAccountVariables.Password);
-            var credential = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
-            var zipPath = deployment.Variables.Get("Octopus.Test.PackagePath");
-            //var tenantId = "27312afb-009f-4fed-a8bb-9737425cc42a";
+            var credential = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{creds.Username}:{creds.Password}"));
+            var client2 = new HttpClient();
+            client2.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", credential);
 
-            var authResult = await GetAuthToken("0f91c747-93cf-464e-9a6c-d46c93eef239",
-                "27312afb-009f-4fed-a8bb-9737425cc42a", "EU.M~6P3pCHe4K__x3~jif.keOtae5A7Xz");
-
-            webClient.Headers[HttpRequestHeader.Authorization] = $"Basic {credential}";
-            webClient.Headers[HttpRequestHeader.ContentType] = "application/zip";
-            
-
-            byte[] response;
-
+            var uploadZipPath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
             try
             {
-                //var response = await webClient.UploadFileTaskAsync(new Uri(targetUrl), "POST", zipPath); //PackageVariables.Output.FilePath));
-                response = await webClient.UploadFileTaskAsync(new Uri(targetUrl), "POST", zipPath);
-
-                while (webClient.IsBusy)
-                    await Task.Delay(1000);
+                await client2.PostAsync($@"https://{targetSite.Site}.scm.azurewebsites.net/api/zipdeploy",
+                    new StreamContent(new FileStream(uploadZipPath, FileMode.Open)));
             }
-            catch (WebException ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
-
-            //var variables = deployment.Variables;
-            //var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
-            //var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
-            //var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
-            //var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
-
-            //var targetSite = AzureWebAppHelper.GetAzureTargetSite(siteAndSlotName, slotName);
-
-            //var resourceGroupText = string.IsNullOrEmpty(resourceGroupName)
-            //    ? string.Empty
-            //    : $" in Resource Group '{resourceGroupName}'";
-            //var slotText = targetSite.HasSlot
-            //    ? $", deployment slot '{targetSite.Slot}'"
-            //    : string.Empty;
-            //log.Info(
-            //    $"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
-
-            //RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
-            //try
-            //{
-            //    originalServerCertificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
-            //    ServicePointManager.ServerCertificateValidationCallback = WrapperForServerCertificateValidationCallback;
-            //    await Task.Run(() => { Console.WriteLine("Hello"); });
-            //}
-            //finally
-            //{
-            //    ServicePointManager.ServerCertificateValidationCallback = originalServerCertificateValidationCallback;
-            //}
-
+            finally
+            {
+                client2.Dispose();
+            }
         }
 
-        bool WrapperForServerCertificateValidationCallback(object sender, X509Certificate certificate,
-            X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        private async Task<string> GetAuthTokenAsync(ServicePrincipalAccount principalAccount)// ,string tenantId, string applicationId, string password)
         {
-            switch (sslPolicyErrors)
+            var authContext = GetContextUri(principalAccount.ActiveDirectoryEndpointBaseUri, principalAccount.TenantId);
+            //Log.Verbose($"Authentication Context: {authContext}");
+            var context = new AuthenticationContext(authContext);
+            var result = await context.AcquireTokenAsync(principalAccount.ResourceManagementEndpointBaseUri, new ClientCredential(principalAccount.ClientId, principalAccount.Password));
+            return result.AccessToken;
+        }
+
+        static string GetContextUri(string activeDirectoryEndPoint, string tenantId)
+        {
+            if (!activeDirectoryEndPoint.EndsWith("/"))
             {
-                case SslPolicyErrors.None:
-                    return true;
-                case SslPolicyErrors.RemoteCertificateNameMismatch:
-                    log.Error(
-                        $"A certificate mismatch occurred. We have had reports previously of Azure using incorrect certificates for some Web App SCM sites, which seem to related to a known issue, a possible fix is documented in {log.FormatLink("https://g.octopushq.com/CertificateMismatch")}.");
-                    break;
+                return $"{activeDirectoryEndPoint}/{tenantId}";
+            }
+            return $"{activeDirectoryEndPoint}{tenantId}";
+        }
+
+
+        private async Task<(string Username, string Password)> GetPublishProfileCredsAsync(TargetSite targetSite, TokenCredentials tokenCredentials, ServicePrincipalAccount account, IVariables variables)
+        {
+
+            var mgmtEndpoint = account.ResourceManagementEndpointBaseUri;
+
+            var webAppClient = new WebSiteManagementClient(new Uri(mgmtEndpoint), tokenCredentials)
+                {SubscriptionId = account.SubscriptionNumber};
+
+            var options = new CsmPublishingProfileOptions {Format = "WebDeploy"};
+            var resourceGroup = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
+
+            await using var publishProfileStream = targetSite.HasSlot
+                ? await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(resourceGroup,
+                    targetSite.Site, options, targetSite.Slot)
+                : await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsAsync(resourceGroup, targetSite.Site,
+                    options);
+
+            using var streamReader = new StreamReader(publishProfileStream);
+            var document = XDocument.Parse(await streamReader.ReadToEndAsync());
+
+            var profile = (from el in document.Descendants("publishProfile")
+                where string.Compare(el.Attribute("publishMethod")?.Value, "MSDeploy", StringComparison.OrdinalIgnoreCase) == 0
+                select new
+                {
+                    PublishUrl = $"https://{el.Attribute("publishUrl")?.Value}",
+                    Username = el.Attribute("userName")?.Value,
+                    Password = el.Attribute("userPWD")?.Value,
+                    Site = el.Attribute("msdeploySite")?.Value
+                }).FirstOrDefault();
+
+            if (profile == null)
+            {
+                throw new Exception("Failed to retrieve publishing profile.");
             }
 
-            return false;
-        }
-
-        //private Task<WebDeployPublishSettings> GetWebDeployPublishProfile(WebSiteManagementClient webSiteClient, string resourceGroupName, string appName)
-        //{
-        //    var authSettings = webSiteClient.WebApps.GetAuthSettings(resourceGroupName, appName).;
-        //}
-
-        private async Task<AuthenticationResult> GetAuthToken(string clientId, string tenantId, string clientSecret)
-        {
-            var scopes = new[] {"https://graph.microsoft.com/.default"};
-            var app = ConfidentialClientApplicationBuilder.Create(clientId)
-                .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
-                .WithClientSecret(clientSecret)
-                .WithTenantId(tenantId)
-                .Build();
-
-            return await app.AcquireTokenForClient(scopes).ExecuteAsync();
+            return (profile.Username, profile.Password);
         }
     }
 }
