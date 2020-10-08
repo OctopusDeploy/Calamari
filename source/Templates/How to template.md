@@ -12,11 +12,11 @@ At any point, run ```dotnet new -u``` to see a list of installed templates and w
 
 For release versions:
 ```bash
-dotnet new -i Sashimi.Templates --nuget-source https://packages.octopushq.com/dependencies/nuget/index.json
+dotnet new -i Sashimi.Templates --nuget-source https://f.feedz.io/octopus-deploy/dependencies/nuget/index.json
 ```
 For pre-release versions (where the version is `8.1.1-branch0001`):
 ```bash
-dotnet new -i Sashimi.Templates::8.1.1-branch0001 --nuget-source https://packages.octopushq.com/dependencies/nuget/index.json
+dotnet new -i Sashimi.Templates::8.1.1-branch0001 --nuget-source https://f.feedz.io/octopus-deploy/dependencies/nuget/index.json
 ```
 
 ### Installing local templates (without packaging) for testing
