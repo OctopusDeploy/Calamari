@@ -23,7 +23,7 @@ var artifactsDir = "./artifacts/";
 var localPackagesDir = "../LocalPackages";
 var workingDir = "./working";
 var projectUrl = "https://github.com/OctopusDeploy/Sashimi/";
-var packagesFeed = "https://packages.octopushq.com/dependencies/nuget/index.json";
+var packagesFeed = "https://f.feedz.io/octopus-deploy/dependencies/nuget/index.json";
 
 string nugetVersion;
 GitVersion gitVersionInfo;
