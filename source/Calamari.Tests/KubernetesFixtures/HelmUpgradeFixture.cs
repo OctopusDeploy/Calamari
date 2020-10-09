@@ -36,7 +36,6 @@ namespace Calamari.Tests.KubernetesFixtures
         protected static readonly string ConfigMapName = "mychart-configmap-" + ReleaseName;
 
         protected const string Namespace = "calamari-testing";
-        const string ChartPackageName = "mychart-0.3.7.tgz";
 
         static string HelmOsPlatform => CalamariEnvironment.IsRunningOnWindows ? "windows-amd64" : "linux-amd64";
 
@@ -91,7 +90,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables = new VariablesFactory(FileSystem).Create(new CommonOptions("test"));
             Variables.Set(TentacleVariables.Agent.ApplicationDirectoryPath, StagingDirectory);
 
-            //Chart Pckage
+            //Chart Package
             Variables.Set(PackageVariables.PackageId, "mychart");
             Variables.Set(PackageVariables.PackageVersion, "0.3.7");
 
@@ -117,7 +116,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNon32BitWindows]
         [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
-        public void NoValues_EmbededValuesUsed()
+        public void NoValues_EmbeddedValuesUsed()
         {
             var result = DeployPackage();
 
@@ -125,7 +124,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             Assert.AreEqual("Hello Embedded Variables", result.CapturedOutput.OutputVariables["Message"]);
         }
-        
+
         [Test(Description = "Test the case where the package ID does not match the directory inside the helm archive.")]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -133,10 +132,11 @@ namespace Calamari.Tests.KubernetesFixtures
         [Category(TestCategory.PlatformAgnostic)]
         public void MismatchPackageIDAndHelmArchivePathWorks()
         {
+            var packageName = $"{Variables.Get(PackageVariables.PackageId)}-{Variables.Get(PackageVariables.PackageVersion)}.tgz";
             Variables.Set(PackageVariables.PackageId, "thisisnotamatch");
             Variables.Set(PackageVariables.PackageVersion, "0.3.7");
 
-            var result = DeployPackage();
+            var result = DeployPackage(packageName);
 
             result.AssertSuccess();
 
@@ -193,6 +193,21 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = DeployPackage();
             result.AssertSuccess();
             Assert.AreEqual("Hello I am in a secondary", result.CapturedOutput.OutputVariables["Message"]);
+        }
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void ValuesFromChartPackage_GetSubstituted()
+        {
+            Variables.Set(PackageVariables.PackageVersion, "0.3.8");
+            Variables.Set("SpecialMessage", "octostache is working");
+
+            var result = DeployPackage();
+            result.AssertSuccess();
+            Assert.AreEqual("Hello octostache is working", result.CapturedOutput.OutputVariables["Message"]);
         }
 
         [Test]
@@ -324,7 +339,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace +" -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
             var deleteCommand = DeleteCommand(@namespace, ReleaseName);
-            var script = "set_octopusvariable Message \"$("+ kubectlCmd +$")\"\n{HelmExePath} "+ deleteCommand;
+            var script = "set_octopusvariable Message \"$("+ kubectlCmd +$")\"\n{HelmExePath} " + deleteCommand;
             if (CalamariEnvironment.IsRunningOnWindows)
             {
                 syntax = ScriptSyntax.PowerShell;
@@ -348,11 +363,15 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        protected CalamariResult DeployPackage()
+        protected CalamariResult DeployPackage(string packageName = null)
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                var pkg = GetFixtureResource("Charts", ChartPackageName);
+                if (packageName == null)
+                {
+                    packageName = $"{Variables.Get(PackageVariables.PackageId)}-{Variables.Get(PackageVariables.PackageVersion)}.tgz";
+                }
+                var pkg = GetFixtureResource("Charts", packageName);
                 Variables.Save(variablesFile.FilePath);
 
                 return InvokeInProcess(Calamari()
