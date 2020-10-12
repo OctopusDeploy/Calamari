@@ -4,12 +4,16 @@ using Calamari.Commands;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Plumbing.Pipeline;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Scripting
 {
     [Command("run-script", Description = "Invokes a script")]
     public class RunScriptCommand : PipelineCommand
     {
+        protected override bool IncludeConfiguredScriptBehaviour => false;
+        protected override bool IncludePackagedScriptBehaviour => false;
+
         protected override IEnumerable<IBeforePackageExtractionBehaviour> BeforePackageExtraction(BeforePackageExtractionResolver resolver)
         {
             yield return resolver.Create<WriteVariablesToFileBehaviour>();

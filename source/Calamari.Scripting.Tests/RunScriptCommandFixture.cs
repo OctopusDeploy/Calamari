@@ -53,6 +53,48 @@ namespace Calamari.Scripting.Tests
         }
 
         [Test]
+        public Task ExecuteWithPackageAndParameters()
+        {
+            using var tempFolder = TemporaryDirectory.Create();
+            var psScript = @"
+param ($value)
+echo ""Hello $value"";";
+            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, "myscript.ps1"), psScript);
+
+            return CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
+                                     .WithArrange(context =>
+                                                  {
+                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Package);
+                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptFileName, "myscript.ps1");
+                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptParameters, "-value abc");
+                                                      context.WithFilesToCopy(tempFolder.DirectoryPath);
+                                                  })
+                                     .WithAssert(result => result.FullLog.Should().Contain("Hello abc"))
+                                     .Execute();
+        }
+
+        [Test]
+        public Task ExecuteWithPackageAndParametersDeployPs1()
+        {
+            using var tempFolder = TemporaryDirectory.Create();
+            var psScript = @"
+param ($value)
+echo ""Hello $value"";";
+            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, "deploy.ps1"), psScript);
+
+            return CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
+                                     .WithArrange(context =>
+                                                  {
+                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Package);
+                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptFileName, "deploy.ps1");
+                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptParameters, "-value abc");
+                                                      context.WithFilesToCopy(tempFolder.DirectoryPath);
+                                                  })
+                                     .WithAssert(result => result.FullLog.Should().Contain("Hello abc"))
+                                     .Execute();
+        }
+
+        [Test]
         public Task EnsureWhenScriptReturnsNonZeroCodeDeploymentFails()
         {
             using var tempFolder = TemporaryDirectory.Create();
@@ -74,9 +116,8 @@ namespace Calamari.Scripting.Tests
         public Task EnsureWhenInlineScriptFeatureReturnsNonZeroCodeDeploymentFails()
         {
             using var tempFolder = TemporaryDirectory.Create();
-            var psScript = "echo 'Hello'";
+            var psScript = "throw 'Error'";
             File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, "myscript.ps1"), psScript);
-            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, "PreDeploy.ps1"), "throw 'Error'");
 
             return CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                                      .WithArrange(context =>
