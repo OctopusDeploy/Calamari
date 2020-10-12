@@ -11,20 +11,14 @@ namespace Sashimi.Terraform.Tests
     [TestFixture]
     public class TerraformVariableFileGeneratorFixture
     {
+        const string HclOneVariables = "variable \"test\" {\n\ttype = \"string\"\n}\n\nvariable \"list\" {\n\ttype = \"list\"\n}\n\nvariable \"map\" {\n\ttype = \"map\"\n}";
+        const string HclTwoVariables = "variable \"test\" {\n\ttype = string\n}\n\nvariable \"list\" {\n\ttype = list\n}\n\nvariable \"map\" {\n\ttype = map\n}";
+
         [Test]
-        public void VerifyVariableFileGeneration()
+        [TestCase(HclOneVariables)]
+        [TestCase(HclTwoVariables)]
+        public void VerifyVariableFileGeneration(string template)
         {
-            var template = @"variable ""test"" {
-                type = ""string""
-            }
-
-            variable ""list"" {
-                type = ""list""
-            }
-
-            variable ""map"" {
-                type = ""map""
-            }";
             var metadata = new TerraformHclCloudTemplateHandler().ParseTypes(template);
             var variables = @"{""test"": ""string"", ""list"": ""[1]"", ""map"": ""{\""key\"": \""value\""}""}";
             var jsonVariables = TerraformVariableFileGenerator.ConvertStringPropsToObjects(
@@ -38,19 +32,10 @@ namespace Sashimi.Terraform.Tests
         }
 
         [Test]
-        public void VerifyVariableFileGenerationWithSubstitution()
+        [TestCase(HclOneVariables)]
+        [TestCase(HclTwoVariables)]
+        public void VerifyVariableFileGenerationWithSubstitution(string template)
         {
-            var template = @"variable ""test"" {
-                type = ""string""
-            }
-
-            variable ""list"" {
-                type = ""list""
-            }
-
-            variable ""map"" {
-                type = ""map""
-            }";
             var metadata = new TerraformHclCloudTemplateHandler().ParseTypes(template);
             var variables = @"{""test"": ""#{MyVariable}"", ""list"": ""#{MyList}"", ""map"": ""#{MyMap}""}";
             var jsonVariables = TerraformVariableFileGenerator.ConvertStringPropsToObjects(
@@ -66,19 +51,10 @@ namespace Sashimi.Terraform.Tests
         /// will eventually make up valid inputs
         /// </summary>
         [Test]
-        public void VerifyVariableFileGenerationWithSubstitution2()
+        [TestCase(HclOneVariables)]
+        [TestCase(HclTwoVariables)]
+        public void VerifyVariableFileGenerationWithSubstitution2(string template)
         {
-            var template = @"variable ""test"" {
-                type = ""string""
-            }
-
-            variable ""list"" {
-                type = ""list""
-            }
-
-            variable ""map"" {
-                type = ""map""
-            }";
             var metadata = new TerraformHclCloudTemplateHandler().ParseTypes(template);
             var variables = @"{""test"": ""#{MyVariable}"", ""list"": ""[#{MyListVariable}, 2, 3]"", ""map"": ""{\""key\"": #{MyMap}}""}";
             var jsonVariables = TerraformVariableFileGenerator.ConvertStringPropsToObjects(

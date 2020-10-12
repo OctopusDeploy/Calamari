@@ -17,6 +17,9 @@ namespace Sashimi.Terraform.Tests
     [TestFixture]
     public class TerraformValidatorFixture
     {
+        const string HclOneVariables = "variable \"test\" {\n\ttype = \"string\"\n}\n\nvariable \"list\" {\n\ttype = \"list\"\n}\n\nvariable \"map\" {\n\ttype = \"map\"\n}";
+        const string HclTwoVariables = "variable \"test\" {\n\ttype = string\n}\n\nvariable \"list\" {\n\ttype = list\n}\n\nvariable \"map\" {\n\ttype = map\n}";
+
         TerraformValidator? validator;
         IContainer? container;
 
@@ -72,22 +75,11 @@ namespace Sashimi.Terraform.Tests
             result.IsValid.Should().BeTrue();
         }
 
-        [Test]
-        [TestCase(TerraformActionTypes.Apply)]
-        [TestCase(TerraformActionTypes.Destroy)]
-        public void Should_have_error_when_inline_template_with_invalid_inline_variables(string actionType)
+        [Test, Combinatorial]
+        public void Should_have_error_when_inline_template_with_invalid_inline_variables(
+            [Values(TerraformActionTypes.Apply, TerraformActionTypes.Destroy)] string actionType,
+            [Values(HclOneVariables, HclTwoVariables)] string template)
         {
-            var template = @"variable ""test"" {
-                type = ""string""
-            }
-
-            variable ""list"" {
-                type = ""list""
-            }
-
-            variable ""map"" {
-                type = ""map""
-            }";
             var context = new DeploymentActionValidationContext(actionType,
                                                                 new Dictionary<string, string>
                                                                 {
@@ -106,22 +98,11 @@ namespace Sashimi.Terraform.Tests
             result.Errors.Should().ContainSingle().Which.PropertyName.Should().Be("Properties");
         }
 
-        [Test]
-        [TestCase(TerraformActionTypes.Apply)]
-        [TestCase(TerraformActionTypes.Destroy)]
-        public void Should_have_no_error_when_inline_template_with_valid_inline_variables(string actionType)
+        [Test, Combinatorial]
+        public void Should_have_no_error_when_inline_template_with_valid_inline_variables(
+            [Values(TerraformActionTypes.Apply, TerraformActionTypes.Destroy)] string actionType,
+            [Values(HclOneVariables, HclTwoVariables)] string template)
         {
-            var template = @"variable ""test"" {
-                type = ""string""
-            }
-
-            variable ""list"" {
-                type = ""list""
-            }
-
-            variable ""map"" {
-                type = ""map""
-            }";
             var context = new DeploymentActionValidationContext(actionType,
                                                                 new Dictionary<string, string>
                                                                 {

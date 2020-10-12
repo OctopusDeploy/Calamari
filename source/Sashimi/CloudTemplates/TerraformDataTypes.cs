@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Sashimi.Terraform.CloudTemplates
 {
@@ -15,13 +16,20 @@ namespace Sashimi.Terraform.CloudTemplates
         {
             { "string", "string" },
             { "list", RawList },
-            { "map", RawMap }
+            { "tuple", RawList },
+            { "set", RawList },
+            { "map", RawMap },
+            { "object", RawMap }
         };
 
-        public static string MapToType(string awsType)
+        public static string MapToType(string terraformType)
         {
-            if (awsType == null) return DefaultType;
-            return TypeMap.ContainsKey(awsType) ? TypeMap[awsType] : DefaultType;
+            if (terraformType == null) return DefaultType;
+
+            return TypeMap.Where(kv => terraformType.StartsWith(kv.Key))
+                   .Select(kv => kv.Value)
+                   .FirstOrDefault()
+                ?? DefaultType;
         }
     }
 }
