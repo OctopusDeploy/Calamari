@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
@@ -12,7 +13,7 @@ namespace Calamari.Common.Features.Behaviours
 {
     public class PackagedScriptBehaviour : PackagedScriptRunner, IBehaviour
     {
-        public PackagedScriptBehaviour(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
+        protected PackagedScriptBehaviour(ILog log, string scriptFilePrefix, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
             base(log, scriptFilePrefix, fileSystem, scriptEngine, commandLineRunner)
         {
         }
@@ -32,5 +33,26 @@ namespace Calamari.Common.Features.Behaviours
 
             return this.CompletedTask();
         }
+    }
+
+    public class PreDeployPackagedScriptBehaviour : PackagedScriptBehaviour, IPreDeployBehaviour
+    {
+        public PreDeployPackagedScriptBehaviour(ILog log, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
+            base(log, DeploymentStages.PreDeploy, fileSystem, scriptEngine, commandLineRunner)
+        { }
+    }
+
+    public class DeployPackagedScriptBehaviour : PackagedScriptBehaviour, IDeployBehaviour
+    {
+        public DeployPackagedScriptBehaviour(ILog log, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
+            base(log, DeploymentStages.Deploy, fileSystem, scriptEngine, commandLineRunner)
+        { }
+    }
+
+    public class PostDeployPackagedScriptBehaviour : PackagedScriptBehaviour, IPostDeployBehaviour
+    {
+        public PostDeployPackagedScriptBehaviour(ILog log, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner) :
+            base(log, DeploymentStages.PostDeploy, fileSystem, scriptEngine, commandLineRunner)
+        { }
     }
 }

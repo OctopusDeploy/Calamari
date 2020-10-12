@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Autofac;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
-using Calamari.Common.Features.Deployment;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -46,6 +45,9 @@ namespace Calamari.Common.Plumbing.Pipeline
         {
             return Enumerable.Empty<IOnFinishBehaviour>();
         }
+
+        protected virtual bool IncludePackagedScriptBehaviour { get; } = true;
+        protected virtual bool IncludeConfiguredScriptBehaviour { get; } = true;
 
         public async Task Execute(ILifetimeScope lifetimeScope, IVariables variables)
         {
@@ -101,8 +103,10 @@ namespace Calamari.Common.Plumbing.Pipeline
                 yield return ExecuteBehaviour(deployment, behaviour);
             }
 
-            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.PreDeploy)));
-            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.PreDeploy)));
+            foreach (var scriptBehaviour in MaybeIncludeBehaviours<PreDeployPackagedScriptBehaviour, PreDeployConfiguredScriptBehaviour>(lifetimeScope))
+            {
+                yield return ExecuteBehaviour(deployment, scriptBehaviour);
+            }
 
             foreach (var behaviour in PreDeploy(new PreDeployResolver(lifetimeScope)))
             {
@@ -113,8 +117,11 @@ namespace Calamari.Common.Plumbing.Pipeline
             yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfigurationTransformsBehaviour>());
             yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfigurationVariablesBehaviour>());
             yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<StructuredConfigurationVariablesBehaviour>());
-            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.Deploy)));
-            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.Deploy)));
+
+            foreach (var scriptBehaviour in MaybeIncludeBehaviours<DeployPackagedScriptBehaviour, DeployConfiguredScriptBehaviour>(lifetimeScope))
+            {
+                yield return ExecuteBehaviour(deployment, scriptBehaviour);
+            }
 
             foreach (var behaviour in Deploy(new DeployResolver(lifetimeScope)))
             {
@@ -126,12 +133,28 @@ namespace Calamari.Common.Plumbing.Pipeline
                 yield return ExecuteBehaviour(deployment, behaviour);
             }
 
-            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<PackagedScriptBehaviour>(new NamedParameter("scriptFilePrefix", DeploymentStages.PostDeploy)));
-            yield return ExecuteBehaviour(deployment, lifetimeScope.Resolve<ConfiguredScriptBehaviour>(new NamedParameter("deploymentStage", DeploymentStages.PostDeploy)));
-
+            foreach (var scriptBehaviour in MaybeIncludeBehaviours<PostDeployPackagedScriptBehaviour, PostDeployConfiguredScriptBehaviour>(lifetimeScope))
+            {
+                yield return ExecuteBehaviour(deployment, scriptBehaviour);
+            }
             foreach (var behaviour in OnFinish(new OnFinishResolver(lifetimeScope)))
             {
                 yield return ExecuteBehaviour(deployment, behaviour);
+            }
+        }
+
+        IEnumerable<IBehaviour> MaybeIncludeBehaviours<TPackagedScriptBehaviour, TConfiguredScriptBehaviour>(ILifetimeScope lifetimeScope)
+          where TPackagedScriptBehaviour : PackagedScriptBehaviour
+            where TConfiguredScriptBehaviour : ConfiguredScriptBehaviour
+        {
+            if (IncludePackagedScriptBehaviour)
+            {
+                yield return lifetimeScope.Resolve<TPackagedScriptBehaviour>();
+            }
+
+            if (IncludeConfiguredScriptBehaviour)
+            {
+                yield return lifetimeScope.Resolve<TConfiguredScriptBehaviour>();
             }
         }
 

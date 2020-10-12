@@ -105,7 +105,14 @@ namespace Calamari.Tests.Fixtures.Conventions
 
         private ConfiguredScriptConvention CreateConvention(string deployStage)
         {
-            return new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(deployStage, new InMemoryLog(), fileSystem, scriptEngine, commandLineRunner));
+            ConfiguredScriptBehaviour scriptBehaviour = null;
+            if (deployStage == DeploymentStages.PreDeploy)
+                scriptBehaviour = new PreDeployConfiguredScriptBehaviour(new InMemoryLog(), fileSystem, scriptEngine, commandLineRunner);
+            else if (deployStage == DeploymentStages.Deploy)
+                scriptBehaviour = new DeployConfiguredScriptBehaviour(new InMemoryLog(), fileSystem, scriptEngine, commandLineRunner);
+            else if (deployStage == DeploymentStages.PostDeploy)
+                scriptBehaviour = new PostDeployConfiguredScriptBehaviour(new InMemoryLog(), fileSystem, scriptEngine, commandLineRunner);
+            return new ConfiguredScriptConvention(scriptBehaviour);
         }
     }
 }

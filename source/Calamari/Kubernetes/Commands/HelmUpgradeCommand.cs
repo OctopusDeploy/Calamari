@@ -70,11 +70,11 @@ namespace Calamari.Kubernetes.Commands
             {
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
                 new StageScriptPackagesConvention(null, fileSystem, new CombinedPackageExtractor(log), true),
-                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.PreDeploy, log, fileSystem, scriptEngine, commandLineRunner)),
+                new ConfiguredScriptConvention(new PreDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d, FileTargetFactory().ToList())),
-                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.Deploy, log, fileSystem, scriptEngine, commandLineRunner)),
+                new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem),
-                new ConfiguredScriptConvention(new ConfiguredScriptBehaviour(DeploymentStages.PostDeploy, log, fileSystem, scriptEngine, commandLineRunner))
+                new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner))
             };
             var deployment = new RunningDeployment(pathToPackage, variables);
 
