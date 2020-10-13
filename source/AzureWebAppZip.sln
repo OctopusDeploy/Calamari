@@ -7,9 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sashimi", "Sashimi\Sashimi.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari", "Calamari\Calamari.csproj", "{3182DA11-80C3-4E39-A63A-3BA86DA30E1C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Tests", "Calamari.Tests\Calamari.Tests.csproj", "{FDC03BFB-596F-4783-B875-E09CC87E33B2}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Spike", "Spike\Spike\Spike.csproj", "{F7E47FBE-DDCF-4C66-915C-69B11D746178}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Tests", "Calamari.Tests\Calamari.Tests.csproj", "{FDC03BFB-596F-4783-B875-E09CC87E33B2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +27,6 @@ Global
 		{FDC03BFB-596F-4783-B875-E09CC87E33B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FDC03BFB-596F-4783-B875-E09CC87E33B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FDC03BFB-596F-4783-B875-E09CC87E33B2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F7E47FBE-DDCF-4C66-915C-69B11D746178}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F7E47FBE-DDCF-4C66-915C-69B11D746178}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F7E47FBE-DDCF-4C66-915C-69B11D746178}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F7E47FBE-DDCF-4C66-915C-69B11D746178}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
