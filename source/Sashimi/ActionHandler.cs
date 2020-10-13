@@ -5,7 +5,7 @@ using Sashimi.AzureWebAppZip.Endpoints;
 
 namespace Sashimi.AzureWebAppZip
 {
-    public class ActionHandler : IActionHandler
+    class ActionHandler : IActionHandler
     {
         public string Id => SpecialVariables.Action.Azure.WebAppActionTypeName;
 

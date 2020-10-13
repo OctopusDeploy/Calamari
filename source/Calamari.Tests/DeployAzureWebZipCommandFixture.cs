@@ -47,12 +47,12 @@ namespace Calamari.AzureWebAppZip.Tests
 
         }
 
-        [Test]
+        //[Test]
         public async Task Deploy_WebAppZip_Simple()
         {
             var tempPath = TemporaryDirectory.Create();
             new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
-            await File.WriteAllTextAsync(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"), "Hello World");
+            //await File.WriteAllTextAsync(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"), "Hello World");
             ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip");
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebAppZipCommand, Program>().WithArrange(context =>

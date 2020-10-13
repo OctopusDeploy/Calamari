@@ -4,8 +4,15 @@
     <AssemblyName>Calamari.AzureWebAppZip</AssemblyName>
     <RootNamespace>Calamari.AzureWebAppZip</RootNamespace>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
     <OutputType>Exe</OutputType>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+    <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
+    <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>

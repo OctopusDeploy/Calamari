@@ -89,11 +89,17 @@ namespace Calamari.AzureWebAppZip
             var options = new CsmPublishingProfileOptions {Format = "WebDeploy"};
             var resourceGroup = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
 
-            await using var publishProfileStream = targetSite.HasSlot
+            using var publishProfileStream = targetSite.HasSlot
                 ? await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(resourceGroup,
                     targetSite.Site, options, targetSite.Slot)
                 : await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsAsync(resourceGroup, targetSite.Site,
                     options);
+
+            //await using var publishProfileStream = targetSite.HasSlot
+            //    ? await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(resourceGroup,
+            //        targetSite.Site, options, targetSite.Slot)
+            //    : await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsAsync(resourceGroup, targetSite.Site,
+            //        options);
 
             using var streamReader = new StreamReader(publishProfileStream);
             var document = XDocument.Parse(await streamReader.ReadToEndAsync());
