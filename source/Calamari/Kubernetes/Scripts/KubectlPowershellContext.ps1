@@ -172,11 +172,11 @@ function SetupContext {
 		Write-Host "Creating kubectl context to AKS Cluster in resource group $K8S_Azure_Resource_Group called $K8S_Azure_Cluster (namespace $K8S_Namespace) using a AzureServicePrincipal"
 		if ([string]::IsNullOrEmpty($K8S_Azure_Admin) -or -not $K8S_Azure_Admin -ieq "true")
 		{
-			& az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG
+			& az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG --overwrite-existing
 		}
 		else
 		{
-			& az aks get-credentials --admin --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG
+			& az aks get-credentials --admin --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG --overwrite-existing
 		}
 		& $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace=$K8S_Namespace
 	} else {
