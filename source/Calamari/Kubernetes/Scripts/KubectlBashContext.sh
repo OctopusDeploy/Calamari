@@ -67,7 +67,7 @@ function connect_az_account {
 
 function setup_context {
   if [[ "$Octopus_AccountType" != "AzureServicePrincipal" && -z $Octopus_K8S_ClusterUrl ]]; then
-    echo >&2 "Kubernetes cluster URL is missing"    
+    echo >&2 "Kubernetes cluster URL is missing"
     exit 1
   fi
 
@@ -101,46 +101,51 @@ function setup_context {
     connect_az_account
     K8S_Azure_Resource_Group=$(get_octopusvariable "Octopus.Action.Kubernetes.AksClusterResourceGroup")
     K8S_Azure_Cluster=$(get_octopusvariable "Octopus.Action.Kubernetes.AksClusterName")
+    K8S_Azure_Admin=$(get_octopusvariable "Octopus.Action.Kubernetes.AksAdminLogin")
     echo "Creating kubectl context to AKS Cluster in resource group $K8S_Azure_Resource_Group called $K8S_Azure_Cluster (namespace $Octopus_K8S_Namespace) using a AzureServicePrincipal"
-    az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $KUBECONFIG
+    if [[ -z $K8S_Azure_Admin || ${K8S_Azure_Admin,,} != "true" ]]; then
+      az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $KUBECONFIG --overwrite-existing
+    else
+      az aks get-credentials --admin --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $KUBECONFIG --overwrite-existing
+    fi
     kubectl config set-context $K8S_Azure_Cluster --namespace=$Octopus_K8S_Namespace
   else
     kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl
     kubectl config set-context octocontext --user=octouser --cluster=octocluster --namespace=$Octopus_K8S_Namespace
     kubectl config use-context octocontext
-    
+
     if [[ ! -z $Octopus_K8S_Client_Cert ]]; then
     if [[ -z $Octopus_K8S_Client_Cert_Pem ]]; then
       echo 2> "Kubernetes client certificate does not include the certificate data"
       exit 1
     fi
-    
+
     if [[ -z $Octopus_K8S_Client_Cert_Key ]]; then
       echo 2> "Kubernetes client certificate does not include the private key data"
       exit 1
     fi
-    
-    Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Client_Cert_Pem" | base64 $base64_args) 
+
+    Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Client_Cert_Pem" | base64 $base64_args)
     Octopus_K8S_Client_Cert_Key_Encoded=$(echo "$Octopus_K8S_Client_Cert_Key" | base64 $base64_args)
-    
+
     set_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPemBase64" $Octopus_K8S_Client_Cert_Key_Encoded -sensitive
-    
+
     kubectl config set users.octouser.client-certificate-data "$Octopus_K8S_Client_Cert_Pem_Encoded"
     kubectl config set users.octouser.client-key-data "$Octopus_K8S_Client_Cert_Key_Encoded"
     fi
-    
+
     if [[ ! -z $Octopus_K8S_Server_Cert ]]; then
     if [[ -z $Octopus_K8S_Server_Cert_Pem ]]; then
       echo 2> "Kubernetes server certificate does not include the certificate data"
       exit 1
     fi
-    
+
     Octopus_K8S_Server_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Server_Cert_Pem" | base64 $base64_args)
     kubectl config set clusters.octocluster.certificate-authority-data "$Octopus_K8S_Server_Cert_Pem_Encoded"
     else
     kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification
     fi
-    
+
     if [[ "$Octopus_AccountType" == "Token" ]]; then
     Octopus_K8S_Token=$(get_octopusvariable "Octopus.Account.Token")
     echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using a Token"
