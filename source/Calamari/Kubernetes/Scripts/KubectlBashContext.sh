@@ -104,9 +104,9 @@ function setup_context {
     K8S_Azure_Admin=$(get_octopusvariable "Octopus.Action.Kubernetes.AksAdminLogin")
     echo "Creating kubectl context to AKS Cluster in resource group $K8S_Azure_Resource_Group called $K8S_Azure_Cluster (namespace $Octopus_K8S_Namespace) using a AzureServicePrincipal"
     if [[ -z $K8S_Azure_Admin || ${K8S_Azure_Admin,,} != "true" ]]; then
-      az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $KUBECONFIG
+      az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $KUBECONFIG --overwrite-existing
     else
-      az aks get-credentials --admin --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $KUBECONFIG
+      az aks get-credentials --admin --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $KUBECONFIG --overwrite-existing
     fi
     kubectl config set-context $K8S_Azure_Cluster --namespace=$Octopus_K8S_Namespace
   else
