@@ -7,6 +7,6 @@ namespace Sashimi.AzureWebAppZip
     static class AzureConstants
     {
         public static readonly ActionHandlerCategory AzureActionHandlerCategory = new ActionHandlerCategory("Azure", "Azure", 600);
-        public static CalamariFlavour CalamariAzure = new CalamariFlavour("Calamari.AzureWebApp");
+        public static CalamariFlavour CalamariAzure = new CalamariFlavour("Calamari.AzureWebAppZip");
     }
 }
