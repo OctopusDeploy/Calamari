@@ -1,5 +1,6 @@
 function New-MyFunc([string] $mystring, [switch] $myboolean, [int] $mynumber)
 {
+	$parameters = ""
 	$tempParameter = Convert-ToServiceMessageParameter -name "mystring" -value $mystring
 	$parameters = $parameters, $tempParameter -join ' '
 	$tempParameter = Convert-ToServiceMessageParameter -name "myboolean" -value $myboolean
@@ -11,6 +12,7 @@ function New-MyFunc([string] $mystring, [switch] $myboolean, [int] $mynumber)
 
 function New-MyFunc2([string] $mystring, [switch] $myboolean, [int] $mynumber)
 {
+	$parameters = ""
 	if ($myboolean -eq $true)
 	{
 		$tempParameter = Convert-ToServiceMessageParameter -name "mystring" -value $mystring
