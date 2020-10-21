@@ -49,6 +49,7 @@ namespace Calamari.Common.Features.FunctionScriptContributions
 
                 TabIndentedAppendLine(")");
                 TabIndentedAppendLine("{");
+                TabIndentedAppendLine("$parameters = \"\"");
 
                 foreach (var pair in registration.Parameters)
                 {
