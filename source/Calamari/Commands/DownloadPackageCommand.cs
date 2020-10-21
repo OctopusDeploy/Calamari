@@ -166,7 +166,7 @@ namespace Calamari.Commands
             version = VersionFactory.TryCreateVersion(packageVersion, versionFormat);
             if (version == null)
             {
-                throw new CommandException($"Package version '{packageVersion}' specified is not a valid version string");
+                throw new CommandException($"Package version '{packageVersion}' specified is not a valid {versionFormat.ToString()} version string");
             }
 
             if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))
