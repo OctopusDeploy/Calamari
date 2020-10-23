@@ -4,7 +4,6 @@ using System.Linq;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Deployment.Retention;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Time;
 using NSubstitute;
 using NUnit.Framework;
@@ -21,9 +20,13 @@ namespace Calamari.Tests.Fixtures.Retention
         DateTimeOffset now;
 
         const string policySet1 = "policySet1";
-        JournalEntry fourDayOldDeployment;
-        JournalEntry threeDayOldDeployment;
-        JournalEntry twoDayOldDeployment;
+        JournalEntry sevenDayOldSuccessfulDeployment;
+        JournalEntry sevenDayOldUnsuccessfulDeployment;
+        JournalEntry sixDayOldSuccessfulDeployment;
+        JournalEntry fiveDayOldUnsuccessfulDeployment;
+        JournalEntry fourDayOldSuccessfulDeployment;
+        JournalEntry threeDayOldSuccessfulDeployment;
+        JournalEntry twoDayOldSuccessfulDeployment;
         JournalEntry oneDayOldUnsuccessfulDeployment;
         JournalEntry fourDayOldSameLocationDeployment;
         JournalEntry fourDayOldMultiPackageDeployment;
@@ -47,8 +50,26 @@ namespace Calamari.Tests.Fixtures.Retention
             now = new DateTimeOffset(new DateTime(2015, 01, 15), new TimeSpan(0, 0, 0));
             clock.GetUtcTime().Returns(now);
 
+            // Deployed 7 days prior to 'now'
+            sevenDayOldSuccessfulDeployment = new JournalEntry("sevenDayOldSuccessful", "blah", "blah", "blah", policySet1,
+                                                             now.AddDays(-7).LocalDateTime, "C:\\Applications\\Acme.0.0.7", null, true,
+                                                             new DeployedPackage("blah", "blah", "C:\\packages\\Acme.0.0.7.nupkg"));
+            sevenDayOldUnsuccessfulDeployment = new JournalEntry("sevenDayOldUnsuccessful", "blah", "blah", "blah", policySet1,
+                                                               now.AddDays(-7).LocalDateTime, "C:\\Applications\\Acme.0.0.7", null, false,
+                                                               new DeployedPackage("blah", "blah", "C:\\packages\\Acme.0.0.7.nupkg"));
+
+            // Deployed 6 days prior to 'now'
+            sixDayOldSuccessfulDeployment = new JournalEntry("sixDayOldSuccessful", "blah", "blah", "blah", policySet1,
+                                                                now.AddDays(-6).LocalDateTime, "C:\\Applications\\Acme.0.0.8", null, true,
+                                                                new DeployedPackage("blah", "blah", "C:\\packages\\Acme.0.0.8.nupkg"));
+
+            // Deployed 5 days prior to 'now'
+            fiveDayOldUnsuccessfulDeployment = new JournalEntry("fiveDayOldUnsuccessful", "blah", "blah", "blah", policySet1,
+                                                          now.AddDays(-5).LocalDateTime, "C:\\Applications\\Acme.0.0.9", null, false,
+                                                          new DeployedPackage("blah", "blah", "C:\\packages\\Acme.0.0.9.nupkg"));
+
             // Deployed 4 days prior to 'now'
-            fourDayOldDeployment = new JournalEntry("fourDayOld", "blah", "blah", "blah", policySet1,
+            fourDayOldSuccessfulDeployment = new JournalEntry("fourDayOldSuccessful", "blah", "blah", "blah", policySet1,
                 now.AddDays(-4).LocalDateTime, "C:\\Applications\\Acme.1.0.0", null, true,
                 new DeployedPackage("blah", "blah", "C:\\packages\\Acme.1.0.0.nupkg"));
 
@@ -58,12 +79,12 @@ namespace Calamari.Tests.Fixtures.Retention
                 new DeployedPackage("blah", "blah", "C:\\packages\\Acme.1.2.0.nupkg"));
 
             // Deployed 3 days prior to 'now'
-            threeDayOldDeployment = new JournalEntry("threeDayOld", "blah", "blah", "blah", policySet1,
-                now.AddDays(-3).LocalDateTime, "C:\\Applications\\Acme.1.1.0", null, true,
-                new DeployedPackage("blah", "blah", "C:\\packages\\Acme.1.1.0.nupkg"));
+            threeDayOldSuccessfulDeployment = new JournalEntry("threeDayOldSuccessful", "blah", "blah", "blah", policySet1,
+                                                               now.AddDays(-3).LocalDateTime, "C:\\Applications\\Acme.1.1.0", null, true,
+                                                               new DeployedPackage("blah", "blah", "C:\\packages\\Acme.1.1.0.nupkg"));
 
             // Deployed 2 days prior to 'now'
-            twoDayOldDeployment = new JournalEntry("twoDayOld", "blah", "blah", "blah", policySet1,
+            twoDayOldSuccessfulDeployment = new JournalEntry("twoDayOldSuccessful", "blah", "blah", "blah", policySet1,
                 now.AddDays(-2).LocalDateTime, "C:\\Applications\\Acme.1.2.0", null, true,
                 new DeployedPackage("blah", "blah", "C:\\packages\\Acme.1.2.0.nupkg"));
 
@@ -117,10 +138,14 @@ namespace Calamari.Tests.Fixtures.Retention
 
             var journalEntries = new List<JournalEntry>
             {
+                sevenDayOldUnsuccessfulDeployment,
+                sevenDayOldSuccessfulDeployment,
+                sixDayOldSuccessfulDeployment,
+                fiveDayOldUnsuccessfulDeployment,
                 fiveDayOldNonMatchingDeployment,
-                fourDayOldDeployment,
-                threeDayOldDeployment,
-                twoDayOldDeployment,
+                fourDayOldSuccessfulDeployment,
+                threeDayOldSuccessfulDeployment,
+                twoDayOldSuccessfulDeployment,
                 oneDayOldUnsuccessfulDeployment,
                 fourDayOldMultiPackageDeployment,
                 twoDayOldMultiPackageDeployment,
@@ -142,15 +167,14 @@ namespace Calamari.Tests.Fixtures.Retention
 
         }
 
-
         [Test]
         public void ShouldNotDeleteDirectoryWhereRetainedDeployedToSame()
         {
             var journalEntries = new List<JournalEntry>
             {
-                fourDayOldDeployment,
+                fourDayOldSuccessfulDeployment,
                 fourDayOldSameLocationDeployment,
-                twoDayOldDeployment,
+                twoDayOldSuccessfulDeployment,
             };
             deploymentJournal.GetAllJournalEntries().Returns(journalEntries);
             fileSystem.FileExists(fourDayOldSameLocationDeployment.Package.DeployedFrom).Returns(true);
@@ -160,7 +184,7 @@ namespace Calamari.Tests.Fixtures.Retention
             retentionPolicy.ApplyRetentionPolicy(policySet1, days, null);
 
             // Ensure the directories are the same
-            Assert.AreEqual(twoDayOldDeployment.ExtractedTo, fourDayOldSameLocationDeployment.ExtractedTo);
+            Assert.AreEqual(twoDayOldSuccessfulDeployment.ExtractedTo, fourDayOldSameLocationDeployment.ExtractedTo);
             
             // The old directory was not removed...
             fileSystem.DidNotReceive().DeleteDirectory(Arg.Is<string>(s => s.Equals(fourDayOldSameLocationDeployment.ExtractedTo)));
@@ -169,47 +193,118 @@ namespace Calamari.Tests.Fixtures.Retention
             deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Contains(fourDayOldSameLocationDeployment.Id)));
 
             // and unique directory still removed
-            fileSystem.Received().DeleteDirectory(Arg.Is<string>(s => s.Equals(fourDayOldDeployment.ExtractedTo)));
+            fileSystem.Received().DeleteDirectory(Arg.Is<string>(s => s.Equals(fourDayOldSuccessfulDeployment.ExtractedTo)));
 
         }
 
         [Test]
         public void ShouldKeepDeploymentsForSpecifiedDays()
         {
-            const int days = 3;
+            deploymentJournal.GetAllJournalEntries().Returns(new List<JournalEntry>
+            {
+                fourDayOldSuccessfulDeployment,
+                threeDayOldSuccessfulDeployment,
+                twoDayOldSuccessfulDeployment,
+                oneDayOldUnsuccessfulDeployment,
+                fourDayOldMultiPackageDeployment,
+                twoDayOldMultiPackageDeployment,
+                fiveDayOldDeploymentWithPackageThatWasNotAcquired
+            });
 
-            retentionPolicy.ApplyRetentionPolicy(policySet1, days, null);
+            retentionPolicy.ApplyRetentionPolicy(policySet1, 3, null);
 
             // The older artifacts should have been removed
-            fileSystem.Received().DeleteDirectory(fourDayOldDeployment.ExtractedTo);
-            fileSystem.Received().DeleteFile(fourDayOldDeployment.Package.DeployedFrom, Arg.Any<FailureOptions>());
+            fileSystem.Received().DeleteDirectory(fourDayOldSuccessfulDeployment.ExtractedTo);
+            fileSystem.Received().DeleteFile(fourDayOldSuccessfulDeployment.Package.DeployedFrom, Arg.Any<FailureOptions>());
 
             // The newer artifacts, and those from the non-matching policy-set, should have been kept
             // In other words, nothing but the matching deployment should have been removed
-            fileSystem.DidNotReceive().DeleteDirectory(Arg.Is<string>(s => !s.Equals(fourDayOldDeployment.ExtractedTo)));
-            fileSystem.DidNotReceive().DeleteFile(Arg.Is<string>(s => !s.Equals(fourDayOldDeployment.Package.DeployedFrom)), Arg.Any<FailureOptions>());
+            fileSystem.DidNotReceive().DeleteDirectory(Arg.Is<string>(s => !s.Equals(fourDayOldSuccessfulDeployment.ExtractedTo)));
+            fileSystem.DidNotReceive().DeleteFile(Arg.Is<string>(s => !s.Equals(fourDayOldSuccessfulDeployment.Package.DeployedFrom)), Arg.Any<FailureOptions>());
 
             // The older entry should have been removed from the journal
-            deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Count() == 1 && ids.Contains(fourDayOldDeployment.Id)));
+            deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Count() == 1 && ids.Contains(fourDayOldSuccessfulDeployment.Id)));
         }
 
         [Test]
         public void ShouldKeepSpecifiedNumberOfDeployments()
         {
+            var deploymentsExpectedToKeep = new List<JournalEntry>
+            {
+                twoDayOldSuccessfulDeployment,
+                sixDayOldSuccessfulDeployment,
+                fiveDayOldNonMatchingDeployment // Non-matching
+            };
+            var deploymentsExpectedToRemove = new List<JournalEntry>
+            {
+                fiveDayOldUnsuccessfulDeployment,
+                sevenDayOldUnsuccessfulDeployment,
+                sevenDayOldSuccessfulDeployment
+            };
+            deploymentJournal.GetAllJournalEntries().Returns(deploymentsExpectedToKeep.Concat(deploymentsExpectedToRemove).ToList());
+
             // Keep 1 (+ the current) deployment
             // This will not count the unsuccessful deployment
             retentionPolicy.ApplyRetentionPolicy(policySet1, null, 1);
 
-            fileSystem.Received().DeleteDirectory(fourDayOldDeployment.ExtractedTo);
-            fileSystem.Received().DeleteFile(fourDayOldDeployment.Package.DeployedFrom, Arg.Any<FailureOptions>());
+            foreach (var deployment in deploymentsExpectedToRemove)
+            {
+                fileSystem.Received().DeleteDirectory(deployment.ExtractedTo);
+                fileSystem.Received().DeleteFile(deployment.Package.DeployedFrom, Arg.Any<FailureOptions>());
+            }
 
             // The newer artifacts, and those from the non-matching policy-set, should have been kept
             // In other words, nothing but the matching deployment should have been removed
-            fileSystem.DidNotReceive().DeleteDirectory(Arg.Is<string>(s => !s.Equals(fourDayOldDeployment.ExtractedTo)));
-            fileSystem.DidNotReceive().DeleteFile(Arg.Is<string>(s => !s.Equals(fourDayOldDeployment.Package.DeployedFrom)), Arg.Any<FailureOptions>());
+
+            foreach (var deployment in deploymentsExpectedToKeep)
+            {
+                fileSystem.DidNotReceive().DeleteDirectory(deployment.ExtractedTo);
+                fileSystem.DidNotReceive().DeleteFile(deployment.Package.DeployedFrom, Arg.Any<FailureOptions>());
+            }
 
             // The older entry should have been removed from the journal
-            deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Count() == 1 && ids.Contains(fourDayOldDeployment.Id)));
+            deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.All(id => deploymentsExpectedToRemove.Any(d => d.Id == id))));
+        }
+
+        [Test]
+        public void ShouldNotDeleteDirectoryWhenItIsPreserved()
+        {
+            var journalEntries = new List<JournalEntry>
+            {
+                twoDayOldSuccessfulDeployment,
+                sevenDayOldUnsuccessfulDeployment,
+                sevenDayOldSuccessfulDeployment
+            };
+            deploymentJournal.GetAllJournalEntries().Returns(journalEntries);
+
+            // Keep 1 (+ the current) deployment
+            // This will not count the unsuccessful deployment
+            retentionPolicy.ApplyRetentionPolicy(policySet1, null, 1);
+
+            fileSystem.DidNotReceive().DeleteDirectory(sevenDayOldUnsuccessfulDeployment.ExtractedTo);
+            fileSystem.DidNotReceive().DeleteFile(sevenDayOldUnsuccessfulDeployment.Package.DeployedFrom, Arg.Any<FailureOptions>());
+
+            deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Contains(sevenDayOldUnsuccessfulDeployment.Id)));
+        }
+
+        [Test]
+        public void ShouldNotDeleteAnythingWhenSpecifiedNumberOfSuccessfulDeploymentsNotMet()
+        {
+            var journalEntries = new List<JournalEntry>
+            {
+                twoDayOldSuccessfulDeployment,
+                oneDayOldUnsuccessfulDeployment,
+            };
+            deploymentJournal.GetAllJournalEntries().Returns(journalEntries);
+
+            // Keep 1 (+ the current) deployment
+            // This will not count the unsuccessful deployment
+            retentionPolicy.ApplyRetentionPolicy(policySet1, null, 1);
+
+            fileSystem.DidNotReceive().DeleteDirectory(Arg.Any<string>());
+            fileSystem.DidNotReceive().DeleteFile(Arg.Any<string>(), Arg.Any<FailureOptions>());
+
+            deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => !ids.Any()));
         }
 
         [Test]
