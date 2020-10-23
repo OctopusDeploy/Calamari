@@ -7,7 +7,6 @@ using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -109,7 +108,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             return Invoke(Calamari()
                 .Action("clean")
                 .Argument("retentionPolicySet", retentionPolicySet)
-                .Argument(days.HasValue ? "days" : "releases", days.HasValue ? days.ToString() : releases.ToString()));
+                .Argument(days.HasValue ? "days" : "deployments", days.HasValue ? days.ToString() : releases.ToString()));
         }
     }
 }
