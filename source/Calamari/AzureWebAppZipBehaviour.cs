@@ -54,6 +54,7 @@ namespace Calamari.AzureWebAppZip
 
             var uploadZipPath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
             Log.Verbose($"Path to upload: {uploadZipPath}");
+            Log.Verbose($"Target Site: {targetSite.Site}");
 
             try
             {
