@@ -45,16 +45,25 @@ namespace Calamari.AzureWebAppZip
                 variables.Get(SpecialVariables.Action.Azure.WebAppSlot));
 
             var token = await GetAuthTokenAsync(principalAccount);
+            Log.Verbose($"Token: {token}");
             var creds = await GetPublishProfileCredsAsync(targetSite, new TokenCredentials(token), principalAccount,
                 variables);
 
+            Log.Verbose($"UN: {creds.Username}\nPWD: {creds.Password}");
+
             var credential = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{creds.Username}:{creds.Password}"));
+
+            Log.Verbose($"Base64 Cred: {credential}");
+
             var client2 = new HttpClient();
             client2.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", credential);
 
             var uploadZipPath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
             Log.Verbose($"Path to upload: {uploadZipPath}");
             Log.Verbose($"Target Site: {targetSite.Site}");
+
+            if (!new FileInfo(uploadZipPath).Exists)
+                throw new FileNotFoundException(uploadZipPath);
 
             try
             {
