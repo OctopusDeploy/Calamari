@@ -26,6 +26,7 @@ namespace Calamari.Commands
             this.fileSystem = fileSystem;
             Options.Add("retentionPolicySet=", "The release-policy-set ID", x => retentionPolicySet = x);
             Options.Add("days=", "Number of days to keep artifacts", x => int.TryParse(x, out days));
+            //TODO: rename 'releases' to 'deployments' here 
             Options.Add("releases=", "Number of releases to keep artifacts for", x => int.TryParse(x, out releases));
         }
 

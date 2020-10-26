@@ -11,7 +11,7 @@ namespace Calamari.Deployment.Retention
 {
     public class RetentionPolicy : IRetentionPolicy
     {
-        private static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
+        static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         readonly ICalamariFileSystem fileSystem;
         readonly IDeploymentJournal deploymentJournal;
         readonly IClock clock;
@@ -23,43 +23,45 @@ namespace Calamari.Deployment.Retention
             this.clock = clock;
         }
 
-        public void ApplyRetentionPolicy(string retentionPolicySet, int? days, int? releases)
+        public void ApplyRetentionPolicy(string retentionPolicySet, int? daysToKeep, int? successfulDeploymentsToKeep)
         {
-            var deployments = deploymentJournal
+            var deploymentsToDelete = deploymentJournal
                 .GetAllJournalEntries()
                 .Where(x => x.RetentionPolicySet == retentionPolicySet)
                 .ToList();
             var preservedEntries = new List<JournalEntry>();
 
-            if (days.HasValue && days.Value > 0)
+            if (daysToKeep.HasValue && daysToKeep.Value > 0)
             {
-                Log.Info($"Keeping deployments from the last {days} days");
-                deployments = deployments
-                    .Where(InstalledBeforePolicyDayCutoff(days.Value, preservedEntries))
+                Log.Info($"Keeping deployments from the last {daysToKeep} days");
+                deploymentsToDelete = deploymentsToDelete
+                    .Where(InstalledBeforePolicyDayCutoff(daysToKeep.Value, preservedEntries))
                     .ToList();
             }
-            else if (releases.HasValue && releases.Value > 0)
+            else if (successfulDeploymentsToKeep.HasValue && successfulDeploymentsToKeep.Value > 0)
             {
-                Log.Info($"Keeping this deployment and the previous {releases} successful deployments");
-                // Keep the current release, plus specified releases value
-                // Unsuccessful releases are not included in the count of releases to keep
-                deployments = deployments
-                    .OrderByDescending(deployment => deployment.InstalledOn)
-                    .SkipWhile(SuccessfulCountLessThanPolicyCount(releases.Value, preservedEntries))
-                    .ToList();
+                Log.Info($"Keeping this deployment and the previous {successfulDeploymentsToKeep} successful deployments");
+                // Keep the current deployment, plus specified deployment value
+                // Unsuccessful deployments are not included in the count of deployment to keep
+
+                deploymentsToDelete = deploymentsToDelete
+                              .OrderByDescending(deployment => deployment.InstalledOn)
+                              .Where(SuccessfulCountGreaterThanPolicyCountOrDeployedUnsuccessfully(successfulDeploymentsToKeep.Value, preservedEntries))
+                              .ToList();
+                if (preservedEntries.Count <= successfulDeploymentsToKeep) deploymentsToDelete = new List<JournalEntry>();
             }
             else
             {
-                Log.Info($"Keeping all releases");
+                Log.Info("Keeping all deployments");
                 return;
             }
 
-            if (!deployments.Any())
+            if (!deploymentsToDelete.Any())
             {
                 Log.Info("Did not find any deployments to clean up");
             }
 
-            foreach (var deployment in deployments)
+            foreach (var deployment in deploymentsToDelete)
             {
                 DeleteExtractionDestination(deployment, preservedEntries);
 
@@ -68,7 +70,7 @@ namespace Calamari.Deployment.Retention
                     DeleteExtractionSource(package, preservedEntries);
                 }
             }
-            deploymentJournal.RemoveJournalEntries(deployments.Select(x => x.Id));
+            deploymentJournal.RemoveJournalEntries(deploymentsToDelete.Select(x => x.Id));
 
             RemovedFailedPackageDownloads();
         }
@@ -105,27 +107,25 @@ namespace Calamari.Deployment.Retention
             }
         }
 
-        static Func<JournalEntry, bool> SuccessfulCountLessThanPolicyCount(int releases, List<JournalEntry> preservedEntries)
+        static Func<JournalEntry, bool> SuccessfulCountGreaterThanPolicyCountOrDeployedUnsuccessfully(int successfulDeploymentsToKeep, List<JournalEntry> preservedEntries)
         {
             return journalEntry =>
             {
-                if (preservedEntries.Count() > releases)
-                {
-                    return false;
-                }
-
-                if (journalEntry.WasSuccessful)
+                if (journalEntry.WasSuccessful && preservedEntries.Count <= successfulDeploymentsToKeep)
                 {
                     preservedEntries.Add(journalEntry);
-                    
+
                     var preservedDirectories = (!string.IsNullOrEmpty(journalEntry.ExtractedTo)
-                            ? new List<string> {journalEntry.ExtractedTo}
+                            ? new List<string> { journalEntry.ExtractedTo }
                             : new List<string>())
                         .Concat(journalEntry.Packages.Select(p => p.DeployedFrom).Where(d => !string.IsNullOrEmpty(d)))
                         .ToList();
-                    
+
                     Log.Verbose($"Keeping {FormatList(preservedDirectories)} as it is the {FormatWithThPostfix(preservedEntries.Count)}most recent successful release");
+
+                    return false;
                 }
+
                 return true;
             };
         }
@@ -140,9 +140,9 @@ namespace Calamari.Deployment.Retention
                     return false;
                 if (installedAgo?.TotalDays > days)
                     return true;
-                
+
                 var preservedDirectories = (!string.IsNullOrEmpty(journalEntry.ExtractedTo)
-                        ? new List<string> {journalEntry.ExtractedTo}
+                        ? new List<string> { journalEntry.ExtractedTo }
                         : new List<string>())
                     .Concat(journalEntry.Packages.Select(p => p.DeployedFrom).Where(p => !string.IsNullOrEmpty(p)))
                     .ToList();
@@ -153,7 +153,7 @@ namespace Calamari.Deployment.Retention
                 return false;
             };
         }
-        
+
         static string FormatList(IList<string> items)
         {
             if (items.Count <= 1)
@@ -183,7 +183,7 @@ namespace Calamari.Deployment.Retention
             }
         }
 
-        private void RemovedFailedPackageDownloads()
+        void RemovedFailedPackageDownloads()
         {
             var pattern = "*" + NuGetPackageDownloader.DownloadingExtension;
 
