@@ -58,8 +58,10 @@ namespace Calamari.AzureWebAppZip
 
             try
             {
+                Log.Verbose($@"Publishing {targetSite} to https://{targetSite.Site}.scm.azurewebsites.net/api/zipdeploy");
                 await client2.PostAsync($@"https://{targetSite.Site}.scm.azurewebsites.net/api/zipdeploy",
                     new StreamContent(new FileStream(uploadZipPath, FileMode.Open)));
+                Log.Verbose("Finished deploying");
             }
             catch (Exception ex)
             {
