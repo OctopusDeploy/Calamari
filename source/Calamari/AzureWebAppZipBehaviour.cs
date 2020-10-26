@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Calamari.Azure;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.WebSites;
@@ -21,6 +22,13 @@ namespace Calamari.AzureWebAppZip
 {
     class AzureWebAppZipBehaviour : IDeployBehaviour
     {
+        private ILog Log { get; }
+
+        public AzureWebAppZipBehaviour(ILog log)
+        {
+            Log = log;
+        }
+
         public bool IsEnabled(RunningDeployment context)
         {
             return true;
@@ -28,6 +36,7 @@ namespace Calamari.AzureWebAppZip
 
         public async Task Execute(RunningDeployment context)
         {
+            Log.Verbose("Starting ZipDeploy");
             var variables = context.Variables;
             var principalAccount = new ServicePrincipalAccount(variables);
 
@@ -44,6 +53,8 @@ namespace Calamari.AzureWebAppZip
             client2.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", credential);
 
             var uploadZipPath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
+            Log.Verbose($"Path to upload: {uploadZipPath}");
+
             try
             {
                 await client2.PostAsync($@"https://{targetSite.Site}.scm.azurewebsites.net/api/zipdeploy",
