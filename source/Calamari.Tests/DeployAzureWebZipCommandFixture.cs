@@ -32,7 +32,7 @@ namespace Calamari.AzureWebAppZip.Tests
             clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-            resourceGroupName = SdkContext.RandomResourceName(nameof(DeployAzureWebZipCommandFixture), 60);
+            //resourceGroupName = SdkContext.RandomResourceName(nameof(DeployAzureWebZipCommandFixture), 60);
 
             var credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(clientId, clientSecret, tenantId,
                 AzureEnvironment.AzureGlobalCloud);
@@ -47,7 +47,7 @@ namespace Calamari.AzureWebAppZip.Tests
 
         }
 
-        [Test]
+        //[Test]
         public async Task Deploy_WebAppZip_Simple()
         {
             var tempPath = TemporaryDirectory.Create();
