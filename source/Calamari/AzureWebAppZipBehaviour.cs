@@ -56,7 +56,8 @@ namespace Calamari.AzureWebAppZip
             Log.Verbose($"Base64 Cred: {credential}");
 
             var client2 = new HttpClient();
-            client2.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", credential);
+            client2.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);
+            client2.DefaultRequestHeaders.Add("contentType","application/zip");
 
             var uploadZipPath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
             Log.Verbose($"Path to upload: {uploadZipPath}");
@@ -68,7 +69,7 @@ namespace Calamari.AzureWebAppZip
             try
             {
                 Log.Verbose($@"Publishing {uploadZipPath} to https://{targetSite.Site}.scm.azurewebsites.net/api/zipdeploy");
-                await client2.PostAsync($@"https://{targetSite.Site}.scm.azurewebsites.net/api/zipdeploy",
+                var response = await client2.PostAsync($@"https://{targetSite.Site}.scm.azurewebsites.net/api/zipdeploy",
                     new StreamContent(new FileStream(uploadZipPath, FileMode.Open)));
                 Log.Verbose("Finished deploying");
             }

@@ -47,7 +47,7 @@ namespace Calamari.AzureWebAppZip.Tests
 
         }
 
-        //[Test]
+        [Test]
         public async Task Deploy_WebAppZip_Simple()
         {
             var tempPath = TemporaryDirectory.Create();
