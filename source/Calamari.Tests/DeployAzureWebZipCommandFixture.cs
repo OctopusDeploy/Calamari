@@ -1,14 +1,17 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Azure.Identity;
+using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Shared;
 using FluentAssertions;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using NUnit.Framework;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
 namespace Calamari.AzureWebAppZip.Tests
 {
@@ -20,49 +23,72 @@ namespace Calamari.AzureWebAppZip.Tests
         private string tenantId;
         private string subscriptionId;
         private string webappName;
-        IResourceGroup resourceGroup;
         private string resourceGroupName;
+        private ResourceGroupsOperations resourceGroupClient;
+        private Application webapp;
 
         readonly HttpClient client = new HttpClient();
 
         [OneTimeSetUp]
         public async Task Setup()
         {
+            resourceGroupName = Guid.NewGuid().ToString();
+
             clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
             clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-            //resourceGroupName = SdkContext.RandomResourceName(nameof(DeployAzureWebZipCommandFixture), 60);
+            //var token = GetAuthToken(tenantId, clientId, clientSecret);
+            
+            //var resourcesClient = new ResourcesManagementClient(subscriptionId,
+            //    new ClientSecretCredential(tenantId, clientId, clientSecret));
 
-            var credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(clientId, clientSecret, tenantId,
-                AzureEnvironment.AzureGlobalCloud);
+            var resourcesClient = new ResourcesManagementClient(subscriptionId, new AzureCliCredential());
 
-            webappName = "CMOcto";
+            resourceGroupClient = resourcesClient.ResourceGroups;
+            var resourceWebappClient = resourcesClient.Applications;
 
+            var resourceGroup = new ResourceGroup("eastus"); 
+            resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
+
+            webapp = new Application("MarketPlace", resourceGroup.Id);
+            var createOperation =
+                await resourceWebappClient.StartCreateOrUpdateAsync(resourceGroupName, resourceGroupName, webapp);
+
+            while (!createOperation.HasCompleted)
+            {
+                await Task.Delay(500);
+            }
         }
 
         [OneTimeTearDown]
         public async Task CleanupCode()
         {
+            var opp = await resourceGroupClient.StartDeleteAsync(resourceGroupName);
 
+            while (!opp.HasCompleted)
+            {
+                await Task.Delay(500);
+            }
         }
 
         //[Test]
         public async Task Deploy_WebAppZip_Simple()
         {
-            var tempPath = TemporaryDirectory.Create();
-            new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
-            //await File.WriteAllTextAsync(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"), "Hello World");
-            ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip");
+            await Task.Delay(500);
+            //var tempPath = TemporaryDirectory.Create();
+            //new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
+            ////await File.WriteAllTextAsync(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"), "Hello World");
+            //ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip");
 
-            await CommandTestBuilder.CreateAsync<DeployAzureWebAppZipCommand, Program>().WithArrange(context =>
-                {
-                    //context.WithFilesToCopy($"{tempPath.DirectoryPath}.zip");
-                    context.WithPackage($"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip", "AzureZipDeployPackage", "1.0.0");
-                    AddDefaults(context, webappName);
-                })
-                .Execute();
-            await AssertContent($"{webappName}.azurewebsites.net", "Hello World");
+            //await CommandTestBuilder.CreateAsync<DeployAzureWebAppZipCommand, Program>().WithArrange(context =>
+            //    {
+            //        //context.WithFilesToCopy($"{tempPath.DirectoryPath}.zip");
+            //        context.WithPackage($"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip", "AzureZipDeployPackage", "1.0.0");
+            //        AddDefaults(context, webappName);
+            //    })
+            //    .Execute();
+            //await AssertContent($"{webappName}.azurewebsites.net", "Hello World");
         }
 
         void AddDefaults(CommandTestBuilderContext context, string webAppName)
@@ -82,5 +108,27 @@ namespace Calamari.AzureWebAppZip.Tests
             result.Should().Be(actualText);
         }
 
+        private async Task<string> GetAuthToken(string tenantId, string applicationId, string password)
+        {
+            var activeDirectoryEndPoint = @"https://login.windows.net/";
+            var managementEndPoint = @"https://management.azure.com/";
+            var authContext = GetContextUri(activeDirectoryEndPoint, tenantId); 
+            //Log.Verbose($"Authentication Context: {authContext}");
+            var context = new AuthenticationContext(authContext);
+            var result = await context.AcquireTokenAsync(managementEndPoint,
+                new ClientCredential(applicationId, password));
+            
+            return result.AccessToken;
+        }
+
+        string GetContextUri(string activeDirectoryEndPoint, string tenantId)
+        {
+            if (!activeDirectoryEndPoint.EndsWith("/"))
+            {
+                return $"{activeDirectoryEndPoint}/{tenantId}";
+            }
+
+            return $"{activeDirectoryEndPoint}{tenantId}";
+        }
     }
 }
