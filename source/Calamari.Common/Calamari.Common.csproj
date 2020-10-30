@@ -59,7 +59,7 @@
 
     <ItemGroup>
       <PackageReference Include="JavaPropertiesParser" Version="0.2.1" />
-      <PackageReference Include="Octopus.Versioning" Version="4.2.3" />
+      <PackageReference Include="Octopus.Versioning" Version="4.3.0" />
       <PackageReference Include="Octostache" Version="2.9.2" />
       <PackageReference Include="SharpCompress" Version="0.24.0" />
       <PackageReference Include="XPath2" Version="1.0.12" />

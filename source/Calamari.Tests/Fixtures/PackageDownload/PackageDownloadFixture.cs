@@ -532,7 +532,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             var result = DownloadPackage(FeedzPackage.PackageId, invalidFeedVersion, FeedzPackage.Id, PublicFeedUri);
             result.AssertFailure();
 
-            result.AssertErrorOutput("Package version '{0}' specified is not a valid version string", invalidFeedVersion);
+            result.AssertErrorOutput("Package version '{0}' specified is not a valid Semver version string", invalidFeedVersion);
         }
 
         [Test]
