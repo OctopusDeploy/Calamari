@@ -71,11 +71,13 @@ namespace Calamari.AzureWebAppZip
                 Log.Verbose($@"Publishing {uploadZipPath} to https://{targetSite.Site}.scm.azurewebsites.net/api/zipdeploy");
                 var response = await client2.PostAsync($@"https://{targetSite.Site}.scm.azurewebsites.net/api/zipdeploy",
                     new StreamContent(new FileStream(uploadZipPath, FileMode.Open)));
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception(response.ReasonPhrase);
+                }
+
                 Log.Verbose("Finished deploying");
-            }
-            catch (Exception ex)
-            {
-                throw ex;
             }
             finally
             {
@@ -112,6 +114,9 @@ namespace Calamari.AzureWebAppZip
 
             var options = new CsmPublishingProfileOptions {Format = "WebDeploy"};
             var resourceGroup = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
+
+            
+            webAppClient.WebApps.Get(resourceGroup, targetSite.Site);
 
             using var publishProfileStream = targetSite.HasSlot
                 ? await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(resourceGroup,
