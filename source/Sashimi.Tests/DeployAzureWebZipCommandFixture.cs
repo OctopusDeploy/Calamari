@@ -2,25 +2,25 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
+using Calamari.AzureWebAppZip;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Shared;
-using FluentAssertions;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 using NUnit.Framework;
+using Sashimi.Tests.Shared.Server;
 
-namespace Calamari.AzureWebAppZip.Tests
+namespace Sashimi.AzureWebAppZip.Tests
 {
     [TestFixture]
-    public class DeployAzureWebZipCommandFixture
+    class DeployAzureWebZipCommandFixture
     {
         private string _clientId;
         private string _clientSecret;
@@ -30,14 +30,10 @@ namespace Calamari.AzureWebAppZip.Tests
         private string _resourceGroupName;
         private ResourceGroupsOperations _resourceGroupClient;
         private IList<DirectoryInfo> _tempDirs;
-        
-        //private Site webapp;
-
-        readonly HttpClient client = new HttpClient();
 
         [OneTimeSetUp]
         public async Task Setup()
-        { 
+        {
             _resourceGroupName = Guid.NewGuid().ToString();
             _tempDirs = new List<DirectoryInfo>();
 
@@ -57,21 +53,19 @@ namespace Calamari.AzureWebAppZip.Tests
             var resourceGroup = new ResourceGroup(resourceGroupLocation);
             resourceGroup = await _resourceGroupClient.CreateOrUpdateAsync(_resourceGroupName, resourceGroup);
 
-            var webMgmtClient = new WebSiteManagementClient(new TokenCredentials(token)){SubscriptionId = _subscriptionId};
+            var webMgmtClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = _subscriptionId };
 
             var svcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
                 resourceGroup.Name, new AppServicePlan(resourceGroup.Location));
 
             var webapp = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
-                new Site(resourceGroup.Location) {ServerFarmId = svcPlan.Id});
+                new Site(resourceGroup.Location) { ServerFarmId = svcPlan.Id });
 
             _webappName = webapp.Name;
-
-            
         }
 
         [OneTimeTearDown]
-        public async Task CleanupCode()
+        public async Task Cleanup()
         {
             foreach (var tempDir in _tempDirs)
             {
@@ -82,55 +76,37 @@ namespace Calamari.AzureWebAppZip.Tests
         }
 
         [Test]
-        public async Task Deploy_WebAppZip_Simple()
+        public async Task Deploy_WebAppZip()
         {
-            //await Task.Delay(500);
+
             var tempPath = TemporaryDirectory.Create();
             _tempDirs.Add(new DirectoryInfo(tempPath.DirectoryPath));
             new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
-            File.WriteAllText(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
+            await File.WriteAllTextAsync(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
                 "Hello World");
             ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage",
                 $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip");
 
-            await CommandTestBuilder.CreateAsync<DeployAzureWebAppZipCommand, Program>().WithArrange(context =>
+            ActionHandlerTestBuilder.CreateAsync<ActionHandler, Program>()
+                .WithArrange(context =>
                 {
-                    //context.WithFilesToCopy($"{tempPath.DirectoryPath}.zip");
+                    AddDefaults(context, _webappName);
                     context.WithPackage($"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip",
                         "AzureZipDeployPackage", "1.0.0");
-                    AddDefaults(context, _webappName);
                 })
-                .Execute();
-            await AssertContent($"{_webappName}.azurewebsites.net", "Hello World");
-        }
-
-        void AddDefaults(CommandTestBuilderContext context, string webAppName)
-        {
-            context.Variables.Add(AccountVariables.ClientId, _clientId);
-            context.Variables.Add(AccountVariables.Password, _clientSecret);
-            context.Variables.Add(AccountVariables.TenantId, _tenantId);
-            context.Variables.Add(AccountVariables.SubscriptionId, _subscriptionId);
-            context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName);
-            context.Variables.Add("Octopus.Action.Azure.WebAppName", webAppName);
-        }
-
-        async Task AssertContent(string hostName, string actualText, string rootPath = null)
-        {
-            var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
-
-            result.Should().Be(actualText);
+                .Execute(runOutOfProc: true);
         }
 
         private async Task<string> GetAuthToken(string tenantId, string applicationId, string password)
         {
             var activeDirectoryEndPoint = @"https://login.windows.net/";
             var managementEndPoint = @"https://management.azure.com/";
-            var authContext = GetContextUri(activeDirectoryEndPoint, tenantId); 
+            var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);
             //Log.Verbose($"Authentication Context: {authContext}");
             var context = new AuthenticationContext(authContext);
             var result = await context.AcquireTokenAsync(managementEndPoint,
                 new ClientCredential(applicationId, password));
-            
+
             return result.AccessToken;
         }
 
@@ -142,6 +118,16 @@ namespace Calamari.AzureWebAppZip.Tests
             }
 
             return $"{activeDirectoryEndPoint}{tenantId}";
+        }
+
+        void AddDefaults(TestActionHandlerContext<Program> context, string webAppName)
+        {
+            context.Variables.Add(AccountVariables.ClientId, _clientId);
+            context.Variables.Add(AccountVariables.Password, _clientSecret);
+            context.Variables.Add(AccountVariables.TenantId, _tenantId);
+            context.Variables.Add(AccountVariables.SubscriptionId, _subscriptionId);
+            context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName);
+            context.Variables.Add("Octopus.Action.Azure.WebAppName", webAppName);
         }
     }
 }

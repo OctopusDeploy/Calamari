@@ -7,7 +7,7 @@ using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.AzureWebAppZip.Endpoints
 {
-    public class AzureWebAppEndpoint : Endpoint, IEndpointWithAccount, IRunsOnAWorker
+    public class AzureWebAppEndpoint : Endpoint, IRunsOnAWorker
     {
         public string WebAppName { get; set; } = string.Empty;
 
@@ -24,15 +24,10 @@ namespace Sashimi.AzureWebAppZip.Endpoints
 
         public override bool ScriptConsoleSupported => true;
 
-        public string AccountId { get; set; } = string.Empty;
-
         public string DefaultWorkerPoolId { get; set; } = string.Empty;
 
         public override IEnumerable<(string id, DocumentType documentType)> GetRelatedDocuments()
         {
-            if (!string.IsNullOrEmpty(AccountId))
-                yield return (AccountId, DocumentType.Account);
-
             if (!string.IsNullOrEmpty(DefaultWorkerPoolId))
                 yield return (DefaultWorkerPoolId, DocumentType.WorkerPool);
         }
