@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>Sashimi.AzureWebAppZip</AssemblyName>
-    <RootNamespace>Sashimi.AzureWebAppZip</RootNamespace>
+    <AssemblyName>Sashimi.AzureAppService</AssemblyName>
+    <RootNamespace>Sashimi.AzureAppService</RootNamespace>
     <TargetFramework>netstandard2.1</TargetFramework>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <OutputPath>bin\</OutputPath>
-    <PackageProjectUrl>https://github.com/octopusDeploy/Sashimi.AzureWebAppZip</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/octopusDeploy/Sashimi.AzureAppService</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>
   <PropertyGroup>
     <NoWarn>NU5119</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\..\artifacts\Calamari.AzureWebAppZip.zip">
+    <None Include="..\..\artifacts\Calamari.AzureAppService.zip">
       <Visible>false</Visible>
       <LinkBase>tools</LinkBase>
       <Pack>true</Pack>

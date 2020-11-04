@@ -5,7 +5,7 @@ using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Endpoints;
 using Sashimi.Server.Contracts.Variables;
 
-namespace Sashimi.AzureWebAppZip.Endpoints
+namespace Sashimi.AzureAppService.Endpoints
 {
     public class AzureWebAppEndpoint : Endpoint, IRunsOnAWorker
     {

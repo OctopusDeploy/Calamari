@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>Calamari.AzureWebAppZip.Tests</RootNamespace>
-    <AssemblyName>Calamari.AzureWebAppZip.Tests</AssemblyName>
+    <RootNamespace>Calamari.AzureAppService.Tests</RootNamespace>
+    <AssemblyName>Calamari.AzureAppService.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>

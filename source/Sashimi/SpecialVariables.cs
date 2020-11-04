@@ -1,5 +1,5 @@
 ﻿
-namespace Sashimi.AzureWebAppZip
+namespace Sashimi.AzureAppService
 {
     static class SpecialVariables
     {
@@ -10,7 +10,7 @@ namespace Sashimi.AzureWebAppZip
             public static class Azure
             {
                 public static readonly string WebAppSlot = "Octopus.Action.Azure.DeploymentSlot";
-                public static readonly string WebAppActionTypeName = "Octopus.AzureWebAppZip";
+                public static readonly string WebAppActionTypeName = "Octopus.AzureAppService";
             }
         }
     }

@@ -18,13 +18,13 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 using Microsoft.Win32.SafeHandles;
 
-namespace Calamari.AzureWebAppZip
+namespace Calamari.AzureAppService
 {
-    class AzureWebAppZipBehaviour : IDeployBehaviour
+    class AzureAppServiceBehaviour : IDeployBehaviour
     {
         private ILog Log { get; }
 
-        public AzureWebAppZipBehaviour(ILog log)
+        public AzureAppServiceBehaviour(ILog log)
         {
             Log = log;
         }
@@ -71,7 +71,7 @@ namespace Calamari.AzureWebAppZip
                 Log.Verbose($@"Publishing {uploadZipPath} to https://{targetSite.Site}.scm.azurewebsites.net/api/zipdeploy");
                 var response = await client2.PostAsync($@"https://{targetSite.Site}.scm.azurewebsites.net/api/zipdeploy",
                     new StreamContent(new FileStream(uploadZipPath, FileMode.Open)));
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     throw new Exception(response.ReasonPhrase);
@@ -115,7 +115,7 @@ namespace Calamari.AzureWebAppZip
             var options = new CsmPublishingProfileOptions {Format = "WebDeploy"};
             var resourceGroup = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
 
-            
+
             webAppClient.WebApps.Get(resourceGroup, targetSite.Site);
 
             using var publishProfileStream = targetSite.HasSlot

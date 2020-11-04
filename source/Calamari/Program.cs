@@ -7,7 +7,7 @@ using Calamari.Common;
 using Calamari.Common.Plumbing.Logging;
 
 
-namespace Calamari.AzureWebAppZip
+namespace Calamari.AzureAppService
 {
     public class Program : CalamariFlavourProgramAsync
     {

@@ -1,9 +1,9 @@
 ﻿using Octopus.CoreUtilities;
 using Sashimi.AzureScripting;
 using Sashimi.Server.Contracts.ActionHandlers;
-using Sashimi.AzureWebAppZip.Endpoints;
+using Sashimi.AzureAppService.Endpoints;
 
-namespace Sashimi.AzureWebAppZip
+namespace Sashimi.AzureAppService
 {
     class ActionHandler : IActionHandler
     {

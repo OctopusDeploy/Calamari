@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>Sashimi.AzureWebAppZip.Tests</RootNamespace>
-    <AssemblyName>Sashimi.AzureWebAppZip.Tests</AssemblyName>
+    <RootNamespace>Sashimi.AzureAppService.Tests</RootNamespace>
+    <AssemblyName>Sashimi.AzureAppService.Tests</AssemblyName>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    
+
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

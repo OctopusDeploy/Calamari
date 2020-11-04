@@ -1,3 +1,3 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Sashimi.AzureWebAppZip.Tests")]
+[assembly: InternalsVisibleTo("Sashimi.AzureAppService.Tests")]

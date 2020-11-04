@@ -17,7 +17,7 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 using NUnit.Framework;
 
-namespace Calamari.AzureWebAppZip.Tests
+namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
     public class DeployAzureWebZipCommandFixture
@@ -30,14 +30,14 @@ namespace Calamari.AzureWebAppZip.Tests
         private string _resourceGroupName;
         private ResourceGroupsOperations _resourceGroupClient;
         private IList<DirectoryInfo> _tempDirs;
-        
+
         //private Site webapp;
 
         readonly HttpClient client = new HttpClient();
 
         [OneTimeSetUp]
         public async Task Setup()
-        { 
+        {
             _resourceGroupName = Guid.NewGuid().ToString();
             _tempDirs = new List<DirectoryInfo>();
 
@@ -67,7 +67,7 @@ namespace Calamari.AzureWebAppZip.Tests
 
             _webappName = webapp.Name;
 
-            
+
         }
 
         [OneTimeTearDown]
@@ -93,7 +93,7 @@ namespace Calamari.AzureWebAppZip.Tests
             ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage",
                 $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip");
 
-            await CommandTestBuilder.CreateAsync<DeployAzureWebAppZipCommand, Program>().WithArrange(context =>
+            await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>().WithArrange(context =>
                 {
                     //context.WithFilesToCopy($"{tempPath.DirectoryPath}.zip");
                     context.WithPackage($"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip",
@@ -125,12 +125,12 @@ namespace Calamari.AzureWebAppZip.Tests
         {
             var activeDirectoryEndPoint = @"https://login.windows.net/";
             var managementEndPoint = @"https://management.azure.com/";
-            var authContext = GetContextUri(activeDirectoryEndPoint, tenantId); 
+            var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);
             //Log.Verbose($"Authentication Context: {authContext}");
             var context = new AuthenticationContext(authContext);
             var result = await context.AcquireTokenAsync(managementEndPoint,
                 new ClientCredential(applicationId, password));
-            
+
             return result.AccessToken;
         }
 

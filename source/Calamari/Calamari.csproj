@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>Calamari.AzureWebAppZip</AssemblyName>
-    <RootNamespace>Calamari.AzureWebAppZip</RootNamespace>
+    <AssemblyName>Calamari.AzureAppService</AssemblyName>
+    <RootNamespace>Calamari.AzureAppService</RootNamespace>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>true</IsPackable>
     <OutputType>Exe</OutputType>

@@ -7,7 +7,7 @@ using Azure.Identity;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
-using Calamari.AzureWebAppZip;
+using Calamari.AzureAppService;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Shared;
 using Microsoft.Azure.Management.WebSites;
@@ -17,7 +17,7 @@ using Microsoft.Rest;
 using NUnit.Framework;
 using Sashimi.Tests.Shared.Server;
 
-namespace Sashimi.AzureWebAppZip.Tests
+namespace Sashimi.AzureAppService.Tests
 {
     [TestFixture]
     class DeployAzureWebZipCommandFixture
