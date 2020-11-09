@@ -50,7 +50,7 @@
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="Octodiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
-    <PackageReference Include="Octopus.Versioning" Version="4.3.0" />
+    <PackageReference Include="Octopus.Versioning" Version="4.3.1" />
     <PackageReference Include="scriptcs" Version="0.17.1" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
