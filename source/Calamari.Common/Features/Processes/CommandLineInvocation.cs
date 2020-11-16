@@ -27,6 +27,12 @@ namespace Calamari.Common.Features.Processes
 
         public Dictionary<string, string>? EnvironmentVars { get; set; }
 
+
+        /// <summary>
+        /// Gets or sets a timeour in milliseconds for the command line process execution
+        /// </summary>
+        public TimeSpan Timeout { get; set; } = TimeSpan.Zero;
+
         /// <summary>
         /// Prevent this execution from starting if another execution is running that also has this set to true.
         /// It does not isolate from executions that have this set to false.

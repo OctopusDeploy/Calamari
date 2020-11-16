@@ -6,13 +6,15 @@ namespace Calamari.Common.Features.Processes
     {
         readonly string command;
         readonly string? workingDirectory;
+        readonly bool timedOut;
 
-        public CommandResult(string command, int exitCode, string? additionalErrors = null, string? workingDirectory = null)
+        public CommandResult(string command, int exitCode, string? additionalErrors = null, string? workingDirectory = null, bool timedOut = false)
         {
             this.command = command;
             ExitCode = exitCode;
             Errors = additionalErrors;
             this.workingDirectory = workingDirectory;
+            this.timedOut = timedOut;
         }
 
         public int ExitCode { get; }
@@ -20,6 +22,8 @@ namespace Calamari.Common.Features.Processes
         public string? Errors { get; }
 
         public bool HasErrors => !string.IsNullOrWhiteSpace(Errors);
+
+        public bool TimedOut => this.timedOut;
 
         public void VerifySuccess()
         {

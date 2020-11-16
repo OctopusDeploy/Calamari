@@ -33,13 +33,15 @@ namespace Calamari.Common.Features.Processes
                     invocation.UserName,
                     invocation.Password,
                     commandOutput.WriteInfo,
-                    commandOutput.WriteError);
+                    commandOutput.WriteError,
+                    invocation.Timeout);
 
                 return new CommandResult(
                     invocation.ToString(),
                     exitCode.ExitCode,
                     exitCode.ErrorOutput,
-                    invocation.WorkingDirectory);
+                    invocation.WorkingDirectory,
+                    exitCode.TimedOut);
             }
             catch (Exception ex)
             {

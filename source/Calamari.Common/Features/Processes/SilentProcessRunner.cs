@@ -51,7 +51,8 @@ namespace Calamari.Common.Features.Processes
                 null,
                 null,
                 output,
-                error);
+                error,
+                TimeSpan.Zero);
         }
 
         public static SilentProcessRunnerResult ExecuteCommand(
@@ -69,7 +70,8 @@ namespace Calamari.Common.Features.Processes
                 null,
                 null,
                 output,
-                error);
+                error,
+                TimeSpan.Zero);
         }
 
         public static SilentProcessRunnerResult ExecuteCommand(
@@ -80,7 +82,8 @@ namespace Calamari.Common.Features.Processes
             string? userName,
             SecureString? password,
             Action<string> output,
-            Action<string> error)
+            Action<string> error,
+            TimeSpan timeout)
         {
             try
             {
@@ -105,6 +108,7 @@ namespace Calamari.Common.Features.Processes
                     using (var outputWaitHandle = new AutoResetEvent(false))
                     using (var errorWaitHandle = new AutoResetEvent(false))
                     {
+                        var timedOut = false;
                         var errorData = new StringBuilder();
                         process.OutputDataReceived += (sender, e) =>
                         {
@@ -160,11 +164,30 @@ namespace Calamari.Common.Features.Processes
                         process.BeginOutputReadLine();
                         process.BeginErrorReadLine();
 
-                        process.WaitForExit();
+                        if (timeout > TimeSpan.Zero)
+                        {
+                            if(!process.WaitForExit((int)timeout.TotalMilliseconds))
+                            {
+                                timedOut = true;
+                                error($"Script execution timed out after {timeout.TotalMilliseconds}ms");
+
+                                // In certain cases the process may have exited already, if not we can kill it
+                                // and the wait handles will both be signaled as per normal
+                                if(!process.HasExited)
+                                {
+                                    process.Kill();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            process.WaitForExit();
+                        }
+
                         outputWaitHandle.WaitOne();
                         errorWaitHandle.WaitOne();
 
-                        return new SilentProcessRunnerResult(process.ExitCode, errorData.ToString());
+                        return new SilentProcessRunnerResult(process.ExitCode, errorData.ToString(), timedOut);
                     }
                 }
             }

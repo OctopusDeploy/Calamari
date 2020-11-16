@@ -29,6 +29,7 @@ namespace Calamari.Commands
         string scriptFileArg;
         string packageFile;
         string scriptParametersArg;
+        TimeSpan timeout;
         readonly ILog log;
         readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
@@ -50,6 +51,7 @@ namespace Calamari.Commands
             Options.Add("package=", "Path to the package to extract that contains the script.", v => packageFile = Path.GetFullPath(v));
             Options.Add("script=", $"Path to the script to execute. If --package is used, it can be a script inside the package.", v => scriptFileArg = v);
             Options.Add("scriptParameters=", $"Parameters to pass to the script.", v => scriptParametersArg = v);
+            Options.Add("timeout=", $"Timeout for script in milliseconds.", v => timeout = int.TryParse(v, out var timeoutMs) && timeoutMs > 0 ? TimeSpan.FromMilliseconds(timeoutMs) : TimeSpan.Zero);
             this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
@@ -198,6 +200,11 @@ namespace Calamari.Commands
                 {
                     variables.Set(SpecialVariables.Action.Script.ScriptParameters, scriptParametersArg);
                 }
+            }
+
+            if(timeout > TimeSpan.Zero)
+            {
+                variables.Set(SpecialVariables.Action.Script.Timeout, timeout.TotalMilliseconds.ToString());
             }
         }
 

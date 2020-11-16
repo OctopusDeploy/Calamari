@@ -13,6 +13,7 @@ namespace Calamari.Common.Features.Scripting
     public abstract class ScriptExecutor : IScriptExecutor
     {
         static readonly string CopyWorkingDirectoryVariable = "Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo";
+        static readonly string ScriptTimeoutVariable = "Octopus.Action.Script.Timeout";
 
         public CommandResult Execute(Script script,
             IVariables variables,
@@ -24,10 +25,22 @@ namespace Calamari.Common.Features.Scripting
                 environmentVariablesIncludingProxy[proxyVariable.Key] = proxyVariable.Value;
 
             var prepared = PrepareExecution(script, variables, environmentVariablesIncludingProxy);
+            var timeout = TimeSpan.Zero;
+            var timeoutvar = variables.Get(ScriptTimeoutVariable);
+            if(int.TryParse(timeoutvar, out var timeoutMs) && timeoutMs > 0)
+            {
+                timeout = TimeSpan.FromMilliseconds(timeoutMs);
+                Log.Verbose($"A timeout of {timeoutMs}ms will be set to each script execution");
+            }  
 
             CommandResult? result = null;
             foreach (var execution in prepared)
             {
+                if(variables.IsSet(ScriptTimeoutVariable))
+                {
+                    execution.CommandLineInvocation.Timeout = timeout;
+                }
+
                 if (variables.IsSet(CopyWorkingDirectoryVariable))
                     CopyWorkingDirectory(variables,
                         execution.CommandLineInvocation.WorkingDirectory,
