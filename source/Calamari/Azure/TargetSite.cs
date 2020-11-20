@@ -10,5 +10,11 @@
         public string SiteAndSlotLegacy => HasSlot ? $"{Site}({Slot})" : Site;
 
         public bool HasSlot => !string.IsNullOrWhiteSpace(Slot);
+
+        public TargetSite()
+        {
+            RawSite = "";
+            Site = "";
+        }
     }
 }

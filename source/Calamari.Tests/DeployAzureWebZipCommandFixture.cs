@@ -8,6 +8,7 @@ using Azure.Identity;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
+using Calamari.AzureAppService.Json;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Shared;
 using FluentAssertions;
@@ -15,6 +16,7 @@ using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Calamari.AzureAppService.Tests
@@ -57,13 +59,13 @@ namespace Calamari.AzureAppService.Tests
             var resourceGroup = new ResourceGroup(resourceGroupLocation);
             resourceGroup = await _resourceGroupClient.CreateOrUpdateAsync(_resourceGroupName, resourceGroup);
 
-            var webMgmtClient = new WebSiteManagementClient(new TokenCredentials(token)){SubscriptionId = _subscriptionId};
+            var webMgmtClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = _subscriptionId };
 
             var svcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
                 resourceGroup.Name, new AppServicePlan(resourceGroup.Location));
 
             var webapp = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
-                new Site(resourceGroup.Location) {ServerFarmId = svcPlan.Id});
+                new Site(resourceGroup.Location) { ServerFarmId = svcPlan.Id });
 
             _webappName = webapp.Name;
 
@@ -78,7 +80,7 @@ namespace Calamari.AzureAppService.Tests
                 tempDir.Delete(true);
             }
 
-            await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
+            //await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
         }
 
         [Test]
@@ -110,8 +112,24 @@ namespace Calamari.AzureAppService.Tests
             context.Variables.Add(AccountVariables.Password, _clientSecret);
             context.Variables.Add(AccountVariables.TenantId, _tenantId);
             context.Variables.Add(AccountVariables.SubscriptionId, _subscriptionId);
-            context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName);
-            context.Variables.Add("Octopus.Action.Azure.WebAppName", webAppName);
+            context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName ?? "ChrisOctoTesting");
+            context.Variables.Add("Octopus.Action.Azure.WebAppName", webAppName ?? "octoZipDeploy");
+
+            var appSettings = BuildAppSettingsJson();
+            context.Variables.Add(SpecialVariables.Action.Azure.AppSettings, appSettings);
+        }
+
+        string BuildAppSettingsJson()
+        {
+            var appSettings = new AppSettingsRoot
+            {
+                AppSettings = new[]
+                {
+                    new AppSetting {IsSlotSetting = true, Name = "MyFirstAppSetting", Value = "Foo"},
+                    new AppSetting {IsSlotSetting = false, Name = "MySecondAppSetting", Value = "Bar"}
+                }
+            };
+            return JsonConvert.SerializeObject(appSettings);
         }
 
         async Task AssertContent(string hostName, string actualText, string rootPath = null)
