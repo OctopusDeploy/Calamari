@@ -16,6 +16,7 @@ var configuration = Argument("configuration", "Release");
 var testFilter = Argument("where", "");
 var signingCertificatePath = Argument("signing_certificate_path", "");
 var signingCertificatePassword = Argument("signing_certificate_password", "");
+var isCustomPackageBuild = Argument<bool>("custom_build", false);
 
 ///////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
@@ -48,8 +49,7 @@ Setup(context =>
 		LogFilePath = "gitversion.log"
     });
 
-
-    nugetVersion = gitVersionInfo.NuGetVersion;
+    nugetVersion = isCustomPackageBuild ? gitVersionInfo.MajorMinorPatch : gitVersionInfo.NuGetVersion;
 
     Information("Building Calamari v{0}", nugetVersion);
 });
@@ -257,6 +257,17 @@ private void DoPackage(string project, string framework, string version, string 
     var nuspec = $"{publishedTo}/{packageId}.nuspec";
     CopyFile($"{projectDir}/{project}.nuspec", nuspec);
     NuGetPack(nuspec, nugetPackSettings);
+
+    // for the netfx package, we'll also build when the rid is empty
+    if (isCustomPackageBuild && runtimeId == null)
+    {
+        nugetPackSettings.Id += ".netfx";
+        nuspec = $"{publishedTo}/{packageId}.netfx.nuspec";
+
+        DotNetCorePublish(projectDir, publishSettings);
+        CopyFile($"{projectDir}/{project}.nuspec", nuspec);
+        NuGetPack(nuspec, nugetPackSettings);
+    }
 }
 
 private void SignAndTimestampBinaries(string outputDirectory)

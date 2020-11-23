@@ -30,6 +30,8 @@ No tasks will be executed.
 Tells Cake to use the Mono scripting engine.
 .PARAMETER SkipToolPackageRestore
 Skips restoring of packages.
+.PARAMETER IsCustomPackageBuild
+True to force package name to be Calamari.netfx to use as a custom build.
 .PARAMETER ScriptArgs
 Remaining arguments are added here.
 
@@ -53,7 +55,8 @@ Param(
     [switch]$Mono,
     [switch]$SkipToolPackageRestore,
     [string]$SigningCertificatePath = "./certificates/OctopusDevelopment.pfx",
-    [string]$SigningCertificatePassword = "Password01!"
+    [string]$SigningCertificatePassword = "Password01!",
+    [bool]$IsCustomPackageBuild = 0
 )
 
 [Reflection.Assembly]::LoadWithPartialName("System.Security") | Out-Null
@@ -117,6 +120,11 @@ if($Experimental.IsPresent -and !($Mono.IsPresent)) {
 $UseDryRun = "";
 if($WhatIf.IsPresent) {
     $UseDryRun = "-dryrun"
+}
+
+$UseCustomBuildSwitch = "";
+if($IsCustomPackageBuild) {
+    $UseCustomBuildSwitch = "--custom_build=true";
 }
 
 # Make sure tools folder exists
@@ -233,5 +241,5 @@ if (!(Test-Path $CAKE_EXE)) {
 
 # Start Cake
 Write-Host "Running build script..."
-Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" $UseMono $UseDryRun $UseExperimental"
+Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" $UseMono $UseDryRun $UseExperimental $UseCustomBuildSwitch"
 exit $LASTEXITCODE

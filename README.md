@@ -40,6 +40,8 @@ Octopus.Server.exe service --instance <instance> --start --nologo --console
 
 ** Ensure you update your build to the latest Calamari or revert to the bundled package when you upgrade Octopus Server **
 
+** If you're using a custom built package, you will need to ensure the package id of the nuget package is `Calamari.netfx` in order for it be executed on the server. By running `./build -IsCustomPackageBuild:1` or `dotnet cake --custom_build=true` the package id will be `Calamari.netfx` and omit the branch name from the package file. **
+
 ## Releasing
 
 After you finish merging to master to tag the Calamari NuGet package:
