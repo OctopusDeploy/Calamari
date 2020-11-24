@@ -18,7 +18,17 @@ namespace Calamari.AzureAppService
 {
     class AppSettingsManagement
     {
-        public static async Task PatchAppSettings(WebSiteManagementClient webAppClient, string resourceGroupName, string appName, StringDictionary appSettings, string? slotName=null)//HttpClient client)
+        /// <summary>
+        /// Patches (add or update) the app settings for a web app or slot using the website management client library extensions.
+        /// If any setting needs to be marked sticky (slot setting), update it via <see cref="PutSlotSettingsListAsync"/>.
+        /// </summary>
+        /// <param name="webAppClient">A <see cref="WebSiteManagementClient"/> that is directly used to update app settings.<seealso cref="WebSiteManagementClientExtensions"/></param>
+        /// <param name="resourceGroupName">The name of the resource group that houses the webapp</param>
+        /// <param name="appName">The name of the webapp being updated</param>
+        /// <param name="appSettings">A <see cref="StringDictionary"/> containing the app settings to set</param>
+        /// <param name="slotName">The slot name of the app being updated.  Leave blank to specify the production slot. Defaults to null.</param>
+        /// <returns>Awaitable <see cref="Task"/></returns>
+        public static async Task PatchAppSettingsAsync(WebSiteManagementClient webAppClient, string resourceGroupName, string appName, StringDictionary appSettings, string? slotName=null)//HttpClient client)
         {
             _ = slotName == null
                 ? await webAppClient.WebApps.UpdateApplicationSettingsAsync(resourceGroupName, appName, appSettings)
@@ -26,7 +36,16 @@ namespace Calamari.AzureAppService
                     slotName);
         }
 
-        public static async Task PutSlotSettingsList(WebSiteManagementClient webAppClient, string resourceGroupName,
+        /// <summary>
+        /// Puts (overwrite) List of setting names who's values should be sticky (slot settings).
+        /// </summary>
+        /// <param name="webAppClient">The <see cref="WebSiteManagementClient"/> that will be used to submit the new list</param>
+        /// <param name="resourceGroupName">The name of the resource group housing the webapp being updated</param>
+        /// <param name="appName">The name of the web app being updated</param>
+        /// <param name="slotConfigNames">collection of setting names to be marked as sticky (slot setting)</param>
+        /// <param name="authToken">The authorization token used to authenticate the request</param>
+        /// <returns>Awaitable <see cref="Task"/></returns>
+        public static async Task PutSlotSettingsListAsync(WebSiteManagementClient webAppClient, string resourceGroupName,
             string appName, IEnumerable<string> slotConfigNames, string authToken)
         {
             var client = webAppClient.HttpClient;
@@ -44,9 +63,21 @@ namespace Calamari.AzureAppService
             //var body = new StringContent(postBody);
             var body = new StringContent(postBody, Encoding.UTF8, "application/json");
             var response = await client.PutAsync(targetUrl, body);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(response.ReasonPhrase);
+            }
         }
 
-        public static async Task<IEnumerable<string>> GetSlotSettingsList(WebSiteManagementClient webAppClient,
+        /// <summary>
+        /// Gets list of existing sticky (slot settings)
+        /// </summary>
+        /// <param name="webAppClient">The <see cref="WebSiteManagementClient"/> that will be used to submit the get request</param>
+        /// <param name="resourceGroupName">The name of the resource group housing the webapp</param>
+        /// <param name="appName">The name of the webapp being updated</param>
+        /// <param name="authToken">The authorization token used to authenticate the request</param>
+        /// <returns>Collection of setting names that are sticky (slot setting)</returns>
+        public static async Task<IEnumerable<string>> GetSlotSettingsListAsync(WebSiteManagementClient webAppClient,
             string resourceGroupName, string appName, string authToken)
         {
             var client = webAppClient.HttpClient;

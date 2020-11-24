@@ -118,19 +118,20 @@ namespace Calamari.AzureAppService
                 settingsDict.Properties[setting.Name] = setting.Value;
             }
 
-            await AppSettingsManagement.PatchAppSettings(webAppClient, resourceGroupName, webAppName, settingsDict,
+            await AppSettingsManagement.PatchAppSettingsAsync(webAppClient, resourceGroupName, webAppName, settingsDict,
                 slotName);
             var slotSettings = appSettings.AppSettings
                 .Where(setting => setting.IsSlotSetting)
-                .Select(setting => setting.Name);
+                .Select(setting => setting.Name).ToArray();
 
             var existingSlotSettings =
-                await AppSettingsManagement.GetSlotSettingsList(webAppClient, resourceGroupName, webAppName, authToken);
+                (await AppSettingsManagement.GetSlotSettingsListAsync(webAppClient, resourceGroupName, webAppName,
+                    authToken)).ToArray();
 
             if (!slotSettings.Any() || existingSlotSettings.Any())
                 return;
 
-            await AppSettingsManagement.PutSlotSettingsList(webAppClient, resourceGroupName, webAppName,
+            await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient, resourceGroupName, webAppName,
                 slotSettings.Concat(existingSlotSettings), authToken);
         }
     }
