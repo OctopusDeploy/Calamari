@@ -35,7 +35,7 @@ namespace Sashimi.AzureAppService
                         $"The machine {context.DeploymentTargetName.SomeOr("<unknown>")} will not be deployed to because it is not an {AzureWebAppEndpoint.AzureWebAppDeploymentTargetType.DisplayName} target.");
             }
 
-            return context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-web-zip").WithAzureTools(context)
+            return context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-app-service").WithAzureTools(context)
                 .WithStagedPackageArgument().Execute();
         }
     }
