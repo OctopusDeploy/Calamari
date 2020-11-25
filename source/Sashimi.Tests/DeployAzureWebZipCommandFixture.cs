@@ -19,7 +19,7 @@ using Sashimi.Tests.Shared.Server;
 
 namespace Sashimi.AzureAppService.Tests
 {
-    [TestFixture]
+    //[TestFixture]
     class DeployAzureWebZipCommandFixture
     {
         private string _clientId;
