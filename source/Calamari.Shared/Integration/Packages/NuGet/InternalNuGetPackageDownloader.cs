@@ -4,6 +4,7 @@ using System.Threading;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Retry;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Octopus.Versioning;
@@ -13,10 +14,12 @@ namespace Calamari.Integration.Packages.NuGet
     public class InternalNuGetPackageDownloader
     {
         private readonly ICalamariFileSystem fileSystem;
+        readonly IVariables variables;
 
-        public InternalNuGetPackageDownloader(ICalamariFileSystem fileSystem)
+        public InternalNuGetPackageDownloader(ICalamariFileSystem fileSystem, IVariables variables)
         {
             this.fileSystem = fileSystem;
+            this.variables = variables;
         }
 
         public void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
@@ -31,7 +34,7 @@ namespace Calamari.Integration.Packages.NuGet
             ICredentials feedCredentials,
             string targetFilePath, 
             int maxDownloadAttempts, 
-            TimeSpan downloadAttemptBackoff, 
+            TimeSpan downloadAttemptBackoff,
             Action<string, IVersion, Uri, ICredentials, string> action)
         {
             if (maxDownloadAttempts <= 0)
@@ -94,7 +97,8 @@ namespace Calamari.Integration.Packages.NuGet
             // NuGet V3 feed 
             else if (IsHttp(feedUri.ToString()) && feedUri.ToString().EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
-                NuGetV3Downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
+                var timeout = GetHttpTimeout();
+                NuGetV3Downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, timeout);
             }
 
             // V2 feed
@@ -110,6 +114,17 @@ namespace Calamari.Integration.Packages.NuGet
 #endif
         }
 
+#if USE_NUGET_V2_LIBS
+        TimeSpan GetHttpTimeout()
+        {
+            var timeoutFromVariables = variables.GetInt32(KnownVariables.NetfxNugetHttpTimeout);
+
+            return timeoutFromVariables == null 
+                ? new TimeSpan(0, 0, 0, 0, -1) // Equal to Timeout.InfiniteTimeSpan, which isn't available in net40
+                : TimeSpan.FromMilliseconds(timeoutFromVariables.Value);
+        }
+#endif
+        
         bool IsHttp(string uri)
         {
             return uri.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||

@@ -58,7 +58,7 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new MavenPackageDownloader(fileSystem, freeSpaceChecker);
                     break;
                 case FeedType.NuGet:
-                    downloader = new NuGetPackageDownloader(fileSystem, freeSpaceChecker);
+                    downloader = new NuGetPackageDownloader(fileSystem, freeSpaceChecker, variables);
                     break;
                 case FeedType.GitHub:
                     downloader = new GitHubPackageDownloader(log, fileSystem, freeSpaceChecker);

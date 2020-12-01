@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Integration.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Packages.NuGet;
 using NSubstitute;
 using NUnit.Framework;
@@ -21,9 +21,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var feedCredentials = new CredentialCache();
             var targetFilePath = "FakeTargetFilePath";
             var filesystem = Substitute.For<ICalamariFileSystem>();
+            var variables = new CalamariVariables();
 
             var calledCount = 0;
-            var downloader = new InternalNuGetPackageDownloader(filesystem);
+            var downloader = new InternalNuGetPackageDownloader(filesystem, variables);
             downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts: 5, downloadAttemptBackoff: TimeSpan.Zero, action: (arg1, arg2, arg3, arg4, arg5) =>
             {
                 calledCount++;
@@ -44,11 +45,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var feedCredentials = new CredentialCache();
             var targetFilePath = "FakeTargetFilePath";
             var filesystem = Substitute.For<ICalamariFileSystem>();
+            var variables = new CalamariVariables();
 
             var calledCount = 0;
             Assert.Throws<Exception>(() =>
             {
-                var downloader = new InternalNuGetPackageDownloader(filesystem);
+                var downloader = new InternalNuGetPackageDownloader(filesystem, variables);
                 downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, maxDownloadAttempts: maxDownloadAttempts, downloadAttemptBackoff: TimeSpan.Zero,
                     action: (arg1, arg2, arg3, arg4, arg5) =>
                     {
