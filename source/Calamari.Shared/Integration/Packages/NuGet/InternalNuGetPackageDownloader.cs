@@ -117,11 +117,30 @@ namespace Calamari.Integration.Packages.NuGet
 #if USE_NUGET_V2_LIBS
         TimeSpan GetHttpTimeout()
         {
-            var timeoutFromVariables = variables.GetInt32(KnownVariables.NetfxNugetHttpTimeout);
+            const string expectedTimespanFormat = "c";
+            
+            // Equal to Timeout.InfiniteTimeSpan, which isn't available in net40
+            var defaultTimeout = new TimeSpan(0, 0, 0, 0, -1);
+            
+            var rawTimeout = variables.Get(KnownVariables.NetfxNugetHttpTimeout);
+            if (string.IsNullOrWhiteSpace(rawTimeout))
+            {
+                return defaultTimeout;
+            }
 
-            return timeoutFromVariables == null 
-                ? new TimeSpan(0, 0, 0, 0, -1) // Equal to Timeout.InfiniteTimeSpan, which isn't available in net40
-                : TimeSpan.FromMilliseconds(timeoutFromVariables.Value);
+            if (TimeSpan.TryParseExact(rawTimeout, expectedTimespanFormat, null, out var parsedTimeout))
+            {
+                return parsedTimeout;
+            }
+
+            var exampleTimespan = new TimeSpan(0, 0, 1, 0).ToString(expectedTimespanFormat);
+            
+            var message = $"The variable {KnownVariables.NetfxNugetHttpTimeout} couldn't be parsed as a timespan. " +
+                          $"Expected a value like '{exampleTimespan}' but received '{rawTimeout}'. " +
+                          $"Defaulting to '{defaultTimeout.ToString(expectedTimespanFormat)}'.";
+
+            Log.Warn(message);
+            return defaultTimeout;
         }
 #endif
         
