@@ -13,7 +13,7 @@ namespace Calamari.Integration.Packages.NuGet
 {
     public class InternalNuGetPackageDownloader
     {
-        private readonly ICalamariFileSystem fileSystem;
+        readonly ICalamariFileSystem fileSystem;
         readonly IVariables variables;
 
         public InternalNuGetPackageDownloader(ICalamariFileSystem fileSystem, IVariables variables)
