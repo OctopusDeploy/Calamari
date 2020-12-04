@@ -68,28 +68,28 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Test]
         public void TimesOutIfAValidTimeoutIsDefinedInVariables()
         {
-            RunTimeoutTest("00:00:01", TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(1));
+            RunNugetV3TimeoutTest("00:00:01", TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(1));
         }
 
         [Test]
         public void IgnoresTheTimeoutIfAnInvalidTimeoutIsDefinedInVariables()
         {
-            RunTimeoutTest("this is not a valid timespan", TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+            RunNugetV3TimeoutTest("this is not a valid timespan", TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
         }
 
         [Test]
         public void DoesNotTimeOutIfNoTimeoutIsDefinedInVariables()
         {
-            RunTimeoutTest(null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            RunNugetV3TimeoutTest(null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
         }
 
         [Test]
         public void DoesNotTimeOutIfTheServerRespondsBeforeTheTimeout()
         {
-            RunTimeoutTest("00:01:00", TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            RunNugetV3TimeoutTest("00:01:00", TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
         }
 
-        void RunTimeoutTest(string timeoutInVariables, TimeSpan serverResponseTime, TimeSpan estimatedTimeout)
+        void RunNugetV3TimeoutTest(string timeoutInVariables, TimeSpan serverResponseTime, TimeSpan estimatedTimeout)
         {
             using (var server = new TestHttpServer(9001, serverResponseTime))
             {
@@ -103,7 +103,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
                 if (timeoutInVariables != null)
                 {
-                    variables[KnownVariables.NetfxNugetHttpTimeout] = timeoutInVariables;
+                    variables[KnownVariables.NugetHttpTimeout] = timeoutInVariables;
                 }
                 
                 var downloader = new InternalNuGetPackageDownloader(filesystem, variables);

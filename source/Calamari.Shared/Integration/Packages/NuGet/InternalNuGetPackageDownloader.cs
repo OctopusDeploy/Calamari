@@ -102,13 +102,15 @@ namespace Calamari.Integration.Packages.NuGet
             }
 
             // V2 feed
-            else 
+            else
             {
+                WarnIfHttpTimeoutIsUnsupported();
                 NuGetV2Downloader.DownloadPackage(packageId, version.ToString(), feedUri, feedCredentials, targetFilePath);
             }
 #else
             else
             {
+                WarnIfHttpTimeoutIsUnsupported();
                 NuGetV3LibDownloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
             }
 #endif
@@ -122,7 +124,7 @@ namespace Calamari.Integration.Packages.NuGet
             // Equal to Timeout.InfiniteTimeSpan, which isn't available in net40
             var defaultTimeout = new TimeSpan(0, 0, 0, 0, -1);
             
-            var rawTimeout = variables.Get(KnownVariables.NetfxNugetHttpTimeout);
+            var rawTimeout = variables.Get(KnownVariables.NugetHttpTimeout);
             if (string.IsNullOrWhiteSpace(rawTimeout))
             {
                 return defaultTimeout;
@@ -135,15 +137,27 @@ namespace Calamari.Integration.Packages.NuGet
 
             var exampleTimespan = new TimeSpan(0, 0, 1, 0).ToString(expectedTimespanFormat);
             
-            var message = $"The variable {KnownVariables.NetfxNugetHttpTimeout} couldn't be parsed as a timespan. " +
+            var message = $"The variable {KnownVariables.NugetHttpTimeout} couldn't be parsed as a timespan. " +
                           $"Expected a value like '{exampleTimespan}' but received '{rawTimeout}'. " +
                           $"Defaulting to '{defaultTimeout.ToString(expectedTimespanFormat)}'.";
 
             Log.Warn(message);
             return defaultTimeout;
         }
+
 #endif
         
+        void WarnIfHttpTimeoutIsUnsupported()
+        {
+            if (variables.IsSet(KnownVariables.NugetHttpTimeout))
+            {
+                Log.Warn(
+                    $"A Nuget HTTP timeout was set via the '{KnownVariables.NugetHttpTimeout}' variable. "
+                    + "This variable is not supported for this Nuget repository on this version of .NET."
+                );
+            }
+        }
+
         bool IsHttp(string uri)
         {
             return uri.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||

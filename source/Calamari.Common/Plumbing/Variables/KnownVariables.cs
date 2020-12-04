@@ -13,7 +13,7 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
         public static readonly string AppliedXmlConfigTransforms = "OctopusAppliedXmlConfigTransforms";
 
-        public static readonly string NetfxNugetHttpTimeout = "OctopusNetfxNugetHttpTimeout";
+        public static readonly string NugetHttpTimeout = "OctopusNugetHttpTimeout";
         
         public static class Action
         {
