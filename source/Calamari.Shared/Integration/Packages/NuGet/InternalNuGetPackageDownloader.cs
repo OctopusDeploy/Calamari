@@ -104,13 +104,13 @@ namespace Calamari.Integration.Packages.NuGet
             // V2 feed
             else
             {
-                WarnIfHttpTimeoutIsUnsupported();
+                WarnIfHttpTimeoutHasBeenSet();
                 NuGetV2Downloader.DownloadPackage(packageId, version.ToString(), feedUri, feedCredentials, targetFilePath);
             }
 #else
             else
             {
-                WarnIfHttpTimeoutIsUnsupported();
+                WarnIfHttpTimeoutHasBeenSet();
                 NuGetV3LibDownloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
             }
 #endif
@@ -147,7 +147,7 @@ namespace Calamari.Integration.Packages.NuGet
 
 #endif
         
-        void WarnIfHttpTimeoutIsUnsupported()
+        void WarnIfHttpTimeoutHasBeenSet()
         {
             if (variables.IsSet(KnownVariables.NugetHttpTimeout))
             {
