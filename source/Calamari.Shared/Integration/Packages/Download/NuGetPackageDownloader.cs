@@ -107,9 +107,6 @@ namespace Calamari.Integration.Packages.Download
 
             var fullPathToDownloadTo = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, ".nupkg"));
 
-            var httpTimeoutMilliseconds = variables.GetInt32(KnownVariables.NugetHttpTimeout) ?? 0;
-            var httpTimeout = TimeSpan.FromMilliseconds(httpTimeoutMilliseconds);
-            
             var downloader = new InternalNuGetPackageDownloader(fileSystem, variables);
             downloader.DownloadPackage(packageId,
                 version,
