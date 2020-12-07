@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Net;
 using Calamari.Common.Plumbing.FileSystem;
@@ -65,25 +65,33 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
 #if USE_NUGET_V2_LIBS
+        // We only support the specification of HTTP timeouts on V3 nuget endpoints in
+        // .NET framework. V2 nuget endpoints and .net core runtimes execute entirely
+        // different codepaths that don't give us an easy way to allow users to specify 
+        // timeouts.
         [Test]
+        [NonParallelizable]
         public void TimesOutIfAValidTimeoutIsDefinedInVariables()
         {
             RunNugetV3TimeoutTest("00:00:01", TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(1));
         }
 
         [Test]
+        [NonParallelizable]
         public void IgnoresTheTimeoutIfAnInvalidTimeoutIsDefinedInVariables()
         {
             RunNugetV3TimeoutTest("this is not a valid timespan", TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
         }
 
         [Test]
+        [NonParallelizable]
         public void DoesNotTimeOutIfNoTimeoutIsDefinedInVariables()
         {
             RunNugetV3TimeoutTest(null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
         }
 
         [Test]
+        [NonParallelizable]
         public void DoesNotTimeOutIfTheServerRespondsBeforeTheTimeout()
         {
             RunNugetV3TimeoutTest("00:01:00", TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));

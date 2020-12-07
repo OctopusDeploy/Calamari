@@ -153,7 +153,7 @@ namespace Calamari.Integration.Packages.NuGet
             {
                 Log.Warn(
                     $"A Nuget HTTP timeout was set via the '{KnownVariables.NugetHttpTimeout}' variable. "
-                    + "This variable is not supported for this Nuget repository on this version of .NET."
+                    + "This variable is only supported when running on .NET Framework."
                 );
             }
         }
