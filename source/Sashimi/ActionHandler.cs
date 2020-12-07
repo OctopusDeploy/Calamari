@@ -13,7 +13,7 @@ namespace Sashimi.AzureAppService
 
         public string Description => "Deploy the contents of a package to an Azure Web App via ZipDeploy";
 
-        public string? Keywords => null;
+        public string? Keywords => "Azure";
 
         public bool ShowInStepTemplatePickerUI => true;
 
