@@ -10,7 +10,7 @@ namespace Sashimi.AzureWebApp
        {
               protected override void Load(ContainerBuilder builder)
               {
-                     builder.RegisterType<ActionHandler>()
+                     builder.RegisterType<AzureAppServiceActionHandler>()
                             .As<IActionHandler>()
                             .AsSelf()
                             .InstancePerLifetimeScope();
