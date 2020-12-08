@@ -5,7 +5,7 @@ using Sashimi.AzureAppService.Endpoints;
 
 namespace Sashimi.AzureAppService
 {
-    class ActionHandler : IActionHandler
+    class AzureAppServiceActionHandler : IActionHandler
     {
         public string Id => SpecialVariables.Action.Azure.WebAppActionTypeName;
 

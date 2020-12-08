@@ -87,7 +87,7 @@ namespace Sashimi.AzureAppService.Tests
             ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage",
                 $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip");
 
-            ActionHandlerTestBuilder.CreateAsync<ActionHandler, Program>()
+            ActionHandlerTestBuilder.CreateAsync<AzureAppServiceActionHandler, Program>()
                 .WithArrange(context =>
                 {
                     AddDefaults(context, _webappName);
