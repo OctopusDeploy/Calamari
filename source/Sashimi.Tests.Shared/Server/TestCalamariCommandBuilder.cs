@@ -398,6 +398,8 @@ namespace Sashimi.Tests.Shared.Server
             {
                 //This is where Teamcity puts the Calamari binaries
                 var calamaribinariesFolder = Environment.GetEnvironmentVariable(CalamariBinariesLocationEnvironmentVariable);
+                if (string.IsNullOrEmpty(calamaribinariesFolder))
+                    throw new ApplicationException($"It appears that the environment variable {CalamariBinariesLocationEnvironmentVariable} is not set. Without this, I cant find the binaries!");
                 return AddExeExtensionIfNecessary(Path.GetFullPath(Path.Combine(sashimiTestFolder, calamaribinariesFolder, calamariFlavour)));
             }
 
