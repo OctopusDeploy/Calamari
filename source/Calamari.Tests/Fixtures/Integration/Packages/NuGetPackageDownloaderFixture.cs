@@ -85,13 +85,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [NonParallelizable]
-        public void DoesNotTimeOutIfNoTimeoutIsDefinedInVariables()
-        {
-            RunNugetV3TimeoutTest(null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-        }
-
-        [Test]
-        [NonParallelizable]
         public void DoesNotTimeOutIfTheServerRespondsBeforeTheTimeout()
         {
             RunNugetV3TimeoutTest("00:01:00", TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
@@ -121,16 +114,22 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 Action invocation = () =>
                 {
                     stopwatch.Start();
-                    downloader.DownloadPackage(
-                        packageId,
-                        version,
-                        v3NugetUri,
-                        feedCredentials,
-                        targetFilePath,
-                        maxDownloadAttempts: 1,
-                        downloadAttemptBackoff: TimeSpan.Zero
-                    );
-                    stopwatch.Stop();
+                    try
+                    {
+                        downloader.DownloadPackage(
+                            packageId,
+                            version,
+                            v3NugetUri,
+                            feedCredentials,
+                            targetFilePath,
+                            maxDownloadAttempts: 1,
+                            downloadAttemptBackoff: TimeSpan.Zero
+                        );
+                    }
+                    finally
+                    {
+                        stopwatch.Stop();
+                    }
                 };
 
                 invocation.Should()
