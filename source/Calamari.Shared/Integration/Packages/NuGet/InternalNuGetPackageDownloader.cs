@@ -4,6 +4,7 @@ using System.Threading;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Retry;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Octopus.Versioning;
@@ -12,11 +13,13 @@ namespace Calamari.Integration.Packages.NuGet
 {
     public class InternalNuGetPackageDownloader
     {
-        private readonly ICalamariFileSystem fileSystem;
+        readonly ICalamariFileSystem fileSystem;
+        readonly IVariables variables;
 
-        public InternalNuGetPackageDownloader(ICalamariFileSystem fileSystem)
+        public InternalNuGetPackageDownloader(ICalamariFileSystem fileSystem, IVariables variables)
         {
             this.fileSystem = fileSystem;
+            this.variables = variables;
         }
 
         public void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
@@ -31,7 +34,7 @@ namespace Calamari.Integration.Packages.NuGet
             ICredentials feedCredentials,
             string targetFilePath, 
             int maxDownloadAttempts, 
-            TimeSpan downloadAttemptBackoff, 
+            TimeSpan downloadAttemptBackoff,
             Action<string, IVersion, Uri, ICredentials, string> action)
         {
             if (maxDownloadAttempts <= 0)
@@ -94,20 +97,65 @@ namespace Calamari.Integration.Packages.NuGet
             // NuGet V3 feed 
             else if (IsHttp(feedUri.ToString()) && feedUri.ToString().EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
-                NuGetV3Downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
+                var timeout = GetHttpTimeout();
+                NuGetV3Downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, timeout);
             }
 
             // V2 feed
-            else 
+            else
             {
+                WarnIfHttpTimeoutHasBeenSet();
                 NuGetV2Downloader.DownloadPackage(packageId, version.ToString(), feedUri, feedCredentials, targetFilePath);
             }
 #else
             else
             {
+                WarnIfHttpTimeoutHasBeenSet();
                 NuGetV3LibDownloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
             }
 #endif
+        }
+
+#if USE_NUGET_V2_LIBS
+        TimeSpan GetHttpTimeout()
+        {
+            const string expectedTimespanFormat = "c";
+            
+            // Equal to Timeout.InfiniteTimeSpan, which isn't available in net40
+            var defaultTimeout = new TimeSpan(0, 0, 0, 0, -1);
+            
+            var rawTimeout = variables.Get(KnownVariables.NugetHttpTimeout);
+            if (string.IsNullOrWhiteSpace(rawTimeout))
+            {
+                return defaultTimeout;
+            }
+
+            if (TimeSpan.TryParseExact(rawTimeout, expectedTimespanFormat, null, out var parsedTimeout))
+            {
+                return parsedTimeout;
+            }
+
+            var exampleTimespan = new TimeSpan(0, 0, 1, 0).ToString(expectedTimespanFormat);
+            
+            var message = $"The variable {KnownVariables.NugetHttpTimeout} couldn't be parsed as a timespan. " +
+                          $"Expected a value like '{exampleTimespan}' but received '{rawTimeout}'. " +
+                          $"Defaulting to '{defaultTimeout.ToString(expectedTimespanFormat)}'.";
+
+            Log.Warn(message);
+            return defaultTimeout;
+        }
+
+#endif
+        
+        void WarnIfHttpTimeoutHasBeenSet()
+        {
+            if (variables.IsSet(KnownVariables.NugetHttpTimeout))
+            {
+                Log.Warn(
+                    $"A Nuget HTTP timeout was set via the '{KnownVariables.NugetHttpTimeout}' variable. "
+                    + "This variable is only supported when running on .NET Framework."
+                );
+            }
         }
 
         bool IsHttp(string uri)

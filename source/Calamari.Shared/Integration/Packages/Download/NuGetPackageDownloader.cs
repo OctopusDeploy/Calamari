@@ -7,6 +7,7 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.NuGet;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Packages.NuGet;
 using Octopus.Versioning;
 using PackageName = Calamari.Common.Features.Packages.PackageName;
@@ -27,11 +28,13 @@ namespace Calamari.Integration.Packages.Download
 
         readonly ICalamariFileSystem fileSystem;
         readonly IFreeSpaceChecker freeSpaceChecker;
+        readonly IVariables variables;
 
-        public NuGetPackageDownloader(ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker)
+        public NuGetPackageDownloader(ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, IVariables variables)
         {
             this.fileSystem = fileSystem;
             this.freeSpaceChecker = freeSpaceChecker;
+            this.variables = variables;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(
@@ -104,7 +107,7 @@ namespace Calamari.Integration.Packages.Download
 
             var fullPathToDownloadTo = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, ".nupkg"));
 
-            var downloader = new InternalNuGetPackageDownloader(fileSystem);
+            var downloader = new InternalNuGetPackageDownloader(fileSystem, variables);
             downloader.DownloadPackage(packageId,
                 version,
                 feedUri,
