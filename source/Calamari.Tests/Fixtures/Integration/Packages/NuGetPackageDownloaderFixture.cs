@@ -121,16 +121,22 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 Action invocation = () =>
                 {
                     stopwatch.Start();
-                    downloader.DownloadPackage(
-                        packageId,
-                        version,
-                        v3NugetUri,
-                        feedCredentials,
-                        targetFilePath,
-                        maxDownloadAttempts: 1,
-                        downloadAttemptBackoff: TimeSpan.Zero
-                    );
-                    stopwatch.Stop();
+                    try
+                    {
+                        downloader.DownloadPackage(
+                            packageId,
+                            version,
+                            v3NugetUri,
+                            feedCredentials,
+                            targetFilePath,
+                            maxDownloadAttempts: 1,
+                            downloadAttemptBackoff: TimeSpan.Zero
+                        );
+                    }
+                    finally
+                    {
+                        stopwatch.Stop();
+                    }
                 };
 
                 invocation.Should()
