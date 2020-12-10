@@ -85,13 +85,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [NonParallelizable]
-        public void DoesNotTimeOutIfNoTimeoutIsDefinedInVariables()
-        {
-            RunNugetV3TimeoutTest(null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-        }
-
-        [Test]
-        [NonParallelizable]
         public void DoesNotTimeOutIfTheServerRespondsBeforeTheTimeout()
         {
             RunNugetV3TimeoutTest("00:01:00", TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
