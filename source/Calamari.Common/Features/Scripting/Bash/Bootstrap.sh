@@ -34,7 +34,6 @@ function __mask_sensitive_value
 }
 
 __mask_sensitive_value $sensitiveVariableKey
-#### SensitiveValueMasks ####
 
 # -----------------------------------------------------------------------------
 # Function to decrypt a sensitive variable
