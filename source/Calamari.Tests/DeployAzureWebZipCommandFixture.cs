@@ -73,11 +73,11 @@ namespace Calamari.AzureAppService.Tests
         {
             await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
 
-            foreach (var tempDir in _tempDirs)
-            {
-                if(tempDir.Exists)
-                    tempDir.Delete(true);
-            }
+            //foreach (var tempDir in _tempDirs)
+            //{
+            //    if(tempDir.Exists)
+            //        tempDir.Delete(true);
+            //}
         }
 
         [Test]
