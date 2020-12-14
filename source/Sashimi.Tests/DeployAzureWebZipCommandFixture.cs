@@ -74,10 +74,10 @@ namespace Sashimi.AzureAppService.Tests
         [OneTimeTearDown]
         public async Task Cleanup()
         {
-            foreach (var tempDir in _tempDirs)
-            {
-                tempDir.Delete(true);
-            }
+            //foreach (var tempDir in _tempDirs)
+            //{
+            //    tempDir.Delete(true);
+            //}
 
             await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
         }
