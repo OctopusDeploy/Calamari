@@ -16,27 +16,27 @@ using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet
 {
-    internal class NuGetV3Downloader
+    internal static class NuGetV3Downloader
     {
-        public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
+        public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, TimeSpan httpTimeout)
         {
             var normalizedId = packageId.ToLowerInvariant();
             var normalizedVersion = version.ToString().ToLowerInvariant();
-            var packageBaseUri = GetPackageBaseUri(feedUri, feedCredentials).AbsoluteUri.TrimEnd('/');
+            var packageBaseUri = GetPackageBaseUri(feedUri, feedCredentials, httpTimeout).AbsoluteUri.TrimEnd('/');
             var downloadUri = new Uri($"{packageBaseUri}/{normalizedId}/{normalizedVersion}/{normalizedId}.{normalizedVersion}.nupkg");
 
             Log.Verbose($"Downloading package from '{downloadUri}'");
 
             using (var nupkgFile = new FileStream(targetFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
             {
-                GetHttp(downloadUri, feedCredentials, pkgStream =>
+                GetHttp(downloadUri, feedCredentials, httpTimeout, pkgStream =>
                 {
                     pkgStream.CopyTo(nupkgFile);
                 });
             }
         }
 
-        static HttpClient CreateHttpClient(ICredentials credentials)
+        static HttpClient CreateHttpClient(ICredentials credentials, TimeSpan httpTimeout)
         {
             var handler = new WebRequestHandler
             {
@@ -46,7 +46,7 @@ namespace Calamari.Integration.Packages.NuGet
 
             var httpClient = new HttpClient(handler)
             {
-                Timeout = new TimeSpan(0, 0, 0, 0, -1) // Infinite 
+                Timeout = httpTimeout
             };
 
             httpClient.DefaultRequestHeaders.Add("user-agent", "NuGet Client V3/3.4.3");
@@ -54,11 +54,11 @@ namespace Calamari.Integration.Packages.NuGet
             return httpClient;
         }
 
-        static void GetHttp(Uri uri, ICredentials credentials, Action<Stream> processContent)
+        static void GetHttp(Uri uri, ICredentials credentials, TimeSpan httpTimeout, Action<Stream> processContent)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
-            using (var httpClient = CreateHttpClient(credentials))
+            using (var httpClient = CreateHttpClient(credentials, httpTimeout))
             {
                 var sending = httpClient.SendAsync(request);
                 sending.Wait();
@@ -72,11 +72,11 @@ namespace Calamari.Integration.Packages.NuGet
             }
         }
 
-        static Uri GetPackageBaseUri(Uri feedUri, ICredentials feedCredentials)
+        static Uri GetPackageBaseUri(Uri feedUri, ICredentials feedCredentials, TimeSpan httpTimeout)
         {
             // Parse JSON for package base URL
             JObject json = null;
-            GetHttp(feedUri, feedCredentials, stream =>
+            GetHttp(feedUri, feedCredentials, httpTimeout, stream =>
             {
                 using (var streamReader = new StreamReader(stream))
                 using (var jsonReader = new JsonTextReader(streamReader))
