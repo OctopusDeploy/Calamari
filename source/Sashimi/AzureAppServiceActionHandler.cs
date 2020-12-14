@@ -7,13 +7,13 @@ namespace Sashimi.AzureAppService
 {
     class AzureAppServiceActionHandler : IActionHandler
     {
-        public string Id => SpecialVariables.Action.Azure.WebAppActionTypeName;
+        public string Id => SpecialVariables.Action.Azure.ActionTypeName;
 
         public string Name => "Deploy an Azure Web App via ZipDeploy";
 
         public string Description => "Deploy the contents of a package to an Azure Web App via ZipDeploy";
 
-        public string? Keywords => "Azure";
+        public string? Keywords => null;
 
         public bool ShowInStepTemplatePickerUI => true;
 
@@ -22,9 +22,7 @@ namespace Sashimi.AzureAppService
         public bool CanRunOnDeploymentTarget => false;
 
         public ActionHandlerCategory[] Categories => new[]
-        {
-            ActionHandlerCategory.BuiltInStep, AzureConstants.AzureActionHandlerCategory, ActionHandlerCategory.Package
-        };
+            {ActionHandlerCategory.BuiltInStep, AzureConstants.AzureActionHandlerCategory};
 
         public IActionHandlerResult Execute(IActionHandlerContext context)
         {

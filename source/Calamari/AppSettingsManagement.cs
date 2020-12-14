@@ -86,7 +86,11 @@ namespace Calamari.AzureAppService
             var targetUrl =
                 $"https://management.azure.com/subscriptions/{webAppClient.SubscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{appName}/config/slotconfignames?api-version=2018-11-01";
 
-            var output = JsonConvert.DeserializeObject<appSettingNamesRoot>(await client.GetStringAsync(targetUrl)).properties.appSettingNames;
+            var results = await client.GetStringAsync(targetUrl);
+
+            var output = JsonConvert.DeserializeObject<appSettingNamesRoot>(results).properties.appSettingNames ??
+                         new List<string>();
+
             return output;
         }
     }

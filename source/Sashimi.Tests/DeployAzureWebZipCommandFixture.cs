@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.ResourceManager.Resources;
@@ -10,10 +11,12 @@ using Calamari.Azure;
 using Calamari.AzureAppService;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Shared;
+using FluentAssertions;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using Sashimi.Tests.Shared.Server;
 
@@ -30,6 +33,10 @@ namespace Sashimi.AzureAppService.Tests
         private string _resourceGroupName;
         private ResourceGroupsOperations _resourceGroupClient;
         private IList<DirectoryInfo> _tempDirs;
+
+        private WebSiteManagementClient _webMgmtClient;
+
+        private string _testAppSettings = "{\"AppSettings\":[{\"Name\":\"MyAppSetting\",\"Value\":\"AppValue\",\"IsSlotSetting\":false},{\"Name\":\"MyAppSetting2\",\"Value\":\"AppValue2\",\"IsSlotSetting\":true}]}";
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -53,12 +60,12 @@ namespace Sashimi.AzureAppService.Tests
             var resourceGroup = new ResourceGroup(resourceGroupLocation);
             resourceGroup = await _resourceGroupClient.CreateOrUpdateAsync(_resourceGroupName, resourceGroup);
 
-            var webMgmtClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = _subscriptionId };
+            _webMgmtClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = _subscriptionId };
 
-            var svcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
+            var svcPlan = await _webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
                 resourceGroup.Name, new AppServicePlan(resourceGroup.Location));
 
-            var webapp = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
+            var webapp = await _webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
                 new Site(resourceGroup.Location) { ServerFarmId = svcPlan.Id });
 
             _webappName = webapp.Name;
@@ -75,7 +82,7 @@ namespace Sashimi.AzureAppService.Tests
             await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
         }
 
-        //[Test]
+        [Test]
         public async Task Deploy_WebAppZip()
         {
 
@@ -95,6 +102,7 @@ namespace Sashimi.AzureAppService.Tests
                         "AzureZipDeployPackage", "1.0.0");
                 })
                 .Execute(runOutOfProc: true);
+            await AssertContent($"{_webappName}.azurewebsites.net", "Hello World");
         }
 
         private async Task<string> GetAuthToken(string tenantId, string applicationId, string password)
@@ -128,6 +136,18 @@ namespace Sashimi.AzureAppService.Tests
             context.Variables.Add(AccountVariables.SubscriptionId, _subscriptionId);
             context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName);
             context.Variables.Add("Octopus.Action.Azure.WebAppName", webAppName);
+            context.Variables.Add(SpecialVariables.Action.Azure.AppSettings,  _testAppSettings);
+        }
+
+        async Task AssertContent(string hostName, string actualText, string rootPath = null)
+        {
+            var result = await new HttpClient().GetStringAsync($"https://{hostName}/{rootPath}"); 
+            result.Should().Be(actualText);
+
+            var appSettings =
+                await _webMgmtClient.WebApps.ListApplicationSettingsWithHttpMessagesAsync(_resourceGroupName,
+                    _webappName);
+
         }
     }
 }

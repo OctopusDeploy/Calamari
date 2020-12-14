@@ -33,8 +33,6 @@ namespace Calamari.AzureAppService.Tests
         private ResourceGroupsOperations _resourceGroupClient;
         private IList<DirectoryInfo> _tempDirs;
 
-        //private Site webapp;
-
         readonly HttpClient client = new HttpClient();
 
         [OneTimeSetUp]
@@ -68,22 +66,21 @@ namespace Calamari.AzureAppService.Tests
                 new Site(resourceGroup.Location) { ServerFarmId = svcPlan.Id });
 
             _webappName = webapp.Name;
-
-
         }
 
         [OneTimeTearDown]
         public async Task CleanupCode()
         {
+            await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
+
             foreach (var tempDir in _tempDirs)
             {
-                tempDir.Delete(true);
+                if(tempDir.Exists)
+                    tempDir.Delete(true);
             }
-
-            //await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
         }
 
-        //[Test]
+        [Test]
         public async Task Deploy_WebAppZip_Simple()
         {
             //await Task.Delay(500);
@@ -112,8 +109,8 @@ namespace Calamari.AzureAppService.Tests
             context.Variables.Add(AccountVariables.Password, _clientSecret);
             context.Variables.Add(AccountVariables.TenantId, _tenantId);
             context.Variables.Add(AccountVariables.SubscriptionId, _subscriptionId);
-            context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName ?? "ChrisOctoTesting");
-            context.Variables.Add("Octopus.Action.Azure.WebAppName", webAppName ?? "octoZipDeploy");
+            context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName);
+            context.Variables.Add("Octopus.Action.Azure.WebAppName", webAppName);
 
             var appSettings = BuildAppSettingsJson();
             context.Variables.Add(SpecialVariables.Action.Azure.AppSettings, appSettings);
