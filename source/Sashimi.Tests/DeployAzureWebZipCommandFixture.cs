@@ -82,7 +82,7 @@ namespace Sashimi.AzureAppService.Tests
             await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
         }
 
-        [Test]
+        //[Test]
         public async Task Deploy_WebAppZip()
         {
 
