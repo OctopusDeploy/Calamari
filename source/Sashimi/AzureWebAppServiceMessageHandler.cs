@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security;
 using Octopus.Diagnostics;
 using Octostache;
 using Sashimi.AzureWebApp.Endpoints;
@@ -35,7 +36,8 @@ namespace Sashimi.AzureWebApp
                                                { AzureWebAppServiceMessageNames.ResourceGroupNameAttribute, new FunctionParameter(ParameterType.String) },
                                                { AzureWebAppServiceMessageNames.AccountIdOrNameAttribute, new FunctionParameter(ParameterType.String) },
                                                { AzureWebAppServiceMessageNames.RolesAttribute, new FunctionParameter(ParameterType.String) },
-                                               { AzureWebAppServiceMessageNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) }
+                                               { AzureWebAppServiceMessageNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) },
+                                               { AzureWebAppServiceMessageNames.WorkerPoolIdOrNameAttribute, new FunctionParameter(ParameterType.String) }
                                            })
         };
 
@@ -48,7 +50,7 @@ namespace Sashimi.AzureWebApp
         {
             var endpoint = new AzureWebAppEndpoint
             {
-                AccountId = GetAccountId(messageProperties, variables, accountIdResolver)
+                AccountId = GetAccountId(messageProperties, variables, accountIdResolver),
             };
 
             messageProperties.TryGetValue(AzureWebAppServiceMessageNames.WebAppNameAttribute, out var wepAppName);
@@ -63,7 +65,22 @@ namespace Sashimi.AzureWebApp
                 endpoint.WebAppSlotName = webAppSlotName;
             }
 
+            endpoint.DefaultWorkerPoolId = GetWorkerPoolId(messageProperties, variables, workerPoolIdResolver);
+
             return endpoint;
+        }
+
+        string GetWorkerPoolId(IDictionary<string,string> messageProperties, VariableDictionary variables, Func<string,string> workerPoolIdResolver)
+        {
+            messageProperties.TryGetValue(AzureWebAppServiceMessageNames.WorkerPoolIdOrNameAttribute, out var workerPoolIdOrName);
+            if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
+                return string.Empty;
+
+            var resolvedWorkerPoolId = workerPoolIdResolver(workerPoolIdOrName);
+            if (string.IsNullOrWhiteSpace(resolvedWorkerPoolId))
+                return string.Empty;
+
+            return resolvedWorkerPoolId;
         }
 
         string GetAccountId(IDictionary<string, string> messageProperties,
@@ -106,6 +123,7 @@ namespace Sashimi.AzureWebApp
             public const string WebAppNameAttribute = "azureWebApp";
             public const string ResourceGroupNameAttribute = "azureResourceGroupName";
             public const string WebAppSlotNameAttribute = "azureWebAppSlot";
+            public const string WorkerPoolIdOrNameAttribute = "octopusWorkerPoolIdOrName";
         }
     }
 }

@@ -180,6 +180,56 @@ namespace Sashimi.AzureWebApp.Tests
             });
         }
 
+        [Test]
+        public void BuildEndpoint_WhenWorkerPoolIdAttributeIsProvided_ShouldLookupWorkerPool()
+        {
+            var messageProperties = GetMessageProperties();
+            messageProperties.Add(AzureWebAppServiceMessageNames.WorkerPoolIdOrNameAttribute, "Worker Pool 1");
+
+            var workerPoolId = "WorkerPools-1";
+            const string accountId = "Accounts-12";
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
+                                                               GetVariableDictionary(),
+                                                               _ => accountId,
+                                                               null,
+                                                               _ => workerPoolId,
+                                                               null);
+
+            AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
+            {
+                AccountId = accountId,
+                WebAppName = messageProperties[AzureWebAppServiceMessageNames.WebAppNameAttribute],
+                ResourceGroupName = messageProperties[AzureWebAppServiceMessageNames.ResourceGroupNameAttribute],
+                WebAppSlotName = messageProperties[AzureWebAppServiceMessageNames.WebAppSlotNameAttribute],
+                WorkerPoolId = workerPoolId
+            });
+        }
+
+        [Test]
+        public void BuildEndpoint_WhenNoWorkerPoolIdAttributeIsProvided_ShouldLeaveWorkerPoolIdEmpty()
+        {
+            var messageProperties = GetMessageProperties();
+            messageProperties.Add(AzureWebAppServiceMessageNames.WorkerPoolIdOrNameAttribute, "Worker Pool 1");
+
+            var workerPoolId = "WorkerPools-1";
+            const string accountId = "Accounts-12";
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
+                                                               GetVariableDictionary(),
+                                                               _ => accountId,
+                                                               null,
+                                                               _ => workerPoolId,
+                                                               null);
+
+            AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
+            {
+                AccountId = accountId,
+                WebAppName = messageProperties[AzureWebAppServiceMessageNames.WebAppNameAttribute],
+                ResourceGroupName = messageProperties[AzureWebAppServiceMessageNames.ResourceGroupNameAttribute],
+                WebAppSlotName = messageProperties[AzureWebAppServiceMessageNames.WebAppSlotNameAttribute],
+                WorkerPoolId = string.Empty
+            });
+        }
+
         static void AssertAzureWebAppEndpoint(Endpoint actualEndpoint, ExpectedEndpointValues expectedEndpointValues)
         {
             actualEndpoint.Should().BeOfType<AzureWebAppEndpoint>();
@@ -212,6 +262,7 @@ namespace Sashimi.AzureWebApp.Tests
             public string WebAppName { get; set; }
             public string ResourceGroupName { get; set; }
             public string WebAppSlotName { get; set; }
+            public string WorkerPoolId { get; set; }
         }
     }
 }
