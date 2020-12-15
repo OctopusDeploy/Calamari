@@ -36,7 +36,8 @@ namespace Sashimi.AzureCloudService
                                                { AzureCloudServiceServiceMessageNames.InstanceCountAttribute, new FunctionParameter(ParameterType.String) },
                                                { AzureCloudServiceServiceMessageNames.AccountIdOrNameAttribute, new FunctionParameter(ParameterType.String) },
                                                { AzureCloudServiceServiceMessageNames.RolesAttribute, new FunctionParameter(ParameterType.String) },
-                                               { AzureCloudServiceServiceMessageNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) }
+                                               { AzureCloudServiceServiceMessageNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) },
+                                               { AzureCloudServiceServiceMessageNames.WorkerPoolIdOrNameAttribute, new FunctionParameter(ParameterType.String) }
                                            })
         };
 
@@ -69,18 +70,23 @@ namespace Sashimi.AzureCloudService
             return endpoint;
         }
 
-        string GetWorkerPoolId(IDictionary<string, string> messageProperties, VariableDictionary variables, Func<string, string> workerPoolIdResolver)
+        string? GetWorkerPoolId(IDictionary<string, string> messageProperties, VariableDictionary variables, Func<string, string> workerPoolIdResolver)
         {
+            if (workerPoolIdResolver == null)
+                return null;
+
             messageProperties.TryGetValue(AzureCloudServiceServiceMessageNames.WorkerPoolIdOrNameAttribute, out var workerPoolIdOrName);
+
             if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
+                // try getting the worker pool from the step variables
                 workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id);
 
-            if (string.IsNullOrWhiteSpace(workerPoolIdOrName) || workerPoolIdResolver == null)
-                return string.Empty;
+            if (string.IsNullOrWhiteSpace(workerPoolIdOrName) )
+                return null;
 
             var resolvedWorkerPoolId = workerPoolIdResolver(workerPoolIdOrName);
             if (string.IsNullOrWhiteSpace(resolvedWorkerPoolId))
-                return string.Empty;
+                return null;
 
             return resolvedWorkerPoolId;
         }
@@ -153,7 +159,7 @@ namespace Sashimi.AzureCloudService
             public const string InstanceCountAttribute = "instanceCount";
             public const string RolesAttribute = "octopusRoles";
             public const string UpdateIfExistingAttribute = "updateIfExisting";
-            public const string WorkerPoolIdOrNameAttribute = "octopusWorkerPoolIdOrName";
+            public const string WorkerPoolIdOrNameAttribute = "octopusDefaultWorkerPoolIdOrName";
         }
 
         internal static class AzureCloudServiceEndpointDeploymentSlot

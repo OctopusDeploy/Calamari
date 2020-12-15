@@ -395,7 +395,7 @@ namespace Sashimi.AzureCloudService.Tests
             public string Slot { get; set; }
             public bool SwapIfPossible { get; set; }
             public bool UseCurrentInstanceCount { get; set; }
-            public string WorkerPoolId { get; set; } = string.Empty;
+            public string WorkerPoolId { get; set; }
         }
     }
 }
