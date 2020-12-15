@@ -261,7 +261,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        public void FailsIfAFileFailsToParseWhenThereAreManyGlobs()
+        public void FailsIfAFileFailsToParseWhenThereAreMultipleTargetFiles()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
