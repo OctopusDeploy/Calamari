@@ -70,10 +70,13 @@ namespace Sashimi.AzureWebApp
             return endpoint;
         }
 
-        string GetWorkerPoolId(IDictionary<string,string> messageProperties, VariableDictionary variables, Func<string,string> workerPoolIdResolver)
+        string GetWorkerPoolId(IDictionary<string, string> messageProperties, VariableDictionary variables, Func<string, string> workerPoolIdResolver)
         {
             messageProperties.TryGetValue(AzureWebAppServiceMessageNames.WorkerPoolIdOrNameAttribute, out var workerPoolIdOrName);
             if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
+                workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id);
+
+            if (string.IsNullOrWhiteSpace(workerPoolIdOrName) || workerPoolIdResolver == null)
                 return string.Empty;
 
             var resolvedWorkerPoolId = workerPoolIdResolver(workerPoolIdOrName);

@@ -7,8 +7,10 @@ using NUnit.Framework;
 using Octopus.Diagnostics;
 using Octostache;
 using Sashimi.AzureWebApp.Endpoints;
+using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Endpoints;
 using Sashimi.Server.Contracts.ServiceMessages;
+using YamlDotNet.Core;
 using AzureWebAppServiceMessageNames = Sashimi.AzureWebApp.AzureWebAppServiceMessageHandler.AzureWebAppServiceMessageNames;
 
 namespace Sashimi.AzureWebApp.Tests
@@ -206,18 +208,17 @@ namespace Sashimi.AzureWebApp.Tests
         }
 
         [Test]
-        public void BuildEndpoint_WhenNoWorkerPoolIdAttributeIsProvided_ShouldLeaveWorkerPoolIdEmpty()
+        public void BuildEndpoint_WhenNoWorkerPoolIdAttributeIsProvided_ShouldUseWorkerPoolFromStep()
         {
             var messageProperties = GetMessageProperties();
-            messageProperties.Add(AzureWebAppServiceMessageNames.WorkerPoolIdOrNameAttribute, "Worker Pool 1");
-
-            var workerPoolId = "WorkerPools-1";
+            messageProperties.Remove(AzureWebAppServiceMessageNames.WorkerPoolIdOrNameAttribute);
             const string accountId = "Accounts-12";
+            var variableDictionary = GetVariableDictionary();
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
-                                                               GetVariableDictionary(),
+                                                               variableDictionary,
                                                                _ => accountId,
                                                                null,
-                                                               _ => workerPoolId,
+                                                               _ => variableDictionary.Get(KnownVariables.WorkerPool.Id),
                                                                null);
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
@@ -226,18 +227,19 @@ namespace Sashimi.AzureWebApp.Tests
                 WebAppName = messageProperties[AzureWebAppServiceMessageNames.WebAppNameAttribute],
                 ResourceGroupName = messageProperties[AzureWebAppServiceMessageNames.ResourceGroupNameAttribute],
                 WebAppSlotName = messageProperties[AzureWebAppServiceMessageNames.WebAppSlotNameAttribute],
-                WorkerPoolId = string.Empty
+                WorkerPoolId = variableDictionary.Get(KnownVariables.WorkerPool.Id)
             });
         }
 
         static void AssertAzureWebAppEndpoint(Endpoint actualEndpoint, ExpectedEndpointValues expectedEndpointValues)
         {
             actualEndpoint.Should().BeOfType<AzureWebAppEndpoint>();
-            var cloudServiceEndpoint = (AzureWebAppEndpoint)actualEndpoint;
-            cloudServiceEndpoint.AccountId.Should().Be(expectedEndpointValues.AccountId);
-            cloudServiceEndpoint.ResourceGroupName.Should().Be(expectedEndpointValues.ResourceGroupName);
-            cloudServiceEndpoint.WebAppName.Should().Be(expectedEndpointValues.WebAppName);
-            cloudServiceEndpoint.WebAppSlotName.Should().Be(expectedEndpointValues.WebAppSlotName);
+            var azureWebAppEndpoint = (AzureWebAppEndpoint)actualEndpoint;
+            azureWebAppEndpoint.AccountId.Should().Be(expectedEndpointValues.AccountId);
+            azureWebAppEndpoint.ResourceGroupName.Should().Be(expectedEndpointValues.ResourceGroupName);
+            azureWebAppEndpoint.WebAppName.Should().Be(expectedEndpointValues.WebAppName);
+            azureWebAppEndpoint.WebAppSlotName.Should().Be(expectedEndpointValues.WebAppSlotName);
+            azureWebAppEndpoint.DefaultWorkerPoolId.Should().Be(expectedEndpointValues.WorkerPoolId);
         }
 
         static IDictionary<string, string> GetMessageProperties()
@@ -253,7 +255,11 @@ namespace Sashimi.AzureWebApp.Tests
 
         static VariableDictionary GetVariableDictionary()
         {
-            return new VariableDictionary { { SpecialVariables.Action.Azure.AccountId, "Accounts-2" } };
+            return new VariableDictionary
+            {
+                { SpecialVariables.Action.Azure.AccountId, "Accounts-2" },
+                { KnownVariables.WorkerPool.Id, "WorkerPools-100" },
+            };
         }
 
         class ExpectedEndpointValues
@@ -262,7 +268,7 @@ namespace Sashimi.AzureWebApp.Tests
             public string WebAppName { get; set; }
             public string ResourceGroupName { get; set; }
             public string WebAppSlotName { get; set; }
-            public string WorkerPoolId { get; set; }
+            public string WorkerPoolId { get; set; } = string.Empty;
         }
     }
 }
