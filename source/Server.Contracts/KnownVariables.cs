@@ -29,6 +29,11 @@
             }
         }
 
+        public static class WorkerPool
+        {
+            public static readonly string Id = "Octopus.WorkerPool.Id";
+        }
+
         public static class RunbookRun
         {
             public static readonly string Id = "Octopus.RunbookRun.Id";

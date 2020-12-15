@@ -68,3 +68,4 @@ TestResult.xml
 TestResults/
 .idea/
 /working/
+.DS_Store
