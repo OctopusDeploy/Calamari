@@ -114,7 +114,7 @@ using Sashimi.Server.Contracts.ServiceMessages;
          {
              messageProperties.TryGetValue(AzureServiceFabricServiceMessageNames.WorkerPoolIdOrNameAttribute, out var workerPoolIdOrName);
              if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
-                 workerPoolIdOrName = variables.Get("Octopus.WorkerPool.Id");
+                 workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id);
 
              if (string.IsNullOrWhiteSpace(workerPoolIdOrName) || workerPoolIdResolver == null)
                  return string.Empty;
