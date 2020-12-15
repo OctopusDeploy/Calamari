@@ -123,6 +123,46 @@ namespace Sashimi.AzureServiceFabric.Tests
             });
         }
 
+        [Test]
+        public void BuildEndpoint_WhenWorkerPoolIsProvided_ShouldSetWorkerPoolId()
+        {
+            var messageProperties = GetMessagePropertiesBySecurityMode("NotSecuredAtAll");
+            messageProperties.Add(AzureServiceFabricServiceMessageNames.WorkerPoolIdOrNameAttribute, "Worker Pool 1");
+
+            const string certificateId = "Certificates-5";
+            const string workerPoolId = "WorkerPools-5";
+
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, _ => workerPoolId, null!);
+
+            AssertEndpoint(endpoint, new ExpectedEndpointValues
+            {
+                SecurityMode = AzureServiceFabricSecurityMode.Unsecure,
+                ConnectionEndpoint = messageProperties[AzureServiceFabricServiceMessageNames.ConnectionEndpointAttribute],
+                WorkerPoolId = workerPoolId
+            });
+        }
+
+        [Test]
+        public void BuildEndpoint_WhenNoWorkerPoolIsProvided_ShouldUseStepWorkerPoolId()
+        {
+            var messageProperties = GetMessagePropertiesBySecurityMode("NotSecuredAtAll");
+            messageProperties.Remove(AzureServiceFabricServiceMessageNames.WorkerPoolIdOrNameAttribute);
+
+            const string certificateId = "Certificates-5";
+            const string workerPoolId = "WorkerPools-6";
+
+            var variableDictionary = new VariableDictionary();
+            variableDictionary.Add("Octopus.WorkerPool.Id", workerPoolId);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDictionary, null!, _ => certificateId, _ => workerPoolId, null!);
+
+            AssertEndpoint(endpoint, new ExpectedEndpointValues
+            {
+                SecurityMode = AzureServiceFabricSecurityMode.Unsecure,
+                ConnectionEndpoint = messageProperties[AzureServiceFabricServiceMessageNames.ConnectionEndpointAttribute],
+                WorkerPoolId = workerPoolId
+            });
+        }
+
         static void AssertEndpoint(Endpoint actualEndpoint, ExpectedEndpointValues expectedEndpointValues)
         {
             actualEndpoint.Should().BeOfType<AzureServiceFabricClusterEndpoint>();
@@ -145,6 +185,8 @@ namespace Sashimi.AzureServiceFabric.Tests
                     serviceFabricClusterEndpoint.AadCredentialType.Should().Be(expectedEndpointValues.AadCredentialType);
                     break;
             }
+
+            serviceFabricClusterEndpoint.DefaultWorkerPoolId.Should().Be(expectedEndpointValues.WorkerPoolId);
         }
 
         static IDictionary<string, string> GetMessagePropertiesBySecurityMode(string securityModeValue)
@@ -200,6 +242,7 @@ namespace Sashimi.AzureServiceFabric.Tests
             public string? AadUserCredentialUsername { get; set; }
             public SensitiveString? AadUserCredentialPassword { get; set; }
             public AzureServiceFabricCredentialType AadCredentialType { get; set; }
+            public string WorkerPoolId { get; set; } = string.Empty;
         }
     }
 }
