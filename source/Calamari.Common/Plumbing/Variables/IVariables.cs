@@ -10,7 +10,7 @@ namespace Calamari.Common.Plumbing.Variables
         bool IsSet(string name);
         void Set(string name, string? value);
         void SetStrings(string variableName, IEnumerable<string> values, string separator);
-        string GetRaw(string variableName);
+        string? GetRaw(string variableName);
         [return: NotNullIfNotNull("defaultValue")]
         string? Get(string variableName, string? defaultValue = null);
         [return: NotNullIfNotNull("defaultValue")]
