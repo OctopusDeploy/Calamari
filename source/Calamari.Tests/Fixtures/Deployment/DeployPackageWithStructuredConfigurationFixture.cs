@@ -22,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         const string XmlFileNameWithNonXmlExtension = "xml.config";
         const string YamlFileNameWithNonYamlExtension = "yaml.config";
         const string PropertiesFileNameWithNonPropertiesExtension = "properties.config";
-        const string XmlFileNameWithYamlExtension = "xml.yaml";
+        const string PropertiesFileNameWithYamlExtension = "properties.yaml";
         const string YamlFileNameWithXmlExtension = "yaml.xml";
 
 
@@ -330,7 +330,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
 
-                var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, XmlFileName));
+                var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, XmlFileNameWithNonXmlExtension));
 
                 // NOSHIP: Assert that it logs that it tried json first
                 this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
@@ -349,7 +349,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
 
-                var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
+                var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileNameWithNonYamlExtension));
 
                 // noship: assert that it tried json, xml and json first
                 this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
@@ -369,7 +369,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
 
-                var extractedPackageUpdatedPropertiesFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, PropertiesFileName));
+                var extractedPackageUpdatedPropertiesFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, PropertiesFileNameWithNonPropertiesExtension));
 
                 // noship: assert that it tried json, xml and yaml first
                 this.Assent(extractedPackageUpdatedPropertiesFile, TestEnvironment.AssentPropertiesConfiguration);
@@ -387,7 +387,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
-                result.AssertErrorOutput("The file could not be parsed as Json");
+                result.AssertErrorOutput("The file could not be parsed as Xml");
             }
         }
 
@@ -397,12 +397,15 @@ namespace Calamari.Tests.Fixtures.Deployment
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
                 Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
-                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, XmlFileNameWithYamlExtension);
+                // The content of this file can't be JSON (because JSON is a special case)
+                // It also can't be XML because XML is valid yaml
+                // We are left with making it a properties file that also happens to be invalid yaml
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, PropertiesFileNameWithYamlExtension);
                 Variables.Set("key", "new-value");
 
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
-                result.AssertErrorOutput("The file could not be parsed as Json");
+                result.AssertErrorOutput("The file could not be parsed as Yaml");
             }
         }
 
@@ -420,7 +423,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 result.AssertSuccess();
 
-                var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, ConfigFileName));
+                var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileNameWithAnXmlExtension));
 
                 this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonConfiguration);
             }
