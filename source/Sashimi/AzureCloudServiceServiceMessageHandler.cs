@@ -64,8 +64,25 @@ namespace Sashimi.AzureCloudService
             endpoint.Slot = GetSlot(messageProperties);
             endpoint.SwapIfPossible = GetSwap(messageProperties);
             endpoint.UseCurrentInstanceCount = GetUseCurrentInstance(messageProperties);
+            endpoint.DefaultWorkerPoolId = GetWorkerPoolId(messageProperties, variables, workerPoolIdResolver);
 
             return endpoint;
+        }
+
+        string GetWorkerPoolId(IDictionary<string, string> messageProperties, VariableDictionary variables, Func<string, string> workerPoolIdResolver)
+        {
+            messageProperties.TryGetValue(AzureCloudServiceServiceMessageNames.WorkerPoolIdOrNameAttribute, out var workerPoolIdOrName);
+            if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
+                workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id);
+
+            if (string.IsNullOrWhiteSpace(workerPoolIdOrName) || workerPoolIdResolver == null)
+                return string.Empty;
+
+            var resolvedWorkerPoolId = workerPoolIdResolver(workerPoolIdOrName);
+            if (string.IsNullOrWhiteSpace(resolvedWorkerPoolId))
+                return string.Empty;
+
+            return resolvedWorkerPoolId;
         }
 
         string GetAccountId(IDictionary<string, string> messageProperties,
@@ -136,6 +153,7 @@ namespace Sashimi.AzureCloudService
             public const string InstanceCountAttribute = "instanceCount";
             public const string RolesAttribute = "octopusRoles";
             public const string UpdateIfExistingAttribute = "updateIfExisting";
+            public const string WorkerPoolIdOrNameAttribute = "octopusWorkerPoolIdOrName";
         }
 
         internal static class AzureCloudServiceEndpointDeploymentSlot

@@ -7,6 +7,7 @@ using NUnit.Framework;
 using Octopus.Diagnostics;
 using Octostache;
 using Sashimi.AzureCloudService.Endpoints;
+using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Endpoints;
 using Sashimi.Server.Contracts.ServiceMessages;
 using AzureCloudServiceServiceMessageNames =
@@ -304,6 +305,55 @@ namespace Sashimi.AzureCloudService.Tests
             });
         }
 
+        [Test]
+        public void BuildEndpoint_WhenWorkerPoolProvided_ShouldUseWorkerPool()
+        {
+            var messageProperties = GetMessageProperties();
+            messageProperties.Add(AzureCloudServiceServiceMessageNames.WorkerPoolIdOrNameAttribute, "Worker Pool 1");
+            var accountId = "Accounts-2";
+            var workerPoolId = "WorkerPools-234";
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
+                                                               GetVariableDictionary(), _ => accountId,
+                                                               null, _ => workerPoolId, null);
+
+            AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
+            {
+                AccountId = accountId,
+                CloudServiceName = messageProperties[AzureCloudServiceServiceMessageNames.AzureCloudServiceNameAttribute],
+                StorageAccountName = messageProperties[AzureCloudServiceServiceMessageNames.AzureStorageAccountAttribute],
+                SwapIfPossible = false,
+                Slot = AzureCloudServiceEndpointDeploymentSlot.Production,
+                UseCurrentInstanceCount = false,
+                WorkerPoolId = workerPoolId
+            });
+        }
+
+        [Test]
+        public void BuildEndpoint_WhenNoWorkerPoolProvided_ShouldUseWorkerPoolFromStep()
+        {
+            var messageProperties = GetMessageProperties();
+            messageProperties.Remove(AzureCloudServiceServiceMessageNames.WorkerPoolIdOrNameAttribute);
+            var accountId = "Accounts-2";
+            var workerPoolId = "WorkerPools-234";
+            var variables = GetVariableDictionary();
+            variables.Add(KnownVariables.WorkerPool.Id, workerPoolId);
+
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
+                                                               variables, _ => accountId,
+                                                               null, _ => workerPoolId, null);
+
+            AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
+            {
+                AccountId = accountId,
+                CloudServiceName = messageProperties[AzureCloudServiceServiceMessageNames.AzureCloudServiceNameAttribute],
+                StorageAccountName = messageProperties[AzureCloudServiceServiceMessageNames.AzureStorageAccountAttribute],
+                SwapIfPossible = false,
+                Slot = AzureCloudServiceEndpointDeploymentSlot.Production,
+                UseCurrentInstanceCount = false,
+                WorkerPoolId = workerPoolId
+            });
+        }
+
         static void AssertAzureCloudServiceEndpoint(Endpoint actualEndpoint,
             ExpectedEndpointValues expectedEndpointValues)
         {
@@ -316,6 +366,7 @@ namespace Sashimi.AzureCloudService.Tests
             cloudServiceEndpoint.SwapIfPossible.Should().Be(expectedEndpointValues.SwapIfPossible);
             cloudServiceEndpoint.UseCurrentInstanceCount.Should()
                 .Be(expectedEndpointValues.UseCurrentInstanceCount);
+            cloudServiceEndpoint.DefaultWorkerPoolId.Should().Be(expectedEndpointValues.WorkerPoolId);
         }
 
         static IDictionary<string, string> GetMessageProperties()
@@ -344,6 +395,7 @@ namespace Sashimi.AzureCloudService.Tests
             public string Slot { get; set; }
             public bool SwapIfPossible { get; set; }
             public bool UseCurrentInstanceCount { get; set; }
+            public string WorkerPoolId { get; set; } = string.Empty;
         }
     }
 }
