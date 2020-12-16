@@ -21,7 +21,7 @@ using NUnit.Framework;
 
 namespace Calamari.AzureAppService.Tests
 {
-   // [TestFixture]
+    [TestFixture]
     public class DeployAzureWebZipCommandFixture
     {
         private string _clientId;
