@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using Assent;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -20,6 +20,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         const string PropertiesFileName = "config.properties";
         const string MalformedFileName = "malformed.file";
         const string XmlFileNameWithNonXmlExtension = "xml.config";
+        const string XmlFileNameWithJsonExtension = "xml.json";
         const string YamlFileNameWithNonYamlExtension = "yaml.config";
         const string PropertiesFileNameWithNonPropertiesExtension = "properties.config";
         const string PropertiesFileNameWithYamlExtension = "properties.yaml";
@@ -406,6 +407,21 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
                 result.AssertErrorOutput("The file could not be parsed as Yaml");
+            }
+        }
+
+        [Test]
+        public void FailsAndWarnsIfFileWithAJsonExtensionContainsValidNonJsonContent()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, XmlFileNameWithJsonExtension);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertFailure();
+                result.AssertErrorOutput("The file could not be parsed as Json");
             }
         }
 
