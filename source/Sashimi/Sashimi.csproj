@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Sashimi.AzureCloudService</AssemblyName>
@@ -27,7 +27,7 @@
   <ItemGroup>
     <PackageReference Include="Portable.BouncyCastle" Version="1.8.4" />
     <PackageReference Include="Sashimi.AzureScripting" Version="9.0.2" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="8.3.4" />
+    <PackageReference Include="Sashimi.Server.Contracts" Version="8.6.0" />
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.7.0" />
     <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0" />
   </ItemGroup>

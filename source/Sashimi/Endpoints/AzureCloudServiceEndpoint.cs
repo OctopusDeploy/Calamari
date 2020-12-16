@@ -1,4 +1,3 @@
-#nullable disable
 using System.Collections.Generic;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Endpoints;
@@ -15,11 +14,11 @@ namespace Sashimi.AzureCloudService.Endpoints
 
         public override bool ScriptConsoleSupported => true;
 
-        public string AccountId { get; set; }
+        public string AccountId { get; set; } = string.Empty;
 
-        public string CloudServiceName { get; set; }
-        public string StorageAccountName { get; set; }
-        public string Slot { get; set; }
+        public string CloudServiceName { get; set; } = string.Empty;
+        public string StorageAccountName { get; set; } = string.Empty;
+        public string Slot { get; set; } = string.Empty;
         public bool SwapIfPossible { get; set; }
         public bool UseCurrentInstanceCount { get; set; }
 
@@ -43,6 +42,6 @@ namespace Sashimi.AzureCloudService.Endpoints
                 yield return (DefaultWorkerPoolId, DocumentType.WorkerPool);
         }
 
-        public string DefaultWorkerPoolId { get; set; }
+        public string? DefaultWorkerPoolId { get; set; }
     }
 }
