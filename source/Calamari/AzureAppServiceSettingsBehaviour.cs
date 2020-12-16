@@ -64,8 +64,17 @@ namespace Calamari.AzureAppService
 
             await PublishAppSettings(webAppClient, resourceGroupName, webAppName, appSettings, token, slotName);
 
-            Log.Info($"Restarting {webAppName} in resource group {resourceGroupName}");
-            await webAppClient.WebApps.RestartAsync(resourceGroupName, webAppName, true);
+            if (string.IsNullOrEmpty(slotName))
+            {
+                Log.Info($"Soft restarting {webAppName} in resource group {resourceGroupName}");
+                await webAppClient.WebApps.RestartAsync(resourceGroupName, webAppName, true);
+
+            }
+            else
+            {
+                Log.Info($"Soft restarting slot {slotName} in app {webAppName} in resource group {resourceGroupName}");
+                await webAppClient.WebApps.RestartSlotAsync(resourceGroupName, webAppName, slotName, true);
+            }
         }
 
         private async Task PublishAppSettings(WebSiteManagementClient webAppClient, string resourceGroupName,

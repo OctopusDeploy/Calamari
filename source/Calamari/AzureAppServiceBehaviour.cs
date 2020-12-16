@@ -70,9 +70,15 @@ namespace Calamari.AzureAppService
             var httpClient = webAppClient.HttpClient;
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);
 
+            Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
             await UploadZipAsync(httpClient, uploadZipPath, targetSite.Site);
 
-            await webAppClient.WebApps.RestartAsync(resourceGroupName, webAppName, true);
+            Log.Info($"Soft restarting {targetSite.SiteAndSlot}");
+            if (targetSite.HasSlot)
+                await webAppClient.WebApps.RestartSlotWithHttpMessagesAsync(resourceGroupName, webAppName,
+                    targetSite.Slot, true);
+            else
+                await webAppClient.WebApps.RestartAsync(resourceGroupName, webAppName, true);
         }
 
         private async Task UploadZipAsync(HttpClient client, string uploadZipPath, string targetSite)
