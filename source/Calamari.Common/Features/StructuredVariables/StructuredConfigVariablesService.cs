@@ -95,7 +95,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
         IEnumerable<IFileFormatVariableReplacer>? GetParsersBasedOnFileName(string filePath)
         {
-            var guessedParserBasedOnFileName = FindBestNonJsonReplacerForFilePath(filePath);
+            var guessedParserBasedOnFileName = allReplacers.FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
             if (guessedParserBasedOnFileName == null) return null;
 
             var guessedParserMessage = $"The file at {filePath} matches a known filename pattern, and will be "
@@ -114,19 +114,17 @@ namespace Calamari.Common.Features.StructuredVariables
             };
         }
 
-        IFileFormatVariableReplacer? FindBestNonJsonReplacerForFilePath(string filePath)
-        {
-            return allReplacers
-                .FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
-        }
-
         IEnumerable<IFileFormatVariableReplacer> GetAllParsers(string filePath)
         {
             log.Verbose($"The file at {filePath} does not match any known filename patterns. "
                         + "The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed.");
 
             // Order so that the json replacer comes first
-            return allReplacers.OrderBy(r => r != jsonReplacer);
+            yield return jsonReplacer;
+            foreach (var replacer in allReplacers.Except(new [] { jsonReplacer }))
+            {
+                yield return replacer;
+            }
         }
 
         void DoReplacement(string filePath, IVariables variables, IFileFormatVariableReplacer[] replacersToTry)
