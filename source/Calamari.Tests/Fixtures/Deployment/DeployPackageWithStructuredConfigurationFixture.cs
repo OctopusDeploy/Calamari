@@ -332,7 +332,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, XmlFileNameWithNonXmlExtension));
 
-                // NOSHIP: Assert that it logs that it tried json first
+                result.AssertOutput("The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed");
+                result.AssertOutput("couldn't be parsed as Json");
                 this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
             }
         }
@@ -351,7 +352,9 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileNameWithNonYamlExtension));
 
-                // noship: assert that it tried json, xml and json first
+                result.AssertOutput("The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed");
+                result.AssertOutput("couldn't be parsed as Json");
+                result.AssertOutput("couldn't be parsed as Xml");
                 this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
             }
         }
@@ -371,7 +374,10 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var extractedPackageUpdatedPropertiesFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, PropertiesFileNameWithNonPropertiesExtension));
 
-                // noship: assert that it tried json, xml and yaml first
+                result.AssertOutput("The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed");
+                result.AssertOutput("couldn't be parsed as Json");
+                result.AssertOutput("couldn't be parsed as Xml");
+                result.AssertOutput("couldn't be parsed as Yaml");
                 this.Assent(extractedPackageUpdatedPropertiesFile, TestEnvironment.AssentPropertiesConfiguration);
             }
         }
