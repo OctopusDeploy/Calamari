@@ -98,6 +98,8 @@ using Sashimi.Server.Contracts.ServiceMessages;
                  azureServiceFabricClusterEndpoint.AadCredentialType = AzureServiceFabricCredentialType.UserCredential;
              }
 
+             azureServiceFabricClusterEndpoint.DefaultWorkerPoolId = GetWorkerPoolId(messageProperties, variables, workerPoolIdResolver);
+
              return azureServiceFabricClusterEndpoint;
          }
 
@@ -106,6 +108,24 @@ using Sashimi.Server.Contracts.ServiceMessages;
              messageProperties.TryGetValue(AzureServiceFabricServiceMessageNames.CertificateStoreNameAttribute, out var certificateStoreName);
 
              return string.IsNullOrWhiteSpace(certificateStoreName) ? "My" : certificateStoreName;
+         }
+
+         string? GetWorkerPoolId(IDictionary<string, string> messageProperties, VariableDictionary variables, Func<string, string> workerPoolIdResolver)
+         {
+             messageProperties.TryGetValue(AzureServiceFabricServiceMessageNames.WorkerPoolIdOrNameAttribute, out var workerPoolIdOrName);
+
+             if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
+                 // try getting the worker pool from the step variables
+                 workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id);
+
+             if (string.IsNullOrWhiteSpace(workerPoolIdOrName) )
+                 return null;
+
+             var resolvedWorkerPoolId = workerPoolIdResolver(workerPoolIdOrName);
+             if (string.IsNullOrWhiteSpace(resolvedWorkerPoolId))
+                 return null;
+
+             return resolvedWorkerPoolId;
          }
 
          static AzureServiceFabricSecurityMode GetSecurityMode(IDictionary<string, string> messageProperties)
@@ -141,6 +161,7 @@ using Sashimi.Server.Contracts.ServiceMessages;
              public const string CertificateStoreNameAttribute = "certificateStoreName";
              public const string RolesAttribute = "octopusRoles";
              public const string UpdateIfExistingAttribute = "updateIfExisting";
+             public const string WorkerPoolIdOrNameAttribute = "octopusDefaultWorkerPoolIdOrName";
          }
      }
  }
