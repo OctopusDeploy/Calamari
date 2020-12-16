@@ -110,18 +110,20 @@ using Sashimi.Server.Contracts.ServiceMessages;
              return string.IsNullOrWhiteSpace(certificateStoreName) ? "My" : certificateStoreName;
          }
 
-         string GetWorkerPoolId(IDictionary<string, string> messageProperties, VariableDictionary variables, Func<string, string> workerPoolIdResolver)
+         string? GetWorkerPoolId(IDictionary<string, string> messageProperties, VariableDictionary variables, Func<string, string> workerPoolIdResolver)
          {
              messageProperties.TryGetValue(AzureServiceFabricServiceMessageNames.WorkerPoolIdOrNameAttribute, out var workerPoolIdOrName);
+
              if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
+                 // try getting the worker pool from the step variables
                  workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id);
 
-             if (string.IsNullOrWhiteSpace(workerPoolIdOrName) || workerPoolIdResolver == null)
-                 return string.Empty;
+             if (string.IsNullOrWhiteSpace(workerPoolIdOrName) )
+                 return null;
 
              var resolvedWorkerPoolId = workerPoolIdResolver(workerPoolIdOrName);
              if (string.IsNullOrWhiteSpace(resolvedWorkerPoolId))
-                 return string.Empty;
+                 return null;
 
              return resolvedWorkerPoolId;
          }
@@ -159,7 +161,7 @@ using Sashimi.Server.Contracts.ServiceMessages;
              public const string CertificateStoreNameAttribute = "certificateStoreName";
              public const string RolesAttribute = "octopusRoles";
              public const string UpdateIfExistingAttribute = "updateIfExisting";
-             public const string WorkerPoolIdOrNameAttribute = "octopusWorkerPoolIdOrName";
+             public const string WorkerPoolIdOrNameAttribute = "octopusDefaultWorkerPoolIdOrName";
          }
      }
  }
