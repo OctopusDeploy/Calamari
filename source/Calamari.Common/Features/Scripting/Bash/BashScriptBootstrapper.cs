@@ -43,7 +43,6 @@ namespace Calamari.Common.Features.Scripting.Bash
             var builder = new StringBuilder(BootstrapScriptTemplate);
             var encryptedVariables = EncryptVariables(variables);
             builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(encryptedVariables)));
-            builder.Replace("#### SensitiveValueMasks ####", string.Join(LinuxNewLine, GetSensitiveValueMasks(encryptedVariables)));
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -54,15 +53,6 @@ namespace Calamari.Common.Features.Scripting.Bash
 
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
-        }
-
-        static IEnumerable<string> GetSensitiveValueMasks(IEnumerable<EncryptedVariable> variables)
-        {
-            foreach (var variable in variables)
-            {
-                yield return $@"__mask_sensitive_value ""{variable.EncryptedValue}""";
-                yield return $@"__mask_sensitive_value ""{variable.Iv}""";
-            }
         }
 
         static IList<EncryptedVariable> EncryptVariables(IVariables variables)
