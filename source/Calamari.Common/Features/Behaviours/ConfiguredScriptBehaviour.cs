@@ -42,8 +42,7 @@ namespace Calamari.Common.Features.Behaviours
             foreach (ScriptSyntax scriptType in Enum.GetValues(typeof(ScriptSyntax)))
             {
                 var scriptName = KnownVariables.Action.CustomScripts.GetCustomScriptStage(deploymentStage, scriptType);
-                string error;
-                var scriptBody = context.Variables.Get(scriptName, out error);
+                var scriptBody = context.Variables.Get(scriptName, out var error);
                 if (!string.IsNullOrEmpty(error))
                     log.VerboseFormat(
                         "Parsing script for phase {0} with Octostache returned the following error: `{1}`",

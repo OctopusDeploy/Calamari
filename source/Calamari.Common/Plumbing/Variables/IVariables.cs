@@ -14,9 +14,13 @@ namespace Calamari.Common.Plumbing.Variables
         [return: NotNullIfNotNull("defaultValue")]
         string? Get(string variableName, string? defaultValue = null);
         [return: NotNullIfNotNull("defaultValue")]
-        string? Get(string variableName, out string error, string? defaultValue = null);
-        string Evaluate(string expressionOrVariableOrText, out string error, bool haltOnError = true);
-        string Evaluate(string expressionOrVariableOrText);
+        string? Get(string variableName, out string? error, string? defaultValue = null);
+
+        [return: NotNullIfNotNull("expressionOrVariableOrText")]
+        public string? Evaluate(string? expressionOrVariableOrText, out string? error, bool haltOnError = true);
+
+        string? Evaluate(string? expressionOrVariableOrText);
+
         List<string> GetStrings(string variableName, params char[] separators);
         List<string> GetPaths(string variableName);
         bool GetFlag(string variableName, bool defaultValueIfUnset = false);

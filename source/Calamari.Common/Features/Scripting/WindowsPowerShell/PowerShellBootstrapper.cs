@@ -346,7 +346,10 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                     var moduleFileName = $"{name}.psm1";
                     var moduleFilePath = Path.Combine(parentDirectory, moduleFileName);
                     Log.VerboseFormat("Writing script module '{0}' as PowerShell module {1}. This module will be automatically imported - functions will automatically be in scope.", libraryScriptModuleName, moduleFileName, name);
-                    CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
+                    var contents = variables.Get(variableName);
+                    if (contents == null)
+                        throw new InvalidOperationException($"Value for variable {variableName} could not be found.");
+                    CalamariFileSystem.OverwriteFile(moduleFilePath, contents, Encoding.UTF8);
                     output.AppendLine($"Import-ScriptModule '{libraryScriptModuleName.EscapeSingleQuotedString()}' '{moduleFilePath.EscapeSingleQuotedString()}'");
                     output.AppendLine();
                     scriptModules.Add(moduleFilePath);

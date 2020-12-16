@@ -26,7 +26,7 @@ namespace Calamari.Common.Features.FunctionScriptContributions
         }
 
         public int Priority { get; } = ScriptWrapperPriorities.ToolConfigPriority;
-        public IScriptWrapper NextWrapper { get; set; }
+        public IScriptWrapper? NextWrapper { get; set; }
 
         public bool IsEnabled(ScriptSyntax syntax)
         {
@@ -40,7 +40,12 @@ namespace Calamari.Common.Features.FunctionScriptContributions
 
         public CommandResult ExecuteScript(Script script, ScriptSyntax scriptSyntax, ICommandLineRunner commandLineRunner, Dictionary<string, string>? environmentVars)
         {
+            if (NextWrapper == null)
+                throw new InvalidOperationException("NextWrapper has not been set.");
+
             var workingDirectory = Path.GetDirectoryName(script.File);
+            if (workingDirectory == null)
+                throw new InvalidOperationException("Working directory has not been set correctly.");
 
             variables.Set("OctopusFunctionAppenderTargetScript", $"{script.File}");
             variables.Set("OctopusFunctionAppenderTargetScriptParameters", script.Parameters);

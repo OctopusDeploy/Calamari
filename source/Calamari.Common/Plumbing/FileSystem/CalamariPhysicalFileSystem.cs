@@ -321,7 +321,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 Log.Warn($"The supplied encoding '{e}' does not raise errors for unsupported characters, so the subsequent "
                          + "encoder will never be used. Please set DecoderFallback to ExceptionFallback or use Unicode.");
 
-            byte[] bytes = null;
+            byte[]? bytes = null;
             (Encoding encoding, Exception exception)? lastFailure = null;
             foreach (var currentEncoding in encodingsToTry)
             {
