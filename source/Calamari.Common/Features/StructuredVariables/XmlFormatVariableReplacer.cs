@@ -61,8 +61,6 @@ namespace Calamari.Common.Features.StructuredVariables
                 {
                     var selectedNodes = navigator.XPath2SelectNodes(xPathExpression, nsManager);
                     var variableValue = variables.Get(variable.Key);
-                    if (variableValue == null)
-                        continue;
 
                     foreach (XPathNavigator selectedNode in selectedNodes)
                     {
@@ -132,7 +130,7 @@ namespace Calamari.Common.Features.StructuredVariables
                                      encoding);
         }
 
-        void TrySetInnerXml(XmlElement element, string xpathExpression, string variableValue)
+        void TrySetInnerXml(XmlElement element, string xpathExpression, string? variableValue)
         {
             var previousInnerXml = element.InnerXml;
 
