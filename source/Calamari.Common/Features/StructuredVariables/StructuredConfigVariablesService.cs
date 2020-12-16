@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -59,7 +58,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
                 foreach (var filePath in matchingFiles)
                 {
-                    var replacersToTry = GetReplacersToTryForFile(filePath, onlyPerformJsonReplacement);
+                    var replacersToTry = GetReplacersToTryForFile(filePath, onlyPerformJsonReplacement).ToArray();
                     DoReplacement(filePath, deployment.Variables, replacersToTry);
                 }
             }
@@ -78,47 +77,56 @@ namespace Calamari.Common.Features.StructuredVariables
             return files;
         }
 
-        IFileFormatVariableReplacer[] GetReplacersToTryForFile(string filePath, bool onlyPerformJsonReplacement)
+        IEnumerable<IFileFormatVariableReplacer> GetReplacersToTryForFile(string filePath, bool onlyPerformJsonReplacement)
         {
-            if (onlyPerformJsonReplacement)
-            {
-                log.Verbose($"The {ActionVariables.StructuredConfigurationFallbackFlag} flag is set. The file at "
-                            + $"{filePath} will be parsed as JSON.");
+            return GetParsersWhenOnlyPerformingJsonReplacement(filePath, onlyPerformJsonReplacement)
+                   ?? GetParsersBasedOnFileName(filePath)
+                   ?? GetAllParsers(filePath);
+        }
 
-                return new []	
-                {	
-                    jsonReplacer	
-                };	
+        IEnumerable<IFileFormatVariableReplacer>? GetParsersWhenOnlyPerformingJsonReplacement(string filePath, bool onlyPerformJsonReplacement)
+        {
+            if (!onlyPerformJsonReplacement) return null;
+
+            log.Verbose($"The {ActionVariables.StructuredConfigurationFallbackFlag} flag is set. The file at "
+                        + $"{filePath} will be parsed as JSON.");
+            return new[] { jsonReplacer };
+        }
+
+        IEnumerable<IFileFormatVariableReplacer>? GetParsersBasedOnFileName(string filePath)
+        {
+            var guessedParserBasedOnFileName = FindBestNonJsonReplacerForFilePath(filePath);
+            if (guessedParserBasedOnFileName == null) return null;
+
+            var guessedParserMessage = $"The file at {filePath} matches a known filename pattern, and will be "
+                                       + $"treated as {guessedParserBasedOnFileName.FileFormatName}.";
+            if (guessedParserBasedOnFileName == jsonReplacer)
+            {
+                log.Verbose(guessedParserMessage);
+                return new[] { jsonReplacer };
             }
 
-            var guessBasedOnFilePath = FindBestNonJsonReplacerForFilePath(filePath);
-            if (guessBasedOnFilePath != null)
+            log.Verbose($"${guessedParserMessage} The file will be tried as {jsonReplacer.FileFormatName} first for backwards compatibility.");
+            return new[]
             {
-                log.Verbose($"The file at {filePath} matches a known filename pattern, and will be "
-                            + $"treated as {guessBasedOnFilePath.FileFormatName}. The file will be tried "
-                            + $"as {jsonReplacer.FileFormatName} first for backwards compatibility.");
-
-                return new []
-                {
-                    // For backwards compatibility, always try JSON first.
-                    jsonReplacer,
-                    guessBasedOnFilePath
-                };
-            }
-
-            log.Verbose($"The file at {filePath} will be treated as JSON.");
-
-            return new []
-            {
-                jsonReplacer
+                jsonReplacer,
+                guessedParserBasedOnFileName
             };
         }
 
         IFileFormatVariableReplacer? FindBestNonJsonReplacerForFilePath(string filePath)
         {
             return allReplacers
-                   .Where(r => r.FileFormatName != StructuredConfigVariablesFileFormats.Json)
-                   .FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
+                .FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
+        }
+
+        IEnumerable<IFileFormatVariableReplacer> GetAllParsers(string filePath)
+        {
+            log.Verbose($"The file at {filePath} does not match any known filename patterns. "
+                        + "The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed.");
+
+            // Order so that the json replacer comes first
+            return allReplacers.OrderBy(r => r != jsonReplacer);
         }
 
         void DoReplacement(string filePath, IVariables variables, IFileFormatVariableReplacer[] replacersToTry)

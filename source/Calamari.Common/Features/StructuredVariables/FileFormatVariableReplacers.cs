@@ -9,9 +9,11 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             return new IFileFormatVariableReplacer[]
             {
+                // For files that don't have well known extensions (like `.xml`, `.yaml`, etc.)
+                // these replacers should appear here in the order we want to test them against such files
                 new JsonFormatVariableReplacer(fileSystem, log),
-                new YamlFormatVariableReplacer(fileSystem, log),
                 new XmlFormatVariableReplacer(fileSystem, log),
+                new YamlFormatVariableReplacer(fileSystem, log),
                 new PropertiesFormatVariableReplacer(fileSystem, log)
             };
         }
