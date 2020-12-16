@@ -30,7 +30,7 @@ namespace Calamari.AzureAppService
         /// <returns>Awaitable <see cref="Task"/></returns>
         public static async Task PatchAppSettingsAsync(WebSiteManagementClient webAppClient, string resourceGroupName, string appName, StringDictionary appSettings, string? slotName=null)//HttpClient client)
         {
-            _ = string.IsNullOrEmpty(slotName)
+            _ = !string.IsNullOrEmpty(slotName)
                 ? await webAppClient.WebApps.UpdateApplicationSettingsAsync(resourceGroupName, appName, appSettings)
                 : await webAppClient.WebApps.UpdateApplicationSettingsSlotAsync(resourceGroupName, appName, appSettings,
                     slotName);
