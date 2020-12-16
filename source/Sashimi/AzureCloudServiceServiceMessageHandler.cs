@@ -72,9 +72,6 @@ namespace Sashimi.AzureCloudService
 
         string? GetWorkerPoolId(IDictionary<string, string> messageProperties, VariableDictionary variables, Func<string, string> workerPoolIdResolver)
         {
-            if (workerPoolIdResolver == null)
-                return null;
-
             messageProperties.TryGetValue(AzureCloudServiceServiceMessageNames.WorkerPoolIdOrNameAttribute, out var workerPoolIdOrName);
 
             if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
