@@ -60,8 +60,11 @@ namespace Calamari.AzureAppService
 
             var appSettings = JsonConvert.DeserializeObject<AppSettingsRoot>(variables.Get(SpecialVariables.Action.Azure.AppSettings));
             
+            Log.Verbose($"Deploy publishing app settings to webapp {webAppName} in resource group {resourceGroupName}");
+
             await PublishAppSettings(webAppClient, resourceGroupName, webAppName, appSettings, token, slotName);
 
+            Log.Info($"Restarting {webAppName} in resource group {resourceGroupName}");
             await webAppClient.WebApps.RestartAsync(resourceGroupName, webAppName, true);
         }
 
