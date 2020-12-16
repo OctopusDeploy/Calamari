@@ -38,7 +38,8 @@ using Sashimi.Server.Contracts.ServiceMessages;
                                                 { AzureServiceFabricServiceMessageNames.CertificateStoreNameAttribute, new FunctionParameter(ParameterType.String) },
                                                 { AzureServiceFabricServiceMessageNames.CertificateIdOrNameAttribute, new FunctionParameter(ParameterType.String) },
                                                 { AzureServiceFabricServiceMessageNames.RolesAttribute, new FunctionParameter(ParameterType.String) },
-                                                { AzureServiceFabricServiceMessageNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) }
+                                                { AzureServiceFabricServiceMessageNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) },
+                                                { AzureServiceFabricServiceMessageNames.WorkerPoolIdOrNameAttribute, new FunctionParameter(ParameterType.String) }
                                             })
          };
 
