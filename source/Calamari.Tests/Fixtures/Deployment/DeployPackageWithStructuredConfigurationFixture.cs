@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using Assent;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -18,14 +18,13 @@ namespace Calamari.Tests.Fixtures.Deployment
         const string JsonFileNameWithAnXmlExtension = "json.xml";
         const string ConfigFileName = "values.config";
         const string PropertiesFileName = "config.properties";
-        const string MalformedFileName = "malformed.file";
+        const string MalformedFileName = "malformed.json";
         const string XmlFileNameWithNonXmlExtension = "xml.config";
         const string XmlFileNameWithJsonExtension = "xml.json";
         const string YamlFileNameWithNonYamlExtension = "yaml.config";
         const string PropertiesFileNameWithNonPropertiesExtension = "properties.config";
         const string PropertiesFileNameWithYamlExtension = "properties.yaml";
         const string YamlFileNameWithXmlExtension = "yaml.xml";
-
 
         [SetUp]
         public override void SetUp()
