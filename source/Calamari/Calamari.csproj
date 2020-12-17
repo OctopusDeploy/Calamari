@@ -15,7 +15,7 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Calamari.Common" Version="14.11.2" />
+        <PackageReference Include="Calamari.Common" Version="15.1.5" />
         <PackageReference Include="Calamari.Scripting" Version="8.3.4" />
     </ItemGroup>
     <ItemGroup>
