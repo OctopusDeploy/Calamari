@@ -13,7 +13,7 @@ namespace Sashimi.Server.Contracts.CommandBuilders
     {
         ICalamariCommandBuilder WithStagedPackageArgument();
         ICalamariCommandBuilder WithArgument(string name);
-        ICalamariCommandBuilder WithArgument(string name, string value);
+        ICalamariCommandBuilder WithArgument(string name, string? value);
         ICalamariCommandBuilder WithDataFile(string fileContents, string? fileName = null);
         ICalamariCommandBuilder WithDataFileNoBom(string fileContents, string? fileName = null);
         ICalamariCommandBuilder WithDataFile(byte[] fileContents, string? fileName = null);
@@ -21,7 +21,7 @@ namespace Sashimi.Server.Contracts.CommandBuilders
         ICalamariCommandBuilder WithDataFileAsArgument(string argumentName, string fileContents, string? fileName = null);
         ICalamariCommandBuilder WithDataFileAsArgument(string argumentName, byte[] fileContents, string? fileName = null);
         ICalamariCommandBuilder WithTool(IDeploymentTool tool);
-        ICalamariCommandBuilder WithVariable(string name, string value, bool isSensitive = false);
+        ICalamariCommandBuilder WithVariable(string name, string? value, bool isSensitive = false);
         ICalamariCommandBuilder WithVariable(string name, bool value, bool isSensitive = false);
         IActionHandlerResult Execute();
         ICalamariCommandBuilder WithIsolation(ExecutionIsolation executionIsolation);

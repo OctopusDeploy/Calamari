@@ -64,7 +64,7 @@ namespace Sashimi.Tests.Shared.Server
             throw new NotImplementedException();
         }
 
-        public ICalamariCommandBuilder WithArgument(string name, string value)
+        public ICalamariCommandBuilder WithArgument(string name, string? value)
         {
             throw new NotImplementedException();
         }
@@ -110,7 +110,7 @@ namespace Sashimi.Tests.Shared.Server
             return this;
         }
 
-        public ICalamariCommandBuilder WithVariable(string name, string value, bool isSensitive = false)
+        public ICalamariCommandBuilder WithVariable(string name, string? value, bool isSensitive = false)
         {
             throw new NotImplementedException();
         }
@@ -229,15 +229,18 @@ namespace Sashimi.Tests.Shared.Server
 
             if (!withStagedPackageArgument)
             {
-                var packageId = variables.GetRaw("Octopus.Test.PackagePath");
-                if (File.Exists(packageId))
+                var packagePath = variables.GetRaw("Octopus.Test.PackagePath");
+                if (packagePath == null)
+                    throw new ControlledActionFailedException("PackagePath variable value could not be located.");
+
+                if (File.Exists(packagePath))
                 {
-                    var fileName = new FileInfo(packageId).Name;
-                    File.Copy(packageId, Path.Combine(workingPath, fileName));
+                    var fileName = new FileInfo(packagePath).Name;
+                    File.Copy(packagePath, Path.Combine(workingPath, fileName));
                 }
-                else if (Directory.Exists(packageId))
+                else if (Directory.Exists(packagePath))
                 {
-                    Copy(packageId, workingPath);
+                    Copy(packagePath, workingPath);
                 }
             }
         }

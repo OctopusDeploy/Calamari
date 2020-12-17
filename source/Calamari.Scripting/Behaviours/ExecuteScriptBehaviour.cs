@@ -28,7 +28,10 @@ namespace Calamari.Scripting
         public Task Execute(RunningDeployment context)
         {
             var variables = context.Variables;
-            var scriptFile = Path.Combine(context.CurrentDirectory, variables.Get(ScriptVariables.ScriptFileName));
+            var scriptFileName = variables.Get(ScriptVariables.ScriptFileName);
+            if (scriptFileName == null)
+                throw new InvalidOperationException($"{ScriptVariables.ScriptFileName} variable value could not be found.");
+            var scriptFile = Path.Combine(context.CurrentDirectory, scriptFileName);
             var scriptParameters = variables.Get(SpecialVariables.Action.Script.ScriptParameters);
             Log.VerboseFormat("Executing '{0}'", scriptFile);
             var result = scriptEngine.Execute(new Script(scriptFile, scriptParameters), variables, commandLineRunner);

@@ -68,7 +68,7 @@ namespace Calamari.Scripting
                     continue;
                 }
 
-                packageOriginalPath = Path.GetFullPath(variables.Get(PackageVariables.IndexedOriginalPath(packageReferenceName)));
+                packageOriginalPath = Path.GetFullPath(packageOriginalPath);
 
                 // In the case of container images, the original path is not a file-path.  We won't try and extract or move it.
                 if (!fileSystem.FileExists(packageOriginalPath))

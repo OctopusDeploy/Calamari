@@ -157,7 +157,8 @@ Task("PublishCalamariProjects")
 		    	    	Configuration = configuration,
                         OutputDirectory = $"{publishDir}/{calamariFlavour}/{platform}",
                         Framework = framework,
-                        Runtime = runtime
+                        Runtime = runtime,
+						NoRestore = true
 		    	    });
                 }
 

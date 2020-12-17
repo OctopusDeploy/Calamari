@@ -1,9 +1,10 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Calamari.Common;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
@@ -57,7 +58,7 @@ namespace Calamari.Scripting
             return this.CompletedTask();
         }
 
-        bool TryGetScriptFromVariables(out string scriptBody, out string scriptFileName, out ScriptSyntax syntax)
+        bool TryGetScriptFromVariables([NotNullWhen(true)]out string? scriptBody, [NotNullWhen(true)]out string? scriptFileName, out ScriptSyntax syntax)
         {
             scriptBody = variables.GetRaw(ScriptVariables.ScriptBody);
             if (WasProvided(scriptBody))
@@ -97,7 +98,7 @@ namespace Calamari.Scripting
             return false;
         }
 
-        bool WasProvided(string value)
+        bool WasProvided([NotNullWhen(true)]string? value)
         {
             return !string.IsNullOrEmpty(value);
         }

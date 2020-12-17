@@ -180,12 +180,12 @@ namespace Calamari.Tests.Shared
                     var packageId = context.Variables.GetRaw("Octopus.Test.PackagePath");
                     if (File.Exists(packageId))
                     {
-                        var fileName = new FileInfo(packageId).Name;
-                        File.Copy(packageId, Path.Combine(workingPath, fileName));
+                        var fileName = new FileInfo(packageId!).Name;
+                        File.Copy(packageId!, Path.Combine(workingPath, fileName));
                     }
                     else if (Directory.Exists(packageId))
                     {
-                        Copy(packageId, workingPath);
+                        Copy(packageId!, workingPath);
                     }
                 }
             }

@@ -15,10 +15,15 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Calamari.Common" Version="14.11.2" />
+        <PackageReference Include="Calamari.Common" Version="16.0.6" />
         <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
         <PackageReference Include="scriptcs" Version="0.17.1" />
     </ItemGroup>
+
+    <!-- The following is to stop incorrect nullable reference type warnings for net452 build -->
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net452' ">
+        <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
+    </PropertyGroup>
 
     <ItemGroup>
         <Content Include="FSharp/*.*">

@@ -34,6 +34,8 @@ namespace Calamari.Scripting
         IEnumerable<string> ScriptFileTargetFactory(RunningDeployment context)
         {
             var scriptFile = context.Variables.Get(ScriptVariables.ScriptFileName);
+            if (scriptFile == null)
+                throw new InvalidOperationException($"{ScriptVariables.ScriptFileName} variable value could not be found.");
             yield return Path.Combine(context.CurrentDirectory, scriptFile);
         }
 
