@@ -21,7 +21,7 @@ namespace Calamari.Common.Features.Scripting
         /// a linked list through the NextWrapper property, and scipts are
         /// wrapped up in multiple wrapper as they move through the list.
         /// </summary>
-        IScriptWrapper NextWrapper { get; set; }
+        IScriptWrapper? NextWrapper { get; set; }
 
         /// <summary>
         /// true if this wrapper is enabled, and false otherwise. If

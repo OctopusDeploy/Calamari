@@ -130,7 +130,7 @@ namespace Calamari.Common.Features.StructuredVariables
                                      encoding);
         }
 
-        void TrySetInnerXml(XmlElement element, string xpathExpression, string variableValue)
+        void TrySetInnerXml(XmlElement element, string xpathExpression, string? variableValue)
         {
             var previousInnerXml = element.InnerXml;
 
@@ -199,7 +199,7 @@ namespace Calamari.Common.Features.StructuredVariables
                 yield return namespaceFromDescendants;
         }
 
-        XPath2Expression TryGetXPathFromVariableKey(string variableKey, IXmlNamespaceResolver nsResolver)
+        XPath2Expression? TryGetXPathFromVariableKey(string variableKey, IXmlNamespaceResolver nsResolver)
         {
             // Prevent 'Octopus*' and other unintended variables being recognized as XPath expressions selecting the document node
             if (!variableKey.Contains("/")

@@ -136,7 +136,10 @@ namespace Calamari.Common.Features.Scripting.Bash
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
                     Log.VerboseFormat("Writing script module '{0}' as bash script {1}. Import this via `source {1}`.", libraryScriptModuleName, moduleFileName, name);
                     Encoding utf8WithoutBom = new UTF8Encoding(false);
-                    CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), utf8WithoutBom);
+                    var contents = variables.Get(variableName);
+                    if (contents == null)
+                        throw new InvalidOperationException($"Value for variable {variableName} could not be found.");
+                    CalamariFileSystem.OverwriteFile(moduleFilePath, contents, utf8WithoutBom);
                     EnsureValidUnixFile(moduleFilePath);
                     yield return moduleFilePath;
                 }

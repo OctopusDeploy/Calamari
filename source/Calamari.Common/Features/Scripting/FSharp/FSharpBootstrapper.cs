@@ -77,7 +77,10 @@ namespace Calamari.Common.Features.Scripting.FSharp
                     var moduleFileName = $"{name}.fsx";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
                     Log.VerboseFormat("Writing script module '{0}' as f# module {1}. Import this module via `#load \"{1}\"`.", libraryScriptModuleName, moduleFileName, name);
-                    CalamariFileSystem.OverwriteFile(moduleFilePath, variables.Get(variableName), Encoding.UTF8);
+                    var contents = variables.Get(variableName);
+                    if (contents == null)
+                        throw new InvalidOperationException($"Value for variable {variableName} could not be found.");
+                    CalamariFileSystem.OverwriteFile(moduleFilePath, contents, Encoding.UTF8);
                     yield return moduleFileName;
                 }
         }
