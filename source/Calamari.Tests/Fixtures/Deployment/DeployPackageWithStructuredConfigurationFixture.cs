@@ -15,9 +15,16 @@ namespace Calamari.Tests.Fixtures.Deployment
         const string YamlFileName = "values.yaml";
         const string JsonFileName = "values.json";
         const string XmlFileName = "values.xml";
+        const string JsonFileNameWithAnXmlExtension = "json.xml";
         const string ConfigFileName = "values.config";
         const string PropertiesFileName = "config.properties";
-        const string MalformedFileName = "malformed.file";
+        const string MalformedFileName = "malformed.json";
+        const string XmlFileNameWithNonXmlExtension = "xml.config";
+        const string XmlFileNameWithJsonExtension = "xml.json";
+        const string YamlFileNameWithNonYamlExtension = "yaml.config";
+        const string PropertiesFileNameWithNonPropertiesExtension = "properties.config";
+        const string PropertiesFileNameWithYamlExtension = "properties.yaml";
+        const string YamlFileNameWithXmlExtension = "yaml.xml";
 
         [SetUp]
         public override void SetUp()
@@ -185,24 +192,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        public void FallsBackToJsonIfUnknownFileExtension()
-        {
-            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
-            {
-                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
-                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, ConfigFileName);
-                Variables.Set("key", "new-value");
-
-                var result = DeployPackage(file.FilePath);
-                result.AssertSuccess();
-
-                var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, ConfigFileName));
-
-                this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonConfiguration);
-            }
-        }
-
-        [Test]
         public void CanPerformReplacementOnMultipleTargetFiles()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
@@ -261,7 +250,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        public void FailsIfAFileFailsToParseWhenThereAreManyGlobs()
+        public void FailsIfAFileFailsToParseWhenThereAreMultipleTargetFiles()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {
@@ -308,6 +297,156 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var result = DeployPackage(file.FilePath);
                 result.AssertFailure();
                 result.AssertErrorOutput("The file could not be parsed as Json");
+            }
+        }
+
+        [Test]
+        public void ShouldPerformReplacementInJsonFileWithANonJsonExtension()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, ConfigFileName);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertSuccess();
+
+                var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, ConfigFileName));
+
+                this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonConfiguration);
+            }
+        }
+
+        [Test]
+        public void ShouldPerformReplacementInXmlFileWithANonXmlExtension()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, XmlFileNameWithNonXmlExtension);
+                Variables.Set("/document/key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertSuccess();
+
+                var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, XmlFileNameWithNonXmlExtension));
+
+                result.AssertOutput("The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed");
+                result.AssertOutput("couldn't be parsed as Json");
+                this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
+            }
+        }
+
+        [Test]
+        public void ShouldPerformReplacementInYamlFileWithANonYamlExtension()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileNameWithNonYamlExtension);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertSuccess();
+
+                var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileNameWithNonYamlExtension));
+
+                result.AssertOutput("The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed");
+                result.AssertOutput("couldn't be parsed as Json");
+                result.AssertOutput("couldn't be parsed as Xml");
+                this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
+            }
+        }
+
+        [Test]
+        public void ShouldPerformReplacementInPropertiesFileWithANonPropertiesExtension()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, PropertiesFileNameWithNonPropertiesExtension);
+                Variables.Set("debug", "false");
+                Variables.Set("port", "80");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertSuccess();
+
+                var extractedPackageUpdatedPropertiesFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, PropertiesFileNameWithNonPropertiesExtension));
+
+                result.AssertOutput("The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed");
+                result.AssertOutput("couldn't be parsed as Json");
+                result.AssertOutput("couldn't be parsed as Xml");
+                result.AssertOutput("couldn't be parsed as Yaml");
+                this.Assent(extractedPackageUpdatedPropertiesFile, TestEnvironment.AssentPropertiesConfiguration);
+            }
+        }
+
+        [Test]
+        public void FailsAndWarnsIfFileWithAnXmlExtensionContainsValidNonXmlContent()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, YamlFileNameWithXmlExtension);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertFailure();
+                result.AssertErrorOutput("The file could not be parsed as Xml");
+            }
+        }
+
+        [Test]
+        public void FailsAndWarnsIfFileWithAYamlExtensionContainsValidNonYamlContent()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
+                // The content of this file can't be JSON (because JSON is a special case)
+                // It also can't be XML because XML is valid yaml
+                // We are left with making it a properties file that also happens to be invalid yaml
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, PropertiesFileNameWithYamlExtension);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertFailure();
+                result.AssertErrorOutput("The file could not be parsed as Yaml");
+            }
+        }
+
+        [Test]
+        public void FailsAndWarnsIfFileWithAJsonExtensionContainsValidNonJsonContent()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, XmlFileNameWithJsonExtension);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertFailure();
+                result.AssertErrorOutput("The file could not be parsed as Json");
+            }
+        }
+
+        // This test case demonstrates that even though we usually try to determine file types
+        // using file extensions first, Json is still a special case which takes precedence
+        [Test]
+        public void ShouldPerformReplacementInJsonFileWithFileExtensionForOtherSupportedConfigFormat()
+        {
+            using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
+            {
+                Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
+                Variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, JsonFileNameWithAnXmlExtension);
+                Variables.Set("key", "new-value");
+
+                var result = DeployPackage(file.FilePath);
+                result.AssertSuccess();
+
+                var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileNameWithAnXmlExtension));
+
+                this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonConfiguration);
             }
         }
 
