@@ -9,7 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Calamari.AzureScripting" Version="9.0.2" />
-    <PackageReference Include="Calamari.Common" Version="14.11.2" />
+    <PackageReference Include="Calamari.Common" Version="15.1.5" />
     <PackageReference Include="Calamari.Scripting" Version="8.3.4" />
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.7.3-preview" />
     <PackageReference Include="Microsoft.Azure.Management.Websites" Version="3.0.0" />
