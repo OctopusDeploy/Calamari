@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Calamari.Azure;
 using Calamari.AzureAppService.Json;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
@@ -18,6 +19,9 @@ using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Common;
 
 namespace Calamari.AzureAppService
 {
@@ -53,7 +57,37 @@ namespace Calamari.AzureAppService
             if (resourceGroupName == null)
                 throw new Exception("resource group name must be specified");
 
-            var uploadZipPath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
+            var substituionFeatures = new[]
+            {
+                KnownVariables.Features.ConfigurationTransforms,
+                KnownVariables.Features.StructuredConfigurationVariables,
+                KnownVariables.Features.SubstituteInFiles
+            };
+
+            /*
+             * Calamari default behaviors
+             * https://github.com/OctopusDeploy/Calamari/tree/master/source/Calamari.Common/Features/Behaviours
+             */
+
+            var uploadZipPath = string.Empty;
+            if (substituionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
+            {
+                if (context.StagingDirectory != null)
+                {
+                    using var archive = ZipArchive.Create();
+                    archive.AddAllFromDirectory(context.StagingDirectory);
+                    archive.SaveTo($"{context.CurrentDirectory}/app.zip", CompressionType.Deflate);
+                    uploadZipPath = $"{context.CurrentDirectory}/app.zip";
+                }
+                else
+                {
+                    uploadZipPath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
+                }
+            }
+            else
+            {
+                uploadZipPath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
+            }
 
             if (uploadZipPath == null)
                 throw new Exception("Package File Path must be specified");
