@@ -34,8 +34,18 @@ namespace Calamari.Tests.Fixtures.Conventions
         }
 
         [Test]
-        public void ShouldNotRunIfVariableNotSet()
+        public void ShouldNotRunIfFeatureNotEnabled()
         {
+            var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, new InMemoryLog()));
+            convention.Install(deployment);
+            replacer.DidNotReceiveWithAnyArgs().ModifyConfigurationFile(null, null);
+        }
+
+        [Test]
+        public void ShouldNotRunIfConfiguredToNotReplace()
+        {
+            deployment.Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationVariables);
+            deployment.Variables.Set(KnownVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings, "false");
             var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, new InMemoryLog()));
             convention.Install(deployment);
             replacer.DidNotReceiveWithAnyArgs().ModifyConfigurationFile(null, null);
@@ -45,6 +55,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         public void ShouldFindAndCallDeployScripts()
         {
             deployment.Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationVariables);
+            deployment.Variables.Set(KnownVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings, "true");
             var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, new InMemoryLog()));
             convention.Install(deployment);
             replacer.Received().ModifyConfigurationFile("C:\\App\\MyApp\\Web.config", deployment.Variables);
