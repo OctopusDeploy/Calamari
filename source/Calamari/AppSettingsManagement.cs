@@ -82,9 +82,8 @@ namespace Calamari.AzureAppService
         {
             var client = webAppClient.HttpClient;
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
-
             var targetUrl =
-                $"https://management.azure.com/subscriptions/{webAppClient.SubscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{appName}/config/slotconfignames?api-version=2018-11-01";
+                $"{client.BaseAddress}/subscriptions/{webAppClient.SubscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{appName}/config/slotconfignames?api-version=2018-11-01";
 
             var results = await client.GetStringAsync(targetUrl);
 

@@ -55,7 +55,7 @@ namespace Calamari.AzureAppService
 
             string token = await Auth.GetAuthTokenAsync(principalAccount);
 
-            var webAppClient = new WebSiteManagementClient(new Uri(DefaultVariables.ResourceManagementEndpoint), new TokenCredentials(token))
+            var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri), new TokenCredentials(token))
                 { SubscriptionId = principalAccount.SubscriptionNumber};
 
             var appSettings = JsonConvert.DeserializeObject<AppSettingsRoot>(variables.Get(SpecialVariables.Action.Azure.AppSettings));
