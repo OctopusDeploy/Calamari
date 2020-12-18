@@ -156,6 +156,7 @@ namespace Calamari.Tests.NewPipeline
                                         .WithArrange(context =>
                                                      {
                                                          context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationTransforms + "," + KnownVariables.Features.ConfigurationVariables);
+                                                         context.Variables.Add(KnownVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings, "true");
                                                          context.Variables.Add("Environment", "Test");
                                                          context.WithFilesToCopy(tempPath.DirectoryPath);
                                                      })

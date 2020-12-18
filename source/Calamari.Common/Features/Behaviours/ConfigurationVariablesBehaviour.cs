@@ -26,7 +26,8 @@ namespace Calamari.Common.Features.Behaviours
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return context.Variables.IsFeatureEnabled(KnownVariables.Features.ConfigurationVariables);
+            return context.Variables.IsFeatureEnabled(KnownVariables.Features.ConfigurationVariables) &&
+                context.Variables.GetFlag(KnownVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings);
         }
 
         public Task Execute(RunningDeployment context)
