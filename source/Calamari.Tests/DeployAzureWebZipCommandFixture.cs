@@ -80,7 +80,7 @@ namespace Calamari.AzureAppService.Tests
             //}
         }
 
-        [Test]
+        //[Test]
         public async Task Deploy_WebAppZip_Simple()
         {
             //await Task.Delay(500);
