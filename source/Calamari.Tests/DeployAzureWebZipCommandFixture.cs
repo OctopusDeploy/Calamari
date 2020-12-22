@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.ResourceManager.Resources;
@@ -10,6 +11,7 @@ using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
 using Calamari.AzureAppService.Json;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Shared;
 using FluentAssertions;
 using Microsoft.Azure.Management.WebSites;
@@ -30,6 +32,7 @@ namespace Calamari.AzureAppService.Tests
         private string _subscriptionId;
         private string _webappName;
         private string _resourceGroupName;
+        private string _greeting;
         private ResourceGroupsOperations _resourceGroupClient;
         private IList<DirectoryInfo> _tempDirs;
 
@@ -46,6 +49,8 @@ namespace Calamari.AzureAppService.Tests
             _tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             _subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
+
+            _greeting = "Calamari";
 
             var token = await GetAuthToken(_tenantId, _clientId, _clientSecret);
 
@@ -80,7 +85,7 @@ namespace Calamari.AzureAppService.Tests
             //}
         }
 
-        //[Test]
+        [Test]
         public async Task Deploy_WebAppZip_Simple()
         {
             //await Task.Delay(500);
@@ -88,7 +93,7 @@ namespace Calamari.AzureAppService.Tests
             _tempDirs.Add(new DirectoryInfo(tempPath.DirectoryPath));
             new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
             File.WriteAllText(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
-                "Hello World");
+                "Hello #{Greeting}");
             ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage",
                 $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip");
 
@@ -100,7 +105,7 @@ namespace Calamari.AzureAppService.Tests
                     AddDefaults(context, _webappName);
                 })
                 .Execute();
-            await AssertContent($"{_webappName}.azurewebsites.net", "Hello World");
+            await AssertContent($"{_webappName}.azurewebsites.net", $"Hello {_greeting}");
         }
 
         void AddDefaults(CommandTestBuilderContext context, string webAppName)
@@ -111,9 +116,13 @@ namespace Calamari.AzureAppService.Tests
             context.Variables.Add(AccountVariables.SubscriptionId, _subscriptionId);
             context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName);
             context.Variables.Add("Octopus.Action.Azure.WebAppName", webAppName);
-
+            context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
+            
             var appSettings = BuildAppSettingsJson();
             context.Variables.Add(SpecialVariables.Action.Azure.AppSettings, appSettings);
+
+            context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
+            context.Variables.Add("Greeting", _greeting);
         }
 
         string BuildAppSettingsJson()

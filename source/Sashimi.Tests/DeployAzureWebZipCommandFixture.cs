@@ -10,6 +10,7 @@ using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
 using Calamari.AzureAppService;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Shared;
 using FluentAssertions;
 using Microsoft.Azure.Management.WebSites;
@@ -31,6 +32,7 @@ namespace Sashimi.AzureAppService.Tests
         private string _subscriptionId;
         private string _webappName;
         private string _resourceGroupName;
+        private string _greeting;
         private ResourceGroupsOperations _resourceGroupClient;
         private IList<DirectoryInfo> _tempDirs;
 
@@ -48,6 +50,7 @@ namespace Sashimi.AzureAppService.Tests
             _clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             _tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             _subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
+            _greeting = "Sashimi";
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
             var token = await GetAuthToken(_tenantId, _clientId, _clientSecret);
@@ -82,7 +85,7 @@ namespace Sashimi.AzureAppService.Tests
             await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
         }
 
-        //[Test]
+        [Test]
         public async Task Deploy_WebAppZip()
         {
 
@@ -90,7 +93,7 @@ namespace Sashimi.AzureAppService.Tests
             _tempDirs.Add(new DirectoryInfo(tempPath.DirectoryPath));
             new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
             await File.WriteAllTextAsync(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
-                "Hello World");
+                "Hello #{Greeting}");
             ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage",
                 $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip");
 
@@ -137,6 +140,10 @@ namespace Sashimi.AzureAppService.Tests
             context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName);
             context.Variables.Add("Octopus.Action.Azure.WebAppName", webAppName);
             context.Variables.Add(SpecialVariables.Action.Azure.AppSettings,  _testAppSettings);
+            context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
+
+            context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
+            context.Variables.Add("Greeting", _greeting);
         }
 
         async Task AssertContent(string hostName, string actualText, string rootPath = null)
