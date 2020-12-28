@@ -72,17 +72,14 @@ namespace Calamari.AzureAppService
             var uploadZipPath = string.Empty;
             if (substituionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
             {
-                if (context.StagingDirectory != null)
-                {
+                
                     using var archive = ZipArchive.Create();
-                    archive.AddAllFromDirectory(context.StagingDirectory);
-                    archive.SaveTo($"{context.CurrentDirectory}/app.zip", CompressionType.Deflate);
+#pragma warning disable CS8604 // Possible null reference argument.
+                archive.AddAllFromDirectory(context.StagingDirectory);
+#pragma warning restore CS8604 // Possible null reference argument.
+                archive.SaveTo($"{context.CurrentDirectory}/app.zip", CompressionType.Deflate);
                     uploadZipPath = $"{context.CurrentDirectory}/app.zip";
-                }
-                else
-                {
-                    uploadZipPath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
-                }
+                
             }
             else
             {
