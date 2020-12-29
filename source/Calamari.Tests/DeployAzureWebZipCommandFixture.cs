@@ -31,6 +31,7 @@ namespace Calamari.AzureAppService.Tests
         private string _tenantId;
         private string _subscriptionId;
         private string _webappName;
+        private const string _slotName = "stage";
         private string _resourceGroupName;
         private string _greeting;
         private ResourceGroupsOperations _resourceGroupClient;
@@ -69,6 +70,9 @@ namespace Calamari.AzureAppService.Tests
 
             var webapp = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
                 new Site(resourceGroup.Location) { ServerFarmId = svcPlan.Id });
+            var slot =
+                await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroup.Name, webapp.Name, webapp,
+                    "stage");
 
             _webappName = webapp.Name;
         }
@@ -105,7 +109,7 @@ namespace Calamari.AzureAppService.Tests
                     AddDefaults(context, _webappName);
                 })
                 .Execute();
-            await AssertContent($"{_webappName}.azurewebsites.net", $"Hello {_greeting}");
+            await AssertContent($"{_webappName}-{_slotName}.azurewebsites.net", $"Hello {_greeting}");
         }
 
         void AddDefaults(CommandTestBuilderContext context, string webAppName)
@@ -117,7 +121,8 @@ namespace Calamari.AzureAppService.Tests
             context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName);
             context.Variables.Add("Octopus.Action.Azure.WebAppName", webAppName);
             context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
-            
+            context.Variables.Add("Octopus.Action.Azure.DeploymentSlot", _slotName);
+
             var appSettings = BuildAppSettingsJson();
             context.Variables.Add(SpecialVariables.Action.Azure.AppSettings, appSettings);
 
@@ -140,6 +145,7 @@ namespace Calamari.AzureAppService.Tests
 
         async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
+
             var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
 
             result.Should().Be(actualText);

@@ -102,7 +102,7 @@ namespace Calamari.AzureAppService
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);
 
             Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
-            await UploadZipAsync(httpClient, uploadZipPath, targetSite.Site);
+            await UploadZipAsync(httpClient, uploadZipPath, targetSite.ScmSiteAndSlot);
 
             Log.Info($"Soft restarting {targetSite.SiteAndSlot}");
             if (targetSite.HasSlot)
