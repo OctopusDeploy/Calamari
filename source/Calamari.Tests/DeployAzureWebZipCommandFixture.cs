@@ -36,6 +36,9 @@ namespace Calamari.AzureAppService.Tests
         private string _greeting;
         private ResourceGroupsOperations _resourceGroupClient;
         private IList<DirectoryInfo> _tempDirs;
+        private string _authToken;
+        private AppSettingsRoot _testAppSettings;
+        private WebSiteManagementClient _webMgmtClient;
 
         readonly HttpClient client = new HttpClient();
 
@@ -49,11 +52,12 @@ namespace Calamari.AzureAppService.Tests
             _clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             _tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             _subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
+            
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
             _greeting = "Calamari";
 
-            var token = await GetAuthToken(_tenantId, _clientId, _clientSecret);
+            _authToken= await GetAuthToken(_tenantId, _clientId, _clientSecret);
 
             var resourcesClient = new ResourcesManagementClient(_subscriptionId,
                 new ClientSecretCredential(_tenantId, _clientId, _clientSecret));
@@ -63,15 +67,19 @@ namespace Calamari.AzureAppService.Tests
             var resourceGroup = new ResourceGroup(resourceGroupLocation);
             resourceGroup = await _resourceGroupClient.CreateOrUpdateAsync(_resourceGroupName, resourceGroup);
 
-            var webMgmtClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = _subscriptionId };
+            _webMgmtClient = new WebSiteManagementClient(new TokenCredentials(_authToken))
+            {
+                SubscriptionId = _subscriptionId,
+                HttpClient = {BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint)}
+            };
 
-            var svcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
+            var svcPlan = await _webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
                 resourceGroup.Name, new AppServicePlan(resourceGroup.Location));
 
-            var webapp = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
+            var webapp = await _webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
                 new Site(resourceGroup.Location) { ServerFarmId = svcPlan.Id });
             var slot =
-                await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroup.Name, webapp.Name, webapp,
+                await _webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroup.Name, webapp.Name, webapp,
                     "stage");
 
             _webappName = webapp.Name;
@@ -110,6 +118,7 @@ namespace Calamari.AzureAppService.Tests
                 })
                 .Execute();
             await AssertContent($"{_webappName}-{_slotName}.azurewebsites.net", $"Hello {_greeting}");
+            await AssertAppSettings();
         }
 
         void AddDefaults(CommandTestBuilderContext context, string webAppName)
@@ -140,6 +149,9 @@ namespace Calamari.AzureAppService.Tests
                     new AppSetting {IsSlotSetting = false, Name = "MySecondAppSetting", Value = "Bar"}
                 }
             };
+
+            _testAppSettings = appSettings;
+            
             return JsonConvert.SerializeObject(appSettings);
         }
 
@@ -149,6 +161,19 @@ namespace Calamari.AzureAppService.Tests
             var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
 
             result.Should().Be(actualText);
+        }
+
+        async Task AssertAppSettings()
+        {
+            var settings =
+                await AppSettingsManagement.GetAppSettingsAsync(_webMgmtClient, _resourceGroupName, _webappName,
+                    _authToken, _slotName);
+
+            var testSettingsJson = JsonConvert.SerializeObject(settings);
+            var controlSettingsJson = JsonConvert.SerializeObject(_testAppSettings);
+
+            //Assert.AreEqual(_testAppSettings,settings);
+            Assert.AreEqual(controlSettingsJson, testSettingsJson);
         }
 
         private async Task<string> GetAuthToken(string tenantId, string applicationId, string password)

@@ -18,6 +18,33 @@ namespace Calamari.AzureAppService
 {
     class AppSettingsManagement
     {
+
+        public static async Task<AppSettingsRoot> GetAppSettingsAsync(WebSiteManagementClient webAppClient, string resourceGroupName, string appName, string authToken, string? slotName = null)//HttpClient client)
+        {
+            var webAppSettings = string.IsNullOrEmpty(slotName)
+                ? await webAppClient.WebApps.ListApplicationSettingsAsync(resourceGroupName, appName)
+                : await webAppClient.WebApps.ListApplicationSettingsSlotAsync(resourceGroupName, appName, slotName);
+
+            var slotSettings = (await  GetSlotSettingsListAsync(webAppClient, resourceGroupName, appName, authToken)).ToArray();
+
+            var appSettings = new AppSettingsRoot();
+
+            var settingsList = new List<AppSetting>();
+
+            foreach (var setting in webAppSettings.Properties)
+            {
+                settingsList.Add(new AppSetting()
+                {
+                    Name = setting.Key, Value = setting.Value,
+                    IsSlotSetting = slotSettings.Any(x => x == setting.Key)
+                });
+            }
+
+            appSettings.AppSettings = settingsList;
+
+            return appSettings;
+        }
+
         /// <summary>
         /// Patches (add or update) the app settings for a web app or slot using the website management client library extensions.
         /// If any setting needs to be marked sticky (slot setting), update it via <see cref="PutSlotSettingsListAsync"/>.
