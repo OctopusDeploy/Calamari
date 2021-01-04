@@ -15,7 +15,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Azure.Common\Sashimi.Azure.Common.csproj" />
         <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
-        <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.34.0" />
+        <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.36.1" />
         <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
         <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.7.3-preview" />
         <PackageReference Include="Microsoft.Azure.Management.Storage" Version="9.0.0-preview" />
