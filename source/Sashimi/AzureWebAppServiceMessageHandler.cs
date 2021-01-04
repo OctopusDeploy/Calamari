@@ -70,18 +70,20 @@ namespace Sashimi.AzureWebApp
             return endpoint;
         }
 
-        string GetWorkerPoolId(IDictionary<string, string> messageProperties, VariableDictionary variables, Func<string, string> workerPoolIdResolver)
+        string? GetWorkerPoolId(IDictionary<string, string> messageProperties, VariableDictionary variables, Func<string, string> workerPoolIdResolver)
         {
             messageProperties.TryGetValue(AzureWebAppServiceMessageNames.WorkerPoolIdOrNameAttribute, out var workerPoolIdOrName);
+
             if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
+                // try getting the worker pool from the step variables
                 workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id);
 
-            if (string.IsNullOrWhiteSpace(workerPoolIdOrName) || workerPoolIdResolver == null)
-                return string.Empty;
+            if (string.IsNullOrWhiteSpace(workerPoolIdOrName) )
+                return null;
 
-            var resolvedWorkerPoolId = workerPoolIdResolver(workerPoolIdOrName);
+            var resolvedWorkerPoolId = workerPoolIdResolver.Invoke(workerPoolIdOrName);
             if (string.IsNullOrWhiteSpace(resolvedWorkerPoolId))
-                return string.Empty;
+                return null;
 
             return resolvedWorkerPoolId;
         }
@@ -126,7 +128,7 @@ namespace Sashimi.AzureWebApp
             public const string WebAppNameAttribute = "azureWebApp";
             public const string ResourceGroupNameAttribute = "azureResourceGroupName";
             public const string WebAppSlotNameAttribute = "azureWebAppSlot";
-            public const string WorkerPoolIdOrNameAttribute = "octopusWorkerPoolIdOrName";
+            public const string WorkerPoolIdOrNameAttribute = "octopusDefaultWorkerPoolIdOrName";
         }
     }
 }

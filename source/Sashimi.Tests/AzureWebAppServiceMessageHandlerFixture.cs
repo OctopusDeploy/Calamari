@@ -258,7 +258,6 @@ namespace Sashimi.AzureWebApp.Tests
             return new VariableDictionary
             {
                 { SpecialVariables.Action.Azure.AccountId, "Accounts-2" },
-                { KnownVariables.WorkerPool.Id, "WorkerPools-100" },
             };
         }
 
@@ -268,7 +267,7 @@ namespace Sashimi.AzureWebApp.Tests
             public string WebAppName { get; set; }
             public string ResourceGroupName { get; set; }
             public string WebAppSlotName { get; set; }
-            public string WorkerPoolId { get; set; } = string.Empty;
+            public string WorkerPoolId { get; set; }
         }
     }
 }

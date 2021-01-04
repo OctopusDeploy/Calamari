@@ -1,4 +1,4 @@
-﻿#nullable disable
+﻿using System;
 using Octopus.Data.Resources.Attributes;
 using Sashimi.Server.Contracts.Endpoints;
 
@@ -10,22 +10,22 @@ namespace Sashimi.AzureWebApp.Endpoints
 
         [Trim]
         [Writeable]
-        public string AccountId { get; set; }
+        public string AccountId { get; set; } = string.Empty;
 
         [Trim]
         [Writeable]
-        public string ResourceGroupName { get; set; }
+        public string ResourceGroupName { get; set; } = string.Empty;
 
         [Trim]
         [Writeable]
-        public string WebAppName { get; set; }
+        public string WebAppName { get; set; } = string.Empty;
 
         [Trim]
         [Writeable]
-        public string WebAppSlotName { get; set; }
+        public string? WebAppSlotName { get; set; }
 
         [Trim]
         [Writeable]
-        public string DefaultWorkerPoolId { get; set; }
+        public string? DefaultWorkerPoolId { get; set; }
     }
 }

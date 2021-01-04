@@ -36,6 +36,6 @@ namespace Sashimi.AzureWebApp.Endpoints
                 yield return (DefaultWorkerPoolId, DocumentType.WorkerPool);
         }
 
-        public string DefaultWorkerPoolId { get; set; } = string.Empty;
+        public string? DefaultWorkerPoolId { get; set; }
     }
 }
