@@ -151,7 +151,7 @@ namespace Calamari.Testing.LogParser
 
     public class ScriptOutputFilter
     {
-        readonly ILogWithContext log;
+        readonly ITaskLog log;
         readonly ServiceMessageParser parser;
 
         readonly Action<string> nullTarget = s =>
@@ -162,7 +162,7 @@ namespace Calamari.Testing.LogParser
         readonly List<CollectedArtifact> artifacts = new List<CollectedArtifact>();
         readonly List<FoundPackage> foundPackages = new List<FoundPackage>();
         readonly List<ServiceMessage> serviceMessages = new List<ServiceMessage>();
-        readonly ILogContext logContext;
+        readonly ITaskLogContext logContext;
         readonly Action<string> debugTarget;
         Action<string> outputTarget;
         Action<string> errorTarget;
@@ -170,7 +170,7 @@ namespace Calamari.Testing.LogParser
         readonly List<string> supportedScriptActionNames = new List<string>();
         readonly Action<int, string> progressTarget;
 
-        public ScriptOutputFilter(ILogWithContext log)
+        public ScriptOutputFilter(ITaskLog log)
         {
             this.log = log;
             DeltaPackageVerifcation = null;
@@ -180,7 +180,7 @@ namespace Calamari.Testing.LogParser
             debugTarget = log.Verbose;
             outputTarget = log.Info;
             errorTarget = log.Error;
-            logContext = log.CurrentContext;
+            logContext = log.Context;
             PopulateSupportedScriptActionNames();
             progressTarget = log.UpdateProgress;
         }

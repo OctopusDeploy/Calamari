@@ -5,11 +5,16 @@ using Octopus.Diagnostics;
 
 namespace Calamari.Testing
 {
-    public class ServerInMemoryLog : ILogWithContext
+    public class ServerInMemoryLog : ITaskLog
     {
         readonly StringBuilder log = new StringBuilder();
 
-        public ILogContext CurrentContext { get; } = new NullLogContext();
+        public void Dispose()
+        {
+        }
+
+        public ITaskLogContext Context { get; } = new NullLogContext();
+
         public bool IsVerboseEnabled { get; }
         public bool IsErrorEnabled { get; }
         public bool IsFatalEnabled { get; }
@@ -242,34 +247,34 @@ namespace Calamari.Testing
         {
         }
 
-        public IDisposable OpenBlock(string messageText)
+        public ITaskLog OpenBlock(string messageText)
         {
-            return new Disposable();
+            return new ServerInMemoryLog();
         }
 
-        public IDisposable OpenBlock(string messageFormat, params object[] args)
+        public ITaskLog OpenBlock(string messageFormat, params object[] args)
         {
-            return new Disposable();
+            return new ServerInMemoryLog();
         }
 
-        public ILogContext PlanGroupedBlock(string messageText)
+        public ITaskLogContext PlanGroupedBlock(string messageText)
         {
-            return CurrentContext;
+            return Context;
         }
 
-        public ILogContext PlanFutureBlock(string messageText)
+        public ITaskLogContext PlanFutureBlock(string messageText)
         {
-            return CurrentContext;
+            return Context;
         }
 
-        public ILogContext PlanFutureBlock(string messageFormat, params object[] args)
+        public ITaskLogContext PlanFutureBlock(string messageFormat, params object[] args)
         {
-            return CurrentContext;
+            return Context;
         }
 
-        public IDisposable WithinBlock(ILogContext logContext)
+        public ITaskLog WithinBlock(ITaskLogContext logContext)
         {
-            return new Disposable();
+            return new ServerInMemoryLog();
         }
 
         public void Abandon()
@@ -303,23 +308,23 @@ namespace Calamari.Testing
             list.Add((message, error));
         }
 
-        class NullLogContext : ILogContext
+        class NullLogContext : ITaskLogContext
         {
             public void SafeSanitize(string raw, Action<string> action)
             {
             }
 
-            public ILogContext CreateChild(string[]? sensitiveValues = null)
+            public ITaskLogContext CreateChild(string[]? sensitiveValues = null)
             {
                 return this;
             }
 
-            public ILogContext WithSensitiveValues(string[] sensitiveValues)
+            public ITaskLogContext WithSensitiveValues(string[] sensitiveValues)
             {
                 return this;
             }
 
-            public ILogContext WithSensitiveValue(string sensitiveValue)
+            public ITaskLogContext WithSensitiveValue(string sensitiveValue)
             {
                 return this;
             }
@@ -330,13 +335,6 @@ namespace Calamari.Testing
 
             public string CorrelationId { get; } = Guid.NewGuid().ToString();
             public string[] SensitiveValues { get; } = new string[0];
-        }
-
-        class Disposable : IDisposable
-        {
-            public void Dispose()
-            {
-            }
         }
     }
 }
