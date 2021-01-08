@@ -32,6 +32,8 @@
   <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
     <Message Text="Collecting nupkg packages to bundle with Sashimi module binaries" />
     <ItemGroup>
+      <!-- We ".ToLower()" on the Pacakge Definition names here as packages are downloaded with lower case, but this is using the 
+      Include name which is camel case, so we want to make sure we lower case it so it can find the path correctly on unix systems --> 
       <Content Include="@(PackageDefinitions->'%(ResolvedPath)/$([System.String]::new('%(Name)').ToLower()).%(Version).nupkg')" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))">
         <Visible>false</Visible>
         <Link>@(PackageDefinitions->'%(Name).nupkg')</Link>
