@@ -24,7 +24,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Octopus.CoreParsers.Hcl" Version="1.1.2" /> 
+    <PackageReference Include="Octopus.CoreParsers.Hcl" Version="1.1.2" />
     <PackageReference Include="Octopus.Dependencies.TerraformCLI" Version="1.0.9" />
     <PackageReference Include="Sashimi.Server.Contracts" Version="7.1.0" />
   </ItemGroup>
@@ -32,13 +32,13 @@
   <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
     <Message Text="Collecting nupkg packages to bundle with Sashimi module binaries" />
     <ItemGroup>
-      <Content Include="@(PackageDefinitions->'%(ResolvedPath)/%(Name).%(Version).nupkg')" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))">
+      <Content Include="@(PackageDefinitions->'%(ResolvedPath)/$([System.String]::new('%(Name)').ToLower()).%(Version).nupkg')" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))">
         <Visible>false</Visible>
-        <Link>@(PackageDefinitions->'%(Name).nupkg')</Link>
+        <Link>@(PackageDefinitions->'$([System.String]::new('%(Name)').ToLower()).nupkg')</Link>
         <Pack>true</Pack>
         <PackageCopyToOutput>true</PackageCopyToOutput>
         <PackageFlatten>true</PackageFlatten>
-        <PackagePath>@(PackageDefinitions->'contentFiles/any/any/%(Name).nupkg')</PackagePath>
+        <PackagePath>@(PackageDefinitions->'contentFiles/any/any/$([System.String]::new('%(Name)').ToLower()).nupkg')</PackagePath>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
