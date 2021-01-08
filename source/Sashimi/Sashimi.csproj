@@ -34,11 +34,11 @@
     <ItemGroup>
       <Content Include="@(PackageDefinitions->'%(ResolvedPath)/$([System.String]::new('%(Name)').ToLower()).%(Version).nupkg')" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))">
         <Visible>false</Visible>
-        <Link>@(PackageDefinitions->'$([System.String]::new('%(Name)').ToLower()).nupkg')</Link>
+        <Link>@(PackageDefinitions->'%(Name).nupkg')</Link>
         <Pack>true</Pack>
         <PackageCopyToOutput>true</PackageCopyToOutput>
         <PackageFlatten>true</PackageFlatten>
-        <PackagePath>@(PackageDefinitions->'contentFiles/any/any/$([System.String]::new('%(Name)').ToLower()).nupkg')</PackagePath>
+        <PackagePath>@(PackageDefinitions->'contentFiles/any/any/%(Name).nupkg')</PackagePath>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
