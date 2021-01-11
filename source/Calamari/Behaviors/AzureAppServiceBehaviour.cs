@@ -90,9 +90,10 @@ namespace Calamari.AzureAppService.Behaviors
                 throw new Exception("Package File Path must be specified");
 
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName);
+            targetSite.ResourceGroupName = resourceGroupName;
 
             // Get Authentication creds/tokens
-            var credential = await Auth.GetBasicAuthCreds(principalAccount, targetSite, resourceGroupName);
+            var credential = await Auth.GetBasicAuthCreds(principalAccount, targetSite);
             string token = await Auth.GetAuthTokenAsync(principalAccount);
 
             var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri), new TokenCredentials(token))

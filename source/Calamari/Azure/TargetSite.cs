@@ -2,6 +2,7 @@
  {
     class TargetSite
     {
+        public string ResourceGroupName { get; set; }
         public string RawSite { get; set; }
         public string Site { get; set; }
         public string Slot { get; set; }

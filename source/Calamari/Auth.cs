@@ -14,9 +14,9 @@ namespace Calamari.AzureAppService
 {
     class Auth
     {
-        public static async Task<string> GetBasicAuthCreds(ServicePrincipalAccount principalAccount, TargetSite targetSite, string resourceGroupName)
+        public static async Task<string> GetBasicAuthCreds(ServicePrincipalAccount principalAccount, TargetSite targetSite)
         {
-            var (username, password) = await GetPublishProfileCredsAsync(targetSite, principalAccount, resourceGroupName);
+            var (username, password) = await GetPublishProfileCredsAsync(targetSite, principalAccount);
             var credential = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
             return credential;
         }
@@ -37,7 +37,7 @@ namespace Calamari.AzureAppService
             }
             return $"{activeDirectoryEndPoint}{tenantId}";
         }
-        private static async Task<(string Username, string Password)> GetPublishProfileCredsAsync(TargetSite targetSite, ServicePrincipalAccount account, string resourceGroupName)
+        private static async Task<(string Username, string Password)> GetPublishProfileCredsAsync(TargetSite targetSite, ServicePrincipalAccount account)
         {
             var mgmtEndpoint = account.ResourceManagementEndpointBaseUri;
             var token = await GetAuthTokenAsync(account);
@@ -46,15 +46,13 @@ namespace Calamari.AzureAppService
             { SubscriptionId = account.SubscriptionNumber };
 
             var options = new CsmPublishingProfileOptions { Format = "WebDeploy" };
-            var resourceGroup = resourceGroupName; //variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
-
-
-            webAppClient.WebApps.Get(resourceGroup, targetSite.Site);
+            
+            webAppClient.WebApps.Get(targetSite.ResourceGroupName, targetSite.Site);
 
             using var publishProfileStream = targetSite.HasSlot
-                ? await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(resourceGroup,
+                ? await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(targetSite.ResourceGroupName,
                     targetSite.Site, options, targetSite.Slot)
-                : await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsAsync(resourceGroup, targetSite.Site,
+                : await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsAsync(targetSite.ResourceGroupName, targetSite.Site,
                     options);
 
             using var streamReader = new StreamReader(publishProfileStream);
