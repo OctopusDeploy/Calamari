@@ -22,7 +22,7 @@
 *.cmd text
 *.coffee text
 *.config text
-*.cs text diff=csharp 
+*.cs text diff=csharp
 *.css text
 *.less text
 *.cshtml text
@@ -43,9 +43,10 @@
 *.xml text
 *.xunit text
 
-*.csproj text merge=union 
-*.vbproj text merge=union 
+*.csproj text merge=union
+*.vbproj text merge=union
 
-*.sln text eol=crlf merge=union 
+*.sln text eol=crlf merge=union
 
 *.approved.* binary
+*.sh text eol=lf

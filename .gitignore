@@ -51,7 +51,6 @@ hgignore[.-]*
 ignore[.-]*
 svnignore[.-]*
 lint.db
-build
 tools/TestResult.xml
 *.ReSharper
 source/packages
