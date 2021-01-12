@@ -71,8 +71,10 @@ namespace Calamari.Kubernetes.Commands
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
                 new StageScriptPackagesConvention(null, fileSystem, new CombinedPackageExtractor(log), true),
                 new ConfiguredScriptConvention(new PreDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new DelegateInstallConvention(d => substituteInFiles.Substitute(d, GetDefaultValuesFilesFromAdditionalPackages().ToList(), false)),
-                new DelegateInstallConvention(d => substituteInFiles.Substitute(d, GetDefaultValuesFilesFromAdditionalPackages().ToList(), true)),
+                // Any values.yaml files in any packages referenced by the step will automatically have variable substitution applied (we won't log a warning if these aren't present)
+                new DelegateInstallConvention(d => substituteInFiles.Substitute(d, DefaultValuesFiles().ToList(), false)),
+                // Any values files explicitly specified by the user will also have variable substitution applied
+                new DelegateInstallConvention(d => substituteInFiles.Substitute(d, DefaultValuesFiles().ToList(), true)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner))
@@ -102,7 +104,10 @@ namespace Calamari.Kubernetes.Commands
             }
         }
 
-        IEnumerable<string> GetDefaultValuesFilesFromAdditionalPackages()
+        /// <summary>
+        /// Any values.yaml files in any packages referenced by the step will automatically have variable substitution applied
+        /// </summary>
+        IEnumerable<string> DefaultValuesFiles()
         {
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
@@ -116,7 +121,10 @@ namespace Calamari.Kubernetes.Commands
             }
         }
 
-        IEnumerable<string> GetExplicitlySpecifiedValuesFilesFromAdditionalPackages()
+        /// <summary>
+        /// Any values files explicitly specified by the user will also have variable substitution applied
+        /// </summary>
+        IEnumerable<string> ExplicitlySpecifiedValuesFiles()
         {
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
