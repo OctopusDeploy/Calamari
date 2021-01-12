@@ -71,7 +71,8 @@ namespace Calamari.Kubernetes.Commands
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
                 new StageScriptPackagesConvention(null, fileSystem, new CombinedPackageExtractor(log), true),
                 new ConfiguredScriptConvention(new PreDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new DelegateInstallConvention(d => substituteInFiles.Substitute(d, FileTargetFactory().ToList())),
+                new DelegateInstallConvention(d => substituteInFiles.Substitute(d, GetDefaultValuesFilesFromAdditionalPackages().ToList(), false)),
+                new DelegateInstallConvention(d => substituteInFiles.Substitute(d, GetDefaultValuesFilesFromAdditionalPackages().ToList(), true)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner))
@@ -101,27 +102,42 @@ namespace Calamari.Kubernetes.Commands
             }
         }
 
-        IEnumerable<string> FileTargetFactory()
+        IEnumerable<string> GetDefaultValuesFilesFromAdditionalPackages()
         {
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
             {
-                var packageRoot = packageReferenceName;
-                if (string.IsNullOrEmpty(packageReferenceName))
-                {
-                    packageRoot = variables.Get(PackageVariables.IndexedPackageId(packageReferenceName));
-                }
-                var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageRoot ?? String.Empty);
-
-                yield return Path.Combine(sanitizedPackageReferenceName, "values.yaml");
-
                 var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
 
                 foreach (var path in paths)
                 {
-                    yield return Path.Combine(sanitizedPackageReferenceName, path);
+                    yield return Path.Combine(PackageDirectory(packageReferenceName), "values.yaml");
                 }
             }
+        }
+
+        IEnumerable<string> GetExplicitlySpecifiedValuesFilesFromAdditionalPackages()
+        {
+            var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
+            foreach (var packageReferenceName in packageReferenceNames)
+            {
+                var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
+
+                foreach (var path in paths)
+                {
+                    yield return Path.Combine(PackageDirectory(packageReferenceName), path);
+                }
+            }
+        }
+
+        string PackageDirectory(string packageReferenceName)
+        {
+            var packageRoot = packageReferenceName;
+            if (string.IsNullOrEmpty(packageReferenceName))
+            {
+                packageRoot = variables.Get(PackageVariables.IndexedPackageId(packageReferenceName ?? ""));
+            }
+            return fileSystem.RemoveInvalidFileNameChars(packageRoot ?? string.Empty);
         }
     }
 }
