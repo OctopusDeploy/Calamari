@@ -112,12 +112,7 @@ namespace Calamari.Kubernetes.Commands
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
             {
-                var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
-
-                foreach (var path in paths)
-                {
-                    yield return Path.Combine(PackageDirectory(packageReferenceName), "values.yaml");
-                }
+                yield return Path.Combine(PackageDirectory(packageReferenceName), "values.yaml");
             }
         }
 
