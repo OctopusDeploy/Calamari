@@ -30,7 +30,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             Substitute(deployment, filesToTarget);
         }
 
-        public void Substitute(RunningDeployment deployment, IList<string> filesToTarget)
+        public void Substitute(RunningDeployment deployment, IList<string> filesToTarget, bool warnIfFileNotFound = true)
         {
             foreach (var target in filesToTarget)
             {
@@ -38,7 +38,7 @@ namespace Calamari.Common.Plumbing.FileSystem
 
                 if (!matchingFiles.Any())
                 {
-                    if (deployment.Variables.GetFlag(PackageVariables.EnableNoMatchWarning, true))
+                    if (warnIfFileNotFound && deployment.Variables.GetFlag(PackageVariables.EnableNoMatchWarning, true))
                         log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
 
                     continue;
