@@ -32,7 +32,7 @@ namespace Calamari.AzureAppService
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return true;
+            return !string.IsNullOrEmpty(context.Variables.Get(SpecialVariables.Action.Azure.AppSettings));
         }
 
         public async Task Execute(RunningDeployment context)
