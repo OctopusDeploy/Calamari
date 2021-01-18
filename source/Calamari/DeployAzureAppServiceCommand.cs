@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Calamari.AzureAppService.Behaviors;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 

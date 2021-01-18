@@ -23,7 +23,7 @@ using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 
-namespace Calamari.AzureAppService
+namespace Calamari.AzureAppService.Behaviors
 {
     class AzureAppServiceBehaviour : IDeployBehaviour
     {
@@ -57,7 +57,7 @@ namespace Calamari.AzureAppService
             if (resourceGroupName == null)
                 throw new Exception("resource group name must be specified");
 
-            var substituionFeatures = new[]
+            var substitutionFeatures = new[]
             {
                 KnownVariables.Features.ConfigurationTransforms,
                 KnownVariables.Features.StructuredConfigurationVariables,
@@ -70,7 +70,7 @@ namespace Calamari.AzureAppService
              */
 
             var uploadZipPath = string.Empty;
-            if (substituionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
+            if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
             {
                 
                     using var archive = ZipArchive.Create();

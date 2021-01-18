@@ -66,21 +66,43 @@ namespace Calamari.AzureAppService.Tests
 
             var resourceGroup = new ResourceGroup(resourceGroupLocation);
             resourceGroup = await _resourceGroupClient.CreateOrUpdateAsync(_resourceGroupName, resourceGroup);
-
+            
             _webMgmtClient = new WebSiteManagementClient(new TokenCredentials(_authToken))
             {
                 SubscriptionId = _subscriptionId,
-                HttpClient = {BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint)}
+                HttpClient = {BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint)},
             };
 
             var svcPlan = await _webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
-                resourceGroup.Name, new AppServicePlan(resourceGroup.Location));
+                resourceGroup.Name, new AppServicePlan(resourceGroup.Location)
+                {
+                    Kind = "linux",
+                    Reserved = true,
+                    Sku = new SkuDescription
+                    {
+                        Name = "F1",
+                        Tier = "Free"
+                    }
+                });
 
             var webapp = await _webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
-                new Site(resourceGroup.Location) { ServerFarmId = svcPlan.Id });
-            var slot =
-                await _webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroup.Name, webapp.Name, webapp,
-                    "stage");
+                new Site(resourceGroup.Location)
+                {
+                    ServerFarmId = svcPlan.Id,
+                    SiteConfig = new SiteConfig
+                    {
+                        LinuxFxVersion = @"DOCKER|xtreampb/ubuntu_ssh",
+                        AppSettings = new List<NameValuePair>
+                        {
+                            new NameValuePair("DOCKER_REGISTRY_SERVER_URL", DefaultVariables.DockerRegistryUrl),
+                            new NameValuePair("WEBSITES_ENABLE_APP_SERVICE_STORAGE", "false")
+                        }
+                    }
+                });
+
+            //var slot =
+            //    await _webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroup.Name, webapp.Name, webapp,
+            //        "stage");
 
             _webappName = webapp.Name;
         }
@@ -131,6 +153,7 @@ namespace Calamari.AzureAppService.Tests
             context.Variables.Add("Octopus.Action.Azure.WebAppName", webAppName);
             context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
             context.Variables.Add("Octopus.Action.Azure.DeploymentSlot", _slotName);
+            context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "container");
 
             var appSettings = BuildAppSettingsJson();
             context.Variables.Add(SpecialVariables.Action.Azure.AppSettings, appSettings);

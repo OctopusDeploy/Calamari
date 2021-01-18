@@ -19,7 +19,7 @@ using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json;
 
-namespace Calamari.AzureAppService
+namespace Calamari.AzureAppService.Behaviors
 {
     class AzureAppServiceSettingsBehaviour : IDeployBehaviour
     {
