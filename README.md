@@ -10,6 +10,10 @@ When the solution is built, a new Calamari package is created in the `artifacts`
 
 ## Usage
 
+> **Octopus Server 2020.3+: Using a custom version of Calamari may not work**
+>
+> Calamari is currently being filleted into [Sashimi](https://github.com/OctopusDeploy/Sashimi). Due to the architectural changes involved in this transformation, using a custom version of Calamari with Octopus Server version 2020.3+ may not work. Please get in touch with support@octopus.com if this affects you, to help us make decisions about how we can support custom implementations of deployment steps.
+
 To use your own Calamari package with an Octopus 3.0 server, run the following commands
 ```
 Octopus.Server.exe service --instance <instance> --stop --nologo --console
