@@ -230,19 +230,18 @@ namespace Sashimi.Tests.Shared.Server
             if (!withStagedPackageArgument)
             {
                 var packagePath = variables.GetRaw("Octopus.Test.PackagePath");
-                if (packagePath == null)
-                {
-                    return;
-                }
 
-                if (File.Exists(packagePath))
+                if (packagePath != null)
                 {
-                    var fileName = new FileInfo(packagePath).Name;
-                    File.Copy(packagePath, Path.Combine(workingPath, fileName));
-                }
-                else if (Directory.Exists(packagePath))
-                {
-                    Copy(packagePath, workingPath);
+                    if (File.Exists(packagePath))
+                    {
+                        var fileName = new FileInfo(packagePath).Name;
+                        File.Copy(packagePath, Path.Combine(workingPath, fileName));
+                    }
+                    else if (Directory.Exists(packagePath))
+                    {
+                        Copy(packagePath, workingPath);
+                    }
                 }
             }
         }
