@@ -231,7 +231,9 @@ namespace Sashimi.Tests.Shared.Server
             {
                 var packagePath = variables.GetRaw("Octopus.Test.PackagePath");
                 if (packagePath == null)
-                    throw new ControlledActionFailedException("PackagePath variable value could not be located.");
+                {
+                    return;
+                }
 
                 if (File.Exists(packagePath))
                 {
