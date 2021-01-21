@@ -22,6 +22,7 @@ using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.DeploymentTools;
 using Octopus.CoreUtilities;
+using Sashimi.Server.Contracts.Actions;
 using Sashimi.Tests.Shared.Extensions;
 
 namespace Sashimi.Tests.Shared.Server
@@ -164,11 +165,21 @@ namespace Sashimi.Tests.Shared.Server
 
             var modulePaths = new List<string>();
             var addToPath = new List<string>();
+            var platform = KnownPlatforms.Windows;
+
+            if (PlatformDetection.IsRunningOnNix)
+            {
+                platform = KnownPlatforms.Linux64;
+            }
+            if (PlatformDetection.IsRunningOnMac)
+            {
+                platform = KnownPlatforms.Osx64;
+            }
 
             foreach (var tool in Tools)
             {
                 var toolPath = Path.Combine(toolsPath, tool.Id);
-                modulePaths.AddRange(tool.GetCompatiblePackage(null!)
+                modulePaths.AddRange(tool.GetCompatiblePackage(platform)
                                          .SelectValueOr(package => package.BootstrapperModulePaths, Enumerable.Empty<string>())
                                          .Select(s => Path.Combine(toolPath, s)));
 
