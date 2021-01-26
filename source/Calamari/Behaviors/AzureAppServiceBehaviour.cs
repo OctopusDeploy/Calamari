@@ -79,7 +79,6 @@ namespace Calamari.AzureAppService.Behaviors
 #pragma warning restore CS8604 // Possible null reference argument.
                 archive.SaveTo($"{context.CurrentDirectory}/app.zip", CompressionType.Deflate);
                     uploadZipPath = $"{context.CurrentDirectory}/app.zip";
-                
             }
             else
             {
@@ -106,11 +105,7 @@ namespace Calamari.AzureAppService.Behaviors
             await UploadZipAsync(httpClient, uploadZipPath, targetSite.ScmSiteAndSlot);
 
             Log.Info($"Soft restarting {targetSite.SiteAndSlot}");
-            if (targetSite.HasSlot)
-                await webAppClient.WebApps.RestartSlotWithHttpMessagesAsync(resourceGroupName, webAppName,
-                    targetSite.Slot, true);
-            else
-                await webAppClient.WebApps.RestartAsync(resourceGroupName, webAppName, true);
+            await webAppClient.WebApps.RestartAsync(targetSite, true);
         }
 
         private async Task UploadZipAsync(HttpClient client, string uploadZipPath, string targetSite)

@@ -53,6 +53,9 @@ namespace Calamari.AzureAppService.Behaviors
             if (resourceGroupName == null)
                 throw new Exception("resource group name must be specified");
 
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName);
+            targetSite.ResourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
+
             string token = await Auth.GetAuthTokenAsync(principalAccount);
 
             var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri),
@@ -66,7 +69,7 @@ namespace Calamari.AzureAppService.Behaviors
             
             Log.Verbose($"Deploy publishing app settings to webapp {webAppName} in resource group {resourceGroupName}");
 
-            await PublishAppSettings(webAppClient, resourceGroupName, webAppName, appSettings, token, slotName);
+            await PublishAppSettings(webAppClient, targetSite, appSettings, token);
 
             if (string.IsNullOrEmpty(slotName))
             {
@@ -81,8 +84,7 @@ namespace Calamari.AzureAppService.Behaviors
             }
         }
 
-        private async Task PublishAppSettings(WebSiteManagementClient webAppClient, string resourceGroupName,
-            string webAppName, AppSettingsRoot appSettings, string authToken, string? slotName)
+        private async Task PublishAppSettings(WebSiteManagementClient webAppClient, TargetSite targetSite, AppSettingsRoot appSettings, string authToken)
         {
             var settingsDict = new StringDictionary
             {
@@ -94,21 +96,18 @@ namespace Calamari.AzureAppService.Behaviors
                 settingsDict.Properties[setting.Name] = setting.Value;
             }
 
-            await AppSettingsManagement.PatchAppSettingsAsync(webAppClient, resourceGroupName, webAppName, settingsDict,
-                slotName);
+            await AppSettingsManagement.PatchAppSettingsAsync(webAppClient, settingsDict, targetSite);
             var slotSettings = appSettings.AppSettings
                 .Where(setting => setting.IsSlotSetting)
                 .Select(setting => setting.Name).ToArray();
 
             var existingSlotSettings =
-                (await AppSettingsManagement.GetSlotSettingsListAsync(webAppClient, resourceGroupName, webAppName,
-                    authToken)).ToArray();
+                (await AppSettingsManagement.GetSlotSettingsListAsync(webAppClient, authToken, targetSite)).ToArray();
 
             if (!slotSettings.Any() || existingSlotSettings.Any())
                 return;
 
-            await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient, resourceGroupName, webAppName,
-                slotSettings.Concat(existingSlotSettings), authToken);
+            await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient, targetSite, slotSettings.Concat(existingSlotSettings), authToken);
         }
     }
 }
