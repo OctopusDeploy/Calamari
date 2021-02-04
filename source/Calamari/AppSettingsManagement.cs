@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Calamari.Azure;
@@ -17,8 +18,7 @@ using Newtonsoft.Json;
 namespace Calamari.AzureAppService
 {
     class AppSettingsManagement
-    {
-        
+    {   
         public static async Task<AppSettingsRoot> GetAppSettingsAsync(WebSiteManagementClient webAppClient, string authToken, TargetSite targetSite)//HttpClient client)
         {
             var webAppSettings = await webAppClient.WebApps.ListApplicationSettingsAsync(targetSite);
@@ -51,11 +51,11 @@ namespace Calamari.AzureAppService
         /// <param name="targetSite">The target site containing the resource group name, site and (optional) site name</param>
         /// <param name="appSettings">A <see cref="StringDictionary"/> containing the app settings to set</param>
         /// <returns>Awaitable <see cref="Task"/></returns>
-        public static async Task PatchAppSettingsAsync(WebSiteManagementClient webAppClient, StringDictionary appSettings, TargetSite targetSite)
-        { 
+        public static async Task PutAppSettingsAsync(WebSiteManagementClient webAppClient, StringDictionary appSettings, TargetSite targetSite)
+        {
             await webAppClient.WebApps.UpdateApplicationSettingsAsync(targetSite, appSettings);
         }
-
+        
         /// <summary>
         /// Puts (overwrite) List of setting names who's values should be sticky (slot settings).
         /// </summary>

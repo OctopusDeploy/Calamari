@@ -29,6 +29,16 @@ namespace Calamari.AzureAppService
             return result.AccessToken;
         }
 
+        public static async Task<string> GetAuthTokenAsync(string ADEndpointBaseUri, string resourceMgmtEndpointBaseUri,
+            string tenantId, string clientId, string clientSecret)
+        {
+            var authContext = GetContextUri(ADEndpointBaseUri, tenantId);
+            var context = new AuthenticationContext(authContext);
+            var result = await context.AcquireTokenAsync(resourceMgmtEndpointBaseUri,
+                new ClientCredential(clientId, clientSecret));
+            return result.AccessToken;
+        }
+
         private static string GetContextUri(string activeDirectoryEndPoint, string tenantId)
         {
             if (!activeDirectoryEndPoint.EndsWith("/"))

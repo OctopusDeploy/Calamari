@@ -7,7 +7,10 @@
             public static class Azure
             {
                 /// <summary>
-                /// deployment type should be either 'zipdeploy' or 'container'
+                /// Expected Values:
+                /// ZipDeploy,
+                /// ImageDeploy,
+                /// DockerCompose
                 /// </summary>
                 public static readonly string DeploymentType = "Octopus.Action.Azure.DeploymentType";
                 public static readonly string ResourceGroupName = "Octopus.Action.Azure.ResourceGroupName";
@@ -15,14 +18,15 @@
                 public static readonly string WebAppSlot = "Octopus.Action.Azure.DeploymentSlot";
 
                 public static readonly string AppSettings = "Octopus.Action.Azure.AppSettings";
-
-                /// <summary>
-                /// json string of docker settings:
-                /// Registry URL:(Default: Docker: https://index.docker.io)
-                ///
-                /// </summary>
-                public static readonly string ContainerSettings = "Octopus.Action.Azure.ContainerSettings";
+                public static readonly string ContainerInitTimeout = "Octopus.Action.Azure.ContainerInitTimeout";
             }
+
+            public static class Package
+            {
+                public static readonly string FeedId = "Octopus.Action.Package.FeedId";
+                public static readonly string PackageId = "Octopus.Action.Package.PackageId";
+            }
+
         }
     }
 }

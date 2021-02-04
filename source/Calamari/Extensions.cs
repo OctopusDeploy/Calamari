@@ -26,37 +26,42 @@ namespace Calamari.AzureAppService
             TargetSite targetSite, CancellationToken cancellationToken = default)
         {
             StringDictionary body;
-            if(targetSite.HasSlot)
+            if (targetSite.HasSlot)
             {
-                using var operationResponse = await operations.ListApplicationSettingsSlotWithHttpMessagesAsync(targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot, cancellationToken: cancellationToken).ConfigureAwait(false);
-                body = operationResponse.Body;
-            }
-            else
-            {
-                using var operationResponse = await operations.ListApplicationSettingsWithHttpMessagesAsync(targetSite.ResourceGroupName, targetSite.Site, cancellationToken: cancellationToken).ConfigureAwait(false);
-                body = operationResponse.Body;
-            }
-            return body;
-        }
-
-        public static async Task<StringDictionary> UpdateApplicationSettingsAsync(this IWebAppsOperations operations, TargetSite targetsite, StringDictionary appSettings, CancellationToken cancellationToken = default)
-        {
-            StringDictionary body;
-            if (targetsite.HasSlot)
-            {
-                using var operationResponse = await operations.UpdateApplicationSettingsSlotWithHttpMessagesAsync(
-                    targetsite.ResourceGroupName, targetsite.Site, appSettings, targetsite.Slot,
-                    cancellationToken: cancellationToken);
+                using var operationResponse = await operations
+                    .ListApplicationSettingsSlotWithHttpMessagesAsync(targetSite.ResourceGroupName, targetSite.Site,
+                        targetSite.Slot, cancellationToken: cancellationToken).ConfigureAwait(false);
                 body = operationResponse.Body;
             }
             else
             {
                 using var operationResponse = await operations
-                    .UpdateApplicationSettingsWithHttpMessagesAsync(targetsite.ResourceGroupName, targetsite.Site, appSettings,
+                    .ListApplicationSettingsWithHttpMessagesAsync(targetSite.ResourceGroupName, targetSite.Site,
                         cancellationToken: cancellationToken).ConfigureAwait(false);
                 body = operationResponse.Body;
             }
+
             return body;
+        }
+
+        public static async Task<StringDictionary> UpdateApplicationSettingsAsync(this IWebAppsOperations operations,
+            TargetSite targetSite, StringDictionary appSettings, CancellationToken cancellationToken = default)
+        {
+            if (targetSite.HasSlot)
+            {
+                using var operationResponse = await operations.UpdateApplicationSettingsSlotWithHttpMessagesAsync(
+                    targetSite.ResourceGroupName, targetSite.Site, appSettings, targetSite.Slot,
+                    cancellationToken: cancellationToken);
+                return operationResponse.Body;
+            }
+            else
+            {
+                using var operationResponse = await operations
+                    .UpdateApplicationSettingsWithHttpMessagesAsync(targetSite.ResourceGroupName, targetSite.Site,
+                        appSettings,
+                        cancellationToken: cancellationToken).ConfigureAwait(false);
+                return operationResponse.Body;
+            }
         }
 
         public static async Task RestartAsync(this IWebAppsOperations operations, TargetSite targetSite,
@@ -67,10 +72,40 @@ namespace Calamari.AzureAppService
                 await operations.RestartSlotWithHttpMessagesAsync(targetSite.ResourceGroupName, targetSite.Site,
                     targetSite.Slot, softRestart, synchronous, cancellationToken: cancellationToken);
             }
+
             else
             {
                 await operations.RestartWithHttpMessagesAsync(targetSite.ResourceGroupName, targetSite.Site,
                     softRestart, synchronous, cancellationToken: cancellationToken);
+            }
+        }
+
+        public static async Task<SiteConfigResource> GetConfigurationAsync(this IWebAppsOperations operations,
+            TargetSite targetSite, CancellationToken cancellationToken = default)
+        {
+            if (targetSite.HasSlot)
+            {
+                return (await operations.GetConfigurationSlotWithHttpMessagesAsync(targetSite.ResourceGroupName,
+                    targetSite.Site,
+                    targetSite.Slot, cancellationToken: cancellationToken)).Body;
+            }
+
+            return (await operations.GetConfigurationWithHttpMessagesAsync(targetSite.ResourceGroupName,
+                targetSite.Site, cancellationToken: cancellationToken)).Body;
+        }
+
+        public static async Task UpdateConfigurationAsync(this IWebAppsOperations operations, TargetSite targetSite,
+            SiteConfigResource config, CancellationToken cancellationToken = default)
+        {
+            if (targetSite.HasSlot)
+            {
+                await operations.UpdateConfigurationSlotWithHttpMessagesAsync(targetSite.ResourceGroupName,
+                    targetSite.Site, config, targetSite.Slot, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                await operations.UpdateConfigurationWithHttpMessagesAsync(targetSite.ResourceGroupName,
+                    targetSite.ScmSiteAndSlot, config, cancellationToken: cancellationToken);
             }
         }
     }

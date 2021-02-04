@@ -36,7 +36,7 @@ namespace Calamari.AzureAppService.Behaviors
         }
 
         public async Task Execute(RunningDeployment context)
-        { 
+        {
             // Read/Validate variables
             Log.Verbose("Starting App Settings Deploy");
             var variables = context.Variables;
@@ -65,25 +65,28 @@ namespace Calamari.AzureAppService.Behaviors
                 HttpClient = {BaseAddress = new Uri(principalAccount.ResourceManagementEndpointBaseUri)}
             };
 
-            var appSettings = JsonConvert.DeserializeObject<AppSettingsRoot>(variables.Get(SpecialVariables.Action.Azure.AppSettings));
-            
+            // Get Defined Settings
+            var appSettings =
+                JsonConvert.DeserializeObject<AppSettingsRoot>(
+                    variables.Get(SpecialVariables.Action.Azure.AppSettings));
+
             Log.Verbose($"Deploy publishing app settings to webapp {webAppName} in resource group {resourceGroupName}");
 
+            // publish defined settings (automatically merges with existing settings
             await PublishAppSettings(webAppClient, targetSite, appSettings, token);
 
-            if (string.IsNullOrEmpty(slotName))
-            {
-                Log.Info($"Soft restarting {webAppName} in resource group {resourceGroupName}");
-                await webAppClient.WebApps.RestartAsync(resourceGroupName, webAppName, true);
-
-            }
-            else
-            {
-                Log.Info($"Soft restarting slot {slotName} in app {webAppName} in resource group {resourceGroupName}");
-                await webAppClient.WebApps.RestartSlotAsync(resourceGroupName, webAppName, slotName, true);
-            }
+            Log.Info($"Soft restarting {webAppName} in resource group {resourceGroupName}");
+            await webAppClient.WebApps.RestartAsync(targetSite, true);
         }
 
+        /// <summary>
+        /// combines and publishes app and slot settings
+        /// </summary>
+        /// <param name="webAppClient"></param>
+        /// <param name="targetSite"></param>
+        /// <param name="appSettings"></param>
+        /// <param name="authToken"></param>
+        /// <returns></returns>
         private async Task PublishAppSettings(WebSiteManagementClient webAppClient, TargetSite targetSite, AppSettingsRoot appSettings, string authToken)
         {
             var settingsDict = new StringDictionary
@@ -91,23 +94,28 @@ namespace Calamari.AzureAppService.Behaviors
                 Properties = new Dictionary<string, string>()
             };
 
+            var existingSlotSettings = new List<string>();
+            foreach (var (name, value, isSlotSetting) in (await AppSettingsManagement.GetAppSettingsAsync(webAppClient, authToken, targetSite)).AppSettings.ToList())
+            {
+                settingsDict.Properties[name] = value;
+                if (isSlotSetting)
+                    existingSlotSettings.Add(name);
+            }
+
             foreach (var setting in appSettings.AppSettings)
             {
                 settingsDict.Properties[setting.Name] = setting.Value;
             }
-
-            await AppSettingsManagement.PatchAppSettingsAsync(webAppClient, settingsDict, targetSite);
+            
+            await AppSettingsManagement.PutAppSettingsAsync(webAppClient, settingsDict, targetSite);
             var slotSettings = appSettings.AppSettings
                 .Where(setting => setting.IsSlotSetting)
                 .Select(setting => setting.Name).ToArray();
-
-            var existingSlotSettings =
-                (await AppSettingsManagement.GetSlotSettingsListAsync(webAppClient, authToken, targetSite)).ToArray();
-
-            if (!slotSettings.Any() || existingSlotSettings.Any())
+            
+            if (!slotSettings.Any())
                 return;
 
-            await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient, targetSite, slotSettings.Concat(existingSlotSettings), authToken);
+            await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient, targetSite, slotSettings.Union(existingSlotSettings), authToken);
         }
     }
 }

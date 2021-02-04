@@ -22,5 +22,12 @@ namespace Calamari.AzureAppService.Json
         public string Value { get; set; }
 
         public bool IsSlotSetting { get; set; }
+
+        internal void Deconstruct(out string name, out string value, out bool isSlotSetting)
+        {
+            name = Name;
+            value = Value;
+            isSlotSetting = IsSlotSetting;
+        }
     }
 }
