@@ -127,7 +127,7 @@ namespace Calamari.AzureAppService.Tests
             var slotName = "stage";
             _slotName = slotName;
 
-            var slotTask =  _webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(_resourceGroupName, _resourceGroupName, _site,
+            await _webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(_resourceGroupName, _resourceGroupName, _site,
                 slotName);
             
             var existingSettingsTask = _webMgmtClient.WebApps.UpdateApplicationSettingsSlotWithHttpMessagesAsync(_resourceGroupName,
@@ -149,7 +149,7 @@ namespace Calamari.AzureAppService.Tests
 
             iVars.Add(SpecialVariables.Action.Azure.AppSettings, settings);
 
-            Task.WaitAll(slotTask, existingSettingsTask);
+            await existingSettingsTask;
 
             await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
             await AssertAppSettings(JsonConvert.DeserializeObject<AppSettingsRoot>(settings));
@@ -186,10 +186,10 @@ namespace Calamari.AzureAppService.Tests
                 _existingSettings.Properties[name] = value;
             }
 
-            
             // for each existing setting that isn't defined in the expected settings object, add it
             var expectedList = expectedSettings.AppSettings.ToList();
-            foreach (var (name, value) in _existingSettings.Properties.Where(x=> expectedSettings.AppSettings.All(y => y.Name != x.Key)))
+            foreach (var (name, value) in _existingSettings.Properties.Where(x =>
+                expectedSettings.AppSettings.All(y => y.Name != x.Key)))
             {
                 expectedList.Add(new AppSetting {Name = name, Value = value, IsSlotSetting = false});
             }
@@ -203,12 +203,6 @@ namespace Calamari.AzureAppService.Tests
             var settings = await AppSettingsManagement.GetAppSettingsAsync(_webMgmtClient, _authToken, targetSite);
 
             CollectionAssert.AreEquivalent(expectedSettings.AppSettings, settings.AppSettings);
-
-            //var testSettingsJson = JsonConvert.SerializeObject(settings);
-            //var controlSettingsJson = JsonConvert.SerializeObject(expectedSettings);
-            
-            //// Check that our control and test match each other
-            //Assert.AreEqual(controlSettingsJson, testSettingsJson);
         }
     }
 }

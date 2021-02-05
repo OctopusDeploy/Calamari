@@ -15,7 +15,7 @@ namespace Calamari.AzureAppService.Json
         public bool HasSettings => AppSettings.Any();
     }
 
-    public class AppSetting
+    public class AppSetting : IEquatable<AppSetting>
     {
         public string Name { get; set; }
 
@@ -28,6 +28,25 @@ namespace Calamari.AzureAppService.Json
             name = Name;
             value = Value;
             isSlotSetting = IsSlotSetting;
+        }
+
+        public bool Equals(AppSetting other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return Name == other.Name && Value == other.Value && IsSlotSetting == other.IsSlotSetting;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj.GetType() == this.GetType() && Equals((AppSetting) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Name, Value, IsSlotSetting);
         }
     }
 }
