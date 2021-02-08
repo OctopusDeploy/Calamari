@@ -3,6 +3,8 @@ package patches.buildTypes
 import jetbrains.buildServer.configs.kotlin.v2019_2.*
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.CommitStatusPublisher
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.commitStatusPublisher
+import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.PowerShellStep
+import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.powerShell
 import jetbrains.buildServer.configs.kotlin.v2019_2.ui.*
 
 /*
@@ -15,6 +17,34 @@ changeBuildType(RelativeId("Build")) {
         "Unexpected option value: artifactRules = $artifactRules"
     }
     artifactRules = "artifacts"
+
+    expectSteps {
+        powerShell {
+            name = "Build"
+            scriptMode = script {
+                content = """
+                    ./build.ps1
+                    
+                    exit ${'$'}LASTEXITCODE
+                """.trimIndent()
+            }
+        }
+    }
+    steps {
+        update<PowerShellStep>(0) {
+            clearConditions()
+            scriptMode = script {
+                content = """
+                    ./build.ps1 -Verbose
+                    
+                    exit ${'$'}LASTEXITCODE
+                """.trimIndent()
+            }
+            param("org.jfrog.artifactory.selectedDeployableServer.downloadSpecSource", "Job configuration")
+            param("org.jfrog.artifactory.selectedDeployableServer.useSpecs", "false")
+            param("org.jfrog.artifactory.selectedDeployableServer.uploadSpecSource", "Job configuration")
+        }
+    }
 
     features {
         val feature1 = find<CommitStatusPublisher> {
