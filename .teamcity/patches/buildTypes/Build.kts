@@ -33,13 +33,6 @@ changeBuildType(RelativeId("Build")) {
     steps {
         update<PowerShellStep>(0) {
             clearConditions()
-            scriptMode = script {
-                content = """
-                    ./build.ps1 -Verbose
-                    
-                    exit ${'$'}LASTEXITCODE
-                """.trimIndent()
-            }
             param("org.jfrog.artifactory.selectedDeployableServer.downloadSpecSource", "Job configuration")
             param("org.jfrog.artifactory.selectedDeployableServer.useSpecs", "false")
             param("org.jfrog.artifactory.selectedDeployableServer.uploadSpecSource", "Job configuration")
