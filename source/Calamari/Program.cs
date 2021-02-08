@@ -13,7 +13,7 @@ using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
-using Calamari.Tools;
+using Calamari.LaunchTools;
 using NuGet;
 
 namespace Calamari
@@ -63,8 +63,11 @@ namespace Calamari
                 .As<ICommandWithArgs>();
 
             builder.RegisterAssemblyTypes(GetProgramAssemblyToRegister())
-                   .Where(x => x.IsAssignableTo<IExecuteTool>())
-                   .WithMetadataFrom<ExecutionToolAttribute>();
+                   .Where(x => x.IsAssignableTo<ILaunchTool>())
+                   .WithMetadataFrom<LaunchToolAttribute>();
+
+            builder.RegisterType<ExecutionManifest>()
+                   .As<IExecutionManifest>();
         }
 
         IEnumerable<Assembly> GetExtensionAssemblies()
