@@ -43,7 +43,7 @@ namespace Calamari.Tests.Helpers
         {
             // Register CommandOverride so it shows up first in IEnumerable
             if (CommandOverride != null)
-                builder.RegisterInstance(CommandOverride).As<ICommandWithArgs>();
+                builder.RegisterInstance(CommandOverride).WithMetadata("Name", "stub").As<ICommandWithArgs>();
 
             base.ConfigureContainer(builder, options);
 
