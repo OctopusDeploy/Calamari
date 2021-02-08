@@ -37,7 +37,7 @@ namespace Calamari.AzureAppService.Tests
         private ResourceGroupsOperations _resourceGroupClient;
         private IList<DirectoryInfo> _tempDirs;
         private string _authToken;
-        private AppSettingsRoot _testAppSettings;
+        private AppSetting[] _testAppSettings;
         private WebSiteManagementClient _webMgmtClient;
 
         readonly HttpClient client = new HttpClient();
@@ -52,7 +52,7 @@ namespace Calamari.AzureAppService.Tests
             _clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             _tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             _subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-            
+
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
             _greeting = "Calamari";
@@ -141,17 +141,13 @@ namespace Calamari.AzureAppService.Tests
 
         string BuildAppSettingsJson()
         {
-            var appSettings = new AppSettingsRoot
+            var appSettings = new[]
             {
-                AppSettings = new[]
-                {
-                    new AppSetting {IsSlotSetting = true, Name = "MyFirstAppSetting", Value = "Foo"},
-                    new AppSetting {IsSlotSetting = false, Name = "MySecondAppSetting", Value = "Bar"}
-                }
+                new AppSetting {SlotSetting = true, Name = "MyFirstAppSetting", Value = "Foo"},
+                new AppSetting {SlotSetting = false, Name = "MySecondAppSetting", Value = "Bar"}
             };
 
             _testAppSettings = appSettings;
-            
             return JsonConvert.SerializeObject(appSettings);
         }
 

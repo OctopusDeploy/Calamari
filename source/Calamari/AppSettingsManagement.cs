@@ -18,8 +18,7 @@ namespace Calamari.AzureAppService
 {
     class AppSettingsManagement
     {
-
-        public static async Task<AppSettingsRoot> GetAppSettingsAsync(WebSiteManagementClient webAppClient, string resourceGroupName, string appName, string authToken, string? slotName = null)//HttpClient client)
+        public static async Task<IList<AppSetting>> GetAppSettingsAsync(WebSiteManagementClient webAppClient, string resourceGroupName, string appName, string authToken, string? slotName = null)//HttpClient client)
         {
             var webAppSettings = string.IsNullOrEmpty(slotName)
                 ? await webAppClient.WebApps.ListApplicationSettingsAsync(resourceGroupName, appName)
@@ -27,22 +26,14 @@ namespace Calamari.AzureAppService
 
             var slotSettings = (await  GetSlotSettingsListAsync(webAppClient, resourceGroupName, appName, authToken)).ToArray();
 
-            var appSettings = new AppSettingsRoot();
-
-            var settingsList = new List<AppSetting>();
-
-            foreach (var setting in webAppSettings.Properties)
-            {
-                settingsList.Add(new AppSetting()
-                {
-                    Name = setting.Key, Value = setting.Value,
-                    IsSlotSetting = slotSettings.Any(x => x == setting.Key)
-                });
-            }
-
-            appSettings.AppSettings = settingsList;
-
-            return appSettings;
+            return webAppSettings.Properties.Select(
+                setting =>
+                    new AppSetting
+                    {
+                        Name = setting.Key,
+                        Value = setting.Value,
+                        SlotSetting = slotSettings.Any(x => x == setting.Key)
+                    }).ToList();
         }
 
         /// <summary>
