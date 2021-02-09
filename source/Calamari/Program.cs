@@ -63,8 +63,9 @@ namespace Calamari
                 .As<ICommandWithArgs>();
 
             builder.RegisterAssemblyTypes(GetProgramAssemblyToRegister())
-                   .Where(x => x.IsAssignableTo<ILaunchTool>())
-                   .WithMetadataFrom<LaunchToolAttribute>();
+                   .Where(x => typeof(ILaunchTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
+                   .WithMetadataFrom<LaunchToolAttribute>()
+                   .As<ILaunchTool>();
 
             builder.RegisterType<ExecutionManifest>()
                    .As<IExecutionManifest>();
