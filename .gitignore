@@ -68,3 +68,5 @@ source/OctopusTools.v2.ncrunchsolution
 TestResult.xml
 TestResults/
 .idea/
+tools/*
+!tools/packages.config
