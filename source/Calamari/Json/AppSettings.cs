@@ -7,34 +7,25 @@ using Newtonsoft.Json;
 
 namespace Calamari.AzureAppService.Json
 {
-    public class AppSettingsRoot
-    {
-        public IEnumerable<AppSetting> AppSettings { get; set; }
-
-        [JsonIgnore]
-        public bool HasSettings => AppSettings.Any();
-    }
-
-    public class AppSetting : IEquatable<AppSetting>
+    public class AppSetting
     {
         public string Name { get; set; }
-
         public string Value { get; set; }
 
-        public bool IsSlotSetting { get; set; }
+        public bool SlotSetting { get; set; }
 
         internal void Deconstruct(out string name, out string value, out bool isSlotSetting)
         {
             name = Name;
             value = Value;
-            isSlotSetting = IsSlotSetting;
+            isSlotSetting = SlotSetting;
         }
 
         public bool Equals(AppSetting other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return Name == other.Name && Value == other.Value && IsSlotSetting == other.IsSlotSetting;
+            return Name == other.Name && Value == other.Value && IsSlotSetting == other.SlotSetting;
         }
 
         public override bool Equals(object obj)
@@ -46,7 +37,7 @@ namespace Calamari.AzureAppService.Json
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Name, Value, IsSlotSetting);
+            return HashCode.Combine(Name, Value, SlotSetting);
         }
     }
 }

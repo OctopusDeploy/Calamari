@@ -53,6 +53,8 @@ svnignore[.-]*
 lint.db
 build
 tools/TestResult.xml
+tools/nuget.exe
+tools/*.md5sum
 *.ReSharper
 source/packages
 source/OctopusTools.v2.ncrunchsolution
@@ -61,7 +63,6 @@ source/OctopusTools.v2.ncrunchsolution
 *.lock.json
 .vs
 .vscode
-/tools/
 /artifacts/
 /publish/
 TestResult.xml

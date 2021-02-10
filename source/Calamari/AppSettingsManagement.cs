@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Calamari.Azure;
@@ -18,29 +17,21 @@ using Newtonsoft.Json;
 namespace Calamari.AzureAppService
 {
     class AppSettingsManagement
-    {   
-        public static async Task<AppSettingsRoot> GetAppSettingsAsync(WebSiteManagementClient webAppClient, string authToken, TargetSite targetSite)//HttpClient client)
+    {
+        public static async Task<IList<AppSetting>> GetAppSettingsAsync(WebSiteManagementClient webAppClient, string authToken, TargetSite targetSite)//HttpClient client)
         {
             var webAppSettings = await webAppClient.WebApps.ListApplicationSettingsAsync(targetSite);
             
             var slotSettings = (await  GetSlotSettingsListAsync(webAppClient, authToken, targetSite)).ToArray();
 
-            var appSettings = new AppSettingsRoot();
-
-            var settingsList = new List<AppSetting>();
-
-            foreach (var setting in webAppSettings.Properties)
-            {
-                settingsList.Add(new AppSetting()
-                {
-                    Name = setting.Key, Value = setting.Value,
-                    IsSlotSetting = slotSettings.Any(x => x == setting.Key)
-                });
-            }
-
-            appSettings.AppSettings = settingsList;
-
-            return appSettings;
+            return webAppSettings.Properties.Select(
+                setting =>
+                    new AppSetting
+                    {
+                        Name = setting.Key,
+                        Value = setting.Value,
+                        SlotSetting = slotSettings.Any(x => x == setting.Key)
+                    }).ToList();
         }
 
         /// <summary>

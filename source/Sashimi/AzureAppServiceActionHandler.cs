@@ -9,9 +9,9 @@ namespace Sashimi.AzureAppService
     {
         public string Id => SpecialVariables.Action.Azure.ActionTypeName;
 
-        public string Name => "Deploy an Azure Web App via ZipDeploy";
+        public string Name => "Deploy an Azure App Service";
 
-        public string Description => "Deploy the contents of a package to an Azure Web App via ZipDeploy";
+        public string Description => "Deploy a package or container image to an Azure App Service";
 
         public string? Keywords => null;
 

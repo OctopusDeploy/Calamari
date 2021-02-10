@@ -71,10 +71,7 @@ namespace Calamari.AzureAppService.Behaviors
                 HttpClient = {BaseAddress = new Uri(principalAccount.ResourceManagementEndpointBaseUri)}
             };
 
-            // Get Defined Settings
-            var appSettings =
-                JsonConvert.DeserializeObject<AppSettingsRoot>(
-                    variables.Get(SpecialVariables.Action.Azure.AppSettings));
+            var appSettings = JsonConvert.DeserializeObject<AppSetting[]>(variables.Get(SpecialVariables.Action.Azure.AppSettings, ""));
 
             Log.Verbose($"Deploy publishing app settings to webapp {webAppName} in resource group {resourceGroupName}");
 
@@ -93,29 +90,21 @@ namespace Calamari.AzureAppService.Behaviors
         /// <param name="appSettings"></param>
         /// <param name="authToken"></param>
         /// <returns></returns>
-        private async Task PublishAppSettings(WebSiteManagementClient webAppClient, TargetSite targetSite, AppSettingsRoot appSettings, string authToken)
+        private async Task PublishAppSettings(WebSiteManagementClient webAppClient, TargetSite targetSite, AppSetting[] appSettings, string authToken)
         {
             var settingsDict = new StringDictionary
             {
                 Properties = new Dictionary<string, string>()
             };
 
-            var existingSlotSettings = new List<string>();
-            foreach (var (name, value, isSlotSetting) in (await AppSettingsManagement.GetAppSettingsAsync(webAppClient, authToken, targetSite)).AppSettings.ToList())
-            {
-                settingsDict.Properties[name] = value;
-                if (isSlotSetting)
-                    existingSlotSettings.Add(name);
-            }
-
-            foreach (var setting in appSettings.AppSettings)
+            foreach (var setting in appSettings)
             {
                 settingsDict.Properties[setting.Name] = setting.Value;
             }
             
             await AppSettingsManagement.PutAppSettingsAsync(webAppClient, settingsDict, targetSite);
             var slotSettings = appSettings.AppSettings
-                .Where(setting => setting.IsSlotSetting)
+                .Where(setting => setting.SlotSetting)
                 .Select(setting => setting.Name).ToArray();
             
             if (!slotSettings.Any())
