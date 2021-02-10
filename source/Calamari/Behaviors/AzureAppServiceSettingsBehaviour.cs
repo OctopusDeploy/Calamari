@@ -40,6 +40,12 @@ namespace Calamari.AzureAppService.Behaviors
             // Read/Validate variables
             Log.Verbose("Starting App Settings Deploy");
             var variables = context.Variables;
+
+            //if there are no app settings to deploy
+            if (!variables.GetNames().Contains(SpecialVariables.Action.Azure.AppSettings) &&
+                !string.IsNullOrEmpty(variables[SpecialVariables.Action.Azure.AppSettings]))
+                return;
+
             var principalAccount = new ServicePrincipalAccount(variables);
 
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
@@ -53,8 +59,8 @@ namespace Calamari.AzureAppService.Behaviors
             if (resourceGroupName == null)
                 throw new Exception("resource group name must be specified");
 
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName);
-            targetSite.ResourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
+            
 
             string token = await Auth.GetAuthTokenAsync(principalAccount);
 

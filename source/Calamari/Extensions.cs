@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,19 @@ namespace Calamari.AzureAppService
 {
     public static class Extensions
     {
+        public static async Task<Stream> GetWebSiteContainerLogsAsync(this IWebAppsOperations operations, TargetSite targetSite,
+            CancellationToken cancellationToken = default)
+        {
+            if (targetSite.HasSlot)
+            {
+                return (await operations.GetWebSiteContainerLogsSlotWithHttpMessagesAsync(targetSite.ResourceGroupName,
+                    targetSite.Site, targetSite.Slot, cancellationToken: cancellationToken)).Body;
+            }
+
+            return (await operations.GetWebSiteContainerLogsWithHttpMessagesAsync(targetSite.ResourceGroupName,
+                targetSite.Site, cancellationToken: cancellationToken)).Body;
+        }
+
         /// <summary>Gets the application settings of an app.</summary>
         /// <remarks>
         /// Description for Gets the application settings of an app.

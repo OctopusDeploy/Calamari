@@ -12,7 +12,7 @@ namespace Calamari.AzureAppService
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
-            yield return resolver.Create<AzureAppServiceBehaviour>();
+            yield return resolver.Create<AppDeployBehavior>();
             yield return resolver.Create<AzureAppServiceSettingsBehaviour>();
         }
     }

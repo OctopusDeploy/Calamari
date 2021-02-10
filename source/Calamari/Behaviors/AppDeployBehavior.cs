@@ -26,8 +26,7 @@ namespace Calamari.AzureAppService.Behaviors
         public Task Execute(RunningDeployment context)
         {
             var deploymentType = context.Variables.Get(SpecialVariables.Action.Azure.DeploymentType);
-            var variables = context.Variables;
-
+            
             switch (deploymentType)
             {
                 case "ImageDeploy":

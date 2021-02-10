@@ -75,7 +75,8 @@ namespace Calamari.AzureAppService.Behaviors
                 
                     using var archive = ZipArchive.Create();
 #pragma warning disable CS8604 // Possible null reference argument.
-                archive.AddAllFromDirectory(context.StagingDirectory);
+                archive.AddAllFromDirectory(
+                    $"{context.StagingDirectory}");
 #pragma warning restore CS8604 // Possible null reference argument.
                 archive.SaveTo($"{context.CurrentDirectory}/app.zip", CompressionType.Deflate);
                     uploadZipPath = $"{context.CurrentDirectory}/app.zip";
@@ -88,9 +89,8 @@ namespace Calamari.AzureAppService.Behaviors
             if (uploadZipPath == null)
                 throw new Exception("Package File Path must be specified");
 
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName);
-            targetSite.ResourceGroupName = resourceGroupName;
-
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
+            
             // Get Authentication creds/tokens
             var credential = await Auth.GetBasicAuthCreds(principalAccount, targetSite);
             string token = await Auth.GetAuthTokenAsync(principalAccount);

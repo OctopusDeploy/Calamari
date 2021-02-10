@@ -24,8 +24,6 @@ namespace Calamari.AzureAppService.Tests
     [TestFixture]
     public class AppServiceSettingsBehaviorFixture
     {
-        private string _activeDirectoryEndPoint = @"https://login.windows.net/";
-
         private string _clientId;
         private string _clientSecret;
         private string _tenantId;
@@ -43,6 +41,13 @@ namespace Calamari.AzureAppService.Tests
         [OneTimeSetUp]
         public async Task Setup()
         {
+            var resourceManagementEndpointBaseUri =
+                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ??
+                DefaultVariables.ResourceManagementEndpoint;
+            var activeDirectoryEndpointBaseUri =
+                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
+                DefaultVariables.ActiveDirectoryEndpoint;
+
             _resourceGroupName = Guid.NewGuid().ToString();
             
             _clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
@@ -52,8 +57,8 @@ namespace Calamari.AzureAppService.Tests
 
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
-            _authToken = await Auth.GetAuthTokenAsync(_activeDirectoryEndPoint,
-                DefaultVariables.ResourceManagementEndpoint, _tenantId, _clientId, _clientSecret);
+            _authToken = await Auth.GetAuthTokenAsync(activeDirectoryEndpointBaseUri,
+                resourceManagementEndpointBaseUri, _tenantId, _clientId, _clientSecret);
 
             var resourcesClient = new ResourcesManagementClient(_subscriptionId,
                 new ClientSecretCredential(_tenantId, _clientId, _clientSecret));
@@ -87,15 +92,8 @@ namespace Calamari.AzureAppService.Tests
         public async Task CleanupCode()
         {
             await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
-
-            //foreach (var tempDir in _tempDirs)
-            //{
-            //    if(tempDir.Exists)
-            //        tempDir.Delete(true);
-            //}
         }
-
-
+        
         [Test]
         public async Task TestSiteSettings()
         {
@@ -180,7 +178,7 @@ namespace Calamari.AzureAppService.Tests
         async Task AssertAppSettings(AppSettingsRoot expectedSettings)
         {
             // Update existing settings with new replacement values
-            foreach (var (name, value, isslotsetting) in expectedSettings.AppSettings.Where(x =>
+            foreach (var (name, value, _) in expectedSettings.AppSettings.Where(x =>
                 _existingSettings.Properties.ContainsKey(x.Name)))
             {
                 _existingSettings.Properties[name] = value;
@@ -197,9 +195,8 @@ namespace Calamari.AzureAppService.Tests
             expectedSettings.AppSettings = expectedList;
 
             // Get the settings from the webapp
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(_webappName, _slotName);
-            targetSite.ResourceGroupName = _resourceGroupName;
-
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(_webappName, _slotName, _resourceGroupName);
+            
             var settings = await AppSettingsManagement.GetAppSettingsAsync(_webMgmtClient, _authToken, targetSite);
 
             CollectionAssert.AreEquivalent(expectedSettings.AppSettings, settings.AppSettings);

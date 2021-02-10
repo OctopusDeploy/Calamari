@@ -25,6 +25,7 @@
             {
                 public static readonly string FeedId = "Octopus.Action.Package.FeedId";
                 public static readonly string PackageId = "Octopus.Action.Package.PackageId";
+                public static readonly string PackageVersion = "Octopus.Action.Package.PackageVersion";
             }
 
         }
