@@ -25,7 +25,7 @@ namespace Calamari.AzureAppService.Json
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return Name == other.Name && Value == other.Value && IsSlotSetting == other.SlotSetting;
+            return Name == other.Name && Value == other.Value && SlotSetting == other.SlotSetting;
         }
 
         public override bool Equals(object obj)
@@ -38,6 +38,11 @@ namespace Calamari.AzureAppService.Json
         public override int GetHashCode()
         {
             return HashCode.Combine(Name, Value, SlotSetting);
+        }
+
+        public override string ToString()
+        {
+            return $"\nName: {Name}\nValue: {Value}\nIsSlotSetting: {SlotSetting}\n";
         }
     }
 }

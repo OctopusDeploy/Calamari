@@ -34,7 +34,6 @@ namespace Calamari.AzureAppService.Tests
         private StringDictionary _existingSettings;
         private ResourceGroupsOperations _resourceGroupClient;
         private string _authToken;
-        private AppSettingsRoot _testAppSettings;
         private WebSiteManagementClient _webMgmtClient;
         private Site _site;
 
@@ -104,7 +103,7 @@ namespace Calamari.AzureAppService.Tests
             AddVariables(iVars);
             var runningContext = new RunningDeployment("", iVars);
             iVars.Add("Greeting", "Calamari");
-
+            
             var appSettings = BuildAppSettingsJson(new[]
             {
                 ("MyFirstAppSetting", "Foo", true),
@@ -112,11 +111,11 @@ namespace Calamari.AzureAppService.Tests
                 ("ReplaceSetting", "Bar", false)
             });
             
-            iVars.Add(SpecialVariables.Action.Azure.AppSettings, appSettings);
-
+            iVars.Add(SpecialVariables.Action.Azure.AppSettings, appSettings.json);
+            
             await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
 
-            await AssertAppSettings(JsonConvert.DeserializeObject<AppSettingsRoot>(appSettings));
+            await AssertAppSettings(appSettings.setting);
         }
 
         [Test]
@@ -145,12 +144,12 @@ namespace Calamari.AzureAppService.Tests
                 ("ReplaceSetting", "Foo", false)
             });
 
-            iVars.Add(SpecialVariables.Action.Azure.AppSettings, settings);
+            iVars.Add(SpecialVariables.Action.Azure.AppSettings, settings.json);
 
             await existingSettingsTask;
 
             await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
-            await AssertAppSettings(JsonConvert.DeserializeObject<AppSettingsRoot>(settings));
+            await AssertAppSettings(settings.setting);
         }
 
         private void AddVariables(CalamariVariables vars)
@@ -163,43 +162,41 @@ namespace Calamari.AzureAppService.Tests
             vars.Add("Octopus.Action.Azure.WebAppName", _webappName);
         }
 
-        string BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)
+        private (string json, IEnumerable<AppSetting> setting) BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)
         {
-            var appSettings = new AppSettingsRoot
-            {
-                AppSettings = settings.Select(setting => new AppSetting
-                    {Name = setting.name, Value = setting.value, IsSlotSetting = setting.isSlotSetting}).ToList()
-            };
-            _testAppSettings = appSettings;
-
-            return JsonConvert.SerializeObject(appSettings);
+            var appSettings = settings.Select(setting => new AppSetting
+                {Name = setting.name, Value = setting.value, SlotSetting = setting.isSlotSetting});
+            
+            return (JsonConvert.SerializeObject(appSettings), appSettings);
         }
 
-        async Task AssertAppSettings(AppSettingsRoot expectedSettings)
+        async Task AssertAppSettings(IEnumerable<AppSetting> expectedSettings)
         {
             // Update existing settings with new replacement values
-            foreach (var (name, value, _) in expectedSettings.AppSettings.Where(x =>
+            var expectedSettingsArray = expectedSettings as AppSetting[] ?? expectedSettings.ToArray();
+            foreach (var (name, value, _) in expectedSettingsArray.Where(x =>
                 _existingSettings.Properties.ContainsKey(x.Name)))
             {
                 _existingSettings.Properties[name] = value;
             }
 
             // for each existing setting that isn't defined in the expected settings object, add it
-            var expectedList = expectedSettings.AppSettings.ToList();
+            var expectedList = expectedSettingsArray.ToList();
             foreach (var (name, value) in _existingSettings.Properties.Where(x =>
-                expectedSettings.AppSettings.All(y => y.Name != x.Key)))
+                expectedSettingsArray.All(y => y.Name != x.Key)))
             {
-                expectedList.Add(new AppSetting {Name = name, Value = value, IsSlotSetting = false});
+                expectedList.Add(new AppSetting {Name = name, Value = value, SlotSetting = false});
             }
-
-            expectedSettings.AppSettings = expectedList;
-
+            
             // Get the settings from the webapp
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(_webappName, _slotName, _resourceGroupName);
             
             var settings = await AppSettingsManagement.GetAppSettingsAsync(_webMgmtClient, _authToken, targetSite);
 
-            CollectionAssert.AreEquivalent(expectedSettings.AppSettings, settings.AppSettings);
+            CollectionAssert.AreEquivalent(expectedList, settings);
         }
+
+        async Task AssertDeploymentSlotSettings()
+        { }
     }
 }

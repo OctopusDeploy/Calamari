@@ -90,27 +90,38 @@ namespace Calamari.AzureAppService.Behaviors
         /// <param name="appSettings"></param>
         /// <param name="authToken"></param>
         /// <returns></returns>
-        private async Task PublishAppSettings(WebSiteManagementClient webAppClient, TargetSite targetSite, AppSetting[] appSettings, string authToken)
+        private async Task PublishAppSettings(WebSiteManagementClient webAppClient, TargetSite targetSite,
+            AppSetting[] appSettings, string authToken)
         {
             var settingsDict = new StringDictionary
             {
                 Properties = new Dictionary<string, string>()
             };
 
+            var existingSlotSettings = new List<string>();
+            foreach (var (name, value, SlotSetting) in (await AppSettingsManagement.GetAppSettingsAsync(webAppClient,
+                authToken, targetSite)).ToList())
+            {
+                settingsDict.Properties[name] = value;
+                if (SlotSetting)
+                    existingSlotSettings.Add(name);
+            }
+
             foreach (var setting in appSettings)
             {
                 settingsDict.Properties[setting.Name] = setting.Value;
             }
-            
+
             await AppSettingsManagement.PutAppSettingsAsync(webAppClient, settingsDict, targetSite);
-            var slotSettings = appSettings.AppSettings
+            var slotSettings = appSettings
                 .Where(setting => setting.SlotSetting)
                 .Select(setting => setting.Name).ToArray();
-            
+
             if (!slotSettings.Any())
                 return;
 
-            await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient, targetSite, slotSettings.Union(existingSlotSettings), authToken);
+            await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient, targetSite,
+                slotSettings.Union(existingSlotSettings), authToken);
         }
     }
 }
