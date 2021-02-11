@@ -17,6 +17,7 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.Rest;
 using Newtonsoft.Json;
 using SharpCompress.Archives;
@@ -40,7 +41,7 @@ namespace Calamari.AzureAppService
         }
 
         public async Task Execute(RunningDeployment context)
-        { 
+        {
             // Read/Validate variables
             Log.Verbose("Starting ZipDeploy");
             var variables = context.Variables;
@@ -72,14 +73,14 @@ namespace Calamari.AzureAppService
             var uploadZipPath = string.Empty;
             if (substituionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
             {
-                
+
                     using var archive = ZipArchive.Create();
 #pragma warning disable CS8604 // Possible null reference argument.
                 archive.AddAllFromDirectory(context.StagingDirectory);
 #pragma warning restore CS8604 // Possible null reference argument.
                 archive.SaveTo($"{context.CurrentDirectory}/app.zip", CompressionType.Deflate);
                     uploadZipPath = $"{context.CurrentDirectory}/app.zip";
-                
+
             }
             else
             {
@@ -100,6 +101,8 @@ namespace Calamari.AzureAppService
 
             var httpClient = webAppClient.HttpClient;
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);
+
+            await EnsureSlotExists(webAppClient, resourceGroupName, targetSite);
 
             Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
             await UploadZipAsync(httpClient, uploadZipPath, targetSite.ScmSiteAndSlot);
@@ -131,6 +134,28 @@ namespace Calamari.AzureAppService
             }
 
             Log.Verbose("Finished deploying");
+        }
+
+        private async Task EnsureSlotExists(WebSiteManagementClient webAppClient, string resourceGroup, TargetSite site)
+        {
+            if (string.IsNullOrEmpty(site.Slot))
+                return;
+
+            Log.Verbose($"Checking if slot {site.Slot} exists");
+            var searchResult = await webAppClient.WebApps.GetSlotAsync(resourceGroup, site.Site, site.Slot);
+
+            if (searchResult != null)
+            {
+                Log.Verbose($"Found existing slot {site.Slot}");
+                return;
+            }
+
+            Log.Verbose($"Slot {site.Slot} not found");
+            Log.Info($"Creating slot {site.Slot}");
+            await webAppClient.WebApps.CopySlotSlotWithHttpMessagesAsync(resourceGroup, site.Site, new CsmCopySlotEntity
+            {
+                TargetSlot = site.Slot
+            }, null );
         }
     }
 }
