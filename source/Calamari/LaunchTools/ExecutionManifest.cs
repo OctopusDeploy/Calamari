@@ -12,8 +12,6 @@ namespace Calamari.LaunchTools
         public LaunchTools Launcher { get; set; }
         public JToken LauncherInstructions { get; set; }
         public string LauncherInstructionsRaw => LauncherInstructions.ToString();
-        public JToken Inputs { get; set; }
-        public string InputsRaw => Inputs.ToString();
     }
 
     public interface IExecutionManifest

@@ -6,18 +6,18 @@ namespace Calamari.LaunchTools
 {
     public interface ILaunchTool
     {
-        int Execute(string instructions, string inputs, params string[] args);
+        int Execute(string instructions, params string[] args);
     }
 
     public abstract class LaunchTool<T> : ILaunchTool where T: class
     {
-        public int Execute(string instructions, string inputs, params string[] args)
+        public int Execute(string instructions, params string[] args)
         {
             var toolSpecificInstructions = JsonConvert.DeserializeObject<T>(instructions, JsonSerialization.GetDefaultSerializerSettings());
 
-            return ExecuteInternal(toolSpecificInstructions, inputs, args);
+            return ExecuteInternal(toolSpecificInstructions, args);
         }
 
-        protected abstract int ExecuteInternal(T instructions, string inputs, params string[] args);
+        protected abstract int ExecuteInternal(T instructions, params string[] args);
     }
 }

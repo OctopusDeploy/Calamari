@@ -26,14 +26,15 @@ namespace Calamari.LaunchTools
             this.log = log;
         }
 
-        protected override int ExecuteInternal(NodeInstructions instructions, string inputs, params string[] args)
+        protected override int ExecuteInternal(NodeInstructions instructions, params string[] args)
         {
             var pathToNode = variables.Get(instructions.NodePathVariable);
             var pathToStepPackage = variables.Get(instructions.TargetPathVariable);
+            var pathToBootstrapper = variables.Get(instructions.BootstrapperPathVariable);
             var runningDeployment = new RunningDeployment(variables);
 
             var commandLineInvocation = new CommandLineInvocation(BuildNodePath(pathToNode),
-                                                                  BuildArgs(pathToStepPackage, options.InputVariables.SensitiveVariablesFiles.First(), options.InputVariables.SensitiveVariablesPassword))
+                                                                  BuildArgs(Path.Combine(pathToBootstrapper, "bootstrapper.js"), Path.Combine(pathToStepPackage, instructions.TargetEntryPoint), options.InputVariables.SensitiveVariablesFiles.First(), options.InputVariables.SensitiveVariablesPassword))
             {
                 WorkingDirectory = runningDeployment.CurrentDirectory,
                 OutputToLog = true,
@@ -48,13 +49,15 @@ namespace Calamari.LaunchTools
 
         static string BuildNodePath(string pathToNode) => CalamariEnvironment.IsRunningOnWindows ? Path.Combine(pathToNode, "node.exe") : Path.Combine(pathToNode, "bin", "node");
 
-        static string BuildArgs(string pathToStepPackage, string pathToSensitiveVariables, string sensitiveVariablesSecret) =>
-            $"bootstrapper.js {pathToStepPackage} {pathToSensitiveVariables} {sensitiveVariablesSecret}";
+        static string BuildArgs(string pathToBootstrapper, string pathToStepPackage, string pathToSensitiveVariables, string sensitiveVariablesSecret) =>
+            $"\"{pathToBootstrapper}\" \"{pathToStepPackage}\" \"{pathToSensitiveVariables}\" {sensitiveVariablesSecret}";
     }
 
     public class NodeInstructions
     {
         public string NodePathVariable { get; set; }
         public string TargetPathVariable { get; set; }
+        public string BootstrapperPathVariable { get; set; }
+        public string TargetEntryPoint { get; set; }
     }
 }

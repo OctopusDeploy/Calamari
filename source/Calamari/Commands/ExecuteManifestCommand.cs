@@ -44,7 +44,7 @@ namespace Calamari.Commands
             {
                 var tool = executionTools.First(x => x.Metadata.Tool == instruction.Launcher);
 
-                var result = tool.Value.Execute(instruction.LauncherInstructionsRaw, instruction.InputsRaw, commandLineArguments.Skip(1).ToArray());
+                var result = tool.Value.Execute(instruction.LauncherInstructionsRaw, commandLineArguments.Skip(1).ToArray());
 
                 if (result != 0) return result;
             }

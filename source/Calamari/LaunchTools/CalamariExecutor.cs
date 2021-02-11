@@ -17,7 +17,7 @@ namespace Calamari.LaunchTools
             this.commands = commands;
         }
 
-        protected override int ExecuteInternal(CalamariInstructions instructions, string inputs, params string[] args)
+        protected override int ExecuteInternal(CalamariInstructions instructions, params string[] args)
         {
             var commandToExecute = commands.Single(x => x.Metadata.Name.Equals(instructions.Command, StringComparison.OrdinalIgnoreCase));
 
