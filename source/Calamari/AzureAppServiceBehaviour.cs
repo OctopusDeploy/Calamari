@@ -17,7 +17,6 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
-using Microsoft.Extensions.Logging;
 using Microsoft.Rest;
 using Newtonsoft.Json;
 using SharpCompress.Archives;
