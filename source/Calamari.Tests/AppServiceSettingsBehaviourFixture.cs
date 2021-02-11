@@ -195,8 +195,5 @@ namespace Calamari.AzureAppService.Tests
 
             CollectionAssert.AreEquivalent(expectedList, settings);
         }
-
-        async Task AssertDeploymentSlotSettings()
-        { }
     }
 }
