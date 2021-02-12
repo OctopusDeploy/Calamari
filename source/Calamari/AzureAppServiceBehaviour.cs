@@ -60,7 +60,7 @@ namespace Calamari.AzureAppService
                 .Authenticate(
                     SdkContext.AzureCredentialsFactory.FromServicePrincipal(servicePrincipal.ClientId,
                         servicePrincipal.Password, servicePrincipal.TenantId,
-                        AzureEnvironment.FromName(servicePrincipal.AzureEnvironment)))
+                       !string.IsNullOrEmpty(servicePrincipal.AzureEnvironment) ? AzureEnvironment.FromName(servicePrincipal.AzureEnvironment) : AzureEnvironment.AzureGlobalCloud))
                 .WithSubscription(servicePrincipal.SubscriptionNumber);
 
             var webApp = await azureClient.WebApps.GetByResourceGroupAsync(resourceGroupName, webAppName);
@@ -148,29 +148,12 @@ namespace Calamari.AzureAppService
 
             Log.Verbose($"Checking if slot {site.Slot} exists");
 
-            var slot = client.DeploymentSlots.GetByNameAsync(site.Slot);
+            var slot = await client.DeploymentSlots.GetByNameAsync(site.Slot);
             if (slot != null)
             {
                 Log.Verbose($"Found existing slot {site.Slot}");
                 return;
             }
-
-            // try
-            // {
-            //     var searchResult = await webAppClient.WebApps.GetSlotAsync(resourceGroup, site.Site, site.Slot);
-            //
-            //     if (searchResult != null)
-            //     {
-            //         Log.Verbose($"Found existing slot {site.Slot}");
-            //         return;
-            //     }
-            // }
-            // catch (DefaultErrorResponseException ex)
-            // {
-            //     // A 404 is returned if the slot doesn't exist
-            //     if (ex.Response.StatusCode != HttpStatusCode.NotFound)
-            //         throw;
-            // }
 
             Log.Verbose($"Slot {site.Slot} not found");
             Log.Info($"Creating slot {site.Slot}");
