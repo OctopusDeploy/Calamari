@@ -1,32 +1,21 @@
 ﻿#nullable enable
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Calamari.Azure;
-using Calamari.AzureAppService.Json;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.AppService.Fluent;
-using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
-using Microsoft.Azure.Management.WebSites;
-using Microsoft.Azure.Management.WebSites.Models;
-using Microsoft.Rest;
-using Newtonsoft.Json;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
-using WebSiteManagementClient = Microsoft.Azure.Management.WebSites.WebSiteManagementClient;
 
 namespace Calamari.AzureAppService
 {
@@ -65,7 +54,7 @@ namespace Calamari.AzureAppService
 
             var webApp = await azureClient.WebApps.GetByResourceGroupAsync(resourceGroupName, webAppName);
 
-            var substituionFeatures = new[]
+            var substitutionFeatures = new[]
             {
                 KnownVariables.Features.ConfigurationTransforms,
                 KnownVariables.Features.StructuredConfigurationVariables,
@@ -78,7 +67,7 @@ namespace Calamari.AzureAppService
              */
 
             var uploadZipPath = string.Empty;
-            if (substituionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
+            if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
             {
 
                     using var archive = ZipArchive.Create();
@@ -99,65 +88,42 @@ namespace Calamari.AzureAppService
 
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName);
 
-            string authToken = await Auth.GetAuthTokenAsync(servicePrincipal);
-            var webAppClient = new WebSiteManagementClient(new Uri(servicePrincipal.ResourceManagementEndpointBaseUri), new TokenCredentials(authToken))
-                { SubscriptionId = servicePrincipal.SubscriptionNumber};
-
-            await EnsureSlotExists(webApp, targetSite);
-
-            var publishingCredentials = await Auth.GetBasicAuthCreds(servicePrincipal, targetSite, resourceGroupName);
-            var httpClient = webAppClient.HttpClient;
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", publishingCredentials);
+            var slot =
+                targetSite.HasSlot
+                    ? await FindOrCreateSlot(webApp, targetSite)
+                    : null;
 
             Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
-            await UploadZipAsync(httpClient, uploadZipPath, targetSite.ScmSiteAndSlot);
-
-            Log.Info($"Soft restarting {targetSite.SiteAndSlot}");
-            if (targetSite.HasSlot)
-                await webAppClient.WebApps.RestartSlotWithHttpMessagesAsync(resourceGroupName, webAppName,
-                    targetSite.Slot, true);
-            else
-                await webAppClient.WebApps.RestartAsync(resourceGroupName, webAppName, true);
-        }
-
-        private async Task UploadZipAsync(HttpClient client, string uploadZipPath, string targetSite)
-        {
-            Log.Verbose($"Path to upload: {uploadZipPath}");
-            Log.Verbose($"Target Site: {targetSite}");
-
-            if (!new FileInfo(uploadZipPath).Exists)
-                throw new FileNotFoundException(uploadZipPath);
-
-            Log.Verbose($@"Publishing {uploadZipPath} to https://{targetSite}.scm.azurewebsites.net/api/zipdeploy");
-
-            var response = await client.PostAsync($@"https://{targetSite}.scm.azurewebsites.net/api/zipdeploy",
-                new StreamContent(new FileStream(uploadZipPath, FileMode.Open)));
-
-            if (!response.IsSuccessStatusCode)
+            if (slot != null)
             {
-                throw new Exception(response.ReasonPhrase);
+                slot.Deploy().WithPackageUri(uploadZipPath);
+            }
+            else
+            {
+                webApp.Deploy().WithPackageUri(uploadZipPath);
             }
 
-            Log.Verbose("Finished deploying");
+            Log.Info($"Restarting {targetSite.SiteAndSlot}");
+            if (slot != null)
+                await slot.RestartAsync();
+            else
+                await webApp.RestartAsync();
         }
 
-        private async Task EnsureSlotExists(IWebApp client, TargetSite site)
+        private async Task<IDeploymentSlot> FindOrCreateSlot(IWebApp client, TargetSite site)
         {
-            if (string.IsNullOrEmpty(site.Slot))
-                return;
-
             Log.Verbose($"Checking if slot {site.Slot} exists");
 
             var slot = await client.DeploymentSlots.GetByNameAsync(site.Slot);
             if (slot != null)
             {
                 Log.Verbose($"Found existing slot {site.Slot}");
-                return;
+                return slot;
             }
 
             Log.Verbose($"Slot {site.Slot} not found");
             Log.Info($"Creating slot {site.Slot}");
-            await client.DeploymentSlots
+            return await client.DeploymentSlots
                 .Define(site.Slot)
                 .WithConfigurationFromParent()
                 .CreateAsync();
