@@ -37,6 +37,7 @@ namespace Calamari.AzureAppService
             }
             return $"{activeDirectoryEndPoint}{tenantId}";
         }
+
         private static async Task<(string Username, string Password)> GetPublishProfileCredsAsync(TargetSite targetSite, ServicePrincipalAccount account, string resourceGroupName)
         {
             var mgmtEndpoint = account.ResourceManagementEndpointBaseUri;
