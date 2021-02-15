@@ -4,9 +4,10 @@ using System.Linq;
 using Autofac.Features.Metadata;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.LaunchTools;
+using Calamari.Serialization;
+using Newtonsoft.Json;
 
 namespace Calamari.Commands
 {
@@ -14,20 +15,14 @@ namespace Calamari.Commands
     public class ExecuteManifestCommand : Command
     {
         readonly IVariables variables;
-        readonly IExecutionManifest executionManifest;
         readonly IEnumerable<Meta<ILaunchTool, LaunchToolMeta>> executionTools;
-
-        string executionManifestPath;
 
         public ExecuteManifestCommand(
             IVariables variables,
-            IExecutionManifest executionManifest,
             IEnumerable<Meta<ILaunchTool, LaunchToolMeta>> executionTools)
         {
             this.variables = variables;
-            this.executionManifest = executionManifest;
             this.executionTools = executionTools;
-            Options.Add("executionManifest=", "Path to a JSON file containing the execution manifest to execute", x => executionManifestPath = x);
         }
 
         // To solve: every handler can add to the variables collection. How do we ensure each handler gets an updated set to work with?
@@ -36,9 +31,19 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
 
-            Guard.NotNullOrWhiteSpace(executionManifestPath, "No execution manifest path was supplied. Please pass --executionManifest \"path\\to\\manifest\\\"");
+            var contents = variables.Get("Octopus.Steps.Manifest");
 
-            var instructions = executionManifest.Create(executionManifestPath);
+            if (contents == null)
+            {
+                throw new Exception("Execution manifest not found in variables.");
+            }
+
+            var instructions = JsonConvert.DeserializeObject<Instruction[]>(contents, JsonSerialization.GetDefaultSerializerSettings());
+
+            if (instructions.Length == 0)
+            {
+                throw new Exception("The execution manifest must have at least one instruction.");
+            }
 
             foreach (var instruction in instructions)
             {

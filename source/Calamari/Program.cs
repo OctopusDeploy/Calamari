@@ -14,7 +14,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.LaunchTools;
-using NuGet;
 
 namespace Calamari
 {
@@ -66,9 +65,6 @@ namespace Calamari
                    .Where(x => typeof(ILaunchTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
                    .WithMetadataFrom<LaunchToolAttribute>()
                    .As<ILaunchTool>();
-
-            builder.RegisterType<ExecutionManifest>()
-                   .As<IExecutionManifest>();
         }
 
         IEnumerable<Assembly> GetExtensionAssemblies()
