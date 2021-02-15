@@ -12,6 +12,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Calamari.Common" Version="16.0.4" />
+    <PackageReference Include="Microsoft.Azure.Management.AppService.Fluent" Version="1.37.0" />
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.37.0" />
     <PackageReference Include="Microsoft.Azure.Management.Websites" Version="3.1.0" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">

@@ -70,3 +70,4 @@ TestResults/
 .idea/
 tools/*
 !tools/packages.config
+*.DS_Store
