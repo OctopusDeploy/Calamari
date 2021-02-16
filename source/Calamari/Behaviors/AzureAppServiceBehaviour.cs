@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Calamari.Azure;
 using Calamari.Common.Commands;
@@ -13,11 +14,12 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Rest;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 
-namespace Calamari.AzureAppService
+namespace Calamari.AzureAppService.Behaviors
 {
     class AzureAppServiceBehaviour : IDeployBehaviour
     {
@@ -72,11 +74,11 @@ namespace Calamari.AzureAppService
 
                     using var archive = ZipArchive.Create();
 #pragma warning disable CS8604 // Possible null reference argument.
-                archive.AddAllFromDirectory(context.StagingDirectory);
+                archive.AddAllFromDirectory(
+                    $"{context.StagingDirectory}");
 #pragma warning restore CS8604 // Possible null reference argument.
                 archive.SaveTo($"{context.CurrentDirectory}/app.zip", CompressionType.Deflate);
                     uploadZipPath = $"{context.CurrentDirectory}/app.zip";
-
             }
             else
             {
@@ -86,14 +88,26 @@ namespace Calamari.AzureAppService
             if (uploadZipPath == null)
                 throw new Exception("Package File Path must be specified");
 
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName);
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
+            
+            // Get Authentication creds/tokens
+            var credential = await Auth.GetBasicAuthCreds(servicePrincipal, targetSite);
+            string token = await Auth.GetAuthTokenAsync(servicePrincipal);
+            
+            var webAppClient = new Microsoft.Azure.Management.WebSites.WebSiteManagementClient(new Uri(servicePrincipal.ResourceManagementEndpointBaseUri), new TokenCredentials(token))
+                { SubscriptionId = servicePrincipal.SubscriptionNumber};
 
+            var httpClient = webAppClient.HttpClient;
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);
+            
             var slot =
                 targetSite.HasSlot
                     ? await FindOrCreateSlot(webApp, targetSite)
                     : null;
 
             Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
+
+            await UploadZipAsync(httpClient, uploadZipPath, targetSite.ScmSiteAndSlot);
             if (slot != null)
             {
                 slot.Deploy().WithPackageUri(uploadZipPath);
@@ -103,11 +117,8 @@ namespace Calamari.AzureAppService
                 webApp.Deploy().WithPackageUri(uploadZipPath);
             }
 
-            Log.Info($"Restarting {targetSite.SiteAndSlot}");
-            if (slot != null)
-                await slot.RestartAsync();
-            else
-                await webApp.RestartAsync();
+            Log.Info($"Soft restarting {targetSite.SiteAndSlot}");
+            await webAppClient.WebApps.RestartAsync(targetSite, true);
         }
 
         private async Task<IDeploymentSlot> FindOrCreateSlot(IWebApp client, TargetSite site)
@@ -127,6 +138,27 @@ namespace Calamari.AzureAppService
                 .Define(site.Slot)
                 .WithConfigurationFromParent()
                 .CreateAsync();
+        }
+
+        private async Task UploadZipAsync(HttpClient client, string uploadZipPath, string targetSite)
+        {
+            Log.Verbose($"Path to upload: {uploadZipPath}");
+            Log.Verbose($"Target Site: {targetSite}");
+
+            if (!new FileInfo(uploadZipPath).Exists)
+                throw new FileNotFoundException(uploadZipPath);
+
+            Log.Verbose($@"Publishing {uploadZipPath} to https://{targetSite}.scm.azurewebsites.net/api/zipdeploy");
+
+            var response = await client.PostAsync($@"https://{targetSite}.scm.azurewebsites.net/api/zipdeploy",
+                new StreamContent(new FileStream(uploadZipPath, FileMode.Open)));
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception(response.ReasonPhrase);
+            }
+
+            Log.Verbose("Finished deploying");
         }
     }
 }

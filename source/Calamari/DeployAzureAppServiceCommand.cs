@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Calamari.AzureAppService.Behaviors;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 
@@ -11,7 +12,7 @@ namespace Calamari.AzureAppService
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
-            yield return resolver.Create<AzureAppServiceBehaviour>();
+            yield return resolver.Create<AppDeployBehavior>();
             yield return resolver.Create<AzureAppServiceSettingsBehaviour>();
         }
     }

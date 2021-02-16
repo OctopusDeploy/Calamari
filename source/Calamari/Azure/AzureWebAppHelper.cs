@@ -4,7 +4,7 @@ namespace Calamari.Azure
 {
     static class AzureWebAppHelper
     {
-        public static TargetSite GetAzureTargetSite(string siteAndMaybeSlotName, string slotName)
+        public static TargetSite GetAzureTargetSite(string siteAndMaybeSlotName, string slotName, string resourceGroupName)
         {
             var targetSite = new TargetSite {RawSite = siteAndMaybeSlotName};
 
@@ -28,6 +28,7 @@ namespace Calamari.Azure
 
             targetSite.Site = siteAndMaybeSlotName;
             targetSite.Slot = slotName;
+            targetSite.ResourceGroupName = resourceGroupName;
             return targetSite;
         }
     }

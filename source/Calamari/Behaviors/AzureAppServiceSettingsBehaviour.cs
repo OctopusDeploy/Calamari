@@ -19,7 +19,7 @@ using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json;
 
-namespace Calamari.AzureAppService
+namespace Calamari.AzureAppService.Behaviors
 {
     class AzureAppServiceSettingsBehaviour : IDeployBehaviour
     {
@@ -32,7 +32,7 @@ namespace Calamari.AzureAppService
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return true;
+            return !string.IsNullOrEmpty(context.Variables.Get(SpecialVariables.Action.Azure.AppSettings));
         }
 
         public async Task Execute(RunningDeployment context)
@@ -40,6 +40,12 @@ namespace Calamari.AzureAppService
             // Read/Validate variables
             Log.Verbose("Starting App Settings Deploy");
             var variables = context.Variables;
+
+            //if there are no app settings to deploy
+            if (!variables.GetNames().Contains(SpecialVariables.Action.Azure.AppSettings) &&
+                !string.IsNullOrEmpty(variables[SpecialVariables.Action.Azure.AppSettings]))
+                return;
+
             var principalAccount = new ServicePrincipalAccount(variables);
 
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
@@ -52,6 +58,9 @@ namespace Calamari.AzureAppService
 
             if (resourceGroupName == null)
                 throw new Exception("resource group name must be specified");
+
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
+            
 
             string token = await Auth.GetAuthTokenAsync(principalAccount);
 
@@ -66,49 +75,53 @@ namespace Calamari.AzureAppService
 
             Log.Verbose($"Deploy publishing app settings to webapp {webAppName} in resource group {resourceGroupName}");
 
-            await PublishAppSettings(webAppClient, resourceGroupName, webAppName, appSettings, token, slotName);
+            // publish defined settings (automatically merges with existing settings
+            await PublishAppSettings(webAppClient, targetSite, appSettings, token);
 
-            if (string.IsNullOrEmpty(slotName))
-            {
-                Log.Info($"Soft restarting {webAppName} in resource group {resourceGroupName}");
-                await webAppClient.WebApps.RestartAsync(resourceGroupName, webAppName, true);
-
-            }
-            else
-            {
-                Log.Info($"Soft restarting slot {slotName} in app {webAppName} in resource group {resourceGroupName}");
-                await webAppClient.WebApps.RestartSlotAsync(resourceGroupName, webAppName, slotName, true);
-            }
+            Log.Info($"Soft restarting {webAppName} in resource group {resourceGroupName}");
+            await webAppClient.WebApps.RestartAsync(targetSite, true);
         }
 
-        private async Task PublishAppSettings(WebSiteManagementClient webAppClient, string resourceGroupName,
-            string webAppName, AppSetting[] appSettings, string authToken, string? slotName)
+        /// <summary>
+        /// combines and publishes app and slot settings
+        /// </summary>
+        /// <param name="webAppClient"></param>
+        /// <param name="targetSite"></param>
+        /// <param name="appSettings"></param>
+        /// <param name="authToken"></param>
+        /// <returns></returns>
+        private async Task PublishAppSettings(WebSiteManagementClient webAppClient, TargetSite targetSite,
+            AppSetting[] appSettings, string authToken)
         {
             var settingsDict = new StringDictionary
             {
                 Properties = new Dictionary<string, string>()
             };
 
+            var existingSlotSettings = new List<string>();
+            foreach (var (name, value, SlotSetting) in (await AppSettingsManagement.GetAppSettingsAsync(webAppClient,
+                authToken, targetSite)).ToList())
+            {
+                settingsDict.Properties[name] = value;
+                if (SlotSetting)
+                    existingSlotSettings.Add(name);
+            }
+
             foreach (var setting in appSettings)
             {
                 settingsDict.Properties[setting.Name] = setting.Value;
             }
 
-            await AppSettingsManagement.PatchAppSettingsAsync(webAppClient, resourceGroupName, webAppName, settingsDict,
-                slotName);
+            await AppSettingsManagement.PutAppSettingsAsync(webAppClient, settingsDict, targetSite);
             var slotSettings = appSettings
                 .Where(setting => setting.SlotSetting)
                 .Select(setting => setting.Name).ToArray();
 
-            var existingSlotSettings =
-                (await AppSettingsManagement.GetSlotSettingsListAsync(webAppClient, resourceGroupName, webAppName,
-                    authToken)).ToArray();
-
-            if (!slotSettings.Any() || existingSlotSettings.Any())
+            if (!slotSettings.Any())
                 return;
 
-            await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient, resourceGroupName, webAppName,
-                slotSettings.Concat(existingSlotSettings), authToken);
+            await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient, targetSite,
+                slotSettings.Union(existingSlotSettings), authToken);
         }
     }
 }
