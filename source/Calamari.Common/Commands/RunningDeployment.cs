@@ -6,9 +6,8 @@ namespace Calamari.Common.Commands
 {
     public class RunningDeployment
     {
-        public RunningDeployment(IVariables variables)
+        public RunningDeployment(IVariables variables) : this(null, variables)
         {
-            Variables = variables;
         }
 
         public RunningDeployment(string? packageFilePath, IVariables variables)

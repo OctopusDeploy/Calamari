@@ -25,8 +25,6 @@ namespace Calamari.Commands
             this.executionTools = executionTools;
         }
 
-        // To solve: every handler can add to the variables collection. How do we ensure each handler gets an updated set to work with?
-
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
