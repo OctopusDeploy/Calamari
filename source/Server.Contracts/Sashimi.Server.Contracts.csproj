@@ -12,10 +12,9 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="8.6.2" />
-    <PackageReference Include="Octopus.Data" Version="5.2.0" />
-    <PackageReference Include="Octopus.TinyTypes" Version="0.1.22" />
     <PackageReference Include="Octopus.Diagnostics" Version="1.3.5" />
-    <PackageReference Include="Octopus.Server.Extensibility" Version="11.1.2" />
+    <PackageReference Include="Octopus.Server.Extensibility" Version="12.1.0" />
+    <PackageReference Include="Octopus.CoreUtilities" Version="2.0.0" />
     <PackageReference Include="Octostache" Version="2.9.3" />
   </ItemGroup>
 
