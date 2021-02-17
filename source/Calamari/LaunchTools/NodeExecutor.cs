@@ -1,10 +1,11 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -33,18 +34,24 @@ namespace Calamari.LaunchTools
             var pathToBootstrapper = variables.Get(instructions.BootstrapperPathVariable);
             var runningDeployment = new RunningDeployment(variables);
 
-            var commandLineInvocation = new CommandLineInvocation(BuildNodePath(pathToNode),
-                                                                  BuildArgs(Path.Combine(pathToBootstrapper, "bootstrapper.js"), Path.Combine(pathToStepPackage, instructions.TargetEntryPoint), options.InputVariables.SensitiveVariablesFiles.First(), options.InputVariables.SensitiveVariablesPassword))
+            var copyVariables = new CalamariVariables();
+            variables.GetNames().ForEach(name => copyVariables.Set(name, variables.Get(name)));
+
+            using (var variableFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                WorkingDirectory = runningDeployment.CurrentDirectory,
-                OutputToLog = true,
-            };
+                var variablesAsJson = copyVariables.SaveAsString();
+                File.WriteAllBytes(variableFile.FilePath, new AesEncryption(options.InputVariables.SensitiveVariablesPassword).Encrypt(variablesAsJson));
+                var commandLineInvocation = new CommandLineInvocation(BuildNodePath(pathToNode),
+                                                                      BuildArgs(Path.Combine(pathToBootstrapper, "bootstrapper.js"), Path.Combine(pathToStepPackage, instructions.TargetEntryPoint), variableFile.FilePath, options.InputVariables.SensitiveVariablesPassword))
+                {
+                    WorkingDirectory = runningDeployment.CurrentDirectory,
+                    OutputToLog = true,
+                };
 
-            log.Info(commandLineInvocation.ToString());
+                var commandResult = commandLineRunner.Execute(commandLineInvocation);
 
-            var commandResult = commandLineRunner.Execute(commandLineInvocation);
-
-            return commandResult.ExitCode;
+                return commandResult.ExitCode;
+            }
         }
 
         static string BuildNodePath(string pathToNode) => CalamariEnvironment.IsRunningOnWindows ? Path.Combine(pathToNode, "node.exe") : Path.Combine(pathToNode, "bin", "node");
