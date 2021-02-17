@@ -3,17 +3,17 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
 using Azure.Identity;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
-using Calamari.AzureAppService.Behaviors;
-using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Shared;
-using Calamari.Tests.Shared.Helpers;
 using FluentAssertions;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
@@ -96,6 +96,7 @@ namespace Calamari.AzureAppService.Tests
             new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
             File.WriteAllText(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
                 "Hello #{Greeting}");
+            
             packageinfo.packagePath = $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip";
             packageinfo.packageVersion = "1.0.0";
             packageinfo.packageName = "AzureZipDeployPackage";
@@ -119,7 +120,8 @@ namespace Calamari.AzureAppService.Tests
 
             (string packagePath, string packageName, string packageVersion) packageinfo;
 
-            var slotTask = _webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(_resourceGroupName, _resourceGroupName, _site,
+            var slotTask = _webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(_resourceGroupName, _resourceGroupName,
+                _site,
                 slotName);
 
             var tempPath = TemporaryDirectory.Create();
@@ -139,9 +141,52 @@ namespace Calamari.AzureAppService.Tests
                 AddVariables(context);
                 context.Variables.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
             }).Execute();
-            
-            await AssertContent($"{_site.Name}-{slotName}.azurewebsites.net", $"Hello {_greeting}");
 
+            await AssertContent($"{_site.Name}-{slotName}.azurewebsites.net", $"Hello {_greeting}");
+        }
+
+        [Test]
+        public async Task Deploy_NugetPackage()
+        {
+            (string packagePath, string packageName, string packageVersion) packageinfo;
+            _greeting = "nuget";
+
+            var tempPath = TemporaryDirectory.Create();
+            new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
+            
+            var doc = new XDocument(new XElement("package",
+                new XAttribute("xmlns", @"http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd"),
+                new XElement("metadata",
+                    new XElement("id", "AzureZipDeployPackage"),
+                    new XElement("version", "1.0.0"),
+                    new XElement("title", "AzureZipDeployPackage"),
+                    new XElement("authors","Chris Thomas"),
+                    new XElement("description", "Test Package used to test nuget package deployments")
+                )
+            ));
+
+            await File.WriteAllTextAsync(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
+                "Hello #{Greeting}");
+            using (var writer = new XmlTextWriter(
+                Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "AzureZipDeployPackage.nuspec"),
+                Encoding.UTF8))
+            {
+                doc.Save(writer);
+            }
+
+            packageinfo.packagePath = $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.nupkg";
+            packageinfo.packageVersion = "1.0.0";
+            packageinfo.packageName = "AzureZipDeployPackage";
+            ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
+
+            await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>().WithArrange(context =>
+            {
+                context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
+                AddVariables(context);
+            }).Execute();
+
+            //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
+            await AssertContent($"{_site.Name}.azurewebsites.net", $"Hello {_greeting}");
         }
 
         private void AddVariables(CommandTestBuilderContext context)
