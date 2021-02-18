@@ -5,6 +5,7 @@ using Autofac.Features.Metadata;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
 using Calamari.LaunchTools;
 using Calamari.Serialization;
 using Newtonsoft.Json;
@@ -29,7 +30,7 @@ namespace Calamari.Commands
         {
             Options.Parse(commandLineArguments);
 
-            var contents = variables.Get("Octopus.Steps.Manifest");
+            var contents = variables.Get(SpecialVariables.Execution.Manifest);
 
             if (contents == null)
             {
