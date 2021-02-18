@@ -6,6 +6,10 @@ namespace Calamari.Common.Commands
 {
     public class RunningDeployment
     {
+        public RunningDeployment(IVariables variables) : this(null, variables)
+        {
+        }
+
         public RunningDeployment(string? packageFilePath, IVariables variables)
         {
             if (!string.IsNullOrEmpty(packageFilePath))

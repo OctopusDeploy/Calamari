@@ -6,7 +6,6 @@ namespace Calamari.Deployment
 {
     public static class SpecialVariables
     {
-
         public static readonly string AppliedXmlConfigTransforms = "OctopusAppliedXmlConfigTransforms";
 
         public static string GetLibraryScriptModuleName(string variableName)
@@ -368,6 +367,11 @@ namespace Calamari.Deployment
             {
                 return $"{variableName}.Subject";
             }
+        }
+
+        public static class Execution
+        {
+            public static readonly string Manifest = "Octopus.Steps.Manifest";
         }
     }
 }

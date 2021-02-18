@@ -30,5 +30,7 @@ namespace Calamari.Common.Plumbing.Variables
         void Add(string key, string? value);
         void AddFlag(string key, bool value);
         IVariables Clone();
+        IVariables CloneAndEvaluate();
+        string SaveAsString();
     }
 }

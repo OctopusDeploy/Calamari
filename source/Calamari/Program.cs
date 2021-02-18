@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Autofac.Features.Metadata;
 using Calamari.Commands;
 using Calamari.Common;
 using Calamari.Common.Commands;
@@ -12,7 +13,7 @@ using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
-using NuGet;
+using Calamari.LaunchTools;
 
 namespace Calamari
 {
@@ -31,13 +32,16 @@ namespace Calamari
 
         protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
         {
-            var command = container.Resolve<ICommandWithArgs[]>();
-            if (command.Length == 0)
+            var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>();
+
+            var commandCandidates = commands.Where(x => x.Metadata.Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase)).ToArray();
+
+            if (commandCandidates.Length == 0)
                 throw new CommandException($"Could not find the command {options.Command}");
-            if (command.Length > 1)
+            if (commandCandidates.Length > 1)
                 throw new CommandException($"Multiple commands found with the name {options.Command}");
 
-            return command[0].Execute(options.RemainingArguments.ToArray());
+            return commandCandidates[0].Value.Value.Execute(options.RemainingArguments.ToArray());
         }
 
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
@@ -54,9 +58,13 @@ namespace Calamari
 
             builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
                 .AssignableTo<ICommandWithArgs>()
-                .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
-                    .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
+                .WithMetadataFrom<CommandAttribute>()
                 .As<ICommandWithArgs>();
+
+            builder.RegisterAssemblyTypes(GetProgramAssemblyToRegister())
+                   .Where(x => typeof(ILaunchTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
+                   .WithMetadataFrom<LaunchToolAttribute>()
+                   .As<ILaunchTool>();
         }
 
         IEnumerable<Assembly> GetExtensionAssemblies()

@@ -111,6 +111,8 @@ namespace Calamari.Common
                 .Where(t => ((CommandAttribute)Attribute.GetCustomAttribute(t, typeof(CommandAttribute))).Name
                     .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .Named<ICommand>(t => ((CommandAttribute)Attribute.GetCustomAttribute(t, typeof(CommandAttribute))).Name);
+
+            builder.RegisterInstance(options).AsSelf().SingleInstance();
         }
 
         protected virtual Assembly GetProgramAssemblyToRegister()
