@@ -26,5 +26,12 @@ namespace Calamari.Common.Plumbing.Variables
             dict.Merge(this);
             return dict;
         }
+
+        public IVariables CloneAndEvaluate()
+        {
+            var dict = new CalamariVariables();
+            GetNames().ForEach(name => dict.Set(name, Get(name)));
+            return dict;
+        }
     }
 }

@@ -34,12 +34,9 @@ namespace Calamari.LaunchTools
             var pathToBootstrapper = variables.Get(instructions.BootstrapperPathVariable);
             var runningDeployment = new RunningDeployment(variables);
 
-            var copyVariables = new CalamariVariables();
-            variables.GetNames().ForEach(name => copyVariables.Set(name, variables.Get(name)));
-
             using (var variableFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                var variablesAsJson = copyVariables.SaveAsString();
+                var variablesAsJson = variables.CloneAndEvaluate().SaveAsString();
                 File.WriteAllBytes(variableFile.FilePath, new AesEncryption(options.InputVariables.SensitiveVariablesPassword).Encrypt(variablesAsJson));
                 var commandLineInvocation = new CommandLineInvocation(BuildNodePath(pathToNode),
                                                                       BuildArgs(Path.Combine(pathToBootstrapper, "bootstrapper.js"), Path.Combine(pathToStepPackage, instructions.TargetEntryPoint), variableFile.FilePath, options.InputVariables.SensitiveVariablesPassword))
