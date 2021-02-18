@@ -140,7 +140,7 @@ class Program
 
             var exePath = Path.Combine(projectPath.FullName,
                                        "bin",
-                                       "Debug",
+                                       "debug",
                                        "netcoreapp3.1",
                                        $"{projectName}{(CalamariEnvironment.IsRunningOnWindows ? ".exe" : String.Empty)}");
 
