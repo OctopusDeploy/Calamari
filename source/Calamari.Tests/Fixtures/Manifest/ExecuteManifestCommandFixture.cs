@@ -48,6 +48,26 @@ namespace Calamari.Tests.Fixtures.Manifest
         [Test]
         public void WithInstructions()
         {
+            void CopyDirectory(string sourcePath, string destPath)
+            {
+                if (!Directory.Exists(destPath))
+                {
+                    Directory.CreateDirectory(destPath);
+                }
+
+                foreach (var file in Directory.EnumerateFiles(sourcePath))
+                {
+                    var dest = Path.Combine(destPath, Path.GetFileName(file));
+                    File.Copy(file, dest);
+                }
+
+                foreach (var folder in Directory.EnumerateDirectories(sourcePath))
+                {
+                    var dest = Path.Combine(destPath, Path.GetFileName(folder));
+                    CopyDirectory(folder, dest);
+                }
+            }
+
             var instructions = new[]
             {
                 new Instruction
@@ -76,12 +96,23 @@ namespace Calamari.Tests.Fixtures.Manifest
             var instructionsJson = JsonConvert.SerializeObject(instructions, JsonSerialization.GetDefaultSerializerSettings());
             using (var temporaryDirectory = TemporaryDirectory.Create())
             {
-                var exePath = GenerateCode("node", temporaryDirectory.DirectoryPath);
+                string destinationPath;
+                var installationPath = destinationPath = Path.Combine(temporaryDirectory.DirectoryPath, "app");
+                Directory.CreateDirectory(installationPath);
+                var outputPath = GenerateCode("node", temporaryDirectory.DirectoryPath);
+                if (!CalamariEnvironment.IsRunningOnWindows)
+                {
+                    destinationPath = Path.Combine(installationPath, "bin");
+                    Directory.CreateDirectory(destinationPath);
+                }
+
+                CopyDirectory(outputPath, destinationPath);
+
                 var variables = new VariableDictionary
                 {
                     { SpecialVariables.Execution.Manifest, instructionsJson },
                     { nameof(NodeInstructions.BootstrapperPathVariable), "BootstrapperPathVariable_Value" },
-                    { nameof(NodeInstructions.NodePathVariable), Path.GetDirectoryName(exePath) },
+                    { nameof(NodeInstructions.NodePathVariable), installationPath },
                     { nameof(NodeInstructions.TargetEntryPoint), "TargetEntryPoint_Value" },
                     { nameof(NodeInstructions.TargetPathVariable), "TargetPathVariable_Value" },
                 };
@@ -138,13 +169,12 @@ class Program
             result = clr.Execute(CreateCommandLineInvocation("dotnet", "build"));
             result.VerifySuccess();
 
-            var exePath = Path.Combine(projectPath.FullName,
+            var outputPath = Path.Combine(projectPath.FullName,
                                        "bin",
-                                       "debug",
-                                       "netcoreapp3.1",
-                                       $"{projectName}{(CalamariEnvironment.IsRunningOnWindows ? ".exe" : String.Empty)}");
+                                       "Debug",
+                                       "netcoreapp3.1");
 
-            return exePath;
+            return outputPath;
         }
 
         CalamariResult ExecuteCommand(VariableDictionary variables, string extensions = "")
