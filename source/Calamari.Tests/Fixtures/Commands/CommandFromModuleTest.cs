@@ -16,10 +16,10 @@ namespace Calamari.Tests.Fixtures.Commands
         // PowerShell modules. i.e. you get the error:
         // The term 'Get-AzureRmEnvironment' is not recognized as the name of a cmdlet
         // You can uncomment the line below for local testing though.
-        //private string Extensions = "--extensions=Calamari.Aws,Calamari.Azure,Calamari.Tests"; 
+        //private string Extensions = "--extensions=Calamari.Aws,Calamari.Azure,Calamari.Tests";
 
         private string Script = GetFixtureResource("Scripts", "awsscript.ps1");
-        
+
         private static string GetFixtureResource(params string[] paths)
         {
             var type = typeof(CommandFromModuleTest);
@@ -70,8 +70,8 @@ namespace Calamari.Tests.Fixtures.Commands
 
                 var args = new[]
                 {
-                    "run-test-script", 
-                    "--script=" + Script, 
+                    "run-test-script",
+                    "--script=" + Script,
                     "--extensions=Calamari.Aws,Calamari.Tests",
                     "--variables=" + temp.FilePath
                 };
@@ -79,7 +79,7 @@ namespace Calamari.Tests.Fixtures.Commands
                 ScriptHookMock.WasCalled = false;
                 var retCode = Program.Main(args);
                 Assert.AreEqual(0, retCode);
-                // TestModule should have been loadded because we are treating the 
+                // TestModule should have been loaded because we are treating the
                 // Calamari.Test dll as an extension. This means ScriptHookMock and
                 // EnvironmentVariableHook have been placed in the container, and because
                 // it is enabled they must have been called.

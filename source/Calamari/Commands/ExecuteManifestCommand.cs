@@ -34,14 +34,14 @@ namespace Calamari.Commands
 
             if (contents == null)
             {
-                throw new Exception("Execution manifest not found in variables.");
+                throw new CommandException("Execution manifest not found in variables.");
             }
 
             var instructions = JsonConvert.DeserializeObject<Instruction[]>(contents, JsonSerialization.GetDefaultSerializerSettings());
 
             if (instructions.Length == 0)
             {
-                throw new Exception("The execution manifest must have at least one instruction.");
+                throw new CommandException("The execution manifest must have at least one instruction.");
             }
 
             foreach (var instruction in instructions)
