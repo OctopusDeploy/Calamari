@@ -121,11 +121,9 @@ namespace Calamari.Tests.Fixtures.Manifest
                 var result = ExecuteCommand(variables, "Calamari.Tests");
 
                 result.AssertSuccess();
-                result.AssertOutput(@"Hello from TestCommand
-Hello from my custom Node!
-BootstrapperPathVariable_Value\bootstrapper.js
-TargetPathVariable_Value\TargetEntryPoint
-");
+                result.AssertOutput(string.Join(Environment.NewLine, "Hello from TestCommand", "Hello from my custom Node!",
+                                                "BootstrapperPathVariable_Value\\bootstrapper.js",
+                                                "TargetPathVariable_Value\\TargetEntryPoint"));
             }
         }
 
