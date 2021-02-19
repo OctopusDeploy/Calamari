@@ -182,10 +182,10 @@ namespace Calamari.AzureAppService.Tests
 
             // for each existing setting that isn't defined in the expected settings object, add it
             var expectedList = expectedSettingsArray.ToList();
-            foreach (var (name, value) in _existingSettings.Properties.Where(x =>
+            foreach (var kvp in _existingSettings.Properties.Where(x =>
                 expectedSettingsArray.All(y => y.Name != x.Key)))
             {
-                expectedList.Add(new AppSetting {Name = name, Value = value, SlotSetting = false});
+                expectedList.Add(new AppSetting {Name = kvp.Key, Value = kvp.Value, SlotSetting = false});
             }
             
             // Get the settings from the webapp
