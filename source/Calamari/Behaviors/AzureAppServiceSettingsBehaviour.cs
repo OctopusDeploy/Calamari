@@ -60,7 +60,7 @@ namespace Calamari.AzureAppService.Behaviors
                 throw new Exception("resource group name must be specified");
 
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
-            
+
 
             string token = await Auth.GetAuthTokenAsync(principalAccount);
 
@@ -71,7 +71,10 @@ namespace Calamari.AzureAppService.Behaviors
                 HttpClient = {BaseAddress = new Uri(principalAccount.ResourceManagementEndpointBaseUri)}
             };
 
-            var appSettings = JsonConvert.DeserializeObject<AppSetting[]>(variables.Get(SpecialVariables.Action.Azure.AppSettings, ""));
+            var appSettings =
+                JsonConvert.DeserializeObject<AppSetting[]>(variables.Get(SpecialVariables.Action.Azure.AppSettings, ""))
+                //?? new AppSetting[] { };
+                ;
 
             Log.Verbose($"Deploy publishing app settings to webapp {webAppName} in resource group {resourceGroupName}");
 
