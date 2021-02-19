@@ -26,17 +26,16 @@ namespace Calamari.AzureAppService.Behaviors
         public Task Execute(RunningDeployment context)
         {
             var deploymentType = context.Variables.Get(SpecialVariables.Action.Azure.DeploymentType);
-            
+
             switch (deploymentType)
             {
                 case "ImageDeploy":
                     return new AzureAppServiceDeployContainerBehavior(Log).Execute(context);
 
-                case "ZipDeploy":
+                // Default to zip deploy
+                default:
                     return new AzureAppServiceBehaviour(Log).Execute(context);
             }
-
-            return null;
         }
     }
 }
