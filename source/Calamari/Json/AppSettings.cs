@@ -37,7 +37,12 @@ namespace Calamari.AzureAppService.Json
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Name, Value, SlotSetting);
+            return new
+            {
+                Name,
+                Value,
+                SlotSetting
+            }.GetHashCode();
         }
 
         public override string ToString()
