@@ -1,23 +1,19 @@
 using Calamari.Common.Plumbing.Extensions;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using NUnit.Framework.Internal;
 
 namespace Calamari.Tests.Fixtures
 {
-    public class RequiresDotNetFrameworkAttribute : TestAttribute, ITestAction
+    public class RequiresDotNetFrameworkAttribute: NUnitAttribute, IApplyToTest
     {
-        public void BeforeTest(ITest testDetails)
+        public void ApplyToTest(Test test)
         {
             if (!ScriptingEnvironment.IsNetFramework())
             {
-                Assert.Ignore("Requires .NET Framework");
+                test.RunState = RunState.Skipped;
+                test.Properties.Set(PropertyNames.SkipReason, "Requires dotnet Framework");
             }
         }
-
-        public void AfterTest(ITest testDetails)
-        {
-        }
-
-        public ActionTargets Targets { get; set; }
     }
 }

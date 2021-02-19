@@ -19,6 +19,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Manifest
 {
     [TestFixture]
+    [RequiresDotNetFrameworkAttribute]
     public class ExecuteManifestCommandFixture : CalamariFixture
     {
         [Test]
