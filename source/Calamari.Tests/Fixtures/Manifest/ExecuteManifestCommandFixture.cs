@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if NETCORE
+using System;
 using System.IO;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -207,3 +208,4 @@ class Program
         }
     }
 }
+#endif
