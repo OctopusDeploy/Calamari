@@ -22,7 +22,7 @@ namespace Calamari.AzureAppService.Interfaces
             return new FileInfo($"{targetDirectory}/app.zip");
         }
 
-        public async Task<FileInfo> ConvertToZip(FileInfo sourceFile)
+        public async Task<FileInfo> ConvertToAzureSupportedFile(FileInfo sourceFile)
         {
             var newFilePath = sourceFile.FullName.Replace(".nupkg", ".zip");
             await Task.Run(() => File.Move(sourceFile.FullName, newFilePath));
