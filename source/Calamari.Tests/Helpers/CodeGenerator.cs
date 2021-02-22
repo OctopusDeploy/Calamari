@@ -41,13 +41,9 @@ class Program
     }}
 }}";
             File.WriteAllText(programCS, newProgram);
-            result = clr.Execute(CreateCommandLineInvocation("dotnet", "build"));
+            var outputPath = Path.Combine(projectPath.FullName, "output");
+            result = clr.Execute(CreateCommandLineInvocation("dotnet", $"build -o {outputPath}"));
             result.VerifySuccess();
-
-            var outputPath = Path.Combine(projectPath.FullName,
-                                          "bin",
-                                          "Debug",
-                                          "netcoreapp3.1");
 
             return outputPath;
         }
