@@ -15,9 +15,6 @@ using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Rest;
-using SharpCompress.Archives;
-using SharpCompress.Archives.Zip;
-using SharpCompress.Common;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -58,6 +55,10 @@ namespace Calamari.AzureAppService.Behaviors
                     Archive = new ZipPackageProvider();
                     break;
                 case "nupkg":
+                    Archive = new NugetPackageProvider();
+                    break;
+                case "war":
+                    Archive = new WarPackageProvider(Log, variables, context);
                     break;
             }
 
