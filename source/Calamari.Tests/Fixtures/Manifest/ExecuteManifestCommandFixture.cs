@@ -55,8 +55,9 @@ namespace Calamari.Tests.Fixtures.Manifest
             using (var temporaryDirectory = TemporaryDirectory.Create())
             {
                 var generatedApplicationPath = CodeGenerator.GenerateConsoleApplication("node", temporaryDirectory.DirectoryPath);
-
-                var destinationPath = Path.Combine(temporaryDirectory.DirectoryPath, "app");
+                var toolRoot = Path.Combine(temporaryDirectory.DirectoryPath, "app");
+                var destinationPath =
+                    CalamariEnvironment.IsRunningOnWindows ? toolRoot : Path.Combine(toolRoot, "bin");
 
                 DirectoryEx.Copy(generatedApplicationPath, destinationPath);
 
@@ -64,7 +65,7 @@ namespace Calamari.Tests.Fixtures.Manifest
                 {
                     { SpecialVariables.Execution.Manifest, instructions },
                     { nameof(NodeInstructions.BootstrapperPathVariable), "BootstrapperPathVariable_Value" },
-                    { nameof(NodeInstructions.NodePathVariable), destinationPath },
+                    { nameof(NodeInstructions.NodePathVariable), toolRoot },
                     { nameof(NodeInstructions.TargetEntryPoint), "TargetEntryPoint_Value" },
                     { nameof(NodeInstructions.TargetPathVariable), "TargetPathVariable_Value" },
                 };
