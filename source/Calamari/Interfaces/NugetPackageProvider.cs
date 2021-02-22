@@ -4,7 +4,7 @@ using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 
-namespace Calamari.AzureAppService.Interfaces
+namespace Calamari.AzureAppService
 {
     class NugetPackageProvider : IPackageProvider
     {
