@@ -56,8 +56,7 @@ namespace Calamari.Tests.Fixtures.Manifest
             {
                 var generatedApplicationPath = CodeGenerator.GenerateConsoleApplication("node", temporaryDirectory.DirectoryPath);
 
-                var destinationPath =
-                    CalamariEnvironment.IsRunningOnWindows ? Path.Combine(temporaryDirectory.DirectoryPath, "app") : Path.Combine(temporaryDirectory.DirectoryPath, "app", "bin");
+                var destinationPath = Path.Combine(temporaryDirectory.DirectoryPath, "app");
 
                 DirectoryEx.Copy(generatedApplicationPath, destinationPath);
 
