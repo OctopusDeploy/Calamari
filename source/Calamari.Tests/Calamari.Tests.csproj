@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="sample.1.0.0.war" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
     <PackageReference Include="Azure.Identity" Version="1.2.3" />
     <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-preview.2" />
@@ -19,5 +23,11 @@
     <PackageReference Include="nunit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="sample.1.0.0.war">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 </Project>
