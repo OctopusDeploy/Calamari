@@ -189,6 +189,15 @@ namespace Calamari.AzureAppService.Tests
             await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
         }
 
+        [Test]
+        public async Task Deploy_WarPackage()
+        {
+            // need to spin up java app service plan with a tomcat server
+            // need java installed on the test runner
+            // var javaSvcPlan = await _webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(_resourceGroupName, $"{_resourceGroupName}-java",new AppServicePlan(_site.Location){})
+            // var javaSite = await _webMgmtClient.WebApps.BeginCreateOrUpdateAsync(_resourceGroupName, $"{_resourceGroupName}-java",new Site(_site.Location){ServerFarmId = })
+        }
+
         private void AddVariables(CommandTestBuilderContext context)
         {
             context.Variables.Add(AccountVariables.ClientId, clientId);
