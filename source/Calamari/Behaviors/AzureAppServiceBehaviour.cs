@@ -98,7 +98,7 @@ namespace Calamari.AzureAppService.Behaviors
             }
             else
             {
-                uploadPath = (await Archive.ConvertToZip(packageFileInfo)).FullName;
+                uploadPath = (await Archive.ConvertToAzureSupportedFile(packageFileInfo)).FullName;
             }
 
             if (uploadPath == null)
