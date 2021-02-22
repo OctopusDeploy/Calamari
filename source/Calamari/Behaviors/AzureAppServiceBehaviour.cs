@@ -54,6 +54,10 @@ namespace Calamari.AzureAppService.Behaviors
                     Archive = new ZipPackageProvider();
                     break;
                 case "nupkg":
+                    Archive = new NugetPackageProvider();
+                    break;
+                case "war":
+                    Archive = new WarPackageProvider(Log, variables, context);
                     break;
             }
 
