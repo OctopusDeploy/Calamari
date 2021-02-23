@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Runtime.InteropServices;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
@@ -42,14 +43,30 @@ class Program
     }}
 }}";
 
-            // Windows and Linux will produce executables via dotnet build
-            // Mac needs to publish with an RID (https://docs.microsoft.com/en-us/dotnet/core/rid-catalog) to produce an executable
-            CommandResult BuildExecutableMac(string output) => clr.Execute(CreateCommandLineInvocation("dotnet", $"publish -o {output} -r osx-x64"));
-            CommandResult BuildExecutable(string output) => clr.Execute(CreateCommandLineInvocation("dotnet", $"build -o {output}"));
+            var architecture = RuntimeInformation.ProcessArchitecture;
+            var rid = "win-x64";
+            if (CalamariEnvironment.IsRunningOnMac)
+            {
+                rid = "osx-x64";
+            }
+            else if (CalamariEnvironment.IsRunningOnNix)
+            {
+                rid = "linux-x64";
+            }
+
+            if (architecture == Architecture.Arm)
+            {
+                rid = "linux-arm";
+            }
+
+            if (architecture == Architecture.Arm64)
+            {
+                rid = "linux-arm64";
+            }
 
             File.WriteAllText(programCS, newProgram);
             var outputPath = Path.Combine(projectPath.FullName, "output");
-            result = CalamariEnvironment.IsRunningOnMac ? BuildExecutableMac(outputPath) : BuildExecutable(outputPath);
+            result = clr.Execute(CreateCommandLineInvocation("dotnet", $"publish -o {outputPath} -r {rid}"));
             result.VerifySuccess();
 
             return outputPath;
