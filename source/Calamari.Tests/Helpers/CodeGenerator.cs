@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -40,9 +41,15 @@ class Program
         Console.Write(String.Join(Environment.NewLine, args));
     }}
 }}";
+
+            // Windows and Linux will produce executables via dotnet build
+            // Mac needs to publish with an RID (https://docs.microsoft.com/en-us/dotnet/core/rid-catalog) to produce an executable
+            CommandResult BuildExecutableMac(string output) => clr.Execute(CreateCommandLineInvocation("dotnet", $"publish -o {output} -r osx-x64"));
+            CommandResult BuildExecutable(string output) => clr.Execute(CreateCommandLineInvocation("dotnet", $"build -o {output}"));
+
             File.WriteAllText(programCS, newProgram);
             var outputPath = Path.Combine(projectPath.FullName, "output");
-            result = clr.Execute(CreateCommandLineInvocation("dotnet", $"build -o {outputPath}"));
+            result = CalamariEnvironment.IsRunningOnMac ? BuildExecutableMac(outputPath) : BuildExecutable(outputPath);
             result.VerifySuccess();
 
             return outputPath;
