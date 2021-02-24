@@ -32,7 +32,7 @@ namespace Calamari.Common.Plumbing.Extensions
 
         public static Version GetMonoVersion()
         {
-            // A bit hacky, but this is what Mono community seems to be using: 
+            // A bit hacky, but this is what Mono community seems to be using:
             // http://stackoverflow.com/questions/8413922/programmatically-determining-mono-runtime-version
 
             var monoRuntime = Type.GetType("Mono.Runtime");
@@ -71,7 +71,7 @@ namespace Calamari.Common.Plumbing.Extensions
             }
             catch
             {
-                //silently ignore it - we dont want to 
+                //silently ignore it - we dont want to
             }
 
             return Version.Parse("0.0.0");
