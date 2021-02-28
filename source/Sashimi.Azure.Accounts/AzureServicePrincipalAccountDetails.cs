@@ -27,6 +27,13 @@ namespace Sashimi.Azure.Accounts
         [JsonIgnore]
         public VariableType ExpandsVariableType { get; } = AzureVariableType.AzureServicePrincipal;
 
+        [JsonIgnore]
+        public string Authority => $"{ActiveDirectoryEndpointBaseUriOrDefault}{TenantId}";
+
+        string ActiveDirectoryEndpointBaseUriOrDefault => !string.IsNullOrWhiteSpace(ActiveDirectoryEndpointBaseUri)
+            ? ActiveDirectoryEndpointBaseUri
+            : "https://login.windows.net/";
+
         public bool CanExpand(string id, string referencedEntityId)
         {
             return id == referencedEntityId;
