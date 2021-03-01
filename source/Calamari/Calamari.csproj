@@ -17,8 +17,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.4.34" />
-    <PackageReference Include="Calamari.CloudAccounts" Version="14.8.1" />
-    <PackageReference Include="Calamari.Common" Version="14.11.2" />
+    <PackageReference Include="Calamari.CloudAccounts" Version="15.1.6" />
+    <PackageReference Include="Calamari.Common" Version="15.1.6" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>

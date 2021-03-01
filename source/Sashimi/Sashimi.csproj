@@ -26,7 +26,7 @@
   <ItemGroup>
     <PackageReference Include="Octopus.CoreParsers.Hcl" Version="1.1.2" />
     <PackageReference Include="Octopus.Dependencies.TerraformCLI" Version="1.0.9" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="7.1.0" />
+    <PackageReference Include="Sashimi.Server.Contracts" Version="8.5.4" />
   </ItemGroup>
 
   <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
