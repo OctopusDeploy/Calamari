@@ -15,6 +15,6 @@ namespace Sashimi.Server.Contracts.ServiceMessages
                                Func<string, string> certificateIdResolver, 
                                Func<string, string> workerPoolIdResolver, 
                                Func<string, AccountType> accountTypeResolver, 
-                               Func<string, FeedId> feedIdResolver);
+                               Func<string, string> feedIdResolver);
     }
 }
