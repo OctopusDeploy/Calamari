@@ -48,7 +48,7 @@ namespace Sashimi.AzureServiceFabric.Endpoints
             }
         }
 
-        public string DefaultWorkerPoolId { get; set; } = string.Empty;
+        public string? DefaultWorkerPoolId { get; set; } = string.Empty;
 
         public override IEnumerable<(string id, DocumentType documentType)> GetRelatedDocuments()
         {
