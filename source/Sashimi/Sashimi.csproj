@@ -26,7 +26,7 @@
   <ItemGroup>
     <PackageReference Include="Octopus.CoreParsers.Hcl" Version="1.1.2" />
     <PackageReference Include="Octopus.Dependencies.TerraformCLI" Version="1.0.9" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="7.1.0" />
+    <PackageReference Include="Sashimi.Server.Contracts" Version="8.5.4" />
   </ItemGroup>
 
   <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
@@ -34,7 +34,7 @@
     <ItemGroup>
       <!-- We ".ToLower()" on the Pacakge Definition names here as packages are downloaded with lower case, but this is using the 
       Include name which is camel case, so we want to make sure we lower case it so it can find the path correctly on unix systems --> 
-      <Content Include="@(PackageDefinitions->'%(ResolvedPath)/$([System.String]::new('%(Name)').ToLower()).%(Version).nupkg')" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))">
+      <Content Include="@(PackageDefinitions-&gt;'%(ResolvedPath)/$([System.String]::new('%(Name)').ToLower()).%(Version).nupkg')" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))">
         <Visible>false</Visible>
         <Link>@(PackageDefinitions->'%(Name).nupkg')</Link>
         <Pack>true</Pack>
