@@ -14,7 +14,7 @@ namespace Sashimi.Terraform.ActionHandler
         /// <summary>
         /// When variables are supplied from the UI (i.e. not from a package), all values are strings.
         /// So maps and lists are just strings, even though they should be objects.
-        /// 
+        ///
         /// This method find variables that should be objects, and parses the strings sent in
         /// into real objects.
         /// </summary>
@@ -45,7 +45,7 @@ namespace Sashimi.Terraform.ActionHandler
         {
             var properties = GetPropertiesAsList(parsedProperties, metadata, GetHclVariableValue);
             var asStr = string.Join("\n", properties);
-            return variableDictionary.EvaluateIgnoringErrors(asStr);
+            return variableDictionary.EvaluateIgnoringErrors(asStr)!;
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace Sashimi.Terraform.ActionHandler
         {
             var properties = GetPropertiesAsList(parsedProperties, metadata, GetJsonVariableValue);
             var asJson = "{" + string.Join(",", properties) + "}";
-            return variableDictionary.EvaluateIgnoringErrors(asJson);
+            return variableDictionary.EvaluateIgnoringErrors(asJson)!;
         }
 
         static List<string> GetPropertiesAsList(JObject parsedProperties, Metadata metadata, Func<string?, JProperty, string> getVariableValue)

@@ -14,10 +14,10 @@
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
     <ProjectReference Include="..\Sashimi\Sashimi.csproj" />
     <PackageReference Include="Assent" Version="1.6.1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="Octopus.Server.Extensibility.Tests" Version="10.0.1" />
-    <PackageReference Include="Sashimi.Tests.Shared" Version="8.5.4" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="8.6.4" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.22" />
   </ItemGroup>
 
