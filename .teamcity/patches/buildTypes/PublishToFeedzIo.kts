@@ -142,6 +142,11 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
             }
         }
 
+        remove(RelativeId("WindowsNetFxTesting_2008")) {
+            snapshot {
+            }
+        }
+
         remove(RelativeId("WindowsNetFxTesting_2008r2")) {
             snapshot {
             }
