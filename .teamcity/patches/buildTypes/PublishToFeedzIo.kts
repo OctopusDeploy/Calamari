@@ -82,6 +82,11 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
             }
         }
 
+        remove(RelativeId("NetcoreTesting_Sles")) {
+            snapshot {
+            }
+        }
+
         expect(RelativeId("NetcoreTesting_CentOS")) {
             snapshot {
             }
