@@ -15,9 +15,6 @@ using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Rest;
-using SharpCompress.Archives;
-using SharpCompress.Archives.Zip;
-using SharpCompress.Common;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -26,7 +23,6 @@ namespace Calamari.AzureAppService.Behaviors
         private ILog Log { get; }
 
         private IPackageProvider Archive { get; set; }
-            
 
         public AzureAppServiceBehaviour(ILog log)
         {

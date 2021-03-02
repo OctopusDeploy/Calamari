@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 using System.Threading.Tasks;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
@@ -28,7 +25,7 @@ namespace Calamari.AzureAppService.Interfaces
         public async Task<FileInfo> ConvertToZip(FileInfo sourceFile)
         {
             var newFilePath = sourceFile.FullName.Replace(".nupkg", ".zip");
-            await Task.Run(() => System.IO.File.Move(sourceFile.FullName, newFilePath));
+            await Task.Run(() => File.Move(sourceFile.FullName, newFilePath));
             return new FileInfo(newFilePath);
         }
     }

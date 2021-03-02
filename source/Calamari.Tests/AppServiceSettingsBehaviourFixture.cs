@@ -24,18 +24,18 @@ namespace Calamari.AzureAppService.Tests
     [TestFixture]
     public class AppServiceSettingsBehaviorFixture
     {
-        private string _clientId;
-        private string _clientSecret;
-        private string _tenantId;
-        private string _subscriptionId;
-        private string _webappName;
-        private string _resourceGroupName;
-        private string _slotName;
-        private StringDictionary _existingSettings;
-        private ResourceGroupsOperations _resourceGroupClient;
-        private string _authToken;
-        private WebSiteManagementClient _webMgmtClient;
-        private Site _site;
+        private string clientId;
+        private string clientSecret;
+        private string tenantId;
+        private string subscriptionId;
+        private string webappName;
+        private string resourceGroupName;
+        private string slotName;
+        private StringDictionary existingSettings;
+        private ResourceGroupsOperations resourceGroupClient;
+        private string authToken;
+        private WebSiteManagementClient webMgmtClient;
+        private Site site;
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -47,57 +47,57 @@ namespace Calamari.AzureAppService.Tests
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
                 DefaultVariables.ActiveDirectoryEndpoint;
 
-            _resourceGroupName = Guid.NewGuid().ToString();
+            resourceGroupName = Guid.NewGuid().ToString();
             
-            _clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
-            _clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
-            _tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
-            _subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
+            clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
+            clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
+            tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
+            subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
 
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
-            _authToken = await Auth.GetAuthTokenAsync(activeDirectoryEndpointBaseUri,
-                resourceManagementEndpointBaseUri, _tenantId, _clientId, _clientSecret);
+            authToken = await Auth.GetAuthTokenAsync(activeDirectoryEndpointBaseUri,
+                resourceManagementEndpointBaseUri, tenantId, clientId, clientSecret);
 
-            var resourcesClient = new ResourcesManagementClient(_subscriptionId,
-                new ClientSecretCredential(_tenantId, _clientId, _clientSecret));
+            var resourcesClient = new ResourcesManagementClient(subscriptionId,
+                new ClientSecretCredential(tenantId, clientId, clientSecret));
 
-            _resourceGroupClient = resourcesClient.ResourceGroups;
+            resourceGroupClient = resourcesClient.ResourceGroups;
 
             var resourceGroup = new ResourceGroup(resourceGroupLocation);
-            resourceGroup = await _resourceGroupClient.CreateOrUpdateAsync(_resourceGroupName, resourceGroup);
+            resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
 
-            _webMgmtClient = new WebSiteManagementClient(new TokenCredentials(_authToken))
+            webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
             {
-                SubscriptionId = _subscriptionId,
+                SubscriptionId = subscriptionId,
                 HttpClient = {BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint)},
             };
 
-            var svcPlan = await _webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
+            var svcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
                 new AppServicePlan(resourceGroup.Location));
 
-            _site = await _webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
+            site = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
                 new Site(resourceGroup.Location) {ServerFarmId = svcPlan.Id});
             
-            _existingSettings = new StringDictionary
+            existingSettings = new StringDictionary
             {
                 Properties = new Dictionary<string, string> { { "ExistingSetting", "Foo" },{"ReplaceSetting","Foo"} }
             };
 
-            _webappName = _site.Name;
+            webappName = site.Name;
         }
 
         [OneTimeTearDown]
         public async Task CleanupCode()
         {
-            await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
+            await resourceGroupClient.StartDeleteAsync(resourceGroupName);
         }
         
         [Test]
         public async Task TestSiteSettings()
         {
-            await _webMgmtClient.WebApps.UpdateApplicationSettingsWithHttpMessagesAsync(_resourceGroupName, _site.Name,
-                _existingSettings);
+            await webMgmtClient.WebApps.UpdateApplicationSettingsWithHttpMessagesAsync(resourceGroupName, site.Name,
+                existingSettings);
 
             var iVars = new CalamariVariables();
             AddVariables(iVars);
@@ -122,13 +122,13 @@ namespace Calamari.AzureAppService.Tests
         public async Task TestSlotSettings()
         {
             var slotName = "stage";
-            _slotName = slotName;
+            this.slotName = slotName;
 
-            await _webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(_resourceGroupName, _resourceGroupName, _site,
+            await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName, resourceGroupName, site,
                 slotName);
             
-            var existingSettingsTask = _webMgmtClient.WebApps.UpdateApplicationSettingsSlotWithHttpMessagesAsync(_resourceGroupName,
-                _site.Name, _existingSettings, slotName);
+            var existingSettingsTask = webMgmtClient.WebApps.UpdateApplicationSettingsSlotWithHttpMessagesAsync(resourceGroupName,
+                site.Name, existingSettings, slotName);
 
             var iVars = new CalamariVariables();
             AddVariables(iVars);
@@ -154,12 +154,12 @@ namespace Calamari.AzureAppService.Tests
 
         private void AddVariables(CalamariVariables vars)
         {
-            vars.Add(AccountVariables.ClientId, _clientId);
-            vars.Add(AccountVariables.Password, _clientSecret);
-            vars.Add(AccountVariables.TenantId, _tenantId);
-            vars.Add(AccountVariables.SubscriptionId, _subscriptionId);
-            vars.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName);
-            vars.Add("Octopus.Action.Azure.WebAppName", _webappName);
+            vars.Add(AccountVariables.ClientId, clientId);
+            vars.Add(AccountVariables.Password, clientSecret);
+            vars.Add(AccountVariables.TenantId, tenantId);
+            vars.Add(AccountVariables.SubscriptionId, subscriptionId);
+            vars.Add("Octopus.Action.Azure.ResourceGroupName", resourceGroupName);
+            vars.Add("Octopus.Action.Azure.WebAppName", webappName);
         }
 
         private (string json, IEnumerable<AppSetting> setting) BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)
@@ -175,23 +175,23 @@ namespace Calamari.AzureAppService.Tests
             // Update existing settings with new replacement values
             var expectedSettingsArray = expectedSettings as AppSetting[] ?? expectedSettings.ToArray();
             foreach (var (name, value, _) in expectedSettingsArray.Where(x =>
-                _existingSettings.Properties.ContainsKey(x.Name)))
+                existingSettings.Properties.ContainsKey(x.Name)))
             {
-                _existingSettings.Properties[name] = value;
+                existingSettings.Properties[name] = value;
             }
 
             // for each existing setting that isn't defined in the expected settings object, add it
             var expectedList = expectedSettingsArray.ToList();
-            foreach (var kvp in _existingSettings.Properties.Where(x =>
+            foreach (var kvp in existingSettings.Properties.Where(x =>
                 expectedSettingsArray.All(y => y.Name != x.Key)))
             {
                 expectedList.Add(new AppSetting {Name = kvp.Key, Value = kvp.Value, SlotSetting = false});
             }
             
             // Get the settings from the webapp
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(_webappName, _slotName, _resourceGroupName);
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webappName, slotName, resourceGroupName);
             
-            var settings = await AppSettingsManagement.GetAppSettingsAsync(_webMgmtClient, _authToken, targetSite);
+            var settings = await AppSettingsManagement.GetAppSettingsAsync(webMgmtClient, authToken, targetSite);
 
             CollectionAssert.AreEquivalent(expectedList, settings);
         }

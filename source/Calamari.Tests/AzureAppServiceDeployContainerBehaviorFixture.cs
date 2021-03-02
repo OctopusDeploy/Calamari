@@ -28,50 +28,50 @@ namespace Calamari.AzureAppService.Tests
     [TestFixture]
     public class AzureAppServiceDeployContainerBehaviorFixture
     {
-        private string _clientId;
-        private string _clientSecret;
-        private string _tenantId;
-        private string _subscriptionId;
-        private string _webappName;
-        private string _resourceGroupName;
-        private ResourceGroupsOperations _resourceGroupClient;
-        private string _authToken;
-        private WebSiteManagementClient _webMgmtClient;
-        private CalamariVariables _newVariables;
-        readonly HttpClient _client = new HttpClient();
-        private Site _site;
+        private string clientId;
+        private string clientSecret;
+        private string tenantId;
+        private string subscriptionId;
+        private string webappName;
+        private string resourceGroupName;
+        private ResourceGroupsOperations resourceGroupClient;
+        private string authToken;
+        private WebSiteManagementClient webMgmtClient;
+        private CalamariVariables newVariables;
+        readonly HttpClient client = new HttpClient();
+        private Site site;
 
 
 
         [OneTimeSetUp]
         public async Task Setup()
         {
-            _resourceGroupName = Guid.NewGuid().ToString();
+            resourceGroupName = Guid.NewGuid().ToString();
         
-            _clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
-            _clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
-            _tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
-            _subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
+            clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
+            clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
+            tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
+            subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
 
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
             
-            _authToken = await GetAuthToken(_tenantId, _clientId, _clientSecret);
+            authToken = await GetAuthToken(tenantId, clientId, clientSecret);
 
-            var resourcesClient = new ResourcesManagementClient(_subscriptionId,
-                new ClientSecretCredential(_tenantId, _clientId, _clientSecret));
+            var resourcesClient = new ResourcesManagementClient(subscriptionId,
+                new ClientSecretCredential(tenantId, clientId, clientSecret));
 
-            _resourceGroupClient = resourcesClient.ResourceGroups;
+            resourceGroupClient = resourcesClient.ResourceGroups;
 
             var resourceGroup = new ResourceGroup(resourceGroupLocation);
-            resourceGroup = await _resourceGroupClient.CreateOrUpdateAsync(_resourceGroupName, resourceGroup);
+            resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
 
-            _webMgmtClient = new WebSiteManagementClient(new TokenCredentials(_authToken))
+            webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
             {
-                SubscriptionId = _subscriptionId,
+                SubscriptionId = subscriptionId,
                 HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
             };
 
-            var svcPlan = await _webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
+            var svcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
                 resourceGroup.Name, new AppServicePlan(resourceGroup.Location)
                 {
                     Kind = "linux",
@@ -83,7 +83,7 @@ namespace Calamari.AzureAppService.Tests
                     }
                 });
 
-            _site = await _webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
+            site = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
                 new Site(resourceGroup.Location)
                 {
                     ServerFarmId = svcPlan.Id,
@@ -99,7 +99,7 @@ namespace Calamari.AzureAppService.Tests
                     }
                 });
             
-            _webappName = _site.Name;
+            webappName = site.Name;
 
             await AssertSetupSuccessAsync();
         }
@@ -107,8 +107,8 @@ namespace Calamari.AzureAppService.Tests
         [OneTimeTearDown]
         public async Task CleanupCode()
         {
-            if(_resourceGroupClient != null)
-                await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
+            if(resourceGroupClient != null)
+                await resourceGroupClient.StartDeleteAsync(resourceGroupName);
 
             //foreach (var tempDir in _tempDirs)
             //{
@@ -120,14 +120,14 @@ namespace Calamari.AzureAppService.Tests
         [Test]
         public async Task AzureLinuxContainerDeploy()
         {
-            _newVariables = new CalamariVariables();
-            AddVariables(_newVariables);
+            newVariables = new CalamariVariables();
+            AddVariables(newVariables);
 
-            var runningContext = new RunningDeployment("", _newVariables);
+            var runningContext = new RunningDeployment("", newVariables);
 
             await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
-            await AssertDeploySuccessAsync(AzureWebAppHelper.GetAzureTargetSite(_site.Name, "", _resourceGroupName));
+            await AssertDeploySuccessAsync(AzureWebAppHelper.GetAzureTargetSite(site.Name, "", resourceGroupName));
         }
 
         [Test]
@@ -135,22 +135,22 @@ namespace Calamari.AzureAppService.Tests
         {
             var slotName = "stage";
             
-            _newVariables = new CalamariVariables();
-            AddVariables(_newVariables);
-            _newVariables.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
-            var slot = await _webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(_resourceGroupName, _webappName, _site,
+            newVariables = new CalamariVariables();
+            AddVariables(newVariables);
+            newVariables.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
+            var slot = await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName, webappName, site,
                 slotName);
 
-            var runningContext = new RunningDeployment("", _newVariables);
+            var runningContext = new RunningDeployment("", newVariables);
 
             await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
-            await AssertDeploySuccessAsync(AzureWebAppHelper.GetAzureTargetSite(_site.Name, slotName, _resourceGroupName));
+            await AssertDeploySuccessAsync(AzureWebAppHelper.GetAzureTargetSite(site.Name, slotName, resourceGroupName));
         }
 
         async Task AssertSetupSuccessAsync()
         {
-            var result = await _client.GetAsync($@"https://{_webappName}.azurewebsites.net");
+            var result = await client.GetAsync($@"https://{webappName}.azurewebsites.net");
             var recievedContent = await result.Content.ReadAsStringAsync();
 
             recievedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>"); 
@@ -159,25 +159,25 @@ namespace Calamari.AzureAppService.Tests
 
         async Task AssertDeploySuccessAsync(TargetSite targetSite)
         {
-            var imageName = _newVariables.Get(SpecialVariables.Action.Package.PackageId);
-            var registryUrl = _newVariables.Get(SpecialVariables.Action.Package.FeedId);
-            var imageVersion = _newVariables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
+            var imageName = newVariables.Get(SpecialVariables.Action.Package.PackageId);
+            var registryUrl = newVariables.Get(SpecialVariables.Action.Package.FeedId);
+            var imageVersion = newVariables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
 
-            var config = await _webMgmtClient.WebApps.GetConfigurationAsync(targetSite);
+            var config = await webMgmtClient.WebApps.GetConfigurationAsync(targetSite);
             Assert.AreEqual($@"DOCKER|{imageName}:{imageVersion}", config.LinuxFxVersion);
 
-            var appSettings = await _webMgmtClient.WebApps.ListApplicationSettingsAsync(targetSite);
+            var appSettings = await webMgmtClient.WebApps.ListApplicationSettingsAsync(targetSite);
             Assert.AreEqual(registryUrl, appSettings.Properties["DOCKER_REGISTRY_SERVER_URL"]);
         }
 
         void AddVariables(CalamariVariables vars)
         {
-            vars.Add(AccountVariables.ClientId, _clientId);
-            vars.Add(AccountVariables.Password, _clientSecret);
-            vars.Add(AccountVariables.TenantId, _tenantId);
-            vars.Add(AccountVariables.SubscriptionId, _subscriptionId);
-            vars.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName);
-            vars.Add("Octopus.Action.Azure.WebAppName", _webappName);
+            vars.Add(AccountVariables.ClientId, clientId);
+            vars.Add(AccountVariables.Password, clientSecret);
+            vars.Add(AccountVariables.TenantId, tenantId);
+            vars.Add(AccountVariables.SubscriptionId, subscriptionId);
+            vars.Add("Octopus.Action.Azure.ResourceGroupName", resourceGroupName);
+            vars.Add("Octopus.Action.Azure.WebAppName", webappName);
             vars.Add(SpecialVariables.Action.Package.FeedId, "https://index.docker.io");
             vars.Add(SpecialVariables.Action.Package.PackageId, "nginx");
             vars.Add(SpecialVariables.Action.Package.PackageVersion, "latest");

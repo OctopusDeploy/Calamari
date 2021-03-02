@@ -1,5 +1,4 @@
-﻿using System;
-using Sashimi.Server.Contracts.ActionHandlers;
+﻿using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 
 namespace Sashimi.AzureAppService

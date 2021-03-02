@@ -25,17 +25,17 @@ namespace Calamari.AzureAppService.Tests
     [TestFixture]
     public class AppServiceBehaviorFixture
     {
-        private string _clientId;
-        private string _clientSecret;
-        private string _tenantId;
-        private string _subscriptionId;
-        private string _resourceGroupName;
-        private string _authToken;
-        private string _greeting = "Calamari";
-        private ResourceGroupsOperations _resourceGroupClient;
-        private WebSiteManagementClient _webMgmtClient;
-        private Site _site;
-        readonly HttpClient _client = new HttpClient();
+        private string clientId;
+        private string clientSecret;
+        private string tenantId;
+        private string subscriptionId;
+        private string resourceGroupName;
+        private string authToken;
+        private string greeting = "Calamari";
+        private ResourceGroupsOperations resourceGroupClient;
+        private WebSiteManagementClient webMgmtClient;
+        private Site site;
+        readonly HttpClient client = new HttpClient();
         
         [OneTimeSetUp]
         public async Task Setup()
@@ -47,44 +47,44 @@ namespace Calamari.AzureAppService.Tests
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
                 DefaultVariables.ActiveDirectoryEndpoint;
             
-            _resourceGroupName = Guid.NewGuid().ToString();
+            resourceGroupName = Guid.NewGuid().ToString();
 
-            _clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
-            _clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
-            _tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
-            _subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
+            clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
+            clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
+            tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
+            subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
-            _authToken = await Auth.GetAuthTokenAsync(activeDirectoryEndpointBaseUri, resourceManagementEndpointBaseUri,
-                _tenantId, _clientId, _clientSecret);
+            authToken = await Auth.GetAuthTokenAsync(activeDirectoryEndpointBaseUri, resourceManagementEndpointBaseUri,
+                tenantId, clientId, clientSecret);
 
-            var resourcesClient = new ResourcesManagementClient(_subscriptionId,
-                new ClientSecretCredential(_tenantId, _clientId, _clientSecret));
+            var resourcesClient = new ResourcesManagementClient(subscriptionId,
+                new ClientSecretCredential(tenantId, clientId, clientSecret));
 
-            _resourceGroupClient = resourcesClient.ResourceGroups;
+            resourceGroupClient = resourcesClient.ResourceGroups;
 
             var resourceGroup = new ResourceGroup(resourceGroupLocation);
-            resourceGroup = await _resourceGroupClient.CreateOrUpdateAsync(_resourceGroupName, resourceGroup);
+            resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
 
-            _webMgmtClient = new WebSiteManagementClient(new TokenCredentials(_authToken))
+            webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
             {
-                SubscriptionId = _subscriptionId,
+                SubscriptionId = subscriptionId,
                 HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
             };
 
-            var svcPlan = await _webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
+            var svcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
                 resourceGroup.Name,
                 new AppServicePlan(resourceGroup.Location) {Sku = new SkuDescription("S1", "Standard")}
             );
 
-            _site = await _webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
+            site = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
                 new Site(resourceGroup.Location) { ServerFarmId = svcPlan.Id });
         }
 
         [OneTimeTearDown]
         public async Task Cleanup()
         {
-            await _resourceGroupClient.StartDeleteAsync(_resourceGroupName);
+            await resourceGroupClient.StartDeleteAsync(resourceGroupName);
         }
 
         [Test]
@@ -109,19 +109,19 @@ namespace Calamari.AzureAppService.Tests
             }).Execute();
 
             //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
-            await AssertContent($"{_site.Name}.azurewebsites.net", $"Hello {_greeting}");
+            await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
         }
 
         [Test]
         public async Task Deploy_WebAppZipSlot()
         {
             var slotName = "stage";
-            _greeting = "stage";
+            greeting = "stage";
 
             (string packagePath, string packageName, string packageVersion) packageinfo;
 
-            var slotTask = _webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(_resourceGroupName, _resourceGroupName,
-                _site,
+            var slotTask = webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName, resourceGroupName,
+                site,
                 slotName);
 
             var tempPath = TemporaryDirectory.Create();
@@ -142,14 +142,14 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
             }).Execute();
 
-            await AssertContent($"{_site.Name}-{slotName}.azurewebsites.net", $"Hello {_greeting}");
+            await AssertContent($"{site.Name}-{slotName}.azurewebsites.net", $"Hello {greeting}");
         }
 
         [Test]
         public async Task Deploy_NugetPackage()
         {
             (string packagePath, string packageName, string packageVersion) packageinfo;
-            _greeting = "nuget";
+            greeting = "nuget";
 
             var tempPath = TemporaryDirectory.Create();
             new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
@@ -186,18 +186,18 @@ namespace Calamari.AzureAppService.Tests
             }).Execute();
 
             //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
-            await AssertContent($"{_site.Name}.azurewebsites.net", $"Hello {_greeting}");
+            await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
         }
 
         private void AddVariables(CommandTestBuilderContext context)
         {
-            context.Variables.Add(AccountVariables.ClientId, _clientId);
-            context.Variables.Add(AccountVariables.Password, _clientSecret);
-            context.Variables.Add(AccountVariables.TenantId, _tenantId);
-            context.Variables.Add(AccountVariables.SubscriptionId, _subscriptionId);
-            context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", _resourceGroupName);
-            context.Variables.Add("Octopus.Action.Azure.WebAppName", _site.Name);
-            context.Variables.Add("Greeting", _greeting);
+            context.Variables.Add(AccountVariables.ClientId, clientId);
+            context.Variables.Add(AccountVariables.Password, clientSecret);
+            context.Variables.Add(AccountVariables.TenantId, tenantId);
+            context.Variables.Add(AccountVariables.SubscriptionId, subscriptionId);
+            context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", resourceGroupName);
+            context.Variables.Add("Octopus.Action.Azure.WebAppName", site.Name);
+            context.Variables.Add("Greeting", greeting);
             context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
             context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
             context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
@@ -205,7 +205,7 @@ namespace Calamari.AzureAppService.Tests
 
         async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
-            var result = await _client.GetStringAsync($"https://{hostName}/{rootPath}");
+            var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
 
             result.Should().Be(actualText);
         }

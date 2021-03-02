@@ -1,8 +1,6 @@
 using Autofac;
-using Octopus.Server.Extensibility.Extensions.Mappings;
 using Sashimi.AzureAppService;
 using Sashimi.Server.Contracts.ActionHandlers;
-using Sashimi.Server.Contracts.Endpoints;
 
 namespace Sashimi.AzureWebApp
 {
@@ -14,9 +12,6 @@ namespace Sashimi.AzureWebApp
                             .As<IActionHandler>()
                             .AsSelf()
                             .InstancePerLifetimeScope();
-                     //builder.RegisterType<AzureWebAppScriptActionOverride>()
-                     //       .As<IScriptActionOverride>()
-                     //       .InstancePerLifetimeScope();
               }
        }
 }
