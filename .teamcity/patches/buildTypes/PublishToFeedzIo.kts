@@ -132,6 +132,11 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
             }
         }
 
+        remove(RelativeId("NetcoreTesting_MacOsx")) {
+            snapshot {
+            }
+        }
+
         expect(RelativeId("WindowsNetFxTesting_2008r2")) {
             snapshot {
             }
