@@ -38,7 +38,7 @@ namespace Calamari.AzureScripting
 
         public bool IsEnabled(ScriptSyntax syntax) => supportedScriptSyntax.Contains(syntax);
 
-        public IScriptWrapper NextWrapper { get; set; } = null!;
+        public IScriptWrapper? NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,
                                            ScriptSyntax scriptSyntax,
@@ -68,14 +68,14 @@ namespace Calamari.AzureScripting
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId)!);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId)!);
                     variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
+                    return NextWrapper!.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
                 }
 
                 //otherwise use management certificate
                 SetOutputVariable("OctopusUseServicePrincipal", false.ToString());
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory)))
                 {
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
+                    return NextWrapper!.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
                 }
             }
         }
