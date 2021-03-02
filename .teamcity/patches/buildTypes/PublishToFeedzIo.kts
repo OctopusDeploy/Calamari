@@ -142,13 +142,8 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
             }
         }
 
-        expect(RelativeId("WindowsNetFxTesting_2008r2")) {
+        remove(RelativeId("WindowsNetFxTesting_2008r2")) {
             snapshot {
-            }
-        }
-        update(RelativeId("WindowsNetFxTesting_2008r2")) {
-            snapshot {
-                reuseBuilds = ReuseBuilds.NO
             }
         }
 
