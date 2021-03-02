@@ -9,12 +9,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="WindowsBase" />
-    <PackageReference Include="Calamari.AzureScripting" Version="8.3.1" />
-    <PackageReference Include="Calamari.Scripting" Version="8.3.1" />
-    <PackageReference Include="Calamari.Common" Version="14.11.0" />
-    <PackageReference Include="Calamari.AzureScripting" Version="9.0.2" />
-    <PackageReference Include="Calamari.Scripting" Version="8.3.4" />
-    <PackageReference Include="Calamari.Common" Version="14.8.4" />
+    <PackageReference Include="Calamari.Common" Version="15.1.6" />
+    <PackageReference Include="Calamari.AzureScripting" Version="9.2.0" />
+    <PackageReference Include="Calamari.Scripting" Version="8.4.0" />
     <PackageReference Include="Hyak.Common" Version="1.2.2" />
     <PackageReference Include="Microsoft.Azure.Common" Version="2.2.1" />
     <PackageReference Include="Microsoft.WindowsAzure.Management.Compute" Version="14.0.0" />
