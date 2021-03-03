@@ -11,12 +11,12 @@
 
   <ItemGroup>
     <PackageReference Include="NSubstitute" Version="4.2.1" />
-    <PackageReference Include="nunit" Version="3.12.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.0" />
-    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.22" />
+    <PackageReference Include="nunit" Version="3.13.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
+    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
     <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="10.0.6" />
-    <PackageReference Include="Sashimi.Tests.Shared" Version="8.5.4" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="8.6.4" />
   </ItemGroup>
 
   <ItemGroup>
