@@ -74,7 +74,7 @@ namespace Calamari.Commands
 
             var conventions = new List<IConvention>
             {
-                new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log)),
+                new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner)),
                 // Substitute the script source file
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d, ScriptFileTargetFactory(d).ToList())),
                 // Substitute any user-specified files
