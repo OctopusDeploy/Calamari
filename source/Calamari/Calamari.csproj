@@ -10,7 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Calamari.Common" Version="17.0.1" />
-    <PackageReference Include="Calamari.AzureScripting" Version="10.0.0" />
+    <PackageReference Include="Calamari.AzureScripting" Version="10.0.1" />
     <PackageReference Include="Calamari.Scripting" Version="8.6.4" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.21" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
