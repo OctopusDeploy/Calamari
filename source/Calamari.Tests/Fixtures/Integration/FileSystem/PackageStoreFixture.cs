@@ -3,12 +3,16 @@ using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
-using Calamari.Tests.Helpers;
+using Calamari.Tests.Fixtures.Manifest;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
+using InMemoryLog = Calamari.Tests.Helpers.InMemoryLog;
+using TestEnvironment = Calamari.Tests.Helpers.TestEnvironment;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {
@@ -46,8 +50,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreatePackage("2.0.0.2")))
             {
                 var store = new PackageStore(
-                    new CombinedPackageExtractor(new InMemoryLog()),
-                    CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                     CreatePackageExtractor(),
+                     CalamariPhysicalFileSystem.GetPhysicalFileSystem()
                     );
 
                 var packages = store.GetNearestPackages("Acme.Web", new SemanticVersion(1, 1, 1, 1));
@@ -63,7 +67,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreatePackage("1.0.0.1", true)))
             {
                 var store = new PackageStore(
-                    new CombinedPackageExtractor(new InMemoryLog()),
+                    CreatePackageExtractor(),
                     CalamariPhysicalFileSystem.GetPhysicalFileSystem()
                 );
 
@@ -80,7 +84,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             using (new TemporaryFile(CreateEmptyFile("1.0.0.2")))
             {
                 var store = new PackageStore(
-                    new CombinedPackageExtractor(new InMemoryLog()),
+                    CreatePackageExtractor(),
                     CalamariPhysicalFileSystem.GetPhysicalFileSystem()
                 );
 
@@ -110,6 +114,15 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
             File.Move(sourcePackage, destinationPath);
             return destinationPath;
+        }
+
+        ICombinedPackageExtractor CreatePackageExtractor()
+        {
+            var log = new InMemoryLog();
+            var variables = new CalamariVariables();
+            var commandLineRunner = new TestCommandLineRunner(log, variables);
+
+            return new CombinedPackageExtractor(log, variables, commandLineRunner);
         }
     }
 }

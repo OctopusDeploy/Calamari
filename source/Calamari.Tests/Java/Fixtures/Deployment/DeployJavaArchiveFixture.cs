@@ -124,14 +124,15 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
 
         protected void DeployPackage(string packageName, IVariables variables)
         {
+            var commandLineRunner = new CommandLineRunner(log, variables); 
             var command = new DeployJavaArchiveCommand(
                 log,
                 new ScriptEngine(Enumerable.Empty<IScriptWrapper>()),
                 variables,
                 fileSystem,
-                new CommandLineRunner(log, variables),
+                commandLineRunner,
                 new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
-                new ExtractPackage(new CombinedPackageExtractor(log), fileSystem, variables, log)
+                new ExtractPackage(new CombinedPackageExtractor(log, variables, commandLineRunner), fileSystem, variables, log)
             );
             returnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }

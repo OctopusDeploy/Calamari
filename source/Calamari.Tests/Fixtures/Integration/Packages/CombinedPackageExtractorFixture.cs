@@ -1,15 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Amazon.IdentityManagement.Model;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Packages.NuGet;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using InMemoryLog = Calamari.Tests.Helpers.InMemoryLog;
+using TestCommandLineRunner = Calamari.Testing.Helpers.TestCommandLineRunner;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
@@ -20,9 +25,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCaseSource(nameof(PackageNameTestCases))]
         public void GettingFileByExtension(string filename, Type expectedType)
         {
-            var extractor = new CombinedPackageExtractor(new InMemoryLog()).GetExtractor(filename);
+            var combinedExtractor = CreateCombinedPackageExtractor();
+            var specificExtractor = combinedExtractor.GetExtractor(filename);
 
-            Assert.AreEqual(expectedType, extractor.GetType());
+            Assert.AreEqual(expectedType, specificExtractor.GetType());
         }
 
         static IEnumerable<object> PackageNameTestCases()
@@ -58,14 +64,22 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [ExpectedException(typeof(CommandException), ExpectedMessage = "Package is missing file extension. This is needed to select the correct extraction algorithm.")]
         public void FileWithNoExtensionThrowsError()
         {
-            new CombinedPackageExtractor(new InMemoryLog()).GetExtractor("blah");
+            CreateCombinedPackageExtractor().GetExtractor("blah");
         }
 
         [Test]
         [ExpectedException(typeof(CommandException), ExpectedMessage = "Unsupported file extension `.7z`")]
         public void FileWithUnsupportedExtensionThrowsError()
         {
-            new CombinedPackageExtractor(new InMemoryLog()).GetExtractor("blah.1.0.0.7z");
+            CreateCombinedPackageExtractor().GetExtractor("blah.1.0.0.7z");
+        }
+        
+        static CombinedPackageExtractor CreateCombinedPackageExtractor()
+        {
+            var log = new InMemoryLog();
+            var variables = new CalamariVariables();
+            var combinedExtractor = new CombinedPackageExtractor(log, variables, new TestCommandLineRunner(log, variables));
+            return combinedExtractor;
         }
     }
 }
