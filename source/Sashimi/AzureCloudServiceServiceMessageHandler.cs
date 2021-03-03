@@ -77,7 +77,7 @@ namespace Sashimi.AzureCloudService
 
             if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
                 // try getting the worker pool from the step variables
-                workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id) ?? string.Empty;
+                workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id)!;
 
             if (string.IsNullOrWhiteSpace(workerPoolIdOrName) )
                 return null;
@@ -103,7 +103,7 @@ namespace Sashimi.AzureCloudService
                 }
             }
 
-            accountIdOrName = variables.Get(SpecialVariables.Action.Azure.AccountId) ?? string.Empty;
+            accountIdOrName = variables.Get(SpecialVariables.Action.Azure.AccountId)!;
             if (!string.IsNullOrWhiteSpace(accountIdOrName))
             {
                 var resolvedAccountId = accountIdResolver(accountIdOrName);
