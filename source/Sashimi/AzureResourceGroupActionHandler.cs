@@ -19,7 +19,7 @@ namespace Sashimi.AzureResourceGroup
         public IActionHandlerResult Execute(IActionHandlerContext context)
         {
             var templateInPackage = context.Variables.Get(SpecialVariables.Action.AzureResourceGroup.TemplateSource, String.Empty) == "Package";
-            var template = context.Variables.Get(SpecialVariables.Action.AzureResourceGroup.ResourceGroupTemplate);
+            var template = context.Variables.Get(SpecialVariables.Action.AzureResourceGroup.ResourceGroupTemplate)!;
             var templateParameters = GetTemplateParameters();
 
             var builder = context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-resource-group")
@@ -38,10 +38,10 @@ namespace Sashimi.AzureResourceGroup
             {
                 if (templateInPackage)
                 {
-                    return context.Variables.Get(SpecialVariables.Action.AzureResourceGroup.ResourceGroupTemplateParameters);
+                    return context.Variables.Get(SpecialVariables.Action.AzureResourceGroup.ResourceGroupTemplateParameters)!;
                 }
 
-                var parametersJson = context.Variables.GetRaw(SpecialVariables.Action.AzureResourceGroup.ResourceGroupTemplateParameters);
+                var parametersJson = context.Variables.GetRaw(SpecialVariables.Action.AzureResourceGroup.ResourceGroupTemplateParameters)!;
 
                 var parameterMetadata = AzureResourceGroupActionUtils.ExtractParameterTypes(template);
                 return AzureResourceGroupActionUtils.TemplateParameters(parametersJson, parameterMetadata, context.Variables);
