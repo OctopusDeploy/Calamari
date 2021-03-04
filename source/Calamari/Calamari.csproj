@@ -9,9 +9,9 @@
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Calamari.Common" Version="15.1.6" />
-    <PackageReference Include="Calamari.AzureScripting" Version="9.2.0" />
-    <PackageReference Include="Calamari.Scripting" Version="8.4.0" />
+    <PackageReference Include="Calamari.Common" Version="17.0.1" />
+    <PackageReference Include="Calamari.AzureScripting" Version="10.0.1" />
+    <PackageReference Include="Calamari.Scripting" Version="8.6.4" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.21" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.9.0-preview" />
