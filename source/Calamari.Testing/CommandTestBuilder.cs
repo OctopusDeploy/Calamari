@@ -223,7 +223,7 @@ namespace Calamari.Testing
                 {
                     exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
                 }
-                var serverInMemoryLog = new ServerInMemoryLog();
+                var serverInMemoryLog = new CalamariInMemoryTaskLog();
                 var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
                 foreach (var text in inMemoryLog.StandardError)
                 {

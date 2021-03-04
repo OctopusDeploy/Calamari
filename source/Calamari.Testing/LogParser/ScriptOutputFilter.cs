@@ -151,7 +151,7 @@ namespace Calamari.Testing.LogParser
 
     public class ScriptOutputFilter
     {
-        readonly ITaskLog log;
+        readonly CalamariInMemoryTaskLog log;
         readonly ServiceMessageParser parser;
 
         readonly Action<string> nullTarget = s =>
@@ -162,7 +162,6 @@ namespace Calamari.Testing.LogParser
         readonly List<CollectedArtifact> artifacts = new List<CollectedArtifact>();
         readonly List<FoundPackage> foundPackages = new List<FoundPackage>();
         readonly List<ServiceMessage> serviceMessages = new List<ServiceMessage>();
-        readonly ITaskLogContext logContext;
         readonly Action<string> debugTarget;
         Action<string> outputTarget;
         Action<string> errorTarget;
@@ -170,7 +169,7 @@ namespace Calamari.Testing.LogParser
         readonly List<string> supportedScriptActionNames = new List<string>();
         readonly Action<int, string> progressTarget;
 
-        public ScriptOutputFilter(ITaskLog log)
+        public ScriptOutputFilter(CalamariInMemoryTaskLog log)
         {
             this.log = log;
             DeltaPackageVerifcation = null;
@@ -180,7 +179,6 @@ namespace Calamari.Testing.LogParser
             debugTarget = log.Verbose;
             outputTarget = log.Info;
             errorTarget = log.Error;
-            logContext = log.Context;
             PopulateSupportedScriptActionNames();
             progressTarget = log.UpdateProgress;
         }
@@ -225,20 +223,17 @@ namespace Calamari.Testing.LogParser
 
         void WritePlainText(ProcessOutputSource source, string text)
         {
-            using (log.WithinBlock(logContext))
+            switch (source)
             {
-                switch (source)
-                {
-                    case ProcessOutputSource.Debug:
-                        debugTarget(text);
-                        break;
-                    case ProcessOutputSource.StdOut:
-                        outputTarget(text);
-                        break;
-                    case ProcessOutputSource.StdErr:
-                        errorTarget(text);
-                        break;
-                }
+                case ProcessOutputSource.Debug:
+                    debugTarget(text);
+                    break;
+                case ProcessOutputSource.StdOut:
+                    outputTarget(text);
+                    break;
+                case ProcessOutputSource.StdErr:
+                    errorTarget(text);
+                    break;
             }
         }
 
@@ -273,7 +268,7 @@ namespace Calamari.Testing.LogParser
                         {
                             // If we're adding a sensitive output-variable we need to add it to the log-context
                             // so it will be masked.
-                            logContext.WithSensitiveValue(value);
+                            log.WithSensitiveValue(value);
                         }
                     }
 
@@ -284,8 +279,7 @@ namespace Calamari.Testing.LogParser
                 {
                     var message = serviceMessage.GetValue(ScriptServiceMessageNames.Progress.Message);
                     if (message != null && int.TryParse(serviceMessage.GetValue(ScriptServiceMessageNames.Progress.Percentage), out int percentage))
-                        using (log.WithinBlock(logContext))
-                            progressTarget(percentage, message);
+                        progressTarget(percentage, message);
 
                     break;
                 }
