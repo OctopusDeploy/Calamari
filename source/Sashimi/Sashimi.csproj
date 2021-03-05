@@ -26,9 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Portable.BouncyCastle" Version="1.8.4" />
-    <PackageReference Include="Sashimi.AzureScripting" Version="9.0.2" />
     <PackageReference Include="Sashimi.Server.Contracts" Version="8.8.1-define-worker-im0004" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="8.6.0" />
     <PackageReference Include="Sashimi.AzureScripting" Version="10.0.1" />
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.7.0" />
     <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0" />
