@@ -7,9 +7,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
-    <PackageReference Include="Calamari.Tests.Shared" Version="8.6.4" />
-    <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.34.0" />
-    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.33.0" />
+    <PackageReference Include="Calamari.Tests.Shared" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.37.0" />
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.37.0" />
     <PackageReference Include="nunit" Version="3.13.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
