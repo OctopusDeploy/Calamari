@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -50,13 +51,13 @@ namespace Calamari.AzureAppService.Behaviors
 
             switch (packageFileInfo.Extension)
             {
-                case "zip":
+                case ".zip":
                     Archive = new ZipPackageProvider();
                     break;
-                case "nupkg":
+                case ".nupkg":
                     Archive = new NugetPackageProvider();
                     break;
-                case "war":
+                case ".war":
                     Archive = new WarPackageProvider(Log, variables, context);
                     break;
             }
@@ -69,6 +70,13 @@ namespace Calamari.AzureAppService.Behaviors
                 .WithSubscription(servicePrincipal.SubscriptionNumber);
 
             var webApp = await azureClient.WebApps.GetByResourceGroupAsync(resourceGroupName, webAppName);
+
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
+
+            // Lets process our archive while the slot is spun up.  we will await it later before we try to upload to it.
+            var slotCreateTask = new Task(() => { });
+            if (targetSite.HasSlot)
+                slotCreateTask = FindOrCreateSlot(webApp, targetSite);
 
             var substitutionFeatures = new[]
             {
@@ -87,14 +95,6 @@ namespace Calamari.AzureAppService.Behaviors
             {
                 uploadPath = (await Archive.PackageArchive(context.StagingDirectory, context.CurrentDirectory))
                     .FullName;
-                //if war use new 
-//                    using var archive = ZipArchive.Create();
-//#pragma warning disable CS8604 // Possible null reference argument.
-//                archive.AddAllFromDirectory(
-//                    $"{context.StagingDirectory}");
-//#pragma warning restore CS8604 // Possible null reference argument.
-//                archive.SaveTo($"{context.CurrentDirectory}/app.zip", CompressionType.Deflate);
-//                    uploadPath = $"{context.CurrentDirectory}/app.zip";
             }
             else
             {
@@ -103,12 +103,10 @@ namespace Calamari.AzureAppService.Behaviors
 
             if (uploadPath == null)
                 throw new Exception("Package File Path must be specified");
-            //if is dirinfo.exists continue as normal
-            //elseif is fileinfo and extension == .nuget -> to zip
-            
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
-            
-            // Get Authentication creds/tokens
+
+            // need to ensure slot is created as slot creds may be used
+            if (targetSite.HasSlot)
+                await slotCreateTask;
             var credential = await Auth.GetBasicAuthCreds(servicePrincipal, targetSite);
             string token = await Auth.GetAuthTokenAsync(servicePrincipal);
             
@@ -118,23 +116,10 @@ namespace Calamari.AzureAppService.Behaviors
             var httpClient = webAppClient.HttpClient;
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);
             
-            var slot =
-                targetSite.HasSlot
-                    ? await FindOrCreateSlot(webApp, targetSite)
-                    : null;
-
             Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
 
             await UploadZipAsync(httpClient, uploadPath, targetSite.ScmSiteAndSlot);
-            if (slot != null)
-            {
-                slot.Deploy().WithPackageUri(uploadPath);
-            }
-            else
-            {
-                webApp.Deploy().WithPackageUri(uploadPath);
-            }
-
+            
             Log.Info($"Soft restarting {targetSite.SiteAndSlot}");
             await webAppClient.WebApps.RestartAsync(targetSite, true);
         }

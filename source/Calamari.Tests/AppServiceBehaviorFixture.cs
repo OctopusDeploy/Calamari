@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
@@ -165,8 +166,10 @@ namespace Calamari.AzureAppService.Tests
                 )
             ));
 
-            await File.WriteAllTextAsync(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
-                "Hello #{Greeting}");
+            await Task.Run(() => File.WriteAllText(
+                Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
+                "Hello #{Greeting}"));
+
             using (var writer = new XmlTextWriter(
                 Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "AzureZipDeployPackage.nuspec"),
                 Encoding.UTF8))
@@ -194,17 +197,42 @@ namespace Calamari.AzureAppService.Tests
         {
             // need to spin up java app service plan with a tomcat server
             // need java installed on the test runner
-            // var javaSvcPlan = await _webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(_resourceGroupName, $"{_resourceGroupName}-java",new AppServicePlan(_site.Location){})
-            // var javaSite = await _webMgmtClient.WebApps.BeginCreateOrUpdateAsync(_resourceGroupName, $"{_resourceGroupName}-java",new Site(_site.Location){ServerFarmId = })
-        }
+            var javaSvcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroupName,
+                $"{resourceGroupName}-java", new AppServicePlan(site.Location)
+                {
+                    Sku = new SkuDescription { Name = "F1", Tier = "Free"}
+                });
 
-        [Test]
-        public async Task Deploy_WarPackage()
-        {
-            // need to spin up java app service plan with a tomcat server
-            // need java installed on the test runner
-            // var javaSvcPlan = await _webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(_resourceGroupName, $"{_resourceGroupName}-java",new AppServicePlan(_site.Location){})
-            // var javaSite = await _webMgmtClient.WebApps.BeginCreateOrUpdateAsync(_resourceGroupName, $"{_resourceGroupName}-java",new Site(_site.Location){ServerFarmId = })
+            var javaSite = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroupName,
+                $"{resourceGroupName}-java", new Site(site.Location)
+                {
+                    ServerFarmId = javaSvcPlan.Id,
+                    SiteConfig = new SiteConfig
+                    {
+                        JavaVersion = "1.8",
+                        JavaContainer = "TOMCAT",
+                        JavaContainerVersion = "9.0"
+                    }   
+                });
+
+            
+            (string packagePath, string packageName, string packageVersion) packageinfo;
+            var assemblyFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
+            packageinfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "sample.1.0.0.war");
+            packageinfo.packageVersion = "1.0.0";
+            packageinfo.packageName = "sample";
+            greeting = "java";
+
+            await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>().WithArrange(context =>
+            {
+                context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
+                AddVariables(context);
+                context.Variables["Octopus.Action.Azure.WebAppName"] = javaSite.Name;
+                context.Variables[PackageVariables.SubstituteInFilesTargets] = "test.jsp";
+            }).Execute();
+
+            await AssertContent($"{javaSite.Name}.azurewebsites.net", $"Hello! {greeting}", "test.jsp");
+
         }
 
         private void AddVariables(CommandTestBuilderContext context)

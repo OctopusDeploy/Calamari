@@ -14,13 +14,6 @@
   <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="sample.1.0.0.war" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="sample.1.0.0.war" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
@@ -34,8 +27,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="sample.1.0.0.war">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
+    <None Update="sample.1.0.0.war">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
