@@ -43,7 +43,7 @@ namespace Sashimi.AzureWebApp.Tests
             var messageProperties = GetMessageProperties();
             var variableDict = GetVariableDictionary();
 
-            Action action = () => serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, _ => accountId, null, null, null);
+            Action action = () => serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, _ => accountId, null, null, null, null);
 
             var expectedErrorMessage = $"Account with Id / Name, {variableDict.Get(SpecialVariables.Action.Azure.AccountId)}, not found.";
             action.Should().Throw<Exception>().Which.Message.Should().Be(expectedErrorMessage);
@@ -67,7 +67,7 @@ namespace Sashimi.AzureWebApp.Tests
             }
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, ResolveAccountId,
-                null, null, null);
+                null, null, null, null);
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -99,7 +99,7 @@ namespace Sashimi.AzureWebApp.Tests
             }
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, ResolveAccountId,
-                null, null, null);
+                null, null, null, null);
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -132,7 +132,7 @@ namespace Sashimi.AzureWebApp.Tests
             }
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, ResolveAccountId,
-                                                               null, null, null);
+                                                               null, null, null, null);
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -152,7 +152,7 @@ namespace Sashimi.AzureWebApp.Tests
 
             const string accountId = "Accounts-12";
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, _ => accountId,
-                null, null, null);
+                null, null, null, null);
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -171,7 +171,7 @@ namespace Sashimi.AzureWebApp.Tests
 
             const string accountId = "Accounts-12";
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, _ => accountId,
-                null, null, null);
+                null, null, null, null);
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -195,6 +195,7 @@ namespace Sashimi.AzureWebApp.Tests
                                                                _ => accountId,
                                                                null,
                                                                _ => workerPoolId,
+                                                               null,
                                                                null);
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
@@ -219,6 +220,7 @@ namespace Sashimi.AzureWebApp.Tests
                                                                _ => accountId,
                                                                null,
                                                                _ => variableDictionary.Get(KnownVariables.WorkerPool.Id),
+                                                               null,
                                                                null);
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues

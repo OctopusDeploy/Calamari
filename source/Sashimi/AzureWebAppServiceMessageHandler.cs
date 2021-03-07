@@ -46,7 +46,8 @@ namespace Sashimi.AzureWebApp
                                       Func<string, string> accountIdResolver,
                                       Func<string, string> certificateIdResolver,
                                       Func<string, string> workerPoolIdResolver,
-                                      Func<string, AccountType> accountTypeResolver)
+                                      Func<string, AccountType> accountTypeResolver,
+                                      Func<string, string> feedIdResolver)
         {
             var endpoint = new AzureWebAppEndpoint
             {
@@ -76,7 +77,7 @@ namespace Sashimi.AzureWebApp
 
             if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
                 // try getting the worker pool from the step variables
-                workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id);
+                workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id)!;
 
             if (string.IsNullOrWhiteSpace(workerPoolIdOrName) )
                 return null;
@@ -102,7 +103,7 @@ namespace Sashimi.AzureWebApp
                 }
             }
 
-            accountIdOrName = variables.Get(SpecialVariables.Action.Azure.AccountId);
+            accountIdOrName = variables.Get(SpecialVariables.Action.Azure.AccountId)!;
             if (!string.IsNullOrWhiteSpace(accountIdOrName))
             {
                 var resolvedAccountId = accountIdResolver(accountIdOrName);

@@ -17,6 +17,7 @@
     <PackageReference Include="NSubstitute" Version="4.2.1" />
     <PackageReference Include="nunit" Version="3.13.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
+    <PackageReference Include="Sashimi.Azure.Common" Version="10.0.0" />
     <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="12.1.1" />
     <PackageReference Include="Sashimi.Tests.Shared" Version="9.0.0" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
