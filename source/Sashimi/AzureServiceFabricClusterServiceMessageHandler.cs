@@ -48,7 +48,8 @@ using Sashimi.Server.Contracts.ServiceMessages;
                                        Func<string, string> accountIdResolver,
                                        Func<string, string> certificateIdResolver,
                                        Func<string, string> workerPoolIdResolver,
-                                       Func<string, AccountType> accountTypeResolver)
+                                       Func<string, AccountType> accountTypeResolver,
+                                       Func<string, string> feedIdResolver)
          {
              messageProperties.TryGetValue(AzureServiceFabricServiceMessageNames.ConnectionEndpointAttribute, out var connectionEndpoint);
              var azureServiceFabricClusterEndpoint = new AzureServiceFabricClusterEndpoint
@@ -117,7 +118,7 @@ using Sashimi.Server.Contracts.ServiceMessages;
 
              if (string.IsNullOrWhiteSpace(workerPoolIdOrName))
                  // try getting the worker pool from the step variables
-                 workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id);
+                 workerPoolIdOrName = variables.Get(KnownVariables.WorkerPool.Id) ?? string.Empty;
 
              if (string.IsNullOrWhiteSpace(workerPoolIdOrName) )
                  return null;

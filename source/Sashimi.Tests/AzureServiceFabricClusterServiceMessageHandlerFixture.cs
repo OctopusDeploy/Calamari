@@ -39,7 +39,7 @@ namespace Sashimi.AzureServiceFabric.Tests
             var messageProperties = GetMessagePropertiesBySecurityMode(AllAliasesForSecureClientCertificate().First());
 
             Action action = () => serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!,
-                _ => invalidCertificateId, null!, null!);
+                _ => invalidCertificateId, null!, null!, null!);
 
             action.Should().Throw<Exception>().Which.Message.Should().Be(
                 $"Certificate with Id / Name {messageProperties[AzureServiceFabricServiceMessageNames.CertificateIdOrNameAttribute]} not found.");
@@ -53,7 +53,7 @@ namespace Sashimi.AzureServiceFabric.Tests
 
             const string certificateId = "Certificates-1";
 
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!);
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -74,7 +74,7 @@ namespace Sashimi.AzureServiceFabric.Tests
             var messageProperties = GetMessagePropertiesBySecurityMode(securityModeValue);
             const string certificateId = "Certificates-1";
 
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!);
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -95,7 +95,7 @@ namespace Sashimi.AzureServiceFabric.Tests
             var messageProperties = GetMessagePropertiesBySecurityMode(securityModeValue);
             const string certificateId = "Certificates-3";
 
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!);
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -115,7 +115,7 @@ namespace Sashimi.AzureServiceFabric.Tests
 
             const string certificateId = "Certificates-5";
 
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!);
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -133,7 +133,7 @@ namespace Sashimi.AzureServiceFabric.Tests
             const string certificateId = "Certificates-5";
             const string workerPoolId = "WorkerPools-5";
 
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, _ => workerPoolId, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, _ => workerPoolId, null!, null!);
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -154,7 +154,7 @@ namespace Sashimi.AzureServiceFabric.Tests
 
             var variableDictionary = new VariableDictionary();
             variableDictionary.Add(KnownVariables.WorkerPool.Id, workerPoolId);
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDictionary, null!, _ => certificateId, _ => workerPoolId, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDictionary, null!, _ => certificateId, _ => workerPoolId, null!, null!);
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
