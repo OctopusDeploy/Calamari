@@ -1,5 +1,6 @@
 ﻿using System;
 using Octopus.CoreUtilities;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.AzureScripting;
 using Sashimi.AzureWebApp.Endpoints;
 using Sashimi.Server.Contracts.ActionHandlers;
@@ -18,7 +19,7 @@ namespace Sashimi.AzureWebApp
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, AzureConstants.AzureActionHandlerCategory, ActionHandlerCategory.Package };
         public string[] StepBasedVariableNameForAccountIds { get; } = {SpecialVariables.Action.Azure.AccountId};
 
-        public IActionHandlerResult Execute(IActionHandlerContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
             var isLegacyAction = !string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.AccountId));
 
@@ -32,7 +33,7 @@ namespace Sashimi.AzureWebApp
                           .WithCheckAccountIsNotManagementCertificate(context)
                           .WithAzureTools(context)
                           .WithStagedPackageArgument()
-                          .Execute();
+                          .Execute(taskLog);
         }
     }
 }

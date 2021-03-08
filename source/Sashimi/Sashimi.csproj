@@ -26,5 +26,6 @@
     <PackageReference Include="Sashimi.Azure.Accounts" Version="9.0.0" />
     <PackageReference Include="Sashimi.Azure.Common" Version="10.0.0" />
     <PackageReference Include="Sashimi.AzureScripting" Version="11.0.0" />
+    <PackageReference Include="Sashimi.Server.Contracts" Version="9.0.1-enh-logwithconte0010" />
   </ItemGroup>
 </Project>

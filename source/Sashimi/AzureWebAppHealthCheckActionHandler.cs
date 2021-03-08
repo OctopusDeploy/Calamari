@@ -1,4 +1,5 @@
-﻿using Sashimi.Server.Contracts.ActionHandlers;
+﻿using Octopus.Server.Extensibility.HostServices.Diagnostics;
+using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 
 namespace Sashimi.AzureWebApp
@@ -17,11 +18,11 @@ namespace Sashimi.AzureWebApp
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Azure };
         public string[] StepBasedVariableNameForAccountIds { get; } = {SpecialVariables.Action.Azure.AccountId};
 
-        public IActionHandlerResult Execute(IActionHandlerContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
             return context.CalamariCommand(CalamariAzure, "health-check")
-                          .WithCheckAccountIsNotManagementCertificate(context)
-                          .Execute();
+                          .WithCheckAccountIsNotManagementCertificate(context, taskLog)
+                          .Execute(taskLog);
         }
     }
 }
