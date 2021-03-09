@@ -1,5 +1,6 @@
 ﻿using System;
 using Octopus.CoreUtilities;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.AzureScripting;
 using Sashimi.AzureServiceFabric.Endpoints;
 using Sashimi.Server.Contracts.ActionHandlers;
@@ -17,7 +18,7 @@ namespace Sashimi.AzureServiceFabric
         public bool CanRunOnDeploymentTarget => false;
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Azure, ActionHandlerCategory.Package };
 
-        public IActionHandlerResult Execute(IActionHandlerContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
             var isLegacyAction = !string.IsNullOrWhiteSpace(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint);
             // ReSharper disable once InvertIf
@@ -28,9 +29,9 @@ namespace Sashimi.AzureServiceFabric
             }
 
             return context.CalamariCommand(CalamariFlavours.CalamariServiceFabric, "deploy-azure-service-fabric-app")
-                .WithAzureTools(context)
+                .WithAzureTools(context, taskLog)
                 .WithStagedPackageArgument()
-                .Execute();
+                .Execute(taskLog);
         }
     }
 }
