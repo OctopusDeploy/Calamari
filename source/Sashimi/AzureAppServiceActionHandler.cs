@@ -1,4 +1,5 @@
 ﻿using Octopus.CoreUtilities;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.AzureScripting;
 using Sashimi.Server.Contracts.ActionHandlers;
 
@@ -25,7 +26,7 @@ namespace Sashimi.AzureAppService
         public ActionHandlerCategory[] Categories => new[]
             {ActionHandlerCategory.BuiltInStep, AzureConstants.AzureActionHandlerCategory};
 
-        public IActionHandlerResult Execute(IActionHandlerContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
             if (context.DeploymentTargetType.Some())
             {
@@ -35,7 +36,7 @@ namespace Sashimi.AzureAppService
             }
 
             return context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-app-service").WithAzureTools(context)
-                .WithStagedPackageArgument().Execute();
+                .WithStagedPackageArgument().Execute(taskLog);
         }
     }
 }
