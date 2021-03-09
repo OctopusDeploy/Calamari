@@ -22,6 +22,6 @@ namespace Calamari.AzureAppService
             return new FileInfo($"{targetDirectory}/app.zip");
         }
 
-        public async Task<FileInfo> ConvertToZip(FileInfo sourceFile) => await Task.Run(() => sourceFile);
+        public async Task<FileInfo> ConvertToAzureSupportedFile(FileInfo sourceFile) => await Task.Run(() => sourceFile);
     }
 }
