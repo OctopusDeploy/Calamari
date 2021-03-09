@@ -1,5 +1,6 @@
 ﻿using System;
 using Octopus.CoreUtilities;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
@@ -33,7 +34,7 @@ namespace Sashimi.Terraform.ActionHandler
         public bool CanRunOnDeploymentTarget => false;
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Terraform };
 
-        public IActionHandlerResult Execute(IActionHandlerContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
             var builder = context.CalamariCommand(CalamariTerraform, ToolCommand);
 
@@ -75,7 +76,7 @@ namespace Sashimi.Terraform.ActionHandler
                                          );
             }
 
-            return builder.Execute();
+            return builder.Execute(taskLog);
         }
     }
 }
