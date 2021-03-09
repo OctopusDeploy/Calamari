@@ -4,3 +4,8 @@ branches:
   master:
     regex: ^(main|master)$
     source-branches: ["main"]
+
+ignore:
+  sha: [
+    979bc17b3dc77c8006851e5a852511bddd7c6a65
+    ]    
