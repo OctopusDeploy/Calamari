@@ -1,5 +1,6 @@
 ﻿using System;
 using Octopus.CoreUtilities;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.AzureCloudService.Endpoints;
 using Sashimi.AzureScripting;
 using Sashimi.Server.Contracts.Accounts;
@@ -19,7 +20,7 @@ namespace Sashimi.AzureCloudService
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, AzureConstants.AzureActionHandlerCategory, ActionHandlerCategory.Package };
         public string[] StepBasedVariableNameForAccountIds { get; } = {SpecialVariables.Action.Azure.AccountId};
 
-        public IActionHandlerResult Execute(IActionHandlerContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
             var isLegacyAction = !string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.AccountId));
 
@@ -33,9 +34,9 @@ namespace Sashimi.AzureCloudService
             AccountVariablesHaveBeenContributed(context);
 
             return context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-cloud-service")
-                            .WithAzureTools(context)
+                            .WithAzureTools(context, taskLog)
                             .WithStagedPackageArgument()
-                            .Execute();
+                            .Execute(taskLog);
         }
 
         static void AccountVariablesHaveBeenContributed(IActionHandlerContext context)

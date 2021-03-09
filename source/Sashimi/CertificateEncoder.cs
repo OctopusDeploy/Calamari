@@ -12,9 +12,9 @@ namespace Sashimi.AzureCloudService
 {
     class CertificateEncoder
     {
-        readonly ILog log;
+        readonly ISystemLog log;
 
-        public CertificateEncoder(ILog log)
+        public CertificateEncoder(ISystemLog log)
         {
             this.log = log;
         }

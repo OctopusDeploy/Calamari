@@ -1,6 +1,8 @@
 using System;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Tests.Shared.Server;
 
@@ -18,7 +20,7 @@ namespace Sashimi.AzureCloudService.Tests
             {
                 variables.Add(SpecialVariables.AccountType, "Boo");
                 variables.Add(SpecialVariables.Action.Azure.AccountId, "myaccount");
-            }).Execute();
+            }).Execute(Substitute.For<ITaskLog>());
 
             act.Should().Throw<KnownDeploymentFailureException>();
         }
@@ -32,7 +34,7 @@ namespace Sashimi.AzureCloudService.Tests
                 {
                     variables.Add(SpecialVariables.AccountType, "Boo");
                 })
-                .Execute();
+                .Execute(Substitute.For<ITaskLog>());
 
             act.Should().Throw<KnownDeploymentFailureException>();
         }

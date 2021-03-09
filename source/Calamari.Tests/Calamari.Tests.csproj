@@ -7,7 +7,7 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Calamari.Tests.Shared" Version="9.0.0" />
+        <PackageReference Include="Calamari.Tests.Shared" Version="10.0.1-enh-logwithconte0010" />
         <PackageReference Include="FluentAssertions" Version="5.10.3" />
         <PackageReference Include="nunit" Version="3.13.1" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />

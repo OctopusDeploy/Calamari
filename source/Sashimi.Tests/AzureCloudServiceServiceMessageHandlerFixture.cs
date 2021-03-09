@@ -21,12 +21,12 @@ namespace Sashimi.AzureCloudService.Tests
     public class AzureCloudServiceServiceMessageHandlerFixture
     {
         ICreateTargetServiceMessageHandler serviceMessageHandler;
-        ILog logger;
+        ISystemLog logger;
 
         [SetUp]
         public void SetUp()
         {
-            logger = Substitute.For<ILog>();
+            logger = Substitute.For<ISystemLog>();
             serviceMessageHandler = new AzureCloudServiceServiceMessageHandler(logger);
         }
 

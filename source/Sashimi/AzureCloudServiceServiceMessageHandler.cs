@@ -12,9 +12,9 @@ namespace Sashimi.AzureCloudService
 {
     class AzureCloudServiceServiceMessageHandler : ICreateTargetServiceMessageHandler
     {
-        readonly ILog logger;
+        readonly ISystemLog logger;
 
-        public AzureCloudServiceServiceMessageHandler(ILog logger)
+        public AzureCloudServiceServiceMessageHandler(ISystemLog logger)
         {
             this.logger = logger;
         }
