@@ -1,4 +1,5 @@
 ﻿using System;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.AzureScripting;
 using Sashimi.Server.Contracts.ActionHandlers;
 
@@ -16,14 +17,14 @@ namespace Sashimi.AzureResourceGroup
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, AzureConstants.AzureActionHandlerCategory, ActionHandlerCategory.Script };
         public string[] StepBasedVariableNameForAccountIds { get; } = {SpecialVariables.Action.Azure.AccountId};
 
-        public IActionHandlerResult Execute(IActionHandlerContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
             var templateInPackage = context.Variables.Get(SpecialVariables.Action.AzureResourceGroup.TemplateSource, String.Empty) == "Package";
             var template = context.Variables.Get(SpecialVariables.Action.AzureResourceGroup.ResourceGroupTemplate)!;
             var templateParameters = GetTemplateParameters();
 
             var builder = context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-resource-group")
-                                 .WithAzureTools(context);
+                                 .WithAzureTools(context, taskLog);
 
             if (templateInPackage)
                 builder.WithStagedPackageArgument();
@@ -32,7 +33,7 @@ namespace Sashimi.AzureResourceGroup
                     .WithDataFile(template, "template.json")
                     .WithDataFile(templateParameters, "parameters.json");
 
-            return builder.Execute();
+            return builder.Execute(taskLog);
 
             string GetTemplateParameters()
             {
