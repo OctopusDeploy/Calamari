@@ -1,8 +1,8 @@
 ﻿using System;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Azure.Accounts;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
-using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 
 namespace Sashimi.AzureScripting
@@ -11,16 +11,17 @@ namespace Sashimi.AzureScripting
     {
         public static ICalamariCommandBuilder WithAzureTools(
             this ICalamariCommandBuilder builder,
-            IActionHandlerContext context)
+            IActionHandlerContext context,
+            ITaskLog taskLog)
         {
-            return builder.WithAzureCmdlets(context).WithAzureCLI(context);
+            return builder.WithAzureCmdlets(context, taskLog).WithAzureCLI(context, taskLog);
         }
 
-        public static ICalamariCommandBuilder WithCheckAccountIsNotManagementCertificate(this ICalamariCommandBuilder builder, IActionHandlerContext context)
+        public static ICalamariCommandBuilder WithCheckAccountIsNotManagementCertificate(this ICalamariCommandBuilder builder, IActionHandlerContext context, ITaskLog taskLog)
         {
             if (context.Variables.Get(SpecialVariables.AccountType) != AccountTypes.AzureServicePrincipalAccountType.ToString())
             {
-                context.Log.Warn("Azure have announced they will be retiring Service Management API support on June 30th 2018. Please switch to using Service Principals for your Octopus Azure accounts https://g.octopushq.com/AzureServicePrincipalAccount");
+                taskLog.Warn("Azure have announced they will be retiring Service Management API support on June 30th 2018. Please switch to using Service Principals for your Octopus Azure accounts https://g.octopushq.com/AzureServicePrincipalAccount");
             }
 
             return builder;
@@ -28,7 +29,8 @@ namespace Sashimi.AzureScripting
 
         public static ICalamariCommandBuilder WithAzureCmdlets(
             this ICalamariCommandBuilder builder,
-            IActionHandlerContext context)
+            IActionHandlerContext context,
+            ITaskLog taskLog)
         {
             // This is the new value that the user can set on the step. It and the legacy variable both default to true, if either are false then
             // we don't include the tooling.
@@ -39,7 +41,7 @@ namespace Sashimi.AzureScripting
             if (legacyModuleBundling == false)
             {
                 // user has explicitly used the legacy flag to switch off bundling, tell them it's available on the step now
-                context.Log.Warn($"The {SpecialVariables.Action.Azure.UseBundledAzureModules} variable has been used to disable using the bundled Azure PowerShell modules. Note that this variable is deprecated and will be removed in a future version, please use the bundling options on the step to control this behavior now.");
+                taskLog.Warn($"The {SpecialVariables.Action.Azure.UseBundledAzureModules} variable has been used to disable using the bundled Azure PowerShell modules. Note that this variable is deprecated and will be removed in a future version, please use the bundling options on the step to control this behavior now.");
             }
 
             if (useBundledTooling && legacyModuleBundling)
@@ -50,7 +52,8 @@ namespace Sashimi.AzureScripting
 
         public static ICalamariCommandBuilder WithAzureCLI(
             this ICalamariCommandBuilder builder,
-            IActionHandlerContext context)
+            IActionHandlerContext context,
+            ITaskLog taskLog)
         {
             // This is the new value that the user can set on the step. It and the legacy variable both default to true, if either are false then
             // we don't include the tooling.
@@ -61,7 +64,7 @@ namespace Sashimi.AzureScripting
             if (legacyCliBundling == false)
             {
                 // user has explicitly used the legacy flag to switch off bundling, tell them it's available on the step now
-                context.Log.Warn($"The {SpecialVariables.Action.Azure.UseBundledAzureCLI} variable has been used to disable using the bundled Azure CLI. Note that this variable is deprecated and will be removed in a future version, please use the bundling options on the step to control this behavior now.");
+                taskLog.Warn($"The {SpecialVariables.Action.Azure.UseBundledAzureCLI} variable has been used to disable using the bundled Azure CLI. Note that this variable is deprecated and will be removed in a future version, please use the bundling options on the step to control this behavior now.");
             }
 
             if (useBundledTooling && legacyCliBundling)
