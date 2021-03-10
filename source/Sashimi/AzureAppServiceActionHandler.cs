@@ -35,7 +35,7 @@ namespace Sashimi.AzureAppService
                         $"The machine {context.DeploymentTargetName.SomeOr("<unknown>")} will not be deployed to because it is not an Azure Web Application deployment target");
             }
 
-            return context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-app-service").WithAzureTools(context)
+            return context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-app-service").WithAzureTools(context, taskLog)
                 .WithStagedPackageArgument().Execute(taskLog);
         }
     }
