@@ -3,3 +3,8 @@ branches:
     master:
         regex: (^main$|^origin\/main$)
 
+ignore:
+    sha: [
+        d132f055ffbfc235c7eaa3970e81b8ea77f3884b,
+        42ac4bcc4d0a5832a4478783708192ae1c15e61b
+        ]
