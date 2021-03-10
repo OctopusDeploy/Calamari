@@ -7,7 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
-    <PackageReference Include="Calamari.Tests.Shared" Version="10.0.1-enh-logwithconte0010" />
+    <PackageReference Include="Calamari.Tests.Shared" Version="10.0.1-enh-logwithconte0011" />
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.37.0" />
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.37.0" />
     <PackageReference Include="nunit" Version="3.13.1" />
