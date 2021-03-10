@@ -8,7 +8,7 @@
     <TargetFramework>net452</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Calamari.AzureScripting" Version="11.0.1-enh-logwithconte0002" />
+    <PackageReference Include="Calamari.AzureScripting" Version="11.0.1-enh-logwithconte0003" />
     <PackageReference Include="Calamari.Common" Version="19.0.1-enh-logwithconte0003" />
     <PackageReference Include="Calamari.Scripting" Version="10.0.1-enh-logwithconte0011" />
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.7.3-preview" />
