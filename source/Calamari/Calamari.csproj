@@ -16,7 +16,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Calamari.Common" Version="19.0.1-enh-logwithconte0003" />
-        <PackageReference Include="Calamari.Scripting" Version="10.0.1-enh-logwithconte0010" />
+        <PackageReference Include="Calamari.Scripting" Version="10.0.1-enh-logwithconte0011" />
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="Scripts\*" />
