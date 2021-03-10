@@ -10,8 +10,8 @@
   <ItemGroup>
     <Reference Include="WindowsBase" />
     <PackageReference Include="Calamari.Common" Version="19.0.1-enh-logwithconte0003" />
-    <PackageReference Include="Calamari.AzureScripting" Version="11.0.1-enh-logwithconte0002" />
-    <PackageReference Include="Calamari.Scripting" Version="10.0.1-enh-logwithconte0010" />
+    <PackageReference Include="Calamari.AzureScripting" Version="11.0.1-enh-logwithconte0003" />
+    <PackageReference Include="Calamari.Scripting" Version="10.0.1-enh-logwithconte0011" />
     <PackageReference Include="Hyak.Common" Version="1.2.2" />
     <PackageReference Include="Microsoft.Azure.Common" Version="2.2.1" />
     <PackageReference Include="Microsoft.WindowsAzure.Management.Compute" Version="14.0.0" />
