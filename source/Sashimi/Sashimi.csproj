@@ -16,6 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Sashimi.AzureScripting" Version="11.0.1-enh-logwithconte0002" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="10.0.1-enh-logwithconte0010" />
+    <PackageReference Include="Sashimi.Server.Contracts" Version="10.0.1-enh-logwithconte0011" />
   </ItemGroup>
 </Project>

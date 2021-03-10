@@ -14,7 +14,7 @@
     <PackageReference Include="nunit" Version="3.13.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="12.1.1" />
-    <PackageReference Include="Sashimi.Tests.Shared" Version="10.0.1-enh-logwithconte0010" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="10.0.1-enh-logwithconte0011" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
     <PackageReference Include="Assent" Version="1.6.1" />
   </ItemGroup>
