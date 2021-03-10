@@ -9,7 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Calamari.Common" Version="19.0.1-enh-logwithconte0003" />
-    <PackageReference Include="Calamari.Scripting" Version="9.0.1-enh-logwithconte0010" />
+    <PackageReference Include="Calamari.Scripting" Version="10.0.1-enh-logwithconte0011" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="2.28.3" />
     <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
   </ItemGroup>
