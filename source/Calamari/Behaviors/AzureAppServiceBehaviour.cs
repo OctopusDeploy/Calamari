@@ -60,6 +60,8 @@ namespace Calamari.AzureAppService.Behaviors
                 case ".war":
                     Archive = new WarPackageProvider(Log, variables, context);
                     break;
+                default:
+                    throw new Exception("Unsupported archive type");
             }
 
             var azureClient = Microsoft.Azure.Management.Fluent.Azure.Configure()
