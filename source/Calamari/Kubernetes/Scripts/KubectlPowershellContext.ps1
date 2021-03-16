@@ -173,12 +173,14 @@ function SetupContext {
 		if ([string]::IsNullOrEmpty($K8S_Azure_Admin) -or -not $K8S_Azure_Admin -ieq "true")
 		{
 			& az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG --overwrite-existing
+			& $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace=$K8S_Namespace
 		}
 		else
 		{
 			& az aks get-credentials --admin --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG --overwrite-existing
+			& $Kubectl_Exe config set-context "$($K8S_Azure_Cluster)-admin" --namespace=$K8S_Namespace
 		}
-		& $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace=$K8S_Namespace
+
 	} else {
 		Write-Verbose "$Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl"
 		& $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl
