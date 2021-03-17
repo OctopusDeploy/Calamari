@@ -44,6 +44,7 @@
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net" />
