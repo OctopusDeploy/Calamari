@@ -13,9 +13,9 @@ namespace Sashimi.AzureWebApp
 {
     class AzureWebAppServiceMessageHandler : ICreateTargetServiceMessageHandler
     {
-        readonly ILog logger;
+        readonly ISystemLog logger;
 
-        public AzureWebAppServiceMessageHandler(ILog logger)
+        public AzureWebAppServiceMessageHandler(ISystemLog logger)
         {
             this.logger = logger;
         }

@@ -10,7 +10,6 @@ using Sashimi.AzureWebApp.Endpoints;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Endpoints;
 using Sashimi.Server.Contracts.ServiceMessages;
-using YamlDotNet.Core;
 using AzureWebAppServiceMessageNames = Sashimi.AzureWebApp.AzureWebAppServiceMessageHandler.AzureWebAppServiceMessageNames;
 
 namespace Sashimi.AzureWebApp.Tests
@@ -18,12 +17,12 @@ namespace Sashimi.AzureWebApp.Tests
     public class AzureWebAppServiceMessageHandlerFixture
     {
         ICreateTargetServiceMessageHandler serviceMessageHandler;
-        ILog logger;
+        ISystemLog logger;
 
         [SetUp]
         public void SetUp()
         {
-            logger = Substitute.For<ILog>();
+            logger = Substitute.For<ISystemLog>();
             serviceMessageHandler = new AzureWebAppServiceMessageHandler(logger);
         }
 
