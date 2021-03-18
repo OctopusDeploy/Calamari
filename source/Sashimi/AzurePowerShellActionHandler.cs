@@ -1,4 +1,5 @@
 ﻿using System;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 
@@ -16,15 +17,15 @@ namespace Sashimi.AzureScripting
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, AzureConstants.AzureActionHandlerCategory, ActionHandlerCategory.Script };
         public string[] StepBasedVariableNameForAccountIds { get; } = {SpecialVariables.Action.Azure.AccountId};
 
-        public IActionHandlerResult Execute(IActionHandlerContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
             var syntax = context.Variables.GetEnum(KnownVariables.Action.Script.Syntax, ScriptSyntax.PowerShell);
 
             var builder = context.CalamariCommand(AzureConstants.CalamariAzure, "run-script")
-                                 .WithAzureCLI(context);
+                                 .WithAzureCLI(context, taskLog);
 
             if (syntax == ScriptSyntax.PowerShell)
-                builder = builder.WithAzureCmdlets(context);
+                builder = builder.WithAzureCmdlets(context, taskLog);
 
             var isInPackage = KnownVariableValues.Action.Script.ScriptSource.Package.Equals(context.Variables.Get(KnownVariables.Action.Script.ScriptSource), StringComparison.OrdinalIgnoreCase);
             if (isInPackage)
@@ -32,7 +33,7 @@ namespace Sashimi.AzureScripting
                 builder.WithStagedPackageArgument();
             }
 
-            return builder.Execute();
+            return builder.Execute(taskLog);
         }
     }
 }

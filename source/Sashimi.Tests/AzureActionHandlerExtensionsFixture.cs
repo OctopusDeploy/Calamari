@@ -1,6 +1,7 @@
 ﻿using System;
 using NSubstitute;
 using NUnit.Framework;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Tests.Shared.Server;
@@ -20,7 +21,7 @@ namespace Sashimi.AzureScripting.Tests
             variables.Set(SpecialVariables.Action.Azure.UseBundledAzureModules, Boolean.TrueString);
             context.Variables.Returns(variables);
 
-            builder.WithAzureTools(context);
+            builder.WithAzureTools(context, Substitute.For<ITaskLog>());
             builder.Received().WithTool(AzureTools.AzureCmdlets);
         }
 
@@ -34,7 +35,7 @@ namespace Sashimi.AzureScripting.Tests
             variables.Set(SpecialVariables.Action.Azure.UseBundledAzureModules, Boolean.FalseString);
             context.Variables.Returns(variables);
 
-            builder.WithAzureTools(context);
+            builder.WithAzureTools(context, Substitute.For<ITaskLog>());
             builder.DidNotReceive().WithTool(AzureTools.AzureCmdlets);
         }
 
@@ -48,7 +49,7 @@ namespace Sashimi.AzureScripting.Tests
             variables.Set(SpecialVariables.Action.Azure.UseBundledAzureModulesLegacy, Boolean.TrueString);
             context.Variables.Returns(variables);
 
-            builder.WithAzureTools(context);
+            builder.WithAzureTools(context, Substitute.For<ITaskLog>());
             builder.Received().WithTool(AzureTools.AzureCmdlets);
         }
 
@@ -62,7 +63,7 @@ namespace Sashimi.AzureScripting.Tests
             variables.Set(SpecialVariables.Action.Azure.UseBundledAzureModulesLegacy, Boolean.FalseString);
             context.Variables.Returns(variables);
 
-            builder.WithAzureTools(context);
+            builder.WithAzureTools(context, Substitute.For<ITaskLog>());
             builder.DidNotReceive().WithTool(AzureTools.AzureCmdlets);
         }
 
@@ -77,7 +78,7 @@ namespace Sashimi.AzureScripting.Tests
             variables.Set(SpecialVariables.Action.Azure.UseBundledAzureModules, Boolean.FalseString);
             context.Variables.Returns(variables);
 
-            builder.WithAzureTools(context);
+            builder.WithAzureTools(context, Substitute.For<ITaskLog>());
             builder.DidNotReceive().WithTool(AzureTools.AzureCmdlets);
         }
 
@@ -92,7 +93,7 @@ namespace Sashimi.AzureScripting.Tests
             variables.Set(SpecialVariables.Action.Azure.UseBundledAzureModules, Boolean.TrueString);
             context.Variables.Returns(variables);
 
-            builder.WithAzureTools(context);
+            builder.WithAzureTools(context, Substitute.For<ITaskLog>());
             builder.Received().WithTool(AzureTools.AzureCmdlets);
         }
 
@@ -107,7 +108,7 @@ namespace Sashimi.AzureScripting.Tests
             variables.Set(SpecialVariables.Action.Azure.UseBundledAzureModules, Boolean.FalseString);
             context.Variables.Returns(variables);
 
-            builder.WithAzureTools(context);
+            builder.WithAzureTools(context, Substitute.For<ITaskLog>());
             builder.DidNotReceive().WithTool(AzureTools.AzureCmdlets);
         }
     }

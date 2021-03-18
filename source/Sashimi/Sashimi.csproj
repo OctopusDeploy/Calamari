@@ -21,9 +21,9 @@
     <ItemGroup>
         <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.0.50" />
         <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.13.1" />
-        <PackageReference Include="Sashimi.Azure.Common" Version="9.0.0" />
-        <PackageReference Include="Sashimi.Azure.Accounts" Version="9.0.0" />
-        <PackageReference Include="Sashimi.Server.Contracts" Version="9.0.0" />
+        <PackageReference Include="Sashimi.Azure.Common" Version="11.0.0" />
+        <PackageReference Include="Sashimi.Azure.Accounts" Version="11.0.0" />
+        <PackageReference Include="Sashimi.Server.Contracts" Version="11.0.0" />
     </ItemGroup>
     <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
         <Message Text="Collecting nupkg packages to bundle with Sashimi module binaries" Importance="high" />
