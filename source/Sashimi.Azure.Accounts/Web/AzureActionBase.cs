@@ -7,12 +7,12 @@ namespace Sashimi.Azure.Accounts.Web
 {
     abstract class AzureActionBase
     {
-        protected AzureActionBase(ILog log)
+        protected AzureActionBase(ISystemLog systemLog)
         {
-            Log = log;
+            SystemLog = systemLog;
         }
 
-        ILog Log { get; }
+        ISystemLog SystemLog { get; }
 
         protected async Task<TReturn> ThrowIfNotSuccess<TResponse, TReturn>(Func<Task<AzureOperationResponse<TResponse>>> azureResponse, Func<AzureOperationResponse<TResponse>, TReturn> onSuccess, string errorMessage)
         {
@@ -23,7 +23,7 @@ namespace Sashimi.Azure.Accounts.Web
             }
             catch (Exception e)
             {
-                Log.Warn(e, errorMessage);
+                SystemLog.Warn(e, errorMessage);
                 throw new Exception(errorMessage);
             }
 
@@ -32,7 +32,7 @@ namespace Sashimi.Azure.Accounts.Web
                 return onSuccess(operationResponse);
             }
 
-            Log.Warn($"{errorMessage}{Environment.NewLine}Response status code does not indicate success: {operationResponse.Response.StatusCode} ({operationResponse.Response.ReasonPhrase}).");
+            SystemLog.Warn($"{errorMessage}{Environment.NewLine}Response status code does not indicate success: {operationResponse.Response.StatusCode} ({operationResponse.Response.ReasonPhrase}).");
             throw new Exception(errorMessage);
         }
     }

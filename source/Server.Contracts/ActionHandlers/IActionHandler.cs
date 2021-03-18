@@ -1,4 +1,6 @@
-﻿namespace Sashimi.Server.Contracts.ActionHandlers
+﻿using Octopus.Server.Extensibility.HostServices.Diagnostics;
+
+namespace Sashimi.Server.Contracts.ActionHandlers
 {
     /// <summary>
     /// Implementors of this interface must not keep state so that they can be reusable between steps and deployments
@@ -14,6 +16,6 @@
         bool CanRunOnDeploymentTarget { get; }
         ActionHandlerCategory[] Categories { get; }
 
-        IActionHandlerResult Execute(IActionHandlerContext context);
+        IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog);
     }
 }

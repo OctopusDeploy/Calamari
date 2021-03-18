@@ -1,4 +1,5 @@
-﻿using Sashimi.Server.Contracts.ActionHandlers;
+﻿using Octopus.Server.Extensibility.HostServices.Diagnostics;
+using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.Tests.Shared.Server
 {
@@ -13,9 +14,9 @@ namespace Sashimi.Tests.Shared.Server
             this.variableDictionary = variableDictionary;
         }
 
-        public void Execute()
+        public void Execute(ITaskLog taskLog)
         {
-            handler.Execute(new WrapperActionHandlerContext(variableDictionary));
+            handler.Execute(new WrapperActionHandlerContext(variableDictionary), taskLog);
         }
     }
 }

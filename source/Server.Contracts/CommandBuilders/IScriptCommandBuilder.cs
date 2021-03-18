@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.Server.Contracts.CommandBuilders
@@ -19,6 +20,6 @@ namespace Sashimi.Server.Contracts.CommandBuilders
         IScriptCommandBuilder WithDataFile(Stream fileContents, string? fileName = null);
         IScriptCommandBuilder WithIsolation(ExecutionIsolation executionIsolation);
         IScriptCommandBuilder WithIsolationTimeout(TimeSpan mutexTimeout);
-        IActionHandlerResult Execute();
+        IActionHandlerResult Execute(ITaskLog taskLog);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.DeploymentTools;
 
@@ -23,7 +24,7 @@ namespace Sashimi.Server.Contracts.CommandBuilders
         ICalamariCommandBuilder WithTool(IDeploymentTool tool);
         ICalamariCommandBuilder WithVariable(string name, string? value, bool isSensitive = false);
         ICalamariCommandBuilder WithVariable(string name, bool value, bool isSensitive = false);
-        IActionHandlerResult Execute();
+        IActionHandlerResult Execute(ITaskLog taskLog);
         ICalamariCommandBuilder WithIsolation(ExecutionIsolation executionIsolation);
         ICalamariCommandBuilder WithIsolationTimeout(TimeSpan mutexTimeout);
         string Describe();

@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using Calamari.Commands;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Plumbing.Pipeline;
-using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Scripting
 {

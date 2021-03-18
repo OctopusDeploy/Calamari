@@ -1,6 +1,6 @@
 ﻿using System;
 using Octopus.CoreUtilities;
-using Octopus.Diagnostics;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
@@ -11,14 +11,12 @@ namespace Sashimi.Tests.Shared.Server
 {
     public class TestActionHandlerContext<TCalamariProgram> : IActionHandlerContext
     {
-        readonly ILog log;
-
-        internal TestActionHandlerContext(ILog log)
+        internal TestActionHandlerContext(ITaskLog taskLog)
         {
-            this.log = log;
+            TaskLog = taskLog;
         }
 
-        ILog IActionHandlerContext.Log => log;
+        public ITaskLog TaskLog { get; }
         public Maybe<DeploymentTargetType> DeploymentTargetType { get; set; } = Maybe<DeploymentTargetType>.None;
         public Maybe<string> DeploymentTargetName { get; set; } = Maybe<string>.None;
         IActionAndTargetScopedVariables IActionHandlerContext.Variables => Variables;

@@ -1,10 +1,11 @@
 ﻿using System;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 
 namespace Sashimi.Server.Contracts.ActionHandlers
 {
     public interface IContributeToPackageDeployment
     {
-        PackageContributionResult Contribute(DeploymentTargetType deploymentTargetType, IActionHandlerContext context);
+        PackageContributionResult Contribute(DeploymentTargetType deploymentTargetType, IActionHandlerContext context, ITaskLog taskLog);
     }
 
     public abstract class PackageContributionResult

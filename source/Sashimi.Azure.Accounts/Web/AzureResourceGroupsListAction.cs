@@ -15,7 +15,7 @@ namespace Sashimi.Azure.Accounts.Web
 
         readonly IOctopusHttpClientFactory httpClientFactory;
 
-        public AzureResourceGroupsListAction(ILog log, IOctopusHttpClientFactory httpClientFactory) : base(log)
+        public AzureResourceGroupsListAction(ISystemLog systemLog, IOctopusHttpClientFactory httpClientFactory) : base(systemLog)
         {
             this.httpClientFactory = httpClientFactory;
         }

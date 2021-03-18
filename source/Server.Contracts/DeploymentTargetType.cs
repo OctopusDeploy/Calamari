@@ -5,7 +5,7 @@ namespace Sashimi.Server.Contracts
     public class DeploymentTargetType : IEquatable<DeploymentTargetType>
     {
         public static readonly DeploymentTargetType Ssh = new DeploymentTargetType("Ssh", "SSH");
-        
+
         public string Id { get; }
         public string DisplayName { get; }
 
@@ -15,14 +15,14 @@ namespace Sashimi.Server.Contracts
             DisplayName = displayName;
         }
 
-        public bool Equals(DeploymentTargetType other)
+        public bool Equals(DeploymentTargetType? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return string.Equals(Id, other.Id, StringComparison.OrdinalIgnoreCase);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;

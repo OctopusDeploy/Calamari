@@ -15,8 +15,8 @@ namespace Sashimi.Azure.Accounts.Web
         static readonly OctopusJsonRegistration<ICollection<AzureWebSiteResource>> Results = new OctopusJsonRegistration<ICollection<AzureWebSiteResource>>();
 
         readonly IOctopusHttpClientFactory httpClientFactory;
-        public AzureWebSitesListAction(ILog log, IOctopusHttpClientFactory httpClientFactory)
-            : base(log)
+        public AzureWebSitesListAction(ISystemLog systemLog, IOctopusHttpClientFactory httpClientFactory)
+            : base(systemLog)
         {
             this.httpClientFactory = httpClientFactory;
         }

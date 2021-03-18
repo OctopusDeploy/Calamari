@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using Calamari.Common.Features.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Shared;
 using FluentAssertions;

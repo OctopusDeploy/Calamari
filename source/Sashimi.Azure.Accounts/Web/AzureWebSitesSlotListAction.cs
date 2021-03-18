@@ -20,8 +20,8 @@ namespace Sashimi.Azure.Accounts.Web
         readonly IOctopusHttpClientFactory httpClientFactory;
 
         public AzureWebSitesSlotListAction(
-            ILog log,
-            IOctopusHttpClientFactory httpClientFactory) : base(log)
+            ISystemLog systemLog,
+            IOctopusHttpClientFactory httpClientFactory) : base(systemLog)
         {
             this.httpClientFactory = httpClientFactory;
         }

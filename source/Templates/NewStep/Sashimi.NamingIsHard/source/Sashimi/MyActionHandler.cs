@@ -1,14 +1,15 @@
-﻿using Sashimi.Server.Contracts.ActionHandlers;
+﻿using Octopus.Server.Extensibility.HostServices.Diagnostics;
+using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 
 namespace Sashimi.NamingIsHard
 {
     class MyActionHandler : IActionHandler
     {
-        public IActionHandlerResult Execute(IActionHandlerContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
             return context.CalamariCommand(new CalamariFlavour("Calamari.NamingIsHard"), "my-command-name")
-                .Execute();
+                .Execute(taskLog);
         }
 
         public string Id { get; } = SpecialVariables.MyActionHandlerTypeName;

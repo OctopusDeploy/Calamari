@@ -5,7 +5,6 @@ using Autofac;
 using Calamari.Common;
 using Calamari.Common.Plumbing.Variables;
 using FluentAssertions;
-using Octopus.Diagnostics;
 using Sashimi.Server.Contracts.ActionHandlers;
 using KnownVariables = Sashimi.Server.Contracts.KnownVariables;
 
@@ -98,7 +97,8 @@ namespace Sashimi.Tests.Shared.Server
             builder.RegisterAssemblyModules(actionHandlerType.Assembly);
             builder.RegisterModule<ServerModule>();
             var container = builder.Build();
-            var context = new TestActionHandlerContext<TCalamariProgram>(container.Resolve<ILog>());
+            var log = new SashimiInMemoryTaskLog();
+            var context = new TestActionHandlerContext<TCalamariProgram>(log);
 
             foreach (var arrangeAction in arrangeActions)
             {
@@ -118,7 +118,7 @@ namespace Sashimi.Tests.Shared.Server
                     {
                         Environment.SetEnvironmentVariable(TestCalamariCommandBuilder<TCalamariProgram>.InProcOutProcOverride.EnvironmentVariable, TestCalamariCommandBuilder<TCalamariProgram>.InProcOutProcOverride.OutProcValue);
 
-                        result = (TestActionHandlerResult)actionHandler.Execute(context);
+                        result = (TestActionHandlerResult)actionHandler.Execute(context, log);
                     }
                     finally
                     {
@@ -127,7 +127,7 @@ namespace Sashimi.Tests.Shared.Server
                 }
                 else
                 {
-                    result = (TestActionHandlerResult)actionHandler.Execute(context);
+                    result = (TestActionHandlerResult)actionHandler.Execute(context, log);
                 }
 
                 Console.WriteLine(result.FullLog);

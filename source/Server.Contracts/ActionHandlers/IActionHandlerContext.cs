@@ -1,5 +1,4 @@
 ﻿using Octopus.CoreUtilities;
-using Octopus.Diagnostics;
 using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.Variables;
@@ -8,7 +7,6 @@ namespace Sashimi.Server.Contracts.ActionHandlers
 {
     public interface IActionHandlerContext
     {
-        ILog Log { get; }
         Maybe<DeploymentTargetType> DeploymentTargetType { get; }
         Maybe<string> DeploymentTargetName { get; }
         IActionAndTargetScopedVariables Variables { get; }

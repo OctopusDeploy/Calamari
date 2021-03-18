@@ -16,7 +16,7 @@ namespace Sashimi.Azure.Accounts.Web
 
         readonly IOctopusHttpClientFactory httpClientFactory;
 
-        public AzureStorageAccountsListAction(ILog log, IOctopusHttpClientFactory httpClientFactory) : base(log)
+        public AzureStorageAccountsListAction(ISystemLog systemLog, IOctopusHttpClientFactory httpClientFactory) : base(systemLog)
         {
             this.httpClientFactory = httpClientFactory;
         }

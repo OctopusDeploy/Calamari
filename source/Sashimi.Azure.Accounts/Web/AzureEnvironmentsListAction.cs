@@ -26,7 +26,7 @@ namespace Sashimi.Azure.Accounts.Web
         {
             var properties = typeof(AzureEnvironment).GetProperties().Where(x => x.PropertyType == typeof(AzureEnvironment));
 
-            var azureEnvironmentsLookup = properties.ToDictionary(x => x.Name, x => (AzureEnvironment)x.GetValue(null, null));
+            var azureEnvironmentsLookup = properties.ToDictionary(x => x.Name, x => (AzureEnvironment)x.GetValue(null, null)!);
 
             var azureEnvironmentResources = azureEnvironmentsLookup.Select(x => new AzureEnvironmentResource
             {

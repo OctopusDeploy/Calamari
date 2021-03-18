@@ -1,162 +1,23 @@
-﻿using System;
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Calamari.Common.Plumbing.ServiceMessages;
+using Calamari.Tests.Shared.LogParser;
 using Octopus.Diagnostics;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
+using ServiceMessageParser = Calamari.Tests.Shared.LogParser.ServiceMessageParser;
 
-namespace Calamari.Tests.Shared.LogParser
+namespace Sashimi.Tests.Shared.LogParser
 {
-    public enum TestExecutionOutcome
+    public class ScriptOutputFilter : IScriptOutputFilter
     {
-        Successful = 1,
-        Cancelled = 2,
-        TimeOut = 3,
-        Unsuccessful = 4
-    }
-
-    public class TestOutputVariable
-    {
-        public TestOutputVariable(string name, string? value, bool isSensitive = false)
-        {
-            Name = name;
-            Value = value;
-            IsSensitive = isSensitive;
-        }
-
-        public string Name { get; }
-        public string? Value { get; }
-        public bool IsSensitive { get; }
-    }
-
-    public class TestOutputVariableCollection : ICollection<TestOutputVariable>, IReadOnlyDictionary<string, TestOutputVariable>
-    {
-        readonly Dictionary<string, TestOutputVariable> items = new Dictionary<string, TestOutputVariable>(StringComparer.OrdinalIgnoreCase);
-
-        public int Count => items.Count;
-
-        public void Add(TestOutputVariable item)
-        {
-            items.Add(item.Name, item);
-        }
-
-        public bool ContainsKey(string name)
-        {
-            return items.ContainsKey(name);
-        }
-
-        public bool TryGetValue(string name, out TestOutputVariable value)
-        {
-            return items.TryGetValue(name, out value);
-        }
-
-        public TestOutputVariable this[string name]
-        {
-            get => items[name];
-            set => items[name] = value;
-        }
-
-        public IEnumerable<string> Keys => items.Keys;
-        public IEnumerable<TestOutputVariable> Values => items.Values;
-
-        public void Clear()
-        {
-            items.Clear();
-        }
-
-        bool ICollection<TestOutputVariable>.Contains(TestOutputVariable item)
-        {
-            return items.ContainsKey(item.Name);
-        }
-
-        public void CopyTo(TestOutputVariable[] array, int arrayIndex)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        bool ICollection<TestOutputVariable>.Remove(TestOutputVariable item)
-        {
-            return items.Remove(item.Name);
-        }
-
-        IEnumerator<TestOutputVariable> IEnumerable<TestOutputVariable>.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        IEnumerator<KeyValuePair<string, TestOutputVariable>> IEnumerable<KeyValuePair<string, TestOutputVariable>>.GetEnumerator()
-        {
-            return items.GetEnumerator();
-        }
-
-        IEnumerator<TestOutputVariable> GetEnumerator()
-        {
-            return items.Values.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        bool ICollection<TestOutputVariable>.IsReadOnly => false;
-    }
-
-    public class TestScriptOutputAction
-    {
-        public TestScriptOutputAction(string name, IDictionary<string, string> properties)
-        {
-            Name = name;
-            Properties = properties;
-        }
-
-        public string Name { get; }
-
-        public IDictionary<string, string> Properties { get; }
-
-        public bool ContainsPropertyWithValue(string propertyName)
-        {
-            return Properties.ContainsKey(propertyName) && !string.IsNullOrEmpty(Properties[propertyName]);
-        }
-
-        public bool ContainsPropertyWithGuid(string propertyName)
-        {
-            return ContainsPropertyWithValue(propertyName) && IsGuid(propertyName);
-        }
-
-        bool IsGuid(string propertyName)
-        {
-            return Guid.TryParse(Properties[propertyName], out _);
-        }
-
-        public string[] GetStrings(params string[] propertyNames)
-        {
-            var values = Properties.Where(x => propertyNames.Contains(x.Key))
-                .Select(x => x.Value)
-                .ToList();
-            if (!values.Any())
-            {
-                return new string[0];
-            }
-
-            var allValues = new List<string>();
-            foreach (var v in values.Where(v => !string.IsNullOrWhiteSpace(v)))
-            {
-                allValues.AddRange(v.Split(new [] {','}, StringSplitOptions.RemoveEmptyEntries).Select(_ => _.Trim()));
-            }
-            return allValues.ToArray();
-        }
-    }
-
-    public class CalamariScriptOutputFilter : IScriptOutputFilter
-    {
-        readonly CalamariInMemoryTaskLog log;
+        readonly ITaskLog log;
         readonly ServiceMessageParser parser;
 
         readonly Action<string> nullTarget = s =>
-        {
-        };
+                                             {
+                                             };
 
         readonly TestOutputVariableCollection testOutputVariables = new TestOutputVariableCollection();
         readonly List<CollectedArtifact> artifacts = new List<CollectedArtifact>();
@@ -169,7 +30,7 @@ namespace Calamari.Tests.Shared.LogParser
         readonly List<string> supportedScriptActionNames = new List<string>();
         readonly Action<int, string> progressTarget;
 
-        public CalamariScriptOutputFilter(CalamariInMemoryTaskLog log)
+        public ScriptOutputFilter(ITaskLog log)
         {
             this.log = log;
             DeltaPackageVerifcation = null;
@@ -323,7 +184,7 @@ namespace Calamari.Tests.Shared.LogParser
                     var deltaVerificationHash = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.HashAttribute);
                     var deltaVerificationSize = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.SizeAttribute);
                     DeltaPackageError = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.Error);
-                    if (deltaVerificationRemotePath != null && deltaVerificationHash != null)
+                    if (deltaVerificationRemotePath != null && deltaVerificationHash != null && deltaVerificationSize != null)
                     {
                         DeltaPackageVerifcation = new DeltaPackage(deltaVerificationRemotePath, deltaVerificationHash, long.Parse(deltaVerificationSize));
                     }
@@ -373,7 +234,7 @@ namespace Calamari.Tests.Shared.LogParser
             var actionNames = GetAllFieldValues(
                     typeof(ScriptServiceMessageNames.ScriptOutputActions),
                     x => Attribute.IsDefined(x, typeof(ServiceMessageNameAttribute)))
-                .Select(x => x.ToString());
+                .Select(x => x.ToString()!);
             supportedScriptActionNames.AddRange(actionNames);
         }
 
@@ -381,7 +242,7 @@ namespace Calamari.Tests.Shared.LogParser
         {
             var values = new List<object>();
             var fields = t.GetFields();
-            values.AddRange(fields.Where(filter).Select(x => x.GetValue(null)));
+            values.AddRange(fields.Where(filter).Select(x => x.GetValue(null)!));
 
             var nestedTypes = t.GetNestedTypes();
             foreach (var nestedType in nestedTypes)

@@ -24,30 +24,56 @@ namespace Calamari.Tests.Shared
 {
     public static class CommandTestBuilder
     {
-        public static CommandTestBuilder<TCalamari> CreateAsync<TCalamari>(string command)
+        public static CommandTestBuilder<TCalamari, TTaskLog, TScriptOutputFilter> CreateAsync<TCalamari, TTaskLog, TScriptOutputFilter>(string command)
+            where TCalamari : CalamariFlavourProgramAsync
+            where TTaskLog : class, new()
+        {
+            return new CommandTestBuilder<TCalamari, TTaskLog, TScriptOutputFilter>(command);
+        }
+        public static CommandTestBuilder<TCalamari, CalamariInMemoryTaskLog, CalamariScriptOutputFilter> CreateAsync<TCalamari>(string command)
             where TCalamari : CalamariFlavourProgramAsync
         {
-            return new CommandTestBuilder<TCalamari>(command);
+            return new CommandTestBuilder<TCalamari, CalamariInMemoryTaskLog, CalamariScriptOutputFilter>(command);
         }
 
-        public static CommandTestBuilder<TCalamari> CreateAsync<TCommand, TCalamari>()
+        public static CommandTestBuilder<TCalamari, TTaskLog, TScriptOutputFilter> CreateAsync<TCommand, TCalamari, TTaskLog, TScriptOutputFilter>()
+            where TCalamari : CalamariFlavourProgramAsync
+            where TCommand : PipelineCommand
+            where TTaskLog : class, new()
+        {
+            return new CommandTestBuilder<TCalamari, TTaskLog, TScriptOutputFilter>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+        }
+        public static CommandTestBuilder<TCalamari, CalamariInMemoryTaskLog, CalamariScriptOutputFilter> CreateAsync<TCommand, TCalamari>()
             where TCalamari : CalamariFlavourProgramAsync
             where TCommand : PipelineCommand
         {
-            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+            return new CommandTestBuilder<TCalamari, CalamariInMemoryTaskLog, CalamariScriptOutputFilter>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
         }
 
-        public static CommandTestBuilder<TCalamari> Create<TCalamari>(string command)
+        public static CommandTestBuilder<TCalamari, TTaskLog, TScriptOutputFilter> Create<TCalamari, TTaskLog, TScriptOutputFilter>(string command)
+            where TCalamari : CalamariFlavourProgram
+            where TTaskLog : class, new()
+        {
+            return new CommandTestBuilder<TCalamari, TTaskLog, TScriptOutputFilter>(command);
+        }
+        public static CommandTestBuilder<TCalamari, CalamariInMemoryTaskLog, CalamariScriptOutputFilter> Create<TCalamari>(string command)
             where TCalamari : CalamariFlavourProgram
         {
-            return new CommandTestBuilder<TCalamari>(command);
+            return new CommandTestBuilder<TCalamari, CalamariInMemoryTaskLog, CalamariScriptOutputFilter>(command);
         }
 
-        public static CommandTestBuilder<TCalamari> Create<TCommand, TCalamari>()
+        public static CommandTestBuilder<TCalamari, TTaskLog, TScriptOutputFilter> Create<TCommand, TCalamari, TTaskLog, TScriptOutputFilter>()
+            where TCalamari : CalamariFlavourProgram
+            where TCommand : ICommand
+            where TTaskLog : class, new()
+        {
+            return new CommandTestBuilder<TCalamari, TTaskLog, TScriptOutputFilter>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+        }
+        public static CommandTestBuilder<TCalamari, CalamariInMemoryTaskLog, CalamariScriptOutputFilter> Create<TCommand, TCalamari>()
             where TCalamari : CalamariFlavourProgram
             where TCommand : ICommand
         {
-            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+            return new CommandTestBuilder<TCalamari, CalamariInMemoryTaskLog, CalamariScriptOutputFilter>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
         }
 
         public static CommandTestBuilderContext WithFilesToCopy(this CommandTestBuilderContext context, string path)
@@ -113,7 +139,8 @@ namespace Calamari.Tests.Shared
         }
     }
 
-    public class CommandTestBuilder<TCalamariProgram>
+    public class CommandTestBuilder<TCalamariProgram, TTaskLog, TScriptOutputFilter>
+        where TTaskLog : class, new()
     {
         readonly string command;
         readonly List<Action<CommandTestBuilderContext>> arrangeActions;
@@ -125,13 +152,13 @@ namespace Calamari.Tests.Shared
             arrangeActions = new List<Action<CommandTestBuilderContext>>();
         }
 
-        public CommandTestBuilder<TCalamariProgram> WithArrange(Action<CommandTestBuilderContext> arrange)
+        public CommandTestBuilder<TCalamariProgram, TTaskLog, TScriptOutputFilter> WithArrange(Action<CommandTestBuilderContext> arrange)
         {
             arrangeActions.Add(arrange);
             return this;
         }
 
-        public CommandTestBuilder<TCalamariProgram> WithAssert(Action<TestCalamariCommandResult> assert)
+        public CommandTestBuilder<TCalamariProgram, TTaskLog, TScriptOutputFilter> WithAssert(Action<TestCalamariCommandResult> assert)
         {
             assertAction = assert;
             return this;
@@ -223,9 +250,10 @@ namespace Calamari.Tests.Shared
                 {
                     exitCode = (int) methodInfo.Invoke(instance, new object?[] {args.ToArray()});
                 }
-                var serverInMemoryLog = new ServerInMemoryLog();
+                var serverInMemoryLog = new TTaskLog();
 
-                var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
+                var filterType = typeof(TScriptOutputFilter);
+                var outputFilter = (IScriptOutputFilter)Activator.CreateInstance(filterType, serverInMemoryLog);
                 foreach (var text in inMemoryLog.StandardError)
                 {
                     outputFilter.Write(ProcessOutputSource.StdErr, text);

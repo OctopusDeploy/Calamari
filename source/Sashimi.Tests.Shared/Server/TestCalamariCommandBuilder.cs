@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Calamari;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using System.Threading.Tasks;
@@ -14,7 +13,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
-using Calamari.Tests.Shared;
 using Calamari.Tests.Shared.Helpers;
 using Calamari.Tests.Shared.LogParser;
 using Sashimi.Server.Contracts.ActionHandlers;
@@ -22,8 +20,12 @@ using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.DeploymentTools;
 using Octopus.CoreUtilities;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts.Actions;
 using Sashimi.Tests.Shared.Extensions;
+using Sashimi.Tests.Shared.LogParser;
+using AssemblyExtensions = Calamari.AssemblyExtensions;
+using ILog = Calamari.Common.Plumbing.Logging.ILog;
 
 namespace Sashimi.Tests.Shared.Server
 {
@@ -128,7 +130,7 @@ namespace Sashimi.Tests.Shared.Server
         public string Describe()
             => throw new NotImplementedException();
 
-        public IActionHandlerResult Execute()
+        public IActionHandlerResult Execute(ITaskLog taskLog)
         {
             using var working = TemporaryDirectory.Create();
             var workingPath = working.DirectoryPath;
@@ -183,7 +185,7 @@ namespace Sashimi.Tests.Shared.Server
                                          .SelectValueOr(package => package.BootstrapperModulePaths, Enumerable.Empty<string>())
                                          .Select(s => Path.Combine(toolPath, s)));
 
-                var toolPackagePath = Path.Combine(Path.GetDirectoryName(AssemblyExtensions.FullLocalPath(Assembly.GetExecutingAssembly())), $"{tool.Id}.nupkg");
+                var toolPackagePath = Path.Combine(Path.GetDirectoryName(AssemblyExtensions.FullLocalPath(Assembly.GetExecutingAssembly())) ?? string.Empty, $"{tool.Id}.nupkg");
                 if (!File.Exists(toolPackagePath))
                 {
                     throw new Exception($"{tool.Id}.nupkg missing.");
@@ -309,13 +311,13 @@ namespace Sashimi.Tests.Shared.Server
                                                 {
                                                     if (methodInfo.ReturnType.IsGenericType)
                                                     {
-                                                        return await (Task<int>)methodInfo.Invoke(instance, new object?[] { args.ToArray() });
+                                                        return await (Task<int>)methodInfo.Invoke(instance, new object?[] { args.ToArray() })!;
                                                     }
 
-                                                    return (int)methodInfo.Invoke(instance, new object?[] { args.ToArray() });
+                                                    return (int)methodInfo.Invoke(instance, new object?[] { args.ToArray() })!;
                                                 });
 
-            var serverInMemoryLog = new ServerInMemoryLog();
+            var serverInMemoryLog = new SashimiInMemoryTaskLog();
 
             var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
             foreach (var text in inMemoryLog.StandardError)
@@ -371,7 +373,7 @@ namespace Sashimi.Tests.Shared.Server
 
                 var capturedOutput = calamariResult.CapturedOutput;
 
-                var serverInMemoryLog = new ServerInMemoryLog();
+                var serverInMemoryLog = new SashimiInMemoryTaskLog();
 
                 var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
                 foreach (var text in capturedOutput.Errors)
@@ -407,7 +409,11 @@ namespace Sashimi.Tests.Shared.Server
         string GetOutProcCalamariExePath()
         {
             var calamariFlavour = typeof(TCalamariProgram).Assembly.GetName().Name;
+            if (calamariFlavour == null)
+                throw new ArgumentException("Unable to determine CalamariFlavour from assembly name");
             var sashimiTestFolder = Path.GetDirectoryName(AssemblyExtensions.FullLocalPath(typeof(TCalamariProgram).Assembly));
+            if (sashimiTestFolder == null)
+                throw new ArgumentException("Unable to retrieve Sashimi test folder");
 
             if (TestEnvironment.IsCI)
             {

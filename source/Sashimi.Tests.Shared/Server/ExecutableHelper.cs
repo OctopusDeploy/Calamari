@@ -17,7 +17,7 @@ namespace Sashimi.Tests.Shared.Server
             var stdError = new StringBuilder();
             var result = SilentProcessRunner.ExecuteCommand("chmod",
                                                             $"+x {exePath}",
-                                                            Path.GetDirectoryName(exePath),
+                                                            Path.GetDirectoryName(exePath) ?? string.Empty,
                                                             s => stdOut.AppendLine(s),
                                                             s => stdError.AppendLine(s));
 

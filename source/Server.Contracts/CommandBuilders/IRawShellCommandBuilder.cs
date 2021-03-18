@@ -1,4 +1,5 @@
-﻿using Sashimi.Server.Contracts.ActionHandlers;
+﻿using Octopus.Server.Extensibility.HostServices.Diagnostics;
+using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.Server.Contracts.CommandBuilders
 {
@@ -12,6 +13,6 @@ namespace Sashimi.Server.Contracts.CommandBuilders
     public interface IRawShellCommandBuilder
     {
         IRawShellCommandBuilder WithScript(ScriptSyntax syntax, string body);
-        IActionHandlerResult Execute();
+        IActionHandlerResult Execute(ITaskLog taskLog);
     }
 }

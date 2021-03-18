@@ -22,14 +22,14 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         public string Name { get; }
         public int DisplayOrder { get; }
 
-        public bool Equals(ActionHandlerCategory other)
+        public bool Equals(ActionHandlerCategory? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return string.Equals(Id, other.Id, StringComparison.OrdinalIgnoreCase);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;

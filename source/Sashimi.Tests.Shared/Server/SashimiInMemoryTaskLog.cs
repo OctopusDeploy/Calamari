@@ -2,14 +2,20 @@
 using System.Collections.Generic;
 using System.Text;
 using Octopus.Diagnostics;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 
-namespace Calamari.Tests.Shared
+namespace Sashimi.Tests.Shared.Server
 {
-    public class ServerInMemoryLog : ILogWithContext
+    public class SashimiInMemoryTaskLog : ITaskLog
     {
         readonly StringBuilder log = new StringBuilder();
 
-        public ILogContext CurrentContext { get; } = new NullLogContext();
+        public string CorrelationId { get; } = Guid.NewGuid().ToString();
+
+        public void Dispose()
+        {
+        }
+
         public bool IsVerboseEnabled { get; }
         public bool IsErrorEnabled { get; }
         public bool IsFatalEnabled { get; }
@@ -28,6 +34,14 @@ namespace Calamari.Tests.Shared
         public List<(string?, Exception?)> FatalLog { get; } = new List<(string?, Exception?)>();
         public List<(string?, Exception?)> TraceLog { get; } = new List<(string?, Exception?)>();
         public List<(string?, Exception?)> VerboseLog { get; } = new List<(string?, Exception?)>();
+
+        public void WithSensitiveValues(string[] sensitiveValues)
+        {
+        }
+
+        public void WithSensitiveValue(string sensitiveValue)
+        {
+        }
 
         public void Trace(string messageText)
         {
@@ -242,34 +256,34 @@ namespace Calamari.Tests.Shared
         {
         }
 
-        public IDisposable OpenBlock(string messageText)
+        public ITaskLog CreateBlock(string messageText)
         {
-            return new Disposable();
+            return new SashimiInMemoryTaskLog();
         }
 
-        public IDisposable OpenBlock(string messageFormat, params object[] args)
+        public ITaskLog CreateBlock(string messageFormat, params object[] args)
         {
-            return new Disposable();
+            return new SashimiInMemoryTaskLog();
         }
 
-        public ILogContext PlanGroupedBlock(string messageText)
+        public ITaskLog ChildContext(string[] sensitiveValues)
         {
-            return CurrentContext;
+            return new SashimiInMemoryTaskLog();
         }
 
-        public ILogContext PlanFutureBlock(string messageText)
+        public ITaskLog PlanGroupedBlock(string messageText)
         {
-            return CurrentContext;
+            return new SashimiInMemoryTaskLog();
         }
 
-        public ILogContext PlanFutureBlock(string messageFormat, params object[] args)
+        public ITaskLog PlanFutureBlock(string messageText)
         {
-            return CurrentContext;
+            return new SashimiInMemoryTaskLog();
         }
 
-        public IDisposable WithinBlock(ILogContext logContext)
+        public ITaskLog PlanFutureBlock(string messageFormat, params object[] args)
         {
-            return new Disposable();
+            return new SashimiInMemoryTaskLog();
         }
 
         public void Abandon()
@@ -301,42 +315,6 @@ namespace Calamari.Tests.Shared
         {
             log.AppendLine(message);
             list.Add((message, error));
-        }
-
-        class NullLogContext : ILogContext
-        {
-            public void SafeSanitize(string raw, Action<string> action)
-            {
-            }
-
-            public ILogContext CreateChild(string[]? sensitiveValues = null)
-            {
-                return this;
-            }
-
-            public ILogContext WithSensitiveValues(string[] sensitiveValues)
-            {
-                return this;
-            }
-
-            public ILogContext WithSensitiveValue(string sensitiveValue)
-            {
-                return this;
-            }
-
-            public void Flush()
-            {
-            }
-
-            public string CorrelationId { get; } = Guid.NewGuid().ToString();
-            public string[] SensitiveValues { get; } = new string[0];
-        }
-
-        class Disposable : IDisposable
-        {
-            public void Dispose()
-            {
-            }
         }
     }
 }
