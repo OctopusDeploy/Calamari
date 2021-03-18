@@ -144,7 +144,7 @@ namespace Calamari.Common.Plumbing.Pipeline
         }
 
         IEnumerable<IBehaviour> MaybeIncludeScriptBehaviours<TPackagedScriptBehaviour, TConfiguredScriptBehaviour>(ILifetimeScope lifetimeScope)
-          where TPackagedScriptBehaviour : PackagedScriptBehaviour
+            where TPackagedScriptBehaviour : PackagedScriptBehaviour
             where TConfiguredScriptBehaviour : ConfiguredScriptBehaviour
         {
             if (IncludePackagedScriptBehaviour)

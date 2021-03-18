@@ -74,9 +74,9 @@ namespace Calamari.Common
                    .SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
-                .AssignableTo<IBehaviour>()
-                .AsSelf()
-                .InstancePerDependency();
+                   .Where(t => t.IsAssignableTo<IBehaviour>() && !t.IsAbstract)
+                   .AsSelf()
+                   .InstancePerDependency();
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<ICommandAsync>()

@@ -5,11 +5,14 @@ using Octopus.Diagnostics;
 
 namespace Calamari.Testing
 {
-    public class ServerInMemoryLog : ILogWithContext
+    public class CalamariInMemoryTaskLog
     {
         readonly StringBuilder log = new StringBuilder();
 
-        public ILogContext CurrentContext { get; } = new NullLogContext();
+        public void Dispose()
+        {
+        }
+
         public bool IsVerboseEnabled { get; }
         public bool IsErrorEnabled { get; }
         public bool IsFatalEnabled { get; }
@@ -28,6 +31,14 @@ namespace Calamari.Testing
         public List<(string?, Exception?)> FatalLog { get; } = new List<(string?, Exception?)>();
         public List<(string?, Exception?)> TraceLog { get; } = new List<(string?, Exception?)>();
         public List<(string?, Exception?)> VerboseLog { get; } = new List<(string?, Exception?)>();
+
+        public void WithSensitiveValues(string[] sensitiveValues)
+        {
+        }
+
+        public void WithSensitiveValue(string sensitiveValue)
+        {
+        }
 
         public void Trace(string messageText)
         {
@@ -242,34 +253,34 @@ namespace Calamari.Testing
         {
         }
 
-        public IDisposable OpenBlock(string messageText)
+        public CalamariInMemoryTaskLog CreateBlock(string messageText)
         {
-            return new Disposable();
+            return new CalamariInMemoryTaskLog();
         }
 
-        public IDisposable OpenBlock(string messageFormat, params object[] args)
+        public CalamariInMemoryTaskLog CreateBlock(string messageFormat, params object[] args)
         {
-            return new Disposable();
+            return new CalamariInMemoryTaskLog();
         }
 
-        public ILogContext PlanGroupedBlock(string messageText)
+        public CalamariInMemoryTaskLog ChildContext(string[] sensitiveValues)
         {
-            return CurrentContext;
+            return new CalamariInMemoryTaskLog();
         }
 
-        public ILogContext PlanFutureBlock(string messageText)
+        public CalamariInMemoryTaskLog PlanGroupedBlock(string messageText)
         {
-            return CurrentContext;
+            return new CalamariInMemoryTaskLog();
         }
 
-        public ILogContext PlanFutureBlock(string messageFormat, params object[] args)
+        public CalamariInMemoryTaskLog PlanFutureBlock(string messageText)
         {
-            return CurrentContext;
+            return new CalamariInMemoryTaskLog();
         }
 
-        public IDisposable WithinBlock(ILogContext logContext)
+        public CalamariInMemoryTaskLog PlanFutureBlock(string messageFormat, params object[] args)
         {
-            return new Disposable();
+            return new CalamariInMemoryTaskLog();
         }
 
         public void Abandon()
@@ -301,42 +312,6 @@ namespace Calamari.Testing
         {
             log.AppendLine(message);
             list.Add((message, error));
-        }
-
-        class NullLogContext : ILogContext
-        {
-            public void SafeSanitize(string raw, Action<string> action)
-            {
-            }
-
-            public ILogContext CreateChild(string[]? sensitiveValues = null)
-            {
-                return this;
-            }
-
-            public ILogContext WithSensitiveValues(string[] sensitiveValues)
-            {
-                return this;
-            }
-
-            public ILogContext WithSensitiveValue(string sensitiveValue)
-            {
-                return this;
-            }
-
-            public void Flush()
-            {
-            }
-
-            public string CorrelationId { get; } = Guid.NewGuid().ToString();
-            public string[] SensitiveValues { get; } = new string[0];
-        }
-
-        class Disposable : IDisposable
-        {
-            public void Dispose()
-            {
-            }
         }
     }
 }
