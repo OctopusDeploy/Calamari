@@ -15,8 +15,8 @@
     <PackageReference Include="Assent" Version="1.6.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
-    <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="12.1.1" />
-    <PackageReference Include="Sashimi.Tests.Shared" Version="10.0.1-enh-logwithconte0011" />
+    <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="13.0.0" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="11.0.0" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
   </ItemGroup>
 
