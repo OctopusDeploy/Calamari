@@ -1,4 +1,5 @@
 ﻿using System;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 
@@ -18,12 +19,12 @@ namespace Sashimi.AzureCloudService
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Azure };
         public string[] StepBasedVariableNameForAccountIds { get; } = {SpecialVariables.Action.Azure.AccountId};
 
-        public IActionHandlerResult Execute(IActionHandlerContext context)
+        public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
             ValidateAccountIsOfType(context);
 
             return context.CalamariCommand(CalamariAzure, "health-check")
-                .Execute();
+                .Execute(taskLog);
         }
 
         void ValidateAccountIsOfType(IActionHandlerContext context)

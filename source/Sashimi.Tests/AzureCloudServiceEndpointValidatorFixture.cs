@@ -1,9 +1,10 @@
 using System;
 using System.Security.Cryptography.X509Certificates;
-using Calamari.Tests.Shared;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 using Octopus.Data.Resources;
+using Octopus.Diagnostics;
 using Sashimi.AzureCloudService.Endpoints;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Tests.Shared.Extensions;
@@ -43,7 +44,7 @@ namespace Sashimi.AzureCloudService.Tests
         [Test]
         public void CanContribute_AzureSubscriptionAccountResource_True()
         {
-            var certificateEncoder = new CertificateEncoder(new ServerInMemoryLog());
+            var certificateEncoder = new CertificateEncoder(Substitute.For<ISystemLog>());
             var sut = new AzureCertificateRequiresPrivateKey(certificateEncoder);
             sut.CanContribute(new AzureSubscriptionAccountResource()).Should().BeTrue();
         }
@@ -51,7 +52,7 @@ namespace Sashimi.AzureCloudService.Tests
         [Test]
         public void CanContribute_NotAzureSubscriptionAccountResource_False()
         {
-            var certificateEncoder = new CertificateEncoder(new ServerInMemoryLog());
+            var certificateEncoder = new CertificateEncoder(Substitute.For<ISystemLog>());
             var sut = new AzureCertificateRequiresPrivateKey(certificateEncoder);
             sut.CanContribute(new TestAccountDetailsResource()).Should().BeFalse();
         }
@@ -59,7 +60,7 @@ namespace Sashimi.AzureCloudService.Tests
         [Test]
         public void ValidateResource_NoCertificate_Success()
         {
-            var certificateEncoder = new CertificateEncoder(new ServerInMemoryLog());
+            var certificateEncoder = new CertificateEncoder(Substitute.For<ISystemLog>());
             var sut = new AzureCertificateRequiresPrivateKey(certificateEncoder);
             sut.ValidateResource(new AzureSubscriptionAccountResource()).IsValid.Should().BeTrue();
         }
@@ -67,7 +68,7 @@ namespace Sashimi.AzureCloudService.Tests
         [Test]
         public void ValidateResource_CertificateWithPrivateKey_Success()
         {
-            var certificateEncoder = new CertificateEncoder(new ServerInMemoryLog());
+            var certificateEncoder = new CertificateEncoder(Substitute.For<ISystemLog>());
             var sut = new AzureCertificateRequiresPrivateKey(certificateEncoder);
             var accountResource = new AzureSubscriptionAccountResource();
             accountResource.CertificateBytes = certificateEncoder.ToBase64String(GenerateCertificate());
@@ -88,7 +89,7 @@ namespace Sashimi.AzureCloudService.Tests
                 NewValue = Convert.ToBase64String(cert.Export(X509ContentType.Cert))
             };
 
-            var certificateEncoder = new CertificateEncoder(new ServerInMemoryLog());
+            var certificateEncoder = new CertificateEncoder(Substitute.For<ISystemLog>());
             var sut = new AzureCertificateRequiresPrivateKey(certificateEncoder);
 
             var result = sut.ValidateResource(accountResource);
