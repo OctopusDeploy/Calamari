@@ -11,11 +11,11 @@
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.2.3" />
     <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-preview.2" />
-    <PackageReference Include="nunit" Version="3.12.0" />
+    <PackageReference Include="nunit" Version="3.13.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
-    <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="11.0.0" />
-    <PackageReference Include="Sashimi.Tests.Shared" Version="8.3.1" />
+    <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="13.0.0" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="11.0.0" />
   </ItemGroup>
 
   <ItemGroup>
