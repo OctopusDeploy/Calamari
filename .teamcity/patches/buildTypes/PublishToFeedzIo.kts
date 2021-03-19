@@ -68,7 +68,7 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
         }
         update(RelativeId("NetcoreTesting_Ubuntu")) {
             snapshot {
-                reuseBuilds = ReuseBuilds.NO
+                reuseBuilds = ReuseBuilds.ANY
             }
         }
 
