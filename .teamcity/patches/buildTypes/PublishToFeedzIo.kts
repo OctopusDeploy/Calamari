@@ -168,7 +168,7 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
         }
         update(RelativeId("WindowsNetFxTesting_2012r2")) {
             snapshot {
-                reuseBuilds = ReuseBuilds.NO
+                reuseBuilds = ReuseBuilds.ANY
             }
         }
 
