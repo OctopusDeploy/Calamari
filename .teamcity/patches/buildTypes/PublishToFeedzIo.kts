@@ -133,7 +133,7 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
         }
         update(RelativeId("NetcoreTesting_Windows")) {
             snapshot {
-                reuseBuilds = ReuseBuilds.NO
+                reuseBuilds = ReuseBuilds.ANY
             }
         }
 
