@@ -37,7 +37,7 @@ namespace Calamari.AzureAppService.Tests
         private WebSiteManagementClient webMgmtClient;
         private Site site;
         readonly HttpClient client = new HttpClient();
-        
+
         [OneTimeSetUp]
         public async Task Setup()
         {
@@ -47,7 +47,7 @@ namespace Calamari.AzureAppService.Tests
             var activeDirectoryEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
                 DefaultVariables.ActiveDirectoryEndpoint;
-            
+
             resourceGroupName = Guid.NewGuid().ToString();
 
             clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
@@ -97,7 +97,7 @@ namespace Calamari.AzureAppService.Tests
             new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
             File.WriteAllText(Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
                 "Hello #{Greeting}");
-            
+
             packageinfo.packagePath = $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.zip";
             packageinfo.packageVersion = "1.0.0";
             packageinfo.packageName = "AzureZipDeployPackage";
@@ -154,7 +154,7 @@ namespace Calamari.AzureAppService.Tests
 
             var tempPath = TemporaryDirectory.Create();
             new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
-            
+
             var doc = new XDocument(new XElement("package",
                 new XAttribute("xmlns", @"http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd"),
                 new XElement("metadata",
@@ -200,7 +200,7 @@ namespace Calamari.AzureAppService.Tests
             var javaSvcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroupName,
                 $"{resourceGroupName}-java", new AppServicePlan(site.Location)
                 {
-                    Sku = new SkuDescription { Name = "F1", Tier = "Free"}
+                    Sku = new SkuDescription { Name = "B1", Tier = "Basic" }
                 });
 
             var javaSite = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroupName,
@@ -212,10 +212,10 @@ namespace Calamari.AzureAppService.Tests
                         JavaVersion = "1.8",
                         JavaContainer = "TOMCAT",
                         JavaContainerVersion = "9.0"
-                    }   
+                    }
                 });
 
-            
+
             (string packagePath, string packageName, string packageVersion) packageinfo;
             var assemblyFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
             packageinfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "sample.1.0.0.war");
