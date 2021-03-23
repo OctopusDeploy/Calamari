@@ -121,9 +121,6 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
 
             await UploadZipAsync(httpClient, uploadPath, targetSite.ScmSiteAndSlot);
-            
-            Log.Info($"Soft restarting {targetSite.SiteAndSlot}");
-            await webAppClient.WebApps.RestartAsync(targetSite, true);
         }
 
         private async Task<IDeploymentSlot> FindOrCreateSlot(IWebApp client, TargetSite site)

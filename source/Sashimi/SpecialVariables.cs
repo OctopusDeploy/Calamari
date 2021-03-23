@@ -11,8 +11,8 @@ namespace Sashimi.AzureAppService
             {
                 public static readonly string WebAppSlot = "Octopus.Action.Azure.DeploymentSlot";
                 public static readonly string ActionTypeName = "Octopus.AzureAppService";
-
                 public static readonly string AppSettings = "Octopus.Action.Azure.AppSettings";
+                public static readonly string DeploymentType = "Octopus.Action.Azure.DeploymentType";
             }
         }
     }
