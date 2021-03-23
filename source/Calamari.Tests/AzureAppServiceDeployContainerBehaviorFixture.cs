@@ -160,7 +160,7 @@ namespace Calamari.AzureAppService.Tests
         async Task AssertDeploySuccessAsync(TargetSite targetSite)
         {
             var imageName = newVariables.Get(SpecialVariables.Action.Package.PackageId);
-            var registryUrl = newVariables.Get(SpecialVariables.Action.Package.FeedId);
+            var registryUrl = newVariables.Get(SpecialVariables.Action.Package.Registry);
             var imageVersion = newVariables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
 
             var config = await webMgmtClient.WebApps.GetConfigurationAsync(targetSite);
@@ -178,10 +178,11 @@ namespace Calamari.AzureAppService.Tests
             vars.Add(AccountVariables.SubscriptionId, subscriptionId);
             vars.Add("Octopus.Action.Azure.ResourceGroupName", resourceGroupName);
             vars.Add("Octopus.Action.Azure.WebAppName", webappName);
-            vars.Add(SpecialVariables.Action.Package.FeedId, "https://index.docker.io");
+            vars.Add(SpecialVariables.Action.Package.FeedId, "Feeds-42");
+            vars.Add(SpecialVariables.Action.Package.Registry, "https://index.docker.io");
             vars.Add(SpecialVariables.Action.Package.PackageId, "nginx");
             vars.Add(SpecialVariables.Action.Package.PackageVersion, "latest");
-            vars.Add(SpecialVariables.Action.Azure.DeploymentType, "ImageDeploy");
+            vars.Add(SpecialVariables.Action.Azure.DeploymentType, "Container");
             //vars.Add(SpecialVariables.Action.Azure.ContainerSettings, BuildContainerConfigJson());
 
         }

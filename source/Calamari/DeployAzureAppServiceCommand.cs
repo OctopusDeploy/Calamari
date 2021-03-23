@@ -14,6 +14,7 @@ namespace Calamari.AzureAppService
         {
             yield return resolver.Create<AppDeployBehavior>();
             yield return resolver.Create<AzureAppServiceSettingsBehaviour>();
+            yield return resolver.Create<RestartAzureWebAppBehaviour>();
         }
     }
 }

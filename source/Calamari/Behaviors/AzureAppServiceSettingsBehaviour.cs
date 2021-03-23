@@ -75,9 +75,6 @@ namespace Calamari.AzureAppService.Behaviors
 
             // publish defined settings (automatically merges with existing settings
             await PublishAppSettings(webAppClient, targetSite, appSettings, token);
-
-            Log.Info($"Soft restarting {webAppName} in resource group {resourceGroupName}");
-            await webAppClient.WebApps.RestartAsync(targetSite, true);
         }
 
         /// <summary>

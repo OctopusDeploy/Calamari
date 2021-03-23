@@ -6,7 +6,7 @@ namespace Sashimi.AzureAppService
 {
     class AzureAppServiceActionHandler : IActionHandler
     {
-        private const string AzureWebAppDeploymentTargetTypeId = "AzureWebApp";
+        const string AzureWebAppDeploymentTargetTypeId = "AzureWebApp";
 
         public string Id => SpecialVariables.Action.Azure.ActionTypeName;
 
@@ -34,8 +34,16 @@ namespace Sashimi.AzureAppService
                         $"The machine {context.DeploymentTargetName.SomeOr("<unknown>")} will not be deployed to because it is not an Azure Web Application deployment target");
             }
 
-            return context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-app-service").WithAzureTools(context)
-                .WithStagedPackageArgument().Execute();
+            var commandBuilder = context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-app-service")
+                .WithAzureTools(context);
+
+            // If we are deploying a container image, then there won't be a staged package
+            if (!context.Variables.Get(SpecialVariables.Action.Azure.DeploymentType, "").Equals("Container"))
+            {
+                commandBuilder = commandBuilder.WithStagedPackageArgument();
+            }
+
+            return commandBuilder.Execute();
         }
     }
 }
