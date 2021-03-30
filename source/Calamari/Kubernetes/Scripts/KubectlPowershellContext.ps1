@@ -1,4 +1,4 @@
-﻿## Octopus Kubernetes Context script
+## Octopus Kubernetes Context script
 ## --------------------------------------------------------------------------------------
 ##
 ## This script is used to configure the default kubectl context for this step.
@@ -177,6 +177,7 @@ function SetupContext {
 		else
 		{
 			& az aks get-credentials --admin --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG --overwrite-existing
+			$K8S_Azure_Cluster += "-admin"
 		}
 		& $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace=$K8S_Namespace
 	} else {
@@ -316,6 +317,7 @@ CreateNamespace
 if ($K8S_OutputKubeConfig -eq $true) {
 	& $Kubectl_Exe config view
 }
+Write-Verbose "Ray changes"
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
 Write-Host "##octopus[stdout-default]"
 
