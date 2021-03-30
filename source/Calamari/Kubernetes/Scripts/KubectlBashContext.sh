@@ -107,6 +107,7 @@ function setup_context {
       az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $KUBECONFIG --overwrite-existing
     else
       az aks get-credentials --admin --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $KUBECONFIG --overwrite-existing
+      K8S_Azure_Cluster+="-admin"
     fi
     kubectl config set-context $K8S_Azure_Cluster --namespace=$Octopus_K8S_Namespace
   else
