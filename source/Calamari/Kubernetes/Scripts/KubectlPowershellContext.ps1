@@ -317,7 +317,6 @@ CreateNamespace
 if ($K8S_OutputKubeConfig -eq $true) {
 	& $Kubectl_Exe config view
 }
-Write-Verbose "Ray changes"
 Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
 Write-Host "##octopus[stdout-default]"
 
