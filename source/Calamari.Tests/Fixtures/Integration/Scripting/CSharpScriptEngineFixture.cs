@@ -1,7 +1,6 @@
 using System.IO;
 using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -11,7 +10,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     public class CSharpScriptEngineFixture : ScriptEngineFixtureBase
     {
         [Category(TestCategory.ScriptingSupport.ScriptCS)]
-        [Test, RequiresMonoVersion400OrAbove, RequiresDotNet45]
+        [Test, RequiresMonoVersion400OrAbove, RequiresDotNet45, RequiresMonoVersionBefore(5, 14, 0)]
         public void CSharpDecryptsVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "cs")))
