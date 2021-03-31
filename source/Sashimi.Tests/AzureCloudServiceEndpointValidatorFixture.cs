@@ -3,8 +3,8 @@ using System.Security.Cryptography.X509Certificates;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
-using Octopus.Data.Resources;
 using Octopus.Diagnostics;
+using Octopus.Server.MessageContracts;
 using Sashimi.AzureCloudService.Endpoints;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Tests.Shared.Extensions;
@@ -83,7 +83,7 @@ namespace Sashimi.AzureCloudService.Tests
 
             var cert = GenerateCertificate();
 
-            accountResource.CertificateBytes = new SensitiveValue()
+            accountResource.CertificateBytes = new SensitiveValue
             {
                 HasValue = true,
                 NewValue = Convert.ToBase64String(cert.Export(X509ContentType.Cert))

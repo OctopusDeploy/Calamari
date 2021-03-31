@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using Octopus.Data.Resources.Attributes;
+using Octopus.Server.MessageContracts.Attributes;
 using Sashimi.Server.Contracts.Endpoints;
 
 #nullable disable
