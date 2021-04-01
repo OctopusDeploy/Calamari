@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using Calamari.Deployment;
-using Calamari.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.ScriptCS
 {
@@ -13,7 +10,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
     [Category(TestCategory.ScriptingSupport.ScriptCS)]
     public class ScriptCSFixture : CalamariFixture
     {
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
         public void ShouldPrintEncodedVariable()
         {
             var (output, _) = RunScript("PrintEncodedVariable.csx");
@@ -22,7 +19,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
         
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
         public void ShouldPrintSensitiveVariable()
         {
             var (output, _) = RunScript("PrintSensitiveVariable.csx");
@@ -31,7 +28,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
         }
 
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
         public void ShouldCreateArtifact()
         {
             var (output, _) = RunScript("CreateArtifact.csx");
@@ -41,7 +38,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             output.AssertOutput("name='bXlGaWxlLnR4dA==' length='MTAw']");
         }
         
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
         public void ShouldUpdateProgress()
         {
             var (output, _) = RunScript("UpdateProgress.csx");
@@ -50,7 +47,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
         }
 
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
         public void ShouldCallHello()
         {
             var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
@@ -67,7 +64,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
             output.AssertProcessNameAndId("scriptcs");
         }
 
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove]
+        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
