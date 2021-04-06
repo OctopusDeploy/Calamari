@@ -39,7 +39,12 @@ namespace Calamari.LaunchTools
                 var variablesAsJson = variables.CloneAndEvaluate().SaveAsString();
                 File.WriteAllBytes(variableFile.FilePath, new AesEncryption(options.InputVariables.SensitiveVariablesPassword).Encrypt(variablesAsJson));
                 var commandLineInvocation = new CommandLineInvocation(BuildNodePath(pathToNode),
-                                                                      BuildArgs(Path.Combine(pathToBootstrapper, "bootstrapper.js"), Path.Combine(pathToStepPackage, instructions.TargetEntryPoint), variableFile.FilePath, options.InputVariables.SensitiveVariablesPassword))
+                                                                      BuildArgs(
+                                                                                Path.Combine(pathToBootstrapper, "bootstrapper.js"),
+                                                                                Path.Combine(pathToStepPackage, instructions.TargetEntryPoint),
+                                                                                variableFile.FilePath,
+                                                                                options.InputVariables.SensitiveVariablesPassword,
+                                                                                instructions.InputsVariable))
                 {
                     WorkingDirectory = runningDeployment.CurrentDirectory,
                     OutputToLog = true,
@@ -53,8 +58,8 @@ namespace Calamari.LaunchTools
 
         static string BuildNodePath(string pathToNode) => CalamariEnvironment.IsRunningOnWindows ? Path.Combine(pathToNode, "node.exe") : Path.Combine(pathToNode, "bin", "node");
 
-        static string BuildArgs(string pathToBootstrapper, string pathToStepPackage, string pathToSensitiveVariables, string sensitiveVariablesSecret) =>
-            $"\"{pathToBootstrapper}\" \"{pathToStepPackage}\" \"{pathToSensitiveVariables}\" {sensitiveVariablesSecret}";
+        static string BuildArgs(string pathToBootstrapper, string pathToStepPackage, string pathToSensitiveVariables, string sensitiveVariablesSecret, string inputsKey) =>
+            $"\"{pathToBootstrapper}\" \"{pathToStepPackage}\" \"{pathToSensitiveVariables}\" \"{sensitiveVariablesSecret}\" \"{inputsKey}\"";
     }
 
     public class NodeInstructions
@@ -63,5 +68,6 @@ namespace Calamari.LaunchTools
         public string TargetPathVariable { get; set; }
         public string BootstrapperPathVariable { get; set; }
         public string TargetEntryPoint { get; set; }
+        public string InputsVariable { get; }
     }
 }
