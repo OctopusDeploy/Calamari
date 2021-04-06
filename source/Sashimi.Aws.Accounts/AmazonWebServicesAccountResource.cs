@@ -1,6 +1,6 @@
 #nullable disable
-using Octopus.Data.Resources;
-using Octopus.Data.Resources.Attributes;
+using Octopus.Server.MessageContracts;
+using Octopus.Server.MessageContracts.Attributes;
 using Sashimi.Server.Contracts.Accounts;
 
 namespace Sashimi.Aws.Accounts

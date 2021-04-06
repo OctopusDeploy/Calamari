@@ -1,6 +1,6 @@
-﻿﻿using Octopus.Data.Resources;
+﻿using Octopus.Server.MessageContracts;
 
- namespace Sashimi.Server.Contracts.Endpoints
+namespace Sashimi.Server.Contracts.Endpoints
 {
     public abstract class EndpointResource : Resource
     {
