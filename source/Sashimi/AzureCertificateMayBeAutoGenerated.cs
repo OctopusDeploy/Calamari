@@ -1,5 +1,5 @@
 using System;
-using Octopus.Data.Resources;
+using Octopus.Server.MessageContracts;
 using Sashimi.Server.Contracts.Accounts;
 
 namespace Sashimi.AzureCloudService
