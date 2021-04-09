@@ -3,7 +3,6 @@ using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Tests.Helpers;
 using NSubstitute;
@@ -36,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         [Test]
         public void ShouldNotRunIfFeatureNotEnabled()
         {
-            var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, new InMemoryLog()));
+            var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, deployment.Variables, replacer, new InMemoryLog()));
             convention.Install(deployment);
             replacer.DidNotReceiveWithAnyArgs().ModifyConfigurationFile(null, null);
         }
@@ -46,7 +45,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             deployment.Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationVariables);
             deployment.Variables.Set(KnownVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings, "false");
-            var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, new InMemoryLog()));
+            var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, deployment.Variables,replacer, new InMemoryLog()));
             convention.Install(deployment);
             replacer.DidNotReceiveWithAnyArgs().ModifyConfigurationFile(null, null);
         }
@@ -56,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             deployment.Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationVariables);
             deployment.Variables.Set(KnownVariables.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings, "true");
-            var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, replacer, new InMemoryLog()));
+            var convention = new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, deployment.Variables,replacer, new InMemoryLog()));
             convention.Install(deployment);
             replacer.Received().ModifyConfigurationFile("C:\\App\\MyApp\\Web.config", deployment.Variables);
             replacer.Received().ModifyConfigurationFile("C:\\App\\MyApp\\Web.Release.config", deployment.Variables);

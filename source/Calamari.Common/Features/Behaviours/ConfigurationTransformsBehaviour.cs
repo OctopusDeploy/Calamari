@@ -17,13 +17,15 @@ namespace Calamari.Common.Features.Behaviours
     public class ConfigurationTransformsBehaviour : IBehaviour
     {
         readonly ICalamariFileSystem fileSystem;
+        readonly IVariables variables;
         readonly IConfigurationTransformer configurationTransformer;
         readonly ITransformFileLocator transformFileLocator;
         readonly ILog log;
 
-        public ConfigurationTransformsBehaviour(ICalamariFileSystem fileSystem, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog log)
+        public ConfigurationTransformsBehaviour(ICalamariFileSystem fileSystem, IVariables variables, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog log)
         {
             this.fileSystem = fileSystem;
+            this.variables = variables;
             this.configurationTransformer = configurationTransformer;
             this.transformFileLocator = transformFileLocator;
             this.log = log;
@@ -36,47 +38,52 @@ namespace Calamari.Common.Features.Behaviours
 
         public Task Execute(RunningDeployment deployment)
         {
-            var explicitTransforms = GetExplicitTransforms(deployment);
-            var automaticTransforms = GetAutomaticTransforms(deployment);
-            var sourceExtensions = GetSourceExtensions(deployment, explicitTransforms);
+            DoTransforms(deployment.CurrentDirectory);
+
+            return this.CompletedTask();
+        }
+
+        public void DoTransforms(string currentDirectory)
+        {
+            var explicitTransforms = GetExplicitTransforms();
+            var automaticTransforms = GetAutomaticTransforms();
+            var sourceExtensions = GetSourceExtensions(explicitTransforms);
 
             var allTransforms = explicitTransforms.Concat(automaticTransforms).ToList();
             var transformDefinitionsApplied = new List<XmlConfigTransformDefinition>();
             var duplicateTransformDefinitions = new List<XmlConfigTransformDefinition>();
             var transformFilesApplied = new HashSet<Tuple<string, string>>();
-            var diagnosticLoggingEnabled = deployment.Variables.GetFlag(KnownVariables.Package.EnableDiagnosticsConfigTransformationLogging);
+            var diagnosticLoggingEnabled = variables.GetFlag(KnownVariables.Package.EnableDiagnosticsConfigTransformationLogging);
 
             if (diagnosticLoggingEnabled)
-                log.Verbose($"Recursively searching for transformation files that match {string.Join(" or ", sourceExtensions)} in folder '{deployment.CurrentDirectory}'");
-            foreach (var configFile in MatchingFiles(deployment, sourceExtensions))
+                log.Verbose($"Recursively searching for transformation files that match {string.Join(" or ", sourceExtensions)} in folder '{currentDirectory}'");
+            foreach (var configFile in MatchingFiles(currentDirectory, sourceExtensions))
             {
                 if (diagnosticLoggingEnabled)
                     log.Verbose($"Found config file '{configFile}'");
                 ApplyTransformations(configFile, allTransforms, transformFilesApplied,
-                    transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, deployment);
+                                     transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, currentDirectory);
             }
 
             LogFailedTransforms(explicitTransforms, automaticTransforms, transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled);
-            deployment.Variables.SetStrings(KnownVariables.AppliedXmlConfigTransforms, transformFilesApplied.Select(t => t.Item1), "|");
-
-            return this.CompletedTask();
+            variables.SetStrings(KnownVariables.AppliedXmlConfigTransforms, transformFilesApplied.Select(t => t.Item1), "|");
         }
 
-        static List<XmlConfigTransformDefinition> GetAutomaticTransforms(RunningDeployment deployment)
+        List<XmlConfigTransformDefinition> GetAutomaticTransforms()
         {
             var result = new List<XmlConfigTransformDefinition>();
-            if (deployment.Variables.GetFlag(KnownVariables.Package.AutomaticallyRunConfigurationTransformationFiles))
+            if (variables.GetFlag(KnownVariables.Package.AutomaticallyRunConfigurationTransformationFiles))
             {
                 result.Add(new XmlConfigTransformDefinition("Release"));
 
-                var environment = deployment.Variables.Get(
+                var environment = variables.Get(
                     DeploymentEnvironment.Name);
                 if (!string.IsNullOrWhiteSpace(environment))
                 {
                     result.Add(new XmlConfigTransformDefinition(environment));
                 }
 
-                var tenant = deployment.Variables.Get(DeploymentVariables.Tenant.Name);
+                var tenant = variables.Get(DeploymentVariables.Tenant.Name);
                 if (!string.IsNullOrWhiteSpace(tenant))
                 {
                     result.Add(new XmlConfigTransformDefinition(tenant));
@@ -85,9 +92,9 @@ namespace Calamari.Common.Features.Behaviours
             return result;
         }
 
-        static List<XmlConfigTransformDefinition> GetExplicitTransforms(RunningDeployment deployment)
+        List<XmlConfigTransformDefinition> GetExplicitTransforms()
         {
-            var transforms = deployment.Variables.Get(KnownVariables.Package.AdditionalXmlConfigurationTransforms);
+            var transforms = variables.Get(KnownVariables.Package.AdditionalXmlConfigurationTransforms);
 
             if (string.IsNullOrWhiteSpace(transforms))
                 return new List<XmlConfigTransformDefinition>();
@@ -106,7 +113,7 @@ namespace Calamari.Common.Features.Behaviours
             IList<XmlConfigTransformDefinition> transformDefinitionsApplied,
             IList<XmlConfigTransformDefinition> duplicateTransformDefinitions,
             bool diagnosticLoggingEnabled,
-            RunningDeployment deployment)
+            string currentDirectory)
         {
             foreach (var transformation in transformations)
             {
@@ -122,7 +129,7 @@ namespace Calamari.Common.Features.Behaviours
                 try
                 {
                     ApplyTransformations(sourceFile, transformation, transformFilesApplied,
-                        transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, deployment);
+                        transformDefinitionsApplied, duplicateTransformDefinitions, diagnosticLoggingEnabled, currentDirectory);
                 }
                 catch (Exception)
                 {
@@ -138,12 +145,12 @@ namespace Calamari.Common.Features.Behaviours
             ICollection<XmlConfigTransformDefinition> transformDefinitionsApplied,
             ICollection<XmlConfigTransformDefinition> duplicateTransformDefinitions,
             bool diagnosticLoggingEnabled,
-            RunningDeployment deployment)
+            string currentDirectory)
         {
             if (transformation == null)
                 return;
 
-            var transformFileNames = transformFileLocator.DetermineTransformFileNames(sourceFile, transformation, diagnosticLoggingEnabled, deployment)
+            var transformFileNames = transformFileLocator.DetermineTransformFileNames(sourceFile, transformation, diagnosticLoggingEnabled, currentDirectory)
                 .Distinct()
                 .ToArray();
 
@@ -167,11 +174,11 @@ namespace Calamari.Common.Features.Behaviours
             }
         }
 
-        static string[] GetSourceExtensions(RunningDeployment deployment, List<XmlConfigTransformDefinition> transformDefinitions)
+        string[] GetSourceExtensions(List<XmlConfigTransformDefinition> transformDefinitions)
         {
             var extensions = new HashSet<string>();
 
-            if (deployment.Variables.GetFlag(KnownVariables.Package.AutomaticallyRunConfigurationTransformationFiles))
+            if (variables.GetFlag(KnownVariables.Package.AutomaticallyRunConfigurationTransformationFiles))
             {
                 extensions.Add("*.config");
             }
@@ -212,11 +219,11 @@ namespace Calamari.Common.Features.Behaviours
             return Path.GetFileName(path);
         }
 
-        List<string> MatchingFiles(RunningDeployment deployment, string[] sourceExtensions)
+        List<string> MatchingFiles(string currentDirectory, string[] sourceExtensions)
         {
-            var files = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, sourceExtensions).ToList();
+            var files = fileSystem.EnumerateFilesRecursively(currentDirectory, sourceExtensions).ToList();
 
-            foreach (var path in deployment.Variables.GetStrings(ActionVariables.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
+            foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
             {
                 var pathFiles = fileSystem.EnumerateFilesRecursively(path, sourceExtensions);
                 files.AddRange(pathFiles);

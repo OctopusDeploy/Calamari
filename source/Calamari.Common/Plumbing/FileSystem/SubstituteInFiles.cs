@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Commands;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -24,34 +23,34 @@ namespace Calamari.Common.Plumbing.FileSystem
             this.variables = variables;
         }
 
-        public void SubstituteBasedSettingsInSuppliedVariables(RunningDeployment deployment)
+        public void SubstituteBasedSettingsInSuppliedVariables(string currentDirectory)
         {
             var filesToTarget = variables.GetPaths(PackageVariables.SubstituteInFilesTargets);
-            Substitute(deployment, filesToTarget);
+            Substitute(currentDirectory, filesToTarget);
         }
 
-        public void Substitute(RunningDeployment deployment, IList<string> filesToTarget, bool warnIfFileNotFound = true)
+        public void Substitute(string currentDirectory, IList<string> filesToTarget, bool warnIfFileNotFound = true)
         {
             foreach (var target in filesToTarget)
             {
-                var matchingFiles = MatchingFiles(deployment, target);
+                var matchingFiles = MatchingFiles(currentDirectory, target);
 
                 if (!matchingFiles.Any())
                 {
-                    if (warnIfFileNotFound && deployment.Variables.GetFlag(PackageVariables.EnableNoMatchWarning, true))
+                    if (warnIfFileNotFound && variables.GetFlag(PackageVariables.EnableNoMatchWarning, true))
                         log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
 
                     continue;
                 }
 
                 foreach (var file in matchingFiles)
-                    substituter.PerformSubstitution(file, deployment.Variables);
+                    substituter.PerformSubstitution(file, variables);
             }
         }
 
-        List<string> MatchingFiles(RunningDeployment deployment, string target)
+        List<string> MatchingFiles(string currentDirectory, string target)
         {
-            var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
+            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target).Select(Path.GetFullPath).ToList();
 
             foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths)
                 .Where(s => !string.IsNullOrWhiteSpace(s)))

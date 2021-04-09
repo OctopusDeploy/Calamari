@@ -40,23 +40,23 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             replacer.IsBestReplacerForFileName(Arg.Any<string>()).Returns(true);
 
             var log = new InMemoryLog();
-            var service = new StructuredConfigVariablesService(new []
-            {
-                replacer
-            }, fileSystem, log);
-
             var variables = new CalamariVariables();
             variables.Set(ActionVariables.AdditionalPaths, AdditionalPath);
             variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
             variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, FileName);
             variables.Set(PackageVariables.CustomInstallationDirectory, CurrentPath);
 
+            var service = new StructuredConfigVariablesService(new []
+            {
+                replacer
+            }, variables, fileSystem, log);
+
             var deployment = new RunningDeployment(CurrentPath, variables)
             {
                 CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory
             };
 
-            service.ReplaceVariables(deployment);
+            service.ReplaceVariables(deployment.CurrentDirectory);
 
             replacerAssertions?.Invoke(replacer);
             logAssertions?.Invoke(log);

@@ -22,7 +22,7 @@ namespace Calamari.Common.Features.ConfigurationTransforms
             this.log = log;
         }
 
-        public IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled, RunningDeployment deployment)
+        public IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled, string currentDirectory)
         {
             var defaultTransformFileName = DetermineTransformFileName(sourceFile, transformation, true);
             var transformFileName = DetermineTransformFileName(sourceFile, transformation, false);
@@ -52,7 +52,7 @@ namespace Calamari.Common.Features.ConfigurationTransforms
             {
                 foreach (var transformFile in enumerateFiles)
                 {
-                    var sourceFileName = GetSourceFileName(sourceFile, transformation, transformFileName, transformFile, deployment);
+                    var sourceFileName = GetSourceFileName(sourceFile, transformation, transformFileName, transformFile, currentDirectory);
 
                     if (transformation.Advanced && !transformation.IsSourceWildcard &&
                         !string.Equals(transformation.SourcePattern, sourceFileName, StringComparison.OrdinalIgnoreCase))
@@ -97,12 +97,12 @@ namespace Calamari.Common.Features.ConfigurationTransforms
         }
 
         private string GetSourceFileName(string sourceFile, XmlConfigTransformDefinition transformation,
-            string transformFileName, string transformFile, RunningDeployment deployment)
+            string transformFileName, string transformFile, string currentDirectory)
         {
             var sourcePattern = transformation.SourcePattern ?? "";
             if (Path.IsPathRooted(transformFileName) && sourcePattern.StartsWith("." + Path.DirectorySeparatorChar))
             {
-                var path = fileSystem.GetRelativePath(deployment.CurrentDirectory, sourceFile);
+                var path = fileSystem.GetRelativePath(currentDirectory, sourceFile);
                 return "." + path.Substring(path.IndexOf(Path.DirectorySeparatorChar));
             }
 

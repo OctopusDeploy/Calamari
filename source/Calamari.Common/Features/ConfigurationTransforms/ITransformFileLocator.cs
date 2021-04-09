@@ -6,6 +6,6 @@ namespace Calamari.Common.Features.ConfigurationTransforms
 {
     public interface ITransformFileLocator
     {
-        IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled, RunningDeployment deployment);
+        IEnumerable<string> DetermineTransformFileNames(string sourceFile, XmlConfigTransformDefinition transformation, bool diagnosticLoggingEnabled, string currentDirectory);
     }
 }
