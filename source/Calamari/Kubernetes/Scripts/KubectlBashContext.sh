@@ -12,6 +12,10 @@ Octopus_K8S_Client_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.Ce
 Octopus_K8S_Client_Cert_Key=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPem")
 Octopus_K8S_Server_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.CertificateAuthority")
 Octopus_K8S_Server_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Server_Cert}.CertificatePem")
+Octopus_K8s_Server_Cert_Path=$(get_octopusvariable "Octopus.Action.Kubernetes.PodServiceAccountTokenPath")
+Octopus_K8s_Pod_Service_Account_Token_Path=$(get_octopusvariable "Octopus.Action.Kubernetes.PodServiceAccountTokenPath")
+echo >&2 $Octopus_K8s_Server_Cert_Path
+echo >&2 $Octopus_K8s_Pod_Service_Account_Token_Path
 
 function check_app_exists {
 	command -v $1 > /dev/null 2>&1
@@ -71,7 +75,7 @@ function setup_context {
     exit 1
   fi
 
-  if [[ -z $Octopus_AccountType && -z $Octopus_K8S_Client_Cert && ${Octopus_EKS_Use_Instance_Role,,} != "true" ]]; then
+  if [[ -z $Octopus_AccountType && -z $Octopus_K8S_Client_Cert && -z $Octopus_K8s_Pod_Service_Account_Token_Path && ${Octopus_EKS_Use_Instance_Role,,} != "true" ]]; then
     echo >&2 "Kubernetes account type or certificate is missing"
     exit 1
   fi
