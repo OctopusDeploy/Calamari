@@ -123,29 +123,35 @@ function setup_context {
       K8S_Azure_Cluster+="-admin"
     fi
     kubectl config set-context $K8S_Azure_Cluster --namespace=$Octopus_K8S_Namespace
+  elif [[ $IsUsingPodServiceAccount ]]; then
+    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using Pod Service Account"
+    kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl --certificate-authority=${Octopus_K8s_Server_Cert_Path}
+    kubectl config set-context octocontext --user=octouser --cluster=octocluster --namespace=$Octopus_K8S_Namespace
+    kubectl config use-context octocontext
+    kubectl config set-credentials octouser --token=$Octopus_K8s_Pod_Service_Account_Token
   else
     kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl
     kubectl config set-context octocontext --user=octouser --cluster=octocluster --namespace=$Octopus_K8S_Namespace
     kubectl config use-context octocontext
 
     if [[ ! -z $Octopus_K8S_Client_Cert ]]; then
-    if [[ -z $Octopus_K8S_Client_Cert_Pem ]]; then
-      echo 2> "Kubernetes client certificate does not include the certificate data"
-      exit 1
-    fi
-
-    if [[ -z $Octopus_K8S_Client_Cert_Key ]]; then
-      echo 2> "Kubernetes client certificate does not include the private key data"
-      exit 1
-    fi
-
-    Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Client_Cert_Pem" | base64 $base64_args)
-    Octopus_K8S_Client_Cert_Key_Encoded=$(echo "$Octopus_K8S_Client_Cert_Key" | base64 $base64_args)
-
-    set_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPemBase64" $Octopus_K8S_Client_Cert_Key_Encoded -sensitive
-
-    kubectl config set users.octouser.client-certificate-data "$Octopus_K8S_Client_Cert_Pem_Encoded"
-    kubectl config set users.octouser.client-key-data "$Octopus_K8S_Client_Cert_Key_Encoded"
+      if [[ -z $Octopus_K8S_Client_Cert_Pem ]]; then
+        echo 2> "Kubernetes client certificate does not include the certificate data"
+        exit 1
+      fi
+  
+      if [[ -z $Octopus_K8S_Client_Cert_Key ]]; then
+        echo 2> "Kubernetes client certificate does not include the private key data"
+        exit 1
+      fi
+  
+      Octopus_K8S_Client_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Client_Cert_Pem" | base64 $base64_args)
+      Octopus_K8S_Client_Cert_Key_Encoded=$(echo "$Octopus_K8S_Client_Cert_Key" | base64 $base64_args)
+  
+      set_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPemBase64" $Octopus_K8S_Client_Cert_Key_Encoded -sensitive
+  
+      kubectl config set users.octouser.client-certificate-data "$Octopus_K8S_Client_Cert_Pem_Encoded"
+      kubectl config set users.octouser.client-key-data "$Octopus_K8S_Client_Cert_Key_Encoded"
     fi
 
     if [[ ! -z $Octopus_K8S_Server_Cert ]]; then
