@@ -72,16 +72,21 @@ function setup_context {
     echo >&2 "Kubernetes cluster URL is missing"
     exit 1
   fi
-
+  
   if [[ -z $Octopus_AccountType && -z $Octopus_K8S_Client_Cert && ${Octopus_EKS_Use_Instance_Role,,} != "true" ]]; then
-    if (-z $Octopus_K8s_Pod_Service_Account_Token_Path && -z Octopus_K8s_Server_Cert_Path) then
+    if (-z $Octopus_K8s_Pod_Service_Account_Token_Path && -z $Octopus_K8s_Server_Cert_Path) then
       echo >&2 "Kubernetes account type or certificate is missing"
       exit 1
     fi
-    Octopus_K8s_Pod_Service_Account_Token=$(cat ${Octopus_K8s_Pod_Service_Account_Token_Path})
-    Octopus_K8s_Server_Cert=$(cat ${Octopus_K8s_Server_Cert_Path})
-    echo >&2 "${Octopus_K8s_Pod_Service_Account_Token}"
-    echo >&2 "${Octopus_K8s_Server_Cert}"
+    
+    Octopus_K8s_Pod_Service_Account_Token=$(cat ${Octopus_K8s_Pod_Service_Account_Token_Path} | base64 $base64_args)
+    Octopus_K8s_Server_Cert=$(cat ${Octopus_K8s_Server_Cert_Path} | base64 $base64_args)
+    if [[ -z $Octopus_K8s_Pod_Service_Account_Token || -z $Octopus_K8s_Server_Cert ]]; then
+      echo >&2 "Pod service token file or certificate authority file is missing"
+      exit 1
+    else
+      IsUsingPodServiceAccount=true
+    fi
   fi
 
   if [[ -z $Octopus_K8S_Namespace ]]; then
@@ -144,57 +149,57 @@ function setup_context {
     fi
 
     if [[ ! -z $Octopus_K8S_Server_Cert ]]; then
-    if [[ -z $Octopus_K8S_Server_Cert_Pem ]]; then
-      echo 2> "Kubernetes server certificate does not include the certificate data"
-      exit 1
-    fi
-
-    Octopus_K8S_Server_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Server_Cert_Pem" | base64 $base64_args)
-    kubectl config set clusters.octocluster.certificate-authority-data "$Octopus_K8S_Server_Cert_Pem_Encoded"
-    else
-    kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification
-    fi
-
-    if [[ "$Octopus_AccountType" == "Token" ]]; then
-    Octopus_K8S_Token=$(get_octopusvariable "Octopus.Account.Token")
-    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using a Token"
-    if [[ -z $Octopus_K8S_Token ]]; then
-      echo >2 "Kubernetes authentication Token is missing"
-      exit 1
-    fi
-    kubectl config set-credentials octouser --token=$Octopus_K8S_Token
+      if [[ -z $Octopus_K8S_Server_Cert_Pem ]]; then
+        echo 2> "Kubernetes server certificate does not include the certificate data"
+        exit 1
+      fi
+    
+      Octopus_K8S_Server_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Server_Cert_Pem" | base64 $base64_args)
+      kubectl config set clusters.octocluster.certificate-authority-data "$Octopus_K8S_Server_Cert_Pem_Encoded"
+      else
+        kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification
+      fi
+    
+      if [[ "$Octopus_AccountType" == "Token" ]]; then
+      Octopus_K8S_Token=$(get_octopusvariable "Octopus.Account.Token")
+      echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using a Token"
+      if [[ -z $Octopus_K8S_Token ]]; then
+        echo >2 "Kubernetes authentication Token is missing"
+        exit 1
+      fi
+      kubectl config set-credentials octouser --token=$Octopus_K8S_Token
     elif [[ "$Octopus_AccountType" == "UsernamePassword" ]]; then
-    Octopus_K8S_Username=$(get_octopusvariable "Octopus.Account.Username")
-    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using $Octopus_K8S_Username"
-    kubectl config set-credentials octouser --username=$Octopus_K8S_Username --password=$(get_octopusvariable "Octopus.Account.Password")
+      Octopus_K8S_Username=$(get_octopusvariable "Octopus.Account.Username")
+      echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using $Octopus_K8S_Username"
+      kubectl config set-credentials octouser --username=$Octopus_K8S_Username --password=$(get_octopusvariable "Octopus.Account.Password")
     elif [[ "$Octopus_AccountType" == "AmazonWebServicesAccount" || ${Octopus_EKS_Use_Instance_Role,,} = "true" ]]; then
-        # kubectl doesn't yet support exec authentication
-        # https://github.com/kubernetes/kubernetes/issues/64751
-        # so build this manually
-        Octopus_K8S_ClusterName=$(get_octopusvariable "Octopus.Action.Kubernetes.EksClusterName")
-        echo "Creating kubectl context to $Octopus_K8S_ClusterUrl using EKS cluster name $Octopus_K8S_ClusterName"
+      # kubectl doesn't yet support exec authentication
+      # https://github.com/kubernetes/kubernetes/issues/64751
+      # so build this manually
+      Octopus_K8S_ClusterName=$(get_octopusvariable "Octopus.Action.Kubernetes.EksClusterName")
+      echo "Creating kubectl context to $Octopus_K8S_ClusterUrl using EKS cluster name $Octopus_K8S_ClusterName"
 
-        # The call to set-cluster above will create a file with empty users. We need to call
-        # set-cluster first, because if we try to add the exec user first, set-cluster will
-        # delete those settings. So we now delete the users line (the last line of the yaml file)
-        # and add our own.
+      # The call to set-cluster above will create a file with empty users. We need to call
+      # set-cluster first, because if we try to add the exec user first, set-cluster will
+      # delete those settings. So we now delete the users line (the last line of the yaml file)
+      # and add our own.
 
-        #(Get-Content $env:KUBECONFIG) -replace 'users: \[\]', '' | Set-Content $env:KUBECONFIG
+      #(Get-Content $env:KUBECONFIG) -replace 'users: \[\]', '' | Set-Content $env:KUBECONFIG
 
-        # https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
-        echo "users:" >> $KUBECONFIG
-        echo "- name: octouser" >> $KUBECONFIG
-        echo "  user:" >> $KUBECONFIG
-        echo "    exec:" >> $KUBECONFIG
-        echo "      apiVersion: client.authentication.k8s.io/v1alpha1" >> $KUBECONFIG
-        echo "      command: aws-iam-authenticator" >> $KUBECONFIG
-        echo "      args:" >> $KUBECONFIG
-        echo "        - \"token\"" >> $KUBECONFIG
-        echo "        - \"-i\"" >> $KUBECONFIG
-        echo "        - \"$Octopus_K8S_ClusterName\"" >> $KUBECONFIG
+      # https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
+      echo "users:" >> $KUBECONFIG
+      echo "- name: octouser" >> $KUBECONFIG
+      echo "  user:" >> $KUBECONFIG
+      echo "    exec:" >> $KUBECONFIG
+      echo "      apiVersion: client.authentication.k8s.io/v1alpha1" >> $KUBECONFIG
+      echo "      command: aws-iam-authenticator" >> $KUBECONFIG
+      echo "      args:" >> $KUBECONFIG
+      echo "        - \"token\"" >> $KUBECONFIG
+      echo "        - \"-i\"" >> $KUBECONFIG
+      echo "        - \"$Octopus_K8S_ClusterName\"" >> $KUBECONFIG
     elif [[ -z $Octopus_K8S_Client_Cert ]]; then
-    echo >&2 "The account $Octopus_AccountType is currently not valid for kubectl contexts"
-    exit 1
+      echo >&2 "The account $Octopus_AccountType is currently not valid for kubectl contexts"
+      exit 1
     fi
   fi
 }
