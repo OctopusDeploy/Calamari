@@ -79,10 +79,13 @@ function setup_context {
       exit 1
     fi
     
-    Octopus_K8s_Pod_Service_Account_Token=$(cat ${Octopus_K8s_Pod_Service_Account_Token_Path} | base64 $base64_args)
-    Octopus_K8s_Server_Cert=$(cat ${Octopus_K8s_Server_Cert_Path} | base64 $base64_args)
-    if [[ -z $Octopus_K8s_Pod_Service_Account_Token || -z $Octopus_K8s_Server_Cert ]]; then
-      echo >&2 "Pod service token file or certificate authority file is missing"
+    Octopus_K8s_Pod_Service_Account_Token=$(cat ${Octopus_K8s_Pod_Service_Account_Token_Path})
+    Octopus_K8s_Server_Cert=$(cat ${Octopus_K8s_Server_Cert_Path})
+    if [[ -z $Octopus_K8s_Pod_Service_Account_Token ]]; then
+      echo >&2 "Pod service token file not found"
+      exit 1
+    elif [[ -z $Octopus_K8s_Server_Cert ]]; then
+      echo >&2 "Certificate authority file not found"
       exit 1
     else
       IsUsingPodServiceAccount=true
