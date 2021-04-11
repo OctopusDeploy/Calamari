@@ -197,7 +197,7 @@ function SetupContext {
 			$K8S_Azure_Cluster += "-admin"
 		}
 		& $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace=$K8S_Namespace
-	} elseif() {
+	} elseif($IsUsingPodServiceAccount -eq $true) {
 	  Write-Verbose "$Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl --certificate-authority=$Octopus_K8s_Server_Cert_Path"
     & $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl --certificate-authority=$Octopus_K8s_Server_Cert_Path
 
