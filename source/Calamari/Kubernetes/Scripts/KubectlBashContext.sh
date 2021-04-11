@@ -12,7 +12,7 @@ Octopus_K8S_Client_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.Ce
 Octopus_K8S_Client_Cert_Key=$(get_octopusvariable "${Octopus_K8S_Client_Cert}.PrivateKeyPem")
 Octopus_K8S_Server_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.CertificateAuthority")
 Octopus_K8S_Server_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Server_Cert}.CertificatePem")
-Octopus_K8s_Server_Cert_Path=$(get_octopusvariable "Octopus.Action.Kubernetes.PodServiceAccountTokenPath")
+Octopus_K8s_Server_Cert_Path=$(get_octopusvariable "Octopus.Action.Kubernetes.CertificateAuthorityPath")
 Octopus_K8s_Pod_Service_Account_Token_Path=$(get_octopusvariable "Octopus.Action.Kubernetes.PodServiceAccountTokenPath")
 echo >&2 $Octopus_K8s_Server_Cert_Path
 echo >&2 $Octopus_K8s_Pod_Service_Account_Token_Path
