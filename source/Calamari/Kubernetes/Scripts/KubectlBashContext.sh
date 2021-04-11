@@ -74,7 +74,7 @@ function setup_context {
   fi
   
   if [[ -z $Octopus_AccountType && -z $Octopus_K8S_Client_Cert && ${Octopus_EKS_Use_Instance_Role,,} != "true" ]]; then
-    if (-z $Octopus_K8s_Pod_Service_Account_Token_Path && -z $Octopus_K8s_Server_Cert_Path) then
+    if [[ -z $Octopus_K8s_Pod_Service_Account_Token_Path && -z $Octopus_K8s_Server_Cert_Path ]] then
       echo >&2 "Kubernetes account type or certificate is missing"
       exit 1
     fi
