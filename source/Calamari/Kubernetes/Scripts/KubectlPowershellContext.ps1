@@ -29,6 +29,9 @@ $K8S_Client_Cert_Pem = $OctopusParameters["$($K8S_Client_Cert).CertificatePem"]
 $K8S_Client_Cert_Key = $OctopusParameters["$($K8S_Client_Cert).PrivateKeyPem"]
 $K8S_Server_Cert = $OctopusParameters["Octopus.Action.Kubernetes.CertificateAuthority"]
 $K8S_Server_Cert_Pem = $OctopusParameters["$($K8S_Server_Cert).CertificatePem"]
+$Octopus_K8s_Server_Cert_Path = $OctopusParameters["Octopus.Action.Kubernetes.CertificateAuthorityPath"]
+$Octopus_K8s_Pod_Service_Account_Token_Path = $OctopusParameters["Octopus.Action.Kubernetes.PodServiceAccountTokenPath"]
+$IsUsingPodServiceAccount = $false
 $Kubectl_Exe=GetKubectl
 
 $OctopusAzureSubscriptionId = $OctopusParameters["Octopus.Action.Azure.SubscriptionId"]
@@ -134,13 +137,27 @@ function ConnectAzAccount {
 
 function SetupContext {
 	if($K8S_AccountType -ne "AzureServicePrincipal" -and [string]::IsNullOrEmpty($K8S_ClusterUrl)){
-		Write-Error "Kubernetes cluster URL is missing"
-		Exit 1
+    Write-Error "Kubernetes cluster URL is missing"
+    Exit 1
 	}
 
 	if([string]::IsNullOrEmpty($K8S_AccountType) -and [string]::IsNullOrEmpty($K8S_Client_Cert) -and $EKS_Use_Instance_Role -ine "true"){
-		Write-Error "Kubernetes account type or certificate is missing"
-		Exit 1
+	  if([string]::IsNullOrEmpty($Octopus_K8s_Pod_Service_Account_Token_Path) -and [string]::IsNullOrEmpty($Octopus_K8s_Server_Cert_Path)){
+	    Write-Error "Kubernetes account type or certificate is missing"
+    	Exit 1
+	  }
+		
+		$Octopus_K8s_Pod_Service_Account_Token = Get-Content -Path $Octopus_K8s_Pod_Service_Account_Token_Path
+		$Octopus_K8s_Server_Cert = Get-Content -Path $Octopus_K8s_Server_Cert_Path
+		if([string]::IsNullOrEmpty($Octopus_K8s_Pod_Service_Account_Token)){
+		  Write-Error "Pod service token file not found"
+      Exit 1
+		} elseif([string]::IsNullOrEmpty($Octopus_K8s_Server_Cert)){
+      Write-Error "Certificate authority file not found"
+      Exit 1
+    } else {
+      $IsUsingPodServiceAccount = $true
+    }
 	}
 
 	if([string]::IsNullOrEmpty($K8S_Namespace)){
@@ -180,6 +197,18 @@ function SetupContext {
 			$K8S_Azure_Cluster += "-admin"
 		}
 		& $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace=$K8S_Namespace
+	} elseif() {
+	  Write-Verbose "$Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl --certificate-authority=$Octopus_K8s_Server_Cert_Path"
+    & $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl --certificate-authority=$Octopus_K8s_Server_Cert_Path
+
+    Write-Verbose "$Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace"
+    & $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace
+
+    Write-Verbose "$Kubectl_Exe config use-context octocontext"
+    & $Kubectl_Exe config use-context octocontext
+    
+    Write-Verbose "$Kubectl_Exe config set-credentials octouser --token=$Octopus_K8s_Pod_Service_Account_Token"
+    & $Kubectl_Exe config set-credentials octouser --token=$Octopus_K8s_Pod_Service_Account_Token
 	} else {
 		Write-Verbose "$Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl"
 		& $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl

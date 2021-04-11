@@ -128,7 +128,7 @@ function setup_context {
     kubectl config set-context $K8S_Azure_Cluster --namespace=$Octopus_K8S_Namespace
   elif [[ $IsUsingPodServiceAccount ]]; then
     echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using Pod Service Account"
-    kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl --certificate-authority=${Octopus_K8s_Server_Cert_Path}
+    kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl --certificate-authority=$Octopus_K8s_Server_Cert_Path
     kubectl config set-context octocontext --user=octouser --cluster=octocluster --namespace=$Octopus_K8S_Namespace
     kubectl config use-context octocontext
     kubectl config set-credentials octouser --token=$Octopus_K8s_Pod_Service_Account_Token
