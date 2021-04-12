@@ -23,7 +23,7 @@ namespace Calamari.Deployment.Conventions
             foreach (var convention in conventions)
             {
                 convention.Install(deployment);
-                if (deployment.Variables.GetFlag(SpecialVariables.Action.SkipRemainingConventions))
+                if (deployment.Variables.GetFlag(Common.Plumbing.Variables.KnownVariables.Action.SkipRemainingConventions))
                 {
                     break;
                 }
