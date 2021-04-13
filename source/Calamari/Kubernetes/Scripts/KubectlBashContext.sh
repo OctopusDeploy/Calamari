@@ -80,12 +80,9 @@ function setup_context {
     fi
     
     Octopus_K8s_Pod_Service_Account_Token=$(cat ${Octopus_K8s_Pod_Service_Account_Token_Path})
-    Octopus_K8s_Server_Cert=$(cat ${Octopus_K8s_Server_Cert_Path})
+    Octopus_K8s_Server_Cert_From_Path=$(cat ${Octopus_K8s_Server_Cert_Path})
     if [[ -z $Octopus_K8s_Pod_Service_Account_Token ]]; then
       echo >&2 "Pod service token file not found"
-      exit 1
-    elif [[ -z $Octopus_K8s_Server_Cert ]]; then
-      echo >&2 "Certificate authority file not found"
       exit 1
     else
       IsUsingPodServiceAccount=true
@@ -127,10 +124,18 @@ function setup_context {
     fi
     kubectl config set-context $K8S_Azure_Cluster --namespace=$Octopus_K8S_Namespace
   elif [[ $IsUsingPodServiceAccount ]]; then
-    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using Pod Service Account"
-    kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl --certificate-authority=$Octopus_K8s_Server_Cert_Path
+    kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl
+    
+    if [[ -z $Octopus_K8s_Server_Cert_From_Path ]]; then
+      kubectl config set-cluster octocluster --insecure-skip-tls-verify=$SkipTlsVerification
+    else
+      kubectl config set-cluster octocluster --certificate-authority=$Octopus_K8s_Server_Cert_Path
+    fi
+
     kubectl config set-context octocontext --user=octouser --cluster=octocluster --namespace=$Octopus_K8S_Namespace
     kubectl config use-context octocontext
+    
+    echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using Pod Service Account Token"
     kubectl config set-credentials octouser --token=$Octopus_K8s_Pod_Service_Account_Token
   else
     kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl
@@ -165,11 +170,11 @@ function setup_context {
     
       Octopus_K8S_Server_Cert_Pem_Encoded=$(echo "$Octopus_K8S_Server_Cert_Pem" | base64 $base64_args)
       kubectl config set clusters.octocluster.certificate-authority-data "$Octopus_K8S_Server_Cert_Pem_Encoded"
-      else
-        kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification
-      fi
+    else
+      kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification
+    fi
     
-      if [[ "$Octopus_AccountType" == "Token" ]]; then
+    if [[ "$Octopus_AccountType" == "Token" ]]; then
       Octopus_K8S_Token=$(get_octopusvariable "Octopus.Account.Token")
       echo "Creating kubectl context to $Octopus_K8S_ClusterUrl (namespace $Octopus_K8S_Namespace) using a Token"
       if [[ -z $Octopus_K8S_Token ]]; then
