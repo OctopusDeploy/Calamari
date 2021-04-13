@@ -44,7 +44,7 @@ namespace Calamari.LaunchTools
                                                                                 Path.Combine(pathToStepPackage, instructions.TargetEntryPoint),
                                                                                 variableFile.FilePath,
                                                                                 options.InputVariables.SensitiveVariablesPassword,
-                                                                                "Octopuss",
+                                                                                Guid.NewGuid().ToString("N"),
                                                                                 instructions.InputsVariable))
                 {
                     WorkingDirectory = runningDeployment.CurrentDirectory,
