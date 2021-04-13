@@ -9,7 +9,8 @@ namespace Calamari.Common.Plumbing.Extensions
     public class AesEncryption
     {
         const int PasswordSaltIterations = 1000;
-        static readonly byte[] PasswordPaddingSalt = Encoding.UTF8.GetBytes("Octopuss");
+        public const string SaltRaw = "Octopuss";
+        static readonly byte[] PasswordPaddingSalt = Encoding.UTF8.GetBytes(SaltRaw);
         static readonly byte[] IvPrefix = Encoding.UTF8.GetBytes("IV__");
 
         static readonly Random RandomGenerator = new Random();
