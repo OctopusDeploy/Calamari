@@ -44,6 +44,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly bool disableRollback;
         private readonly List<string> capabilities = new List<string>();
         private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
+        private readonly List<KeyValuePair<string, string>> tags;
 
         public DeployAwsCloudFormationConvention(
             Func<IAmazonCloudFormation> clientFactory,
@@ -55,7 +56,8 @@ namespace Calamari.Aws.Deployment.Conventions
             string stackName,
             IEnumerable<string> iamCapabilities,
             bool disableRollback,
-            AwsEnvironmentGeneration awsEnvironmentGeneration): base(logger)
+            AwsEnvironmentGeneration awsEnvironmentGeneration,
+            List<KeyValuePair<string, string>> tags = null): base(logger)
         {
             this.clientFactory = clientFactory;
             this.templateFactory = templateFactory;
@@ -65,6 +67,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.stackName = stackName;
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
             this.disableRollback = disableRollback;
+            this.tags = tags;
 
             // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities
             var (validCapabilities, _) = ExcludeAndLogUnknownIamCapabilities(iamCapabilities);
@@ -163,7 +166,8 @@ namespace Calamari.Aws.Deployment.Conventions
                         Parameters = template.Inputs.ToList(),
                         Capabilities = capabilities,
                         DisableRollback = disableRollback,
-                        RoleARN = roleArnProvider(deployment)
+                        RoleARN = roleArnProvider(deployment),
+                        Tags = tags?.Select(x => new Tag { Key = x.Key, Value = x.Value }).ToList()
                     });
                     
                     Log.Info($"Created stack {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
@@ -204,7 +208,8 @@ namespace Calamari.Aws.Deployment.Conventions
                     TemplateBody = template.Content,
                     Parameters = template.Inputs.ToList(),
                     Capabilities = capabilities,
-                    RoleARN = roleArnProvider(deployment)
+                    RoleARN = roleArnProvider(deployment),
+                    Tags = tags?.Select(x => new Tag { Key = x.Key, Value = x.Value }).ToList()
                 });
 
                 Log.Info(
