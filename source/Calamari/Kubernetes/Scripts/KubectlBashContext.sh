@@ -127,7 +127,7 @@ function setup_context {
     kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl
     
     if [[ -z $Octopus_K8s_Server_Cert_From_Path ]]; then
-      kubectl config set-cluster octocluster --insecure-skip-tls-verify=$SkipTlsVerification
+      kubectl config set-cluster octocluster --insecure-skip-tls-verify=$Octopus_K8S_SkipTlsVerification
     else
       kubectl config set-cluster octocluster --certificate-authority=$Octopus_K8s_Server_Cert_Path
     fi
