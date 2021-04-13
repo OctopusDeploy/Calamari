@@ -69,6 +69,6 @@ namespace Calamari.LaunchTools
         public string TargetPathVariable { get; set; }
         public string BootstrapperPathVariable { get; set; }
         public string TargetEntryPoint { get; set; }
-        public string InputsVariable { get; }
+        public string InputsVariable { get; set; }
     }
 }
