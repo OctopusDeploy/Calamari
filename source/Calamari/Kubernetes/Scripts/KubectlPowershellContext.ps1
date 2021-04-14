@@ -29,6 +29,11 @@ $K8S_Client_Cert_Pem = $OctopusParameters["$($K8S_Client_Cert).CertificatePem"]
 $K8S_Client_Cert_Key = $OctopusParameters["$($K8S_Client_Cert).PrivateKeyPem"]
 $K8S_Server_Cert = $OctopusParameters["Octopus.Action.Kubernetes.CertificateAuthority"]
 $K8S_Server_Cert_Pem = $OctopusParameters["$($K8S_Server_Cert).CertificatePem"]
+$Octopus_K8s_Server_Cert_Path = $OctopusParameters["Octopus.Action.Kubernetes.CertificateAuthorityPath"]
+$Octopus_K8s_Pod_Service_Account_Token_Path = $OctopusParameters["Octopus.Action.Kubernetes.PodServiceAccountTokenPath"]
+$Octopus_K8s_Pod_Service_Account_Token = ""
+$Octopus_K8s_Server_Cert = ""
+$IsUsingPodServiceAccount = $false
 $Kubectl_Exe=GetKubectl
 
 $OctopusAzureSubscriptionId = $OctopusParameters["Octopus.Action.Azure.SubscriptionId"]
@@ -134,17 +139,32 @@ function ConnectAzAccount {
 
 function SetupContext {
 	if($K8S_AccountType -ne "AzureServicePrincipal" -and [string]::IsNullOrEmpty($K8S_ClusterUrl)){
-		Write-Error "Kubernetes cluster URL is missing"
-		Exit 1
+    Write-Error "Kubernetes cluster URL is missing"
+    Exit 1
 	}
 
 	if([string]::IsNullOrEmpty($K8S_AccountType) -and [string]::IsNullOrEmpty($K8S_Client_Cert) -and $EKS_Use_Instance_Role -ine "true"){
-		Write-Error "Kubernetes account type or certificate is missing"
-		Exit 1
+	  if([string]::IsNullOrEmpty($Octopus_K8s_Pod_Service_Account_Token_Path) -and [string]::IsNullOrEmpty($Octopus_K8s_Server_Cert_Path)){
+	    Write-Error "Kubernetes account type or certificate is missing"
+    	Exit 1
+	  }
+		if (![string]::IsNullOrEmpty($Octopus_K8s_Pod_Service_Account_Token_Path)) {
+		  $Octopus_K8s_Pod_Service_Account_Token = Get-Content -Path $Octopus_K8s_Pod_Service_Account_Token_Path
+		}
+		if (![string]::IsNullOrEmpty($Octopus_K8s_Server_Cert_Path)) {
+		  $Octopus_K8s_Server_Cert = Get-Content -Path $Octopus_K8s_Server_Cert_Path
+		}
+		
+		if([string]::IsNullOrEmpty($Octopus_K8s_Pod_Service_Account_Token)){
+		  Write-Error "Pod service token file not found"
+      Exit 1
+		} else {
+      $IsUsingPodServiceAccount = $true
+    }
 	}
 
 	if([string]::IsNullOrEmpty($K8S_Namespace)){
-		Write-Verbose "No namespace provded. Using default"
+		Write-Verbose "No namespace provided. Using default"
 		$K8S_Namespace="default"
 	}
 
@@ -170,16 +190,34 @@ function SetupContext {
 		$K8S_Azure_Cluster=$OctopusParameters["Octopus.Action.Kubernetes.AksClusterName"]
 		$K8S_Azure_Admin=$OctopusParameters["Octopus.Action.Kubernetes.AksAdminLogin"]
 		Write-Host "Creating kubectl context to AKS Cluster in resource group $K8S_Azure_Resource_Group called $K8S_Azure_Cluster (namespace $K8S_Namespace) using a AzureServicePrincipal"
-		if ([string]::IsNullOrEmpty($K8S_Azure_Admin) -or -not $K8S_Azure_Admin -ieq "true")
-		{
+		if ([string]::IsNullOrEmpty($K8S_Azure_Admin) -or -not $K8S_Azure_Admin -ieq "true") {
 			& az aks get-credentials --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG --overwrite-existing
-		}
-		else
-		{
+		} else {
 			& az aks get-credentials --admin --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG --overwrite-existing
 			$K8S_Azure_Cluster += "-admin"
 		}
 		& $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace=$K8S_Namespace
+	} elseif($IsUsingPodServiceAccount -eq $true) {
+	  Write-Verbose "$Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl"
+    & $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl
+    
+    if([string]::IsNullOrEmpty($Octopus_K8s_Server_Cert)){
+      Write-Verbose "$Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification"
+      & $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification
+    } else {
+      Write-Verbose "$Kubectl_Exe config set-cluster octocluster --certificate-authority=$Octopus_K8s_Server_Cert_Path"
+      & $Kubectl_Exe config set-cluster octocluster --certificate-authority=$Octopus_K8s_Server_Cert_Path
+    }
+
+    Write-Verbose "$Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace"
+    & $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace
+
+    Write-Verbose "$Kubectl_Exe config use-context octocontext"
+    & $Kubectl_Exe config use-context octocontext
+    
+    Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using a Pod Service Account Token"
+    Write-Verbose "$Kubectl_Exe config set-credentials octouser --token=$Octopus_K8s_Pod_Service_Account_Token"
+    & $Kubectl_Exe config set-credentials octouser --token=$Octopus_K8s_Pod_Service_Account_Token
 	} else {
 		Write-Verbose "$Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl"
 		& $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl
@@ -224,8 +262,7 @@ function SetupContext {
 			# Inline the certificate as base64 encoded data
 			Write-Verbose "$Kubectl_Exe config set clusters.octocluster.certificate-authority-data <server-cert-pem>"
 			& $Kubectl_Exe config set clusters.octocluster.certificate-authority-data $([Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($K8S_Server_Cert_Pem)))
-		}
-		else {
+		} else {
 			Write-Verbose "$Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification"
 			& $Kubectl_Exe config set-cluster octocluster --insecure-skip-tls-verify=$K8S_SkipTlsVerification
 		}
@@ -268,9 +305,7 @@ function SetupContext {
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"token`"`n"
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"-i`"`n"
 			Add-Content -NoNewline -Path $env:KUBECONFIG -Value "        - `"$K8S_ClusterName`""
-		}
-		elseif ([string]::IsNullOrEmpty($K8S_Client_Cert)) {
-
+		} elseif ([string]::IsNullOrEmpty($K8S_Client_Cert)) {
 			Write-Error "Account Type $K8S_AccountType is currently not valid for kubectl contexts"
 			Exit 1
 		}
@@ -286,18 +321,14 @@ function ConfigureKubeCtlPath {
 
 function CreateNamespace {
 	if (-not [string]::IsNullOrEmpty($K8S_Namespace)) {
-
-		try
-		{
+		try {
 			# We need to continue if "kubectl get namespace" fails
 			$backupErrorActionPreference = $script:ErrorActionPreference
 			$script:ErrorActionPreference = "Continue"
 
 			# Attempt to get the outputs. This will fail if none are defined.
 			$outputResult = & $Kubectl_Exe get namespace $K8S_Namespace 2> $null
-		}
-		finally
-		{
+		} finally {
 			# Restore the default setting
 			$script:ErrorActionPreference = $backupErrorActionPreference
 
