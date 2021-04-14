@@ -31,6 +31,8 @@ $K8S_Server_Cert = $OctopusParameters["Octopus.Action.Kubernetes.CertificateAuth
 $K8S_Server_Cert_Pem = $OctopusParameters["$($K8S_Server_Cert).CertificatePem"]
 $Octopus_K8s_Server_Cert_Path = $OctopusParameters["Octopus.Action.Kubernetes.CertificateAuthorityPath"]
 $Octopus_K8s_Pod_Service_Account_Token_Path = $OctopusParameters["Octopus.Action.Kubernetes.PodServiceAccountTokenPath"]
+$Octopus_K8s_Pod_Service_Account_Token = ""
+$Octopus_K8s_Server_Cert = ""
 $IsUsingPodServiceAccount = $false
 $Kubectl_Exe=GetKubectl
 
@@ -146,9 +148,13 @@ function SetupContext {
 	    Write-Error "Kubernetes account type or certificate is missing"
     	Exit 1
 	  }
+		if (![string]::IsNullOrEmpty($Octopus_K8s_Pod_Service_Account_Token_Path)) {
+		  $Octopus_K8s_Pod_Service_Account_Token = Get-Content -Path $Octopus_K8s_Pod_Service_Account_Token_Path
+		}
+		if (![string]::IsNullOrEmpty($Octopus_K8s_Server_Cert_Path)) {
+		  $Octopus_K8s_Server_Cert = Get-Content -Path $Octopus_K8s_Server_Cert_Path
+		}
 		
-		$Octopus_K8s_Pod_Service_Account_Token = Get-Content -Path $Octopus_K8s_Pod_Service_Account_Token_Path
-		$Octopus_K8s_Server_Cert = Get-Content -Path $Octopus_K8s_Server_Cert_Path
 		if([string]::IsNullOrEmpty($Octopus_K8s_Pod_Service_Account_Token)){
 		  Write-Error "Pod service token file not found"
       Exit 1

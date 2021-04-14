@@ -14,6 +14,9 @@ Octopus_K8S_Server_Cert=$(get_octopusvariable "Octopus.Action.Kubernetes.Certifi
 Octopus_K8S_Server_Cert_Pem=$(get_octopusvariable "${Octopus_K8S_Server_Cert}.CertificatePem")
 Octopus_K8s_Server_Cert_Path=$(get_octopusvariable "Octopus.Action.Kubernetes.CertificateAuthorityPath")
 Octopus_K8s_Pod_Service_Account_Token_Path=$(get_octopusvariable "Octopus.Action.Kubernetes.PodServiceAccountTokenPath")
+Octopus_K8s_Pod_Service_Account_Token=""
+Octopus_K8s_Server_Cert_From_Path=""
+IsUsingPodServiceAccount=false
 
 function check_app_exists {
 	command -v $1 > /dev/null 2>&1
@@ -79,8 +82,13 @@ function setup_context {
       exit 1
     fi
     
-    Octopus_K8s_Pod_Service_Account_Token=$(cat ${Octopus_K8s_Pod_Service_Account_Token_Path})
-    Octopus_K8s_Server_Cert_From_Path=$(cat ${Octopus_K8s_Server_Cert_Path})
+    if [[ ! -z $Octopus_K8s_Pod_Service_Account_Token_Path ]]; then
+      Octopus_K8s_Pod_Service_Account_Token=$(cat ${Octopus_K8s_Pod_Service_Account_Token_Path})
+    fi
+    if [[ ! -z $Octopus_K8s_Server_Cert_Path ]]; then
+      Octopus_K8s_Server_Cert_From_Path=$(cat ${Octopus_K8s_Server_Cert_Path})
+    fi
+    
     if [[ -z $Octopus_K8s_Pod_Service_Account_Token ]]; then
       echo >&2 "Pod service token file not found"
       exit 1
