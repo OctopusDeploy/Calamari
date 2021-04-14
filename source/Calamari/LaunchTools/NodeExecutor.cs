@@ -6,8 +6,9 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Octostache;
+using Octostache.Templates;
 
 namespace Calamari.LaunchTools
 {
@@ -17,14 +18,12 @@ namespace Calamari.LaunchTools
         readonly CommonOptions options;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
-        readonly ILog log;
 
-        public NodeExecutor(CommonOptions options, IVariables variables, ICommandLineRunner commandLineRunner, ILog log)
+        public NodeExecutor(CommonOptions options, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             this.options = options;
             this.variables = variables;
             this.commandLineRunner = commandLineRunner;
-            this.log = log;
         }
 
         protected override int ExecuteInternal(NodeInstructions instructions, params string[] args)
@@ -36,8 +35,11 @@ namespace Calamari.LaunchTools
 
             using (var variableFile = new TemporaryFile(Path.GetTempFileName()))
             {
+                variables.Set(instructions.InputsVariable, JsonEscapeAllVariablesInOurInputs(instructions));
+
                 var variablesAsJson = variables.CloneAndEvaluate().SaveAsString();
                 File.WriteAllBytes(variableFile.FilePath, new AesEncryption(options.InputVariables.SensitiveVariablesPassword).Encrypt(variablesAsJson));
+
                 var commandLineInvocation = new CommandLineInvocation(BuildNodePath(pathToNode),
                                                                       BuildArgs(
                                                                                 Path.Combine(pathToBootstrapper, "bootstrapper.js"),
@@ -55,6 +57,22 @@ namespace Calamari.LaunchTools
 
                 return commandResult.ExitCode;
             }
+        }
+
+        string JsonEscapeAllVariablesInOurInputs(NodeInstructions instructions)
+        {
+            var rawJson = variables.GetRaw(instructions.InputsVariable);
+            var tempVariableDictionaryToUseForExpandedVariables = new VariableDictionary();
+            var template = TemplateParser.ParseTemplate(rawJson);
+            foreach (var templateToken in template.Tokens)
+            {
+                var variableName = String.Join(".", templateToken.GetArguments());
+                var expanded = variables.Evaluate($"#{{ {variableName} | JsonEscape }}");
+                tempVariableDictionaryToUseForExpandedVariables.Add(variableName, expanded);
+            }
+
+            var evaluatedJson = tempVariableDictionaryToUseForExpandedVariables.Evaluate(rawJson);
+            return evaluatedJson;
         }
 
         static string BuildNodePath(string pathToNode) => CalamariEnvironment.IsRunningOnWindows ? Path.Combine(pathToNode, "node.exe") : Path.Combine(pathToNode, "bin", "node");
