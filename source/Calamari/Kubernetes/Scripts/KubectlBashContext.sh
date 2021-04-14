@@ -131,7 +131,7 @@ function setup_context {
       K8S_Azure_Cluster+="-admin"
     fi
     kubectl config set-context $K8S_Azure_Cluster --namespace=$Octopus_K8S_Namespace
-  elif [[ $IsUsingPodServiceAccount ]]; then
+  elif [[ $IsUsingPodServiceAccount == "true" ]]; then
     kubectl config set-cluster octocluster --server=$Octopus_K8S_ClusterUrl
     
     if [[ -z $Octopus_K8s_Server_Cert_From_Path ]]; then
