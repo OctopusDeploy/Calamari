@@ -68,6 +68,7 @@ namespace Calamari.Tests.Fixtures.Manifest
                     { nameof(NodeInstructions.NodePathVariable), toolRoot },
                     { nameof(NodeInstructions.TargetEntryPoint), "TargetEntryPoint_Value" },
                     { nameof(NodeInstructions.TargetPathVariable), "TargetPathVariable_Value" },
+                    { nameof(NodeInstructions.InputsVariable), "no_empty" },
                 };
 
                 var result = ExecuteCommand(variables, "Calamari.Tests");
