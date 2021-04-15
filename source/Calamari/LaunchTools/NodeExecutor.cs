@@ -1,11 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Octostache;
 using Octostache.Templates;
@@ -51,6 +53,7 @@ namespace Calamari.LaunchTools
                 {
                     WorkingDirectory = runningDeployment.CurrentDirectory,
                     OutputToLog = true,
+                    EnvironmentVars = ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables().ToDictionary(e => e.Key, e => e.Value)
                 };
 
                 var commandResult = commandLineRunner.Execute(commandLineInvocation);
