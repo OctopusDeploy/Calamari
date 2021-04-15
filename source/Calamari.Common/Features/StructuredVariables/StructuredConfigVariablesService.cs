@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -25,8 +24,8 @@ namespace Calamari.Common.Features.StructuredVariables
         public StructuredConfigVariablesService(
             IFileFormatVariableReplacer[] replacers,
             IVariables variables,
-        ICalamariFileSystem fileSystem,
-                            ILog log)
+            ICalamariFileSystem fileSystem,
+            ILog log)
         {
             this.fileSystem = fileSystem;
             this.log = log;
@@ -89,7 +88,10 @@ namespace Calamari.Common.Features.StructuredVariables
 
         IEnumerable<IFileFormatVariableReplacer>? GetParsersWhenOnlyPerformingJsonReplacement(string filePath, bool onlyPerformJsonReplacement)
         {
-            if (!onlyPerformJsonReplacement) return null;
+            if (!onlyPerformJsonReplacement)
+            {
+                return null;
+            }
 
             log.Verbose($"The {ActionVariables.StructuredConfigurationFallbackFlag} flag is set. The file at "
                         + $"{filePath} will be parsed as JSON.");
@@ -99,7 +101,10 @@ namespace Calamari.Common.Features.StructuredVariables
         IEnumerable<IFileFormatVariableReplacer>? GetParsersBasedOnFileName(string filePath)
         {
             var guessedParserBasedOnFileName = allReplacers.FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
-            if (guessedParserBasedOnFileName == null) return null;
+            if (guessedParserBasedOnFileName == null)
+            {
+                return null;
+            }
 
             var guessedParserMessage = $"The file at {filePath} matches a known filename pattern, and will be "
                                        + $"treated as {guessedParserBasedOnFileName.FileFormatName}.";
@@ -124,7 +129,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
             // Order so that the json replacer comes first
             yield return jsonReplacer;
-            foreach (var replacer in allReplacers.Except(new [] { jsonReplacer }))
+            foreach (var replacer in allReplacers.Except(new[] { jsonReplacer }))
             {
                 yield return replacer;
             }
