@@ -29,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             var convention = new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(service));
             convention.Install(deployment);
-            service.DidNotReceiveWithAnyArgs().ReplaceVariables(deployment);
+            service.DidNotReceiveWithAnyArgs().ReplaceVariables(deployment.CurrentDirectory);
         }
 
         [Test]
@@ -37,7 +37,7 @@ namespace Calamari.Tests.Fixtures.Conventions
         {
             var convention = new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(service));
             convention.Install(deployment);
-            service.DidNotReceiveWithAnyArgs().ReplaceVariables(deployment);
+            service.DidNotReceiveWithAnyArgs().ReplaceVariables(deployment.CurrentDirectory);
         }
 
         [Test]
@@ -46,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Conventions
             var convention = new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(service));
             deployment.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
             convention.Install(deployment);
-            service.Received().ReplaceVariables(deployment);
+            service.Received().ReplaceVariables(deployment.CurrentDirectory);
         }
     }
 }

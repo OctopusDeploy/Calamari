@@ -24,7 +24,7 @@ namespace Calamari.Common.Features.Behaviours
 
         public Task Execute(RunningDeployment context)
         {
-            substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(context);
+            substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(context.CurrentDirectory);
             return this.CompletedTask();
         }
     }

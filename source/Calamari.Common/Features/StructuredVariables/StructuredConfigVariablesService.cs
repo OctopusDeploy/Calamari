@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -11,18 +10,20 @@ namespace Calamari.Common.Features.StructuredVariables
 {
     public interface IStructuredConfigVariablesService
     {
-        void ReplaceVariables(RunningDeployment deployment);
+        void ReplaceVariables(string currentDirectory);
     }
 
     public class StructuredConfigVariablesService : IStructuredConfigVariablesService
     {
         readonly IFileFormatVariableReplacer jsonReplacer;
         readonly IFileFormatVariableReplacer[] allReplacers;
+        readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
         public StructuredConfigVariablesService(
             IFileFormatVariableReplacer[] replacers,
+            IVariables variables,
             ICalamariFileSystem fileSystem,
             ILog log)
         {
@@ -30,16 +31,17 @@ namespace Calamari.Common.Features.StructuredVariables
             this.log = log;
 
             allReplacers = replacers;
-            
+            this.variables = variables;
+
             jsonReplacer = replacers.FirstOrDefault(r => r.FileFormatName == StructuredConfigVariablesFileFormats.Json)
                            ?? throw new Exception("No JSON replacer was supplied. A JSON replacer is required as a fallback.");
         }
 
-        public void ReplaceVariables(RunningDeployment deployment)
+        public void ReplaceVariables(string currentDirectory)
         {
-            var targets = deployment.Variables.GetPaths(ActionVariables.StructuredConfigurationVariablesTargets);
-            var onlyPerformJsonReplacement = deployment.Variables.GetFlag(ActionVariables.StructuredConfigurationFallbackFlag);	
-            
+            var targets = variables.GetPaths(ActionVariables.StructuredConfigurationVariablesTargets);
+            var onlyPerformJsonReplacement = variables.GetFlag(ActionVariables.StructuredConfigurationFallbackFlag);
+
             foreach (var target in targets)
             {
                 if (fileSystem.DirectoryExists(target))
@@ -48,7 +50,7 @@ namespace Calamari.Common.Features.StructuredVariables
                     continue;
                 }
 
-                var matchingFiles = MatchingFiles(deployment, target);
+                var matchingFiles = MatchingFiles(currentDirectory, target);
 
                 if (!matchingFiles.Any())
                 {
@@ -59,16 +61,16 @@ namespace Calamari.Common.Features.StructuredVariables
                 foreach (var filePath in matchingFiles)
                 {
                     var replacersToTry = GetReplacersToTryForFile(filePath, onlyPerformJsonReplacement).ToArray();
-                    DoReplacement(filePath, deployment.Variables, replacersToTry);
+                    DoReplacement(filePath, variables, replacersToTry);
                 }
             }
         }
 
-        List<string> MatchingFiles(RunningDeployment deployment, string target)
+        List<string> MatchingFiles(string currentDirectory, string target)
         {
-            var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, target).Select(Path.GetFullPath).ToList();
+            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target).Select(Path.GetFullPath).ToList();
 
-            foreach (var path in deployment.Variables.GetStrings(ActionVariables.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
+            foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
             {
                 var pathFiles = fileSystem.EnumerateFilesWithGlob(path, target).Select(Path.GetFullPath);
                 files.AddRange(pathFiles);
@@ -86,7 +88,10 @@ namespace Calamari.Common.Features.StructuredVariables
 
         IEnumerable<IFileFormatVariableReplacer>? GetParsersWhenOnlyPerformingJsonReplacement(string filePath, bool onlyPerformJsonReplacement)
         {
-            if (!onlyPerformJsonReplacement) return null;
+            if (!onlyPerformJsonReplacement)
+            {
+                return null;
+            }
 
             log.Verbose($"The {ActionVariables.StructuredConfigurationFallbackFlag} flag is set. The file at "
                         + $"{filePath} will be parsed as JSON.");
@@ -96,7 +101,10 @@ namespace Calamari.Common.Features.StructuredVariables
         IEnumerable<IFileFormatVariableReplacer>? GetParsersBasedOnFileName(string filePath)
         {
             var guessedParserBasedOnFileName = allReplacers.FirstOrDefault(r => r.IsBestReplacerForFileName(filePath));
-            if (guessedParserBasedOnFileName == null) return null;
+            if (guessedParserBasedOnFileName == null)
+            {
+                return null;
+            }
 
             var guessedParserMessage = $"The file at {filePath} matches a known filename pattern, and will be "
                                        + $"treated as {guessedParserBasedOnFileName.FileFormatName}.";
@@ -121,7 +129,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
             // Order so that the json replacer comes first
             yield return jsonReplacer;
-            foreach (var replacer in allReplacers.Except(new [] { jsonReplacer }))
+            foreach (var replacer in allReplacers.Except(new[] { jsonReplacer }))
             {
                 yield return replacer;
             }

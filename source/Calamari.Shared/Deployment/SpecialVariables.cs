@@ -105,7 +105,6 @@ namespace Calamari.Deployment
 
         public static class Action
         {
-            public const string SkipRemainingConventions = "Octopus.Action.SkipRemainingConventions";
             public const string FailScriptOnErrorOutput = "Octopus.Action.FailScriptOnErrorOutput";
 
             public static class IisWebSite

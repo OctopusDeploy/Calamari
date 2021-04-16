@@ -39,7 +39,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly bool md5HashSupported;
 
         private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
-        
+
         public UploadAwsS3Convention(
             ILog log,
             ICalamariFileSystem fileSystem,
@@ -132,7 +132,7 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        private void SetOutputVariables(RunningDeployment deployment, IEnumerable<S3UploadResult> results) 
+        private void SetOutputVariables(RunningDeployment deployment, IEnumerable<S3UploadResult> results)
         {
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FilePath, deployment.PackageFilePath);
@@ -188,9 +188,9 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(selection, "Multi file selection properties may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
             var results = new List<S3UploadResult>();
-            
+
             var files = new RelativeGlobber((@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, pattern), deployment.StagingDirectory).EnumerateFilesWithGlob(selection.Pattern).ToList();
-         
+
             if (!files.Any())
             {
                 Log.Info($"The glob pattern '{selection.Pattern}' didn't match any files. Nothing was uploaded to S3.");
@@ -199,21 +199,21 @@ namespace Calamari.Aws.Deployment.Conventions
 
             Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files");
             var substitutionPatterns = selection.VariableSubstitutionPatterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
-            
+
             if(substitutionPatterns.Any())
-                substituteInFiles.Substitute(deployment, substitutionPatterns);
-            
+                substituteInFiles.Substitute(deployment.CurrentDirectory, substitutionPatterns);
+
             foreach (var matchedFile in files)
             {
                 var request = CreateRequest(matchedFile.FilePath,$"{selection.BucketKeyPrefix}{matchedFile.MappedRelativePath}", selection);
                 LogPutObjectRequest(matchedFile.FilePath, request);
-    
+
                 results.Add(await HandleUploadRequest(clientFactory(), request, WarnAndIgnoreException));
             }
-            
+
             return results;
         }
-      
+
         /// <summary>
         /// Uploads a single file with the given properties
         /// </summary>
@@ -234,8 +234,8 @@ namespace Calamari.Aws.Deployment.Conventions
             }
 
             if(selection.PerformVariableSubstitution)
-                substituteInFiles.Substitute(deployment, new List<string>{ filePath });
-    
+                substituteInFiles.Substitute(deployment.CurrentDirectory, new List<string>{ filePath });
+
             return CreateRequest(filePath, GetBucketKey(filePath.AsRelativePathFrom(deployment.StagingDirectory), selection), selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))
                     .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
@@ -252,9 +252,9 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(deployment, "Deployment may not be null");
             Guard.NotNull(options, "Package options may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
-            
+
             var filename = GetNormalizedPackageFilename(deployment);
-            
+
             return CreateRequest(deployment.PackageFilePath,
                     GetBucketKey(filename, options), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
@@ -270,7 +270,7 @@ namespace Calamari.Aws.Deployment.Conventions
         }
 
         /// <summary>
-        /// Creates an upload file request based on the s3 target properties for a given file and bucket key. 
+        /// Creates an upload file request based on the s3 target properties for a given file and bucket key.
         /// </summary>
         /// <param name="path"></param>
         /// <param name="bucketKey"></param>
@@ -339,7 +339,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     permissions.Add("s3:PutObjectTagging");
                     permissions.Add("s3:PutObjectVersionTagging");
                 }
-                
+
                 if (ex.ErrorCode == "AccessDenied")
                     throw new PermissionException(
                         "The AWS account used to perform the operation does not have the required permissions to upload to the bucket.\n" +
@@ -382,7 +382,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     return true;
                 }
-                
+
                 throw;
             }
         }

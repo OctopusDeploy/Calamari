@@ -14,12 +14,14 @@ namespace Calamari.Common.Features.Behaviours
     public class ConfigurationVariablesBehaviour : IBehaviour
     {
         readonly ICalamariFileSystem fileSystem;
+        readonly IVariables variables;
         readonly IConfigurationVariablesReplacer replacer;
         readonly ILog log;
 
-        public ConfigurationVariablesBehaviour(ICalamariFileSystem fileSystem, IConfigurationVariablesReplacer replacer, ILog log)
+        public ConfigurationVariablesBehaviour(ICalamariFileSystem fileSystem, IVariables variables, IConfigurationVariablesReplacer replacer, ILog log)
         {
             this.fileSystem = fileSystem;
+            this.variables = variables;
             this.replacer = replacer;
             this.log = log;
         }
@@ -32,14 +34,21 @@ namespace Calamari.Common.Features.Behaviours
 
         public Task Execute(RunningDeployment context)
         {
-            var appliedAsTransforms = context.Variables.GetStrings(KnownVariables.AppliedXmlConfigTransforms, '|');
+            DoTransforms(context.CurrentDirectory);
+
+            return this.CompletedTask();
+        }
+
+        public void DoTransforms(string currentDirectory)
+        {
+            var appliedAsTransforms = variables.GetStrings(KnownVariables.AppliedXmlConfigTransforms, '|');
 
             log.Verbose("Looking for appSettings, applicationSettings, and connectionStrings in any .config files");
 
-            if (context.Variables.GetFlag(KnownVariables.Package.IgnoreVariableReplacementErrors))
+            if (variables.GetFlag(KnownVariables.Package.IgnoreVariableReplacementErrors))
                 log.Info("Variable replacement errors are suppressed because the variable Octopus.Action.Package.IgnoreVariableReplacementErrors has been set.");
 
-            foreach (var configurationFile in MatchingFiles(context))
+            foreach (var configurationFile in MatchingFiles(currentDirectory))
             {
                 if (appliedAsTransforms.Contains(configurationFile))
                 {
@@ -47,17 +56,14 @@ namespace Calamari.Common.Features.Behaviours
                     continue;
                 }
 
-                replacer.ModifyConfigurationFile(configurationFile, context.Variables);
+                replacer.ModifyConfigurationFile(configurationFile, variables);
             }
-
-            return this.CompletedTask();
         }
-
-        string[] MatchingFiles(RunningDeployment deployment)
+        string[] MatchingFiles(string currentDirectory)
         {
-            var files = fileSystem.EnumerateFilesRecursively(deployment.CurrentDirectory, "*.config");
+            var files = fileSystem.EnumerateFilesRecursively(currentDirectory, "*.config");
 
-            var additional = deployment.Variables.GetStrings(ActionVariables.AdditionalPaths)
+            var additional = variables.GetStrings(ActionVariables.AdditionalPaths)
                 .Where(s => !string.IsNullOrWhiteSpace(s))
                 .SelectMany(p => fileSystem.EnumerateFilesRecursively(p, "*.config"));
 

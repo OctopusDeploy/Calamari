@@ -43,7 +43,7 @@ namespace Calamari.Tests.Fixtures.Conventions
 
             var substituter = Substitute.For<IFileSubstituter>();
             new SubstituteInFiles(new InMemoryLog(), fileSystem, substituter, variables)
-                .SubstituteBasedSettingsInSuppliedVariables(deployment);
+                .SubstituteBasedSettingsInSuppliedVariables(deployment.CurrentDirectory);
 
             substituter.Received().PerformSubstitution(Path.Combine(StagingDirectory, actualMatch), variables);
         }

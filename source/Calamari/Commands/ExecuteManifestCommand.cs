@@ -50,7 +50,15 @@ namespace Calamari.Commands
 
                 var result = tool.Value.Execute(instruction.LauncherInstructionsRaw, commandLineArguments.Skip(1).ToArray());
 
-                if (result != 0) return result;
+                if (result != 0)
+                {
+                    return result;
+                }
+
+                if (variables.GetFlag(KnownVariables.Action.SkipRemainingConventions))
+                {
+                    break;
+                }
             }
 
             return 0;

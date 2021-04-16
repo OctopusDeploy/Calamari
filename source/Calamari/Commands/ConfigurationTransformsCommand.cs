@@ -1,18 +1,18 @@
 ﻿using System;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Commands
 {
-    [Command("substitute-in-files")]
-    public class SubstituteInFilesCommand : Command
+    [Command("configuration-transforms")]
+    public class ConfigurationTransformsCommand : Command
     {
-        readonly ISubstituteInFiles substituteInFiles;
+        readonly ConfigurationTransformsBehaviour substituteInFiles;
         readonly string targetPath;
 
-        public SubstituteInFilesCommand(IVariables variables, ISubstituteInFiles substituteInFiles)
+        public ConfigurationTransformsCommand(IVariables variables, ConfigurationTransformsBehaviour substituteInFiles)
         {
             targetPath = variables.Get(PackageVariables.Output.InstallationDirectoryPath, String.Empty);
             this.substituteInFiles = substituteInFiles;
@@ -20,7 +20,7 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(targetPath);
+            substituteInFiles.DoTransforms(targetPath);
             return 0;
         }
     }

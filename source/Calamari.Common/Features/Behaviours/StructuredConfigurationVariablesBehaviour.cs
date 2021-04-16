@@ -24,7 +24,7 @@ namespace Calamari.Common.Features.Behaviours
 
         public Task Execute(RunningDeployment context)
         {
-            structuredConfigVariablesService.ReplaceVariables(context);
+            structuredConfigVariablesService.ReplaceVariables(context.CurrentDirectory);
 
             return this.CompletedTask();
         }

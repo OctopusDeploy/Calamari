@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
@@ -66,7 +64,7 @@ namespace Calamari.Deployment
                 throw;
             }
         }
-        
+
 
         void RunInstallConventions()
         {
@@ -74,7 +72,7 @@ namespace Calamari.Deployment
             {
                 convention.Install(deployment);
 
-                if (deployment.Variables.GetFlag(SpecialVariables.Action.SkipRemainingConventions))
+                if (deployment.Variables.GetFlag(Common.Plumbing.Variables.KnownVariables.Action.SkipRemainingConventions))
                 {
                     break;
                 }
@@ -93,7 +91,7 @@ namespace Calamari.Deployment
         {
             foreach (var convention in conventions.OfType<IRollbackConvention>())
             {
-                if (deployment.Variables.GetFlag(SpecialVariables.Action.SkipRemainingConventions))
+                if (deployment.Variables.GetFlag(Common.Plumbing.Variables.KnownVariables.Action.SkipRemainingConventions))
                 {
                     break;
                 }
