@@ -44,7 +44,6 @@ namespace Calamari.Tests.Fixtures.Manifest
                                                                    {
                                                                        BootstrapperPathVariable = nameof(NodeInstructions.BootstrapperPathVariable),
                                                                        NodePathVariable = nameof(NodeInstructions.NodePathVariable),
-                                                                       TargetEntryPoint = nameof(NodeInstructions.TargetEntryPoint),
                                                                        TargetPathVariable = nameof(NodeInstructions.TargetPathVariable),
                                                                        InputsVariable = nameof(NodeInstructions.InputsVariable)
                                                                    },

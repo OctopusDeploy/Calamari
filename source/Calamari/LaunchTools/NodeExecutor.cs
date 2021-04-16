@@ -45,7 +45,7 @@ namespace Calamari.LaunchTools
                 var commandLineInvocation = new CommandLineInvocation(BuildNodePath(pathToNode),
                                                                       BuildArgs(
                                                                                 Path.Combine(pathToBootstrapper, "bootstrapper.js"),
-                                                                                Path.Combine(pathToStepPackage, instructions.TargetEntryPoint),
+                                                                                Path.Combine(pathToStepPackage, "executor.js"),
                                                                                 variableFile.FilePath,
                                                                                 options.InputVariables.SensitiveVariablesPassword,
                                                                                 AesEncryption.SaltRaw,
@@ -89,7 +89,6 @@ namespace Calamari.LaunchTools
         public string NodePathVariable { get; set; }
         public string TargetPathVariable { get; set; }
         public string BootstrapperPathVariable { get; set; }
-        public string TargetEntryPoint { get; set; }
         public string InputsVariable { get; set; }
     }
 }
