@@ -75,8 +75,8 @@ namespace Calamari.Tests.Fixtures.Manifest
 
                 result.AssertSuccess();
                 result.AssertOutput("Hello from TestCommand");
-                result.AssertOutput(string.Join(Environment.NewLine, "Hello from my custom node!",
-                                                Path.Combine("BootstrapperPathVariable_Value", "bootstrapper.js"),
+                result.AssertOutput("Hello from my custom node!");
+                result.AssertOutput(string.Join(Path.Combine("BootstrapperPathVariable_Value", "bootstrapper.js"),
                                                 Path.Combine("TargetPathVariable_Value", "TargetEntryPoint")));
             }
         }
