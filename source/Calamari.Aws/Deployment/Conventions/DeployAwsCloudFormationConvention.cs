@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
@@ -44,7 +45,9 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly bool disableRollback;
         private readonly List<string> capabilities = new List<string>();
         private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
-        private readonly List<KeyValuePair<string, string>> tags;
+        // This must allow nulls to distinguish between no tags specified - which preserves existing CF tags,
+        // and an empty list specified - which clears out all existing tags.
+        [AllowNull] private readonly List<Tag> tags;
 
         public DeployAwsCloudFormationConvention(
             Func<IAmazonCloudFormation> clientFactory,
@@ -57,7 +60,7 @@ namespace Calamari.Aws.Deployment.Conventions
             IEnumerable<string> iamCapabilities,
             bool disableRollback,
             AwsEnvironmentGeneration awsEnvironmentGeneration,
-            List<KeyValuePair<string, string>> tags = null): base(logger)
+            IEnumerable<KeyValuePair<string, string>> tags = null): base(logger)
         {
             this.clientFactory = clientFactory;
             this.templateFactory = templateFactory;
@@ -67,7 +70,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.stackName = stackName;
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
             this.disableRollback = disableRollback;
-            this.tags = tags;
+            this.tags = tags?.Select(x => new Tag { Key = x.Key, Value = x.Value }).ToList();
 
             // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities
             var (validCapabilities, _) = ExcludeAndLogUnknownIamCapabilities(iamCapabilities);
@@ -167,7 +170,7 @@ namespace Calamari.Aws.Deployment.Conventions
                         Capabilities = capabilities,
                         DisableRollback = disableRollback,
                         RoleARN = roleArnProvider(deployment),
-                        Tags = tags?.Select(x => new Tag { Key = x.Key, Value = x.Value }).ToList()
+                        Tags = tags
                     });
                     
                     Log.Info($"Created stack {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
@@ -209,7 +212,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     Parameters = template.Inputs.ToList(),
                     Capabilities = capabilities,
                     RoleARN = roleArnProvider(deployment),
-                    Tags = tags?.Select(x => new Tag { Key = x.Key, Value = x.Value }).ToList()
+                    Tags = tags
                 });
 
                 Log.Info(
