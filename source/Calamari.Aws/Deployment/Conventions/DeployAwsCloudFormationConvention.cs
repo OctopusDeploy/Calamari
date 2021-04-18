@@ -47,7 +47,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
         // This must allow nulls to distinguish between no tags specified - which preserves existing CF tags,
         // and an empty list specified - which clears out all existing tags.
-        [AllowNull] private readonly List<Tag> tags;
+        private readonly List<Tag> tags;
 
         public DeployAwsCloudFormationConvention(
             Func<IAmazonCloudFormation> clientFactory,
