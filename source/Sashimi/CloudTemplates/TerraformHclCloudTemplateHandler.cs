@@ -49,13 +49,11 @@ namespace Sashimi.Terraform.CloudTemplates
         public object ParseModel(string template)
         {
             var parameters = GetVariables(template);
-            return parameters?
-                   .Select(x => new KeyValuePair<string, object?>(
-                                                                  x.Value,
-                                                                  GetDefaultValue(x))
-                          )
-                   .ToDictionary(x => x.Key, x => x.Value)
-                   ?? new Dictionary<string, object?>();
+
+            if (parameters != null)
+                return parameters.Select(x => new KeyValuePair<string, object?>(x.Value, GetDefaultValue(x)))
+                                 .ToDictionary(x => x.Key, x => x.Value);
+            return new Dictionary<string, object?>();
         }
 
         string? GetDefaultValue(HclElement argValue)
@@ -97,7 +95,7 @@ namespace Sashimi.Terraform.CloudTemplates
             return "string";
         }
 
-        static IList<HclElement> GetVariables(string template)
+        static IList<HclElement>? GetVariables(string template)
         {
             if (template == null) return new List<HclElement>();
 

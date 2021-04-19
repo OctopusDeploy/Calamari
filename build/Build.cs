@@ -23,7 +23,7 @@ class Build : NukeBuild
     ///   - Microsoft VisualStudio     https://nuke.build/visualstudio
     ///   - Microsoft VSCode           https://nuke.build/vscode
 
-    public static int Main () => Execute<Build>(x => x.Default);
+    public static int Main () => Execute<Build>(x => x.PackSashimi);
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
@@ -170,9 +170,10 @@ class Build : NukeBuild
             ArtifactsDirectory.GlobFiles("*symbols*").ForEach(DeleteFile);
         });
 
+    // ReSharper disable once UnusedMember.Local - it is actually used (see TriggeredBy)
     Target CopyToLocalPackages => _ => _
         .DependsOn(Test)
-        .DependsOn(PackSashimi)
+        .TriggeredBy(PackSashimi)
         .Unlisted()
         .OnlyWhenStatic(() => IsLocalBuild)
         .Executes(() =>
@@ -196,7 +197,4 @@ class Build : NukeBuild
                 .SetTimeout(1200)
             );
     });
-
-    Target Default => _ => _
-        .DependsOn(CopyToLocalPackages);
 }
