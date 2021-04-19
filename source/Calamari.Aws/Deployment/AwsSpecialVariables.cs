@@ -24,6 +24,7 @@ namespace Calamari.Aws.Deployment
             public const string TemplateParameters = "Octopus.Action.Aws.CloudFormationTemplateParameters";
             public const string TemplateParametersRaw = "Octopus.Action.Aws.CloudFormationTemplateParametersRaw";
             public const string RoleArn = "Octopus.Action.Aws.CloudFormation.RoleArn";
+            public const string Tags = "Octopus.Action.Aws.CloudFormation.Tags";
             
             public static class Changesets
             {

@@ -67,6 +67,7 @@ namespace Calamari.Aws.Commands
             ChangeSetArn ChangesetProvider (RunningDeployment x) => new ChangeSetArn(x.Variables[AwsSpecialVariables.CloudFormation.Changesets.Arn]);
             string RoleArnProvider (RunningDeployment x) => x.Variables[AwsSpecialVariables.CloudFormation.RoleArn];
             var iamCapabilities = JsonConvert.DeserializeObject<List<string>>(variables.Get(AwsSpecialVariables.IamCapabilities, "[]"));
+            var tags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags, "[]"));
 
             CloudFormationTemplate TemplateFactory()
             {
@@ -110,7 +111,8 @@ namespace Calamari.Aws.Commands
                             stackName,
                             iamCapabilities,
                             disableRollback,
-                            environment),
+                            environment,
+                            tags),
                         new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger,  StackProvider, () => TemplateFactory().HasOutputs)
                 )
                .When(ChangesetsDisabled)
