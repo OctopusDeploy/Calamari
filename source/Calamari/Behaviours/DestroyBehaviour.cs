@@ -31,7 +31,7 @@ namespace Calamari.Terraform.Behaviours
                                                       environmentVariables))
             {
                 cli.ExecuteCommand("destroy",
-                                   "-force",
+                                   "-auto-approve",
                                    "-no-color",
                                    cli.TerraformVariableFiles,
                                    cli.ActionParams)
