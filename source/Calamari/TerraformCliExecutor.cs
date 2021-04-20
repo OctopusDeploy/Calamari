@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -26,6 +27,7 @@ namespace Calamari.Terraform
         readonly string templateDirectory;
         readonly string logPath;
         Dictionary<string, string> defaultEnvironmentVariables;
+        readonly Version version;
 
         public TerraformCliExecutor(
             ILog log,
@@ -57,7 +59,7 @@ namespace Calamari.Terraform
 
             InitializeTerraformEnvironmentVariables();
 
-            LogVersion();
+            this.version = GetVersion();
 
             InitializePlugins();
 
@@ -87,7 +89,7 @@ namespace Calamari.Terraform
 
         public CommandResult ExecuteCommand(params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(arguments, out _, true);
+            var commandResult = ExecuteCommandInternal(arguments, out var result, true);
 
             commandResult.VerifySuccess();
             return commandResult;
@@ -153,18 +155,29 @@ namespace Calamari.Terraform
         {
             var initParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams);
             var allowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
+            string initCommand = $"init -no-color {initParams}";
+
+            if (version.CompareTo(new Version("0.15.0")) < 0)
+            {
+                initCommand = $"init -no-color -get-plugins={allowPluginDownloads.ToString().ToLower()} {initParams}";
+            }
 
             ExecuteCommandInternal(
-                                   new[] { $"init -no-color -get-plugins={allowPluginDownloads.ToString().ToLower()} {initParams}" },
+                                   new[] { initCommand },
                                    out _,
                                    true)
                 .VerifySuccess();
         }
 
-        void LogVersion()
+        Version GetVersion()
         {
-            ExecuteCommandInternal(new[] { "--version" }, out _, true)
+            ExecuteCommandInternal(new[] { "--version" }, out string version, true)
                 .VerifySuccess();
+
+            version = version.Replace("Terraform v", "");
+            version = version.Substring(0, version.IndexOf('\n'));
+            
+            return new Version(version);
         }
 
         void InitializeWorkspace()
