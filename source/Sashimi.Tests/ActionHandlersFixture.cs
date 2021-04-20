@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -16,6 +17,8 @@ using Calamari.Tests.Shared;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
+using NUnit.Framework.Internal;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Terraform.ActionHandler;
 using Sashimi.Tests.Shared.Server;
@@ -24,17 +27,79 @@ using TestEnvironment = Sashimi.Tests.Shared.TestEnvironment;
 
 namespace Sashimi.Terraform.Tests
 {
-    [TestFixture]
+    [TestFixture(BundledCliFixture.TerraformVersion)]
+    [TestFixture("0.15.0")]
     public class ActionHandlersFixture
     {
-        //This is the version of the Terraform CLI we bundle
-        const string TerraformVersion = BundledCliFixture.TerraformVersion;
-
         string? customTerraformExecutable;
+        string terraformCliVersion;
+        Version terraformCliVersionAsObject => new Version(terraformCliVersion);
 
-        [OneTimeSetUp]
+        public ActionHandlersFixture(string version)
+        {
+            terraformCliVersion = version;
+            InstallTools().GetAwaiter().GetResult();
+        }
+
+        [OneTimeTearDown]
+        public static void OneTimeTearDown()
+        {
+            ClearTestDirectories();
+        }
+
+        static void ClearTestDirectories()
+        {
+            static bool TryDeleteFile(string path)
+            {
+                try
+                {
+                    File.Delete(TestEnvironment.GetTestPath(path));
+                    return true;
+                }
+                catch (IOException)
+                {
+                    return false;
+                }
+            }
+
+            static bool TryDeleteDirectory(string path, bool recursive)
+            {
+                try
+                {
+                    Directory.Delete(TestEnvironment.GetTestPath(path), recursive);
+                    return true;
+                }
+                catch (IOException)
+                {
+                    return false;
+                }
+            }
+
+            static void ClearTerraformDirectory(string directory)
+            {
+                TryDeleteFile(Path.Combine(directory, "terraform.tfstate"));
+                TryDeleteFile(Path.Combine(directory, "terraform.tfstate.backup"));
+                TryDeleteFile(Path.Combine(directory, "terraform.log"));
+                TryDeleteDirectory(Path.Combine(directory, ".terraform"), true);
+                TryDeleteDirectory(Path.Combine(directory, "terraform.tfstate.d"), true);
+                TryDeleteDirectory(Path.Combine(directory, "terraformplugins"), true);
+            }
+
+            ClearTerraformDirectory("AdditionalParams");
+            ClearTerraformDirectory("AWS");
+            ClearTerraformDirectory("Azure");
+            ClearTerraformDirectory("PlanDetailedExitCode");
+            ClearTerraformDirectory("Simple");
+            ClearTerraformDirectory("TemplateDirectory");
+            ClearTerraformDirectory("WithOutputSensitiveVariables");
+            ClearTerraformDirectory("WithVariables");
+            ClearTerraformDirectory("WithVariablesSubstitution");
+        }
+
         public async Task InstallTools()
         {
+            ClearTestDirectories(); // pre-emptively clear test directories for better dev experience
+            
             static string GetTerraformFileName(string currentVersion)
             {
                 if (CalamariEnvironment.IsRunningOnNix)
@@ -64,7 +129,7 @@ namespace Sashimi.Terraform.Tests
                 }
             }
 
-            async Task DownloadCli(string destination)
+            async Task DownloadCli(string destination, string version)
             {
                 Console.WriteLine("Downloading terraform cli...");
 
@@ -75,8 +140,8 @@ namespace Sashimi.Terraform.Tests
                     {
                         using (var client = new HttpClient())
                         {
-                            var downloadBaseUrl = $"https://releases.hashicorp.com/terraform/{TerraformVersion}/";
-                            var fileName = GetTerraformFileName(TerraformVersion);
+                            var downloadBaseUrl = $"https://releases.hashicorp.com/terraform/{version}/";
+                            var fileName = GetTerraformFileName(version);
 
                             await DownloadTerraform(fileName, client, downloadBaseUrl, destination);
                         }
@@ -99,7 +164,7 @@ namespace Sashimi.Terraform.Tests
                 }
             }
 
-            var destinationDirectoryName = TestEnvironment.GetTestPath("TerraformCLIPath");
+            var destinationDirectoryName = Path.Combine(TestEnvironment.GetTestPath("TerraformCLIPath"), terraformCliVersion);
 
             if (Directory.Exists(destinationDirectoryName))
             {
@@ -112,12 +177,14 @@ namespace Sashimi.Terraform.Tests
                 }
             }
 
-            await DownloadCli(destinationDirectoryName);
+            await DownloadCli(destinationDirectoryName, terraformCliVersion);
         }
 
         [Test]
         public void ExtraInitParametersAreSet()
         {
+            IgnoreIfVersionIsNotInRange("0.11.8", "0.15.0");
+                
             var additionalParams = "-var-file=\"backend.tfvars\"";
             ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(_ =>
                                                                       _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, additionalParams),
@@ -129,6 +196,8 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public void AllowPluginDownloadsShouldBeDisabled()
         {
+            IgnoreIfVersionIsNotInRange("0.11.8", "0.15.0");
+            
             ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(
                                                                   _ =>
                                                                   {
@@ -156,7 +225,7 @@ namespace Sashimi.Terraform.Tests
         [TestCase(typeof(TerraformPlanActionHandler), "plan -no-color -detailed-exitcode -var my_var=\"Hello world\"")]
         [TestCase(typeof(TerraformApplyActionHandler), "apply -no-color -auto-approve -var my_var=\"Hello world\"")]
         [TestCase(typeof(TerraformPlanDestroyActionHandler), "plan -no-color -detailed-exitcode -destroy -var my_var=\"Hello world\"")]
-        [TestCase(typeof(TerraformDestroyActionHandler), "destroy -force -no-color -var my_var=\"Hello world\"")]
+        [TestCase(typeof(TerraformDestroyActionHandler), "destroy -auto-approve -no-color -var my_var=\"Hello world\"")]
         public void AdditionalActionParams(Type commandType, string expected)
         {
             ExecuteAndReturnLogOutput(commandType, _ => { _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams, "-var my_var=\"Hello world\""); }, "AdditionalParams")
@@ -168,7 +237,7 @@ namespace Sashimi.Terraform.Tests
         [TestCase(typeof(TerraformPlanActionHandler), "plan -no-color -detailed-exitcode -var-file=\"example.tfvars\"")]
         [TestCase(typeof(TerraformApplyActionHandler), "apply -no-color -auto-approve -var-file=\"example.tfvars\"")]
         [TestCase(typeof(TerraformPlanDestroyActionHandler), "plan -no-color -detailed-exitcode -destroy -var-file=\"example.tfvars\"")]
-        [TestCase(typeof(TerraformDestroyActionHandler), "destroy -force -no-color -var-file=\"example.tfvars\"")]
+        [TestCase(typeof(TerraformDestroyActionHandler), "destroy -auto-approve -no-color -var-file=\"example.tfvars\"")]
         public void VarFiles(Type commandType, string actual)
         {
             ExecuteAndReturnLogOutput(commandType, _ => { _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars"); }, "WithVariables")
@@ -639,7 +708,7 @@ output ""config-map-aws-auth"" {{
                                                                                                               KnownVariables.Action.Script.ScriptSourceOptions.Package);
                                                                                         context.Variables.Add(KnownVariables.Action.Packages.PackageId, terraformFiles);
                                                                                         context.Variables.Add(TerraformSpecialVariables.Calamari.TerraformCliPath,
-                                                                                                              Path.GetDirectoryName(customTerraformExecutable));
+                                                                                                               Path.GetDirectoryName(customTerraformExecutable));
                                                                                         context.Variables.Add(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
                                                                                                               customTerraformExecutable);
 
@@ -654,6 +723,18 @@ output ""config-map-aws-auth"" {{
 
             assertResult(result);
             return result;
+        }
+        
+        private void IgnoreIfVersionIsNotInRange(string minimumVersion, string? maximumVersion = null)
+        {
+            var _minimumVersion = new Version(minimumVersion);
+            var _maximumVersion = new Version(maximumVersion ?? "999.0.0");
+            
+            if (terraformCliVersionAsObject.CompareTo(_minimumVersion) < 0
+                || terraformCliVersionAsObject.CompareTo(_maximumVersion) >= 0)
+            {
+                Assert.Ignore();
+            }
         }
     }
 }
