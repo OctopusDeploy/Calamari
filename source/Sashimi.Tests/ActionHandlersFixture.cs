@@ -90,6 +90,7 @@ namespace Sashimi.Terraform.Tests
             ClearTerraformDirectory("Azure");
             ClearTerraformDirectory("PlanDetailedExitCode");
             ClearTerraformDirectory("Simple");
+            ClearTerraformDirectory($"TemplateDirectory{Path.DirectorySeparatorChar}SubFolder");
             ClearTerraformDirectory("TemplateDirectory");
             ClearTerraformDirectory("WithOutputSensitiveVariables");
             ClearTerraformDirectory("WithVariables");
@@ -395,15 +396,15 @@ namespace Sashimi.Terraform.Tests
                 _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
             }
 
-            var output = ExecuteAndReturnResult(typeof(TerraformPlanActionHandler), PopulateVariables, "Azure");
+            var output = ExecuteAndReturnResult(typeof(TerraformPlanActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
             output.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
 
-            output = ExecuteAndReturnResult(typeof(TerraformApplyActionHandler), PopulateVariables, "Azure");
+            output = ExecuteAndReturnResult(typeof(TerraformApplyActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
             output.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
             output.OutputVariables["TerraformValueOutputs[url]"].Value.Should().Be(expectedHostName);
             await AssertRequestResponse(HttpStatusCode.Forbidden);
 
-            ExecuteAndReturnResult(typeof(TerraformDestroyActionHandler), PopulateVariables, "Azure");
+            ExecuteAndReturnResult(typeof(TerraformDestroyActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
 
             await AssertResponseIsNotReachable();
 
@@ -449,15 +450,15 @@ namespace Sashimi.Terraform.Tests
                 _.Variables.Add("Octopus.Action.Aws.Region", "ap-southeast-1");
                 _.Variables.Add("Hello", "Hello World from AWS");
                 _.Variables.Add("bucket_name", bucketName);
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars"); // TODO: replace file with the original after substitution
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "AWS");
                 _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
             }
 
-            var output = ExecuteAndReturnResult(typeof(TerraformPlanActionHandler), PopulateVariables, "AWS");
+            var output = ExecuteAndReturnResult(typeof(TerraformPlanActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
             output.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
 
-            output = ExecuteAndReturnResult(typeof(TerraformApplyActionHandler), PopulateVariables, "AWS");
+            output = ExecuteAndReturnResult(typeof(TerraformApplyActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
             output.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
             output.OutputVariables["TerraformValueOutputs[url]"].Value.Should().Be(expectedUrl);
 
@@ -467,7 +468,7 @@ namespace Sashimi.Terraform.Tests
 
             fileData.Should().Be("Hello World from AWS");
 
-            ExecuteAndReturnResult(typeof(TerraformDestroyActionHandler), PopulateVariables, "AWS");
+            ExecuteAndReturnResult(typeof(TerraformDestroyActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
             using (var client = new HttpClient())
             {
                 var response = await client.GetAsync(expectedUrl).ConfigureAwait(false);
@@ -825,7 +826,7 @@ output ""config-map-aws-auth"" {{
         {
             var assertResult = assert ?? (_ => { });
 
-            var terraformFiles = TestEnvironment.GetTestPath(folderName);
+            var terraformFiles = Path.IsPathRooted(folderName) ? folderName : TestEnvironment.GetTestPath(folderName); 
 
             var result = ActionHandlerTestBuilder.CreateAsync<Program>(commandType)
                                                                        .WithArrange(context =>
