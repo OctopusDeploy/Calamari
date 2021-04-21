@@ -175,7 +175,8 @@ namespace Calamari.Terraform
                 .VerifySuccess();
 
             version = version.Replace("Terraform v", "");
-            version = version.Substring(0, version.IndexOf('\n'));
+            if (version.IndexOf('\n') != -1)
+                version = version.Substring(0, version.IndexOf('\n'));
             
             return new Version(version);
         }
