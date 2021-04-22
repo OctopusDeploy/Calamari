@@ -13,6 +13,8 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Terraform.Helpers;
+using NuGet.Versioning;
 
 namespace Calamari.Terraform
 {
@@ -28,6 +30,8 @@ namespace Calamari.Terraform
         readonly string logPath;
         Dictionary<string, string> defaultEnvironmentVariables;
         readonly Version version;
+
+        readonly VersionRange supportedVersionRange = new VersionRange(NuGetVersion.Parse("0.11.8"), true, NuGetVersion.Parse("0.15.0"), true);
 
         public TerraformCliExecutor(
             ILog log,
@@ -155,12 +159,12 @@ namespace Calamari.Terraform
         {
             var initParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams);
             var allowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
-            string initCommand = $"init -no-color {initParams}";
+            string initCommand = $"init -no-color";
+            
+            if (version.IsLessThan("0.15.0"))
+                initCommand += $" -get-plugins={allowPluginDownloads.ToString().ToLower()}";
 
-            if (version.CompareTo(new Version("0.15.0")) < 0)
-            {
-                initCommand = $"init -no-color -get-plugins={allowPluginDownloads.ToString().ToLower()} {initParams}";
-            }
+            initCommand += $" {initParams}";
 
             ExecuteCommandInternal(
                                    new[] { initCommand },
@@ -171,14 +175,25 @@ namespace Calamari.Terraform
 
         Version GetVersion()
         {
-            ExecuteCommandInternal(new[] { "--version" }, out string version, true)
+            ExecuteCommandInternal(new[] { "--version" }, out string consoleOutput, true)
                 .VerifySuccess();
 
-            version = version.Replace("Terraform v", "");
-            if (version.IndexOf('\n') != -1)
-                version = version.Substring(0, version.IndexOf('\n'));
-            
-            return new Version(version);
+            consoleOutput = consoleOutput.Replace("Terraform v", "");
+            int newLinePos = consoleOutput.IndexOf('\n'); // this is always \n in all OSes for unknown reasons
+            if (newLinePos != -1)
+                consoleOutput = consoleOutput.Substring(0, newLinePos);
+
+            if (!Version.TryParse(consoleOutput, out var version))
+            {
+                log.Warn($"Could not determine Terraform CLI version.");
+            }
+            else
+            {
+                if (!supportedVersionRange.Satisfies(new NuGetVersion(version)))
+                    log.Warn($"Version {consoleOutput} of Terraform CLI is not supported. Supported version range is: {supportedVersionRange}");
+            }
+
+            return version;
         }
 
         void InitializeWorkspace()
