@@ -450,7 +450,7 @@ namespace Sashimi.Terraform.Tests
                 _.Variables.Add("Octopus.Action.Aws.Region", "ap-southeast-1");
                 _.Variables.Add("Hello", "Hello World from AWS");
                 _.Variables.Add("bucket_name", bucketName);
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars"); // TODO: replace file with the original after substitution
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "AWS");
                 _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
             }
