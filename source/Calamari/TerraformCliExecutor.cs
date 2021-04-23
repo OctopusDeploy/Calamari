@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -12,6 +13,8 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Terraform.Helpers;
+using NuGet.Versioning;
 
 namespace Calamari.Terraform
 {
@@ -26,6 +29,9 @@ namespace Calamari.Terraform
         readonly string templateDirectory;
         readonly string logPath;
         Dictionary<string, string> defaultEnvironmentVariables;
+        readonly Version version;
+
+        readonly VersionRange supportedVersionRange = new VersionRange(NuGetVersion.Parse("0.11.8"), true, NuGetVersion.Parse("0.15"), true);
 
         public TerraformCliExecutor(
             ILog log,
@@ -57,7 +63,7 @@ namespace Calamari.Terraform
 
             InitializeTerraformEnvironmentVariables();
 
-            LogVersion();
+            this.version = GetVersion();
 
             InitializePlugins();
 
@@ -87,7 +93,7 @@ namespace Calamari.Terraform
 
         public CommandResult ExecuteCommand(params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(arguments, out _, true);
+            var commandResult = ExecuteCommandInternal(arguments, out var result, true);
 
             commandResult.VerifySuccess();
             return commandResult;
@@ -153,18 +159,41 @@ namespace Calamari.Terraform
         {
             var initParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams);
             var allowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
+            string initCommand = $"init -no-color";
+            
+            if (version.IsLessThan("0.15.0"))
+                initCommand += $" -get-plugins={allowPluginDownloads.ToString().ToLower()}";
+
+            initCommand += $" {initParams}";
 
             ExecuteCommandInternal(
-                                   new[] { $"init -no-color -get-plugins={allowPluginDownloads.ToString().ToLower()} {initParams}" },
+                                   new[] { initCommand },
                                    out _,
                                    true)
                 .VerifySuccess();
         }
 
-        void LogVersion()
+        Version GetVersion()
         {
-            ExecuteCommandInternal(new[] { "--version" }, out _, true)
+            ExecuteCommandInternal(new[] { "--version" }, out string consoleOutput, true)
                 .VerifySuccess();
+
+            consoleOutput = consoleOutput.Replace("Terraform v", "");
+            int newLinePos = consoleOutput.IndexOf('\n'); // this is always \n in all OSes for unknown reasons
+            if (newLinePos != -1)
+                consoleOutput = consoleOutput.Substring(0, newLinePos);
+
+            if (!Version.TryParse(consoleOutput, out var version))
+            {
+                log.Warn($"Could not determine Terraform CLI version.");
+            }
+            else
+            {
+                if (!supportedVersionRange.Satisfies(new NuGetVersion(version)))
+                    log.Warn($"Version {consoleOutput} of Terraform CLI is not supported. Supported version range is: {supportedVersionRange}");
+            }
+
+            return version;
         }
 
         void InitializeWorkspace()

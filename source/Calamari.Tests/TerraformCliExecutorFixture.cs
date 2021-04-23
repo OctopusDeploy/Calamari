@@ -21,7 +21,8 @@ namespace Calamari.Terraform.Tests
         {
             variables = Substitute.For<IVariables>();
             var commandLineRunner = Substitute.For<ICommandLineRunner>();
-            commandLineRunner.Execute(Arg.Any<CommandLineInvocation>()).Returns(new CommandResult("foo", 0));
+            commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation => invocation.AdditionalInvocationOutputSink.WriteInfo("Terraform v0.15.0")))
+                             .Returns(new CommandResult("foo", 0));
             cliExecutor = new TerraformCliExecutor(Substitute.For<ILog>(),
                                                    Substitute.For<ICalamariFileSystem>(),
                                                    commandLineRunner,
