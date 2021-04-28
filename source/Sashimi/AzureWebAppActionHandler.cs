@@ -1,7 +1,6 @@
 ﻿using System;
 using Octopus.CoreUtilities;
 using Sashimi.AzureScripting;
-using Sashimi.AzureWebApp.Endpoints;
 using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.AzureWebApp
