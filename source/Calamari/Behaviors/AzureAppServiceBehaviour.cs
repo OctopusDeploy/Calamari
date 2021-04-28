@@ -64,15 +64,8 @@ namespace Calamari.AzureAppService.Behaviors
                     throw new Exception("Unsupported archive type");
             }
 
-            var azureClient = Microsoft.Azure.Management.Fluent.Azure.Configure()
-                .Authenticate(
-                    SdkContext.AzureCredentialsFactory.FromServicePrincipal(servicePrincipal.ClientId,
-                        servicePrincipal.Password, servicePrincipal.TenantId,
-                       !string.IsNullOrEmpty(servicePrincipal.AzureEnvironment) ? AzureEnvironment.FromName(servicePrincipal.AzureEnvironment) : AzureEnvironment.AzureGlobalCloud))
-                .WithSubscription(servicePrincipal.SubscriptionNumber);
-
+            var azureClient = servicePrincipal.CreateAzureClient(); 
             var webApp = await azureClient.WebApps.GetByResourceGroupAsync(resourceGroupName, webAppName);
-
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
 
             // Lets process our archive while the slot is spun up.  we will await it later before we try to upload to it.
