@@ -31,5 +31,6 @@ namespace Calamari.AzureAppService.Json
     public class properties
     {
         public IEnumerable<string> appSettingNames { get; set; }
+        public IEnumerable<string> connectionStringNames { get; set; }
     }
 }

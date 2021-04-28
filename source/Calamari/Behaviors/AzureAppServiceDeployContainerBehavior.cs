@@ -45,6 +45,8 @@ namespace Calamari.AzureAppService.Behaviors
             var imageName = variables.Get(SpecialVariables.Action.Package.PackageId);
             var registryUrl = variables.Get(SpecialVariables.Action.Package.Registry);
             var imageVersion = variables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
+            var regUsername = variables.Get(SpecialVariables.Action.Package.Feed.Username);
+            var regPwd = variables.Get(SpecialVariables.Action.Package.Feed.Password);
 
             var token = await Auth.GetAuthTokenAsync(principalAccount);
 
@@ -57,10 +59,14 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Retrieving config (this is required to update image)");
             var config = await webAppClient.WebApps.GetConfigurationAsync(targetSite);
             config.LinuxFxVersion = $@"DOCKER|{imageName}:{imageVersion}";
+            
 
             Log.Verbose("Retrieving app settings");
             var appSettings = await webAppClient.WebApps.ListApplicationSettingsAsync(targetSite);
+
             appSettings.Properties["DOCKER_REGISTRY_SERVER_URL"] = registryUrl;
+            appSettings.Properties["DOCKER_REGISTRY_SERVER_USERNAME"] = regUsername;
+            appSettings.Properties["DOCKER_REGISTRY_SERVER_PASSWORD"] = regPwd;
 
             Log.Info("Updating app settings with container registry");
             await webAppClient.WebApps.UpdateApplicationSettingsAsync(targetSite, appSettings);

@@ -16,7 +16,7 @@
                 public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
                 public static readonly string WebAppSlot = "Octopus.Action.Azure.DeploymentSlot";
                 public static readonly string AppSettings = "Octopus.Action.Azure.AppSettings";
-                public static readonly string ContainerInitTimeout = "Octopus.Action.Azure.ContainerInitTimeout";
+                public static readonly string ConnectionStrings = "Octopus.Action.Azure.ConnectionStrings";
             }
 
             public static class Package
@@ -27,7 +27,16 @@
 
                 // This will only be set for container registry feeds
                 public static readonly string Registry = "Octopus.Action.Package[].Registry";
+                
+
+                public static class Feed
+                {
+                    public static readonly string Username = "Octopus.Action.Package[].Feed.Username";
+                    public static readonly string Password = "Octopus.Action.Package[].Feed.Password";
+                }
             }
+
+
 
         }
     }

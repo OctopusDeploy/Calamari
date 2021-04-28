@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Azure.Identity;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
@@ -32,6 +33,7 @@ namespace Calamari.AzureAppService.Tests
         private string resourceGroupName;
         private string slotName;
         private StringDictionary existingSettings;
+        private ConnectionStringDictionary existingConnectionStrings;
         private ResourceGroupsOperations resourceGroupClient;
         private string authToken;
         private WebSiteManagementClient webMgmtClient;
@@ -84,6 +86,23 @@ namespace Calamari.AzureAppService.Tests
                 Properties = new Dictionary<string, string> { { "ExistingSetting", "Foo" },{"ReplaceSetting","Foo"} }
             };
 
+            existingConnectionStrings = new ConnectionStringDictionary
+            {
+                Properties = new Dictionary<string, ConnStringValueTypePair>
+                {
+                    {
+                        "ExistingConnectionString",
+                        new ConnStringValueTypePair("ConnectionStringValue", ConnectionStringType.SQLAzure)
+                    },
+                    {
+                        "ReplaceConnectionString",
+                        new ConnStringValueTypePair("originalConnectionStringValue", ConnectionStringType.Custom)
+                    }
+                }
+            };
+
+            await webMgmtClient.WebApps.UpdateConnectionStringsAsync(resourceGroupName, site.Name, existingConnectionStrings);
+
             webappName = site.Name;
         }
 
@@ -98,7 +117,9 @@ namespace Calamari.AzureAppService.Tests
         {
             await webMgmtClient.WebApps.UpdateApplicationSettingsWithHttpMessagesAsync(resourceGroupName, site.Name,
                 existingSettings);
-
+            await webMgmtClient.WebApps.UpdateConnectionStringsAsync(resourceGroupName, site.Name,
+                existingConnectionStrings);
+            
             var iVars = new CalamariVariables();
             AddVariables(iVars);
             var runningContext = new RunningDeployment("", iVars);
@@ -110,12 +131,21 @@ namespace Calamari.AzureAppService.Tests
                 ("MySecondAppSetting", "bar", false),
                 ("ReplaceSetting", "Bar", false)
             });
+
+            var connectionStrings = BuildConnectionStringJson(new[]
+            {
+                ("ReplaceConnectionString", "replacedConnectionStringValue", ConnectionStringType.SQLServer, false),
+                ("NewConnectionString","newValue", ConnectionStringType.SQLAzure, false),
+                ("ReplaceSlotConnectionString", "replacedSlotConnectionStringValue", ConnectionStringType.MySql, true)
+            });
+
             
+            iVars.Add(SpecialVariables.Action.Azure.ConnectionStrings, connectionStrings.json);
             iVars.Add(SpecialVariables.Action.Azure.AppSettings, appSettings.json);
             
             await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
 
-            await AssertAppSettings(appSettings.setting);
+            await AssertAppSettings(appSettings.setting, connectionStrings.connStrings);
         }
 
         [Test]
@@ -143,13 +173,22 @@ namespace Calamari.AzureAppService.Tests
                 ("MyDeploySlotSetting", slotName, false),
                 ("ReplaceSetting", "Foo", false)
             });
-
+            
+            var connectionStrings = BuildConnectionStringJson(new[]
+            {
+                ("NewKey", "newConnStringValue", ConnectionStringType.Custom, false),
+                ("ReplaceConnectionString", "ChangedConnectionStringValue", ConnectionStringType.SQLServer, false),
+                ("newSlotConnectionString", "ChangedConnectionStringValue", ConnectionStringType.SQLServer, true),
+                ("ReplaceSlotConnectionString", "ChangedSlotConnectionStringValue", ConnectionStringType.Custom, true)
+            });
+            
             iVars.Add(SpecialVariables.Action.Azure.AppSettings, settings.json);
+            iVars.Add(SpecialVariables.Action.Azure.ConnectionStrings, connectionStrings.json);
 
             await existingSettingsTask;
 
             await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
-            await AssertAppSettings(settings.setting);
+            await AssertAppSettings(settings.setting, connectionStrings.connStrings);
         }
 
         private void AddVariables(CalamariVariables vars)
@@ -170,30 +209,63 @@ namespace Calamari.AzureAppService.Tests
             return (JsonConvert.SerializeObject(appSettings), appSettings);
         }
 
-        async Task AssertAppSettings(IEnumerable<AppSetting> expectedSettings)
+        private (string json, ConnectionStringDictionary connStrings) BuildConnectionStringJson(
+            IEnumerable<(string name, string value, ConnectionStringType type, bool isSlotSetting)> connStrings)
+        {
+            var connections = connStrings.Select(connstring => new ConnectionStringSetting
+            {
+                Name = connstring.name, Value = connstring.value, Type = connstring.type,
+                SlotSetting = connstring.isSlotSetting
+            });
+            var connectionsDict = new ConnectionStringDictionary
+                {Properties = new Dictionary<string, ConnStringValueTypePair>()};
+
+            foreach (var item in connStrings)
+            {
+                connectionsDict.Properties[item.name] = new ConnStringValueTypePair(item.value, item.type);
+            }
+            
+            return (JsonConvert.SerializeObject(connections), connectionsDict);
+        }
+
+        async Task AssertAppSettings(IEnumerable<AppSetting> expectedAppSettings, ConnectionStringDictionary expectedConnStrings)
         {
             // Update existing settings with new replacement values
-            var expectedSettingsArray = expectedSettings as AppSetting[] ?? expectedSettings.ToArray();
+            var expectedSettingsArray = expectedAppSettings as AppSetting[] ?? expectedAppSettings.ToArray();
             foreach (var (name, value, _) in expectedSettingsArray.Where(x =>
                 existingSettings.Properties.ContainsKey(x.Name)))
             {
                 existingSettings.Properties[name] = value;
             }
-
-            // for each existing setting that isn't defined in the expected settings object, add it
-            var expectedList = expectedSettingsArray.ToList();
-            foreach (var kvp in existingSettings.Properties.Where(x =>
-                expectedSettingsArray.All(y => y.Name != x.Key)))
+            
+            foreach(var item in expectedConnStrings.Properties)
             {
-                expectedList.Add(new AppSetting {Name = kvp.Key, Value = kvp.Value, SlotSetting = false});
+                existingConnectionStrings.Properties[item.Key] = item.Value;
             }
+            
+            // for each existing setting that isn't defined in the expected settings object, add it
+            var expectedSettingsList = expectedSettingsArray.ToList();
+            
+            expectedSettingsList.AddRange(existingSettings.Properties
+                .Where(x => expectedSettingsArray.All(y => y.Name != x.Key)).Select(kvp =>
+                    new AppSetting {Name = kvp.Key, Value = kvp.Value, SlotSetting = false}));
             
             // Get the settings from the webapp
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webappName, slotName, resourceGroupName);
-            
-            var settings = await AppSettingsManagement.GetAppSettingsAsync(webMgmtClient, authToken, targetSite);
 
-            CollectionAssert.AreEquivalent(expectedList, settings);
+            var settings = await AppSettingsManagement.GetAppSettingsAsync(webMgmtClient, authToken, targetSite);
+            var connStrings = await AppSettingsManagement.GetConnectionStringsAsync(webMgmtClient, targetSite);
+
+            CollectionAssert.AreEquivalent(expectedSettingsList, settings);
+
+            foreach (var item in connStrings.Properties)
+            {
+                var existingItem = existingConnectionStrings.Properties[item.Key];
+
+                Assert.AreEqual(existingItem.Value, item.Value.Value);
+                Assert.AreEqual(existingItem.Type, item.Value.Type);
+            }
+            //CollectionAssert.AreEquivalent(existingConnectionStrings.Properties, connStrings.Properties);
         }
     }
 }
