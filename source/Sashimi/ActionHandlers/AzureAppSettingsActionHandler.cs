@@ -7,6 +7,7 @@ using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.AzureAppService
 {
+    /*
     class AzureAppSettingsActionHandler : IActionHandler
     {
         private const string AzureWebAppDeploymentTargetTypeId = "AzureWebApp";
@@ -43,4 +44,5 @@ namespace Sashimi.AzureAppService
                 .WithStagedPackageArgument().Execute();
         }
     }
+    */
 }
