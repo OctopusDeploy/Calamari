@@ -42,9 +42,8 @@ namespace Calamari.AzureAppService.Behaviors
             var rgName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, rgName);
 
-            var imageName = variables.Get(SpecialVariables.Action.Package.PackageId);
-            var registryUrl = variables.Get(SpecialVariables.Action.Package.Registry);
-            var imageVersion = variables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
+            var image = variables.Get(SpecialVariables.Action.Package.Image);
+            var registryHost = variables.Get(SpecialVariables.Action.Package.Registry);
             var regUsername = variables.Get(SpecialVariables.Action.Package.Feed.Username);
             var regPwd = variables.Get(SpecialVariables.Action.Package.Feed.Password);
 
@@ -54,17 +53,17 @@ namespace Calamari.AzureAppService.Behaviors
                     new TokenCredentials(token))
                 {SubscriptionId = principalAccount.SubscriptionNumber};
 
-            Log.Info($"Updating web app to use image {imageName}:{imageVersion} from registry {registryUrl}");
+            Log.Info($"Updating web app to use image {image} from registry {registryHost}");
 
             Log.Verbose("Retrieving config (this is required to update image)");
             var config = await webAppClient.WebApps.GetConfigurationAsync(targetSite);
-            config.LinuxFxVersion = $@"DOCKER|{imageName}:{imageVersion}";
+            config.LinuxFxVersion = $@"DOCKER|{image}";
             
 
             Log.Verbose("Retrieving app settings");
             var appSettings = await webAppClient.WebApps.ListApplicationSettingsAsync(targetSite);
 
-            appSettings.Properties["DOCKER_REGISTRY_SERVER_URL"] = registryUrl;
+            appSettings.Properties["DOCKER_REGISTRY_SERVER_URL"] = "https://" + registryHost;
             appSettings.Properties["DOCKER_REGISTRY_SERVER_USERNAME"] = regUsername;
             appSettings.Properties["DOCKER_REGISTRY_SERVER_PASSWORD"] = regPwd;
 

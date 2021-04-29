@@ -26,6 +26,7 @@
                 public static readonly string PackageVersion = "Octopus.Action.Package.PackageVersion";
 
                 // This will only be set for container registry feeds
+                public static readonly string Image = "Octopus.Action.Package[].Image";
                 public static readonly string Registry = "Octopus.Action.Package[].Registry";
                 
 
