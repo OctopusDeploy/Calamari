@@ -36,6 +36,7 @@ namespace Sashimi.Terraform
                 public const string AzureManagedAccount = "Octopus.Action.Terraform.AzureAccount";
                 public const string PlanOutput = "TerraformPlanOutput";
                 public const string PlanDetailedExitCode = "TerraformPlanDetailedExitCode";
+                public const string EnvironmentVariables = "Octopus.Action.Terraform.EnvVariables";
             }
 
             public static class Aws
