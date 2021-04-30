@@ -15,12 +15,14 @@ using Calamari.Terraform;
 using Calamari.Tests.Helpers;
 using Calamari.Tests.Shared;
 using FluentAssertions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Terraform.ActionHandler;
+using Sashimi.Terraform.Tests.CommonTemplates;
 using Sashimi.Tests.Shared.Server;
 using KnownVariables = Sashimi.Server.Contracts.KnownVariables;
 using TestEnvironment = Sashimi.Tests.Shared.TestEnvironment;
@@ -28,7 +30,7 @@ using TestEnvironment = Sashimi.Tests.Shared.TestEnvironment;
 namespace Sashimi.Terraform.Tests
 {
     [TestFixture(BundledCliFixture.TerraformVersion)]
-    [TestFixture("0.15.0")]
+    [TestFixture("0.15.1")]
     public class ActionHandlersFixture
     {
         string? customTerraformExecutable;
@@ -177,8 +179,53 @@ namespace Sashimi.Terraform.Tests
                     return;
                 }
             }
-
+            
             await DownloadCli(destinationDirectoryName, terraformCliVersion);
+        }
+
+        [Test]
+        public void OverridingCacheFolder_WithNonSense_ThrowsAnError()
+        {
+            IgnoreIfVersionIsNotInRange("0.15.0");
+
+            ExecuteWithInlineTemplateAndReturnLogOutput(_ =>
+                                                        {
+                                                            _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
+                                                                            JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_PLUGIN_CACHE_DIR", "NonSense" } }));
+                                                        })
+                .Should()
+                .ContainAll("The specified plugin cache dir", "cannot be opened");
+        }
+        
+        [Test]
+        public void NotProvidingEnvVariables_DoesNotCrashEverything()
+        {
+            ExecuteWithInlineTemplateAndReturnLogOutput(_ =>
+                                                        {
+                                                            _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables, null);
+                                                        })
+                .Should()
+                .NotContain("Error");
+        }
+        [Test]
+        public void UserDefinedEnvVariables_OverrideDefaultBehaviour()
+        { 
+            string template = TemplateLoader.LoadTextTemplate("SingleVariable.json");
+
+            ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
+                                                                   {
+                                                                       _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
+                                                                       _.Variables.Add(KnownVariables.Action.Script.ScriptSource,
+                                                                                       KnownVariables.Action.Script.ScriptSourceOptions.Inline);
+                                                                       _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
+                                                                                       JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_VAR_ami", "new ami value" } }));
+                                                                   },
+                                                                   String.Empty,
+                                                                   _ =>
+                                                                   {
+                                                                       _.OutputVariables.ContainsKey("TerraformValueOutputs[ami]").Should().BeTrue();
+                                                                       _.OutputVariables["TerraformValueOutputs[ami]"].Value.Should().Be("new ami value");
+                                                                   });
         }
 
         [Test]
@@ -507,47 +554,7 @@ namespace Sashimi.Terraform.Tests
             
             const string variables =
                 "{\"stringvar\":\"default string\",\"images\":\"\",\"test2\":\"\",\"test3\":\"\",\"test4\":\"\"}";
-            const string template = @"variable stringvar {
-  type = ""string""
-  default = ""default string""
-}
-variable ""images"" {
-  type = ""map""
-  default = {
-    us-east-1 = ""image-1234""
-    us-west-2 = ""image-4567""
-  }
-}
-variable ""test2"" {
-  type    = ""map""
-  default = {
-    val1 = [""hi""]
-  }
-}
-variable ""test3"" {
-  type    = ""map""
-  default = {
-    val1 = {
-      val2 = ""#{RandomNumber}""
-    }
-  }
-}
-variable ""test4"" {
-  type    = ""map""
-  default = {
-    val1 = {
-      val2 = [""hi""]
-    }                        
-  }
-}
-# Example of getting an element from a list in a map
-output ""nestedlist"" {
-  value = ""${element(var.test2[""val1""], 0)}""
-}
-# Example of getting an element from a nested map
-output ""nestedmap"" {
-  value = ""${lookup(var.test3[""val1""], ""val2"")}""
-}";
+            string template = TemplateLoader.LoadTextTemplate("HclWithVariablesV0118.hcl");
 
             ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
                                                                    {
@@ -572,47 +579,7 @@ output ""nestedmap"" {
                 
             const string variables =
                 "{\"stringvar\":\"default string\",\"images\":\"\",\"test2\":\"\",\"test3\":\"\",\"test4\":\"\"}";
-            const string template = @"variable stringvar {
-  type = string
-  default = ""default string""
-}
-variable ""images"" {
-  type = map(string)
-  default = {
-    us-east-1 = ""image-1234""
-    us-west-2 = ""image-4567""
-  }
-}
-variable ""test2"" {
-  type    = map
-  default = {
-    val1 = [""hi""]
-  }
-}
-variable ""test3"" {
-  type    = map
-  default = {
-    val1 = {
-      val2 = ""#{RandomNumber}""
-    }
-  }
-}
-variable ""test4"" {
-  type    = map
-  default = {
-    val1 = {
-      val2 = [""hi""]
-    }                        
-  }
-}
-# Example of getting an element from a list in a map
-output ""nestedlist"" {
-  value = ""${element(var.test2[""val1""], 0)}""
-}
-# Example of getting an element from a nested map
-output ""nestedmap"" {
-  value = ""${lookup(var.test3[""val1""], ""val2"")}""
-}";
+            string template = TemplateLoader.LoadTextTemplate("HclWithVariablesV0150.hcl");
 
             ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
                                                                    {
@@ -680,35 +647,7 @@ output ""config-map-aws-auth"" {{
             
             const string variables =
                 "{\"ami\":\"new ami value\"}";
-            const string template = @"{
-    ""variable"":{
-      ""ami"":{
-         ""type"":""string"",
-         ""description"":""the AMI to use"",
-         ""default"":""1234567890""
-      }
-    },
-    ""output"":{
-      ""test"":{
-         ""value"":""hi there""
-      },
-      ""test2"":{
-         ""value"":[
-            ""hi there"",
-            ""hi again""
-         ]
-      },
-      ""test3"":{
-         ""value"":""${map(\""a\"", \""hi\"")}""
-      },
-      ""ami"":{
-         ""value"":""${var.ami}""
-      },
-      ""random"":{
-         ""value"":""#{RandomNumber}""
-      }
-    }
-}";
+            string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV01180.json");
 
             var randomNumber = new Random().Next().ToString();
 
@@ -737,35 +676,7 @@ output ""config-map-aws-auth"" {{
             
             const string variables =
                 "{\"ami\":\"new ami value\"}";
-            const string template = @"{
-    ""variable"":{
-      ""ami"":{
-         ""type"":""string"",
-         ""description"":""the AMI to use"",
-         ""default"":""1234567890""
-      }
-    },
-    ""output"":{
-      ""test"":{
-         ""value"":""hi there""
-      },
-      ""test2"":{
-         ""value"":[
-            ""hi there"",
-            ""hi again""
-         ]
-      },
-      ""test3"":{
-         ""value"":""${tomap({ a = \""hi\"" })}""
-      },
-      ""ami"":{
-         ""value"":""${var.ami}""
-      },
-      ""random"":{
-         ""value"":""#{RandomNumber}""
-      }
-    }
-}";
+            string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV0150.json");
 
             var randomNumber = new Random().Next().ToString();
 
@@ -820,6 +731,19 @@ output ""config-map-aws-auth"" {{
                                             Action<TestActionHandlerResult>? assert = null) where T : IActionHandler
         {
             return ExecuteAndReturnLogOutput(typeof(T), populateVariables, folderName, assert);
+        }
+        
+        string ExecuteWithInlineTemplateAndReturnLogOutput(Action<TestActionHandlerContext<Program>> populateVariables, string template = "{}")
+        {
+            return ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
+                                                                          {
+                                                                              _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
+                                                                              _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, "{}");
+                                                                              _.Variables.Add(KnownVariables.Action.Script.ScriptSource,
+                                                                                              KnownVariables.Action.Script.ScriptSourceOptions.Inline);
+                                                                              populateVariables(_);
+                                                                          },
+                                                                          string.Empty);
         }
 
         TestActionHandlerResult ExecuteAndReturnResult(Type commandType, Action<TestActionHandlerContext<Program>> populateVariables, string folderName, Action<TestActionHandlerResult>? assert = null)

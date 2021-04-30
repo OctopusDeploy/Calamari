@@ -7,6 +7,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
 
 namespace Calamari.Terraform.Behaviours
 {
@@ -40,7 +41,18 @@ namespace Calamari.Terraform.Behaviours
             if (useAzureAccount)
                 environmentVariables.AddRange(AzureEnvironmentVariables(variables));
 
+            environmentVariables.AddRange(GetEnvironmentVariableArgs(context.Variables));
+
             await Execute(context, environmentVariables);
+        }
+
+        static Dictionary<string, string> GetEnvironmentVariableArgs(IVariables variables)
+        {
+            var rawJson = variables.Get(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables);
+            if (string.IsNullOrEmpty(rawJson))
+                return new Dictionary<string, string>();
+
+            return JsonConvert.DeserializeObject<Dictionary<string, string>>(rawJson);
         }
         
         protected abstract Task Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables);
