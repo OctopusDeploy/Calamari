@@ -231,7 +231,7 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public void ExtraInitParametersAreSet()
         {
-            IgnoreIfVersionIsNotInRange("0.11.8", "0.15.0");
+            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
                 
             var additionalParams = "-var-file=\"backend.tfvars\"";
             ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(_ =>
@@ -244,7 +244,7 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public void AllowPluginDownloadsShouldBeDisabled()
         {
-            IgnoreIfVersionIsNotInRange("0.11.8", "0.15.0");
+            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
             
             ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(
                                                                   _ =>
@@ -550,7 +550,7 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public void InlineHclTemplateAndVariables()
         {
-            IgnoreIfVersionIsNotInRange("0.11.8", "0.15.0");
+            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
             
             const string variables =
                 "{\"stringvar\":\"default string\",\"images\":\"\",\"test2\":\"\",\"test3\":\"\",\"test4\":\"\"}";
@@ -643,7 +643,7 @@ output ""config-map-aws-auth"" {{
         [Test]
         public void InlineJsonTemplateAndVariables()
         {
-            IgnoreIfVersionIsNotInRange("0.11.8", "0.15.0");
+            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
             
             const string variables =
                 "{\"ami\":\"new ami value\"}";

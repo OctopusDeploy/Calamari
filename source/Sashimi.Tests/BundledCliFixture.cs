@@ -14,7 +14,7 @@ namespace Sashimi.Terraform.Tests
     [TestFixture]
     public class BundledCliFixture
     {
-        internal const string TerraformVersion = "0.11.8";
+        internal const string TerraformVersion = "0.11.15";
 
         //Note that the CLI package may not end up in the test build folder when running locally.
         [Test]
