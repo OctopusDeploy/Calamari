@@ -229,7 +229,8 @@ function setup_context {
 function configure_kubectl_path {
   export KUBECONFIG=$(get_octopusvariable "Octopus.Action.Kubernetes.KubectlConfig")
   echo "Temporary kubectl config set to $KUBECONFIG"
-  echo "" >> $KUBECONFIG
+  # create an empty file, to suppress kubectl errors about the file missing
+  echo "" > $KUBECONFIG
   chmod 600 $KUBECONFIG
 }
 
