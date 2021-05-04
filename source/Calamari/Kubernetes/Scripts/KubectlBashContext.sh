@@ -230,6 +230,7 @@ function configure_kubectl_path {
   export KUBECONFIG=$(get_octopusvariable "Octopus.Action.Kubernetes.KubectlConfig")
   echo "Temporary kubectl config set to $KUBECONFIG"
   echo "" >> $KUBECONFIG
+  chmod 600 $KUBECONFIG
 }
 
 function create_namespace {
