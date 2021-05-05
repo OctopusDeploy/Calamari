@@ -35,7 +35,7 @@ namespace Calamari.Terraform.Behaviours
                                cli.TerraformVariableFiles,
                                cli.ActionParams);
 
-            // Attempt to get the outputs. This will fail if none are defined in versions prior to v0.11.8
+            // Attempt to get the outputs. This will fail if none are defined in versions prior to v0.11.15
             // Please note that we really don't want to log the following command output as it can contain sensitive variables etc. hence the IgnoreCommandOutput()
             if (cli.ExecuteCommand(out var result,
                                    false,
