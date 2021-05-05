@@ -31,7 +31,7 @@ namespace Calamari.Terraform
         Dictionary<string, string> defaultEnvironmentVariables;
         readonly Version version;
 
-        readonly VersionRange supportedVersionRange = new VersionRange(NuGetVersion.Parse("0.11.8"), true, NuGetVersion.Parse("0.15"), true);
+        readonly VersionRange supportedVersionRange = new VersionRange(NuGetVersion.Parse("0.11.15"), true, NuGetVersion.Parse("0.15"), true);
 
         public TerraformCliExecutor(
             ILog log,
