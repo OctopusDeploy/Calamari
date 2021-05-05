@@ -231,7 +231,7 @@ function configure_kubectl_path {
   echo "Temporary kubectl config set to $KUBECONFIG"
   # create an empty file, to suppress kubectl errors about the file missing
   echo "" > $KUBECONFIG
-  chmod 600 $KUBECONFIG
+  chmod u=rw,g=,o= $KUBECONFIG
 }
 
 function create_namespace {
