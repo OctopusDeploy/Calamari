@@ -167,7 +167,7 @@ namespace Calamari.AzureAppService.Tests
             Assert.AreEqual($@"DOCKER|{imageName}:{imageVersion}", config.LinuxFxVersion);
 
             var appSettings = await webMgmtClient.WebApps.ListApplicationSettingsAsync(targetSite);
-            Assert.AreEqual(registryUrl, appSettings.Properties["DOCKER_REGISTRY_SERVER_URL"]);
+            Assert.AreEqual("https://" + registryUrl, appSettings.Properties["DOCKER_REGISTRY_SERVER_URL"]);
         }
 
         void AddVariables(CalamariVariables vars)
@@ -179,8 +179,9 @@ namespace Calamari.AzureAppService.Tests
             vars.Add("Octopus.Action.Azure.ResourceGroupName", resourceGroupName);
             vars.Add("Octopus.Action.Azure.WebAppName", webappName);
             vars.Add(SpecialVariables.Action.Package.FeedId, "Feeds-42");
-            vars.Add(SpecialVariables.Action.Package.Registry, "https://index.docker.io");
+            vars.Add(SpecialVariables.Action.Package.Registry, "index.docker.io");
             vars.Add(SpecialVariables.Action.Package.PackageId, "nginx");
+            vars.Add(SpecialVariables.Action.Package.Image, "nginx:latest");
             vars.Add(SpecialVariables.Action.Package.PackageVersion, "latest");
             vars.Add(SpecialVariables.Action.Azure.DeploymentType, "Container");
             //vars.Add(SpecialVariables.Action.Azure.ContainerSettings, BuildContainerConfigJson());

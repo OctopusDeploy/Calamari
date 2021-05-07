@@ -1,5 +1,4 @@
-﻿using Octopus.CoreUtilities;
-using Octopus.Diagnostics;
+using Octopus.CoreUtilities;
 using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.AzureScripting;
 using Sashimi.Server.Contracts.ActionHandlers;
@@ -14,7 +13,7 @@ namespace Sashimi.AzureAppService
 
         public string Name => "Deploy an Azure App Service";
 
-        public string Description => "Deploy a package or container image to an Azure App Service";
+        public string Description => "Deploy a package or container image to an Azure App Service (Azure Web App)";
 
         public string? Keywords => null;
 

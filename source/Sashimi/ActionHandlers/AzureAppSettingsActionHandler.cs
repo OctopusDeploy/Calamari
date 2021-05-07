@@ -1,29 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Octopus.CoreUtilities;
+﻿using Octopus.CoreUtilities;
 using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.AzureScripting;
 using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.AzureAppService
 {
+    /*
     class AzureAppSettingsActionHandler : IActionHandler
     {
         private const string AzureWebAppDeploymentTargetTypeId = "AzureWebApp";
-        
         public string Id => SpecialVariables.Action.Azure.ActionTypeName;
-
         public string Name => "Deploy app settings/connection strings to an Azure App Service";
-
         public string Description => "Deploy app settings and connection strings to an existing app service";
-
         public string? Keywords => "Azure";
-
         public bool ShowInStepTemplatePickerUI => true;
-
         public bool WhenInAChildStepRunInTheContextOfTheTargetMachine => false;
-
         public bool CanRunOnDeploymentTarget => false;
 
         public ActionHandlerCategory[] Categories => new[]
@@ -44,4 +35,5 @@ namespace Sashimi.AzureAppService
                 .WithStagedPackageArgument().Execute(taskLog);
         }
     }
+    */
 }
