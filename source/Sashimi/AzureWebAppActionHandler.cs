@@ -2,7 +2,6 @@
 using Octopus.CoreUtilities;
 using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.AzureScripting;
-using Sashimi.AzureWebApp.Endpoints;
 using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.AzureWebApp
@@ -10,8 +9,8 @@ namespace Sashimi.AzureWebApp
     class AzureWebAppActionHandler : IActionHandlerWithAccount
     {
         public string Id => SpecialVariables.Action.Azure.WebAppActionTypeName;
-        public string Name => "Deploy an Azure Web App";
-        public string Description => "Deploy the contents of a package to an Azure Web App.";
+        public string Name => "Deploy an Azure Web App (Web Deploy)";
+        public string Description => "Deploy the contents of a package to an Azure Web App using web deploy.";
         public string? Keywords => null;
         public bool ShowInStepTemplatePickerUI => true;
         public bool WhenInAChildStepRunInTheContextOfTheTargetMachine => false;

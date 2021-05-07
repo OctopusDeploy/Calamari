@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using Octopus.Server.Extensibility.Tests;
 using Sashimi.Azure.Accounts;
-using Sashimi.AzureWebApp.Endpoints;
 
 namespace Sashimi.AzureWebApp.Tests
 {
@@ -17,8 +16,6 @@ namespace Sashimi.AzureWebApp.Tests
             get
             {
                 yield return typeof(AccountTypes);
-                yield return typeof(AzureWebAppEndpoint);
-                yield return typeof(AzureWebAppEndpointResource);
             }
         }
     }

@@ -1,6 +1,5 @@
 ﻿using System;
 using Sashimi.AzureScripting;
-using Sashimi.AzureWebApp.Endpoints;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 
