@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Sashimi.GCP.Accounts
+namespace Sashimi.GoogleCloud.Accounts
 {
     static class PropertyDictionaryExtensions
     {

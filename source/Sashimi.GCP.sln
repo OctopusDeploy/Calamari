@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GCP.Accounts", "Sashimi.GCP.Accounts\Sashimi.GCP.Accounts.csproj", "{90D883D6-F46A-416E-B8A4-6F2A7FBB65EF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GoogleCloud.Accounts", "Sashimi.GoogleCloud.Accounts\Sashimi.GoogleCloud.Accounts.csproj", "{90D883D6-F46A-416E-B8A4-6F2A7FBB65EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GCP.Accounts.Tests", "Sashimi.GCP.Accounts.Tests\Sashimi.GCP.Accounts.Tests.csproj", "{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GoogleCloud.Accounts.Tests", "Sashimi.GoogleCloud.Accounts.Tests\Sashimi.GoogleCloud.Accounts.Tests.csproj", "{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -3,13 +3,13 @@ using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers.Validation;
 using PropertiesDictionary = System.Collections.Generic.IReadOnlyDictionary<string, string>;
 
-namespace Sashimi.GCP.Accounts.Validation
+namespace Sashimi.GoogleCloud.Accounts.Validation
 {
-    public abstract class GcpDeploymentValidatorBase : IDeploymentActionValidator
+    public abstract class GoogleCloudDeploymentValidatorBase : IDeploymentActionValidator
     {
         readonly string actionType;
 
-        protected GcpDeploymentValidatorBase(string actionType)
+        protected GoogleCloudDeploymentValidatorBase(string actionType)
         {
             this.actionType = actionType;
         }
@@ -20,11 +20,11 @@ namespace Sashimi.GCP.Accounts.Validation
         public virtual void AddDeploymentValidationRule(AbstractValidator<DeploymentActionValidationContext> validator)
         {
             validator.RuleFor(a => a.Properties)
-                .MustHaveProperty(SpecialVariables.Action.Gcp.ServiceAccountEmail, "Please provide the service account email.")
+                .MustHaveProperty(SpecialVariables.Action.GoogleCloud.ServiceAccountEmail, "Please provide the service account email.")
                 .When(ThisAction);
 
             validator.RuleFor(a => a.Properties)
-                .MustHaveProperty(SpecialVariables.Action.Gcp.Json, $"Please provide the json credential.")
+                .MustHaveProperty(SpecialVariables.Action.GoogleCloud.Json, $"Please provide the json credential.")
                 .When(ThisAction);
         }
 

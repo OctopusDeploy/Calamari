@@ -2,22 +2,22 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Octopus.Data.Model;
-using Sashimi.GCP.Accounts.Variables;
+using Sashimi.GoogleCloud.Accounts.Variables;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.Variables;
 
-namespace Sashimi.GCP.Accounts
+namespace Sashimi.GoogleCloud.Accounts
 {
-    class GcpAccountDetails : AccountDetails, IExpandVariableForAccountDetails
+    class GoogleCloudAccountDetails : AccountDetails, IExpandVariableForAccountDetails
     {
-        public override AccountType AccountType { get; } = AccountTypes.GcpAccountType;
+        public override AccountType AccountType { get; } = AccountTypes.GoogleCloudAccountType;
 
         public string? ServiceAccountEmail { get; set; }
 
         public SensitiveString? Json { get; set; }
 
         [JsonIgnore]
-        public VariableType ExpandsVariableType => GcpVariableType.GcpAccount;
+        public VariableType ExpandsVariableType => GoogleCloudVariableType.GoogleCloudAccount;
 
         public override IEnumerable<Variable> ExpandVariable(Variable variable)
         {
@@ -30,8 +30,8 @@ namespace Sashimi.GCP.Accounts
 
         public override IEnumerable<Variable> ContributeVariables()
         {
-            yield return new Variable(SpecialVariables.Action.Gcp.ServiceAccountEmail, ServiceAccountEmail);
-            yield return new Variable(SpecialVariables.Action.Gcp.Json, Json);
+            yield return new Variable(SpecialVariables.Action.GoogleCloud.ServiceAccountEmail, ServiceAccountEmail);
+            yield return new Variable(SpecialVariables.Action.GoogleCloud.Json, Json);
         }
 
         public bool CanExpand(string id, string referencedEntityId)

@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace Sashimi.GCP.Accounts
+namespace Sashimi.GoogleCloud.Accounts
 {
-    class GcpAccountValidator : AbstractValidator<GcpAccountDetails>
+    class GoogleCloudAccountValidator : AbstractValidator<GoogleCloudAccountDetails>
     {
-        public GcpAccountValidator()
+        public GoogleCloudAccountValidator()
         {
             RuleFor(p => p.ServiceAccountEmail).NotEmpty().WithMessage("Service account email is required.");
             RuleFor(p => p.Json).NotEmpty().WithMessage("JSON credential is required.");

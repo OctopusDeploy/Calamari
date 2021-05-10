@@ -2,6 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
+        <AssemblyName>Sashimi.GoogleCloud.Accounts</AssemblyName>
+        <RootNamespace>Sashimi.GoogleCloud.Accounts</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -10,6 +12,7 @@
 
     <ItemGroup>
       <PackageReference Include="Autofac" Version="6.2.0" />
+      <PackageReference Include="Google.Cloud.Storage.V1" Version="3.4.0" />
       <PackageReference Include="Sashimi.Server.Contracts" Version="11.0.2-octopus-target0002" />
     </ItemGroup>
 

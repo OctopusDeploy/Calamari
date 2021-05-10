@@ -3,11 +3,11 @@ using Octopus.Server.MessageContracts;
 using Octopus.Server.MessageContracts.Attributes;
 using Sashimi.Server.Contracts.Accounts;
 
-namespace Sashimi.GCP.Accounts
+namespace Sashimi.GoogleCloud.Accounts
 {
-    class GcpAccountResource : AccountDetailsResource
+    class GoogleCloudAccountResource : AccountDetailsResource
     {
-        public override AccountType AccountType => AccountTypes.GcpAccountType;
+        public override AccountType AccountType => AccountTypes.GoogleCloudAccountType;
 
         [Trim]
         [Writeable]
