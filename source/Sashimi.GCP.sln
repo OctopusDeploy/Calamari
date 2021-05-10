@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GCP.Accounts", "Sashimi.GCP.Accounts\Sashimi.GCP.Accounts.csproj", "{90D883D6-F46A-416E-B8A4-6F2A7FBB65EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GCP.Accounts.Tests", "Sashimi.GCP.Accounts.Tests\Sashimi.GCP.Accounts.Tests.csproj", "{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{90D883D6-F46A-416E-B8A4-6F2A7FBB65EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90D883D6-F46A-416E-B8A4-6F2A7FBB65EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90D883D6-F46A-416E-B8A4-6F2A7FBB65EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90D883D6-F46A-416E-B8A4-6F2A7FBB65EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

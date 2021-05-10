@@ -1,0 +1,9 @@
+C:\dev\Sashimi.GCP\source\Sashimi.GCP.Accounts\bin\Debug\netcoreapp3.1\Sashimi.GCP.Accounts.deps.json
+C:\dev\Sashimi.GCP\source\Sashimi.GCP.Accounts\bin\Debug\netcoreapp3.1\Sashimi.GCP.Accounts.dll
+C:\dev\Sashimi.GCP\source\Sashimi.GCP.Accounts\bin\Debug\netcoreapp3.1\Sashimi.GCP.Accounts.pdb
+C:\dev\Sashimi.GCP\source\Sashimi.GCP.Accounts\obj\Debug\netcoreapp3.1\Sashimi.GCP.Accounts.csprojAssemblyReference.cache
+C:\dev\Sashimi.GCP\source\Sashimi.GCP.Accounts\obj\Debug\netcoreapp3.1\Sashimi.GCP.Accounts.AssemblyInfoInputs.cache
+C:\dev\Sashimi.GCP\source\Sashimi.GCP.Accounts\obj\Debug\netcoreapp3.1\Sashimi.GCP.Accounts.AssemblyInfo.cs
+C:\dev\Sashimi.GCP\source\Sashimi.GCP.Accounts\obj\Debug\netcoreapp3.1\Sashimi.GCP.Accounts.csproj.CoreCompileInputs.cache
+C:\dev\Sashimi.GCP\source\Sashimi.GCP.Accounts\obj\Debug\netcoreapp3.1\Sashimi.GCP.Accounts.dll
+C:\dev\Sashimi.GCP\source\Sashimi.GCP.Accounts\obj\Debug\netcoreapp3.1\Sashimi.GCP.Accounts.pdb

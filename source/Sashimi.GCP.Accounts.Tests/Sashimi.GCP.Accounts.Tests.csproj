@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+		<RootNamespace>Sashimi.GCP.Accounts.Tests</RootNamespace>
+		<AssemblyName>Sashimi.GCP.Accounts.Tests</AssemblyName>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Assent" Version="1.6.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
+    <PackageReference Include="NSubstitute" Version="4.2.1" />
+    <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="11.0.0" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="6.0.2" />
+    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.21" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Sashimi.GCP.Accounts\Sashimi.GCP.Accounts.csproj" />
+    </ItemGroup>
+
+</Project>
