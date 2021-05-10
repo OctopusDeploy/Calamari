@@ -24,7 +24,7 @@ namespace Sashimi.GoogleCloud.Accounts.Validation
                 .When(ThisAction);
 
             validator.RuleFor(a => a.Properties)
-                .MustHaveProperty(SpecialVariables.Action.GoogleCloud.Json, $"Please provide the json credential.")
+                .MustHaveProperty(SpecialVariables.Action.GoogleCloud.JsonKey, $"Please provide the json credential.")
                 .When(ThisAction);
         }
 

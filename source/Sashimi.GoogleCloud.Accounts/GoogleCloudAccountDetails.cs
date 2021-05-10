@@ -14,7 +14,7 @@ namespace Sashimi.GoogleCloud.Accounts
 
         public string? ServiceAccountEmail { get; set; }
 
-        public SensitiveString? Json { get; set; }
+        public SensitiveString? JsonKey { get; set; }
 
         [JsonIgnore]
         public VariableType ExpandsVariableType => GoogleCloudVariableType.GoogleCloudAccount;
@@ -25,13 +25,13 @@ namespace Sashimi.GoogleCloud.Accounts
                 throw new InvalidOperationException($"Can only expand variables for type {ExpandsVariableType}");
 
             yield return new Variable($"{variable.Name}.AccessKey", ServiceAccountEmail);
-            yield return new Variable($"{variable.Name}.SecretKey", Json);
+            yield return new Variable($"{variable.Name}.SecretKey", JsonKey);
         }
 
         public override IEnumerable<Variable> ContributeVariables()
         {
             yield return new Variable(SpecialVariables.Action.GoogleCloud.ServiceAccountEmail, ServiceAccountEmail);
-            yield return new Variable(SpecialVariables.Action.GoogleCloud.Json, Json);
+            yield return new Variable(SpecialVariables.Action.GoogleCloud.JsonKey, JsonKey);
         }
 
         public bool CanExpand(string id, string referencedEntityId)
@@ -46,7 +46,7 @@ namespace Sashimi.GoogleCloud.Accounts
 
             yield return ("Name", false);
             yield return ("ServiceAccountEmail", false);
-            yield return ("Json", true);
+            yield return ("JsonKey", true);
         }
     }
 }

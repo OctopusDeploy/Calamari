@@ -16,12 +16,12 @@ namespace Sashimi.GoogleCloud.Accounts
         public AccountDetails CreateAccountDetails(IDictionary<string, string> properties)
         {
             properties.TryGetValue(CreateGoogleCloudAccountMessagePropertyNames.ServiceAccountEmail, out var serviceAccountEmail);
-            properties.TryGetValue(CreateGoogleCloudAccountMessagePropertyNames.Json, out var json);
+            properties.TryGetValue(CreateGoogleCloudAccountMessagePropertyNames.JsonKey, out var json);
 
             return new GoogleCloudAccountDetails
             {
                 ServiceAccountEmail = serviceAccountEmail,
-                Json = json?.ToSensitiveString()
+                JsonKey = json?.ToSensitiveString()
             };
         }
 
@@ -29,7 +29,7 @@ namespace Sashimi.GoogleCloud.Accounts
         {
             public const string Name = "create-googlecloudaccount";
             public const string ServiceAccountEmail = "serviceaccountemail";
-            public const string Json = "json";
+            public const string JsonKey = "json";
         }
     }
 }
