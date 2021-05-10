@@ -9,7 +9,7 @@ namespace Sashimi.GoogleCloud.Accounts
 {
     class GoogleCloudAccountServiceMessageHandler : ICreateAccountDetailsServiceMessageHandler
     {
-        public string AuditEntryDescription => "GoogleCloud Account";
+        public string AuditEntryDescription => "Google Cloud Account";
         public string ServiceMessageName => CreateGoogleCloudAccountMessagePropertyNames.Name;
         public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = Enumerable.Empty<ScriptFunctionRegistration>();
 
@@ -27,7 +27,7 @@ namespace Sashimi.GoogleCloud.Accounts
 
         internal static class CreateGoogleCloudAccountMessagePropertyNames
         {
-            public const string Name = "create-GoogleCloudaccount";
+            public const string Name = "create-googlecloudaccount";
             public const string ServiceAccountEmail = "serviceaccountemail";
             public const string Json = "json";
         }

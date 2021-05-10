@@ -21,7 +21,7 @@ namespace Sashimi.GoogleCloud.Accounts
         {
             var total = context.GetAccountDetails<GoogleCloudAccountDetails>().Count();
 
-            yield return ("GoogleCloudaccount", total);
+            yield return ("googlecloudaccount", total);
         }
 
         public void BuildMappings(IResourceMappingsBuilder builder)

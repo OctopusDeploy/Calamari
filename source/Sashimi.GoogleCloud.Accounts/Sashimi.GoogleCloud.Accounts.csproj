@@ -4,6 +4,7 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <AssemblyName>Sashimi.GoogleCloud.Accounts</AssemblyName>
         <RootNamespace>Sashimi.GoogleCloud.Accounts</RootNamespace>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
