@@ -13,7 +13,7 @@ namespace Sashimi.GoogleCloud.Accounts
         {
             var accountTyped = (GoogleCloudAccountDetails) account;
             var credential = GoogleCredential.FromJson(accountTyped.JsonKey?.ToString());
-            var service = new IamService(new BaseClientService.Initializer
+            using var service = new IamService(new BaseClientService.Initializer
             {
                 HttpClientInitializer = credential
             });

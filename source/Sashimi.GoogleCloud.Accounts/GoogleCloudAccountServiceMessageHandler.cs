@@ -25,11 +25,11 @@ namespace Sashimi.GoogleCloud.Accounts
             };
         }
 
-        internal static class CreateGoogleCloudAccountMessagePropertyNames
+        static class CreateGoogleCloudAccountMessagePropertyNames
         {
             public const string Name = "create-googlecloudaccount";
             public const string AccountEmail = "accountemail";
-            public const string JsonKey = "json";
+            public const string JsonKey = "jsonkey";
         }
     }
 }
