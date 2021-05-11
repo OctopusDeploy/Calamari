@@ -27,6 +27,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Sashimi.AzureScripting" Version="12.0.0" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="11.0.2-enh-svcmsg0002" />
+    <PackageReference Include="Sashimi.Server.Contracts" Version="12.0.0" />
   </ItemGroup>
 </Project>
