@@ -17,7 +17,7 @@
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="NSubstitute" Version="4.2.2" />
     <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="14.0.1" />
-    <PackageReference Include="Sashimi.Tests.Shared" Version="11.0.2-enh-svcmsg0002" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="12.0.0" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
   </ItemGroup>
 
