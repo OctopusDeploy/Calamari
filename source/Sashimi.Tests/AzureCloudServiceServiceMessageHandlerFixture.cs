@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
-using Octopus.Diagnostics;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Octostache;
 using Sashimi.AzureCloudService.Endpoints;
 using Sashimi.Server.Contracts;
@@ -21,13 +21,11 @@ namespace Sashimi.AzureCloudService.Tests
     public class AzureCloudServiceServiceMessageHandlerFixture
     {
         ICreateTargetServiceMessageHandler serviceMessageHandler;
-        ISystemLog logger;
 
         [SetUp]
         public void SetUp()
         {
-            logger = Substitute.For<ISystemLog>();
-            serviceMessageHandler = new AzureCloudServiceServiceMessageHandler(logger);
+            serviceMessageHandler = new AzureCloudServiceServiceMessageHandler();
         }
 
         [Test]
@@ -53,7 +51,7 @@ namespace Sashimi.AzureCloudService.Tests
             }
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, ResolveAccountId,
-                null, null, null, null);
+                null, null, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -87,7 +85,7 @@ namespace Sashimi.AzureCloudService.Tests
             }
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, ResolveAccountId,
-                                                               null, null, null, null);
+                                                               null, null, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -122,7 +120,7 @@ namespace Sashimi.AzureCloudService.Tests
             }
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, ResolveAccountId,
-                null, null, null, null);
+                null, null, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -144,8 +142,18 @@ namespace Sashimi.AzureCloudService.Tests
             var messageProperties = GetMessageProperties();
             var variableDict = GetVariableDictionary();
 
-            Action action = () => serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, _ => accountId,
-                                                               null, null, null, null);
+            var logger = Substitute.For<ITaskLog>();
+            Action action = () =>
+                            {
+                                serviceMessageHandler.BuildEndpoint(messageProperties,
+                                                                    variableDict,
+                                                                    _ => accountId,
+                                                                    null,
+                                                                    null,
+                                                                    null,
+                                                                    null,
+                                                                    logger);
+                            };
 
             var expectedErrorMessage = $"Account with Id / Name, {variableDict.Get(SpecialVariables.Action.Azure.AccountId)}, not found.";
             action.Should().Throw<Exception>().Which.Message.Should().Be(expectedErrorMessage);
@@ -166,7 +174,7 @@ namespace Sashimi.AzureCloudService.Tests
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
                 GetVariableDictionary(), _ => accountId,
-                null, null, null, null);
+                null, null, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -190,7 +198,7 @@ namespace Sashimi.AzureCloudService.Tests
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
                 GetVariableDictionary(), _ => accountId,
-                null, null, null, null);
+                null, null, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -216,7 +224,7 @@ namespace Sashimi.AzureCloudService.Tests
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
                 GetVariableDictionary(), _ => accountId,
-                null, null, null, null);
+                null, null, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -241,7 +249,7 @@ namespace Sashimi.AzureCloudService.Tests
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
                 GetVariableDictionary(), _ => accountId,
-                null, null, null, null);
+                null, null, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -267,7 +275,7 @@ namespace Sashimi.AzureCloudService.Tests
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
                 GetVariableDictionary(), _ => accountId,
-                null, null, null, null);
+                null, null, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -292,7 +300,7 @@ namespace Sashimi.AzureCloudService.Tests
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
                 GetVariableDictionary(), _ => accountId,
-                null, null, null, null);
+                null, null, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -314,7 +322,7 @@ namespace Sashimi.AzureCloudService.Tests
             var workerPoolId = "WorkerPools-234";
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
                                                                GetVariableDictionary(), _ => accountId,
-                                                               null, _ => workerPoolId, null, null);
+                                                               null, _ => workerPoolId, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -340,7 +348,7 @@ namespace Sashimi.AzureCloudService.Tests
 
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties,
                                                                variables, _ => accountId,
-                                                               null, _ => workerPoolId, null, null);
+                                                               null, _ => workerPoolId, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureCloudServiceEndpoint(endpoint, new ExpectedEndpointValues
             {
