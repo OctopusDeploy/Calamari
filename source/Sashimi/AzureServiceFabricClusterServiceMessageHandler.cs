@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Octopus.Data.Model;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Octostache;
 using Sashimi.AzureServiceFabric.Endpoints;
 using Sashimi.Server.Contracts;
@@ -49,7 +50,8 @@ using Sashimi.Server.Contracts.ServiceMessages;
                                        Func<string, string> certificateIdResolver,
                                        Func<string, string> workerPoolIdResolver,
                                        Func<string, AccountType> accountTypeResolver,
-                                       Func<string, string> feedIdResolver)
+                                       Func<string, string> feedIdResolver,
+                                       ITaskLog taskLog)
          {
              messageProperties.TryGetValue(AzureServiceFabricServiceMessageNames.ConnectionEndpointAttribute, out var connectionEndpoint);
              var azureServiceFabricClusterEndpoint = new AzureServiceFabricClusterEndpoint
