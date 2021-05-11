@@ -11,7 +11,7 @@ namespace Sashimi.GoogleCloud.Accounts
 
         [Trim]
         [Writeable]
-        public string ServiceAccountEmail { get; set; }
+        public string AccountEmail { get; set; }
 
         [Trim, Writeable]
         public SensitiveValue JsonKey { get; set; }

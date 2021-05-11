@@ -6,7 +6,7 @@ namespace Sashimi.GoogleCloud.Accounts
     {
         public GoogleCloudAccountValidator()
         {
-            RuleFor(p => p.ServiceAccountEmail).NotEmpty().WithMessage("Service account email is required.");
+            RuleFor(p => p.AccountEmail).NotEmpty().WithMessage("Service account email is required.");
             RuleFor(p => p.JsonKey).NotEmpty().WithMessage("JSON credential is required.");
         }
     }

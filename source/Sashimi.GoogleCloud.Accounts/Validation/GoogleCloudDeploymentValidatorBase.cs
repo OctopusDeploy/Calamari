@@ -20,7 +20,7 @@ namespace Sashimi.GoogleCloud.Accounts.Validation
         public virtual void AddDeploymentValidationRule(AbstractValidator<DeploymentActionValidationContext> validator)
         {
             validator.RuleFor(a => a.Properties)
-                .MustHaveProperty(SpecialVariables.Action.GoogleCloud.ServiceAccountEmail, "Please provide the service account email.")
+                .MustHaveProperty(SpecialVariables.Action.GoogleCloud.AccountEmail, "Please provide the service account email.")
                 .When(ThisAction);
 
             validator.RuleFor(a => a.Properties)
