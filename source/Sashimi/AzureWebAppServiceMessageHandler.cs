@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Octopus.Diagnostics;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Octostache;
 using Sashimi.AzureAppService.Endpoints;
 using Sashimi.Server.Contracts;
@@ -12,13 +12,6 @@ namespace Sashimi.AzureAppService
 {
     class AzureWebAppServiceMessageHandler : ICreateTargetServiceMessageHandler
     {
-        readonly ILog logger;
-
-        public AzureWebAppServiceMessageHandler(ILog logger)
-        {
-            this.logger = logger;
-        }
-
         public string AuditEntryDescription => "Azure Web App Target";
         public string ServiceMessageName => AzureWebAppServiceMessageNames.CreateTargetName;
 
@@ -46,11 +39,12 @@ namespace Sashimi.AzureAppService
                                       Func<string, string> certificateIdResolver,
                                       Func<string, string> workerPoolIdResolver,
                                       Func<string, AccountType> accountTypeResolver,
-                                      Func<string, string> feedIdResolver)
+                                      Func<string, string> feedIdResolver,
+                                      ITaskLog taskLog)
         {
             var endpoint = new AzureWebAppEndpoint
             {
-                AccountId = GetAccountId(messageProperties, variables, accountIdResolver),
+                AccountId = GetAccountId(messageProperties, variables, accountIdResolver, taskLog),
             };
 
             messageProperties.TryGetValue(AzureWebAppServiceMessageNames.WebAppNameAttribute, out var wepAppName);
@@ -89,7 +83,7 @@ namespace Sashimi.AzureAppService
         }
 
         string GetAccountId(IDictionary<string, string> messageProperties,
-                            VariableDictionary variables, Func<string, string> accountIdResolver)
+                            VariableDictionary variables, Func<string, string> accountIdResolver, ITaskLog taskLog)
         {
             messageProperties.TryGetValue(AzureWebAppServiceMessageNames.AccountIdOrNameAttribute, out var accountIdOrName);
             if (!string.IsNullOrWhiteSpace(accountIdOrName))
@@ -114,7 +108,7 @@ namespace Sashimi.AzureAppService
             }
 
             var message = $"Account with Id / Name, {accountIdOrName}, not found.";
-            logger.Error(message);
+            taskLog.Error(message);
             throw new Exception(message);
         }
 
