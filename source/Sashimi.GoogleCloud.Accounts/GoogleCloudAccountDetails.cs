@@ -8,7 +8,7 @@ using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.GoogleCloud.Accounts
 {
-    class GoogleCloudAccountDetails : AccountDetails, IExpandVariableForAccountDetails
+    public class GoogleCloudAccountDetails : AccountDetails, IExpandVariableForAccountDetails
     {
         public override AccountType AccountType { get; } = AccountTypes.GoogleCloudAccountType;
 
@@ -24,8 +24,8 @@ namespace Sashimi.GoogleCloud.Accounts
             if (variable.Type != ExpandsVariableType)
                 throw new InvalidOperationException($"Can only expand variables for type {ExpandsVariableType}");
 
-            yield return new Variable($"{variable.Name}.AccessKey", AccountEmail);
-            yield return new Variable($"{variable.Name}.SecretKey", JsonKey);
+            yield return new Variable($"{variable.Name}.AccountEmail", AccountEmail);
+            yield return new Variable($"{variable.Name}.JsonKey", JsonKey);
         }
 
         public override IEnumerable<Variable> ContributeVariables()
