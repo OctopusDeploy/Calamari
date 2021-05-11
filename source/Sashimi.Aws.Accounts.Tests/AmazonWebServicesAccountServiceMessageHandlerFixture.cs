@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts.ServiceMessages;
 using CreateAwsAccountServiceMessagePropertyNames = Sashimi.Aws.Accounts.AmazonWebServicesAccountServiceMessageHandler.CreateAwsAccountServiceMessagePropertyNames;
 
@@ -29,7 +31,7 @@ namespace Sashimi.Aws.Accounts.Tests
         {
             var properties = GetMessageProperties();
 
-            var details = serviceMessageHandler.CreateAccountDetails(properties);
+            var details = serviceMessageHandler.CreateAccountDetails(properties, Substitute.For<ITaskLog>());
 
             details.Should().BeOfType<AmazonWebServicesAccountDetails>();
             var amazonWebServicesAccountDetails = (AmazonWebServicesAccountDetails)details;

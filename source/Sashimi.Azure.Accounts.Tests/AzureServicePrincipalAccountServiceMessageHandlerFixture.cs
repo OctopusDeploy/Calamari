@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 using Octopus.Data.Model;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.ServiceMessages;
 using CreateAzureAccountServiceMessagePropertyNames = Sashimi.Azure.Accounts.AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames;
@@ -32,7 +34,7 @@ namespace Sashimi.Azure.Accounts.Tests
             var properties = GetMessageProperties();
             properties.Remove(CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute);
 
-            var details = serviceMessageHandler.CreateAccountDetails(properties);
+            var details = serviceMessageHandler.CreateAccountDetails(properties, Substitute.For<ITaskLog>());
 
             AssertAzureServicePrincipalAccountDetails(details, new ExpectedAccountDetailsValues
             {
@@ -55,7 +57,7 @@ namespace Sashimi.Azure.Accounts.Tests
             var properties = GetMessageProperties();
             properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute] = environment;
 
-            var details = serviceMessageHandler.CreateAccountDetails(properties);
+            var details = serviceMessageHandler.CreateAccountDetails(properties, Substitute.For<ITaskLog>());
 
             AssertAzureServicePrincipalAccountDetails(details, new ExpectedAccountDetailsValues
             {
@@ -74,7 +76,7 @@ namespace Sashimi.Azure.Accounts.Tests
         {
             var properties = GetMessageProperties();
 
-            var details = serviceMessageHandler.CreateAccountDetails(properties);
+            var details = serviceMessageHandler.CreateAccountDetails(properties, Substitute.For<ITaskLog>());
 
             AssertAzureServicePrincipalAccountDetails(details, new ExpectedAccountDetailsValues
             {

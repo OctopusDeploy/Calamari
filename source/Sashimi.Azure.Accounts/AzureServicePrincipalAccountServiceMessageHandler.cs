@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Octopus.Data.Model;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.ServiceMessages;
@@ -29,7 +30,7 @@ namespace Sashimi.Azure.Accounts
                                            })
         };
 
-        public AccountDetails CreateAccountDetails(IDictionary<string, string> properties)
+        public AccountDetails CreateAccountDetails(IDictionary<string, string> properties, ITaskLog taskLog)
         {
             properties.TryGetValue(CreateAzureAccountServiceMessagePropertyNames.SubscriptionAttribute,
                                    out var subscriptionNumber);

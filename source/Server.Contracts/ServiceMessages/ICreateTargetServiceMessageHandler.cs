@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Octostache;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.Endpoints;
@@ -14,6 +15,7 @@ namespace Sashimi.Server.Contracts.ServiceMessages
                                Func<string, string> certificateIdResolver,
                                Func<string, string> workerPoolIdResolver,
                                Func<string, AccountType> accountTypeResolver,
-                               Func<string, string> feedIdResolver);
+                               Func<string, string> feedIdResolver,
+                               ITaskLog taskLog);
     }
 }
