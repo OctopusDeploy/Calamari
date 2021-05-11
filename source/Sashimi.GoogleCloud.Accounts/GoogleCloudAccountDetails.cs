@@ -8,7 +8,7 @@ using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.GoogleCloud.Accounts
 {
-    public class GoogleCloudAccountDetails : AccountDetails, IExpandVariableForAccountDetails
+    class GoogleCloudAccountDetails : AccountDetails, IExpandVariableForAccountDetails
     {
         public override AccountType AccountType { get; } = AccountTypes.GoogleCloudAccountType;
 
