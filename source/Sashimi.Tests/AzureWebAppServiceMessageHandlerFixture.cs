@@ -5,6 +5,7 @@ using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Octopus.Diagnostics;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Octostache;
 using Sashimi.AzureAppService.Endpoints;
 using Sashimi.Server.Contracts;
@@ -16,13 +17,11 @@ namespace Sashimi.AzureAppService.Tests
     public class AzureWebAppServiceMessageHandlerFixture
     {
         ICreateTargetServiceMessageHandler serviceMessageHandler;
-        ILog logger;
 
         [SetUp]
         public void SetUp()
         {
-            logger = Substitute.For<ILog>();
-            serviceMessageHandler = new AzureWebAppServiceMessageHandler(logger);
+            serviceMessageHandler = new AzureWebAppServiceMessageHandler();
         }
 
         [Test]
@@ -41,7 +40,9 @@ namespace Sashimi.AzureAppService.Tests
             var messageProperties = GetMessageProperties();
             var variableDict = GetVariableDictionary();
 
-            Action action = () => serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, _ => accountId, null, null, null, null);
+            var logger = Substitute.For<ITaskLog>();
+
+            Action action = () => serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, _ => accountId, null, null, null, null, logger);
 
             var expectedErrorMessage = $"Account with Id / Name, {variableDict.Get(SpecialVariables.Action.Azure.AccountId)}, not found.";
             action.Should().Throw<Exception>().Which.Message.Should().Be(expectedErrorMessage);
@@ -64,8 +65,9 @@ namespace Sashimi.AzureAppService.Tests
                 return null;
             }
 
+            var logger = Substitute.For<ITaskLog>();
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, ResolveAccountId,
-                null, null, null, null);
+                null, null, null, null, logger);
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -96,8 +98,9 @@ namespace Sashimi.AzureAppService.Tests
                 return null;
             }
 
+            var logger = Substitute.For<ITaskLog>();
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, ResolveAccountId,
-                null, null, null, null);
+                null, null, null, null, logger);
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -129,8 +132,9 @@ namespace Sashimi.AzureAppService.Tests
                 return null;
             }
 
+            var logger = Substitute.For<ITaskLog>();
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, ResolveAccountId,
-                                                               null, null, null, null);
+                                                               null, null, null, null, logger);
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -150,7 +154,7 @@ namespace Sashimi.AzureAppService.Tests
 
             const string accountId = "Accounts-12";
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, _ => accountId,
-                null, null, null, null);
+                null, null, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -169,7 +173,7 @@ namespace Sashimi.AzureAppService.Tests
 
             const string accountId = "Accounts-12";
             var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDict, _ => accountId,
-                null, null, null, null);
+                null, null, null, null, Substitute.For<ITaskLog>());
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -194,7 +198,8 @@ namespace Sashimi.AzureAppService.Tests
                                                                null,
                                                                _ => workerPoolId,
                                                                null,
-                                                               null);
+                                                               null,
+                                                               Substitute.For<ITaskLog>());
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -219,7 +224,8 @@ namespace Sashimi.AzureAppService.Tests
                                                                null,
                                                                _ => variableDictionary.Get(KnownVariables.WorkerPool.Id),
                                                                null,
-                                                               null);
+                                                               null,
+                                                               Substitute.For<ITaskLog>());
 
             AssertAzureWebAppEndpoint(endpoint, new ExpectedEndpointValues
             {
