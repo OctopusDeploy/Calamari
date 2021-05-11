@@ -13,9 +13,7 @@ namespace Sashimi.GoogleCloud.Accounts
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<GoogleCloudAccountTypeProvider>().As<IServiceMessageHandler>().As<IAccountTypeProvider>().As<IContributeMappings>().SingleInstance();
-            builder.RegisterType<GoogleCloudVariableTypeProvider>().As<IVariableTypeProvider>().SingleInstance();
-            builder.RegisterType<GoogleCloudControlTypeProvider>().As<IControlTypeProvider>().SingleInstance();
+            builder.RegisterType<GoogleCloudAccountTypeProvider>().As<IAccountTypeProvider>().As<IContributeMappings>().SingleInstance();
         }
     }
 }

@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Autofac" Version="6.2.0" />
+      <PackageReference Include="Autofac" Version="4.9.4" />
       <PackageReference Include="Google.Apis.Iam.v1" Version="1.51.0.2303" />
       <PackageReference Include="Google.Cloud.Iam.V1" Version="2.1.0" />
       <PackageReference Include="Sashimi.Server.Contracts" Version="11.0.2-octopus-target0002" />
