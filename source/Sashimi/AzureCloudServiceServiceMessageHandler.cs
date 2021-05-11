@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Octopus.Diagnostics;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Octostache;
 using Sashimi.AzureCloudService.Endpoints;
 using Sashimi.Server.Contracts;
@@ -12,13 +12,6 @@ namespace Sashimi.AzureCloudService
 {
     class AzureCloudServiceServiceMessageHandler : ICreateTargetServiceMessageHandler
     {
-        readonly ISystemLog logger;
-
-        public AzureCloudServiceServiceMessageHandler(ISystemLog logger)
-        {
-            this.logger = logger;
-        }
-
         public string AuditEntryDescription => "Azure Cloud Service Target";
         public string ServiceMessageName => AzureCloudServiceServiceMessageNames.CreateTargetName;
         public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = new List<ScriptFunctionRegistration>
@@ -47,13 +40,14 @@ namespace Sashimi.AzureCloudService
                                       Func<string, string> certificateIdResolver,
                                       Func<string, string> workerPoolIdResolver,
                                       Func<string,AccountType> accountTypeResolver,
-                                      Func<string,string> feedIdResolver)
+                                      Func<string,string> feedIdResolver,
+                                      ITaskLog taskLog)
         {
             // TODO should this be getting the account id as an Azure specific scoped variable
 
             var endpoint = new AzureCloudServiceEndpoint
             {
-                AccountId = GetAccountId(messageProperties, variables, accountIdResolver)
+                AccountId = GetAccountId(messageProperties, variables, accountIdResolver, taskLog)
             };
 
             messageProperties.TryGetValue(AzureCloudServiceServiceMessageNames.AzureCloudServiceNameAttribute,
@@ -90,7 +84,7 @@ namespace Sashimi.AzureCloudService
         }
 
         string GetAccountId(IDictionary<string, string> messageProperties,
-            VariableDictionary variables, Func<string, string> accountIdResolver)
+            VariableDictionary variables, Func<string, string> accountIdResolver, ITaskLog taskLog)
         {
             messageProperties.TryGetValue(AzureCloudServiceServiceMessageNames.AccountIdOrNameAttribute, out var accountIdOrName);
             if (!string.IsNullOrWhiteSpace(accountIdOrName))
@@ -115,7 +109,7 @@ namespace Sashimi.AzureCloudService
             }
 
             var message = $"Account with Id / Name, {accountIdOrName}, not found.";
-            logger.Error(message);
+            taskLog.Error(message);
             throw new Exception(message);
         }
 
