@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 using Octopus.Data.Model;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Octostache;
 using Sashimi.AzureServiceFabric.Endpoints;
 using Sashimi.Server.Contracts;
@@ -39,7 +41,7 @@ namespace Sashimi.AzureServiceFabric.Tests
             var messageProperties = GetMessagePropertiesBySecurityMode(AllAliasesForSecureClientCertificate().First());
 
             Action action = () => serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!,
-                _ => invalidCertificateId, null!, null!, null!);
+                _ => invalidCertificateId, null!, null!, null!, Substitute.For<ITaskLog>());
 
             action.Should().Throw<Exception>().Which.Message.Should().Be(
                 $"Certificate with Id / Name {messageProperties[AzureServiceFabricServiceMessageNames.CertificateIdOrNameAttribute]} not found.");
@@ -53,7 +55,7 @@ namespace Sashimi.AzureServiceFabric.Tests
 
             const string certificateId = "Certificates-1";
 
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!, Substitute.For<ITaskLog>());
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -74,7 +76,7 @@ namespace Sashimi.AzureServiceFabric.Tests
             var messageProperties = GetMessagePropertiesBySecurityMode(securityModeValue);
             const string certificateId = "Certificates-1";
 
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!, Substitute.For<ITaskLog>());
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -95,7 +97,7 @@ namespace Sashimi.AzureServiceFabric.Tests
             var messageProperties = GetMessagePropertiesBySecurityMode(securityModeValue);
             const string certificateId = "Certificates-3";
 
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!, Substitute.For<ITaskLog>());
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -115,7 +117,7 @@ namespace Sashimi.AzureServiceFabric.Tests
 
             const string certificateId = "Certificates-5";
 
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, null!, null!, null!, Substitute.For<ITaskLog>());
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -133,7 +135,7 @@ namespace Sashimi.AzureServiceFabric.Tests
             const string certificateId = "Certificates-5";
             const string workerPoolId = "WorkerPools-5";
 
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, _ => workerPoolId, null!, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, new VariableDictionary(), null!, _ => certificateId, _ => workerPoolId, null!, null!, Substitute.For<ITaskLog>());
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -154,7 +156,7 @@ namespace Sashimi.AzureServiceFabric.Tests
 
             var variableDictionary = new VariableDictionary();
             variableDictionary.Add(KnownVariables.WorkerPool.Id, workerPoolId);
-            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDictionary, null!, _ => certificateId, _ => workerPoolId, null!, null!);
+            var endpoint = serviceMessageHandler.BuildEndpoint(messageProperties, variableDictionary, null!, _ => certificateId, _ => workerPoolId, null!, null!, Substitute.For<ITaskLog>());
 
             AssertEndpoint(endpoint, new ExpectedEndpointValues
             {
@@ -224,7 +226,7 @@ namespace Sashimi.AzureServiceFabric.Tests
 
         static IEnumerable<string> AllAliasesForSecureClientCertificate()
         {
-            return new[] {"secureclientcertificate", "clientcertificate", "clientCertificate", "certificate", "certiFicate" };
+            return new[] { "secureclientcertificate", "clientcertificate", "clientCertificate", "certificate", "certiFicate" };
         }
 
         static IEnumerable<string> AllAliasesForAzureActiveDirectory()
