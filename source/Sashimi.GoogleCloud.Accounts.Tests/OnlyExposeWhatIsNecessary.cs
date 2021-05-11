@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Octopus.Server.Extensibility.Tests;
-using Sashimi.GoogleCloud.Accounts.Validation;
 
 namespace Sashimi.GoogleCloud.Accounts.Tests
 {
@@ -16,7 +15,6 @@ namespace Sashimi.GoogleCloud.Accounts.Tests
             get
             {
                 yield return typeof(AccountTypes);
-                yield return typeof(GoogleCloudDeploymentValidatorBase);
             }
         }
     }
