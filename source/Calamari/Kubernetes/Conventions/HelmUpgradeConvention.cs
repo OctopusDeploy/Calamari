@@ -19,6 +19,13 @@ namespace Calamari.Kubernetes.Conventions
 {
     public class HelmUpgradeConvention : IInstallConvention
     {
+        /// <summary>
+        /// https://golang.org/pkg/time/#ParseDuration
+        /// A duration string is a possibly signed sequence of decimal numbers, each with optional fraction
+        /// and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"),
+        /// "ms", "s", "m", "h". 
+        /// </summary>
+        const string DurationRegex = @"[+-]?(\d+(\.\d+)?(ns|us|µs|ms|s|m|h)?)+";
         readonly ILog log;
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
@@ -194,8 +201,18 @@ namespace Calamari.Kubernetes.Conventions
             if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout)) return;
             
             var timeout = deployment.Variables.Get(SpecialVariables.Helm.Timeout);
+            
+            if (!ValidateTimeout(timeout))
+            {
+                throw new CommandException($"Timeout period is not a valid duration: {timeout}");
+            }
 
             sb.Append($" --timeout \"{timeout}\"");
+        }
+
+        public static bool ValidateTimeout(string timeout)
+        {
+            return new Regex(DurationRegex).IsMatch(timeout);
         }
 
         static void SetTillerTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
