@@ -1,12 +1,11 @@
-using System.Text.RegularExpressions;
-using Calamari.Kubernetes.Conventions;
+using Calamari.Util;
 using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    public class HelmValidationFixture
+    public class GoDurationParserFixture
     {
         [TestCase("100")]
         [TestCase("100s")]
@@ -18,7 +17,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [TestCase("2h45m")]
         public void ValidateTimeouts(string timeout)
         {
-            HelmUpgradeConvention.ValidateTimeout(timeout).Should().BeTrue();
+            GoDurationParser.ValidateTimeout(timeout).Should().BeTrue();
         }
     }
 }
