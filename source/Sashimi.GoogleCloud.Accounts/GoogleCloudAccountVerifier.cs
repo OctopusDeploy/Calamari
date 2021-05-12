@@ -16,7 +16,16 @@ namespace Sashimi.GoogleCloud.Accounts
             var accountTyped = (GoogleCloudAccountDetails) account;
             var bytes = Convert.FromBase64String(accountTyped.JsonKey?.Value);
             var json = Encoding.UTF8.GetString(bytes);
-            var credential = GoogleCredential.FromJson(json);
+            GoogleCredential? credential;
+            try
+            {
+                credential = GoogleCredential.FromJson(json);
+            }
+            catch (InvalidOperationException)
+            {
+                throw new Exception("Error reading json key file, please ensure file is correct.");
+            }
+
             using var service = new IamService(new BaseClientService.Initializer
             {
                 HttpClientInitializer = credential
@@ -29,7 +38,10 @@ namespace Sashimi.GoogleCloud.Accounts
             }
             catch (GoogleApiException exception)
             {
-                if (exception.HttpStatusCode == HttpStatusCode.Unauthorized) throw;
+                if (exception.HttpStatusCode == HttpStatusCode.Unauthorized)
+                {
+                    throw new Exception("Invalid credentials specified.");
+                }
             }
         }
     }
