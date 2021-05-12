@@ -9,10 +9,6 @@ namespace Sashimi.GoogleCloud.Accounts
     {
         public override AccountType AccountType => AccountTypes.GoogleCloudAccountType;
 
-        [Trim]
-        [Writeable]
-        public string AccountEmail { get; set; }
-
         [Trim, Writeable]
         public SensitiveValue JsonKey { get; set; }
     }

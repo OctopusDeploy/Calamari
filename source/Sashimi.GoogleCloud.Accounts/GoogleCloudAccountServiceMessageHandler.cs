@@ -15,12 +15,10 @@ namespace Sashimi.GoogleCloud.Accounts
 
         public AccountDetails CreateAccountDetails(IDictionary<string, string> properties)
         {
-            properties.TryGetValue(CreateGoogleCloudAccountMessagePropertyNames.AccountEmail, out var accountEmail);
             properties.TryGetValue(CreateGoogleCloudAccountMessagePropertyNames.JsonKey, out var json);
 
             return new GoogleCloudAccountDetails
             {
-                AccountEmail = accountEmail,
                 JsonKey = json?.ToSensitiveString()
             };
         }
@@ -28,7 +26,6 @@ namespace Sashimi.GoogleCloud.Accounts
         static class CreateGoogleCloudAccountMessagePropertyNames
         {
             public const string Name = "create-googlecloudaccount";
-            public const string AccountEmail = "accountemail";
             public const string JsonKey = "jsonkey";
         }
     }

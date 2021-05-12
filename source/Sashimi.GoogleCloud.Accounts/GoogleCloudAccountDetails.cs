@@ -10,9 +10,7 @@ namespace Sashimi.GoogleCloud.Accounts
 {
     class GoogleCloudAccountDetails : AccountDetails, IExpandVariableForAccountDetails
     {
-        public override AccountType AccountType { get; } = AccountTypes.GoogleCloudAccountType;
-
-        public string? AccountEmail { get; set; }
+        public override AccountType AccountType => AccountTypes.GoogleCloudAccountType;
 
         public SensitiveString? JsonKey { get; set; }
 
@@ -24,13 +22,11 @@ namespace Sashimi.GoogleCloud.Accounts
             if (variable.Type != ExpandsVariableType)
                 throw new InvalidOperationException($"Can only expand variables for type {ExpandsVariableType}");
 
-            yield return new Variable($"{variable.Name}.AccountEmail", AccountEmail);
             yield return new Variable($"{variable.Name}.JsonKey", JsonKey);
         }
 
         public override IEnumerable<Variable> ContributeVariables()
         {
-            yield return new Variable(SpecialVariables.Action.GoogleCloud.AccountEmail, AccountEmail);
             yield return new Variable(SpecialVariables.Action.GoogleCloud.JsonKey, JsonKey);
         }
 
@@ -44,8 +40,6 @@ namespace Sashimi.GoogleCloud.Accounts
             if (variableType != ExpandsVariableType)
                 throw new InvalidOperationException($"Can only expand variables for type {ExpandsVariableType}");
 
-            yield return ("Name", false);
-            yield return ("AccountEmail", false);
             yield return ("JsonKey", true);
         }
     }
