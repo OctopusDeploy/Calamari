@@ -9,7 +9,7 @@ namespace Sashimi.GoogleCloud.Accounts.Tests
     [TestFixture]
     public class GoogleCloudAccountVerifierFixtures
     {
-        private static readonly string JsonEnvironmentVariableKey = "GoogleCloud_OctopusAPITester_JsonKey";
+        private static readonly string JsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
         [TestCase]
         public void Verify_CredentialIsValid()
         {
