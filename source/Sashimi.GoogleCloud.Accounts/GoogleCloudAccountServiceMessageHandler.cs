@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Octopus.Data.Model;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.ServiceMessages;
@@ -13,7 +14,7 @@ namespace Sashimi.GoogleCloud.Accounts
         public string ServiceMessageName => CreateGoogleCloudAccountMessagePropertyNames.Name;
         public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = Enumerable.Empty<ScriptFunctionRegistration>();
 
-        public AccountDetails CreateAccountDetails(IDictionary<string, string> properties)
+        public AccountDetails CreateAccountDetails(IDictionary<string, string> properties, ITaskLog taskLog)
         {
             properties.TryGetValue(CreateGoogleCloudAccountMessagePropertyNames.JsonKey, out var json);
 
