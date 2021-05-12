@@ -9,7 +9,7 @@ using Sashimi.Server.Contracts.Accounts;
 
 namespace Sashimi.GoogleCloud.Accounts
 {
-    class GoogleCloudAccountVerifier : IVerifyAccount
+    internal class GoogleCloudAccountVerifier : IVerifyAccount
     {
         public void Verify(AccountDetails account)
         {
