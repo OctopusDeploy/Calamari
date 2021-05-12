@@ -194,9 +194,10 @@ namespace Calamari.Kubernetes.Conventions
             if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout)) return;
             
             var timeout = deployment.Variables.Get(SpecialVariables.Helm.Timeout);
-            if (!int.TryParse(timeout, out _))
+            
+            if (!GoDurationParser.ValidateTimeout(timeout))
             {
-                throw new CommandException($"Timeout period is not a valid integer: {timeout}");
+                throw new CommandException($"Timeout period is not a valid duration: {timeout}");
             }
 
             sb.Append($" --timeout \"{timeout}\"");
