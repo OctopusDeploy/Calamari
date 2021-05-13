@@ -119,9 +119,10 @@ function ConnectAzAccount {
 			Write-Host "Azure CLI: Authenticating with Service Principal"
 
 			$loginArgs = @();
-			$loginArgs += @("-u", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId))));
-			$loginArgs += @("-p", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword))));
-			$loginArgs += @("--tenant", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId))));
+			# Use the full argument with an '=' because of https://github.com/Azure/azure-cli/issues/12105
+			$loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
+			$loginArgs += @("--password=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword)))");
+			$loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
 			az login --service-principal $loginArgs
 
 			Write-Host "Azure CLI: Setting active subscription to $OctopusAzureSubscriptionId"

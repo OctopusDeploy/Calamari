@@ -52,9 +52,10 @@ function connect_az_account {
 
         echo "Azure CLI: Authenticating with Service Principal"
         loginArgs=()
-        loginArgs+=("-u $Octopus_Azure_ADClientId")
-        loginArgs+=("-p $Octopus_Azure_ADPassword")
-        loginArgs+=("--tenant $Octopus_Azure_ADTenantId")
+        # Use the full argument with an '=' because of https://github.com/Azure/azure-cli/issues/12105
+        loginArgs+=("--username=$Octopus_Azure_ADClientId")
+        loginArgs+=("--password=$Octopus_Azure_ADPassword")
+        loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
         echo az login --service-principal ${loginArgs[@]}
         az login --service-principal ${loginArgs[@]}
 
