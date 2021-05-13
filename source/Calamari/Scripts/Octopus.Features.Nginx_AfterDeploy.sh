@@ -34,10 +34,10 @@ fi
 
 echo "Validating nginx configuration"
 echo "##octopus[stdout-verbose]"
-sudo nginx -t
+sudo nginx -t 2>&1
 echo "##octopus[stdout-default]"
 
 echo "Reloading nginx configuration"
 echo "##octopus[stdout-verbose]"
-sudo nginx -s reload
+sudo nginx -s reload 2>&1
 echo "##octopus[stdout-default]"
