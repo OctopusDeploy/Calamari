@@ -16,7 +16,7 @@
     <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
     <PackageReference Include="Calamari.Common" Version="19.1.0" />
     <PackageReference Include="FluentAssertions" Version="5.10.3" />
-    <PackageReference Include="Octostache" Version="2.9.4" />
+    <PackageReference Include="Octostache" Version="2.10.0" />
   </ItemGroup>
 
 </Project>
