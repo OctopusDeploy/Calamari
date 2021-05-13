@@ -3,14 +3,14 @@
     <PropertyGroup>
         <RootNamespace>Calamari.Terraform.Tests</RootNamespace>
         <AssemblyName>Calamari.Terraform.Tests</AssemblyName>
-        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-        <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
+        <TargetFrameworks>net452;net5.0</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net5.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="5.10.3" />

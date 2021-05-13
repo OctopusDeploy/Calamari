@@ -3,7 +3,7 @@
   <PropertyGroup>
     <RootNamespace>Sashimi.Terraform.Tests</RootNamespace>
     <AssemblyName>Sashimi.Terraform.Tests</AssemblyName>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Nullable>enable</Nullable>

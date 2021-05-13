@@ -95,7 +95,7 @@ namespace Sashimi.Terraform.CloudTemplates
             return "string";
         }
 
-        static IList<HclElement>? GetVariables(string template)
+        static IList<HclElement> GetVariables(string template)
         {
             if (template == null) return new List<HclElement>();
 

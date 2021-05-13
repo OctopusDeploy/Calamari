@@ -102,7 +102,7 @@ namespace Sashimi.Terraform.Tests
         public async Task InstallTools()
         {
             ClearTestDirectories(); // pre-emptively clear test directories for better dev experience
-            
+
             static string GetTerraformFileName(string currentVersion)
             {
                 if (CalamariEnvironment.IsRunningOnNix)
@@ -152,7 +152,7 @@ namespace Sashimi.Terraform.Tests
                         customTerraformExecutable = Directory.EnumerateFiles(destination).FirstOrDefault();
                         Console.WriteLine($"Downloaded terraform to {customTerraformExecutable}");
 
-                        ExecutableHelper.AddExecutePermission(customTerraformExecutable);
+                        ExecutableHelper.AddExecutePermission(customTerraformExecutable!);
                         break;
                     }
                     catch
@@ -179,7 +179,7 @@ namespace Sashimi.Terraform.Tests
                     return;
                 }
             }
-            
+
             await DownloadCli(destinationDirectoryName, terraformCliVersion);
         }
 
@@ -196,7 +196,7 @@ namespace Sashimi.Terraform.Tests
                 .Should()
                 .ContainAll("The specified plugin cache dir", "cannot be opened");
         }
-        
+
         [Test]
         public void NotProvidingEnvVariables_DoesNotCrashEverything()
         {
@@ -209,7 +209,7 @@ namespace Sashimi.Terraform.Tests
         }
         [Test]
         public void UserDefinedEnvVariables_OverrideDefaultBehaviour()
-        { 
+        {
             string template = TemplateLoader.LoadTextTemplate("SingleVariable.json");
 
             ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
@@ -232,7 +232,7 @@ namespace Sashimi.Terraform.Tests
         public void ExtraInitParametersAreSet()
         {
             IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
-                
+
             var additionalParams = "-var-file=\"backend.tfvars\"";
             ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(_ =>
                                                                       _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, additionalParams),
@@ -245,7 +245,7 @@ namespace Sashimi.Terraform.Tests
         public void AllowPluginDownloadsShouldBeDisabled()
         {
             IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
-            
+
             ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(
                                                                   _ =>
                                                                   {
@@ -551,7 +551,7 @@ namespace Sashimi.Terraform.Tests
         public void InlineHclTemplateAndVariables()
         {
             IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
-            
+
             const string variables =
                 "{\"stringvar\":\"default string\",\"images\":\"\",\"test2\":\"\",\"test3\":\"\",\"test4\":\"\"}";
             string template = TemplateLoader.LoadTextTemplate("HclWithVariablesV0118.hcl");
@@ -571,12 +571,12 @@ namespace Sashimi.Terraform.Tests
                                                                        _.OutputVariables.ContainsKey("TerraformValueOutputs[nestedmap]").Should().BeTrue();
                                                                    });
         }
-        
+
         [Test]
         public void InlineHclTemplateAndVariablesV015()
         {
             IgnoreIfVersionIsNotInRange("0.15.0");
-                
+
             const string variables =
                 "{\"stringvar\":\"default string\",\"images\":\"\",\"test2\":\"\",\"test3\":\"\",\"test4\":\"\"}";
             string template = TemplateLoader.LoadTextTemplate("HclWithVariablesV0150.hcl");
@@ -639,12 +639,12 @@ output ""config-map-aws-auth"" {{
                                                                         .Be($"{expected.Replace("\r\n", "\n")}");
                                                                    });
         }
-        
+
         [Test]
         public void InlineJsonTemplateAndVariables()
         {
             IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
-            
+
             const string variables =
                 "{\"ami\":\"new ami value\"}";
             string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV01180.json");
@@ -668,12 +668,12 @@ output ""config-map-aws-auth"" {{
                                                                        _.OutputVariables["TerraformValueOutputs[random]"].Value.Should().Be(randomNumber);
                                                                    });
         }
-        
+
         [Test]
         public void InlineJsonTemplateAndVariablesV015()
         {
             IgnoreIfVersionIsNotInRange("0.15.0");
-            
+
             const string variables =
                 "{\"ami\":\"new ami value\"}";
             string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV0150.json");
@@ -732,7 +732,7 @@ output ""config-map-aws-auth"" {{
         {
             return ExecuteAndReturnLogOutput(typeof(T), populateVariables, folderName, assert);
         }
-        
+
         string ExecuteWithInlineTemplateAndReturnLogOutput(Action<TestActionHandlerContext<Program>> populateVariables, string template = "{}")
         {
             return ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
@@ -750,7 +750,7 @@ output ""config-map-aws-auth"" {{
         {
             var assertResult = assert ?? (_ => { });
 
-            var terraformFiles = Path.IsPathRooted(folderName) ? folderName : TestEnvironment.GetTestPath(folderName); 
+            var terraformFiles = Path.IsPathRooted(folderName) ? folderName : TestEnvironment.GetTestPath(folderName);
 
             var result = ActionHandlerTestBuilder.CreateAsync<Program>(commandType)
                                                                        .WithArrange(context =>
@@ -775,12 +775,12 @@ output ""config-map-aws-auth"" {{
             assertResult(result);
             return result;
         }
-        
+
         private void IgnoreIfVersionIsNotInRange(string minimumVersion, string? maximumVersion = null)
         {
             var _minimumVersion = new Version(minimumVersion);
             var _maximumVersion = new Version(maximumVersion ?? "999.0.0");
-            
+
             if (terraformCliVersionAsObject.CompareTo(_minimumVersion) < 0
                 || terraformCliVersionAsObject.CompareTo(_maximumVersion) >= 0)
             {

@@ -105,7 +105,7 @@ class Build : NukeBuild
                             .SetOutput(PublishDirectory / calamariFlavour / platform));
                     }
 
-                    if(framework.StartsWith("netcoreapp"))
+                    if(framework == "net5.0")
                     {
                         var runtimes = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/RuntimeIdentifiers")?.Split(';');
                         foreach(var runtime in runtimes)
