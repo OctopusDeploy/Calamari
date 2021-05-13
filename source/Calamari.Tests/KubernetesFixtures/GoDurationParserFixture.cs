@@ -8,6 +8,7 @@ namespace Calamari.Tests.KubernetesFixtures
     public class GoDurationParserFixture
     {
         [TestCase("100")]
+        [TestCase(" 100 ")]
         [TestCase("100s")]
         [TestCase("100us")]
         [TestCase("100µs")]
@@ -18,6 +19,14 @@ namespace Calamari.Tests.KubernetesFixtures
         public void ValidateTimeouts(string timeout)
         {
             GoDurationParser.ValidateTimeout(timeout).Should().BeTrue();
+        }
+
+        [TestCase("")]
+        [TestCase(" ")]
+        [TestCase("100blah")]
+        public void InvalidateTimeouts(string timeout)
+        {
+            GoDurationParser.ValidateTimeout(timeout).Should().BeFalse();
         }
     }
 }
