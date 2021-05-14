@@ -27,7 +27,7 @@ namespace Sashimi.GoogleCloud.Accounts
 
         public override IEnumerable<Variable> ContributeVariables()
         {
-            yield return new Variable(SpecialVariables.Action.GoogleCloud.JsonKey, JsonKey);
+            yield return new Variable(SpecialVariables.Action.GoogleCloud.JsonKey, JsonKey?.Value, VariableType.Sensitive);
         }
 
         public bool CanExpand(string id, string referencedEntityId)
