@@ -13,11 +13,11 @@ trap 'echo "Removing temporary folder ${nginxTempDir}..." && sudo rm -rf $nginxT
 nginxConfRoot=${nginxConfDir:-/etc/nginx/conf.d}
 
 echo "Clearing the existing locations dir"
-for dir in $nginxTempDir/conf/* 
-do 
+for dir in $nginxTempDir/conf/*
+do
     fixedDir=${dir##*/}
     if [[ -d "$dir" && ! -L "$dir" && -d "$nginxConfRoot/$fixedDir" ]]
-    then         
+    then
         sudo rm -rf $nginxConfRoot/$fixedDir
     fi
 done
@@ -33,7 +33,11 @@ if [ -d "$nginxTempDir/ssl" ]; then
 fi
 
 echo "Validating nginx configuration"
-sudo nginx -t
+echo "##octopus[stdout-verbose]"
+sudo nginx -t 2>&1
+echo "##octopus[stdout-default]"
 
 echo "Reloading nginx configuration"
-sudo nginx -s reload
+echo "##octopus[stdout-verbose]"
+sudo nginx -s reload 2>&1
+echo "##octopus[stdout-default]"
