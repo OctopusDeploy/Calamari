@@ -103,13 +103,16 @@ class Build : NukeBuild
                             .SetFramework(framework)
                             .SetRuntime(runtime)
                             .SetOutput(PublishDirectory / calamariFlavour / platform));
+                        File.Copy(RootDirectory / "global.json", PublishDirectory / calamariFlavour / platform / "global.json");
                     }
 
                     if(framework == "net5.0")
                     {
                         var runtimes = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/RuntimeIdentifiers")?.Split(';');
-                        foreach(var runtime in runtimes)
+                        foreach (var runtime in runtimes)
+                        {
                             RunPublish(runtime, runtime);
+                        }
                     }
                     else
                     {
@@ -142,6 +145,7 @@ class Build : NukeBuild
                     .SetConfiguration(Configuration)
                     .SetOutput(PublishDirectory / sashimiFlavour));
 
+                File.Copy(RootDirectory / "global.json", PublishDirectory / sashimiFlavour / "global.json");
                 Logger.Trace($"{PublishDirectory}/{sashimiFlavour}");
                 CompressionTasks.CompressZip(PublishDirectory / sashimiFlavour, $"{ArtifactsDirectory / sashimiFlavour}.zip");
             }
