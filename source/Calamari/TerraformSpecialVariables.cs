@@ -10,6 +10,7 @@ namespace Calamari.Terraform
             {
                 public const string AWSManagedAccount = "Octopus.Action.Terraform.ManagedAccount";
                 public const string AzureManagedAccount = "Octopus.Action.Terraform.AzureAccount";
+                public const string GoogleCloudAccount = "Octopus.Action.Terraform.GoogleCloudAccount";
                 public const string AllowPluginDownloads = "Octopus.Action.Terraform.AllowPluginDownloads";
                 public const string PluginsDirectory = "Octopus.Action.Terraform.PluginsDirectory";
                 public const string TemplateDirectory = "Octopus.Action.Terraform.TemplateDirectory";

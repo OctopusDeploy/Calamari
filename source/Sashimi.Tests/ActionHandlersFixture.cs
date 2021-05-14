@@ -5,21 +5,17 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Retry;
 using Calamari.Terraform;
-using Calamari.Tests.Helpers;
 using Calamari.Tests.Shared;
 using FluentAssertions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using NUnit.Framework.Interfaces;
-using NUnit.Framework.Internal;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Terraform.ActionHandler;
 using Sashimi.Terraform.Tests.CommonTemplates;
@@ -418,6 +414,58 @@ namespace Sashimi.Terraform.Tests
             ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ => { _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, "SubFolder"); }, "TemplateDirectory")
                 .Should()
                 .Contain($"SubFolder{Path.DirectorySeparatorChar}example.tf");
+        }
+
+        [Test]
+        public async Task GoogleCloudIntegration()
+        {
+            const string JsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
+
+            var bucketName = $"e2e-tf-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+
+            using var temporaryFolder = TemporaryDirectory.Create();
+            CopyAllFiles(TestEnvironment.GetTestPath("GoogleCloud"), temporaryFolder.DirectoryPath);
+
+            var environmentJsonKey = Environment.GetEnvironmentVariable(JsonEnvironmentVariableKey);
+            if (environmentJsonKey == null)
+            {
+                throw new Exception($"Environment Variable `{JsonEnvironmentVariableKey}` could not be found. The value can be found in the password store under GoogleCloud - OctopusAPITester");
+            }
+            var jsonKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(environmentJsonKey));
+
+            void PopulateVariables(TestActionHandlerContext<Program> _)
+            {
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
+                _.Variables.Add("Hello", "Hello World from Google Cloud");
+                _.Variables.Add("bucket_name", bucketName);
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
+                _.Variables.Add("Octopus.Action.Terraform.GoogleCloudAccount", bool.TrueString);
+                _.Variables.Add("Octopus.Action.GoogleCloud.KeyFile", jsonKey);
+                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
+            }
+
+            var output = ExecuteAndReturnResult(typeof(TerraformPlanActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
+            output.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
+
+            output = ExecuteAndReturnResult(typeof(TerraformApplyActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
+            output.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
+            var requestUri = output.OutputVariables["TerraformValueOutputs[url]"].Value;
+
+            string fileData;
+
+            using (var client = new HttpClient())
+            {
+                fileData = await client.GetStringAsync(requestUri).ConfigureAwait(false);
+            }
+
+            fileData.Should().Be("Hello World from Google Cloud");
+
+            ExecuteAndReturnResult(typeof(TerraformDestroyActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
+            using (var client = new HttpClient())
+            {
+                var response = await client.GetAsync($"{requestUri}&bust_cache").ConfigureAwait(false);
+                response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            }
         }
 
         [Test]
