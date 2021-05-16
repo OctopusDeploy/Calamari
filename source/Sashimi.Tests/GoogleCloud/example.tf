@@ -21,7 +21,7 @@ resource "google_storage_bucket" "mybucket" {
 }
 
 resource "google_storage_bucket_iam_binding" "binding" {
-  bucket = google_storage_bucket.mybucket.name
+  bucket = "${google_storage_bucket.mybucket.name}"
   role = "roles/storage.objectViewer"
   members = [
     "allUsers"
