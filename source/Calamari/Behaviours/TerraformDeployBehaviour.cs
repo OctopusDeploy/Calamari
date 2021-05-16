@@ -69,7 +69,7 @@ namespace Calamari.Terraform.Behaviours
         Dictionary<string, string> GoogleCloudEnvironmentVariables(IVariables variables)
         {
             var account = variables.Get("Octopus.Action.GoogleCloudAccount.Variable")?.Trim();
-            var keyFile = variables.Get($"{account}.KeyFile")?.Trim() ?? variables.Get("Octopus.Action.GoogleCloud.KeyFile")?.Trim();
+            var keyFile = variables.Get($"{account}.JsonKey")?.Trim() ?? variables.Get("Octopus.Action.GoogleCloudAccount.JsonKey")?.Trim();
 
             var bytes = Convert.FromBase64String(keyFile);
             var json = Encoding.UTF8.GetString(bytes);

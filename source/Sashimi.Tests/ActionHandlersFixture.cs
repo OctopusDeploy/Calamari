@@ -437,7 +437,7 @@ namespace Sashimi.Terraform.Tests
                 _.Variables.Add("bucket_name", bucketName);
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
                 _.Variables.Add("Octopus.Action.Terraform.GoogleCloudAccount", bool.TrueString);
-                _.Variables.Add("Octopus.Action.GoogleCloud.KeyFile", jsonKey);
+                _.Variables.Add("Octopus.Action.GoogleCloudAccount.JsonKey", jsonKey);
                 _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
             }
 
