@@ -6,7 +6,7 @@
         {
             public static class GoogleCloud
             {
-                public static readonly string JsonKey = "Octopus.Action.GoogleCloudAccount.Json";
+                public static readonly string JsonKey = "Octopus.Action.GoogleCloudAccount.JsonKey";
             }
         }
     }
