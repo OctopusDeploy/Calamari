@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
@@ -47,29 +48,25 @@ namespace Sashimi.Terraform.Tests
 
         static void ClearTestDirectories()
         {
-            static bool TryDeleteFile(string path)
+            static void TryDeleteFile(string path)
             {
                 try
                 {
                     File.Delete(TestEnvironment.GetTestPath(path));
-                    return true;
                 }
                 catch (IOException)
                 {
-                    return false;
                 }
             }
 
-            static bool TryDeleteDirectory(string path, bool recursive)
+            static void TryDeleteDirectory(string path, bool recursive)
             {
                 try
                 {
                     Directory.Delete(TestEnvironment.GetTestPath(path), recursive);
-                    return true;
                 }
                 catch (IOException)
                 {
-                    return false;
                 }
             }
 
@@ -336,7 +333,7 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public void EnableNoMatchWarningIsNotSet()
         {
-            ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(variables => { }, "Simple")
+            ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ => { }, "Simple")
                 .Should()
                 .NotContain("No files were found that match the substitution target pattern");
         }
@@ -419,17 +416,17 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public async Task GoogleCloudIntegration()
         {
-            const string JsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
+            const string jsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
 
             var bucketName = $"e2e-tf-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
 
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("GoogleCloud"), temporaryFolder.DirectoryPath);
 
-            var environmentJsonKey = Environment.GetEnvironmentVariable(JsonEnvironmentVariableKey);
+            var environmentJsonKey = Environment.GetEnvironmentVariable(jsonEnvironmentVariableKey);
             if (environmentJsonKey == null)
             {
-                throw new Exception($"Environment Variable `{JsonEnvironmentVariableKey}` could not be found. The value can be found in the password store under GoogleCloud - OctopusAPITester");
+                throw new Exception($"Environment Variable `{jsonEnvironmentVariableKey}` could not be found. The value can be found in the password store under GoogleCloud - OctopusAPITester");
             }
             var jsonKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(environmentJsonKey));
 
@@ -512,11 +509,16 @@ namespace Sashimi.Terraform.Tests
                 }
                 catch (HttpRequestException ex)
                 {
-                    ex.Message.Should().BeOneOf(
-                                                "No such host is known.",
-                                                "Name or service not known", //Some Linux distros
-                                                "nodename nor servname provided, or not known" //Mac
-                                                );
+                    if (ex.InnerException is not SocketException socketException)
+                    {
+                        throw;
+                    }
+
+                    socketException.Message.Should().BeOneOf(
+                                                             "No such host is known.",
+                                                             "Name or service not known", //Some Linux distros
+                                                             "nodename nor servname provided, or not known" //Mac
+                                                            );
                 }
             }
 
@@ -660,16 +662,15 @@ data:
       groups:
         - system:bootstrappers
         - system:nodes";
-            string template = String.Format(@"locals {{
+            string template = $@"locals {{
   config-map-aws-auth = <<CONFIGMAPAWSAUTH
-{0}
+{expected}
 CONFIGMAPAWSAUTH
 }}
 
 output ""config-map-aws-auth"" {{
     value = ""${{local.config-map-aws-auth}}""
-}}",
-                                            expected);
+}}";
 
             ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
                                                                    {
@@ -824,13 +825,13 @@ output ""config-map-aws-auth"" {{
             return result;
         }
 
-        private void IgnoreIfVersionIsNotInRange(string minimumVersion, string? maximumVersion = null)
+        void IgnoreIfVersionIsNotInRange(string minimum, string? maximum = null)
         {
-            var _minimumVersion = new Version(minimumVersion);
-            var _maximumVersion = new Version(maximumVersion ?? "999.0.0");
+            var minimumVersion = new Version(minimum);
+            var maximumVersion = new Version(maximum ?? "999.0.0");
 
-            if (terraformCliVersionAsObject.CompareTo(_minimumVersion) < 0
-                || terraformCliVersionAsObject.CompareTo(_maximumVersion) >= 0)
+            if (terraformCliVersionAsObject.CompareTo(minimumVersion) < 0
+                || terraformCliVersionAsObject.CompareTo(maximumVersion) >= 0)
             {
                 Assert.Ignore();
             }
