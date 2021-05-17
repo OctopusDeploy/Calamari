@@ -416,6 +416,8 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public async Task GoogleCloudIntegration()
         {
+            IgnoreIfVersionIsNotInRange("0.15.0");
+
             const string jsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
 
             var bucketName = $"e2e-tf-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
