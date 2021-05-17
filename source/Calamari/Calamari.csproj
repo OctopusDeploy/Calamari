@@ -9,7 +9,7 @@
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Calamari.Common" Version="19.1.0" />
+    <PackageReference Include="Calamari.Common" Version="19.2.0" />
     <PackageReference Include="Calamari.AzureScripting" Version="12.0.0" />
     <PackageReference Include="Calamari.Scripting" Version="11.0.0" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.22" />
