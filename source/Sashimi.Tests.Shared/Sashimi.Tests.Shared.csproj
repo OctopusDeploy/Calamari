@@ -15,7 +15,6 @@
     <ProjectReference Include="..\Calamari.Tests.Shared\Calamari.Tests.Shared.csproj" />
     <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
     <PackageReference Include="FluentAssertions" Version="5.10.3" />
-    <PackageReference Include="Octostache" Version="2.10.0" />
   </ItemGroup>
 
 </Project>
