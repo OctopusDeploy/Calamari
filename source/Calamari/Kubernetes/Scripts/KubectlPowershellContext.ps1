@@ -123,6 +123,8 @@ function ConnectAzAccount {
 			$loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
 			$loginArgs += @("--password=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword)))");
 			$loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
+
+			Write-Host "az login --service-principal $loginArgs"
 			az login --service-principal $loginArgs
 
 			Write-Host "Azure CLI: Setting active subscription to $OctopusAzureSubscriptionId"
