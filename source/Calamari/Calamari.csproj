@@ -9,7 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="WindowsBase" />
-    <PackageReference Include="Calamari.Common" Version="19.1.0" />
+    <PackageReference Include="Calamari.Common" Version="19.2.0" />
     <PackageReference Include="Calamari.AzureScripting" Version="12.0.0" />
     <PackageReference Include="Calamari.Scripting" Version="12.0.0" />
     <PackageReference Include="Hyak.Common" Version="1.2.2" />
