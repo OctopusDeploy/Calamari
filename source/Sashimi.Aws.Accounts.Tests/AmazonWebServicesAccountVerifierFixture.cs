@@ -27,7 +27,7 @@ namespace Sashimi.Aws.Accounts.Tests
             {
                 AccessKey = ExternalVariables.Get(ExternalVariable.AwsAcessKey),
                 SecretKey = ExternalVariables.Get(ExternalVariable.AwsSecretKey).ToSensitiveString()
-            });
+            }, CancellationToken.None);
 
             httpMessageHandler.RequestLog.Should().ContainSingle(r => r.RequestUri.AbsoluteUri == "https://sts.amazonaws.com/");
         }

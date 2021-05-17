@@ -21,5 +21,7 @@ namespace Sashimi.Server.Contracts.Accounts
         }
 
         public abstract IEnumerable<Variable> ContributeVariables();
+
+        public abstract Credentials GetCredential();
     }
 }

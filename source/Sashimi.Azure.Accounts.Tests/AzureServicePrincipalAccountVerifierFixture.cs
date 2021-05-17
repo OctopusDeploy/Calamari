@@ -36,7 +36,7 @@ namespace Sashimi.Azure.Accounts.Tests
 
             var verifier = GetAzureServicePrincipalAccountVerifier();
 
-            Assert.DoesNotThrow(() => verifier.Verify(accountDetails));
+            Assert.DoesNotThrowAsync(() => verifier.Verify(accountDetails, CancellationToken.None));
         }
 
         [Test]
@@ -52,7 +52,7 @@ namespace Sashimi.Azure.Accounts.Tests
 
             var verifier = GetAzureServicePrincipalAccountVerifier();
 
-            Assert.That(() => verifier.Verify(accountDetails), Throws.TypeOf<Microsoft.IdentityModel.Clients.ActiveDirectory.AdalServiceException>());
+            Assert.ThrowsAsync<Microsoft.IdentityModel.Clients.ActiveDirectory.AdalServiceException>(() => verifier.Verify(accountDetails, CancellationToken.None));
         }
 
         [Test]
@@ -67,10 +67,10 @@ namespace Sashimi.Azure.Accounts.Tests
             };
 
             var verifier = GetAzureServicePrincipalAccountVerifier();
-            verifier.Verify(accountDetails);
+            verifier.Verify(accountDetails, CancellationToken.None);
 
             accountDetails.Password = "InvalidPassword".ToSensitiveString();
-            Assert.That(() => verifier.Verify(accountDetails), Throws.TypeOf<Microsoft.IdentityModel.Clients.ActiveDirectory.AdalServiceException>());
+            Assert.ThrowsAsync<Microsoft.IdentityModel.Clients.ActiveDirectory.AdalServiceException>(() => verifier.Verify(accountDetails, CancellationToken.None));
         }
     }
 

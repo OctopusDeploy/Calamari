@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using Newtonsoft.Json;
 using Octopus.Data.Model;
 using Sashimi.Aws.Common.Variables;
@@ -47,6 +48,11 @@ namespace Sashimi.Aws.Accounts
             yield return ("Name", false);
             yield return ("AccessKey", false);
             yield return ("SecretKey", true);
+        }
+
+        public override Credentials GetCredential()
+        {
+            return new Credentials(AccessKey!, SecretKey?.Value!);
         }
     }
 }

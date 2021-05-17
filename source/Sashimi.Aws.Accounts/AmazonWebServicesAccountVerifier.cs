@@ -1,5 +1,7 @@
 using System;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
@@ -20,12 +22,12 @@ namespace Sashimi.Aws.Accounts
             };
         }
 
-        public void Verify(AccountDetails account)
+        public async Task Verify(AccountDetails account, CancellationToken cancellationToken)
         {
             var accountTyped = (AmazonWebServicesAccountDetails)account;
             using (var client = new AmazonSecurityTokenServiceClient(new BasicAWSCredentials(accountTyped.AccessKey, accountTyped.SecretKey?.Value), tokenServiceConfig))
             {
-                client.GetCallerIdentityAsync(new GetCallerIdentityRequest()).Wait();
+                await client.GetCallerIdentityAsync(new GetCallerIdentityRequest(), cancellationToken);
             }
         }
     }

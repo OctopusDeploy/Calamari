@@ -101,5 +101,10 @@ namespace Sashimi.Azure.Accounts
             yield return ("ActiveDirectoryEndpointBaseUri", false);
             yield return ("ResourceManagementEndpointBaseUri", false);
         }
+
+        public override Credentials GetCredential()
+        {
+            return new Credentials(ClientId!, Password?.Value!);
+        }
     }
 }
