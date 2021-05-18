@@ -87,5 +87,10 @@ namespace Sashimi.AzureCloudService
                 ("ServiceManagementEndpointSuffix", false),
             };
         }
+
+        public override Credentials GetCredential()
+        {
+            return new Credentials(SubscriptionNumber ?? string.Empty, CertificateBytes?.Value ?? string.Empty);
+        }
     }
 }
