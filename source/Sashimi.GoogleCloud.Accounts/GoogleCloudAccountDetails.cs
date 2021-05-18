@@ -42,5 +42,10 @@ namespace Sashimi.GoogleCloud.Accounts
 
             yield return ("JsonKey", true);
         }
+
+        public override Credentials GetCredential()
+        {
+            return new Credentials(JsonKey?.Value ?? string.Empty);
+        }
     }
 }

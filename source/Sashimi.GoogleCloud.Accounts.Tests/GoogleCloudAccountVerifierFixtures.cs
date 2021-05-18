@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Threading;
 using NUnit.Framework;
 using Octopus.Data.Model;
 
@@ -10,7 +11,7 @@ namespace Sashimi.GoogleCloud.Accounts.Tests
     {
         const string JsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
 
-        [TestCase]
+        
         public void Verify_CredentialIsValid()
         {
             var environmentJsonKey = Environment.GetEnvironmentVariable(JsonEnvironmentVariableKey);
@@ -25,7 +26,7 @@ namespace Sashimi.GoogleCloud.Accounts.Tests
             {
                 JsonKey = jsonKey.ToSensitiveString()
             };
-            Assert.DoesNotThrow(() => verifier.Verify(account));
+            Assert.DoesNotThrowAsync(() => verifier.Verify(account, CancellationToken.None));
         }
     }
 }

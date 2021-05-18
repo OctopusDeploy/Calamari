@@ -1,6 +1,8 @@
 using System;
 using System.Net;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Google;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Iam.v1;
@@ -11,10 +13,10 @@ namespace Sashimi.GoogleCloud.Accounts
 {
     internal class GoogleCloudAccountVerifier : IVerifyAccount
     {
-        public void Verify(AccountDetails account)
+        public async Task Verify(AccountDetails account, CancellationToken cancellationToken)
         {
             var accountTyped = (GoogleCloudAccountDetails) account;
-            var bytes = Convert.FromBase64String(accountTyped.JsonKey?.Value);
+            var bytes = Convert.FromBase64String(accountTyped.JsonKey?.Value ?? string.Empty);
             var json = Encoding.UTF8.GetString(bytes);
             GoogleCredential? credential;
             try
@@ -34,7 +36,7 @@ namespace Sashimi.GoogleCloud.Accounts
             var dummyRequest = service.Projects.ServiceAccounts.List("projects/" + "invalidProjectName");
             try
             {
-                dummyRequest.Execute();
+                await dummyRequest.ExecuteAsync(cancellationToken);
             }
             catch (GoogleApiException exception)
             {
