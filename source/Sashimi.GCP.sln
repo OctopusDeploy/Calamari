@@ -4,6 +4,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GoogleCloud.Account
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GoogleCloud.Accounts.Tests", "Sashimi.GoogleCloud.Accounts.Tests\Sashimi.GoogleCloud.Accounts.Tests.csproj", "{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GoogleCloud.Scripting", "Sashimi.GoogleCloud.Scripting\Sashimi.GoogleCloud.Scripting.csproj", "{78303BFD-9B63-43D4-AD48-C21F215EAB44}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GoogleCloud.Scripting.Tests", "Sashimi.GoogleCloud.Scripting.Tests\Sashimi.GoogleCloud.Scripting.Tests.csproj", "{55C1CB24-47D7-41FB-A0D8-2725E5546C54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.GoogleCloudScripting", "Calamari.GoogleCloudScripting\Calamari.GoogleCloudScripting.csproj", "{77629C68-9893-4DF9-82EF-328A3CE15EF0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +24,17 @@ Global
 		{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78303BFD-9B63-43D4-AD48-C21F215EAB44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78303BFD-9B63-43D4-AD48-C21F215EAB44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78303BFD-9B63-43D4-AD48-C21F215EAB44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78303BFD-9B63-43D4-AD48-C21F215EAB44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55C1CB24-47D7-41FB-A0D8-2725E5546C54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55C1CB24-47D7-41FB-A0D8-2725E5546C54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55C1CB24-47D7-41FB-A0D8-2725E5546C54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55C1CB24-47D7-41FB-A0D8-2725E5546C54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77629C68-9893-4DF9-82EF-328A3CE15EF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77629C68-9893-4DF9-82EF-328A3CE15EF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77629C68-9893-4DF9-82EF-328A3CE15EF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77629C68-9893-4DF9-82EF-328A3CE15EF0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
