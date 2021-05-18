@@ -144,10 +144,12 @@ Execute-WithRetry{
                     Write-Host "Azure CLI: Authenticating with Service Principal"
 
                     $loginArgs = @();
-                    $loginArgs += @("-u", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId))));
                     # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
-                    $loginArgs += @("--password", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword))));
-                    $loginArgs += @("--tenant", (ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId))));
+                    $loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
+                    $loginArgs += @("--password=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword)))");
+                    $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
+                    
+                    Write-Host "az login --service-principal $loginArgs"
                     az login --service-principal $loginArgs
 
                     Write-Host "Azure CLI: Setting active subscription to $OctopusAzureSubscriptionId"
