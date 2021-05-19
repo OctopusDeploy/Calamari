@@ -25,7 +25,7 @@ namespace Calamari.Terraform.Behaviours
         public Task Execute(RunningDeployment context)
         {
             var filesToSubstitute = GetFilesToSubstitute(context.Variables);
-            substituteInFiles.Substitute(context, filesToSubstitute);
+            substituteInFiles.Substitute(context.CurrentDirectory, filesToSubstitute);
             return this.CompletedTask();
         }
 
