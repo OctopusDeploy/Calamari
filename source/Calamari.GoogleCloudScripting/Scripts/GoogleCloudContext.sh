@@ -1,6 +1,7 @@
 #!/bin/bash
 
 Octopus_GoogleCloud_KeyFile=$(get_octopusvariable "OctopusGoogleCloudKeyFile")
+Octopus_GoogleCloud_CustomExecutable=$(get_octopusvariable "Octopus.Action.GoogleCloud.CustomExecutable")
 
 function check_app_exists {
 	command -v $1 > /dev/null 2>&1
@@ -9,6 +10,16 @@ function check_app_exists {
 		echo >&2 "You need $1 to be installed and in the PATH."
 		exit 1
 	fi
+}
+
+function setup_executable {
+  if [[ -z $Octopus_GoogleCloud_CustomExecutable ]]; then
+    Octopus_GoogleCloud_CustomExecutable="gcloud"
+  fi
+
+  check_app_exists $Octopus_GoogleCloud_CustomExecutable
+
+  alias kubectl=$Octopus_GoogleCloud_CustomExecutable
 }
 
 function setup_context {
@@ -35,7 +46,7 @@ function setup_context {
 }
 
 echo "##octopus[stdout-verbose]"
-check_app_exists gcloud
+setup_executable
 setup_context
 
 OctopusGoogleCloudTargetScript=$(get_octopusvariable "OctopusGoogleCloudTargetScript")

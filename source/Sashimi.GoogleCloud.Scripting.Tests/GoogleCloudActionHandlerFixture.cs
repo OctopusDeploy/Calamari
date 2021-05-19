@@ -6,9 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Calamari.GoogleCloudScripting;
+using FluentAssertions;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 using Sashimi.GCPScripting;
 using Sashimi.Server.Contracts;
 using Sashimi.Tests.Shared;
@@ -108,7 +110,7 @@ namespace Sashimi.GoogleCloud.Scripting.Tests
                     }
 
                     var destinationDirectory = Path.Combine(rootPath, Path.GetFileNameWithoutExtension(file.Name));
-                    var gcloudExe = Path.Combine(destinationDirectory, "google-cloud-sdk", "bin", "gcloud");
+                    var gcloudExe = Path.Combine(destinationDirectory, "google-cloud-sdk", "bin", $"gcloud{(OperatingSystem.IsWindows() ? ".cmd" : String.Empty)}");
 
                     if (!File.Exists(gcloudExe))
                     {
@@ -139,7 +141,9 @@ namespace Sashimi.GoogleCloud.Scripting.Tests
                 var results = DownloadAllFiles().GetAwaiter().GetResult();
                 foreach (var result in results)
                 {
-                    yield return new object[] {result};
+                    var startIndex = result.IndexOf("google-cloud-sdk-", StringComparison.Ordinal);
+                    var length = result.IndexOf(Path.DirectorySeparatorChar, startIndex + 1) - startIndex;
+                    yield return new TestFixtureParameters(new TestFixtureData(result) { TestName = result.Substring(startIndex, length)});
                 }
             }
         }
@@ -163,92 +167,6 @@ namespace Sashimi.GoogleCloud.Scripting.Tests
         }
 
         [Test]
-        public async Task ListTools()
-        {
-            GoogleCredential? credential;
-            try
-            {
-                credential = GoogleCredential.FromJson(EnvironmentJsonKey);
-            }
-            catch (InvalidOperationException)
-            {
-                throw new Exception("Error reading json key file, please ensure file is correct.");
-            }
-
-            using var client = await StorageClient.CreateAsync(credential);
-            var results = client.ListObjectsAsync("cloud-sdk-release", "google-cloud-sdk-");
-
-            var listOfFilesSortedByCreatedDate = new SortedList<DateTime, Object>(Comparer<DateTime>.Create((a, b) => b.CompareTo(a)));
-
-            await foreach (var result in results)
-            {
-                if (result.TimeCreated.HasValue)
-                {
-                    listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
-                }
-            }
-
-            var latest = new Dictionary<string, Object>();
-            foreach (var (_, value) in listOfFilesSortedByCreatedDate.Take(30))
-            {
-                if (value.Name.EndsWith("-linux-x86_64.tar.gz"))
-                {
-                    latest.TryAdd("Linux", value);
-                }
-
-                if (value.Name.EndsWith("-windows-x86_64-bundled-python.zip"))
-                {
-                    latest.TryAdd("Windows", value);
-                }
-
-                if (value.Name.EndsWith("-darwin-x86_64-bundled-python.tar.gz"))
-                {
-                    latest.TryAdd("Mac", value);
-                }
-
-                if (latest.Count == 3)
-                {
-                    break;
-                }
-            }
-
-            var threeMonthsOld = new Dictionary<string, Object>();
-            var threeMonthsAgo = DateTime.UtcNow.AddMonths(-6);
-            foreach (var (_, value) in listOfFilesSortedByCreatedDate.SkipWhile(pair => pair.Key > threeMonthsAgo))
-            {
-                if (value.Name.EndsWith("-linux-x86_64.tar.gz"))
-                {
-                    threeMonthsOld.TryAdd("Linux", value);
-                }
-
-                if (value.Name.EndsWith("-windows-x86_64-bundled-python.zip"))
-                {
-                    threeMonthsOld.TryAdd("Windows", value);
-                }
-
-                if (value.Name.EndsWith("-darwin-x86_64-bundled-python.tar.gz"))
-                {
-                    threeMonthsOld.TryAdd("Mac", value);
-                }
-
-                if (threeMonthsOld.Count == 3)
-                {
-                    break;
-                }
-            }
-
-            foreach (var (_, value) in threeMonthsOld)
-            {
-                await Console.Out.WriteLineAsync($"{value.Name} - {value.TimeCreated}");
-            }
-
-            foreach (var (_, value) in latest)
-            {
-                await Console.Out.WriteLineAsync($"{value.Name} - {value.TimeCreated}");
-            }
-        }
-
-        [Test]
         public void ExecuteAnInlineScript()
         {
             var psScript = @"
@@ -265,9 +183,27 @@ gcloud projects list";
                 .Execute();
         }
 
-        void AddDefaults(TestActionHandlerContext<Program> context)
+        [Test]
+        public void TryToExecuteAnInlineScriptWithInvalidCredentials()
         {
-            context.Variables.Add("Octopus.Action.GoogleCloudAccount.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(EnvironmentJsonKey!)));
+            var psScript = @"
+gcloud projects list";
+
+            ActionHandlerTestBuilder.CreateAsync<GoogleCloudActionHandler, Program>()
+                .WithArrange(context =>
+                {
+                    AddDefaults(context, "{ \"name\": \"hello\" }");
+                    context.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Inline);
+                    context.Variables.Add(KnownVariables.Action.Script.Syntax, OperatingSystem.IsWindows() ? ScriptSyntax.PowerShell.ToString() : ScriptSyntax.Bash.ToString());
+                    context.Variables.Add(KnownVariables.Action.Script.ScriptBody, psScript);
+                })
+                .WithAssert(result => result.WasSuccessful.Should().BeFalse())
+                .Execute(false);
+        }
+
+        void AddDefaults(TestActionHandlerContext<Program> context, string? keyFile = null)
+        {
+            context.Variables.Add("Octopus.Action.GoogleCloudAccount.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(keyFile ?? EnvironmentJsonKey!)));
             context.Variables.Add("Octopus.Action.GoogleCloud.CustomExecutable", cliPath);
         }
     }
