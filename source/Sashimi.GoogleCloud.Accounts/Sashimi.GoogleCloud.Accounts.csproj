@@ -3,7 +3,8 @@
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
         <AssemblyName>Sashimi.GoogleCloud.Accounts</AssemblyName>
-        <RootNamespace>Sashimi.GoogleCloud.Accounts</RootNamespace>
+        <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi.GCP</PackageProjectUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     </PropertyGroup>
 
     <ItemGroup>

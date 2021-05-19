@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
-        <RootNamespace>Sashimi.GoogleCloud.Scripting</RootNamespace>
+        <AssemblyName>Sashimi.GoogleCloud.Scripting</AssemblyName>
         <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi.GCP</PackageProjectUrl>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <NoDefaultExcludes>true</NoDefaultExcludes>

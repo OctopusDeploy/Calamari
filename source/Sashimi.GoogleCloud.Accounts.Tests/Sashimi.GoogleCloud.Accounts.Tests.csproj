@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-		<RootNamespace>Sashimi.GoogleCloud.Accounts.Tests</RootNamespace>
         <TargetFramework>net5.0</TargetFramework>
+        <AssemblyName>Sashimi.GoogleCloud.Accounts.Tests</AssemblyName>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 

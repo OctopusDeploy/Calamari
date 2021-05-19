@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <AssemblyName>Calamari.GoogleCloudScripting</AssemblyName>
         <OutputType>Exe</OutputType>
         <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-        <IsPackable>true</IsPackable>
-        <IsPackable>true</IsPackable>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
         <TargetFrameworks>net452;net5.0</TargetFrameworks>
