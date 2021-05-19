@@ -2,10 +2,19 @@
 
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
-        <RootNamespace>Sashimi.GCPScripting</RootNamespace>
-        <Nullable>enable</Nullable>
+        <RootNamespace>Sashimi.GoogleCloud.Scripting</RootNamespace>
+        <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi.GCP</PackageProjectUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <NoDefaultExcludes>true</NoDefaultExcludes>
     </PropertyGroup>
-
+    <ItemGroup>
+        <None Include="..\..\artifacts\Calamari.GoogleCloudScripting.zip">
+            <Visible>false</Visible>
+            <LinkBase>tools</LinkBase>
+            <Pack>true</Pack>
+            <PackagePath>tools/</PackagePath>
+        </None>
+    </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Sashimi.Server.Contracts" Version="13.0.0" />
     </ItemGroup>

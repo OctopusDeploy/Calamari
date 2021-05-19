@@ -4,7 +4,6 @@
         <TargetFramework>net5.0</TargetFramework>
         <AssemblyName>Sashimi.GoogleCloud.Accounts</AssemblyName>
         <RootNamespace>Sashimi.GoogleCloud.Accounts</RootNamespace>
-        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>

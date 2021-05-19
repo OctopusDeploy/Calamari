@@ -10,6 +10,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GoogleCloud.Scripti
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.GoogleCloudScripting", "Calamari.GoogleCloudScripting\Calamari.GoogleCloudScripting.csproj", "{77629C68-9893-4DF9-82EF-328A3CE15EF0}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{084B9DB8-DBE0-4120-9271-0535FF8B3636}"
+ProjectSection(SolutionItems) = preProject
+	Directory.Build.props = Directory.Build.props
+	..\GitVersion.yml = ..\GitVersion.yml
+	..\global.json = ..\global.json
+	..\README.md = ..\README.md
+EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

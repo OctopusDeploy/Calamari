@@ -2,10 +2,8 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <Nullable>enable</Nullable>
-        <OutputType>Exe</OutputType>
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <IsPackable>true</IsPackable>
         <IsPackable>true</IsPackable>
     </PropertyGroup>
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">

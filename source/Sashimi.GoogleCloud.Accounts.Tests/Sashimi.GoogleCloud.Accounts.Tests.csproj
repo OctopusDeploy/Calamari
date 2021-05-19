@@ -3,7 +3,6 @@
     <PropertyGroup>
 		<RootNamespace>Sashimi.GoogleCloud.Accounts.Tests</RootNamespace>
         <TargetFramework>net5.0</TargetFramework>
-        <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
