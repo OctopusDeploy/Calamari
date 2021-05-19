@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Octostache" Version="2.9.4" />
+    <PackageReference Include="Octostache" Version="2.10.0" />
     <PackageReference Include="Octopus.TinyTypes" Version="0.1.459" />
     <PackageReference Include="Octopus.Server.Extensibility" Version="14.0.1" />
     <PackageReference Include="Octopus.Diagnostics" Version="2.1.1" />

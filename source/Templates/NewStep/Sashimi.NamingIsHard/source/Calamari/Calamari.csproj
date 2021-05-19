@@ -10,8 +10,7 @@
         <IsPackable>true</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Calamari.Common" Version="18.1.0" />
-        <PackageReference Include="Calamari.Common" Version="19.0.1-enh-logwithconte0002" />
+        <PackageReference Include="Calamari.Common" Version="19.2.0" />
         <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
