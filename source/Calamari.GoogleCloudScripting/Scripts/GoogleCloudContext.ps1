@@ -1,10 +1,5 @@
 ﻿$ErrorActionPreference = "Stop"
 
-if ($PSVersionTable.PSVersion.Major -lt 5)
-{
-    throw "These Azure commands are only supported in PowerShell versions 5 and above. This server is currently running PowerShell version $($PSVersionTable.PSVersion.ToString())."
-}
-
 function EnsureDirectoryExists([string] $path)
 {
     New-Item -ItemType Directory -Force -Path $path *>$null
