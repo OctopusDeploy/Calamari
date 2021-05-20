@@ -56,7 +56,7 @@ namespace Sashimi.GoogleCloud.Scripting.Tests
                 }
                 else if (OperatingSystem.IsMacOS())
                 {
-                    postfix = "-darwin-x86_64-bundled-python.tar.gz";
+                    postfix = "-darwin-x86_64.tar.gz";
                 }
 
                 foreach (var (_, value) in listOfFilesSortedByCreatedDate.Take(30))
