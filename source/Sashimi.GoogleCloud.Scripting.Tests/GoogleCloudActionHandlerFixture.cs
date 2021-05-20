@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -169,8 +169,7 @@ namespace Sashimi.GoogleCloud.Scripting.Tests
         [Test]
         public void ExecuteAnInlineScript()
         {
-            var psScript = $@"
-{cliPath} projects list";
+            var psScript = $"{cliPath} projects list";
 
             ActionHandlerTestBuilder.CreateAsync<GoogleCloudActionHandler, Program>()
                 .WithArrange(context =>
@@ -186,8 +185,7 @@ namespace Sashimi.GoogleCloud.Scripting.Tests
         [Test]
         public void TryToExecuteAnInlineScriptWithInvalidCredentials()
         {
-            var psScript = $@"
-{cliPath} projects list";
+            var psScript = $"{cliPath} projects list";
 
             ActionHandlerTestBuilder.CreateAsync<GoogleCloudActionHandler, Program>()
                 .WithArrange(context =>

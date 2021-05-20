@@ -1,7 +1,7 @@
 #!/bin/bash
 
 Octopus_GoogleCloud_KeyFile=$(get_octopusvariable "OctopusGoogleCloudKeyFile")
-Octopus_GoogleCloud_CustomExecutable=$(get_octopusvariable "Octopus.Action.GoogleCloud.CustomExecutable")
+gcloud_exe=$(get_octopusvariable "Octopus.Action.GoogleCloud.CustomExecutable")
 
 function check_app_exists {
 	command -v $1 > /dev/null 2>&1
@@ -12,14 +12,12 @@ function check_app_exists {
 	fi
 }
 
-function setup_executable {
-  if [[ -z $Octopus_GoogleCloud_CustomExecutable ]]; then
-    Octopus_GoogleCloud_CustomExecutable="gcloud"
-  else
-    alias gcloud=$Octopus_GoogleCloud_CustomExecutable
+function set_executable {
+  if [[ -z $gcloud_exe ]]; then
+    gcloud_exe="gcloud"
   fi
 
-  check_app_exists $Octopus_GoogleCloud_CustomExecutable
+  check_app_exists $gcloud_exe
 }
 
 function setup_context {
@@ -29,12 +27,12 @@ function setup_context {
         export CLOUDSDK_CONFIG="$OctopusCalamariWorkingDirectory/gcloud-cli"
         mkdir -p $CLOUDSDK_CONFIG
 
-        gcloud version
+        $gcloud_exe -q version
         echo "Google Cloud CLI: Authenticating with key file"
         loginArgs=()
         loginArgs+=("--key-file=$Octopus_GoogleCloud_KeyFile")
         echo gcloud auth activate-service-account ${loginArgs[@]}
-        gcloud auth activate-service-account "${loginArgs[@]}"
+        $gcloud_exe -q auth activate-service-account "${loginArgs[@]}"
 
         echo "##octopus[stdout-default]"
         write_verbose "Successfully authenticated with Google Cloud CLI"
@@ -46,7 +44,7 @@ function setup_context {
 }
 
 echo "##octopus[stdout-verbose]"
-setup_executable
+set_executable
 setup_context
 
 OctopusGoogleCloudTargetScript=$(get_octopusvariable "OctopusGoogleCloudTargetScript")
@@ -57,5 +55,5 @@ echo "##octopus[stdout-default]"
 
 source "$OctopusGoogleCloudTargetScript" $OctopusGoogleCloudTargetScriptParameters || exit 1 :
 {
-    gcloud auth revoke --all 2>null 3>null
+    $gcloud_exe -q auth revoke --all 2>null 3>null
 }

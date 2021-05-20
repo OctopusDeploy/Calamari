@@ -39,6 +39,13 @@ namespace Calamari.GoogleCloudScripting
             var workingDirectory = Path.GetDirectoryName(script.File)!;
             variables.Set("OctopusGoogleCloudTargetScript", script.File);
             variables.Set("OctopusGoogleCloudTargetScriptParameters", script.Parameters);
+
+            if (environmentVars == null)
+            {
+                environmentVars = new Dictionary<string, string>();
+            }
+            environmentVars.Add("CLOUDSDK_CORE_DISABLE_PROMPTS", "1");
+
             using var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax));
 
             var jsonKey = variables.Get(SpecialVariables.Action.GoogleCloud.JsonKey, String.Empty);

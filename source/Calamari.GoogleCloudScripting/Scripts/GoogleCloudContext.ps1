@@ -39,13 +39,13 @@ try {
         $env:CLOUDSDK_CONFIG = [System.IO.Path]::Combine($env:OctopusCalamariWorkingDirectory, "gcloud-cli")
         EnsureDirectoryExists($env:CLOUDSDK_CONFIG)
 
-        & $gcloud_exe version
+        & $gcloud_exe -q version
         Write-Verbose "Google Cloud CLI: Authenticating with key file"
         $loginArgs = @();
         $loginArgs += @("--key-file=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusGoogleCloudKeyFile)))");
 
         Write-Host "gcloud auth activate-service-account $loginArgs"
-        & $gcloud_exe auth activate-service-account $loginArgs
+        & $gcloud_exe -q auth activate-service-account $loginArgs
 
         Write-Host "##octopus[stdout-default]"
         Write-Verbose "Successfully authenticated with Google Cloud CLI"
@@ -70,7 +70,7 @@ try {
         $previousLastExitCode = $LastExitCode
         $previousErrorAction = $ErrorActionPreference
         $ErrorActionPreference = "Continue"
-        & $gcloud_exe auth revoke --all 2>$null 3>$null
+        & $gcloud_exe -q auth revoke --all 2>$null 3>$null
     } finally {
         # restore the previous last exit code
         $LastExitCode = $previousLastExitCode
