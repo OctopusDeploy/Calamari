@@ -120,7 +120,7 @@ namespace Sashimi.GoogleCloud.Scripting.Tests
                         reader.WriteAllToDirectory(destinationDirectory,
                             new ExtractionOptions {ExtractFullPath = true});
                     }
-
+                    ExecutableHelper.AddExecutePermission(gcloudExe);
                     yield return gcloudExe;
                 }
             }
