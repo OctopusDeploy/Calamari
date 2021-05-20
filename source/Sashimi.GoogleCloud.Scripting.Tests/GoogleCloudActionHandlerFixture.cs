@@ -169,8 +169,8 @@ namespace Sashimi.GoogleCloud.Scripting.Tests
         [Test]
         public void ExecuteAnInlineScript()
         {
-            var psScript = @"
-gcloud projects list";
+            var psScript = $@"
+{cliPath} projects list";
 
             ActionHandlerTestBuilder.CreateAsync<GoogleCloudActionHandler, Program>()
                 .WithArrange(context =>
@@ -186,8 +186,8 @@ gcloud projects list";
         [Test]
         public void TryToExecuteAnInlineScriptWithInvalidCredentials()
         {
-            var psScript = @"
-gcloud projects list";
+            var psScript = $@"
+{cliPath} projects list";
 
             ActionHandlerTestBuilder.CreateAsync<GoogleCloudActionHandler, Program>()
                 .WithArrange(context =>
