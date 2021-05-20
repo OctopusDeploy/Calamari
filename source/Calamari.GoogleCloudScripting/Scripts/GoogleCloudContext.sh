@@ -15,11 +15,11 @@ function check_app_exists {
 function setup_executable {
   if [[ -z $Octopus_GoogleCloud_CustomExecutable ]]; then
     Octopus_GoogleCloud_CustomExecutable="gcloud"
+  else
+    alias gcloud=$Octopus_GoogleCloud_CustomExecutable
   fi
 
   check_app_exists $Octopus_GoogleCloud_CustomExecutable
-
-  alias kubectl=$Octopus_GoogleCloud_CustomExecutable
 }
 
 function setup_context {
