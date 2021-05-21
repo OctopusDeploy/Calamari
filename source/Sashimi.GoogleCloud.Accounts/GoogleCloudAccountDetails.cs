@@ -22,7 +22,7 @@ namespace Sashimi.GoogleCloud.Accounts
             if (variable.Type != ExpandsVariableType)
                 throw new InvalidOperationException($"Can only expand variables for type {ExpandsVariableType}");
 
-            yield return new Variable($"{variable.Name}.JsonKey", JsonKey);
+            yield return new Variable($"{variable.Name}.JsonKey", JsonKey?.Value, VariableType.Sensitive);
         }
 
         public override IEnumerable<Variable> ContributeVariables()
