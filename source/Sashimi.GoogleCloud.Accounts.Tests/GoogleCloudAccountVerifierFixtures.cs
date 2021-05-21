@@ -11,7 +11,7 @@ namespace Sashimi.GoogleCloud.Accounts.Tests
     {
         const string JsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
 
-        
+        [Test]
         public void Verify_CredentialIsValid()
         {
             var environmentJsonKey = Environment.GetEnvironmentVariable(JsonEnvironmentVariableKey);

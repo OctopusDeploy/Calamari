@@ -13,10 +13,15 @@ namespace Sashimi.GoogleCloud.Accounts
 {
     internal class GoogleCloudAccountVerifier : IVerifyAccount
     {
-        public async Task Verify(AccountDetails account, CancellationToken cancellationToken)
+        public async Task Verify(AccountDetails account, CancellationToken token)
         {
             var accountTyped = (GoogleCloudAccountDetails) account;
-            var bytes = Convert.FromBase64String(accountTyped.JsonKey?.Value ?? string.Empty);
+            if (accountTyped.JsonKey == null)
+            {
+                throw new Exception("Invalid credentials specified.");
+            }
+
+            var bytes = Convert.FromBase64String(accountTyped.JsonKey.Value);
             var json = Encoding.UTF8.GetString(bytes);
             GoogleCredential? credential;
             try
@@ -36,7 +41,7 @@ namespace Sashimi.GoogleCloud.Accounts
             var dummyRequest = service.Projects.ServiceAccounts.List("projects/" + "invalidProjectName");
             try
             {
-                await dummyRequest.ExecuteAsync(cancellationToken);
+                await dummyRequest.ExecuteAsync(token);
             }
             catch (GoogleApiException exception)
             {

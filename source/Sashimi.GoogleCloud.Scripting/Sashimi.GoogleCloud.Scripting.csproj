@@ -2,15 +2,20 @@
 
     <PropertyGroup>
         <TargetFramework>net5.0</TargetFramework>
-        <AssemblyName>Sashimi.GoogleCloud.Accounts</AssemblyName>
+        <AssemblyName>Sashimi.GoogleCloud.Scripting</AssemblyName>
         <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi.GCP</PackageProjectUrl>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <NoDefaultExcludes>true</NoDefaultExcludes>
     </PropertyGroup>
-
     <ItemGroup>
-      <PackageReference Include="Autofac" Version="4.9.4" />
-      <PackageReference Include="Google.Apis.Iam.v1" Version="1.51.0.2303" />
-      <PackageReference Include="Google.Cloud.Iam.V1" Version="2.1.0" />
+        <None Include="..\..\artifacts\Calamari.GoogleCloudScripting.zip">
+            <Visible>false</Visible>
+            <LinkBase>tools</LinkBase>
+            <Pack>true</Pack>
+            <PackagePath>tools/</PackagePath>
+        </None>
+    </ItemGroup>
+    <ItemGroup>
       <PackageReference Include="Sashimi.Server.Contracts" Version="13.0.0" />
     </ItemGroup>
 

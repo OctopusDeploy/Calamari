@@ -4,12 +4,32 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GoogleCloud.Account
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GoogleCloud.Accounts.Tests", "Sashimi.GoogleCloud.Accounts.Tests\Sashimi.GoogleCloud.Accounts.Tests.csproj", "{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GoogleCloud.Scripting", "Sashimi.GoogleCloud.Scripting\Sashimi.GoogleCloud.Scripting.csproj", "{78303BFD-9B63-43D4-AD48-C21F215EAB44}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.GoogleCloud.Scripting.Tests", "Sashimi.GoogleCloud.Scripting.Tests\Sashimi.GoogleCloud.Scripting.Tests.csproj", "{55C1CB24-47D7-41FB-A0D8-2725E5546C54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.GoogleCloudScripting", "Calamari.GoogleCloudScripting\Calamari.GoogleCloudScripting.csproj", "{77629C68-9893-4DF9-82EF-328A3CE15EF0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{084B9DB8-DBE0-4120-9271-0535FF8B3636}"
+ProjectSection(SolutionItems) = preProject
+	Directory.Build.props = Directory.Build.props
+	..\GitVersion.yml = ..\GitVersion.yml
+	..\global.json = ..\global.json
+	..\README.md = ..\README.md
+EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "..\build\_build.csproj", "{7D3CEB0B-E0C7-4170-B9B2-ADC1192684B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.GoogleCloudScripting.Tests", "Calamari.GoogleCloudScripting.Tests\Calamari.GoogleCloudScripting.Tests.csproj", "{3901803D-9BA0-47CF-B5E3-DD6602CAE364}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7D3CEB0B-E0C7-4170-B9B2-ADC1192684B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D3CEB0B-E0C7-4170-B9B2-ADC1192684B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{90D883D6-F46A-416E-B8A4-6F2A7FBB65EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{90D883D6-F46A-416E-B8A4-6F2A7FBB65EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{90D883D6-F46A-416E-B8A4-6F2A7FBB65EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -18,5 +38,21 @@ Global
 		{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FF70989B-12F0-4A88-BD39-8BF89DDC4C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78303BFD-9B63-43D4-AD48-C21F215EAB44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78303BFD-9B63-43D4-AD48-C21F215EAB44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78303BFD-9B63-43D4-AD48-C21F215EAB44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78303BFD-9B63-43D4-AD48-C21F215EAB44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55C1CB24-47D7-41FB-A0D8-2725E5546C54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55C1CB24-47D7-41FB-A0D8-2725E5546C54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55C1CB24-47D7-41FB-A0D8-2725E5546C54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55C1CB24-47D7-41FB-A0D8-2725E5546C54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77629C68-9893-4DF9-82EF-328A3CE15EF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77629C68-9893-4DF9-82EF-328A3CE15EF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77629C68-9893-4DF9-82EF-328A3CE15EF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77629C68-9893-4DF9-82EF-328A3CE15EF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3901803D-9BA0-47CF-B5E3-DD6602CAE364}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3901803D-9BA0-47CF-B5E3-DD6602CAE364}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3901803D-9BA0-47CF-B5E3-DD6602CAE364}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3901803D-9BA0-47CF-B5E3-DD6602CAE364}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
