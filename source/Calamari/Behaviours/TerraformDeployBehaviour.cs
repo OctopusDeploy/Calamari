@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
@@ -19,7 +20,7 @@ namespace Calamari.Terraform.Behaviours
         {
             this.log = log;
         }
-        
+
         public bool IsEnabled(RunningDeployment context)
         {
             return true;
@@ -31,6 +32,7 @@ namespace Calamari.Terraform.Behaviours
             var environmentVariables = new Dictionary<string, string>();
             var useAWSAccount = variables.Get(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "None") == "AWS";
             var useAzureAccount = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount);
+            var useGoogleCloudAccount = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.GoogleCloudAccount);
 
             if (useAWSAccount)
             {
@@ -39,9 +41,16 @@ namespace Calamari.Terraform.Behaviours
             }
 
             if (useAzureAccount)
+            {
                 environmentVariables.AddRange(AzureEnvironmentVariables(variables));
+            }
 
-            environmentVariables.AddRange(GetEnvironmentVariableArgs(context.Variables));
+            if (useGoogleCloudAccount)
+            {
+                environmentVariables.AddRange(GoogleCloudEnvironmentVariables(variables));
+            }
+
+            environmentVariables.AddRange(GetEnvironmentVariableArgs(variables));
 
             await Execute(context, environmentVariables);
         }
@@ -54,9 +63,24 @@ namespace Calamari.Terraform.Behaviours
 
             return JsonConvert.DeserializeObject<Dictionary<string, string>>(rawJson);
         }
-        
+
         protected abstract Task Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables);
-        
+
+        Dictionary<string, string> GoogleCloudEnvironmentVariables(IVariables variables)
+        {
+            var account = variables.Get("Octopus.Action.GoogleCloudAccount.Variable")?.Trim();
+            var keyFile = variables.Get($"{account}.JsonKey")?.Trim() ?? variables.Get("Octopus.Action.GoogleCloudAccount.JsonKey")?.Trim();
+
+            var bytes = Convert.FromBase64String(keyFile);
+            var json = Encoding.UTF8.GetString(bytes);
+
+            // See https://registry.terraform.io/providers/hashicorp/google/latest/docs/guides/provider_reference#full-reference
+            return new Dictionary<string, string>
+            {
+                {"GOOGLE_CLOUD_KEYFILE_JSON", json}
+            };
+        }
+
         static Dictionary<string, string> AzureEnvironmentVariables(IVariables variables)
         {
             string AzureEnvironment(string s)

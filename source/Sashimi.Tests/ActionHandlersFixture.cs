@@ -5,21 +5,18 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
+using System.Text;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Retry;
 using Calamari.Terraform;
-using Calamari.Tests.Helpers;
 using Calamari.Tests.Shared;
 using FluentAssertions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using NUnit.Framework.Interfaces;
-using NUnit.Framework.Internal;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Terraform.ActionHandler;
 using Sashimi.Terraform.Tests.CommonTemplates;
@@ -51,29 +48,25 @@ namespace Sashimi.Terraform.Tests
 
         static void ClearTestDirectories()
         {
-            static bool TryDeleteFile(string path)
+            static void TryDeleteFile(string path)
             {
                 try
                 {
                     File.Delete(TestEnvironment.GetTestPath(path));
-                    return true;
                 }
                 catch (IOException)
                 {
-                    return false;
                 }
             }
 
-            static bool TryDeleteDirectory(string path, bool recursive)
+            static void TryDeleteDirectory(string path, bool recursive)
             {
                 try
                 {
                     Directory.Delete(TestEnvironment.GetTestPath(path), recursive);
-                    return true;
                 }
                 catch (IOException)
                 {
-                    return false;
                 }
             }
 
@@ -102,7 +95,7 @@ namespace Sashimi.Terraform.Tests
         public async Task InstallTools()
         {
             ClearTestDirectories(); // pre-emptively clear test directories for better dev experience
-            
+
             static string GetTerraformFileName(string currentVersion)
             {
                 if (CalamariEnvironment.IsRunningOnNix)
@@ -152,7 +145,7 @@ namespace Sashimi.Terraform.Tests
                         customTerraformExecutable = Directory.EnumerateFiles(destination).FirstOrDefault();
                         Console.WriteLine($"Downloaded terraform to {customTerraformExecutable}");
 
-                        ExecutableHelper.AddExecutePermission(customTerraformExecutable);
+                        ExecutableHelper.AddExecutePermission(customTerraformExecutable!);
                         break;
                     }
                     catch
@@ -179,7 +172,7 @@ namespace Sashimi.Terraform.Tests
                     return;
                 }
             }
-            
+
             await DownloadCli(destinationDirectoryName, terraformCliVersion);
         }
 
@@ -196,7 +189,7 @@ namespace Sashimi.Terraform.Tests
                 .Should()
                 .ContainAll("The specified plugin cache dir", "cannot be opened");
         }
-        
+
         [Test]
         public void NotProvidingEnvVariables_DoesNotCrashEverything()
         {
@@ -209,7 +202,7 @@ namespace Sashimi.Terraform.Tests
         }
         [Test]
         public void UserDefinedEnvVariables_OverrideDefaultBehaviour()
-        { 
+        {
             string template = TemplateLoader.LoadTextTemplate("SingleVariable.json");
 
             ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
@@ -232,7 +225,7 @@ namespace Sashimi.Terraform.Tests
         public void ExtraInitParametersAreSet()
         {
             IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
-                
+
             var additionalParams = "-var-file=\"backend.tfvars\"";
             ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(_ =>
                                                                       _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, additionalParams),
@@ -245,7 +238,7 @@ namespace Sashimi.Terraform.Tests
         public void AllowPluginDownloadsShouldBeDisabled()
         {
             IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
-            
+
             ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(
                                                                   _ =>
                                                                   {
@@ -340,7 +333,7 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public void EnableNoMatchWarningIsNotSet()
         {
-            ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(variables => { }, "Simple")
+            ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ => { }, "Simple")
                 .Should()
                 .NotContain("No files were found that match the substitution target pattern");
         }
@@ -421,6 +414,60 @@ namespace Sashimi.Terraform.Tests
         }
 
         [Test]
+        public async Task GoogleCloudIntegration()
+        {
+            IgnoreIfVersionIsNotInRange("0.15.0");
+
+            const string jsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
+
+            var bucketName = $"e2e-tf-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+
+            using var temporaryFolder = TemporaryDirectory.Create();
+            CopyAllFiles(TestEnvironment.GetTestPath("GoogleCloud"), temporaryFolder.DirectoryPath);
+
+            var environmentJsonKey = Environment.GetEnvironmentVariable(jsonEnvironmentVariableKey);
+            if (environmentJsonKey == null)
+            {
+                throw new Exception($"Environment Variable `{jsonEnvironmentVariableKey}` could not be found. The value can be found in the password store under GoogleCloud - OctopusAPITester");
+            }
+            var jsonKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(environmentJsonKey));
+
+            void PopulateVariables(TestActionHandlerContext<Program> _)
+            {
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
+                _.Variables.Add("Hello", "Hello World from Google Cloud");
+                _.Variables.Add("bucket_name", bucketName);
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
+                _.Variables.Add("Octopus.Action.Terraform.GoogleCloudAccount", bool.TrueString);
+                _.Variables.Add("Octopus.Action.GoogleCloudAccount.JsonKey", jsonKey);
+                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
+            }
+
+            var output = ExecuteAndReturnResult(typeof(TerraformPlanActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
+            output.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
+
+            output = ExecuteAndReturnResult(typeof(TerraformApplyActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
+            output.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
+            var requestUri = output.OutputVariables["TerraformValueOutputs[url]"].Value;
+
+            string fileData;
+
+            using (var client = new HttpClient())
+            {
+                fileData = await client.GetStringAsync(requestUri).ConfigureAwait(false);
+            }
+
+            fileData.Should().Be("Hello World from Google Cloud");
+
+            ExecuteAndReturnResult(typeof(TerraformDestroyActionHandler), PopulateVariables, temporaryFolder.DirectoryPath);
+            using (var client = new HttpClient())
+            {
+                var response = await client.GetAsync($"{requestUri}&bust_cache").ConfigureAwait(false);
+                response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            }
+        }
+
+        [Test]
         public async Task AzureIntegration()
         {
             var random = Guid.NewGuid().ToString("N").Substring(0, 6);
@@ -464,11 +511,16 @@ namespace Sashimi.Terraform.Tests
                 }
                 catch (HttpRequestException ex)
                 {
-                    ex.Message.Should().BeOneOf(
-                                                "No such host is known.",
-                                                "Name or service not known", //Some Linux distros
-                                                "nodename nor servname provided, or not known" //Mac
-                                                );
+                    if (ex.InnerException is not SocketException socketException)
+                    {
+                        throw;
+                    }
+
+                    socketException.Message.Should().BeOneOf(
+                                                             "No such host is known.",
+                                                             "Name or service not known", //Some Linux distros
+                                                             "nodename nor servname provided, or not known" //Mac
+                                                            );
                 }
             }
 
@@ -551,7 +603,7 @@ namespace Sashimi.Terraform.Tests
         public void InlineHclTemplateAndVariables()
         {
             IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
-            
+
             const string variables =
                 "{\"stringvar\":\"default string\",\"images\":\"\",\"test2\":\"\",\"test3\":\"\",\"test4\":\"\"}";
             string template = TemplateLoader.LoadTextTemplate("HclWithVariablesV0118.hcl");
@@ -571,12 +623,12 @@ namespace Sashimi.Terraform.Tests
                                                                        _.OutputVariables.ContainsKey("TerraformValueOutputs[nestedmap]").Should().BeTrue();
                                                                    });
         }
-        
+
         [Test]
         public void InlineHclTemplateAndVariablesV015()
         {
             IgnoreIfVersionIsNotInRange("0.15.0");
-                
+
             const string variables =
                 "{\"stringvar\":\"default string\",\"images\":\"\",\"test2\":\"\",\"test3\":\"\",\"test4\":\"\"}";
             string template = TemplateLoader.LoadTextTemplate("HclWithVariablesV0150.hcl");
@@ -612,16 +664,15 @@ data:
       groups:
         - system:bootstrappers
         - system:nodes";
-            string template = String.Format(@"locals {{
+            string template = $@"locals {{
   config-map-aws-auth = <<CONFIGMAPAWSAUTH
-{0}
+{expected}
 CONFIGMAPAWSAUTH
 }}
 
 output ""config-map-aws-auth"" {{
     value = ""${{local.config-map-aws-auth}}""
-}}",
-                                            expected);
+}}";
 
             ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
                                                                    {
@@ -639,12 +690,12 @@ output ""config-map-aws-auth"" {{
                                                                         .Be($"{expected.Replace("\r\n", "\n")}");
                                                                    });
         }
-        
+
         [Test]
         public void InlineJsonTemplateAndVariables()
         {
             IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
-            
+
             const string variables =
                 "{\"ami\":\"new ami value\"}";
             string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV01180.json");
@@ -668,12 +719,12 @@ output ""config-map-aws-auth"" {{
                                                                        _.OutputVariables["TerraformValueOutputs[random]"].Value.Should().Be(randomNumber);
                                                                    });
         }
-        
+
         [Test]
         public void InlineJsonTemplateAndVariablesV015()
         {
             IgnoreIfVersionIsNotInRange("0.15.0");
-            
+
             const string variables =
                 "{\"ami\":\"new ami value\"}";
             string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV0150.json");
@@ -732,7 +783,7 @@ output ""config-map-aws-auth"" {{
         {
             return ExecuteAndReturnLogOutput(typeof(T), populateVariables, folderName, assert);
         }
-        
+
         string ExecuteWithInlineTemplateAndReturnLogOutput(Action<TestActionHandlerContext<Program>> populateVariables, string template = "{}")
         {
             return ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
@@ -750,7 +801,7 @@ output ""config-map-aws-auth"" {{
         {
             var assertResult = assert ?? (_ => { });
 
-            var terraformFiles = Path.IsPathRooted(folderName) ? folderName : TestEnvironment.GetTestPath(folderName); 
+            var terraformFiles = Path.IsPathRooted(folderName) ? folderName : TestEnvironment.GetTestPath(folderName);
 
             var result = ActionHandlerTestBuilder.CreateAsync<Program>(commandType)
                                                                        .WithArrange(context =>
@@ -775,14 +826,14 @@ output ""config-map-aws-auth"" {{
             assertResult(result);
             return result;
         }
-        
-        private void IgnoreIfVersionIsNotInRange(string minimumVersion, string? maximumVersion = null)
+
+        void IgnoreIfVersionIsNotInRange(string minimum, string? maximum = null)
         {
-            var _minimumVersion = new Version(minimumVersion);
-            var _maximumVersion = new Version(maximumVersion ?? "999.0.0");
-            
-            if (terraformCliVersionAsObject.CompareTo(_minimumVersion) < 0
-                || terraformCliVersionAsObject.CompareTo(_maximumVersion) >= 0)
+            var minimumVersion = new Version(minimum);
+            var maximumVersion = new Version(maximum ?? "999.0.0");
+
+            if (terraformCliVersionAsObject.CompareTo(minimumVersion) < 0
+                || terraformCliVersionAsObject.CompareTo(maximumVersion) >= 0)
             {
                 Assert.Ignore();
             }
