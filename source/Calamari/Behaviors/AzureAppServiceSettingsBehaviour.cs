@@ -27,7 +27,9 @@ namespace Calamari.AzureAppService.Behaviors
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return !string.IsNullOrEmpty(context.Variables.Get(SpecialVariables.Action.Azure.AppSettings));
+            return 
+                !string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.AppSettings)) || 
+                !string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.ConnectionStrings));
         }
 
         public async Task Execute(RunningDeployment context)
@@ -35,11 +37,6 @@ namespace Calamari.AzureAppService.Behaviors
             // Read/Validate variables
             Log.Verbose("Starting App Settings Deploy");
             var variables = context.Variables;
-
-            //if there are no app settings to deploy
-            if (!variables.GetNames().Contains(SpecialVariables.Action.Azure.AppSettings) &&
-                !string.IsNullOrEmpty(variables[SpecialVariables.Action.Azure.AppSettings]))
-                return;
 
             var principalAccount = new ServicePrincipalAccount(variables);
 
@@ -56,7 +53,6 @@ namespace Calamari.AzureAppService.Behaviors
 
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
 
-
             string token = await Auth.GetAuthTokenAsync(principalAccount);
 
             var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri),
@@ -66,19 +62,27 @@ namespace Calamari.AzureAppService.Behaviors
                 HttpClient = {BaseAddress = new Uri(principalAccount.ResourceManagementEndpointBaseUri)}
             };
 
-            var appSettings =
-                JsonConvert.DeserializeObject<AppSetting[]>(
-                    variables.Get(SpecialVariables.Action.Azure.AppSettings, ""));
-
-            var connStrings =
-                JsonConvert.DeserializeObject<ConnectionStringSetting[]>(
-                    variables.Get(SpecialVariables.Action.Azure.ConnectionStrings, ""));
-                
-            Log.Verbose($"Deploy publishing app settings to webapp {webAppName} in resource group {resourceGroupName}");
-
-            // publish defined settings (automatically merges with existing settings
-            await PublishAppSettings(webAppClient, targetSite, appSettings, token);
-            await PublishConnectionStrings(webAppClient, targetSite, connStrings);
+            // If app settings are specified
+            if (variables.GetNames().Contains(SpecialVariables.Action.Azure.AppSettings) &&
+                !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.AppSettings]))
+            {
+                var appSettingsJson = variables.Get(SpecialVariables.Action.Azure.AppSettings, ""); 
+                Log.Verbose($"Updating application settings:\n{appSettingsJson}");
+                var appSettings = JsonConvert.DeserializeObject<AppSetting[]>(appSettingsJson);
+                await PublishAppSettings(webAppClient, targetSite, appSettings, token);
+                Log.Info("Updated application settings");
+            }
+            
+            // If connection strings are specified
+            if (variables.GetNames().Contains(SpecialVariables.Action.Azure.ConnectionStrings) && 
+                !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.ConnectionStrings]))
+            {
+                var connectionStringsJson = variables.Get(SpecialVariables.Action.Azure.ConnectionStrings, "");
+                Log.Verbose($"Updating connection strings:\n{connectionStringsJson}");
+                var connectionStrings = JsonConvert.DeserializeObject<ConnectionStringSetting[]>(connectionStringsJson);
+                await PublishConnectionStrings(webAppClient, targetSite, connectionStrings);
+                Log.Info("Updated connection strings");
+            }
         }
 
         /// <summary>

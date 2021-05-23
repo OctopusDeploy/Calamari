@@ -113,7 +113,7 @@ namespace Calamari.AzureAppService.Tests
         }
         
         [Test]
-        public async Task TestSiteSettings()
+        public async Task TestSiteAppSettings()
         {
             await webMgmtClient.WebApps.UpdateApplicationSettingsWithHttpMessagesAsync(resourceGroupName, site.Name,
                 existingSettings);
@@ -132,20 +132,39 @@ namespace Calamari.AzureAppService.Tests
                 ("ReplaceSetting", "Bar", false)
             });
 
-            var connectionStrings = BuildConnectionStringJson(new[]
-            {
-                ("ReplaceConnectionString", "replacedConnectionStringValue", ConnectionStringType.SQLServer, false),
-                ("NewConnectionString","newValue", ConnectionStringType.SQLAzure, false),
-                ("ReplaceSlotConnectionString", "replacedSlotConnectionStringValue", ConnectionStringType.MySql, true)
-            });
-
-            
-            iVars.Add(SpecialVariables.Action.Azure.ConnectionStrings, connectionStrings.json);
             iVars.Add(SpecialVariables.Action.Azure.AppSettings, appSettings.json);
             
             await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
 
-            await AssertAppSettings(appSettings.setting, connectionStrings.connStrings);
+            await AssertAppSettings(appSettings.setting, new ConnectionStringDictionary());
+        }
+
+        [Test]
+        public async Task TestSiteConnectionStrings()
+        {
+            await webMgmtClient.WebApps.UpdateApplicationSettingsWithHttpMessagesAsync(resourceGroupName, site.Name,
+                existingSettings);
+            await webMgmtClient.WebApps.UpdateConnectionStringsAsync(resourceGroupName, site.Name,
+                existingConnectionStrings);
+
+            var iVars = new CalamariVariables();
+            AddVariables(iVars);
+            var runningContext = new RunningDeployment("", iVars);
+            iVars.Add("Greeting", "Calamari");
+
+            var connectionStrings = BuildConnectionStringJson(new[]
+            {
+                ("ReplaceConnectionString", "replacedConnectionStringValue", ConnectionStringType.SQLServer, false),
+                ("NewConnectionString", "newValue", ConnectionStringType.SQLAzure, false),
+                ("ReplaceSlotConnectionString", "replacedSlotConnectionStringValue", ConnectionStringType.MySql, true)
+            });
+
+
+            iVars.Add(SpecialVariables.Action.Azure.ConnectionStrings, connectionStrings.json);
+
+            await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
+
+            await AssertAppSettings(new AppSetting[]{}, connectionStrings.connStrings);
         }
 
         [Test]
@@ -237,12 +256,15 @@ namespace Calamari.AzureAppService.Tests
             {
                 existingSettings.Properties[name] = value;
             }
-            
-            foreach(var item in expectedConnStrings.Properties)
+
+            if (expectedConnStrings?.Properties != null && expectedConnStrings.Properties.Any())
             {
-                existingConnectionStrings.Properties[item.Key] = item.Value;
+                foreach (var item in expectedConnStrings.Properties)
+                {
+                    existingConnectionStrings.Properties[item.Key] = item.Value;
+                }
             }
-            
+
             // for each existing setting that isn't defined in the expected settings object, add it
             var expectedSettingsList = expectedSettingsArray.ToList();
             
