@@ -15,11 +15,19 @@ namespace Sashimi.AzureScripting
         public bool WhenInAChildStepRunInTheContextOfTheTargetMachine => false;
         public bool CanRunOnDeploymentTarget => false;
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, AzureConstants.AzureActionHandlerCategory, ActionHandlerCategory.Script };
-        public string[] StepBasedVariableNameForAccountIds { get; } = {SpecialVariables.Action.Azure.AccountId};
+        public string[] StepBasedVariableNameForAccountIds { get; } = { SpecialVariables.Action.Azure.AccountId };
 
         public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
             var syntax = context.Variables.GetEnum(KnownVariables.Action.Script.Syntax, ScriptSyntax.PowerShell);
+
+            var useBundledTooling = context.Variables.GetFlag(KnownVariables.Action.UseBundledTooling, true);
+
+            if (useBundledTooling)
+            {
+                // Warn that the use of bundled tooling is not recommended
+                taskLog.Warn($"Using the Azure tools bundled with Octopus is not recommended. Learn more about Azure Tools: https://g.octopushq.com/AzureTools.");
+            }
 
             var builder = context.CalamariCommand(AzureConstants.CalamariAzure, "run-script")
                                  .WithAzureCLI(context, taskLog);
