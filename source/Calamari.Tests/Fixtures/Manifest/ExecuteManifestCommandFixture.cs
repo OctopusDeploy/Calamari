@@ -68,6 +68,7 @@ namespace Calamari.Tests.Fixtures.Manifest
                     { nameof(NodeInstructions.NodePathVariable), toolRoot },
                     { nameof(NodeInstructions.TargetPathVariable), "TargetPathVariable_Value" },
                     { nameof(NodeInstructions.InputsVariable), "no_empty" },
+                    { nameof(NodeInstructions.DeploymentTargetInputsVariable), "deploymentTargetInputs" },
                 };
 
                 var result = ExecuteCommand(variables, "Calamari.Tests");
@@ -77,6 +78,7 @@ namespace Calamari.Tests.Fixtures.Manifest
                 result.AssertOutput("Hello from my custom node!");
                 result.AssertOutput(string.Join(Path.Combine("BootstrapperPathVariable_Value", "bootstrapper.js"),
                                                 Path.Combine("TargetPathVariable_Value", "executor.js")));
+                result.AssertOutput(nameof(NodeInstructions.DeploymentTargetInputsVariable));
             }
         }
 

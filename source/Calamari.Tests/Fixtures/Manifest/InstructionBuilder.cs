@@ -45,7 +45,8 @@ namespace Calamari.Tests.Fixtures.Manifest
                                                                        BootstrapperPathVariable = nameof(NodeInstructions.BootstrapperPathVariable),
                                                                        NodePathVariable = nameof(NodeInstructions.NodePathVariable),
                                                                        TargetPathVariable = nameof(NodeInstructions.TargetPathVariable),
-                                                                       InputsVariable = nameof(NodeInstructions.InputsVariable)
+                                                                       InputsVariable = nameof(NodeInstructions.InputsVariable),
+                                                                       DeploymentTargetInputsVariable = nameof(NodeInstructions.DeploymentTargetInputsVariable)
                                                                    },
                                                                    JsonSerialization.GetDefaultSerializerSettings())
             });
