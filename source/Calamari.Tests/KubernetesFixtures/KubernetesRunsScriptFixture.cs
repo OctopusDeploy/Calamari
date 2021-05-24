@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
+using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -42,6 +43,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [RequiresPowerShell5OrLower]
         public void WindowsPowershellKubeCtlScripts()
         {
             SetTestClusterVariables();
@@ -52,6 +54,8 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresPowerShellCore]
         public void PowershellCoreKubeCtlScripts()
         {
             SetTestClusterVariables();
@@ -63,6 +67,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyNix)]
+        [RequiresNonFreeBSDPlatform]
         public void BashKubeCtlScripts()
         {
             SetTestClusterVariables();
