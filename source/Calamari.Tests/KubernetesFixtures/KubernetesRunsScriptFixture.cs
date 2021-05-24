@@ -45,6 +45,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public void WindowsPowershellKubeCtlScripts()
         {
             SetTestClusterVariables();
+            Variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             Variables.Set(PowerShellVariables.Edition, "Desktop");
             var wrapper = new KubernetesContextScriptWrapper(Variables);
             TestScript(wrapper, "Test-Script.ps1");
@@ -54,6 +55,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public void PowershellCoreKubeCtlScripts()
         {
             SetTestClusterVariables();
+            Variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             Variables.Set(PowerShellVariables.Edition, "Core");
             var wrapper = new KubernetesContextScriptWrapper(Variables);
             TestScript(wrapper, "Test-Script.ps1");
@@ -64,6 +66,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public void BashKubeCtlScripts()
         {
             SetTestClusterVariables();
+            Variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             var wrapper = new KubernetesContextScriptWrapper(Variables);
             TestScript(wrapper, "Test-Script.sh");
         }
@@ -92,8 +95,8 @@ namespace Calamari.Tests.KubernetesFixtures
         CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName, IVariables variables)
         {
             var runner = new TestCommandLineRunner(ConsoleLog.Instance, variables);
-            wrapper.NextWrapper = new TerminalScriptWrapper(new PowerShellScriptExecutor(), variables);
-            var result = wrapper.ExecuteScript(new Script(scriptName), ScriptSyntax.PowerShell, runner, new Dictionary<string, string>());
+            var engine = new ScriptEngine(new[] { wrapper });
+            var result = engine.Execute(new Script(scriptName), variables, runner, new Dictionary<string, string>());
             return new CalamariResult(result.ExitCode, runner.Output);
         }
     }
