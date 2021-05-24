@@ -7,6 +7,7 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.GoogleCloudScripting
@@ -15,11 +16,13 @@ namespace Calamari.GoogleCloudScripting
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
+        private readonly ILog log;
         readonly IVariables variables;
         readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell, ScriptSyntax.Bash};
 
-        public GoogleCloudContextScriptWrapper(IVariables variables, ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources)
+        public GoogleCloudContextScriptWrapper(ILog log, IVariables variables, ICalamariFileSystem fileSystem, ICalamariEmbeddedResources embeddedResources)
         {
+            this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
@@ -37,6 +40,18 @@ namespace Calamari.GoogleCloudScripting
             Dictionary<string, string>? environmentVars)
         {
             var workingDirectory = Path.GetDirectoryName(script.File)!;
+
+            var gcloudCustomExe = variables.Get("Octopus.Action.GoogleCloud.CustomExecutable");
+            if (!String.IsNullOrEmpty(gcloudCustomExe))
+            {
+                if (!File.Exists(gcloudCustomExe))
+                {
+                    log.Error($"The custom gcloud location of {gcloudCustomExe} does not exist. Please make sure gcloud in installed in that location.");
+                    return new CommandResult(String.Empty, 1);
+                }
+            }
+
+            variables.Set("OctopusGCloudExe", gcloudCustomExe ?? "gcloud");
             variables.Set("OctopusGoogleCloudTargetScript", script.File);
             variables.Set("OctopusGoogleCloudTargetScriptParameters", script.Parameters);
 
@@ -45,6 +60,9 @@ namespace Calamari.GoogleCloudScripting
                 environmentVars = new Dictionary<string, string>();
             }
             environmentVars.Add("CLOUDSDK_CORE_DISABLE_PROMPTS", "1");
+            var gcloudConfigPath = Path.Combine(workingDirectory, "gcloud-cli");
+            environmentVars.Add("CLOUDSDK_CONFIG", gcloudConfigPath);
+            Directory.CreateDirectory(gcloudConfigPath);
 
             using var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax));
 
