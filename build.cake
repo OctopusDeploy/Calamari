@@ -31,11 +31,8 @@ string nugetVersion;
 // From time to time the timestamping services go offline, let's try a few of them so our builds are more resilient
 var timestampUrls = new string[]
 {
-    "http://timestamp.globalsign.com/scripts/timestamp.dll",
-    "http://www.startssl.com/timestamp",
-    "http://timestamp.comodoca.com/rfc3161",
-    "http://timestamp.verisign.com/scripts/timstamp.dll",
-    "http://tsa.starfieldtech.com"
+    "http://timestamp.digicert.com?alg=sha256",
+	"http://timestamp.comodoca.com"
 };
 
 ///////////////////////////////////////////////////////////////////////////////
