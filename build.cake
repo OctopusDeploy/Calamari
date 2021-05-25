@@ -32,7 +32,7 @@ string nugetVersion;
 var timestampUrls = new string[]
 {
     "http://timestamp.digicert.com?alg=sha256",
-	"http://timestamp.comodoca.com"
+    "http://timestamp.comodoca.com"
 };
 
 ///////////////////////////////////////////////////////////////////////////////
