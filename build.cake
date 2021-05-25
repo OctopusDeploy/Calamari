@@ -356,7 +356,9 @@ private void TimeStampFiles(IEnumerable<FilePath> files)
     {
         var timestampArguments = new ProcessArgumentBuilder()
             .Append($"timestamp")
-            .Append("/tr").AppendQuoted(url);
+            .Append("/tr").AppendQuoted(url)
+            .Append("/td").Append("sha256");
+            
         foreach (var file in files)
         {
             timestampArguments.AppendQuoted(file.FullPath);
