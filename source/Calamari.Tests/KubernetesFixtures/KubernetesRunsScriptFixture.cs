@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -20,7 +19,13 @@ namespace Calamari.Tests.KubernetesFixtures
     {
         static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
         static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
-        protected IVariables Variables { get; set; } = new CalamariVariables();
+        IVariables variables;
+
+        [SetUp]
+        public void Setup()
+        {
+            variables = new CalamariVariables();
+        }
 
         [Test]
         [TestCase("Url", "", "", true)]
@@ -30,12 +35,10 @@ namespace Calamari.Tests.KubernetesFixtures
         public void ShouldBeEnabledIfAnyVariablesAreProvided(string clusterUrl, string aksClusterName,
             string eksClusterName, bool expected)
         {
-            var variables = new CalamariVariables
-            {
-                {Kubernetes.SpecialVariables.ClusterUrl, clusterUrl},
-                {Kubernetes.SpecialVariables.AksClusterName, aksClusterName},
-                {Kubernetes.SpecialVariables.EksClusterName, eksClusterName}
-            };
+            variables.Set(Kubernetes.SpecialVariables.ClusterUrl, clusterUrl);
+            variables.Set(Kubernetes.SpecialVariables.AksClusterName, aksClusterName);
+            variables.Set(Kubernetes.SpecialVariables.EksClusterName, eksClusterName);
+
             var target = new KubernetesContextScriptWrapper(variables);
             var actual = target.IsEnabled(ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment());
             actual.Should().Be(expected);
@@ -47,9 +50,9 @@ namespace Calamari.Tests.KubernetesFixtures
         public void WindowsPowershellKubeCtlScripts()
         {
             SetTestClusterVariables();
-            Variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
-            Variables.Set(PowerShellVariables.Edition, "Desktop");
-            var wrapper = new KubernetesContextScriptWrapper(Variables);
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            var wrapper = new KubernetesContextScriptWrapper(variables);
             TestScript(wrapper, "Test-Script.ps1");
         }
 
@@ -59,9 +62,9 @@ namespace Calamari.Tests.KubernetesFixtures
         public void PowershellCoreKubeCtlScripts()
         {
             SetTestClusterVariables();
-            Variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
-            Variables.Set(PowerShellVariables.Edition, "Core");
-            var wrapper = new KubernetesContextScriptWrapper(Variables);
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+            variables.Set(PowerShellVariables.Edition, "Core");
+            var wrapper = new KubernetesContextScriptWrapper(variables);
             TestScript(wrapper, "Test-Script.ps1");
         }
 
@@ -71,18 +74,18 @@ namespace Calamari.Tests.KubernetesFixtures
         public void BashKubeCtlScripts()
         {
             SetTestClusterVariables();
-            Variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
-            var wrapper = new KubernetesContextScriptWrapper(Variables);
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
+            var wrapper = new KubernetesContextScriptWrapper(variables);
             TestScript(wrapper, "Test-Script.sh");
         }
 
-        private void SetTestClusterVariables()
+        void SetTestClusterVariables()
         {
-            Variables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
-            Variables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "true");
-            Variables.Set(Kubernetes.SpecialVariables.Namespace, "calamari-testing");
-            Variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
-            Variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
+            variables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
+            variables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "true");
+            variables.Set(Kubernetes.SpecialVariables.Namespace, "calamari-testing");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
         }
 
         void TestScript(IScriptWrapper wrapper, string scriptName)
@@ -92,12 +95,14 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 File.WriteAllText(temp.FilePath, "kubectl get nodes");
 
-                var output = ExecuteScript(wrapper, temp.FilePath, Variables);
+                var output = ExecuteScript(wrapper, temp.FilePath);
                 output.AssertSuccess();
+                var allOutput = string.Join(Environment.NewLine, output.CapturedOutput.AllMessages);
+                Console.WriteLine(allOutput);
             }
         }
 
-        CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName, IVariables variables)
+        CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName)
         {
             var runner = new TestCommandLineRunner(ConsoleLog.Instance, variables);
             var engine = new ScriptEngine(new[] { wrapper });

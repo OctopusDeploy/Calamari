@@ -67,7 +67,7 @@ namespace Calamari.Kubernetes
                     contextFile = "KubectlPowershellContext.ps1";
                     break;
                 default:
-                    throw new InvalidOperationException("No kubernetes context wrapper exists for "+ syntax);
+                    throw new InvalidOperationException($"No kubernetes context wrapper exists for {syntax}");
             }
 
             var k8sContextScriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
