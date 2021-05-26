@@ -429,7 +429,7 @@ namespace Calamari.Kubernetes
                             }
                             else if (string.IsNullOrEmpty(clientCert))
                             {
-                                Log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
+                                log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
                                 return false;
                             }
 
