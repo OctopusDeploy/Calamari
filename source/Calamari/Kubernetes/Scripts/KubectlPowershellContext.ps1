@@ -74,7 +74,6 @@ function Get-RunningInPowershellCore
 
 function Initialize-AzureRmContext
 {
-
     # Authenticate via Service Principal
     $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
     $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
@@ -101,7 +100,6 @@ function Initialize-AzureRmContext
 
 function Initialize-AzContext
 {
-
     # Authenticate via Service Principal
     $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
     $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
@@ -288,12 +286,12 @@ function SetupContext
             & az aks get-credentials --admin --resource-group $K8S_Azure_Resource_Group --name $K8S_Azure_Cluster --file $env:KUBECONFIG --overwrite-existing
             $K8S_Azure_Cluster += "-admin"
         }
-        & $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace = $K8S_Namespace
+        & $Kubectl_Exe config set-context $K8S_Azure_Cluster --namespace=$K8S_Namespace
     }
     elseif($IsUsingPodServiceAccount -eq $true)
     {
         Write-Verbose "$Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl"
-        & $Kubectl_Exe config set-cluster octocluster --server =$K8S_ClusterUrl
+        & $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl
 
         if ( [string]::IsNullOrEmpty($Octopus_K8s_Server_Cert))
         {
@@ -307,22 +305,22 @@ function SetupContext
         }
 
         Write-Verbose "$Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace"
-        & $Kubectl_Exe config set-context octocontext --user = octouser --cluster = octocluster --namespace =$K8S_Namespace
+        & $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace
 
         Write-Verbose "$Kubectl_Exe config use-context octocontext"
         & $Kubectl_Exe config use-context octocontext
 
         Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using a Pod Service Account Token"
         Write-Verbose "$Kubectl_Exe config set-credentials octouser --token=$Octopus_K8s_Pod_Service_Account_Token"
-        & $Kubectl_Exe config set-credentials octouser --token =$Octopus_K8s_Pod_Service_Account_Token
+        & $Kubectl_Exe config set-credentials octouser --token=$Octopus_K8s_Pod_Service_Account_Token
     }
     else
     {
         Write-Verbose "$Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl"
-        & $Kubectl_Exe config set-cluster octocluster --server =$K8S_ClusterUrl
+        & $Kubectl_Exe config set-cluster octocluster --server=$K8S_ClusterUrl
 
         Write-Verbose "$Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace"
-        & $Kubectl_Exe config set-context octocontext --user = octouser --cluster = octocluster --namespace =$K8S_Namespace
+        & $Kubectl_Exe config set-context octocontext --user=octouser --cluster=octocluster --namespace=$K8S_Namespace
 
         Write-Verbose "$Kubectl_Exe config use-context octocontext"
         & $Kubectl_Exe config use-context octocontext
@@ -383,13 +381,13 @@ function SetupContext
                 Exit 1
             }
 
-            & $Kubectl_Exe config set-credentials octouser --token =$K8S_Token
+            & $Kubectl_Exe config set-credentials octouser --token=$K8S_Token
         }
         elseif($K8S_AccountType -eq "UsernamePassword")
         {
             $K8S_Username = $OctopusParameters["Octopus.Account.Username"]
             Write-Host "Creating kubectl context to $K8S_ClusterUrl (namespace $K8S_Namespace) using Username $K8S_Username"
-            & $Kubectl_Exe config set-credentials octouser --username =$K8S_Username --password = $( $OctopusParameters["Octopus.Account.Password"] )
+            & $Kubectl_Exe config set-credentials octouser --username=$K8S_Username --password=$( $OctopusParameters["Octopus.Account.Password"] )
         }
         elseif($K8S_AccountType -eq "AmazonWebServicesAccount" -or $EKS_Use_Instance_Role -ieq "true")
         {
