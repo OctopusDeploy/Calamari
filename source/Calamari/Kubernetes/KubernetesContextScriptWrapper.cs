@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
@@ -15,11 +18,15 @@ namespace Calamari.Kubernetes
     {
         readonly IVariables variables;
         readonly ILog log;
+        readonly ICalamariFileSystem fileSystem;
+        readonly ICalamariEmbeddedResources embeddedResources;
 
-        public KubernetesContextScriptWrapper(IVariables variables, ILog log)
+        public KubernetesContextScriptWrapper(IVariables variables, ILog log, ICalamariEmbeddedResources embeddedResources, ICalamariFileSystem fileSystem)
         {
             this.variables = variables;
             this.log = log;
+            this.fileSystem = fileSystem;
+            this.embeddedResources = embeddedResources;
         }
 
         public int Priority => ScriptWrapperPriorities.ToolConfigPriority;
@@ -49,10 +56,35 @@ namespace Calamari.Kubernetes
                           commandLineRunner,
                           environmentVars ?? new Dictionary<string, string>(),
                           workingDirectory);
-            var result = setupKubectlAuthentication.Execute();
-            return result.ExitCode != 0
-                ? result
-                : NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
+            var accountType = variables.Get("Octopus.Account.AccountType");
+            var result = setupKubectlAuthentication.Execute(accountType);
+
+            if (result.ExitCode != 0)
+            {
+                return result;
+            }
+
+            if (scriptSyntax == ScriptSyntax.PowerShell && accountType == "AzureServicePrincipal")
+            {
+                variables.Set("OctopusKubernetesTargetScript", $"{script.File}");
+                variables.Set("OctopusKubernetesTargetScriptParameters", script.Parameters);
+
+                using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
+                {
+                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
+                }
+            }
+
+            return NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
+        }
+
+        string CreateContextScriptFile(string workingDirectory)
+        {
+            const string contextFile = "AzurePowershellContext.ps1";
+            var contextScriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
+            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Kubernetes.Scripts.{contextFile}");
+            fileSystem.OverwriteFile(contextScriptFile, contextScript);
+            return contextScriptFile;
         }
 
         class SetupKubectlAuthentication
@@ -80,7 +112,7 @@ namespace Calamari.Kubernetes
                 this.workingDirectory = workingDirectory;
             }
 
-            public CommandResult Execute()
+            public CommandResult Execute(string accountType)
             {
                 var errorResult = new CommandResult(string.Empty, 1);
 
@@ -103,7 +135,7 @@ namespace Calamari.Kubernetes
                     @namespace = "default";
                 }
 
-                if (!TrySetupContext(kubeConfig, @namespace))
+                if (!TrySetupContext(kubeConfig, @namespace, accountType))
                 {
                     return errorResult;
                 }
@@ -119,9 +151,8 @@ namespace Calamari.Kubernetes
                 return new CommandResult(string.Empty, 0);
             }
 
-            bool TrySetupContext(string kubeConfig, string @namespace)
+            bool TrySetupContext(string kubeConfig, string @namespace, string accountType)
             {
-                var accountType = variables.Get("Octopus.Account.AccountType");
                 var clusterUrl = variables.Get("Octopus.Action.Kubernetes.ClusterUrl");
                 var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
                 var eksUseInstanceRole = variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole");
