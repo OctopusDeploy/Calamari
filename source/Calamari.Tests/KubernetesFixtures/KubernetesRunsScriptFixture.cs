@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Common.Features.EmbeddedResources;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
@@ -86,7 +87,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         KubernetesContextScriptWrapper CreateWrapper()
         {
-            return new KubernetesContextScriptWrapper(variables, new InMemoryLog(), new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, ConsoleLog.Instance, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()
@@ -107,17 +108,15 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 var output = ExecuteScript(wrapper, temp.FilePath);
                 output.AssertSuccess();
-                var allOutput = string.Join(Environment.NewLine, output.CapturedOutput.AllMessages);
-                Console.WriteLine(allOutput);
             }
         }
 
         CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName)
         {
-            var runner = new TestCommandLineRunner(ConsoleLog.Instance, variables);
+            var runner = new CommandLineRunner(ConsoleLog.Instance, variables);
             var engine = new ScriptEngine(new[] { wrapper });
             var result = engine.Execute(new Script(scriptName), variables, runner, new Dictionary<string, string>());
-            return new CalamariResult(result.ExitCode, runner.Output);
+            return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
     }
 }

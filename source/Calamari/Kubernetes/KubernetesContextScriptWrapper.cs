@@ -36,26 +36,24 @@ namespace Calamari.Kubernetes
         /// </summary>
         public bool IsEnabled(ScriptSyntax syntax)
         {
-            return (!string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl)) ||
-                    !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) ||
-                    !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName)));
+            return (!string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName)));
         }
 
         public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,
-            ScriptSyntax scriptSyntax,
-            ICommandLineRunner commandLineRunner,
-            Dictionary<string, string> environmentVars)
+                                           ScriptSyntax scriptSyntax,
+                                           ICommandLineRunner commandLineRunner,
+                                           Dictionary<string, string> environmentVars)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
 
             var setupKubectlAuthentication = new SetupKubectlAuthentication(variables,
-                          log,
-                          scriptSyntax,
-                          commandLineRunner,
-                          environmentVars ?? new Dictionary<string, string>(),
-                          workingDirectory);
+                                                                            log,
+                                                                            scriptSyntax,
+                                                                            commandLineRunner,
+                                                                            environmentVars ?? new Dictionary<string, string>(),
+                                                                            workingDirectory);
             var accountType = variables.Get("Octopus.Account.AccountType");
             var result = setupKubectlAuthentication.Execute(accountType);
 
@@ -98,11 +96,11 @@ namespace Calamari.Kubernetes
             string kubectl;
 
             public SetupKubectlAuthentication(IVariables variables,
-                     ILog log,
-                     ScriptSyntax scriptSyntax,
-                     ICommandLineRunner commandLineRunner,
-                     Dictionary<string, string> environmentVars,
-                     string workingDirectory)
+                                              ILog log,
+                                              ScriptSyntax scriptSyntax,
+                                              ICommandLineRunner commandLineRunner,
+                                              Dictionary<string, string> environmentVars,
+                                              string workingDirectory)
             {
                 this.variables = variables;
                 this.log = log;
@@ -159,7 +157,7 @@ namespace Calamari.Kubernetes
                 var podServiceAccountTokenPath = variables.Get("Octopus.Action.Kubernetes.PodServiceAccountTokenPath");
                 var serverCertPath = variables.Get("Octopus.Action.Kubernetes.CertificateAuthorityPath");
                 var isUsingPodServiceAccount = false;
-                var skipTlsVerification = variables.GetFlag("Octopus.Action.Kubernetes.SkipTlsVerification");
+                var skipTlsVerification = variables.GetFlag("Octopus.Action.Kubernetes.SkipTlsVerification") ? "true" : "false";
 
                 if (accountType != "AzureServicePrincipal" && string.IsNullOrEmpty(clusterUrl))
                 {
@@ -238,7 +236,7 @@ namespace Calamari.Kubernetes
                         azureCluster += "-admin";
                     }
 
-                    ExecuteCommand("az", true, arguments.ToArray());
+                    ExecuteCommand("az", LogType.Info, arguments.ToArray());
 
                     ExecuteKubectlCommand("config",
                                           "set-context",
@@ -278,7 +276,8 @@ namespace Calamari.Kubernetes
                                           "octocontext");
 
                     log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
-                    ExecuteKubectlCommand("config",
+                    ExecuteKubectlCommand(LogType.None,
+                                          "config",
                                           "set-credentials",
                                           "octouser",
                                           $"--token={podServiceAccountToken}");
@@ -327,11 +326,13 @@ namespace Calamari.Kubernetes
 
                         // Don't leak the private key in the logs
                         log.SetOutputVariable($"{clientCert}.PrivateKeyPemBase64", clientCertKeyEncoded, variables, true);
-                        ExecuteKubectlCommand("config",
+                        ExecuteKubectlCommand(LogType.None,
+                                              "config",
                                               "set",
                                               "users.octouser.client-certificate-data",
                                               clientCertPemEncoded);
-                        ExecuteKubectlCommand("config",
+                        ExecuteKubectlCommand(LogType.None,
+                                              "config",
                                               "set",
                                               "users.octouser.client-key-data",
                                               clientCertKeyEncoded);
@@ -345,7 +346,8 @@ namespace Calamari.Kubernetes
                             return false;
                         }
 
-                        ExecuteKubectlCommand("config",
+                        ExecuteKubectlCommand(LogType.None,
+                                              "config",
                                               "set",
                                               "clusters.octocluster.certificate-authority-data",
                                               Convert.ToBase64String(Encoding.ASCII.GetBytes(serverCertPem)));
@@ -371,7 +373,8 @@ namespace Calamari.Kubernetes
                                 return false;
                             }
 
-                            ExecuteKubectlCommand("config",
+                            ExecuteKubectlCommand(LogType.None,
+                                                  "config",
                                                   "set-credentials",
                                                   "octouser",
                                                   $"--token={token}");
@@ -381,7 +384,8 @@ namespace Calamari.Kubernetes
                         {
                             var username = variables.Get("Octopus.Account.Username");
                             var password = variables.Get("Octopus.Account.Password");
-                            ExecuteKubectlCommand("config",
+                            ExecuteKubectlCommand(LogType.None,
+                                                  "config",
                                                   "set-credentials",
                                                   "octouser",
                                                   $"--username={username}",
@@ -439,7 +443,13 @@ namespace Calamari.Kubernetes
 
             void CreateNamespace(string @namespace)
             {
-                if (ExecuteCommand(new CommandLineInvocation(kubectl, "get", "namespace", @namespace) { OutputToLog = false }, false).ExitCode != 0)
+                if (ExecuteCommand(kubectl,
+                                   LogType.None,
+                                   "get",
+                                   "namespace",
+                                   @namespace)
+                        .ExitCode
+                    != 0)
                 {
                     ExecuteKubectlCommand("create", "namespace", @namespace);
                 }
@@ -461,7 +471,7 @@ namespace Calamari.Kubernetes
 
                 environmentVars.Add("AZURE_CONFIG_DIR", Path.Combine(workingDirectory, "azure-cli"));
                 ExecuteCommand("az",
-                               true,
+                               LogType.Info,
                                "cloud",
                                "set",
                                "--name",
@@ -475,7 +485,7 @@ namespace Calamari.Kubernetes
                 var password = variables.Get("Octopus.Action.Azure.Password");
 
                 ExecuteCommand("az",
-                               true,
+                               LogType.Info,
                                "login",
                                "--service-principal",
                                // Use the full argument with an '=' because of https://github.com/Azure/azure-cli/issues/12105
@@ -485,7 +495,7 @@ namespace Calamari.Kubernetes
 
                 log.Verbose($"Azure CLI: Setting active subscription to {subscriptionId}");
                 ExecuteCommand("az",
-                               true,
+                               LogType.Info,
                                "account",
                                "set",
                                "--subscription",
@@ -505,7 +515,7 @@ namespace Calamari.Kubernetes
 
                 if (scriptSyntax == ScriptSyntax.Bash)
                 {
-                    ExecuteCommand("chmod", true, "u=rw,g=,o=", kubeConfig).VerifySuccess();
+                    ExecuteCommand("chmod", LogType.None, "u=rw,g=,o=", kubeConfig).VerifySuccess();
                 }
 
                 log.Verbose($"Temporary kubectl config set to {kubeConfig}");
@@ -535,25 +545,43 @@ namespace Calamari.Kubernetes
                 return false;
             }
 
-            CommandResult ExecuteCommand(string executable, bool verbose, params string[] arguments)
+            CommandResult ExecuteCommand(string executable, LogType logType, params string[] arguments)
             {
-                return ExecuteCommand(new CommandLineInvocation(executable, arguments), verbose);
+                return ExecuteCommand(new CommandLineInvocation(executable, arguments), logType);
+            }
+
+            CommandResult ExecuteKubectlCommand(LogType logType, params string[] arguments)
+            {
+                return ExecuteCommand(new CommandLineInvocation(kubectl, arguments), logType);
             }
 
             CommandResult ExecuteKubectlCommand(params string[] arguments)
             {
-                return ExecuteCommand(new CommandLineInvocation(kubectl, arguments), true);
+                return ExecuteKubectlCommand(LogType.Info, arguments);
             }
 
-            CommandResult ExecuteCommand(CommandLineInvocation invocation, bool verbose)
+            CommandResult ExecuteCommand(CommandLineInvocation invocation, LogType logType)
             {
                 invocation.EnvironmentVars = environmentVars;
                 invocation.WorkingDirectory = workingDirectory;
-                invocation.OutputAsVerbose = verbose;
+                invocation.OutputAsVerbose = logType == LogType.Verbose;
+                invocation.OutputToLog = logType == LogType.Info;
+
+                if (logType != LogType.None)
+                {
+                    log.Verbose(invocation.ToString());
+                }
 
                 var result = commandLineRunner.Execute(invocation);
 
                 return result;
+            }
+
+            enum LogType
+            {
+                None,
+                Verbose,
+                Info
             }
         }
     }
