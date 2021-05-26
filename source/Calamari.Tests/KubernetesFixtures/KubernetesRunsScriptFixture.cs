@@ -7,10 +7,13 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures;
-using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using CalamariResult = Calamari.Tests.Helpers.CalamariResult;
+using TestCategory = Calamari.Tests.Helpers.TestCategory;
+using TestCommandLineRunner = Calamari.Tests.Helpers.TestCommandLineRunner;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -39,7 +42,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(Kubernetes.SpecialVariables.AksClusterName, aksClusterName);
             variables.Set(Kubernetes.SpecialVariables.EksClusterName, eksClusterName);
 
-            var target = new KubernetesContextScriptWrapper(variables);
+            var target = new KubernetesContextScriptWrapper(variables, new InMemoryLog());
             var actual = target.IsEnabled(ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment());
             actual.Should().Be(expected);
         }
@@ -52,7 +55,7 @@ namespace Calamari.Tests.KubernetesFixtures
             SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
-            var wrapper = new KubernetesContextScriptWrapper(variables);
+            var wrapper = new KubernetesContextScriptWrapper(variables, new InMemoryLog());
             TestScript(wrapper, "Test-Script.ps1");
         }
 
@@ -64,7 +67,7 @@ namespace Calamari.Tests.KubernetesFixtures
             SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Core");
-            var wrapper = new KubernetesContextScriptWrapper(variables);
+            var wrapper = new KubernetesContextScriptWrapper(variables, new InMemoryLog());
             TestScript(wrapper, "Test-Script.ps1");
         }
 
@@ -75,7 +78,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
-            var wrapper = new KubernetesContextScriptWrapper(variables);
+            var wrapper = new KubernetesContextScriptWrapper(variables, new InMemoryLog());
             TestScript(wrapper, "Test-Script.sh");
         }
 
