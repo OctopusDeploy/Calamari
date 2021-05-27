@@ -121,6 +121,7 @@ namespace Calamari.Aws.Deployment.Conventions
             if (waitForComplete)
             {
                 await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack));
+                await CheckStackDeploymentSuccessAndLogErrors(stack);
             }
 
             // Take the stack ID returned by the create or update events, and save it as an output variable
@@ -129,6 +130,25 @@ namespace Calamari.Aws.Deployment.Conventions
                 $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\"");
         }
 
+        /// <summary>
+        /// Checks whether the stack deployment succeeded and logs any errors that occurred during the stack deployment
+        /// </summary>
+        /// <param name="stack">The stack to check</param>
+        private async Task CheckStackDeploymentSuccessAndLogErrors(StackArn stack)
+        {
+            var lastStackEvent = await StackEvent(stack);
+            var isSuccess = lastStackEvent.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, true);
+            if (!isSuccess)
+            {
+                var allStackEvents = await clientFactory.GetStackEvents(stack);
+                foreach (var @event in allStackEvents)
+                {
+                    // Only log errors
+                    if (!@event.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, false))
+                        Logger.Warn(@event);
+                }
+            }
+        }
 
         /// <summary>
         /// Gets the last stack event by timestamp, optionally filtered by a predicate

@@ -35,8 +35,18 @@ namespace Calamari.Aws.Integration.CloudFormation
 
             return false;
         }
-        
-        
+
+        /// <summary>
+        /// Write the state of the stack as a warning
+        /// </summary>
+        /// <param name="status">The current status of the stack</param>
+        public void Warn(Maybe<StackEvent> status)
+        {
+            var statusMessage = status.SelectValueOrDefault(x => $"{x.ResourceType} {x.ResourceStatus.Value ?? "Does not exist"}");
+            log.Warn($"Stack state: {statusMessage}");
+        }
+
+
         /// <summary>
         /// Write the state of the stack, but only if it changed since last time. If we are
         /// writing the same message more than once, do it as verbose logging.
@@ -56,7 +66,7 @@ namespace Calamari.Aws.Integration.CloudFormation
 
             lastMessage = statusMessage;
         }
-        
+
         /// <summary>
         /// Log an error if we expected success and got a rollback
         /// </summary>
@@ -71,20 +81,20 @@ namespace Calamari.Aws.Integration.CloudFormation
         {
             var isSuccess = status.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, !missingIsFailure);
             var isStackType = status.SelectValueOr(x => x.ResourceType.Equals("AWS::CloudFormation::Stack"), true);
-            
+
             if (expectSuccess && !isSuccess && isStackType)
             {
                 log.Warn(
-                    status.SelectValueOr(x => 
-                            $"Stack status {x.ResourceStatus.Value} indicated rollback or failed state. This means that the stack was not processed correctly. ", 
+                    status.SelectValueOr(x =>
+                            $"Stack status {x.ResourceStatus.Value} indicated rollback or failed state. This means that the stack was not processed correctly. ",
                             "Stack was unexpectedly missing during processing. ") +
                         "This means that the stack was not processed correctly. " +
-                        "Review the stack in the AWS console to find any errors that may have occured during deployment."
+                        "Review any stack state errors logged or check the stack in the AWS console to find any errors that may have occured during deployment."
                     );
                 try
                 {
                     var progressStatus = query(stack => stack?.ResourceStatusReason != null);
-                    
+
                     if (progressStatus.Some())
                     {
                         log.Warn(progressStatus.Value.ResourceStatusReason);

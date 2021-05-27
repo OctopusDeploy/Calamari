@@ -269,9 +269,8 @@ namespace Calamari.Aws.Integration.CloudFormation
             do
             {
                 await Task.Delay(waitPeriod);
-                var events = await clientFactory.GetStackEvents(stack, filter);
-                foreach (var @event in events)
-                    action?.Invoke(@event);
+                var @event = await clientFactory.GetLastStackEvent(stack, filter);
+                action?.Invoke(@event);
             } while (await clientFactory.StackExistsAsync(stack, StackStatus.Completed) == StackStatus.InProgress);
         }
 
