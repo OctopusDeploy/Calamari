@@ -6,6 +6,6 @@ namespace Sashimi.GCPScripting
     static class GoogleCloudConstants
     {
         public static readonly ActionHandlerCategory GoogleCloudActionHandlerCategory = new ActionHandlerCategory("Google", "Google Cloud", 500);
-        public static readonly CalamariFlavour CalamariAzure = new CalamariFlavour("Calamari.GoogleCloudScripting");
+        public static readonly CalamariFlavour CalamariGoogleCloud = new CalamariFlavour("Calamari.GoogleCloudScripting");
     }
 }
