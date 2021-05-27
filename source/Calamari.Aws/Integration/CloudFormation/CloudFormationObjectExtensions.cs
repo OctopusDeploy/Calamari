@@ -36,7 +36,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                 "DELETE_FAILED",
                 "CREATE_FAILED"
             };
-        
+
         /// Some statuses indicate that the only way forward is to delete the stack and try again.
         /// Here are some of the explanations of the stack states from the docs.
         /// 
@@ -114,12 +114,12 @@ namespace Calamari.Aws.Integration.CloudFormation
         {
             try
             {
-                var response = await clientFactory().DescribeStackEventsAsync(new DescribeStackEventsRequest {StackName = stack.Value});
-                
+                var response = await clientFactory().DescribeStackEventsAsync(new DescribeStackEventsRequest { StackName = stack.Value });
+
                 return response?
                     .StackEvents.OrderByDescending(stackEvent => stackEvent.Timestamp)
                     .FirstOrDefault(stackEvent => predicate == null || predicate(stackEvent))
-                   .AsSome();
+                    .AsSome();
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
             {
@@ -142,6 +142,45 @@ namespace Calamari.Aws.Integration.CloudFormation
         }
 
         /// <summary>
+        /// Gets all stack events, optionally filtered by a predicate
+        /// </summary>
+        /// <param name="predicate">The optional predicate used to filter events</param>
+        /// <returns>The stack events</returns>
+        public static async Task<List<Maybe<StackEvent>>> GetStackEvents(this Func<IAmazonCloudFormation> clientFactory,
+            StackArn stack,
+            Func<StackEvent, bool> predicate = null)
+        {
+            try
+            {
+                var response = await clientFactory().DescribeStackEventsAsync(new DescribeStackEventsRequest { StackName = stack.Value });
+
+                return response?
+                    .StackEvents.OrderByDescending(stackEvent => stackEvent.Timestamp)
+                    .Where(stackEvent => predicate == null || predicate(stackEvent))
+                    .Select(s => s.AsSome())
+                    .ToList();
+            }
+            catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
+            {
+                throw new PermissionException(
+                    "The AWS account used to perform the operation does not have the required permissions to query the current state of the CloudFormation stack. " +
+                    "This step will complete without waiting for the stack to complete, and will not fail if the stack finishes in an error state.\n " +
+                    "Please ensure the current account has permission to perform action 'cloudformation:DescribeStackEvents'" +
+                    ex.Message);
+            }
+            catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "ExpiredToken")
+            {
+                throw new PermissionException(
+                    "Security token has expired. Please increase the session duration and/or check that the system date and time are set correctly. " +
+                    ex.Message);
+            }
+            catch (AmazonCloudFormationException)
+            {
+                return new List<Maybe<StackEvent>> { Maybe<StackEvent>.None };
+            }
+        }
+
+        /// <summary>
         /// Describe the stack
         /// </summary>
         /// <param name="clientFactory"></param>
@@ -149,7 +188,7 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// <returns></returns>
         public static async Task<Stack> DescribeStackAsync(this Func<IAmazonCloudFormation> clientFactory, StackArn stack)
         {
-            var response = await clientFactory().DescribeStacksAsync(new DescribeStacksRequest {StackName = stack.Value});
+            var response = await clientFactory().DescribeStacksAsync(new DescribeStacksRequest { StackName = stack.Value });
             return response.Stacks.FirstOrDefault();
         }
 
@@ -167,13 +206,13 @@ namespace Calamari.Aws.Integration.CloudFormation
             try
             {
                 var result = await clientFactory.DescribeStackAsync(stackArn);
-                
+
                 if (result == null)
                 {
                     return StackStatus.DoesNotExist;
                 }
 
-                if (result.StackStatus == null || 
+                if (result.StackStatus == null ||
                     result.StackStatus.Value.EndsWith("_COMPLETE") ||
                     result.StackStatus.Value.EndsWith("_FAILED"))
                 {
@@ -216,11 +255,11 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// param name="action">Callback for each event while waiting
         /// <param name="filter">The predicate for filtering the stack events</param>
         public static async Task WaitForStackToComplete(this Func<IAmazonCloudFormation> clientFactory,
-            TimeSpan waitPeriod, StackArn stack, Action<Maybe<StackEvent>> action = null, Func<StackEvent, bool> filter= null)
+            TimeSpan waitPeriod, StackArn stack, Action<Maybe<StackEvent>> action = null, Func<StackEvent, bool> filter = null)
         {
             Guard.NotNull(stack, "Stack should not be null");
             Guard.NotNull(clientFactory, "Client factory should not be null");
-            
+
             var status = await clientFactory.StackExistsAsync(stack, StackStatus.DoesNotExist);
             if (status == StackStatus.DoesNotExist || status == StackStatus.Completed)
             {
@@ -230,11 +269,12 @@ namespace Calamari.Aws.Integration.CloudFormation
             do
             {
                 await Task.Delay(waitPeriod);
-                var @event = await clientFactory.GetLastStackEvent(stack, filter);
-                action?.Invoke(@event);
+                var events = await clientFactory.GetStackEvents(stack, filter);
+                foreach (var @event in events)
+                    action?.Invoke(@event);
             } while (await clientFactory.StackExistsAsync(stack, StackStatus.Completed) == StackStatus.InProgress);
         }
-                
+
         /// <summary>
         /// Check the stack event status to determine whether it was successful.
         /// http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w2ab2c15c15c17c11
@@ -259,7 +299,7 @@ namespace Calamari.Aws.Integration.CloudFormation
 
             try
             {
-                return clientFactory().DeleteStackAsync(new DeleteStackRequest {StackName = stack.Value});
+                return clientFactory().DeleteStackAsync(new DeleteStackRequest { StackName = stack.Value });
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
             {
@@ -276,13 +316,13 @@ namespace Calamari.Aws.Integration.CloudFormation
         {
             try
             {
-                var response =  await clientFactory().CreateStackAsync(request);
+                var response = await clientFactory().CreateStackAsync(request);
                 return response.StackId;
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
             {
                 throw new PermissionException(
-                    "The AWS account used to perform the operation does not have the required permissions to create the stack.\n"+
+                    "The AWS account used to perform the operation does not have the required permissions to create the stack.\n" +
                     "Please ensure the current account has permission to perform action 'cloudformation:CreateStack'.\n" +
                     ex.Message
                 );

@@ -101,7 +101,7 @@ namespace Calamari.Aws.Commands
 
                 //Create or update stack using a template (no changesets)
                 new AggregateInstallationConvention(
-                        new  DeployAwsCloudFormationConvention(
+                        new DeployAwsCloudFormationConvention(
                             ClientFactory,
                             TemplateFactory,
                             stackEventLogger,
