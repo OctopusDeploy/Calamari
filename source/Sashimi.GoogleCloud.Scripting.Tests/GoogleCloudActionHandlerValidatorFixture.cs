@@ -9,7 +9,7 @@ using Sashimi.Server.Contracts.ActionHandlers.Validation;
 namespace Sashimi.GoogleCloud.Scripting.Tests
 {
     [TestFixture]
-    public class AzureScriptDeploymentActionValidatorFixture
+    public class GoogleCloudActionHandlerValidatorFixture
     {
         GoogleCloudActionHandlerValidator? validator;
 
