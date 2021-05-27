@@ -201,7 +201,8 @@ namespace Sashimi.GoogleCloud.Scripting.Tests
 
         void AddDefaults(TestActionHandlerContext<Program> context, string? keyFile = null)
         {
-            context.Variables.Add("Octopus.Action.GoogleCloudAccount.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(keyFile ?? EnvironmentJsonKey!)));
+            context.Variables.Add("Octopus.Action.GoogleCloudAccount.Variable", "MyVariable");
+            context.Variables.Add("MyVariable.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(keyFile ?? EnvironmentJsonKey!)));
             context.Variables.Add("Octopus.Action.GoogleCloud.CustomExecutable", cliPath);
         }
     }

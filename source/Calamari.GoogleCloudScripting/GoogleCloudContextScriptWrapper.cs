@@ -105,20 +105,60 @@ namespace Calamari.GoogleCloudScripting
                     }
                 }
 
-                log.Verbose("Authenticating to gcloud with key file");
-                var jsonKey = variables.Get(SpecialVariables.Action.GoogleCloud.JsonKey, String.Empty);
-                var bytes = Convert.FromBase64String(jsonKey);
-                using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, Path.GetRandomFileName())))
+                var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
+                string? impersonationEmails = null;
+                if (variables.GetFlag("Octopus.Action.GoogleCloud.ImpersonateServiceAccount"))
                 {
-                    File.WriteAllBytes(keyFile.FilePath, bytes);
-                    if (ExecuteCommand("auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\"")
-                        .ExitCode != 0)
+                    impersonationEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
+                }
+                var region = variables.Get("Octopus.Action.GoogleCloud.Region") ?? string.Empty;
+                var zone = variables.Get("Octopus.Action.GoogleCloud.Zone") ?? string.Empty;
+                if (!string.IsNullOrEmpty(region))
+                {
+                    environmentVars.Add("CLOUDSDK_COMPUTE_REGION", region);
+                }
+
+                if (!string.IsNullOrEmpty(zone))
+                {
+                    environmentVars.Add("CLOUDSDK_COMPUTE_ZONE", zone);
+                }
+
+                if (!useVmServiceAccount)
+                {
+                    var accountVariable = variables.Get("Octopus.Action.GoogleCloudAccount.Variable");
+                    var jsonKey = variables.Get($"{accountVariable}.JsonKey");
+
+                    if (jsonKey == null)
                     {
-                        log.Error("Failed to authenticate with gcloud.");
+                        log.Error("Failed to authenticate with gcloud. Key file is empty.");
                         return errorResult;
                     }
+
+                    log.Verbose("Authenticating to gcloud with key file");
+                    var bytes = Convert.FromBase64String(jsonKey);
+                    using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, Path.GetRandomFileName())))
+                    {
+                        File.WriteAllBytes(keyFile.FilePath, bytes);
+                        if (ExecuteCommand("auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\"")
+                            .ExitCode != 0)
+                        {
+                            log.Error("Failed to authenticate with gcloud.");
+                            return errorResult;
+                        }
+                    }
+
+                    log.Verbose("Successfully authenticated with gcloud");
                 }
-                log.Verbose("Successfully authenticated with gcloud");
+                else
+                {
+                    log.Verbose("Bypassing authentication with gcloud");
+                }
+
+                if (impersonationEmails != null)
+                {
+                    ExecuteCommand("config", "set", "auth/impersonate_service_account", impersonationEmails);
+                    log.Verbose("Impersonation emails set.");
+                }
 
                 return new CommandResult(string.Empty, 0);
             }
