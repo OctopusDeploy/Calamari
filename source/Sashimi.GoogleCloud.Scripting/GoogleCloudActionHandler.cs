@@ -5,7 +5,7 @@ using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.GCPScripting
 {
-    class GoogleCloudActionHandler : IActionHandlerWithAccount
+    class GoogleCloudActionHandler : IActionHandler
     {
         public string Id => SpecialVariables.Action.GoogleCloud.ActionTypeName;
         public string Name => "Run gcloud in a Script";
