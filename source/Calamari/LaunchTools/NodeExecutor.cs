@@ -49,7 +49,8 @@ namespace Calamari.LaunchTools
                                                                                 variableFile.FilePath,
                                                                                 options.InputVariables.SensitiveVariablesPassword,
                                                                                 AesEncryption.SaltRaw,
-                                                                                instructions.InputsVariable))
+                                                                                instructions.InputsVariable,
+                                                                                instructions.DeploymentTargetInputsVariable))
                 {
                     WorkingDirectory = runningDeployment.CurrentDirectory,
                     OutputToLog = true,
@@ -80,8 +81,8 @@ namespace Calamari.LaunchTools
 
         static string BuildNodePath(string pathToNode) => CalamariEnvironment.IsRunningOnWindows ? Path.Combine(pathToNode, "node.exe") : Path.Combine(pathToNode, "bin", "node");
 
-        static string BuildArgs(string pathToBootstrapper, string pathToStepPackage, string pathToSensitiveVariables, string sensitiveVariablesSecret, string salt, string inputsKey) =>
-            $"\"{pathToBootstrapper}\" \"{pathToStepPackage}\" \"{pathToSensitiveVariables}\" \"{sensitiveVariablesSecret}\" \"{salt}\" \"{inputsKey}\"";
+        static string BuildArgs(string pathToBootstrapper, string pathToStepPackage, string pathToSensitiveVariables, string sensitiveVariablesSecret, string salt, string inputsKey, string deploymentTargetInputsKey) =>
+            $"\"{pathToBootstrapper}\" \"{pathToStepPackage}\" \"{pathToSensitiveVariables}\" \"{sensitiveVariablesSecret}\" \"{salt}\" \"{inputsKey}\" \"{deploymentTargetInputsKey}\"";
     }
 
     public class NodeInstructions
@@ -90,5 +91,7 @@ namespace Calamari.LaunchTools
         public string TargetPathVariable { get; set; }
         public string BootstrapperPathVariable { get; set; }
         public string InputsVariable { get; set; }
+        
+        public string DeploymentTargetInputsVariable { get; set; }
     }
 }
