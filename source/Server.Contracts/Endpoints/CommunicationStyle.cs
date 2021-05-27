@@ -26,6 +26,8 @@
 
         AzureServiceFabricCluster = 8,
 
-        Kubernetes = 9
+        Kubernetes = 9,
+        
+        StepPackage = 10
     }
 }
