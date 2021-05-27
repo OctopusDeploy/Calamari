@@ -8,8 +8,8 @@ namespace Sashimi.GCPScripting
     class GoogleCloudActionHandler : IActionHandlerWithAccount
     {
         public string Id => SpecialVariables.Action.GoogleCloud.ActionTypeName;
-        public string Name => "Run a Google Cloud Script";
-        public string Description => "Runs a custom script using a Google Cloud CLI.";
+        public string Name => "Run gcloud in a Script";
+        public string Description => "Run gcloud commands in a custom script";
         public string? Keywords => null;
         public bool ShowInStepTemplatePickerUI => true;
         public bool WhenInAChildStepRunInTheContextOfTheTargetMachine => false;
