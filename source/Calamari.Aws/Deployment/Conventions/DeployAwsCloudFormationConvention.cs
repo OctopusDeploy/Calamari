@@ -137,6 +137,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private async Task CheckStackDeploymentSuccessAndLogErrors(StackArn stack)
         {
             var lastStackEvent = await StackEvent(stack);
+            Logger.Log(lastStackEvent);
             var isSuccess = lastStackEvent.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, true);
             if (!isSuccess)
             {
