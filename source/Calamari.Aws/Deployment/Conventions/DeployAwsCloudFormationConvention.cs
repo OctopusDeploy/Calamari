@@ -144,7 +144,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 foreach (var @event in allStackEvents)
                 {
                     // Only log errors
-                    if (!@event.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, false))
+                    //if (!@event.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, false))
                         Logger.Warn(@event);
                 }
             }
