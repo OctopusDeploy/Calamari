@@ -1,7 +1,6 @@
 ﻿using System;
 using NUnit.Framework;
 using Octopus.Server.Extensibility.Tests;
-using Sashimi.GCPScripting;
 
 namespace Sashimi.GoogleCloud.Scripting.Tests
 {

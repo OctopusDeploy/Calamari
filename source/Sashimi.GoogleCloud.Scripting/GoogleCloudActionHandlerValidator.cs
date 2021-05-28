@@ -3,7 +3,7 @@ using FluentValidation;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers.Validation;
 
-namespace Sashimi.GCPScripting
+namespace Sashimi.GoogleCloud.Scripting
 {
     class GoogleCloudActionHandlerValidator : AbstractValidator<DeploymentActionValidationContext>
     {

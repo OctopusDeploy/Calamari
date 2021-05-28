@@ -1,4 +1,4 @@
-﻿namespace Sashimi.GCPScripting
+﻿namespace Sashimi.GoogleCloud.Scripting
 {
     static class SpecialVariables
     {

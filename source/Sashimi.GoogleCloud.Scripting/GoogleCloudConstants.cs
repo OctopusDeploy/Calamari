@@ -1,7 +1,7 @@
 ﻿using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Calamari;
 
-namespace Sashimi.GCPScripting
+namespace Sashimi.GoogleCloud.Scripting
 {
     static class GoogleCloudConstants
     {

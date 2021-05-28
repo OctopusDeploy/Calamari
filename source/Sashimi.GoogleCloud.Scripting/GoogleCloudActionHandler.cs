@@ -3,7 +3,7 @@ using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 
-namespace Sashimi.GCPScripting
+namespace Sashimi.GoogleCloud.Scripting
 {
     class GoogleCloudActionHandler : IActionHandler
     {
