@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
@@ -57,7 +59,7 @@ namespace Calamari.GoogleCloudScripting
             readonly ICommandLineRunner commandLineRunner;
             readonly Dictionary<string, string> environmentVars;
             readonly string workingDirectory;
-            private string gcloud = String.Empty;
+            private string? gcloud = String.Empty;
 
             public SetupGCloudAuthentication(IVariables variables,
                 ILog log,
@@ -86,7 +88,7 @@ namespace Calamari.GoogleCloudScripting
                 environmentVars.Add("CLOUDSDK_CONFIG", gcloudConfigPath);
                 Directory.CreateDirectory(gcloudConfigPath);
 
-                gcloud = variables.Get("Octopus.Action.GoogleCloud.CustomExecutable")!;
+                gcloud = variables.Get("Octopus.Action.GoogleCloud.CustomExecutable");
                 if (!String.IsNullOrEmpty(gcloud))
                 {
                     if (!File.Exists(gcloud))
@@ -97,21 +99,18 @@ namespace Calamari.GoogleCloudScripting
                 }
                 else
                 {
-                    if (CalamariEnvironment.IsRunningOnWindows)
-                    {
-                        gcloud = "gcloud.cmd";
-                    }
-                    else
-                    {
-                        gcloud = "gcloud";
-                    }
+                    gcloud = CalamariEnvironment.IsRunningOnWindows
+                        ? ExecuteCommandAndReturnOutput("where", "gcloud.cmd")
+                        : ExecuteCommandAndReturnOutput("which", "gcloud");
 
-                    if (ExecuteCommand("version").ExitCode != 0)
+                    if (gcloud == null)
                     {
-                        log.Error($"Could not find {gcloud}. Make sure {gcloud} is on the PATH.");
+                        log.Error("Could not find gcloud. Make sure gcloud is on the PATH.");
                         return errorResult;
                     }
                 }
+
+                log.Verbose($"Using gcloud from {gcloud}.");
 
                 var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
                 string? impersonationEmails = null;
@@ -173,6 +172,11 @@ namespace Calamari.GoogleCloudScripting
 
             CommandResult ExecuteCommand(params string[] arguments)
             {
+                if (gcloud == null)
+                {
+                    throw new Exception("gcloud is null");
+                }
+
                 var invocation = new CommandLineInvocation(gcloud, arguments)
                 {
                     EnvironmentVars = environmentVars,
@@ -186,6 +190,41 @@ namespace Calamari.GoogleCloudScripting
                 var result = commandLineRunner.Execute(invocation);
 
                 return result;
+            }
+
+            string? ExecuteCommandAndReturnOutput(string exe, params string[] arguments)
+            {
+                var captureCommandOutput = new CaptureCommandOutput();
+                var invocation = new CommandLineInvocation(exe, arguments)
+                {
+                    EnvironmentVars = environmentVars,
+                    WorkingDirectory = workingDirectory,
+                    OutputAsVerbose = false,
+                    OutputToLog = false,
+                    AdditionalInvocationOutputSink = captureCommandOutput
+                };
+
+                var result = commandLineRunner.Execute(invocation);
+
+                return result.ExitCode == 0
+                    ? captureCommandOutput.StdOut
+                    : null;
+            }
+
+            class CaptureCommandOutput : ICommandInvocationOutputSink
+            {
+                private StringBuilder output = new StringBuilder();
+
+                public string StdOut => output.ToString();
+
+                public void WriteInfo(string line)
+                {
+                    output.AppendLine(line);
+                }
+
+                public void WriteError(string line)
+                {
+                }
             }
         }
     }
