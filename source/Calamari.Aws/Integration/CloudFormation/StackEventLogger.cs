@@ -64,7 +64,7 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// <param name="missingIsFailure">True if the a missing stack indicates a failure, and false otherwise</param>
         public void LogRollbackError(
             Maybe<StackEvent> status,
-            Func<Func<StackEvent, bool>, Maybe<StackEvent>> query,
+            Func<Func<StackEvent, bool>, List<Maybe<StackEvent>>> query,
             bool expectSuccess,
             bool missingIsFailure)
         {
@@ -82,11 +82,12 @@ namespace Calamari.Aws.Integration.CloudFormation
                     );
                 try
                 {
-                    var progressStatus = query(stack => stack?.ResourceStatusReason != null);
+                    var progressStatuses = query(stack => stack?.ResourceStatusReason != null);
 
-                    if (progressStatus.Some())
+                    foreach (var progressStatus in progressStatuses)
                     {
-                        log.Warn(progressStatus.Value.ResourceStatusReason);
+                        if (progressStatus.Some())
+                            log.Warn($"{progressStatus.Value.LogicalResourceId} - {progressStatus.Value.ResourceStatus} - {progressStatus.Value.ResourceStatusReason}");
                     }
                 }
                 catch (PermissionException)

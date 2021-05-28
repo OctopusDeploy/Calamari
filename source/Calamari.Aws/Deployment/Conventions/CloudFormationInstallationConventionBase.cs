@@ -94,8 +94,9 @@ namespace Calamari.Aws.Deployment.Conventions
                 try
                 {
                     Logger.Log(@event);
-                    Logger.LogRollbackError(@event, x =>
-                            WithAmazonServiceExceptionHandling(() => clientFactory.GetLastStackEvent(stack, x).GetAwaiter().GetResult()),
+                    Logger.LogRollbackError(
+                        @event, 
+                        x => WithAmazonServiceExceptionHandling(() => clientFactory.GetStackEvents(stack, x).GetAwaiter().GetResult()),
                         expectSuccess,
                         missingIsFailure);
                 }

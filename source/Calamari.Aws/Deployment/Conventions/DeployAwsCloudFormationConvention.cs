@@ -120,41 +120,13 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if (waitForComplete)
             {
-                try
-                {
-                    await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack));
-                }
-                catch (RollbackException)
-                {
-                    await LogStackDeploymentErrors(stack);
-                    throw;
-                }
+                await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack));
             }
 
             // Take the stack ID returned by the create or update events, and save it as an output variable
             Log.SetOutputVariable("AwsOutputs[StackId]", stackId ?? "", deployment.Variables);
             Log.Info(
                 $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\"");
-        }
-
-        /// <summary>
-        /// Checks whether the stack deployment succeeded and logs any errors that occurred during the stack deployment
-        /// </summary>
-        /// <param name="stack">The stack to check</param>
-        private async Task LogStackDeploymentErrors(StackArn stack)
-        {
-            var lastStackEvent = await StackEvent(stack);            
-            var isSuccess = lastStackEvent.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, true);            
-            if (!isSuccess)
-            {
-                var allStackEvents = await clientFactory.GetStackEvents(stack);
-                foreach (var @event in allStackEvents)
-                {
-                    // Only log errors
-                    if (!@event.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, true))
-                        Log.Warn(@event.SelectValueOr(x => x.ResourceStatusReason, "(Status reason not found)"));
-                }
-            }
         }
 
         /// <summary>
