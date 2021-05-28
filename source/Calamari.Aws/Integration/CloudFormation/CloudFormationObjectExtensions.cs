@@ -155,7 +155,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                 var response = await clientFactory().DescribeStackEventsAsync(new DescribeStackEventsRequest { StackName = stack.Value });
 
                 return response?
-                    .StackEvents.OrderByDescending(stackEvent => stackEvent.Timestamp)
+                    .StackEvents.OrderBy(stackEvent => stackEvent.Timestamp)
                     .Where(stackEvent => predicate == null || predicate(stackEvent))
                     .Select(s => s.AsSome())
                     .ToList();
