@@ -26,7 +26,7 @@ namespace Sashimi.AzureScripting
             if (useBundledTooling)
             {
                 // Warn that the use of bundled tooling is not recommended
-                taskLog.Warn($"Using the Azure tools bundled with Octopus is not recommended. Learn more about Azure Tools: https://g.octopushq.com/AzureTools.");
+                taskLog.Warn($"Using the Azure tools bundled with Octopus Deploy is not recommended. Learn more about Azure Tools at https://g.octopushq.com/AzureTools.");
             }
 
             var builder = context.CalamariCommand(AzureConstants.CalamariAzure, "run-script")
