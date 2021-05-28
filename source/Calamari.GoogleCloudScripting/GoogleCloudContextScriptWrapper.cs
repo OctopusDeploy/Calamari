@@ -5,6 +5,7 @@ using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
@@ -96,7 +97,14 @@ namespace Calamari.GoogleCloudScripting
                 }
                 else
                 {
-                    gcloud = "gcloud";
+                    if (CalamariEnvironment.IsRunningOnWindows)
+                    {
+                        gcloud = "gcloud.cmd";
+                    }
+                    else
+                    {
+                        gcloud = "gcloud";
+                    }
 
                     if (ExecuteCommand("version").ExitCode != 0)
                     {
@@ -139,7 +147,7 @@ namespace Calamari.GoogleCloudScripting
                     using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, Path.GetRandomFileName())))
                     {
                         File.WriteAllBytes(keyFile.FilePath, bytes);
-                        if (ExecuteCommand("auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\"")
+                        if (ExecuteCommand("auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\"", "--no-user-output-enabled")
                             .ExitCode != 0)
                         {
                             log.Error("Failed to authenticate with gcloud.");
@@ -170,7 +178,7 @@ namespace Calamari.GoogleCloudScripting
                     EnvironmentVars = environmentVars,
                     WorkingDirectory = workingDirectory,
                     OutputAsVerbose = true,
-                    OutputToLog = true
+                    OutputToLog = true,
                 };
 
                 log.Verbose(invocation.ToString());
