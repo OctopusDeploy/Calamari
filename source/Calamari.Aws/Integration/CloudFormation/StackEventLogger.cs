@@ -78,7 +78,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                             $"Stack status {x.ResourceStatus.Value} indicated rollback or failed state. This means that the stack was not processed correctly. ",
                             "Stack was unexpectedly missing during processing. ") +
                         "This means that the stack was not processed correctly. " +
-                        "Review any stack status reasons logged below or check the stack in the AWS console to find any errors that may have occured during deployment."
+                        "Review the stack events logged below or check the stack in the AWS console to find any errors that may have occured during deployment."
                     );
                 try
                 {
@@ -87,7 +87,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                     foreach (var progressStatus in progressStatuses)
                     {
                         if (progressStatus.Some())
-                            log.Warn($"{progressStatus.Value.Timestamp}: {progressStatus.Value.LogicalResourceId} - {progressStatus.Value.ResourceStatus} - {progressStatus.Value.ResourceStatusReason}");
+                            log.Warn($"Stack event: {progressStatus.Value.Timestamp} - {progressStatus.Value.LogicalResourceId} - {progressStatus.Value.ResourceStatus} - {progressStatus.Value.ResourceStatusReason}");
                     }
                 }
                 catch (PermissionException)
