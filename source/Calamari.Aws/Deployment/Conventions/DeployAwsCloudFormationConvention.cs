@@ -120,8 +120,15 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if (waitForComplete)
             {
-                await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack));
-                await CheckStackDeploymentSuccessAndLogErrors(stack);
+                try
+                {
+                    await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack));
+                }
+                catch (RollbackException)
+                {
+                    await LogStackDeploymentErrors(stack);
+                    throw;
+                }
             }
 
             // Take the stack ID returned by the create or update events, and save it as an output variable
@@ -134,18 +141,17 @@ namespace Calamari.Aws.Deployment.Conventions
         /// Checks whether the stack deployment succeeded and logs any errors that occurred during the stack deployment
         /// </summary>
         /// <param name="stack">The stack to check</param>
-        private async Task CheckStackDeploymentSuccessAndLogErrors(StackArn stack)
+        private async Task LogStackDeploymentErrors(StackArn stack)
         {
             var lastStackEvent = await StackEvent(stack);            
-            var isSuccess = lastStackEvent.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, true);
-            Log.Verbose($"Last stack event success: {isSuccess}");
+            var isSuccess = lastStackEvent.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, true);            
             if (!isSuccess)
             {
                 var allStackEvents = await clientFactory.GetStackEvents(stack);
                 foreach (var @event in allStackEvents)
                 {
                     // Only log errors
-                    //if (!@event.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, false))
+                    if (!@event.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, false))
                         Logger.Warn(@event);
                 }
             }
