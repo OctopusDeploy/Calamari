@@ -151,8 +151,8 @@ namespace Calamari.Aws.Deployment.Conventions
                 foreach (var @event in allStackEvents)
                 {
                     // Only log errors
-                    if (!@event.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, false))
-                        Logger.Warn(@event);
+                    if (!@event.Select(x => x.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, true))
+                        Log.WarnFormat("Status Reason: {ResourceStatusReason}", @event.SelectValueOr(x => x.ResourceStatusReason, "(Status reason not found)"));
                 }
             }
         }

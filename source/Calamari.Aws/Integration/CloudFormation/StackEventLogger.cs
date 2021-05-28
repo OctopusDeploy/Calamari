@@ -37,17 +37,6 @@ namespace Calamari.Aws.Integration.CloudFormation
         }
 
         /// <summary>
-        /// Write the state of the stack as a warning
-        /// </summary>
-        /// <param name="status">The current status of the stack</param>
-        public void Warn(Maybe<StackEvent> status)
-        {
-            var statusMessage = status.SelectValueOrDefault(x => $"{x.ResourceType} {x.ResourceStatus.Value ?? "Does not exist"}");
-            log.Warn($"Stack state: {statusMessage}");
-        }
-
-
-        /// <summary>
         /// Write the state of the stack, but only if it changed since last time. If we are
         /// writing the same message more than once, do it as verbose logging.
         /// </summary>
