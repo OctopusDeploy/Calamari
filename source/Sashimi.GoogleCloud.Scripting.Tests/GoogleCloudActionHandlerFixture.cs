@@ -11,7 +11,6 @@ using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
-using Sashimi.GCPScripting;
 using Sashimi.Server.Contracts;
 using Sashimi.Tests.Shared;
 using Sashimi.Tests.Shared.Server;

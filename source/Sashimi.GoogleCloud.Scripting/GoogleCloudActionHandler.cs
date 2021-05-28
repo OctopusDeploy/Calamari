@@ -3,9 +3,9 @@ using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 
-namespace Sashimi.GCPScripting
+namespace Sashimi.GoogleCloud.Scripting
 {
-    class GoogleCloudActionHandler : IActionHandlerWithAccount
+    class GoogleCloudActionHandler : IActionHandler
     {
         public string Id => SpecialVariables.Action.GoogleCloud.ActionTypeName;
         public string Name => "Run gcloud in a Script";
@@ -15,11 +15,10 @@ namespace Sashimi.GCPScripting
         public bool WhenInAChildStepRunInTheContextOfTheTargetMachine => false;
         public bool CanRunOnDeploymentTarget => false;
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, GoogleCloudConstants.GoogleCloudActionHandlerCategory, ActionHandlerCategory.Script };
-        public string[] StepBasedVariableNameForAccountIds { get; } = {SpecialVariables.Action.GoogleCloud.AccountId};
 
         public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
-            var builder = context.CalamariCommand(GoogleCloudConstants.CalamariAzure, "run-script");
+            var builder = context.CalamariCommand(GoogleCloudConstants.CalamariGoogleCloud, "run-script");
 
             var isInPackage = KnownVariableValues.Action.Script.ScriptSource.Package.Equals(context.Variables.Get(KnownVariables.Action.Script.ScriptSource), StringComparison.OrdinalIgnoreCase);
             if (isInPackage)

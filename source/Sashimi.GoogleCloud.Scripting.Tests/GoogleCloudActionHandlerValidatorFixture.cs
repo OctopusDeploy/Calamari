@@ -3,7 +3,6 @@ using FluentAssertions;
 using FluentValidation.TestHelper;
 using NUnit.Framework;
 using Octopus.Server.Extensibility.HostServices.Model;
-using Sashimi.GCPScripting;
 using Sashimi.Server.Contracts.ActionHandlers.Validation;
 
 namespace Sashimi.GoogleCloud.Scripting.Tests
@@ -22,22 +21,50 @@ namespace Sashimi.GoogleCloud.Scripting.Tests
         [Test]
         public void Validate_HasAccount_NoErrors()
         {
-            var context = CreateBareAction(new Dictionary<string, string> { { SpecialVariables.Action.GoogleCloud.AccountId, "Accounts-1" } });
+            var context = CreateBareAction(new Dictionary<string, string>
+            {
+                { SpecialVariables.Action.GoogleCloud.AccountVariable, "Accounts-Variable" },
+                { SpecialVariables.Action.GoogleCloud.UseVMServiceAccount, "False"}
+            });
             var result = validator.TestValidate(context);
-
-            result.IsValid.Should().BeTrue();
-            result.Errors.Should().NotContain(f => f.PropertyName == SpecialVariables.Action.GoogleCloud.AccountId);
+        
+            result.Errors.Should().NotContain(f => f.PropertyName == SpecialVariables.Action.GoogleCloud.AccountVariable);
         }
-
+        
         [Test]
         public void Validate_NoAccount_Error()
         {
-            var context = CreateBareAction(new Dictionary<string, string>());
+            var context = CreateBareAction(new Dictionary<string, string>
+            {
+                { SpecialVariables.Action.GoogleCloud.UseVMServiceAccount, "False"}
+            });
             var result = validator.TestValidate(context);
-
-            result.IsValid.Should().BeFalse();
-
-            result.Errors.Should().Contain(f => f.PropertyName == SpecialVariables.Action.GoogleCloud.AccountId);
+        
+            result.Errors.Should().Contain(f => f.PropertyName == SpecialVariables.Action.GoogleCloud.AccountVariable);
+        }
+        
+        [Test]
+        public void Validate_WhenUsingVMAccount_NoAccountIsRequired()
+        {
+            var context = CreateBareAction(new Dictionary<string, string>
+            {
+                { SpecialVariables.Action.GoogleCloud.UseVMServiceAccount, "True"}
+            });
+            var result = validator.TestValidate(context);
+        
+            result.Errors.Should().NotContain(f => f.PropertyName == SpecialVariables.Action.GoogleCloud.AccountVariable);
+        }
+        
+        [Test]
+        public void Validate_WhenImpersonateServiceAccount_EmailsAreRequired()
+        {
+            var context = CreateBareAction(new Dictionary<string, string>
+            {
+                { SpecialVariables.Action.GoogleCloud.ImpersonateServiceAccount, "True"}
+            });
+            var result = validator.TestValidate(context);
+        
+            result.Errors.Should().Contain(f => f.PropertyName == SpecialVariables.Action.GoogleCloud.ServiceAccountEmails);
         }
 
         static DeploymentActionValidationContext CreateBareAction(IReadOnlyDictionary<string, string> props)

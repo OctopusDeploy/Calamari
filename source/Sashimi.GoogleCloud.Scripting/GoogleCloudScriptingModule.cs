@@ -1,7 +1,7 @@
 ﻿using Autofac;
 using Sashimi.Server.Contracts.ActionHandlers;
 
-namespace Sashimi.GCPScripting
+namespace Sashimi.GoogleCloud.Scripting
 {
     public class GoogleCloudScriptingModule : Module
     {
