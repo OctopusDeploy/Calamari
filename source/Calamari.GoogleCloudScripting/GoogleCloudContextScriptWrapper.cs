@@ -207,7 +207,7 @@ namespace Calamari.GoogleCloudScripting
                 var result = commandLineRunner.Execute(invocation);
 
                 return result.ExitCode == 0
-                    ? captureCommandOutput.StdOut
+                    ? captureCommandOutput.StdOut.Trim()
                     : null;
             }
 
