@@ -8,13 +8,13 @@
 
     <ItemGroup>
       <PackageReference Include="Assent" Version="1.7.0" />
-      <PackageReference Include="Google.Apis.Iam.v1" Version="1.51.0.2303" />
-      <PackageReference Include="Google.Cloud.Iam.V1" Version="2.1.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
+      <PackageReference Include="Google.Apis.Iam.v1" Version="1.51.0.2330" />
+      <PackageReference Include="Google.Cloud.Iam.V1" Version="2.2.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="NSubstitute" Version="4.2.2" />
-    <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="14.0.4" />
-    <PackageReference Include="Sashimi.Tests.Shared" Version="13.0.0" />
+    <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="14.0.5" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="13.3.0" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
     </ItemGroup>
 
