@@ -126,6 +126,13 @@ class Build : NukeBuild
                     }
                 }
                 Logger.Trace($"{PublishDirectory}/{calamariFlavour}");
+
+                var files = Directory.EnumerateFiles(PublishDirectory / calamariFlavour, "*", SearchOption.AllDirectories);
+                foreach (var file in files)
+                {
+                    Logger.Info(file);
+                }
+
                 CompressionTasks.CompressZip(PublishDirectory / calamariFlavour, $"{ArtifactsDirectory / calamariFlavour}.zip");
             }
         });
