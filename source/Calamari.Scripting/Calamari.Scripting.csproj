@@ -15,7 +15,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Calamari.Common" Version="19.2.0" />
+        <PackageReference Include="Calamari.Common" Version="19.2.5" />
         <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
         <PackageReference Include="scriptcs" Version="0.17.1" />
     </ItemGroup>
@@ -32,7 +32,7 @@
             <Visible>false</Visible>
             <PackagePath>contentFiles/any/any/FSharp/</PackagePath>
             <PackageCopyToOutput>true</PackageCopyToOutput>
-            <PackageFlatten>true</PackageFlatten>
+            <PackageFlatten>false</PackageFlatten>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="ScriptCS/*.*">
@@ -41,7 +41,7 @@
             <Pack>true</Pack>
             <PackagePath>contentFiles/any/any/ScriptCS/</PackagePath>
             <PackageCopyToOutput>true</PackageCopyToOutput>
-            <PackageFlatten>true</PackageFlatten>
+            <PackageFlatten>false</PackageFlatten>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
