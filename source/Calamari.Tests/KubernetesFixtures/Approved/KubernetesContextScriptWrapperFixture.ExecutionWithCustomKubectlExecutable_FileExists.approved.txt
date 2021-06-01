@@ -1,0 +1,8 @@
+[Verbose] Temporary kubectl config set to <path>\kubectl-octo.yml
+[Verbose] "<customkubectl>" version --client --short
+[Verbose] "<customkubectl>" config set-cluster octocluster --server=<server>
+[Verbose] "<customkubectl>" config set-context octocontext --user=octouser --cluster=octocluster --namespace=calamari-testing
+[Verbose] "<customkubectl>" config use-context octocontext
+[Verbose] "<customkubectl>" config set-cluster octocluster --insecure-skip-tls-verify=true
+[Info] Creating kubectl context to <server> (namespace calamari-testing) using a Token
+[Verbose] "<customkubectl>" config set-credentials octouser --token=<token>

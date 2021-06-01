@@ -1,0 +1,13 @@
+[Verbose] "chmod" u=rw,g=,o= <path>\kubectl-octo.yml
+[Verbose] Temporary kubectl config set to <path>\kubectl-octo.yml
+[Verbose] "kubectl" version --client --short
+[Verbose] "kubectl" config set-cluster octocluster --server=<server>
+[Verbose] "kubectl" config set-context octocontext --user=octouser --cluster=octocluster --namespace=calamari-testing
+[Verbose] "kubectl" config use-context octocontext
+[Verbose] Encoding client cert key
+[Verbose] Encoding client cert pem
+[Info] ##octopus[setVariable name="bXljbGllbnRjZXJ0LlByaXZhdGVLZXlQZW1CYXNlNjQ=" value="WkdGMFlRPT0=" sensitive="VHJ1ZQ=="]
+[Verbose] "kubectl" config set users.octouser.client-certificate-data <data>
+[Verbose] "kubectl" config set users.octouser.client-key-data <data>
+[Verbose] "kubectl" config set clusters.octocluster.certificate-authority-data <data>
+[Verbose] "kubectl" config set-credentials octouser --username=myusername --password=<password>

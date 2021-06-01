@@ -1,6 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading.Tasks;
+using Assent;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -26,12 +31,17 @@ namespace Calamari.Tests.KubernetesFixtures
         static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
         IVariables variables;
         InMemoryLog log;
+        Dictionary<string, string> redactMap;
 
         [SetUp]
         public void Setup()
         {
             variables = new CalamariVariables();
             log = new DoNotDoubleLog();
+            redactMap = new Dictionary<string, string>
+            {
+                [ServerUrl] = "<server>"
+            };
         }
 
         [Test]
@@ -59,21 +69,213 @@ namespace Calamari.Tests.KubernetesFixtures
             SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
             var wrapper = CreateWrapper();
             TestScript(wrapper, "Test-Script.ps1");
         }
 
         [Test]
-        public void MakeWrapperFail()
+        public void ExecutionShouldFailWhenAccountTypeNotValid()
         {
             SetTestClusterVariables();
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "not valid");
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             var wrapper = CreateWrapper();
-            var result = ExecuteScript(wrapper, "Does not matter.ps1");
+            TestScriptInReadOnlyMode(wrapper).AssertFailure();
+        }
 
-            result.AssertFailure();
+        [Test]
+        public void ExecutionShouldApplyChmodInBash()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+
+        [Test]
+        public void ExecutionShouldUseGivenNamespace()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
+            variables.Set(SpecialVariables.Namespace, "my-special-namespace");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+
+        [Test]
+        public void ExecutionShouldOutputKubeConfig()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
+            variables.Set(SpecialVariables.OutputKubeConfig, Boolean.TrueString);
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+
+        [Test]
+        public void ExecutionWithCustomKubectlExecutable_FileDoesNotExist()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
+            variables.Set("Octopus.Action.Kubernetes.CustomKubectlExecutable", "mykubectl");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertFailure();
+        }
+
+        [Test]
+        public void ExecutionWithAzureServicePrincipal()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
+            variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", "clusterRG");
+            variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.FalseString);
+            variables.Set("Octopus.Action.Azure.SubscriptionId", "azSubscriptionId");
+            variables.Set("Octopus.Action.Azure.TenantId", "azTenantId");
+            variables.Set("Octopus.Action.Azure.Password", "azPassword");
+            variables.Set("Octopus.Action.Azure.ClientId", "azClientId");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+
+        [Test]
+        public void ExecutionWithAzureServicePrincipalWithAdmin()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
+            variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", "clusterRG");
+            variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.TrueString);
+            variables.Set("Octopus.Action.Azure.SubscriptionId", "azSubscriptionId");
+            variables.Set("Octopus.Action.Azure.TenantId", "azTenantId");
+            variables.Set("Octopus.Action.Azure.Password", "azPassword");
+            variables.Set("Octopus.Action.Azure.ClientId", "azClientId");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+
+        [Test]
+        public void ExecutionUsingPodServiceAccount_WithoutServerCert()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            using (var dir = TemporaryDirectory.Create())
+            using (var podServiceAccountToken = new TemporaryFile(Path.Combine(dir.DirectoryPath, "podServiceAccountToken")))
+            {
+                File.WriteAllText(podServiceAccountToken.FilePath, "podServiceAccountToken");
+                redactMap[podServiceAccountToken.FilePath] = "<podServiceAccountTokenPath>";
+                variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
+                var wrapper = CreateWrapper();
+                TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+            }
+        }
+
+        [Test]
+        public void ExecutionUsingPodServiceAccount_WithServerCert()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            using (var dir = TemporaryDirectory.Create())
+            using (var podServiceAccountToken = new TemporaryFile(Path.Combine(dir.DirectoryPath, "podServiceAccountToken")))
+            using (var certificateAuthority = new TemporaryFile(Path.Combine(dir.DirectoryPath, "certificateAuthority")))
+            {
+                File.WriteAllText(podServiceAccountToken.FilePath, "podServiceAccountToken");
+                File.WriteAllText(certificateAuthority.FilePath, "certificateAuthority");
+                redactMap[podServiceAccountToken.FilePath] = "<podServiceAccountTokenPath>";
+                redactMap[certificateAuthority.FilePath] = "<certificateAuthorityPath>";
+                variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
+                variables.Set("Octopus.Action.Kubernetes.CertificateAuthorityPath", certificateAuthority.FilePath);
+                var wrapper = CreateWrapper();
+                TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+            }
+        }
+
+        [Test]
+        public void ExecutionWithClientAndCertificateAuthority()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "UsernamePassword");
+            variables.Set("Octopus.Account.Username", "myusername");
+            variables.Set("Octopus.Account.Password", "mypassword");
+            var clientCert = "myclientcert";
+            variables.Set("Octopus.Action.Kubernetes.ClientCertificate", clientCert);
+            variables.Set($"{clientCert}.CertificatePem", "data");
+            variables.Set($"{clientCert}.PrivateKeyPem", "data");
+            var certificateAuthority = "myauthority";
+            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
+            variables.Set($"{certificateAuthority}.CertificatePem", "data");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+
+        [Test]
+        public void ExecutionWithUsernamePassword()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "UsernamePassword");
+            variables.Set("Octopus.Account.Username", "myusername");
+            variables.Set("Octopus.Account.Password", "mypassword");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+
+        [Test]
+        public void ExecutionWithEKS()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(SpecialVariables.EksClusterName, "my-eks-cluster");
+            var account = "eks_account";
+            variables.Set("Octopus.Action.AwsAccount.Variable", account);
+            variables.Set("Octopus.Action.Aws.Region", "eks_region");
+            variables.Set($"{account}.AccessKey", "AccessKey");
+            variables.Set($"{account}.SecretKey", "SecretKey");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+
+        [Test]
+        public void ExecutionWithCustomKubectlExecutable_FileExists()
+        {
+            SetTestClusterVariables();
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
+            using (var dir = TemporaryDirectory.Create())
+            using (var tempExe = new TemporaryFile(Path.Combine(dir.DirectoryPath, "mykubectl.exe")))
+            {
+                File.WriteAllText(tempExe.FilePath, string.Empty);
+                variables.Set("Octopus.Action.Kubernetes.CustomKubectlExecutable", tempExe.FilePath);
+                redactMap[tempExe.FilePath] = "<customkubectl>";
+                var wrapper = CreateWrapper();
+                TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+            }
         }
 
         [Test]
@@ -84,6 +286,8 @@ namespace Calamari.Tests.KubernetesFixtures
             SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Core");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
             var wrapper = CreateWrapper();
             TestScript(wrapper, "Test-Script.ps1");
         }
@@ -94,6 +298,8 @@ namespace Calamari.Tests.KubernetesFixtures
         public void BashKubeCtlScripts()
         {
             SetTestClusterVariables();
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             var wrapper = CreateWrapper();
             TestScript(wrapper, "Test-Script.sh");
@@ -101,7 +307,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         KubernetesContextScriptWrapper CreateWrapper()
         {
-            return new KubernetesContextScriptWrapper(variables, log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem()) { VerifyAmazonLogin = () => Task.FromResult(true)};
         }
 
         void SetTestClusterVariables()
@@ -109,8 +315,6 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.ClusterUrl, ServerUrl);
             variables.Set(SpecialVariables.SkipTlsVerification, "true");
             variables.Set(SpecialVariables.Namespace, "calamari-testing");
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
-            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
         }
 
         void TestScript(IScriptWrapper wrapper, string scriptName)
@@ -125,18 +329,65 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
+        CalamariResult TestScriptInReadOnlyMode(IScriptWrapper wrapper, [CallerMemberName] string testName = null, [CallerFilePath] string filePath = null)
+        {
+            using (var dir = TemporaryDirectory.Create())
+            using (var temp = new TemporaryFile(Path.Combine(dir.DirectoryPath, $"scriptName.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
+            {
+                File.WriteAllText(temp.FilePath, "kubectl get nodes");
+
+                var output = ExecuteScriptInRecordOnlyMode(wrapper, temp.FilePath);
+                redactMap[dir.DirectoryPath] = "<path>";
+                var sb = new StringBuilder();
+                foreach (var message in log.Messages)
+                {
+                    var text = message.FormattedMessage;
+                    text = redactMap.Aggregate(text, (current, pair) => current.Replace(pair.Key, pair.Value));
+                    sb.AppendLine($"[{message.Level}] {text}");
+                }
+
+                var kubectlConfig = File.ReadAllText(Path.Combine(dir.DirectoryPath, "kubectl-octo.yml"));
+                if (!string.IsNullOrEmpty(kubectlConfig))
+                {
+                    sb.AppendLine(kubectlConfig);
+                }
+                this.Assent(sb.ToString().Replace("\r\n", "\n"), testName: testName, filePath: filePath, configuration: Helpers.TestEnvironment.AssentConfiguration);
+
+                return output;
+            }
+        }
+
         CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName)
         {
-            var runner = new CommandLineRunner(log, variables);
-            var engine = new ScriptEngine(new[] { wrapper });
-            var result = engine.Execute(new Script(scriptName), variables, runner, new Dictionary<string, string>());
+            var calamariResult = ExecuteScriptInternal(new CommandLineRunner(log, variables), wrapper, scriptName);
 
             foreach (var message in log.Messages)
             {
                 Console.WriteLine($"[{message.Level}] {message.FormattedMessage}");
             }
 
+            return calamariResult;
+        }
+
+        CalamariResult ExecuteScriptInRecordOnlyMode(IScriptWrapper wrapper, string scriptName)
+        {
+            return ExecuteScriptInternal(new RecordOnly(), wrapper, scriptName);
+        }
+
+        CalamariResult ExecuteScriptInternal(ICommandLineRunner runner, IScriptWrapper wrapper, string scriptName)
+        {
+            var engine = new ScriptEngine(new[] { wrapper });
+            var result = engine.Execute(new Script(scriptName), variables, runner, new Dictionary<string, string>());
+
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
+        }
+
+        class RecordOnly :  ICommandLineRunner
+        {
+            public CommandResult Execute(CommandLineInvocation invocation)
+            {
+                return new CommandResult(invocation.ToString(), 0);
+            }
         }
 
         class DoNotDoubleLog : InMemoryLog
