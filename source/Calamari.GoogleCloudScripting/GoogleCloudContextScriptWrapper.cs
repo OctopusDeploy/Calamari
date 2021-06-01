@@ -152,7 +152,7 @@ namespace Calamari.GoogleCloudScripting
                     using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, Path.GetRandomFileName())))
                     {
                         File.WriteAllBytes(keyFile.FilePath, bytes);
-                        if (ExecuteCommand("auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\"", "--no-user-output-enabled")
+                        if (ExecuteCommand("auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\"")
                             .ExitCode != 0)
                         {
                             log.Error("Failed to authenticate with gcloud.");
@@ -169,7 +169,12 @@ namespace Calamari.GoogleCloudScripting
 
                 if (impersonationEmails != null)
                 {
-                    ExecuteCommand("config", "set", "auth/impersonate_service_account", impersonationEmails, "--no-user-output-enabled");
+                    if (ExecuteCommand("config", "set", "auth/impersonate_service_account", impersonationEmails)
+                        .ExitCode != 0)
+                    {
+                        log.Error("Failed to impersonate service account.");
+                        return errorResult;
+                    }
                     log.Verbose("Impersonation emails set.");
                 }
 
@@ -183,17 +188,38 @@ namespace Calamari.GoogleCloudScripting
                     throw new Exception("gcloud is null");
                 }
 
+                var captureCommandOutput = new CaptureCommandOutput();
                 var invocation = new CommandLineInvocation(gcloud, arguments)
                 {
                     EnvironmentVars = environmentVars,
                     WorkingDirectory = workingDirectory,
-                    OutputAsVerbose = true,
-                    OutputToLog = true,
+                    OutputAsVerbose = false,
+                    OutputToLog = false,
+                    AdditionalInvocationOutputSink = captureCommandOutput
                 };
 
                 log.Verbose(invocation.ToString());
 
                 var result = commandLineRunner.Execute(invocation);
+
+                foreach (var message in captureCommandOutput.Messages)
+                {
+                    if (result.ExitCode == 0)
+                    {
+                        log.Verbose(message.Text);
+                        continue;
+                    }
+
+                    switch (message.Level)
+                    {
+                        case Level.Verbose:
+                            log.Verbose(message.Text);
+                            break;
+                        case Level.Error:
+                            log.Error(message.Text);
+                            break;
+                    }
+                }
 
                 return result;
             }
@@ -213,24 +239,45 @@ namespace Calamari.GoogleCloudScripting
                 var result = commandLineRunner.Execute(invocation);
 
                 return result.ExitCode == 0
-                    ? captureCommandOutput.StdOut.Trim()
+                    ? String.Join(Environment.NewLine, captureCommandOutput.Messages.Where(m => m.Level == Level.Verbose).Select(m => m.Text).ToArray()).Trim()
                     : null;
             }
 
             class CaptureCommandOutput : ICommandInvocationOutputSink
             {
-                private readonly StringBuilder _output = new StringBuilder();
+                private List<Message> messages = new List<Message>();
 
-                public string StdOut => _output.ToString();
+                public List<Message> Messages
+                {
+                    get => messages;
+                }
 
                 public void WriteInfo(string line)
                 {
-                    _output.AppendLine(line);
+                    Messages.Add(new Message(Level.Verbose, line));
                 }
 
                 public void WriteError(string line)
                 {
+                    Messages.Add(new Message(Level.Error, line));
                 }
+            }
+
+            class Message
+            {
+                public Level Level { get; }
+                public string Text { get; }
+                public Message(Level level, string text)
+                {
+                    Level = level;
+                    Text = text;
+                }
+            }
+
+            enum Level
+            {
+                Verbose,
+                Error
             }
         }
     }
