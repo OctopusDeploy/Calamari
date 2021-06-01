@@ -89,7 +89,7 @@ namespace Calamari.GoogleCloudScripting
                 Directory.CreateDirectory(gcloudConfigPath);
 
                 gcloud = variables.Get("Octopus.Action.GoogleCloud.CustomExecutable");
-                if (!String.IsNullOrEmpty(gcloud))
+                if (!string.IsNullOrEmpty(gcloud))
                 {
                     if (!File.Exists(gcloud))
                     {
@@ -163,7 +163,7 @@ namespace Calamari.GoogleCloudScripting
 
                 if (impersonationEmails != null)
                 {
-                    ExecuteCommand("config", "set", "auth/impersonate_service_account", impersonationEmails);
+                    ExecuteCommand("config", "set", "auth/impersonate_service_account", impersonationEmails, "--no-user-output-enabled");
                     log.Verbose("Impersonation emails set.");
                 }
 
@@ -213,13 +213,13 @@ namespace Calamari.GoogleCloudScripting
 
             class CaptureCommandOutput : ICommandInvocationOutputSink
             {
-                private StringBuilder output = new StringBuilder();
+                private readonly StringBuilder _output = new StringBuilder();
 
-                public string StdOut => output.ToString();
+                public string StdOut => _output.ToString();
 
                 public void WriteInfo(string line)
                 {
-                    output.AppendLine(line);
+                    _output.AppendLine(line);
                 }
 
                 public void WriteError(string line)
