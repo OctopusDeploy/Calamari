@@ -118,8 +118,14 @@ namespace Calamari.GoogleCloudScripting
                 {
                     impersonationEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
                 }
+
+                var project = variables.Get("Octopus.Action.GoogleCloud.Project") ?? string.Empty;
                 var region = variables.Get("Octopus.Action.GoogleCloud.Region") ?? string.Empty;
                 var zone = variables.Get("Octopus.Action.GoogleCloud.Zone") ?? string.Empty;
+                if (!string.IsNullOrEmpty(project))
+                {
+                    environmentVars.Add("CLOUDSDK_CORE_PROJECT", project);
+                }
                 if (!string.IsNullOrEmpty(region))
                 {
                     environmentVars.Add("CLOUDSDK_COMPUTE_REGION", region);
