@@ -145,6 +145,11 @@ namespace Calamari.AzureAppService.Behaviors
 
             Log.Verbose($@"Publishing {uploadZipPath} to https://{targetSite}.scm.azurewebsites.net{Archive.UploadUrlPath}");
 
+            // The HttpClient default timeout is 100 seconds: https://docs.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.timeout?view=net-5.0#remarks
+            // This timeouts with even relatively small packages: https://octopus.zendesk.com/agent/tickets/69928
+            // We'll set this to an hour for now, but we should probably implement some more advanced retry logic, similar to https://github.com/OctopusDeploy/Sashimi.AzureWebApp/blob/bbea36152b2fb531c2893efedf0330a06ae0cef0/source/Calamari/AzureWebAppBehaviour.cs#L70
+            client.Timeout = TimeSpan.FromHours(1);
+            
             var response = await client.PostAsync($@"https://{targetSite}.scm.azurewebsites.net{Archive.UploadUrlPath}",
                 new StreamContent(new FileStream(uploadZipPath, FileMode.Open)));
 
