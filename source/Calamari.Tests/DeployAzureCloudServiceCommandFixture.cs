@@ -245,8 +245,19 @@ namespace Calamari.AzureCloudService.Tests
 
         async Task EnsureDeploymentStatus(DeploymentStatus requiredStatus, ComputeManagementClient client, string serviceName, DeploymentSlot deploymentSlot)
         {
-            var deployment = await client.Deployments.GetBySlotAsync(serviceName, deploymentSlot);
-            deployment.Status.Should().Be(requiredStatus);
+            DeploymentStatus status;
+            var counter = 0;
+            do
+            {
+                var deployment = await client.Deployments.GetBySlotAsync(serviceName, deploymentSlot);
+                status = deployment.Status;
+                if (status == requiredStatus)
+                {
+                    break;
+                }
+                await Task.Delay(TimeSpan.FromSeconds(2));
+            } while (counter++ < 5);
+            status.Should().Be(requiredStatus);
         }
 
         static X509Certificate2 CreateManagementCertificate(string certificate)
