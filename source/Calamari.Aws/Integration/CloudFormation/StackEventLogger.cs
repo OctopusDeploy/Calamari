@@ -76,8 +76,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                 log.Warn(
                     status.SelectValueOr(x =>
                             $"Stack status {x.ResourceStatus.Value} indicated rollback or failed state. This means that the stack was not processed correctly. ",
-                            "Stack was unexpectedly missing during processing. ") +
-                        "This means that the stack was not processed correctly. " +
+                            "Stack was unexpectedly missing during processing. This means that the stack was not processed correctly.") +
                         "Review the stack events logged below or check the stack in the AWS console to find any errors that may have occured during deployment."
                     );
                 try
