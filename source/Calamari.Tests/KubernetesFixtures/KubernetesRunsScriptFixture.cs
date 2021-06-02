@@ -337,7 +337,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 File.WriteAllText(temp.FilePath, "kubectl get nodes");
 
                 var output = ExecuteScriptInRecordOnlyMode(wrapper, temp.FilePath);
-                redactMap[dir.DirectoryPath] = "<path>";
+                redactMap[dir.DirectoryPath + Path.DirectorySeparatorChar] = "<path>";
                 var sb = new StringBuilder();
                 foreach (var message in log.Messages)
                 {

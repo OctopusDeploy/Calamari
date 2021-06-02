@@ -1,4 +1,4 @@
-[Verbose] Temporary kubectl config set to <path>\kubectl-octo.yml
+[Verbose] Temporary kubectl config set to <path>kubectl-octo.yml
 [Verbose] "kubectl" version --client --short
 [Verbose] "kubectl" config set-cluster octocluster --server=<server>
 [Verbose] "kubectl" config set-context octocontext --user=octouser --cluster=octocluster --namespace=calamari-testing
