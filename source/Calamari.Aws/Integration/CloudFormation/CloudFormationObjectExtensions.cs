@@ -34,7 +34,8 @@ namespace Calamari.Aws.Integration.CloudFormation
                 "ROLLBACK_COMPLETE",
                 "ROLLBACK_FAILED",
                 "DELETE_FAILED",
-                "CREATE_FAILED"
+                "CREATE_FAILED",
+                "UPDATE_FAILED"
             };
 
         /// Some statuses indicate that the only way forward is to delete the stack and try again.
