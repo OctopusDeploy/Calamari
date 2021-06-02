@@ -5,8 +5,8 @@ using NSubstitute;
 using NUnit.Framework;
 using Octopus.Diagnostics;
 using Octopus.Server.MessageContracts;
+using Octopus.Server.MessageContracts.Features.Accounts;
 using Sashimi.AzureCloudService.Endpoints;
-using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Tests.Shared.Extensions;
 
 namespace Sashimi.AzureCloudService.Tests
@@ -102,9 +102,9 @@ namespace Sashimi.AzureCloudService.Tests
             return new CertificateGenerator().GenerateNew(CertificateExpectations.BuildOctopusAzureCertificateFullName("blah"));
         }
 
-        class TestAccountDetailsResource : AccountDetailsResource
+        class TestAccountDetailsResource : AccountResource
         {
-            public override AccountType AccountType => new AccountType("blah");
+            public override AccountType AccountType => AccountType.Token;
         }
     }
 }

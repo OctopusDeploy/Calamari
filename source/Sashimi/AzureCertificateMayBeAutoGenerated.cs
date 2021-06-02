@@ -1,5 +1,6 @@
 using System;
 using Octopus.Server.MessageContracts;
+using Octopus.Server.MessageContracts.Features.Accounts;
 using Sashimi.Server.Contracts.Accounts;
 
 namespace Sashimi.AzureCloudService
@@ -15,12 +16,12 @@ namespace Sashimi.AzureCloudService
             this.certificateGenerator = certificateGenerator;
         }
 
-        public override bool CanContribute(AccountDetailsResource resource)
+        public override bool CanContribute(AccountResource resource)
         {
             return resource is AzureSubscriptionAccountResource;
         }
 
-        public override void ModifyResource(AccountDetailsResource accountResource, string name)
+        public override void ModifyResource(AccountResource accountResource, string name)
         {
             var resource = (AzureSubscriptionAccountResource)accountResource;
             if (resource.CertificateBytes.HasValue)

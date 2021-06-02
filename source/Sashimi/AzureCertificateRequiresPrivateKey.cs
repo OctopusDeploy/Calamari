@@ -1,3 +1,4 @@
+using Octopus.Server.MessageContracts.Features.Accounts;
 using Sashimi.Server.Contracts.Accounts;
 
 namespace Sashimi.AzureCloudService
@@ -11,12 +12,12 @@ namespace Sashimi.AzureCloudService
             this.certificateEncoder = certificateEncoder;
         }
 
-        public override bool CanContribute(AccountDetailsResource resource)
+        public override bool CanContribute(AccountResource resource)
         {
             return resource is AzureSubscriptionAccountResource;
         }
 
-        public override ValidationResult ValidateResource(AccountDetailsResource accountResource)
+        public override ValidationResult ValidateResource(AccountResource accountResource)
         {
             var resource = (AzureSubscriptionAccountResource) accountResource;
             if (!string.IsNullOrWhiteSpace(resource.CertificateBytes.NewValue))
