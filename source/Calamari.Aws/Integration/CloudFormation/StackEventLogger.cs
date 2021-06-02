@@ -82,12 +82,19 @@ namespace Calamari.Aws.Integration.CloudFormation
                     );
                 try
                 {
-                    var progressStatuses = query(stack => stack != null && stack.ResourceStatusReason != null && stack.MaybeIndicatesSuccess().SelectValueOr(x => x, true) == false);
+                    var progressStatuses = query(stack => stack?.ResourceStatusReason != null);
 
                     foreach (var progressStatus in progressStatuses)
                     {
                         if (progressStatus.Some())
-                            log.Warn($"Stack event: {progressStatus.Value.Timestamp:u} - {progressStatus.Value.LogicalResourceId} - {progressStatus.Value.ResourceStatus} - {progressStatus.Value.ResourceStatusReason}");
+                        {
+                            var progressStatusSuccess = progressStatus.Select(s => s.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, true);
+                            var progressStatusMessage = $"Stack event: {progressStatus.Value.Timestamp:u} - {progressStatus.Value.LogicalResourceId} - {progressStatus.Value.ResourceStatus} - {progressStatus.Value.ResourceStatusReason}";
+                            if (progressStatusSuccess)
+                                log.Verbose(progressStatusMessage);
+                            else
+                                log.Warn(progressStatusMessage);
+                        }
                     }
                 }
                 catch (PermissionException)
