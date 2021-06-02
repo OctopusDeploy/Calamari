@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
@@ -130,7 +129,6 @@ namespace Calamari.GoogleCloudScripting
                 {
                     environmentVars.Add("CLOUDSDK_COMPUTE_REGION", region);
                 }
-
                 if (!string.IsNullOrEmpty(zone))
                 {
                     environmentVars.Add("CLOUDSDK_COMPUTE_ZONE", zone);
