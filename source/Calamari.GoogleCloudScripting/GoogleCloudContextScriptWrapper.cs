@@ -245,10 +245,7 @@ namespace Calamari.GoogleCloudScripting
             {
                 private List<Message> messages = new List<Message>();
 
-                public List<Message> Messages
-                {
-                    get => messages;
-                }
+                public List<Message> Messages => messages;
 
                 public void WriteInfo(string line)
                 {
