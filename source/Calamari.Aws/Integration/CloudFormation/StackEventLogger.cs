@@ -43,7 +43,7 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// <param name="status">The current status of the stack</param>
         public void Log(Maybe<StackEvent> status)
         {
-            var statusMessage = status.SelectValueOrDefault(x => $"{x.ResourceType} {x.ResourceStatus.Value ?? "Does not exist"}");
+            var statusMessage = status.SelectValueOrDefault(x => $"{x.LogicalResourceId} - {x.ResourceType} - {x.ResourceStatus.Value ?? "Does not exist"}{(x.ResourceStatusReason != null ? $" - {x.ResourceStatusReason}" : "")}");
             if (statusMessage != lastMessage)
             {
                 log.Info($"Current stack state: {statusMessage}");
@@ -89,7 +89,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                         if (progressStatus.Some())
                         {
                             var progressStatusSuccess = progressStatus.Select(s => s.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, true);
-                            var progressStatusMessage = $"Stack event: {progressStatus.Value.Timestamp:u} - {progressStatus.Value.LogicalResourceId} - {progressStatus.Value.ResourceStatus} - {progressStatus.Value.ResourceStatusReason}";
+                            var progressStatusMessage = $"Stack event: {progressStatus.Value.Timestamp:u} - {progressStatus.Value.LogicalResourceId} - {progressStatus.Value.ResourceType} - {progressStatus.Value.ResourceStatus} - {progressStatus.Value.ResourceStatusReason}";
                             if (progressStatusSuccess)
                                 log.Verbose(progressStatusMessage);
                             else
