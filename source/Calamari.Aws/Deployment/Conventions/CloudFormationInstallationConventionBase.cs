@@ -96,7 +96,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     Logger.Log(@event);
                     Logger.LogRollbackError(
                         @event, 
-                        x => WithAmazonServiceExceptionHandling(() => clientFactory.GetStackEvents(stack, x).GetAwaiter().GetResult()),
+                        x => WithAmazonServiceExceptionHandling(() => clientFactory.GetStackEvents(stack, (e) => x(e) && filter(e)).GetAwaiter().GetResult()),
                         expectSuccess,
                         missingIsFailure);
                 }
@@ -158,6 +158,11 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 throw new Exception("An unrecognised exception was thrown while querying the CloudFormation stacks.", ex);
             }
+        }
+
+        protected Func<StackEvent, bool> FilterStackEventsSince(DateTime timestamp)
+        {
+            return (e) => e.Timestamp >= timestamp;
         }
     }
 }

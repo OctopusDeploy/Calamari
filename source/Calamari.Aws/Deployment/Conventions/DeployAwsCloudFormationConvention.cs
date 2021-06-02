@@ -97,9 +97,11 @@ namespace Calamari.Aws.Deployment.Conventions
         private async Task DeployCloudFormation(RunningDeployment deployment, StackArn stack, CloudFormationTemplate template)
         {
             Guard.NotNull(deployment, "deployment can not be null");
+
+            var deploymentStartTime = DateTime.Now;
            
-            await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, false));
-            await DeployStack(deployment, stack, template);
+            await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, false, filter: FilterStackEventsSince(deploymentStartTime)));
+            await DeployStack(deployment, stack, template, deploymentStartTime);
         }
 
         /// <summary>
@@ -108,7 +110,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="deployment">The current deployment</param>
         /// <param name="stack"></param>
         /// <param name="template"></param>
-        private async Task DeployStack(RunningDeployment deployment, StackArn stack, CloudFormationTemplate template)
+        private async Task DeployStack(RunningDeployment deployment, StackArn stack, CloudFormationTemplate template, DateTime deploymentStartTime)
         {
             Guard.NotNull(deployment, "deployment can not be null");
            
@@ -120,7 +122,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if (waitForComplete)
             {
-                await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack));
+                await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, filter: FilterStackEventsSince(deploymentStartTime)));
             }
 
             // Take the stack ID returned by the create or update events, and save it as an output variable
@@ -202,6 +204,8 @@ namespace Calamari.Aws.Deployment.Conventions
             CloudFormationTemplate template)
         {
             Guard.NotNull(deployment, "deployment can not be null");
+            var deploymentStartTime = DateTime.Now;
+
             try
             {
                 var result = await ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration).UpdateStackAsync(new UpdateStackRequest
@@ -238,7 +242,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 // created in the first place, we can end up here. In this case we try to create
                 // the stack from scratch.
                 await DeleteCloudFormation(stack);
-                await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, false));
+                await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, false, filter: FilterStackEventsSince(deploymentStartTime)));
                 return await CreateCloudFormation(deployment, template);
             }
             catch (AmazonServiceException ex)
