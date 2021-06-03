@@ -1,11 +1,14 @@
 ﻿using Octopus.Server.MessageContracts.Attributes;
-using Sashimi.Server.Contracts.Endpoints;
+using Octopus.Server.MessageContracts.Features.DeploymentTargets;
+using Octopus.Server.MessageContracts.Features.Machines;
 
 namespace Sashimi.AzureAppService.Endpoints
 {
     public class AzureWebAppEndpointResource : EndpointResource
     {
+#pragma warning disable 672
         public override CommunicationStyle CommunicationStyle => CommunicationStyle.AzureWebApp;
+#pragma warning restore 672
 
         [Trim]
         [Writeable]
