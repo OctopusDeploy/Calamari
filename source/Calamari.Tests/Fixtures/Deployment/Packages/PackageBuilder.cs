@@ -28,7 +28,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             var nugetCommandLine = "dotnet";
 
             var target = GetNixFileOrDefault(packageDirectory, name, ".csproj");
-#endif                 
+#endif
 
             var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
             Directory.CreateDirectory(output);
@@ -74,8 +74,8 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             else
             {
                 var path = Path.Combine(filePath, filePrefix + ".Nix" + fileSuffix);
-                return File.Exists(path) 
-                    ? path 
+                return File.Exists(path)
+                    ? path
                     : GetWindowsOrDefaultPath();
             }
 
@@ -90,7 +90,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
         static string AddFileToPackage(string packageDirectory)
         {
             var indexFilePath = Path.Combine(packageDirectory, "index.html");
-            var content = 
+            var content =
 "<!DOCTYPE html>\n" +
 "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n" +
 "<head>\n" +
