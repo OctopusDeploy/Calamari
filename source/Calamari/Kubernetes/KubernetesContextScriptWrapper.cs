@@ -459,20 +459,26 @@ namespace Calamari.Kubernetes
                                         yaml.Load(input);
                                     }
 
-                                    var invoice = (YamlMappingNode)yaml.Documents[0].RootNode;
-                                    if (!invoice.Children.ContainsKey("users")) {
-                                        invoice.Children["users"] = new YamlSequenceNode();
+                                    if (yaml.Documents.Count == 0)
+                                    {
+                                        yaml.Documents.Add(new YamlDocument(new YamlMappingNode { { "apiVersion", "v1" } }));
                                     }
 
-                                    if(!(invoice.Children["users"] is YamlSequenceNode)) {
-                                        invoice.Children["users"] = new YamlSequenceNode();
+                                    var rootNode = (YamlMappingNode)yaml.Documents[0].RootNode;
+                                    if (!rootNode.Children.ContainsKey("users")) {
+                                        rootNode.Children["users"] = new YamlSequenceNode();
                                     }
-                                    if(((YamlSequenceNode)invoice.Children["users"]).Children.Count == 0) {
-                                        invoice.Children["users"] = new YamlSequenceNode();
+
+                                    if(!(rootNode.Children["users"] is YamlSequenceNode)) {
+                                        rootNode.Children["users"] = new YamlSequenceNode();
+                                    }
+
+                                    if(((YamlSequenceNode)rootNode.Children["users"]).Children.Count == 0) {
+                                        rootNode.Children["users"] = new YamlSequenceNode();
                                     }
 
                                     // https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
-                                    ((YamlSequenceNode)invoice.Children["users"]).Add(new YamlMappingNode
+                                    ((YamlSequenceNode)rootNode.Children["users"]).Add(new YamlMappingNode
                                     {
                                         { "name", user },
                                         {
@@ -597,7 +603,7 @@ namespace Calamari.Kubernetes
                 var kubeConfig = Path.Combine(workingDirectory, "kubectl-octo.yml");
 
                 // create an empty file, to suppress kubectl errors about the file missing
-                File.WriteAllText(kubeConfig, "apiVersion: v1");
+                File.WriteAllText(kubeConfig, string.Empty);
 
                 environmentVars.Add("KUBECONFIG", kubeConfig);
 

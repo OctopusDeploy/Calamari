@@ -217,9 +217,6 @@ namespace Calamari.Tests.KubernetesFixtures
             SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "UsernamePassword");
-            variables.Set("Octopus.Account.Username", "myusername");
-            variables.Set("Octopus.Account.Password", "mypassword");
             var clientCert = "myclientcert";
             variables.Set("Octopus.Action.Kubernetes.ClientCertificate", clientCert);
             variables.Set($"{clientCert}.CertificatePem", "data");

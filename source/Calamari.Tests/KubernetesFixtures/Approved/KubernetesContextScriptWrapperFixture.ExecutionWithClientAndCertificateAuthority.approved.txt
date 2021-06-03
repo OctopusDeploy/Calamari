@@ -10,5 +10,4 @@
 [Verbose] "kubectl" config set users.octouser.client-certificate-data <data> --request-timeout=1m
 [Verbose] "kubectl" config set users.octouser.client-key-data <data> --request-timeout=1m
 [Verbose] "kubectl" config set clusters.octocluster.certificate-authority-data <data> --request-timeout=1m
-[Verbose] "kubectl" config set-credentials octouser --username=myusername --password=<password> --request-timeout=1m
 [Verbose] "kubectl" get namespace calamari-testing --request-timeout=1m
