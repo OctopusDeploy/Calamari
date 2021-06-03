@@ -445,19 +445,12 @@ namespace Calamari.Kubernetes
 #endif
 
                                     /*
-                                kubectl doesn't yet support exec authentication
-                                https://github.com/kubernetes/kubernetes/issues/64751
-                                so build this manually
-                                */
+                                    kubectl doesn't yet support exec authentication
+                                    https://github.com/kubernetes/kubernetes/issues/64751
+                                    so build this manually
+                                    */
                                     var clusterName = variables.Get(SpecialVariables.EksClusterName);
                                     log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
-
-                                    /*
-                                The call to set-cluster above will create a file with empty users. We need to call
-                                set-cluster first, because if we try to add the exec user first, set-cluster will
-                                delete those settings. So we now delete the users line (the last line of the yaml file)
-                                and add our own.
-                                */
 
                                     YamlStream yaml;
                                     using (var input = new StreamReader(kubeConfig))
@@ -604,7 +597,7 @@ namespace Calamari.Kubernetes
                 var kubeConfig = Path.Combine(workingDirectory, "kubectl-octo.yml");
 
                 // create an empty file, to suppress kubectl errors about the file missing
-                File.WriteAllText(kubeConfig, string.Empty);
+                File.WriteAllText(kubeConfig, "apiVersion: v1");
 
                 environmentVars.Add("KUBECONFIG", kubeConfig);
 

@@ -1,8 +1,9 @@
 [Verbose] Temporary kubectl config set to <path>kubectl-octo.yml
-[Verbose] "kubectl" version --client --short
-[Verbose] "kubectl" config set-cluster octocluster --server=<server>
-[Verbose] "kubectl" config set-context octocontext --user=octouser --cluster=octocluster --namespace=my-special-namespace
-[Verbose] "kubectl" config use-context octocontext
-[Verbose] "kubectl" config set-cluster octocluster --insecure-skip-tls-verify=true
+[Verbose] "kubectl" version --client --short --request-timeout=1m
+[Verbose] "kubectl" config set-cluster octocluster --server=<server> --request-timeout=1m
+[Verbose] "kubectl" config set-context octocontext --user=octouser --cluster=octocluster --namespace=my-special-namespace --request-timeout=1m
+[Verbose] "kubectl" config use-context octocontext --request-timeout=1m
+[Verbose] "kubectl" config set-cluster octocluster --insecure-skip-tls-verify=true --request-timeout=1m
 [Info] Creating kubectl context to <server> (namespace my-special-namespace) using a Token
-[Verbose] "kubectl" config set-credentials octouser --token=<token>
+[Verbose] "kubectl" config set-credentials octouser --token=<token> --request-timeout=1m
+[Verbose] "kubectl" get namespace my-special-namespace --request-timeout=1m

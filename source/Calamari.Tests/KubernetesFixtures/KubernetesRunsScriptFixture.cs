@@ -390,6 +390,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             public CommandResult Execute(CommandLineInvocation invocation)
             {
+                invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));
                 return new CommandResult(invocation.ToString(), 0);
             }
         }
