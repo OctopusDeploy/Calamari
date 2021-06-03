@@ -153,13 +153,33 @@ namespace Calamari.Aws.Integration.CloudFormation
         {
             try
             {
+                var stackEventResults = new List<Maybe<StackEvent>>();
+
                 var response = await clientFactory().DescribeStackEventsAsync(new DescribeStackEventsRequest { StackName = stack.Value });
 
-                return response?
+                var stackEvents = response?
                     .StackEvents.OrderBy(stackEvent => stackEvent.Timestamp)
-                    .Where(stackEvent => predicate == null || predicate(stackEvent))
-                    .Select(s => s.AsSome())
+                    .Where(stackEvent => predicate == null || predicate(stackEvent))                    
                     .ToList();
+
+                stackEventResults.AddRange(stackEvents.Select(s => s.AsSome()));
+
+                var nestedStackIds = stackEvents
+                    .Where(s => s.ResourceType == "AWS::CloudFormation::Stack" && s.PhysicalResourceId != s.StackId)
+                    .Select(s => s.PhysicalResourceId)
+                    .Distinct()
+                    .ToList();
+
+                foreach (var nestedStackId in nestedStackIds)
+                {
+                    var nestedStackEvents = await GetStackEvents(clientFactory, new StackArn(nestedStackId), predicate);
+                    if (nestedStackEvents.Any())
+                    {
+                        stackEventResults.AddRange(nestedStackEvents);
+                    }
+                }
+
+                return stackEventResults;
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
             {
