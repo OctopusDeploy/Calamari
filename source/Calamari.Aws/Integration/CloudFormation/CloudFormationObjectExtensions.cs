@@ -178,7 +178,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                     }
                 }
 
-                return stackEventResults.OrderBy(s => s.Select(e => e.Timestamp)).ToList();
+                return stackEventResults.OrderBy(s => s.SelectValueOr(e => e.Timestamp, DateTime.MinValue)).ToList();
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
             {
