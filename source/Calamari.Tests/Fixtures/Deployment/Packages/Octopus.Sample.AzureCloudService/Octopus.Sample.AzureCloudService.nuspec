@@ -10,7 +10,6 @@
     <licenseUrl>http://tempuri.org/</licenseUrl>
   </metadata>
    <files>
-    <file src="**\*.*" target="" exclude="*.csproj"/>
     <file src="**/*.*" target="" exclude="*.csproj"/>
   </files>
 </package>
