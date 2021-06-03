@@ -1,13 +1,13 @@
 #nullable disable
 using Octopus.Server.MessageContracts;
 using Octopus.Server.MessageContracts.Attributes;
-using Sashimi.Server.Contracts.Accounts;
+using Octopus.Server.MessageContracts.Features.Accounts;
 
 namespace Sashimi.GoogleCloud.Accounts
 {
-    class GoogleCloudAccountResource : AccountDetailsResource
+    class GoogleCloudAccountResource : AccountResource
     {
-        public override AccountType AccountType => AccountTypes.GoogleCloudAccountType;
+        public override AccountType AccountType => AccountType.GoogleCloud;
 
         [Trim, Writeable]
         public SensitiveValue JsonKey { get; set; }
