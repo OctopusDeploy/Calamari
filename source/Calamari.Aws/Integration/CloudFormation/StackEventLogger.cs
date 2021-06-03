@@ -88,7 +88,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                         if (progressStatus.Some())
                         {
                             var progressStatusSuccess = progressStatus.Select(s => s.MaybeIndicatesSuccess()).SelectValueOr(x => x.Value, true);
-                            var progressStatusMessage = $"Stack {progressStatus.Value.StackId} event: {progressStatus.Value.Timestamp:u} - {progressStatus.Value.LogicalResourceId} - {progressStatus.Value.ResourceType} - {progressStatus.Value.ResourceStatus} - {progressStatus.Value.ResourceStatusReason}";
+                            var progressStatusMessage = $"Stack event ({progressStatus.Value.StackName}): {progressStatus.Value.Timestamp:u} - {progressStatus.Value.LogicalResourceId} - {progressStatus.Value.ResourceType} - {progressStatus.Value.ResourceStatus} - {progressStatus.Value.ResourceStatusReason}";
                             if (progressStatusSuccess)
                                 log.Verbose(progressStatusMessage);
                             else
