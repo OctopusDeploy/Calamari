@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -16,10 +15,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using YamlDotNet.RepresentationModel;
-#if !NET40
-using Calamari.CloudAccounts;
-using Calamari.Common.Plumbing.Extensions;
-#endif
 
 namespace Calamari.Kubernetes
 {
@@ -38,7 +33,7 @@ namespace Calamari.Kubernetes
             this.embeddedResources = embeddedResources;
         }
 
-        public int Priority => ScriptWrapperPriorities.ToolConfigPriority;
+        public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority + 1;
 
         /// <summary>
         /// One of these fields must be present for a k8s step
@@ -49,8 +44,6 @@ namespace Calamari.Kubernetes
         }
 
         public IScriptWrapper NextWrapper { get; set; }
-
-        public Func<Task<bool>> VerifyAmazonLogin { get; set; }
 
         public CommandResult ExecuteScript(Script script,
                                            ScriptSyntax scriptSyntax,
@@ -69,8 +62,7 @@ namespace Calamari.Kubernetes
                                                                             scriptSyntax,
                                                                             commandLineRunner,
                                                                             environmentVars,
-                                                                            workingDirectory,
-                                                                            VerifyAmazonLogin);
+                                                                            workingDirectory);
             var accountType = variables.Get("Octopus.Account.AccountType");
 
             try
@@ -118,7 +110,6 @@ namespace Calamari.Kubernetes
             readonly ICommandLineRunner commandLineRunner;
             readonly Dictionary<string, string> environmentVars;
             readonly string workingDirectory;
-            readonly Func<Task<bool>> verifyAmazonLogin;
             string kubectl;
             string az;
             Dictionary<string, string> redactMap = new Dictionary<string, string>();
@@ -128,8 +119,7 @@ namespace Calamari.Kubernetes
                                               ScriptSyntax scriptSyntax,
                                               ICommandLineRunner commandLineRunner,
                                               Dictionary<string, string> environmentVars,
-                                              string workingDirectory,
-                                              Func<Task<bool>> verifyAmazonLogin)
+                                              string workingDirectory)
             {
                 this.variables = variables;
                 this.log = log;
@@ -137,7 +127,6 @@ namespace Calamari.Kubernetes
                 this.commandLineRunner = commandLineRunner;
                 this.environmentVars = environmentVars;
                 this.workingDirectory = workingDirectory;
-                this.verifyAmazonLogin = verifyAmazonLogin;
             }
 
             public CommandResult Execute(string accountType)
@@ -438,12 +427,6 @@ namespace Calamari.Kubernetes
                             {
                                 if (accountType == "AmazonWebServicesAccount" || eksUseInstanceRole)
                                 {
-#if !NET40
-                                    // We set the AWS environment variables, these are picked up by aws-iam-authenticator, see https://github.com/kubernetes-sigs/aws-iam-authenticator#specifying-credentials--using-aws-profiles
-                                    var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables, verifyAmazonLogin).GetAwaiter().GetResult().EnvironmentVars;
-                                    environmentVars.AddRange(awsEnvironmentVars);
-#endif
-
                                     /*
                                     kubectl doesn't yet support exec authentication
                                     https://github.com/kubernetes/kubernetes/issues/64751

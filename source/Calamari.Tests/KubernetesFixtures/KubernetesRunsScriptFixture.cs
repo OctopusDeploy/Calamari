@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Assent;
+using Calamari.Aws.Integration;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -304,11 +305,9 @@ namespace Calamari.Tests.KubernetesFixtures
             TestScript(wrapper, "Test-Script.sh");
         }
 
-        KubernetesContextScriptWrapper CreateWrapper(bool verifyAmazon = false)
+        KubernetesContextScriptWrapper CreateWrapper()
         {
-            return !verifyAmazon
-                ? new KubernetesContextScriptWrapper(variables, log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem()) { VerifyAmazonLogin = () => Task.FromResult(true)}
-                : new KubernetesContextScriptWrapper(variables, log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()
@@ -377,7 +376,13 @@ namespace Calamari.Tests.KubernetesFixtures
 
         CalamariResult ExecuteScriptInternal(ICommandLineRunner runner, IScriptWrapper wrapper, string scriptName)
         {
-            var engine = new ScriptEngine(new[] { wrapper });
+            var wrappers = new List<IScriptWrapper>(new[] { wrapper });
+            if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
+            {
+                wrappers.Add(new AwsScriptWrapper(log, variables) { VerifyAmazonLogin = () => Task.FromResult(true) });
+            }
+
+            var engine = new ScriptEngine(wrappers);
             var result = engine.Execute(new Script(scriptName), variables, runner, new Dictionary<string, string>());
 
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());

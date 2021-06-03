@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -17,6 +19,8 @@ namespace Calamari.Aws.Integration
         bool IScriptWrapper.IsEnabled(ScriptSyntax syntax) => true;
         public IScriptWrapper NextWrapper { get; set; }
 
+        public Func<Task<bool>> VerifyAmazonLogin { get; set; }
+
         public AwsScriptWrapper(ILog log, IVariables variables)
         {
             this.log = log;
@@ -28,7 +32,7 @@ namespace Calamari.Aws.Integration
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
-            var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult().EnvironmentVars;
+            var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables, VerifyAmazonLogin).GetAwaiter().GetResult().EnvironmentVars;
             awsEnvironmentVars.AddRange(environmentVars);
 
             return NextWrapper.ExecuteScript(
