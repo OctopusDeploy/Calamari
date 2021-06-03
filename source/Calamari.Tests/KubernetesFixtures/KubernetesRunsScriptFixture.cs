@@ -145,6 +145,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", "clusterRG");
+            variables.Set(SpecialVariables.AksClusterName, "asCluster");
             variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.FalseString);
             variables.Set("Octopus.Action.Azure.SubscriptionId", "azSubscriptionId");
             variables.Set("Octopus.Action.Azure.TenantId", "azTenantId");
@@ -162,6 +163,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", "clusterRG");
+            variables.Set(SpecialVariables.AksClusterName, "asCluster");
             variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.TrueString);
             variables.Set("Octopus.Action.Azure.SubscriptionId", "azSubscriptionId");
             variables.Set("Octopus.Action.Azure.TenantId", "azTenantId");
@@ -253,8 +255,8 @@ namespace Calamari.Tests.KubernetesFixtures
             var account = "eks_account";
             variables.Set("Octopus.Action.AwsAccount.Variable", account);
             variables.Set("Octopus.Action.Aws.Region", "eks_region");
-            variables.Set($"{account}.AccessKey", "AccessKey");
-            variables.Set($"{account}.SecretKey", "SecretKey");
+            variables.Set($"{account}.AccessKey", "eksAccessKey");
+            variables.Set($"{account}.SecretKey", "eksSecretKey");
             var wrapper = CreateWrapper();
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
         }
@@ -305,9 +307,11 @@ namespace Calamari.Tests.KubernetesFixtures
             TestScript(wrapper, "Test-Script.sh");
         }
 
-        KubernetesContextScriptWrapper CreateWrapper()
+        KubernetesContextScriptWrapper CreateWrapper(bool verifyAmazon = false)
         {
-            return new KubernetesContextScriptWrapper(variables, log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem()) { VerifyAmazonLogin = () => Task.FromResult(true)};
+            return !verifyAmazon
+                ? new KubernetesContextScriptWrapper(variables, log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem()) { VerifyAmazonLogin = () => Task.FromResult(true)}
+                : new KubernetesContextScriptWrapper(variables, log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()
