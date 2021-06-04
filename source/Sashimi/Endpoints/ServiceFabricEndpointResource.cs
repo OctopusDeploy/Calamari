@@ -1,7 +1,6 @@
 ﻿#nullable disable
 using Octopus.Server.MessageContracts;
 using Octopus.Server.MessageContracts.Attributes;
-using Octopus.Server.MessageContracts.Features.DeploymentTargets;
 using Octopus.Server.MessageContracts.Features.Machines;
 
 namespace Sashimi.AzureServiceFabric.Endpoints
