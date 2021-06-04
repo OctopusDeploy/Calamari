@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using Octopus.Server.MessageContracts.Attributes;
-using Octopus.Server.MessageContracts.Features.DeploymentTargets;
 using Octopus.Server.MessageContracts.Features.Machines;
 
 #nullable disable
