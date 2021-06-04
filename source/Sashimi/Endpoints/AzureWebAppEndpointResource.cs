@@ -1,5 +1,4 @@
 ﻿using Octopus.Server.MessageContracts.Attributes;
-using Octopus.Server.MessageContracts.Features.DeploymentTargets;
 using Octopus.Server.MessageContracts.Features.Machines;
 
 namespace Sashimi.AzureAppService.Endpoints
