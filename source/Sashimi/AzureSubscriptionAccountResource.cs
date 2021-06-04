@@ -2,18 +2,18 @@
 using System.ComponentModel.DataAnnotations;
 using Octopus.Server.MessageContracts;
 using Octopus.Server.MessageContracts.Attributes;
-using Octopus.Server.MessageContracts.Features.Accounts;
+using Sashimi.Server.Contracts.Accounts;
 
 namespace Sashimi.AzureCloudService
 {
-    class AzureSubscriptionAccountResource : AccountResource
+    class AzureSubscriptionAccountResource : AccountDetailsResource
     {
         public AzureSubscriptionAccountResource()
         {
             CertificateBytes = new SensitiveValue();
         }
 
-        public override AccountType AccountType => AccountType.AzureSubscription;
+        public override AccountType AccountType => AccountTypes.AzureSubscriptionAccountType;
 
         [Trim]
         [Writeable]
