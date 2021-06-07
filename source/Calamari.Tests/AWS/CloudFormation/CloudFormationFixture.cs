@@ -31,7 +31,7 @@ using Octostache;
 
 namespace Calamari.Tests.AWS
 {
-    [TestFixture, Explicit]
+    [TestFixture]
     public class CloudFormationFixture
     {
         private const string StackName = "octopuse2ecftests";
