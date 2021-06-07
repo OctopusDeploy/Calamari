@@ -32,7 +32,7 @@ namespace Calamari.Terraform
         readonly Version version;
         readonly TemporaryDirectory disposableDirectory = TemporaryDirectory.Create();
 
-        readonly VersionRange supportedVersionRange = new VersionRange(NuGetVersion.Parse("0.11.15"), true, NuGetVersion.Parse("0.15"), true);
+        readonly VersionRange supportedVersionRange = new VersionRange(NuGetVersion.Parse("0.11.15"), true, NuGetVersion.Parse("0.16"), false);
 
         public TerraformCliExecutor(
             ILog log,
