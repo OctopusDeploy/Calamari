@@ -5,6 +5,7 @@ using Calamari.Common.Plumbing.Variables;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 #if AWS
 using System;
 using System.Collections.Generic;
@@ -51,20 +52,30 @@ namespace Calamari.Tests.AWS
         }}
     }}
 }}";
-            DeployTemplate(StackName, template);
-
-            await ValidateCloudFormation(async (client) =>
+            try
             {
-                Func<IAmazonCloudFormation> clientFactory = () => client;
-                var stackStatus = await clientFactory.StackExistsAsync(new StackArn(StackName), Aws.Deployment.Conventions.StackStatus.DoesNotExist);
-                stackStatus.Should().Be(Aws.Deployment.Conventions.StackStatus.Completed);
-            });
+                DeployTemplate(StackName, template);
 
-            Validate(client =>
+                await ValidateStackExists(StackName, true);
+
+                ValidateS3(client =>
+                {
+                    // Bucket can be created successfully
+                    client.GetBucketLocation(StackName);
+                });
+            }
+            finally
             {
-                // Bucket can be created successfully
-                client.GetBucketLocation(StackName);
-            });
+                try
+                {
+                    DeleteStack(StackName);
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Error occurred while attempting to delete stack {StackName} -> {e}." +
+                              $"{Environment.NewLine} Test resources may not have been deleted, please check the AWS console for the status of the stack.");
+                }
+            }
         }
 
         [Test]
@@ -84,16 +95,10 @@ namespace Calamari.Tests.AWS
 }}";
             DeployTemplate(StackName, template);
             DeleteStack(StackName);
-
-            await ValidateCloudFormation(async (client) =>
-            {
-                Func<IAmazonCloudFormation> clientFactory = () => client;
-                var stackStatus = await clientFactory.StackExistsAsync(new StackArn(StackName), Aws.Deployment.Conventions.StackStatus.DoesNotExist);
-                stackStatus.Should().Be(Aws.Deployment.Conventions.StackStatus.DoesNotExist);
-            });
+            await ValidateStackExists(StackName, false);
         }
 
-        void Validate(Action<AmazonS3Client> execute)
+        void ValidateS3(Action<AmazonS3Client> execute)
         {
             var credentials = new BasicAWSCredentials(
                 Environment.GetEnvironmentVariable("AWS_Calamari_Access"),
@@ -103,6 +108,16 @@ namespace Calamari.Tests.AWS
             {
                 execute(client);
             }
+        }
+
+        async Task ValidateStackExists(string stackName, bool shouldExist)
+        {
+            await ValidateCloudFormation(async (client) =>
+            {
+                Func<IAmazonCloudFormation> clientFactory = () => client;
+                var stackStatus = await clientFactory.StackExistsAsync(new StackArn(stackName), Aws.Deployment.Conventions.StackStatus.DoesNotExist);
+                stackStatus.Should().Be(shouldExist ? Aws.Deployment.Conventions.StackStatus.Completed : Aws.Deployment.Conventions.StackStatus.DoesNotExist);
+            });
         }
 
         async Task ValidateCloudFormation(Func<AmazonCloudFormationClient, Task> execute)
