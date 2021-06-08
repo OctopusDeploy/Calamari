@@ -12,8 +12,8 @@ environment: # inline at top level
     # - DC: dmd
     #   DVersion: beta
     #   arch: x64  
-  - DC: dmd
-    DVersion: beta
+  - DC: dmd # inline at value
+    DVersion: beta # inline at replaced value
     arch: x86
 skip_tags: false
 branches:
