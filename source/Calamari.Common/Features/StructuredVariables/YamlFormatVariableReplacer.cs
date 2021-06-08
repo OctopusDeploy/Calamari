@@ -92,6 +92,8 @@ namespace Calamari.Common.Features.StructuredVariables
                             else if (node is YamlNode<SequenceStart> sequenceStart
                                      && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
                                 structureWeAreReplacing = (sequenceStart, sequenceReplacement());
+                            else if (node is YamlNode<Comment> comment && comment.Event.IsInline)
+                                structureWeAreReplacing = (comment, null);
                             else
                                 outputEvents.Add(node.Event);
                         }
@@ -115,6 +117,13 @@ namespace Calamari.Common.Features.StructuredVariables
                                 outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
                                                                     sequenceStart.Event.Anchor,
                                                                     sequenceStart.Event.Tag));
+                                structureWeAreReplacing = null;
+                            }
+                            else if ((node is YamlNode<MappingStart> || node is YamlNode<SequenceStart>) 
+                                     && structureWeAreReplacing.Value.startEvent is YamlNode<Comment> comment)
+                            {
+                                outputEvents.Add(node.Event);
+                                outputEvents.Add(structureWeAreReplacing.Value.startEvent.Event);
                                 structureWeAreReplacing = null;
                             }
                         }
