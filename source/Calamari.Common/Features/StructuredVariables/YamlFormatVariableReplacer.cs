@@ -124,8 +124,8 @@ namespace Calamari.Common.Features.StructuredVariables
                             {
                                 // We aren't doing any replacement here, YamlDotNet gives us the comment and the
                                 // mapping/sequence start element in a different order to what we would expect
-                                // (comment first, start element second), so we are flipping them back to the
-                                // other way around so the output is correct.
+                                // (comment first, start element second instead of the other way around),
+                                // so we are flipping them back to the other way around so the output is correct.
                                 outputEvents.Add(node.Event);
                                 outputEvents.Add(structureWeAreReplacing.Value.startEvent.Event);
                                 structureWeAreReplacing = null;
