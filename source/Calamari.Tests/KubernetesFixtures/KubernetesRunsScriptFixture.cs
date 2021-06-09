@@ -15,21 +15,20 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
-using Calamari.Tests.Fixtures;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using NUnit.Framework;
 using CalamariResult = Calamari.Tests.Helpers.CalamariResult;
 using CaptureCommandInvocationOutputSink = Calamari.Tests.Helpers.CaptureCommandInvocationOutputSink;
-using TestCategory = Calamari.Tests.Helpers.TestCategory;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
     public class KubernetesContextScriptWrapperFixture
     {
-        static readonly string ServerUrl = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Server");
-        static readonly string ClusterToken = Environment.GetEnvironmentVariable("K8S_OctopusAPITester_Token");
+        const string ServerUrl = "<server>";
+        const string ClusterToken = "mytoken";
+
         IVariables variables;
         InMemoryLog log;
         Dictionary<string, string> redactMap;
@@ -39,10 +38,9 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             variables = new CalamariVariables();
             log = new DoNotDoubleLog();
-            redactMap = new Dictionary<string, string>
-            {
-                [ServerUrl] = "<server>"
-            };
+            redactMap = new Dictionary<string, string>();
+
+            SetTestClusterVariables();
         }
 
         [Test]
@@ -63,23 +61,8 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
-        [RequiresPowerShell5OrLower]
-        public void WindowsPowershellKubeCtlScripts()
-        {
-            SetTestClusterVariables();
-            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
-            variables.Set(PowerShellVariables.Edition, "Desktop");
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
-            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
-            var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script.ps1");
-        }
-
-        [Test]
         public void ExecutionShouldFailWhenAccountTypeNotValid()
         {
-            SetTestClusterVariables();
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "not valid");
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
@@ -90,7 +73,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionShouldApplyChmodInBash()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
@@ -102,7 +84,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionShouldUseGivenNamespace()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
@@ -115,7 +96,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionShouldOutputKubeConfig()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
@@ -128,7 +108,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionWithCustomKubectlExecutable_FileDoesNotExist()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
@@ -141,7 +120,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionWithAzureServicePrincipal()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
@@ -159,7 +137,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionWithAzureServicePrincipalWithAdmin()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
@@ -177,7 +154,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionUsingPodServiceAccount_WithoutServerCert()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             using (var dir = TemporaryDirectory.Create())
@@ -194,7 +170,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionUsingPodServiceAccount_WithServerCert()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             using (var dir = TemporaryDirectory.Create())
@@ -215,7 +190,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionWithClientAndCertificateAuthority()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             var clientCert = "myclientcert";
@@ -232,7 +206,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionWithUsernamePassword()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "UsernamePassword");
@@ -245,7 +218,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionWithEKS()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
@@ -262,7 +234,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionWithCustomKubectlExecutable_FileExists()
         {
-            SetTestClusterVariables();
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
@@ -278,33 +249,6 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresPowerShellCore]
-        public void PowershellCoreKubeCtlScripts()
-        {
-            SetTestClusterVariables();
-            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
-            variables.Set(PowerShellVariables.Edition, "Core");
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
-            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
-            var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script.ps1");
-        }
-
-        [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNix)]
-        [RequiresNonFreeBSDPlatform]
-        public void BashKubeCtlScripts()
-        {
-            SetTestClusterVariables();
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
-            variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
-            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
-            var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script.sh");
-        }
-
         KubernetesContextScriptWrapper CreateWrapper()
         {
             return new KubernetesContextScriptWrapper(variables, log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
@@ -315,18 +259,6 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.ClusterUrl, ServerUrl);
             variables.Set(SpecialVariables.SkipTlsVerification, "true");
             variables.Set(SpecialVariables.Namespace, "calamari-testing");
-        }
-
-        void TestScript(IScriptWrapper wrapper, string scriptName)
-        {
-            using (var dir = TemporaryDirectory.Create())
-            using (var temp = new TemporaryFile(Path.Combine(dir.DirectoryPath, scriptName)))
-            {
-                File.WriteAllText(temp.FilePath, "kubectl get nodes");
-
-                var output = ExecuteScript(wrapper, temp.FilePath);
-                output.AssertSuccess();
-            }
         }
 
         CalamariResult TestScriptInReadOnlyMode(IScriptWrapper wrapper, [CallerMemberName] string testName = null, [CallerFilePath] string filePath = null)
@@ -357,18 +289,6 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName)
-        {
-            var calamariResult = ExecuteScriptInternal(new CommandLineRunner(log, variables), wrapper, scriptName);
-
-            foreach (var message in log.Messages)
-            {
-                Console.WriteLine($"[{message.Level}] {message.FormattedMessage}");
-            }
-
-            return calamariResult;
-        }
-
         CalamariResult ExecuteScriptInRecordOnlyMode(IScriptWrapper wrapper, string scriptName)
         {
             return ExecuteScriptInternal(new RecordOnly(), wrapper, scriptName);
@@ -394,17 +314,6 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));
                 return new CommandResult(invocation.ToString(), 0);
-            }
-        }
-
-        class DoNotDoubleLog : InMemoryLog
-        {
-            protected override void StdErr(string message)
-            {
-            }
-
-            protected override void StdOut(string message)
-            {
             }
         }
     }
