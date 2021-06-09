@@ -31,7 +31,7 @@ namespace Calamari.Terraform
         Dictionary<string, string> defaultEnvironmentVariables;
         readonly Version version;
 
-        readonly VersionRange supportedVersionRange = new VersionRange(NuGetVersion.Parse("0.11.15"), true, NuGetVersion.Parse("0.15"), true);
+        readonly VersionRange supportedVersionRange = new VersionRange(NuGetVersion.Parse("0.11.15"), true, NuGetVersion.Parse("1.1"), false);
 
         public TerraformCliExecutor(
             ILog log,
@@ -160,7 +160,7 @@ namespace Calamari.Terraform
             var initParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams);
             var allowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
             string initCommand = $"init -no-color";
-            
+
             if (version.IsLessThan("0.15.0"))
                 initCommand += $" -get-plugins={allowPluginDownloads.ToString().ToLower()}";
 
@@ -190,7 +190,10 @@ namespace Calamari.Terraform
             else
             {
                 if (!supportedVersionRange.Satisfies(new NuGetVersion(version)))
-                    log.Warn($"Version {consoleOutput} of Terraform CLI is not supported. Supported version range is: {supportedVersionRange}");
+                {
+                    var messageCode = "Terraform-Configuration-UntestedTerraformCLIVersion";
+                    log.Warn($"{log.FormatLink($"https://g.octopushq.com/Terraform#{messageCode.ToLower()}", messageCode)}: Terraform steps are tested against versions {(supportedVersionRange.IsMinInclusive ? "" : ">")}{supportedVersionRange.MinVersion.ToNormalizedString()} to {(supportedVersionRange.IsMaxInclusive ? "" : "<")}{supportedVersionRange.MaxVersion.ToNormalizedString()} of the Terraform CLI. Version {consoleOutput} of Terraform CLI has not been tested, however Terraform commands may work successfully with this version. Click the error code link for more information.");
+                }
             }
 
             return version;
