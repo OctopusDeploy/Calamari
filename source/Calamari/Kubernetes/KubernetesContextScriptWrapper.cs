@@ -238,35 +238,7 @@ namespace Calamari.Kubernetes
 
                     ConfigureAzAccount();
 
-                    var azureResourceGroup = variables.Get("Octopus.Action.Kubernetes.AksClusterResourceGroup");
-                    var azureCluster = variables.Get(SpecialVariables.AksClusterName);
-                    var azureAdmin = variables.GetFlag("Octopus.Action.Kubernetes.AksAdminLogin");
-                    log.Info($"Creating kubectl context to AKS Cluster in resource group {azureResourceGroup} called {azureCluster} (namespace {@namespace}) using a AzureServicePrincipal");
-
-                    var arguments = new List<string>(new[]
-                    {
-                        "aks",
-                        "get-credentials",
-                        "--resource-group",
-                        azureResourceGroup,
-                        "--name",
-                        azureCluster,
-                        "--file",
-                        kubeConfig,
-                        "--overwrite-existing"
-                    });
-                    if (azureAdmin)
-                    {
-                        arguments.Add("--admin");
-                        azureCluster += "-admin";
-                    }
-
-                    ExecuteCommand(az, LogType.Info, arguments.ToArray());
-
-                    ExecuteKubectlCommand("config",
-                                          "set-context",
-                                          azureCluster,
-                                          $"--namespace={@namespace}");
+                    SetupContextForAzureServicePrincipal(kubeConfig, @namespace);
                 }
                 else
                 {
@@ -275,42 +247,12 @@ namespace Calamari.Kubernetes
                     const string context = "octocontext";
                     if (isUsingPodServiceAccount)
                     {
-                        ExecuteKubectlCommand("config",
-                                              "set-cluster",
-                                              cluster,
-                                              $"--server={clusterUrl}");
-
-                        if (string.IsNullOrEmpty(serverCert))
-                        {
-                            ExecuteKubectlCommand("config",
-                                                  "set-cluster",
-                                                  cluster,
-                                                  $"--insecure-skip-tls-verify={skipTlsVerification}");
-                        }
-                        else
-                        {
-                            ExecuteKubectlCommand("config",
-                                                  "set-cluster",
-                                                  cluster,
-                                                  $"--certificate-authority={serverCertPath}");
-                        }
-
-                        ExecuteKubectlCommand("config",
-                                              "set-context",
-                                              context,
-                                              $"--user={user}",
-                                              $"--cluster={cluster}",
-                                              $"--namespace={@namespace}");
-                        ExecuteKubectlCommand("config",
-                                              "use-context",
-                                              context);
-
-                        log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
-                        redactMap[podServiceAccountToken] = "<token>";
-                        ExecuteKubectlCommand("config",
-                                              "set-credentials",
-                                              user,
-                                              $"--token={podServiceAccountToken}");
+                        SetupContextUsingPodServiceAccount(@namespace, cluster, clusterUrl, serverCert,
+                                                           skipTlsVerification,
+                                                           serverCertPath,
+                                                           context,
+                                                           user,
+                                                           podServiceAccountToken);
                     }
                     else
                     {
@@ -395,8 +337,6 @@ namespace Calamari.Kubernetes
                         {
                             case "Token":
                             {
-                                log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Token");
-
                                 var token = variables.Get("Octopus.Account.Token");
                                 if (string.IsNullOrEmpty(token))
                                 {
@@ -404,92 +344,19 @@ namespace Calamari.Kubernetes
                                     return false;
                                 }
 
-                                redactMap[token] = "<token>";
-                                ExecuteKubectlCommand("config",
-                                                      "set-credentials",
-                                                      user,
-                                                      $"--token={token}");
+                                SetupContextForToken(@namespace, token, clusterUrl, user);
                                 break;
                             }
                             case "UsernamePassword":
                             {
-                                var username = variables.Get("Octopus.Account.Username");
-                                var password = variables.Get("Octopus.Account.Password");
-                                redactMap[password] = "<password>";
-                                ExecuteKubectlCommand("config",
-                                                      "set-credentials",
-                                                      user,
-                                                      $"--username={username}",
-                                                      $"--password={password}");
+                                SetupContextForUsernamePassword(user);
                                 break;
                             }
                             default:
                             {
                                 if (accountType == "AmazonWebServicesAccount" || eksUseInstanceRole)
                                 {
-                                    /*
-                                    kubectl doesn't yet support exec authentication
-                                    https://github.com/kubernetes/kubernetes/issues/64751
-                                    so build this manually
-                                    */
-                                    var clusterName = variables.Get(SpecialVariables.EksClusterName);
-                                    log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
-
-                                    YamlStream yaml;
-                                    using (var input = new StreamReader(kubeConfig))
-                                    {
-                                        yaml = new YamlStream();
-                                        yaml.Load(input);
-                                    }
-
-                                    if (yaml.Documents.Count == 0)
-                                    {
-                                        yaml.Documents.Add(new YamlDocument(new YamlMappingNode { { "apiVersion", "v1" } }));
-                                    }
-
-                                    var rootNode = (YamlMappingNode)yaml.Documents[0].RootNode;
-                                    if (!rootNode.Children.ContainsKey("users")) {
-                                        rootNode.Children["users"] = new YamlSequenceNode();
-                                    }
-
-                                    if(!(rootNode.Children["users"] is YamlSequenceNode)) {
-                                        rootNode.Children["users"] = new YamlSequenceNode();
-                                    }
-
-                                    if(((YamlSequenceNode)rootNode.Children["users"]).Children.Count == 0) {
-                                        rootNode.Children["users"] = new YamlSequenceNode();
-                                    }
-
-                                    // https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
-                                    ((YamlSequenceNode)rootNode.Children["users"]).Add(new YamlMappingNode
-                                    {
-                                        { "name", user },
-                                        {
-                                            "user", new YamlMappingNode
-                                            {
-                                                {
-                                                    "exec", new YamlMappingNode
-                                                    {
-                                                        { "apiVersion", "client.authentication.k8s.io/v1alpha1" },
-                                                        { "command", "aws-iam-authenticator" },
-                                                        {
-                                                            "args", new YamlSequenceNode
-                                                            {
-                                                                "token",
-                                                                "-i",
-                                                                clusterName
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    });
-
-                                    using (var writer = new StreamWriter(kubeConfig, false))
-                                    {
-                                        yaml.Save(writer, false);
-                                    }
+                                    SetupContextForAmazonServiceAccount(kubeConfig, @namespace, clusterUrl, user);
                                 }
                                 else if (string.IsNullOrEmpty(clientCert))
                                 {
@@ -504,6 +371,179 @@ namespace Calamari.Kubernetes
                 }
 
                 return true;
+            }
+
+            void SetupContextForToken(string @namespace, string token, string clusterUrl, string user)
+            {
+                redactMap[token] = "<token>";
+                log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Token");
+                ExecuteKubectlCommand("config",
+                                      "set-credentials",
+                                      user,
+                                      $"--token={token}");
+            }
+
+            void SetupContextForUsernamePassword(string user)
+            {
+                var username = variables.Get("Octopus.Account.Username");
+                var password = variables.Get("Octopus.Account.Password");
+                redactMap[password] = "<password>";
+                ExecuteKubectlCommand("config",
+                                      "set-credentials",
+                                      user,
+                                      $"--username={username}",
+                                      $"--password={password}");
+            }
+
+            void SetupContextForAmazonServiceAccount(string kubeConfig, string @namespace, string clusterUrl, string user)
+            {
+                /*
+                                    kubectl doesn't yet support exec authentication
+                                    https://github.com/kubernetes/kubernetes/issues/64751
+                                    so build this manually
+                                    */
+                var clusterName = variables.Get(SpecialVariables.EksClusterName);
+                log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
+
+                YamlStream yaml;
+                using (var input = new StreamReader(kubeConfig))
+                {
+                    yaml = new YamlStream();
+                    yaml.Load(input);
+                }
+
+                if (yaml.Documents.Count == 0)
+                {
+                    yaml.Documents.Add(new YamlDocument(new YamlMappingNode { { "apiVersion", "v1" } }));
+                }
+
+                var rootNode = (YamlMappingNode)yaml.Documents[0].RootNode;
+                if (!rootNode.Children.ContainsKey("users"))
+                {
+                    rootNode.Children["users"] = new YamlSequenceNode();
+                }
+
+                if (!(rootNode.Children["users"] is YamlSequenceNode))
+                {
+                    rootNode.Children["users"] = new YamlSequenceNode();
+                }
+
+                if (((YamlSequenceNode)rootNode.Children["users"]).Children.Count == 0)
+                {
+                    rootNode.Children["users"] = new YamlSequenceNode();
+                }
+
+                // https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
+                ((YamlSequenceNode)rootNode.Children["users"]).Add(new YamlMappingNode
+                {
+                    { "name", user },
+                    {
+                        "user", new YamlMappingNode
+                        {
+                            {
+                                "exec", new YamlMappingNode
+                                {
+                                    { "apiVersion", "client.authentication.k8s.io/v1alpha1" },
+                                    { "command", "aws-iam-authenticator" },
+                                    {
+                                        "args", new YamlSequenceNode
+                                        {
+                                            "token",
+                                            "-i",
+                                            clusterName
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                using (var writer = new StreamWriter(kubeConfig, false))
+                {
+                    yaml.Save(writer, false);
+                }
+            }
+
+            void SetupContextUsingPodServiceAccount(string @namespace,
+                                                    string cluster,
+                                                    string clusterUrl,
+                                                    string serverCert,
+                                                    string skipTlsVerification,
+                                                    string serverCertPath,
+                                                    string context,
+                                                    string user,
+                                                    string podServiceAccountToken)
+            {
+                ExecuteKubectlCommand("config",
+                                      "set-cluster",
+                                      cluster,
+                                      $"--server={clusterUrl}");
+
+                if (string.IsNullOrEmpty(serverCert))
+                {
+                    ExecuteKubectlCommand("config",
+                                          "set-cluster",
+                                          cluster,
+                                          $"--insecure-skip-tls-verify={skipTlsVerification}");
+                }
+                else
+                {
+                    ExecuteKubectlCommand("config",
+                                          "set-cluster",
+                                          cluster,
+                                          $"--certificate-authority={serverCertPath}");
+                }
+
+                ExecuteKubectlCommand("config",
+                                      "set-context",
+                                      context,
+                                      $"--user={user}",
+                                      $"--cluster={cluster}",
+                                      $"--namespace={@namespace}");
+                ExecuteKubectlCommand("config",
+                                      "use-context",
+                                      context);
+
+                log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
+                redactMap[podServiceAccountToken] = "<token>";
+                ExecuteKubectlCommand("config",
+                                      "set-credentials",
+                                      user,
+                                      $"--token={podServiceAccountToken}");
+            }
+
+            void SetupContextForAzureServicePrincipal(string kubeConfig, string @namespace)
+            {
+                var azureResourceGroup = variables.Get("Octopus.Action.Kubernetes.AksClusterResourceGroup");
+                var azureCluster = variables.Get(SpecialVariables.AksClusterName);
+                var azureAdmin = variables.GetFlag("Octopus.Action.Kubernetes.AksAdminLogin");
+                log.Info($"Creating kubectl context to AKS Cluster in resource group {azureResourceGroup} called {azureCluster} (namespace {@namespace}) using a AzureServicePrincipal");
+
+                var arguments = new List<string>(new[]
+                {
+                    "aks",
+                    "get-credentials",
+                    "--resource-group",
+                    azureResourceGroup,
+                    "--name",
+                    azureCluster,
+                    "--file",
+                    kubeConfig,
+                    "--overwrite-existing"
+                });
+                if (azureAdmin)
+                {
+                    arguments.Add("--admin");
+                    azureCluster += "-admin";
+                }
+
+                ExecuteCommand(az, LogType.Info, arguments.ToArray());
+
+                ExecuteKubectlCommand("config",
+                                      "set-context",
+                                      azureCluster,
+                                      $"--namespace={@namespace}");
             }
 
             bool TrySetAz()
