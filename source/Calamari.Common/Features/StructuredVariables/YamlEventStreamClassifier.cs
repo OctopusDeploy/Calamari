@@ -189,6 +189,9 @@ namespace Calamari.Common.Features.StructuredVariables
                     }
 
                     break;
+                case Comment c:
+                    classifiedNode = new YamlNode<Comment>(c, stack.GetPath());
+                    break;
             }
 
             return classifiedNode ?? new YamlNode<ParsingEvent>(ev, stack.GetPath());
