@@ -5,10 +5,8 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
-using Calamari.Tests.Fixtures.Manifest;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 using InMemoryLog = Calamari.Tests.Helpers.InMemoryLog;
@@ -90,7 +88,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
                 var packages = store.GetNearestPackages("Acme.Web", new SemanticVersion("1.1.1.1"));
 
-                CollectionAssert.AreEquivalent(new[] {"1.0.0.1"}, packages.Select(c => c.Version.ToString()));
+                CollectionAssert.AreEquivalent(new[] { "1.0.0.1" }, packages.Select(c => c.Version.ToString()));
             }
         }
 
@@ -104,11 +102,11 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         private string CreatePackage(string version, bool oldCacheFormat = false)
         {
             var sourcePackage = PackageBuilder.BuildSamplePackage("Acme.Web", version, true);
-            
+
             var destinationPath = Path.Combine(PackagePath, oldCacheFormat
                 ? $"Acme.Web.{version}.nupkg-fd55edc5-9b36-414b-a2d0-4a2deeb6b2ec"
                 : PackageName.ToCachedFileName("Acme.Web", new SemanticVersion(version), ".nupkg"));
-            
+
             if (File.Exists(destinationPath))
                 File.Delete(destinationPath);
 
