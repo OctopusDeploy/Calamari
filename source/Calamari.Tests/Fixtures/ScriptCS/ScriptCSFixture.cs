@@ -68,7 +68,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
-            { ["Name"] = "NameToEncrypt" }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
+                { ["Name"] = "NameToEncrypt" }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
             output.AssertSuccess();
             output.AssertOutput("Hello NameToEncrypt");
@@ -78,7 +78,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
         public void ShouldConsumeParametersWithQuotes()
         {
             var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
-            { [SpecialVariables.Action.Script.ScriptParameters] = "-- \"Para meter0\" Parameter1" });
+                { [SpecialVariables.Action.Script.ScriptParameters] = "-- \"Para meter0\" Parameter1" });
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Parameter1");
@@ -88,7 +88,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
         public void ShouldConsumeParametersWithoutParametersPrefix()
         {
             var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
-            { [SpecialVariables.Action.Script.ScriptParameters] = "Parameter0 Parameter1" });
+                { [SpecialVariables.Action.Script.ScriptParameters] = "Parameter0 Parameter1" });
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Parameter0Parameter1");
