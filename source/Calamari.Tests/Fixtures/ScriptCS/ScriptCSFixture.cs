@@ -68,7 +68,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
-                {["Name"] = "NameToEncrypt"}, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
+                { ["Name"] = "NameToEncrypt" }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
             output.AssertSuccess();
             output.AssertOutput("Hello NameToEncrypt");
