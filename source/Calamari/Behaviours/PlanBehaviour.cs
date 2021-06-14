@@ -42,8 +42,7 @@ namespace Calamari.Terraform.Behaviours
                                                        cli.ActionParams);
                 var resultCode = commandResult.ExitCode;
 
-                if (resultCode == 1)
-                    commandResult.VerifySuccess();
+                cli.VerifySuccess(commandResult, r => r.ExitCode == 0 || r.ExitCode == 2);
 
                 log.Info(
                          $"Saving variable 'Octopus.Action[{deployment.Variables["Octopus.Action.StepName"]}].Output.{TerraformSpecialVariables.Action.Terraform.PlanDetailedExitCode}' with the detailed exit code of the plan, with value '{resultCode}'.");
