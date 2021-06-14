@@ -14,7 +14,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
-using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Kubernetes
 {
@@ -356,7 +355,7 @@ namespace Calamari.Kubernetes
                             {
                                 if (accountType == "AmazonWebServicesAccount" || eksUseInstanceRole)
                                 {
-                                    SetupContextForAmazonServiceAccount(kubeConfig, @namespace, clusterUrl, user);
+                                    SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
                                 }
                                 else if (string.IsNullOrEmpty(clientCert))
                                 {
@@ -395,74 +394,19 @@ namespace Calamari.Kubernetes
                                       $"--password={password}");
             }
 
-            void SetupContextForAmazonServiceAccount(string kubeConfig, string @namespace, string clusterUrl, string user)
+            void SetupContextForAmazonServiceAccount(string @namespace, string clusterUrl, string user)
             {
-                /*
-                                    kubectl doesn't yet support exec authentication
-                                    https://github.com/kubernetes/kubernetes/issues/64751
-                                    so build this manually
-                                    */
                 var clusterName = variables.Get(SpecialVariables.EksClusterName);
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
 
-                YamlStream yaml;
-                using (var input = new StreamReader(kubeConfig))
-                {
-                    yaml = new YamlStream();
-                    yaml.Load(input);
-                }
-
-                if (yaml.Documents.Count == 0)
-                {
-                    yaml.Documents.Add(new YamlDocument(new YamlMappingNode { { "apiVersion", "v1" } }));
-                }
-
-                var rootNode = (YamlMappingNode)yaml.Documents[0].RootNode;
-                if (!rootNode.Children.ContainsKey("users"))
-                {
-                    rootNode.Children["users"] = new YamlSequenceNode();
-                }
-
-                if (!(rootNode.Children["users"] is YamlSequenceNode))
-                {
-                    rootNode.Children["users"] = new YamlSequenceNode();
-                }
-
-                if (((YamlSequenceNode)rootNode.Children["users"]).Children.Count == 0)
-                {
-                    rootNode.Children["users"] = new YamlSequenceNode();
-                }
-
-                // https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
-                ((YamlSequenceNode)rootNode.Children["users"]).Add(new YamlMappingNode
-                {
-                    { "name", user },
-                    {
-                        "user", new YamlMappingNode
-                        {
-                            {
-                                "exec", new YamlMappingNode
-                                {
-                                    { "apiVersion", "client.authentication.k8s.io/v1alpha1" },
-                                    { "command", "aws-iam-authenticator" },
-                                    {
-                                        "args", new YamlSequenceNode
-                                        {
-                                            "token",
-                                            "-i",
-                                            clusterName
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-
-                using (var writer = new StreamWriter(kubeConfig, false))
-                {
-                    yaml.Save(writer, false);
-                }
+                ExecuteKubectlCommand("config",
+                                      "set-credentials",
+                                      user,
+                                      "--exec-command=aws-iam-authenticator",
+                                      "--exec-api-version=client.authentication.k8s.io/v1alpha1",
+                                      "--exec-arg=token",
+                                      "--exec-arg=-i",
+                                      $"--exec-arg={clusterName}");
             }
 
             void SetupContextUsingPodServiceAccount(string @namespace,

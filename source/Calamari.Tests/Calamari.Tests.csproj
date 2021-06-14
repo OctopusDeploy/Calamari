@@ -194,6 +194,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="KubernetesFixtures\Terraform\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <Folder Include="Fixtures\Nginx\Approved" />
   </ItemGroup>
   <!--
