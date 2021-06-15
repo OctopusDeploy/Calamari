@@ -624,72 +624,7 @@ output ""nestedmap"" {
                                                                        _.OutputVariables.ContainsKey("TerraformValueOutputs[nestedlist]").Should().BeTrue();
                                                                        _.OutputVariables.ContainsKey("TerraformValueOutputs[nestedmap]").Should().BeTrue();
                                                                    });
-        }
-
-        [Test]
-        public void InlineHclTemplateAndVariablesV015()
-        {
-            IgnoreIfVersionIsNotInRange("0.15.0");
-
-            const string variables =
-                "{\"stringvar\":\"default string\",\"images\":\"\",\"test2\":\"\",\"test3\":\"\",\"test4\":\"\"}";
-            const string template = @"variable stringvar {
-  type = string
-  default = ""default string""
-}
-variable ""images"" {
-  type = map(string)
-  default = {
-    us-east-1 = ""image-1234""
-    us-west-2 = ""image-4567""
-  }
-}
-variable ""test2"" {
-  type    = map
-  default = {
-    val1 = [""hi""]
-  }
-}
-variable ""test3"" {
-  type    = map
-  default = {
-    val1 = {
-      val2 = ""#{RandomNumber}""
-    }
-  }
-}
-variable ""test4"" {
-  type    = map
-  default = {
-    val1 = {
-      val2 = [""hi""]
-    }                        
-  }
-}
-# Example of getting an element from a list in a map
-output ""nestedlist"" {
-  value = ""${element(var.test2[""val1""], 0)}""
-}
-# Example of getting an element from a nested map
-output ""nestedmap"" {
-  value = ""${lookup(var.test3[""val1""], ""val2"")}""
-}";
-
-            ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
-                                                                   {
-                                                                       _.Variables.Add("RandomNumber", new Random().Next().ToString());
-                                                                       _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
-                                                                       _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
-                                                                       _.Variables.Add(KnownVariables.Action.Script.ScriptSource,
-                                                                                       KnownVariables.Action.Script.ScriptSourceOptions.Inline);
-                                                                   },
-                                                                   String.Empty,
-                                                                   _ =>
-                                                                   {
-                                                                       _.OutputVariables.ContainsKey("TerraformValueOutputs[nestedlist]").Should().BeTrue();
-                                                                       _.OutputVariables.ContainsKey("TerraformValueOutputs[nestedmap]").Should().BeTrue();
-                                                                   });
-        }
+        }        
 
         [Test]
         public void InlineHclTemplateWithMultilineOutput()
@@ -760,63 +695,6 @@ output ""config-map-aws-auth"" {{
       },
       ""test3"":{
          ""value"":""${map(\""a\"", \""hi\"")}""
-      },
-      ""ami"":{
-         ""value"":""${var.ami}""
-      },
-      ""random"":{
-         ""value"":""#{RandomNumber}""
-      }
-    }
-}";
-
-            var randomNumber = new Random().Next().ToString();
-
-            ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ =>
-                                                                   {
-                                                                       _.Variables.Add("RandomNumber", randomNumber);
-                                                                       _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
-                                                                       _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
-                                                                       _.Variables.Add(KnownVariables.Action.Script.ScriptSource,
-                                                                                       KnownVariables.Action.Script.ScriptSourceOptions.Inline);
-                                                                   },
-                                                                   String.Empty,
-                                                                   _ =>
-                                                                   {
-                                                                       _.OutputVariables.ContainsKey("TerraformValueOutputs[ami]").Should().BeTrue();
-                                                                       _.OutputVariables["TerraformValueOutputs[ami]"].Value.Should().Be("new ami value");
-                                                                       _.OutputVariables.ContainsKey("TerraformValueOutputs[random]").Should().BeTrue();
-                                                                       _.OutputVariables["TerraformValueOutputs[random]"].Value.Should().Be(randomNumber);
-                                                                   });
-        }
-
-        [Test]
-        public void InlineJsonTemplateAndVariablesV015()
-        {
-            IgnoreIfVersionIsNotInRange("0.15.0");
-
-            const string variables =
-                "{\"ami\":\"new ami value\"}";
-            const string template = @"{
-    ""variable"":{
-      ""ami"":{
-         ""type"":""string"",
-         ""description"":""the AMI to use"",
-         ""default"":""1234567890""
-      }
-    },
-    ""output"":{
-      ""test"":{
-         ""value"":""hi there""
-      },
-      ""test2"":{
-         ""value"":[
-            ""hi there"",
-            ""hi again""
-         ]
-      },
-      ""test3"":{
-         ""value"":""${tomap({ a = \""hi\"" })}""
       },
       ""ami"":{
          ""value"":""${var.ami}""
