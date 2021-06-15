@@ -11,7 +11,12 @@ namespace Calamari.Tests.AWS.CloudFormation
     [TestFixture]
     public class CloudFormationFixture
     {
-        private const string StackName = "octopuse2ecftests";
+        private string StackName;
+
+        public CloudFormationFixture()
+        {
+            StackName = $"calamariteststack{Guid.NewGuid().ToString("N").ToLowerInvariant()}";
+        }
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]

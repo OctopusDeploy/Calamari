@@ -10,8 +10,15 @@ namespace Calamari.Tests.AWS.CloudFormation
     [TestFixture]
     public class CloudFormationVariableReplacementFixture
     {
-        private const string StackName = "octopuse2ecftests";
-        private const string ReplacedName = "octopuse2e-replaced";
+        private string StackName;
+        private string ReplacedName;
+
+        public CloudFormationVariableReplacementFixture()
+        {
+            var unique = Guid.NewGuid().ToString("N").ToLowerInvariant();
+            StackName = $"calamariteststack{unique}";
+            ReplacedName = $"calamaritestreplaced{unique}";
+        }
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
