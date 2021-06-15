@@ -1,6 +1,6 @@
-﻿using Calamari.Common.Plumbing.Variables;
+﻿#if AWS
+using Calamari.Common.Plumbing.Variables;
 using System.Threading.Tasks;
-#if AWS
 using System;
 using System.IO;
 using Calamari.Tests.Helpers;
@@ -8,7 +8,7 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.AWS.CloudFormation
 {
-    [TestFixture, Explicit]
+    [TestFixture]
     public class CloudFormationFixture
     {
         private const string StackName = "octopuse2ecftests";
