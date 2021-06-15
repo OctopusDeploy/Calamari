@@ -126,15 +126,14 @@ namespace Calamari.Aws.Integration.CloudFormation
             {
                 throw new PermissionException(
                     "The AWS account used to perform the operation does not have the required permissions to query the current state of the CloudFormation stack. " +
-                    "This step will complete without waiting for the stack to complete, and will not fail if the stack finishes in an error state.\n " +
-                    "Please ensure the current account has permission to perform action 'cloudformation:DescribeStackEvents'" +
+                    "This step will complete without waiting for the stack to complete, and will not fail if the stack finishes in an error state. " +
+                    "Please ensure the current account has permission to perform action 'cloudformation:DescribeStackEvents'." +
                     ex.Message);
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "ExpiredToken")
             {
                 throw new PermissionException(
-                    "Security token has expired. Please increase the session duration and/or check that the system date and time are set correctly. " +
-                    ex.Message);
+                    ex.Message + ". Please increase the session duration and/or check that the system date and time are set correctly. ");
             }
             catch (AmazonCloudFormationException)
             {
@@ -197,14 +196,13 @@ namespace Calamari.Aws.Integration.CloudFormation
             {
                 throw new PermissionException(
                     "The AWS account used to perform the operation does not have the required permissions to query the current state of the CloudFormation stack. " +
-                    "This step will complete without waiting for the stack to complete, and will not fail if the stack finishes in an error state.\n " +
+                    "This step will complete without waiting for the stack to complete, and will not fail if the stack finishes in an error state. " +
                     "Please ensure the current account has permission to perform action 'cloudformation:DescribeStackEvents'" +
                     ex.Message);
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "ExpiredToken")
             {
-                throw new PermissionException(
-                    "Security token has expired. Please increase the session duration and/or check that the system date and time are set correctly. " +
+                throw new PermissionException(ex.Message + ". Please increase the session duration and/or check that the system date and time are set correctly." +
                     ex.Message);
             }
             catch (AmazonCloudFormationException)
@@ -275,7 +273,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                    .Response?
                    .GetResponseStream()?
                    .Map(stream => new StreamReader(stream).ReadToEnd())
-                   .Map(message => "An exception was thrown while contacting the AWS API.\n" + message)
+                   .Map(message => "An exception was thrown while contacting the AWS API. " + message)
                    ?? "An exception was thrown while contacting the AWS API.";
         }
 
@@ -336,8 +334,8 @@ namespace Calamari.Aws.Integration.CloudFormation
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
             {
                 throw new PermissionException(
-                    "The AWS account used to perform the operation does not have the required permissions to delete the stack.\n" +
-                    "Please ensure the current account has permission to perform action 'cloudformation:DeleteStack'.\n" +
+                    "The AWS account used to perform the operation does not have the required permissions to delete the stack. " +
+                    "Please ensure the current account has permission to perform action 'cloudformation:DeleteStack'. " +
                     ex.Message
                 );
             }
@@ -354,8 +352,8 @@ namespace Calamari.Aws.Integration.CloudFormation
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
             {
                 throw new PermissionException(
-                    "The AWS account used to perform the operation does not have the required permissions to create the stack.\n" +
-                    "Please ensure the current account has permission to perform action 'cloudformation:CreateStack'.\n" +
+                    "The AWS account used to perform the operation does not have the required permissions to create the stack. " +
+                    "Please ensure the current account has permission to perform action 'cloudformation:CreateStack'. " +
                     ex.Message
                 );
             }
