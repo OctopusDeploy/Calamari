@@ -27,11 +27,11 @@
     <PackageReference Include="XPath2" Version="1.0.12" />
     <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
     <PackageReference Include="NSubstitute" Version="2.0.3" />
     <PackageReference Include="FluentAssertions" Version="5.10.3" />
-    <PackageReference Include="NUnit" Version="3.12.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
+    <PackageReference Include="NUnit" Version="3.13.2" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.0.0" />
     <PackageReference Include="Assent" Version="1.6.1" />
     <PackageReference Include="Polly" Version="5.4.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />

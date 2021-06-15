@@ -6,17 +6,5 @@
 [Verbose] "kubectl" config use-context octocontext --request-timeout=1m
 [Verbose] "kubectl" config set-cluster octocluster --insecure-skip-tls-verify=true --request-timeout=1m
 [Info] Creating kubectl context to <server> (namespace calamari-testing) using EKS cluster name my-eks-cluster
+[Verbose] "kubectl" config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1alpha1 --exec-arg=token --exec-arg=-i --exec-arg=my-eks-cluster --request-timeout=1m
 [Verbose] "kubectl" get namespace calamari-testing --request-timeout=1m
-apiVersion: v1
-users:
-- name: octouser
-  user:
-    exec:
-      apiVersion: client.authentication.k8s.io/v1alpha1
-      command: aws-iam-authenticator
-      args:
-      - token
-      - -i
-      - my-eks-cluster
-...
-

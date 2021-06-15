@@ -278,11 +278,6 @@ namespace Calamari.Tests.KubernetesFixtures
                     sb.AppendLine($"[{message.Level}] {text}");
                 }
 
-                var kubectlConfig = File.ReadAllText(Path.Combine(dir.DirectoryPath, "kubectl-octo.yml"));
-                if (!string.IsNullOrEmpty(kubectlConfig))
-                {
-                    sb.AppendLine(kubectlConfig);
-                }
                 this.Assent(sb.ToString().Replace("\r\n", "\n"), testName: testName, filePath: filePath, configuration: Helpers.TestEnvironment.AssentConfiguration);
 
                 return output;
