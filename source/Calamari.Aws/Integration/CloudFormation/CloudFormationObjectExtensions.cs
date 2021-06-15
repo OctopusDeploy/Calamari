@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Amazon.CloudFormation;
+﻿using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Amazon.Runtime;
 using Calamari.Aws.Exceptions;
 using Calamari.Common.Plumbing;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;
 
 namespace Calamari.Aws.Integration.CloudFormation
@@ -153,18 +153,29 @@ namespace Calamari.Aws.Integration.CloudFormation
         {
             try
             {
-                var stackEventResults = new List<Maybe<StackEvent>>();
+                var currentStackEvents = new List<StackEvent>();
+                var nextToken = (string)null;
 
-                var response = await clientFactory().DescribeStackEventsAsync(new DescribeStackEventsRequest { StackName = stack.Value });
+                while (true)
+                {
+                    var response = await clientFactory().DescribeStackEventsAsync(new DescribeStackEventsRequest { StackName = stack.Value, NextToken = nextToken });
 
-                var stackEvents = response?
-                    .StackEvents.Where(stackEvent => predicate == null || predicate(stackEvent))                    
-                    .ToList();
+                    var stackEvents = response?
+                        .StackEvents.Where(stackEvent => predicate == null || predicate(stackEvent))
+                        .ToList();
 
-                stackEventResults.AddRange(stackEvents.Select(s => s.AsSome()));
+                    currentStackEvents.AddRange(stackEvents);
 
-                var nestedStackIds = stackEvents
-                    .Where(s => s.ResourceType == "AWS::CloudFormation::Stack" && s.PhysicalResourceId != s.StackId)
+                    if (!string.IsNullOrEmpty(response.NextToken))
+                        nextToken = response.NextToken; // Get the next page of results
+                    else
+                        break;
+                }
+
+                var results = new List<Maybe<StackEvent>>();
+
+                var nestedStackIds = currentStackEvents
+                    .Where(s => s.ResourceType == "AWS::CloudFormation::Stack" && !string.IsNullOrEmpty(s.PhysicalResourceId) && s.PhysicalResourceId != s.StackId)
                     .Select(s => s.PhysicalResourceId)
                     .Distinct()
                     .ToList();
@@ -174,11 +185,13 @@ namespace Calamari.Aws.Integration.CloudFormation
                     var nestedStackEvents = await GetStackEvents(clientFactory, new StackArn(nestedStackId), predicate);
                     if (nestedStackEvents.Any())
                     {
-                        stackEventResults.AddRange(nestedStackEvents);
+                        results.AddRange(nestedStackEvents);
                     }
                 }
 
-                return stackEventResults.OrderBy(s => s.SelectValueOr(e => e.Timestamp, DateTime.MinValue)).ToList();
+                results.AddRange(currentStackEvents.Select(s => s.AsSome()));                
+
+                return results.OrderBy(s => s.SelectValueOr(e => e.Timestamp, DateTime.MinValue)).ToList();
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
             {
