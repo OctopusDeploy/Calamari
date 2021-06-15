@@ -51,33 +51,6 @@ resource "aws_security_group" "ssh" {
   vpc_id = var.aws_vpc_id
 }
 
-resource "aws_security_group" "http" {
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["${chomp(data.http.myip.body)}/32"]
-  }
-  egress = [
-    {
-      cidr_blocks = [
-        "0.0.0.0/0",
-      ]
-      description = ""
-      from_port   = 0
-      ipv6_cidr_blocks = [
-        "::/0",
-      ]
-      prefix_list_ids = []
-      protocol        = "-1"
-      security_groups = []
-      self            = false
-      to_port         = 0
-    },
-  ]
-  vpc_id = var.aws_vpc_id
-}
-
 resource "local_file" "private_key" {
   content  = tls_private_key.default.private_key_pem
   filename = "private_key"
@@ -101,7 +74,7 @@ resource "aws_instance" "default" {
   associate_public_ip_address = true
   key_name                    = aws_key_pair.generated_key.key_name
   iam_instance_profile        = var.aws_iam_instance_profile_name
-  vpc_security_group_ids      = [aws_security_group.ssh.id, aws_security_group.http.id]
+  vpc_security_group_ids      = [aws_security_group.ssh.id]
   subnet_id                   = var.aws_subnet_id
 
   provisioner "file" {

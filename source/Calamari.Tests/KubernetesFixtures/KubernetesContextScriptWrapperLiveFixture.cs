@@ -107,9 +107,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         void RunTerraformDestroy(string terraformWorkingFolder, Dictionary<string, string> env = null)
         {
-//#if !DEBUG
             RunTerraformInternal(terraformWorkingFolder, env ?? new Dictionary<string, string>(), "destroy", "-auto-approve");
-//#endif
         }
 
         string RunTerraformInternal(string terraformWorkingFolder, params string[] args)
