@@ -53,6 +53,8 @@ namespace Calamari.Aws.Deployment.Conventions
 
             Guard.NotNull(stack, "The provided stack identifer or name may not be null");
             Guard.NotNull(changeSet, "The provided change set identifier or name may not be null");
+
+            var deploymentStartTime = DateTime.Now;
             
             var response = await clientFactory.DescribeChangeSetAsync(stack, changeSet);
             if (response.Changes.Count == 0)
@@ -72,7 +74,7 @@ namespace Calamari.Aws.Deployment.Conventions
             if (waitForComplete)
             {
                 await WithAmazonServiceExceptionHandling(() =>
-                    clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack))
+                    clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, filter: FilterStackEventsSince(deploymentStartTime)))
                 );
             }
         }

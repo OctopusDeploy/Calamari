@@ -52,6 +52,8 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment, "deployment can not be null");
 
+            var deploymentStartTime = DateTime.Now;
+
             var stack = stackProvider(deployment);
 
             if (await clientFactory.StackExistsAsync(stack, StackStatus.Completed) != StackStatus.DoesNotExist)
@@ -70,7 +72,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 await WithAmazonServiceExceptionHandling(async () =>
                 {
                     await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack,
-                        LogAndThrowRollbacks(clientFactory, stack, true, false));
+                        LogAndThrowRollbacks(clientFactory, stack, true, false, FilterStackEventsSince(deploymentStartTime)));
                 });
             }
         }

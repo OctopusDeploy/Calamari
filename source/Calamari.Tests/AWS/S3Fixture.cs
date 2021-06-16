@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿#if AWS
+using System.Linq;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Substitutions;
@@ -7,7 +8,8 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Packages;
 using Calamari.Integration.Processes;
-#if AWS
+using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,7 +34,7 @@ using Octostache;
 
 namespace Calamari.Tests.AWS
 {
-    [TestFixture, Explicit]
+    [TestFixture]
     public class S3Fixture
     {
         private const string BucketName = "octopus-e2e-tests";
@@ -48,8 +50,7 @@ namespace Calamari.Tests.AWS
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
-        public void UploadPackage1()
+        public async Task UploadPackage1()
         {
             var fileSelections = new List<S3FileSelectionProperties>
             {
@@ -72,17 +73,16 @@ namespace Calamari.Tests.AWS
 
             var prefix = Upload("Package1", fileSelections);
 
-            Validate(client =>
+            await Validate(async client =>
             {
-                client.GetObject(BucketName, $"{prefix}Resources/TextFile.txt");
-                client.GetObject(BucketName, $"{prefix}root/Page.html");
-                client.GetObject(BucketName, $"{prefix}JavaScript.js");
+                await client.GetObjectAsync(BucketName, $"{prefix}Resources/TextFile.txt");
+                await client.GetObjectAsync(BucketName, $"{prefix}root/Page.html");
+                await client.GetObjectAsync(BucketName, $"{prefix}Extra/JavaScript.js");
             });
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
-        public void UploadPackage2()
+        public async Task UploadPackage2()
         {
             var fileSelections = new List<S3FileSelectionProperties>
             {
@@ -97,12 +97,12 @@ namespace Calamari.Tests.AWS
 
             var prefix = Upload("Package2", fileSelections);
 
-            Validate(client =>
+            await Validate(async client =>
             {
-                client.GetObject(BucketName, $"{prefix}Wild/Things/TextFile2.txt");
+                await client.GetObjectAsync(BucketName, $"{prefix}Wild/Things/TextFile2.txt");
                 try
                 {
-                    client.GetObject(BucketName, $"{prefix}Wild/Ignore/TextFile1.txt");
+                    await client.GetObjectAsync(BucketName, $"{prefix}Wild/Ignore/TextFile1.txt");
                 }
                 catch (AmazonS3Exception e)
                 {
@@ -119,8 +119,8 @@ namespace Calamari.Tests.AWS
             {"Cache-Control", "max-age=123"},
             {"Content-Disposition", "some disposition"},
             {"Content-Encoding", "some-encoding"},
-            {"Content-Type", "some-content"},
-            {"Expires", "2020-01-02T00:00:00.000Z"},
+            {"Content-Type", "application/html"},            
+            {"Expires", DateTime.UtcNow.AddDays(1).ToString("r")}, // Need to use RFC1123 format to match how the request is serialized
             {"x-amz-website-redirect-location", "/anotherPage.html"},
             
             //Locking requires a bucket with versioning
@@ -140,8 +140,7 @@ namespace Calamari.Tests.AWS
         };
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
-        public void UploadPackageWithMetadata()
+        public async Task UploadPackageWithMetadata()
         {
             var fileSelections = new List<S3FileSelectionProperties>
             {
@@ -162,9 +161,9 @@ namespace Calamari.Tests.AWS
 
             var prefix = Upload("Package1", fileSelections);
 
-            Validate(client =>
+            await Validate(async client =>
             {
-                var response = client.GetObject(BucketName, $"{prefix}JavaScript.js");
+                var response = await client.GetObjectAsync(BucketName, $"{prefix}Extra/JavaScript.js");
                 var headers = response.Headers;
                 var metadata = response.Metadata;
 
@@ -193,14 +192,14 @@ namespace Calamari.Tests.AWS
             });
         }
 
-        static void Validate(Action<AmazonS3Client> execute)
+        static async Task Validate(Func<AmazonS3Client, Task> execute)
         {
-            var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_Calamari_Access"),
-                Environment.GetEnvironmentVariable("AWS_Calamari_Secret"));
+            var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"),
+                Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
             var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.APSoutheast1};
             using (var client = new AmazonS3Client(credentials, config))
             {
-                execute(client);
+                await execute(client);
             }
         }
 
@@ -224,8 +223,8 @@ namespace Calamari.Tests.AWS
             var variablesFile = Path.GetTempFileName();
             var variables = new CalamariVariables();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_Calamari_Access"));
-            variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_Calamari_Secret"));
+            variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"));
+            variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
             variables.Set("Octopus.Action.Aws.Region", RegionEndpoint.APSoutheast1.SystemName);
             variables.Set(AwsSpecialVariables.S3.FileSelections,
                 JsonConvert.SerializeObject(fileSelections, GetEnrichedSerializerSettings()));
