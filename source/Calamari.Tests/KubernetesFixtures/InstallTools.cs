@@ -16,6 +16,13 @@ namespace Calamari.Tests.KubernetesFixtures
 {
     class InstallTools
     {
+        readonly Action<string> log;
+
+        public InstallTools(Action<string> log)
+        {
+            this.log = log;
+        }
+
         public string TerraformExecutable { get; private set; }
         public string KubectlExecutable { get; private set; }
         public string AwsAuthenticatorExecutable { get; private set; }
@@ -25,59 +32,59 @@ namespace Calamari.Tests.KubernetesFixtures
             using (var client = new HttpClient())
             {
                 TerraformExecutable = await DownloadCli("Terraform",
-                                                              async () =>
-                                                              {
-                                                                  var json = await client.GetAsync("https://checkpoint-api.hashicorp.com/v1/check/terraform");
-                                                                  json.EnsureSuccessStatusCode();
-                                                                  var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
-                                                                  var downloadBaseUrl = jObject["current_download_url"].Value<string>();
-                                                                  var version = jObject["current_version"].Value<string>();
-                                                                  return (version, downloadBaseUrl);
-                                                              },
-                                                              async (destinationDirectoryName, tuple) =>
-                                                              {
-                                                                  var fileName = GetTerraformFileName(tuple.latestVersion);
+                                                        async () =>
+                                                        {
+                                                            var json = await client.GetAsync("https://checkpoint-api.hashicorp.com/v1/check/terraform");
+                                                            json.EnsureSuccessStatusCode();
+                                                            var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
+                                                            var downloadBaseUrl = jObject["current_download_url"].Value<string>();
+                                                            var version = jObject["current_version"].Value<string>();
+                                                            return (version, downloadBaseUrl);
+                                                        },
+                                                        async (destinationDirectoryName, tuple) =>
+                                                        {
+                                                            var fileName = GetTerraformFileName(tuple.latestVersion);
 
-                                                                  await DownloadTerraform(fileName, client, tuple.data, destinationDirectoryName);
+                                                            await DownloadTerraform(fileName, client, tuple.data, destinationDirectoryName);
 
-                                                                  var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                                                                  return terraformExecutable;
-                                                              });
+                                                            var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                                                            return terraformExecutable;
+                                                        });
 
                 KubectlExecutable = await DownloadCli("Kubectl",
-                                                            async () =>
-                                                            {
-                                                                var message = await client.GetAsync("https://storage.googleapis.com/kubernetes-release/release/stable.txt");
-                                                                message.EnsureSuccessStatusCode();
-                                                                return (await message.Content.ReadAsStringAsync(), null);
-                                                            },
-                                                            async (destinationDirectoryName, tuple) =>
-                                                            {
-                                                                var downloadUrl = GetKubectlDownloadLink(tuple.latestVersion);
+                                                      async () =>
+                                                      {
+                                                          var message = await client.GetAsync("https://storage.googleapis.com/kubernetes-release/release/stable.txt");
+                                                          message.EnsureSuccessStatusCode();
+                                                          return (await message.Content.ReadAsStringAsync(), null);
+                                                      },
+                                                      async (destinationDirectoryName, tuple) =>
+                                                      {
+                                                          var downloadUrl = GetKubectlDownloadLink(tuple.latestVersion);
 
-                                                                await Download(Path.Combine(destinationDirectoryName, GetKubectlFileName()), client, downloadUrl);
+                                                          await Download(Path.Combine(destinationDirectoryName, GetKubectlFileName()), client, downloadUrl);
 
-                                                                var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                                                                return terraformExecutable;
-                                                            });
+                                                          var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                                                          return terraformExecutable;
+                                                      });
 
                 AwsAuthenticatorExecutable = await DownloadCli("aws-iam-authenticator",
-                                                                     async () =>
-                                                                     {
-                                                                         client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
-                                                                         var json = await client.GetAsync("https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases/latest");
-                                                                         json.EnsureSuccessStatusCode();
-                                                                         var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
-                                                                         var downloadUrl = jObject["assets"].Children().FirstOrDefault(token => token["name"].Value<string>().EndsWith(GetAWSAuthenticatorFileNameEndsWith()))?["browser_download_url"].Value<string>();
-                                                                         return (jObject["tag_name"].Value<string>(), downloadUrl);
-                                                                     },
-                                                                     async (destinationDirectoryName, tuple) =>
-                                                                     {
-                                                                         await Download(Path.Combine(destinationDirectoryName, GetAWSAuthenticatorFileName()), client, tuple.data);
+                                                               async () =>
+                                                               {
+                                                                   client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
+                                                                   var json = await client.GetAsync("https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases/latest");
+                                                                   json.EnsureSuccessStatusCode();
+                                                                   var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
+                                                                   var downloadUrl = jObject["assets"].Children().FirstOrDefault(token => token["name"].Value<string>().EndsWith(GetAWSAuthenticatorFileNameEndsWith()))?["browser_download_url"].Value<string>();
+                                                                   return (jObject["tag_name"].Value<string>(), downloadUrl);
+                                                               },
+                                                               async (destinationDirectoryName, tuple) =>
+                                                               {
+                                                                   await Download(Path.Combine(destinationDirectoryName, GetAWSAuthenticatorFileName()), client, tuple.data);
 
-                                                                         var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                                                                         return terraformExecutable;
-                                                                     });
+                                                                   var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                                                                   return terraformExecutable;
+                                                               });
             }
         }
 
@@ -88,13 +95,13 @@ namespace Calamari.Tests.KubernetesFixtures
             var stdOut = new StringBuilder();
             var stdError = new StringBuilder();
             if (SilentProcessRunner.ExecuteCommand("chmod",
-                                                   "+x " + exePath,
+                                                   $"+x {exePath}",
                                                    Path.GetDirectoryName(exePath) ?? string.Empty,
                                                    (Action<string>)(s => stdOut.AppendLine(s)),
                                                    (Action<string>)(s => stdError.AppendLine(s)))
                                    .ExitCode
                 != 0)
-                throw new Exception(stdOut.ToString() + stdError.ToString());
+                throw new Exception($"{stdOut}{stdError}");
         }
 
         static string GetTerraformFileName(string currentVersion)
@@ -168,7 +175,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        static async Task<string> DownloadCli(string toolName, Func<Task<(string latestVersion, string data)>> versionFetcher, Func<string, (string latestVersion, string data), Task<string>> downloader)
+        async Task<string> DownloadCli(string toolName, Func<Task<(string latestVersion, string data)>> versionFetcher, Func<string, (string latestVersion, string data), Task<string>> downloader)
         {
             var data = await versionFetcher();
             var destinationDirectoryName = TestEnvironment.GetTestPath("Tools", toolName, data.latestVersion);
@@ -186,7 +193,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     return null;
                 }
 
-                Console.WriteLine($"Using existing {toolName} located in {path}");
+                log($"Using existing {toolName} located in {path}");
                 return path;
             }
 
@@ -196,7 +203,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 return executablePath;
             }
 
-            Console.WriteLine($"Downloading {toolName} cli...");
+            log($"Downloading {toolName} cli...");
             Directory.CreateDirectory(destinationDirectoryName);
 
             var retry = new RetryTracker(3, TimeSpan.MaxValue, new LimitedExponentialRetryInterval(1000, 30000, 2));
@@ -220,7 +227,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
             }
 
-            Console.WriteLine($"Downloaded {toolName} to {executablePath}");
+            log($"Downloaded {toolName} to {executablePath}");
 
             return executablePath;
         }

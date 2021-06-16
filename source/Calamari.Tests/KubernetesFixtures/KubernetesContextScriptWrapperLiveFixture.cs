@@ -46,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             terraformWorkingFolder = InitialiseTerraformWorkingFolder("terraform_working", "KubernetesFixtures/Terraform/Clusters");
 
-            installTools = new InstallTools();
+            installTools = new InstallTools(TestContext.Progress.WriteLine);
             await installTools.Install();
 
             InitialiseInfrastructure(terraformWorkingFolder);
@@ -68,7 +68,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
             var delimiter = CalamariEnvironment.IsRunningOnWindows ? ";" : ":";
-            if (currentPath.Length > 0 && currentPath.EndsWith(delimiter))
+            if (currentPath.Length > 0 && !currentPath.EndsWith(delimiter))
             {
                 currentPath += delimiter;
             }
@@ -143,7 +143,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                                 sb.AppendLine(s);
                                                                 TestContext.Progress.WriteLine(s);
                                                             },
-                                                            TestContext.Progress.WriteLine);
+                                                            Console.Error.WriteLine);
 
             result.ExitCode.Should().Be(0);
 
