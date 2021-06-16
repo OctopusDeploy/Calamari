@@ -18,7 +18,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
-    <DefineConstants>$(DefineConstants);NETCORE;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETCORE;AWS;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
     <DefineConstants>$(DefineConstants);NETFX;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;WINDOWS_USER_ACCOUNT_SUPPORT;WINDOWS_REGISTRY_SUPPORT</DefineConstants>
