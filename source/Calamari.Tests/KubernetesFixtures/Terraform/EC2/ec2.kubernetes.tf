@@ -35,6 +35,20 @@ resource "kubernetes_cluster_role_binding" "default" {
     api_group = "rbac.authorization.k8s.io"
   }
 
+  provisioner "file" {
+    source      = data.archive_file.data.output_path
+    destination = "/tmp/data.zip"
+  }
+
+  provisioner "file" {
+    content = templatefile("${path.module}/test.tpl", {
+      cluster_name = data.aws_eks_cluster.default.name,
+      cluster_ca   = data.aws_eks_cluster.default.certificate_authority[0].data,
+      endpoint     = data.aws_eks_cluster.default.endpoint,
+    })
+    destination = "/tmp/script.sh"
+  }
+
   provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/script.sh",

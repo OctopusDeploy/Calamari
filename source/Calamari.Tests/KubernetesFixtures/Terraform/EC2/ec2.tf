@@ -76,25 +76,4 @@ resource "aws_instance" "default" {
   iam_instance_profile        = var.aws_iam_instance_profile_name
   vpc_security_group_ids      = [aws_security_group.ssh.id]
   subnet_id                   = var.aws_subnet_id
-
-  provisioner "file" {
-    source      = data.archive_file.data.output_path
-    destination = "/tmp/data.zip"
-  }
-
-  provisioner "file" {
-    content = templatefile("${path.module}/test.tpl", {
-      cluster_name = data.aws_eks_cluster.default.name,
-      cluster_ca   = data.aws_eks_cluster.default.certificate_authority[0].data,
-      endpoint     = data.aws_eks_cluster.default.endpoint,
-    })
-    destination = "/tmp/script.sh"
-  }
-
-  connection {
-    type        = "ssh"
-    user        = "admin"
-    private_key = file(local_file.private_key.filename)
-    host        = self.public_ip
-  }
 }
