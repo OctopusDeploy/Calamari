@@ -51,7 +51,12 @@ resource "kubernetes_cluster_role_binding" "default" {
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /tmp/script.sh",
+      "if [ ! -f /tmp/script.sh ]; then",
+      "echo \"File not found!\"",
+      "else",
+      "echo \"File found!\"",
+      "fi",
+      "chmod u+x /tmp/script.sh",
       "/tmp/script.sh",
     ]
   }
