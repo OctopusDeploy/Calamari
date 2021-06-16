@@ -50,7 +50,6 @@ namespace Calamari.Tests.AWS
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public async Task UploadPackage1()
         {
             var fileSelections = new List<S3FileSelectionProperties>
@@ -83,7 +82,6 @@ namespace Calamari.Tests.AWS
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public async Task UploadPackage2()
         {
             var fileSelections = new List<S3FileSelectionProperties>
@@ -142,7 +140,6 @@ namespace Calamari.Tests.AWS
         };
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public async Task UploadPackageWithMetadata()
         {
             var fileSelections = new List<S3FileSelectionProperties>

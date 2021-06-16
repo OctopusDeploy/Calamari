@@ -21,7 +21,6 @@ namespace Calamari.Tests.AWS.CloudFormation
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public async Task CreateCloudFormationWithStructuredVariableReplacement()
         {
             var templateFilePath = CloudFormationFixtureHelpers.WriteTemplateFile(CloudFormationFixtureHelpers.GetBasicS3Template(StackName));

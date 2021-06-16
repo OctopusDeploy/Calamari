@@ -19,7 +19,6 @@ namespace Calamari.Tests.AWS.CloudFormation
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public async Task CreateOrUpdateCloudFormationTemplate()
         {
             var templateFilePath = CloudFormationFixtureHelpers.WriteTemplateFile(CloudFormationFixtureHelpers.GetBasicS3Template(StackName));
@@ -39,7 +38,6 @@ namespace Calamari.Tests.AWS.CloudFormation
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public async Task DeleteCloudFormationStack()
         {
             var templateFilePath = CloudFormationFixtureHelpers.WriteTemplateFile(CloudFormationFixtureHelpers.GetBasicS3Template(StackName));
