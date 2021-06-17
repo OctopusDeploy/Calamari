@@ -57,7 +57,7 @@ resource "local_file" "private_key" {
 }
 
 resource "aws_key_pair" "generated_key" {
-  key_name   = "deployer_key"
+  key_name   = "${random_pet.prefix.id}-key"
   public_key = tls_private_key.default.public_key_openssh
 }
 
