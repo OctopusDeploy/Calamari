@@ -18,8 +18,10 @@ namespace Calamari.CloudAccounts
     /// </summary>
     public class AwsEnvironmentGeneration
     {
-        readonly ILog log;
         const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
+
+        readonly ILog log;
+        readonly Func<Task<bool>> verifyLogin;
         readonly string region;
         readonly string accessKey;
         readonly string secretKey;
@@ -29,9 +31,9 @@ namespace Calamari.CloudAccounts
         readonly string assumeRoleSession;
         readonly string assumeRoleDurationSeconds;
 
-        public static async Task<AwsEnvironmentGeneration> Create(ILog log, IVariables variables)
+        public static async Task<AwsEnvironmentGeneration> Create(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null)
         {
-            var environmentGeneration = new AwsEnvironmentGeneration(log, variables);
+            var environmentGeneration = new AwsEnvironmentGeneration(log, variables, verifyLogin);
 
             await environmentGeneration.Initialise();
 
@@ -48,9 +50,10 @@ namespace Calamari.CloudAccounts
 
         public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
 
-        internal AwsEnvironmentGeneration(ILog log, IVariables variables)
+        internal AwsEnvironmentGeneration(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null)
         {
             this.log = log;
+            this.verifyLogin = verifyLogin ?? VerifyLogin;
             var account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
             region = variables.Get("Octopus.Action.Aws.Region")?.Trim();
             // When building the context for an AWS step, there will be a variable expanded with the keys
@@ -132,7 +135,7 @@ namespace Calamari.CloudAccounts
             {
                 EnvironmentVars["AWS_ACCESS_KEY_ID"] = accessKey;
                 EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
-                if (!await VerifyLogin())
+                if (!await verifyLogin())
                 {
                     throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. " +
                                              "Please check the keys assigned to the Amazon Web Services Account associated with this step. " +
