@@ -50,15 +50,9 @@ resource "kubernetes_cluster_role_binding" "default" {
     destination = "/tmp/data.zip"
   }
 
-  provisioner "local-exec" {
-    inline = [
-      "echo ${data.template_file.script.rendered}"
-    ]
-  }
-
   provisioner "remote-exec" {
     inline = [
-      data.template_file.script.rendered
+      replace(data.template_file.script.rendered, "\r", "")
     ]
   }
 
