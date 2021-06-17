@@ -20,6 +20,16 @@ resource "kubernetes_cluster_role" "default" {
   }
 }
 
+data "template_file" "script" {
+  template = file("${path.module}/test.sh")
+
+  vars = {
+    cluster_name = data.aws_eks_cluster.default.name,
+    cluster_ca   = data.aws_eks_cluster.default.certificate_authority[0].data,
+    endpoint     = data.aws_eks_cluster.default.endpoint,
+  }
+}
+
 resource "kubernetes_cluster_role_binding" "default" {
   metadata {
     name = "${random_pet.prefix.id}-role-account"
@@ -40,24 +50,9 @@ resource "kubernetes_cluster_role_binding" "default" {
     destination = "/tmp/data.zip"
   }
 
-  provisioner "file" {
-    content = templatefile("${path.module}/test.tpl", {
-      cluster_name = data.aws_eks_cluster.default.name,
-      cluster_ca   = data.aws_eks_cluster.default.certificate_authority[0].data,
-      endpoint     = data.aws_eks_cluster.default.endpoint,
-    })
-    destination = "/tmp/script.sh"
-  }
-
   provisioner "remote-exec" {
     inline = [
-      "if [ ! -f /tmp/script.sh ]; then",
-      "echo \"File not found!\"",
-      "else",
-      "echo \"File found!\"",
-      "fi",
-      "chmod u+x /tmp/script.sh",
-      "/tmp/script.sh",
+      data.template_file.script.rendered
     ]
   }
 

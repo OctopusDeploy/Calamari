@@ -21,6 +21,10 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = ">= 2.3.2"
     }
+    template = {
+      source = "hashicorp/template"
+      version = "2.2.0"
+    }
   }
   required_version = ">= 0.15"
 }
@@ -36,4 +40,7 @@ provider "tls" {
 }
 
 provider "http" {
+}
+
+provider "template" {
 }
