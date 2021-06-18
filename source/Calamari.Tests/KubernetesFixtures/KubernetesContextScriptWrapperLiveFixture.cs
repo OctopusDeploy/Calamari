@@ -82,7 +82,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             RunTerraformInternal(terraformWorkingFolder, "init");
             RunTerraformInternal(terraformWorkingFolder, "apply", "-auto-approve");
-            var jsonOutput = JObject.Parse(RunTerraformInternal(terraformWorkingFolder, "output", "-json"));
+            var jsonOutput = JObject.Parse(RunTerraformOutput(terraformWorkingFolder));
 
             eksClientID = jsonOutput["eks_client_id"]["value"].Value<string>();
             eksSecretKey = jsonOutput["eks_secret_key"]["value"].Value<string>();
@@ -111,12 +111,22 @@ namespace Calamari.Tests.KubernetesFixtures
             RunTerraformInternal(terraformWorkingFolder, env ?? new Dictionary<string, string>(), "destroy", "-auto-approve");
         }
 
+        string RunTerraformOutput(string terraformWorkingFolder)
+        {
+            return RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), false, "output", "-json");
+        }
+
         string RunTerraformInternal(string terraformWorkingFolder, params string[] args)
         {
             return RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), args);
         }
 
         string RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, params string[] args)
+        {
+            return RunTerraformInternal(terraformWorkingFolder, env, true, args);
+        }
+
+        string RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, bool printOut, params string[] args)
         {
             var sb = new StringBuilder();
             var environmentVars = new Dictionary<string, string>(env)
@@ -142,7 +152,10 @@ namespace Calamari.Tests.KubernetesFixtures
                                                             s =>
                                                             {
                                                                 sb.AppendLine(s);
-                                                                TestContext.Progress.WriteLine(s);
+                                                                if (printOut)
+                                                                {
+                                                                    TestContext.Progress.WriteLine(s);
+                                                                }
                                                             },
                                                             Console.Error.WriteLine);
 
