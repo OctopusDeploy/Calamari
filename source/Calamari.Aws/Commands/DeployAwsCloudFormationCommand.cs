@@ -13,7 +13,9 @@ using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
 using Calamari.Commands;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -68,6 +70,8 @@ namespace Calamari.Aws.Commands
             string RoleArnProvider (RunningDeployment x) => x.Variables[AwsSpecialVariables.CloudFormation.RoleArn];
             var iamCapabilities = JsonConvert.DeserializeObject<List<string>>(variables.Get(AwsSpecialVariables.IamCapabilities, "[]"));
             var tags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags, "[]"));
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
+            var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, variables, fileSystem, log);
 
             CloudFormationTemplate TemplateFactory()
             {
@@ -87,6 +91,7 @@ namespace Calamari.Aws.Commands
             {
                 new LogAwsUserInfoConvention(environment),
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
+                new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
 
                 //Create or Update the stack using changesets
                 new AggregateInstallationConvention(
@@ -101,7 +106,7 @@ namespace Calamari.Aws.Commands
 
                 //Create or update stack using a template (no changesets)
                 new AggregateInstallationConvention(
-                        new  DeployAwsCloudFormationConvention(
+                        new DeployAwsCloudFormationConvention(
                             ClientFactory,
                             TemplateFactory,
                             stackEventLogger,

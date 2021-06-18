@@ -92,6 +92,8 @@ namespace Calamari.Common.Features.StructuredVariables
                             else if (node is YamlNode<SequenceStart> sequenceStart
                                      && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
                                 structureWeAreReplacing = (sequenceStart, sequenceReplacement());
+                            else if (node is YamlNode<Comment> comment && comment.Event.IsInline)
+                                structureWeAreReplacing = (comment, null);
                             else
                                 outputEvents.Add(node.Event);
                         }
@@ -115,6 +117,24 @@ namespace Calamari.Common.Features.StructuredVariables
                                 outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
                                                                     sequenceStart.Event.Anchor,
                                                                     sequenceStart.Event.Tag));
+                                structureWeAreReplacing = null;
+                            }
+                            else if ((node is YamlNode<MappingStart> || node is YamlNode<SequenceStart>)
+                                     && structureWeAreReplacing.Value.startEvent is YamlNode<Comment>)
+                            {
+                                // We aren't doing any replacement here, YamlDotNet gives us the comment and the
+                                // mapping/sequence start element in a different order to what we would expect
+                                // (comment first, start element second instead of the other way around),
+                                // so we are flipping them back to the other way around so the output is correct.
+                                outputEvents.Add(node.Event);
+                                outputEvents.Add(structureWeAreReplacing.Value.startEvent.Event);
+                                structureWeAreReplacing = null;
+                            }
+                            else if (structureWeAreReplacing.Value.startEvent is YamlNode<Comment>)
+                            {
+                                // Comment after any other type of element, just put in the order in which they were given to us
+                                outputEvents.Add(structureWeAreReplacing.Value.startEvent.Event);
+                                outputEvents.Add(node.Event);
                                 structureWeAreReplacing = null;
                             }
                         }

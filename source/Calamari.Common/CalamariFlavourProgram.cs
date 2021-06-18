@@ -6,6 +6,7 @@ using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.FunctionScriptContributions;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
@@ -95,6 +96,7 @@ namespace Calamari.Common
             builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
+            builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
