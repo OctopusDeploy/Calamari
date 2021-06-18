@@ -8,6 +8,7 @@ using Path = System.IO.Path;
 using System.Xml;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Task = System.Threading.Tasks.Task;
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
@@ -139,45 +140,50 @@ Task("Test")
 
 Task("Pack")
 	.IsDependentOn("Build")
-    .Does(() =>
+    .Does(async () =>
 {
+    var packageActions = new List<Task>();
 
-    DoPackage("Calamari", "net40", nugetVersion);
-	DoPackage("Calamari", "net452", nugetVersion, "Cloud");
-    Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
+    packageActions.Add(Task.Run(() => DoPackage("Calamari", "net40", nugetVersion)));
+    packageActions.Add(Task.Run(() => {
+        DoPackage("Calamari", "net452", nugetVersion, "Cloud");
+        Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
+    }));
 
     // Create a portable .NET Core package
-    DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable");
+    packageActions.Add(Task.Run(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable")));
 
     // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
     foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari\Calamari.csproj"))
     {
-        DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid);
+        packageActions.Add(Task.Run(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid)));
     }
+
+    await Task.WhenAll(packageActions);
 
 	// Create a Zip for each runtime for testing
-	foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
-    {
-		var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", nugetVersion, rid);
-		var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
-		Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
-    }
+	// foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
+    // {
+	// 	var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", nugetVersion, rid);
+	// 	var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
+	// 	Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
+    // }
 
-    var dotNetCorePackSettings = new DotNetCorePackSettings
-    {
-        Configuration = configuration,
-        OutputDirectory = artifactsDir,
-        NoBuild = true,
-        IncludeSource = true,
-        ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
-    };
-    var commonProjects = GetFiles("./source/**/*.Common.csproj");
-    foreach(var project in commonProjects)
-    {
-        DotNetCorePack(project.ToString(), dotNetCorePackSettings);
-    }
-    DotNetCorePack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings);
-    DotNetCorePack("./source/Calamari.Testing/Calamari.Testing.csproj", dotNetCorePackSettings);
+    // var dotNetCorePackSettings = new DotNetCorePackSettings
+    // {
+    //     Configuration = configuration,
+    //     OutputDirectory = artifactsDir,
+    //     NoBuild = true,
+    //     IncludeSource = true,
+    //     ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
+    // };
+    // var commonProjects = GetFiles("./source/**/*.Common.csproj");
+    // foreach(var project in commonProjects)
+    // {
+    //     DotNetCorePack(project.ToString(), dotNetCorePackSettings);
+    // }
+    // DotNetCorePack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings);
+    // DotNetCorePack("./source/Calamari.Testing/Calamari.Testing.csproj", dotNetCorePackSettings);
 
 });
 
