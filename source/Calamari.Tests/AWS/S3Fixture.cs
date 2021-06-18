@@ -35,6 +35,7 @@ using Octostache;
 namespace Calamari.Tests.AWS
 {
     [TestFixture]
+    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class S3Fixture
     {
         private const string BucketName = "octopus-e2e-tests";
