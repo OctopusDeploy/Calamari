@@ -9,6 +9,7 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Kubernetes;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -16,7 +17,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Explicit]
+    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class KubernetesContextScriptWrapperLiveFixture: KubernetesContextScriptWrapperLiveFixtureBase
     {
         InstallTools installTools;
