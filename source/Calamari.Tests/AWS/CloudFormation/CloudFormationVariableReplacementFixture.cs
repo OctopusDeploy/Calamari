@@ -7,7 +7,7 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.AWS.CloudFormation
 {
-    [TestFixture]
+    [TestFixture, Explicit]
     public class CloudFormationVariableReplacementFixture
     {
         private string StackName;
