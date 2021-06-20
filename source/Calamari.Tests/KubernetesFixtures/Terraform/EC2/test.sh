@@ -7,6 +7,7 @@ sudo apt-get install -y dotnet-sdk-3.1
 
 export AWS_CLUSTER_URL=${endpoint}
 export AWS_CLUSTER_NAME=${cluster_name}
+export AWS_REGION=${region}
 
 mkdir tools
 cd tools || exit

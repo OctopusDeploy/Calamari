@@ -6,6 +6,10 @@ variable "cluster_name" {
   type = string
 }
 
+variable "aws_region" {
+  type = string
+}
+
 variable "aws_vpc_id" {
   type = string
 }
