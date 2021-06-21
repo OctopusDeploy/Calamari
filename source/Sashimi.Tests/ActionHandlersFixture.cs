@@ -17,6 +17,8 @@ using Calamari.Tests.Shared;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
+using NUnit.Framework.Internal;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Terraform.ActionHandler;
 using Sashimi.Terraform.Tests.CommonTemplates;
@@ -27,7 +29,7 @@ using TestEnvironment = Sashimi.Tests.Shared.TestEnvironment;
 namespace Sashimi.Terraform.Tests
 {
     [TestFixture(BundledCliFixture.TerraformVersion)]
-    [TestFixture("0.15.5")]
+    [TestFixture("1.0.0")]
     public class ActionHandlersFixture
     {
         string? customTerraformExecutable;
@@ -224,8 +226,7 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public void ExtraInitParametersAreSet()
         {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.5");
-
+            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
             var additionalParams = "-var-file=\"backend.tfvars\"";
             ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(_ =>
                                                                       _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, additionalParams),
@@ -237,8 +238,7 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public void AllowPluginDownloadsShouldBeDisabled()
         {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.5");
-
+            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
             ExecuteAndReturnLogOutput<TerraformPlanActionHandler>(
                                                                   _ =>
                                                                   {
@@ -602,8 +602,7 @@ namespace Sashimi.Terraform.Tests
         [Test]
         public void InlineHclTemplateAndVariables()
         {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.5");
-
+            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
             const string variables =
                 "{\"stringvar\":\"default string\",\"images\":\"\",\"test2\":\"\",\"test3\":\"\",\"test4\":\"\"}";
             string template = TemplateLoader.LoadTextTemplate("HclWithVariablesV0118.hcl");
@@ -694,8 +693,7 @@ output ""config-map-aws-auth"" {{
         [Test]
         public void InlineJsonTemplateAndVariables()
         {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.5");
-
+            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
             const string variables =
                 "{\"ami\":\"new ami value\"}";
             string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV01180.json");
@@ -835,7 +833,7 @@ output ""config-map-aws-auth"" {{
             if (terraformCliVersionAsObject.CompareTo(minimumVersion) < 0
                 || terraformCliVersionAsObject.CompareTo(maximumVersion) >= 0)
             {
-                Assert.Ignore();
+                Assert.Ignore($"Test ignored as terraform version is not between {minimumVersion} and {maximumVersion}");
             }
         }
     }
