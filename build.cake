@@ -148,100 +148,56 @@ Task("PackBinaries")
 	.IsDependentOn("Build")
     .Does(async () =>
 {
-    var packageActions = new List<Action>();
+    var actions = new List<Action>();
 
-    packageActions.Add(() => DoPackage("Calamari", "net40", nugetVersion));
-    packageActions.Add(() => DoPackage("Calamari", "net452", nugetVersion, "Cloud"));
+    actions.Add(() => DoPackage("Calamari", "net40", nugetVersion));
+    actions.Add(() => DoPackage("Calamari", "net452", nugetVersion, "Cloud"));
 
     // Create a portable .NET Core package
-    packageActions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable"));
+    actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable"));
 
     // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
     foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari\Calamari.csproj"))
     {
-        packageActions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid));
+        actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid));
     }
 
-    var dotNetCorePackSettings = new DotNetCorePackSettings
-    {
-        Configuration = configuration,
-        OutputDirectory = artifactsDir,
-        NoBuild = true,
-        IncludeSource = true,
-        ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
-    };
+    var dotNetCorePackSettings = GetDotNetCorePackSettings();
 
     var commonProjects = GetFiles("./source/**/*.Common.csproj");
     foreach(var project in commonProjects)
     {
-        packageActions.Add(() => DotNetCorePack(project.ToString(), dotNetCorePackSettings));
+        actions.Add(() => DotNetCorePack(project.ToString(), dotNetCorePackSettings));
     }
 
-    packageActions.Add(() => DotNetCorePack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings));
+    actions.Add(() => DotNetCorePack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings));
 
-    if (packInParallel)
-    {
-        var tasks = new List<Task>();
-        foreach (var action in packageActions)
-        {
-            tasks.Add(Task.Run(action));
-        }
-        await Task.WhenAll(tasks);
-    }        
-    else
-    {
-        foreach (var action in packageActions)
-        {
-            action();
-        }
-    }
+    await RunPackActions(actions);
 });
 
 Task("PackTests")
 	.IsDependentOn("Build")
     .Does(async () =>
 {
-    var packageActions = new List<Action>();
+    var actions = new List<Action>();
 
-    packageActions.Add(() => Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip")));
+    actions.Add(() => Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip")));
 
     // Create a Zip for each runtime for testing
 	foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
     {
-        packageActions.Add(() => {
+        actions.Add(() => {
             var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", nugetVersion, rid);
             var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
             Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
         });
     }
 
-    var dotNetCorePackSettings = new DotNetCorePackSettings
-    {
-        Configuration = configuration,
-        OutputDirectory = artifactsDir,
-        NoBuild = true,
-        IncludeSource = true,
-        ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
-    };
+    var dotNetCorePackSettings = GetDotNetCorePackSettings();
     
-    packageActions.Add(() => DotNetCorePack("./source/Calamari.Testing/Calamari.Testing.csproj", dotNetCorePackSettings));
+    actions.Add(() => DotNetCorePack("./source/Calamari.Testing/Calamari.Testing.csproj", dotNetCorePackSettings));
 
-    if (packInParallel)
-    {
-        var tasks = new List<Task>();
-        foreach (var action in packageActions)
-        {
-            tasks.Add(Task.Run(action));
-        }
-        await Task.WhenAll(tasks);
-    }        
-    else
-    {
-        foreach (var action in packageActions)
-        {
-            action();
-        }
-    }
+    await RunPackActions(actions);
 });
 
 Task("Pack")
@@ -272,6 +228,26 @@ Task("SetOctopusServerVersion")
         Information("Could not set Calamari version in Octopus Server project {0} to {1} as could not find project file", serverProjectFile, nugetVersion);
     }
 });
+
+private async Task RunPackActions(List<Action> actions) 
+{
+    if (packInParallel)
+    {
+        var tasks = new List<Task>();
+        foreach (var action in actions)
+        {
+            tasks.Add(Task.Run(action));
+        }
+        await Task.WhenAll(tasks);
+    }        
+    else
+    {
+        foreach (var action in actions)
+        {
+            action();
+        }
+    }
+}
 
 private string DoPublish(string project, string framework, string version, string runtimeId = null) {
 	var projectDir = Path.Combine("./source", project);
@@ -491,6 +467,18 @@ private IEnumerable<string> GetProjectRuntimeIds(string projectFile)
 private void SetOctopusServerCalamariVersion(string projectFile)
 {
     ReplaceRegexInFiles(projectFile, @"<CalamariVersion>([\S])+<\/CalamariVersion>", $"<CalamariVersion>{nugetVersion}</CalamariVersion>");
+}
+
+private DotNetCorePackSettings GetDotNetCorePackSettings()
+{
+    return new DotNetCorePackSettings
+    {
+        Configuration = configuration,
+        OutputDirectory = artifactsDir,
+        NoBuild = true,
+        IncludeSource = true,
+        ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
+    };
 }
 
 //////////////////////////////////////////////////////////////////////
