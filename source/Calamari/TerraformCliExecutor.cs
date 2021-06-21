@@ -30,6 +30,7 @@ namespace Calamari.Terraform
         readonly string logPath;
         Dictionary<string, string> defaultEnvironmentVariables;
         readonly Version version;
+        readonly TemporaryDirectory disposableDirectory = TemporaryDirectory.Create();
         bool haveLoggedUntestedVersionInfoMessage = false;
 
         readonly VersionRange supportedVersionRange = new VersionRange(NuGetVersion.Parse("0.11.15"), true, NuGetVersion.Parse("1.1"), false);
