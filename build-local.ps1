@@ -15,7 +15,7 @@ Write-Host "
 #  might have caused an issue.                                                                   #
 #                                                                                                #
 ##################################################################################################
-"
+" -ForegroundColor Cyan
 
 ./build.ps1 -Target Local -BuildVerbosity Minimal -PackInParallel -Timestamp -SetOctopusServerVersion
 
@@ -24,4 +24,5 @@ Write-Host "
 #                                                                                      #
 #  Local build complete, restart your Octopus Server to test your Calamari changes :)  #
 #                                                                                      #
-########################################################################################"
+########################################################################################
+" -ForegroundColor Cyan
