@@ -1,11 +1,27 @@
-########################
-# Helper script for running local Calamari builds which does the following:
-# * Skips packing test projects
-# * Runs pack of nuget packages for runtimes in parallel for better performance
-# * Appends a timestamp to the nuget version so don't need to commit each time to get a unique package version
-# * Sets the octopus server version for you
-#
-# The intention of this is not to replace anything the existing build script does, but to reduce the inner feedback loop
-# for Calamari changes getting across to Server as part of dev testing.
-########################
+Write-Host "
+##################################################################################################
+#                                                                                                #
+#  This is a helper script for running local Calamari builds, it's going to do the following:    #
+#    * Append a timestamp to the NuGet package versions to give you a unique version number      #
+#    * Set the msbuild verbosity to minimal to reduce noise                                      #
+#    * Create NuGet packages for the various runtimes in parallel                                #
+#    * Skip creating .Tests NuGet packages                                                       #
+#    * Set the CalamariVersion property in Octopus.Server.csproj                                 #
+#                                                                                                # 
+#  This script is intended to only be run locally and not in CI.                                 #
+#                                                                                                #
+#  If something unexpected is happening in your build or Calamari changes you may want to run    #
+#  the full build by running ./build.ps1 and check again as something in the optimizations here  #
+#  might have caused an issue.                                                                   #
+#                                                                                                #
+##################################################################################################
+"
+
 ./build.ps1 -Target Local -BuildVerbosity Minimal -PackInParallel -Timestamp -SetOctopusServerVersion
+
+Write-Host "
+########################################################################################
+#                                                                                      #
+#  Local build complete, restart your Octopus Server to test your Calamari changes :)  #
+#                                                                                      #
+########################################################################################"
