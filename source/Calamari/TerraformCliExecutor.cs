@@ -30,9 +30,9 @@ namespace Calamari.Terraform
         readonly string logPath;
         Dictionary<string, string> defaultEnvironmentVariables;
         readonly Version version;
-        readonly TemporaryDirectory disposableDirectory = TemporaryDirectory.Create();
+        bool haveLoggedUntestedVersionInfoMessage = false;
 
-        readonly VersionRange supportedVersionRange = new VersionRange(NuGetVersion.Parse("0.11.15"), true, NuGetVersion.Parse("0.16"), false);
+        readonly VersionRange supportedVersionRange = new VersionRange(NuGetVersion.Parse("0.11.15"), true, NuGetVersion.Parse("1.1"), false);
 
         public TerraformCliExecutor(
             ILog log,
@@ -110,24 +110,17 @@ namespace Calamari.Terraform
 
         public CommandResult ExecuteCommand(params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(arguments, out var result, true);
-
-            commandResult.VerifySuccess();
-            return commandResult;
+            return ExecuteCommandAndVerifySuccess(arguments, out var result, true);
         }
 
         public CommandResult ExecuteCommand(out string result, params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(arguments, out result, true);
-
-            return commandResult;
+            return ExecuteCommand(out result, true, arguments);
         }
 
         public CommandResult ExecuteCommand(out string result, bool outputToCalamariConsole, params string[] arguments)
         {
-            var commandResult = ExecuteCommandInternal(arguments, out result, outputToCalamariConsole);
-
-            return commandResult;
+            return ExecuteCommandInternal(arguments, out result, outputToCalamariConsole);
         }
 
         public void Dispose()
@@ -146,6 +139,44 @@ namespace Calamari.Terraform
                     log.NewOctopusArtifact(fileSystem.GetFullPath(crashLogPath), fileSystem.GetFileName(crashLogPath), fileSystem.GetFileSize(crashLogPath));
             }
             disposableDirectory.Dispose();
+        }
+
+        public void VerifySuccess(CommandResult commandResult, Predicate<CommandResult> isSuccess)
+        {
+            LogUntestedVersionMessageIfNeeded(commandResult, isSuccess);
+
+            if (isSuccess == null || !isSuccess(commandResult))
+                commandResult.VerifySuccess();
+        }
+
+        public void VerifySuccess(CommandResult commandResult)
+        {
+            VerifySuccess(commandResult, r => r.ExitCode == 0);
+        }
+
+        void LogUntestedVersionMessageIfNeeded(CommandResult commandResult, Predicate<CommandResult> isSuccess)
+        {
+            if (this.version != null && !supportedVersionRange.Satisfies(new NuGetVersion(version)))
+            {
+                var messageCode = "Terraform-Configuration-UntestedTerraformCLIVersion";
+                var message = $"{log.FormatLink($"https://g.octopushq.com/Terraform#{messageCode.ToLower()}", messageCode)}: Terraform steps are tested against versions {(supportedVersionRange.IsMinInclusive ? "" : ">")}{supportedVersionRange.MinVersion.ToNormalizedString()} to {(supportedVersionRange.IsMaxInclusive ? "" : "<")}{supportedVersionRange.MaxVersion.ToNormalizedString()} of the Terraform CLI. Version {version} of Terraform CLI has not been tested, however Terraform commands may work successfully with this version. Click the error code link for more information.";
+                if (isSuccess == null || !isSuccess(commandResult))
+                {
+                    log.Warn(message);
+                }
+                else if (!haveLoggedUntestedVersionInfoMessage) // Only want to log an info message once, not on every command
+                {
+                    log.Info(message);
+                    haveLoggedUntestedVersionInfoMessage = true;
+                }
+            }
+        }
+
+        CommandResult ExecuteCommandAndVerifySuccess(string[] arguments, out string result, bool outputToCalamariConsole)
+        {
+            var commandResult = ExecuteCommandInternal(arguments, out result, outputToCalamariConsole);
+            VerifySuccess(commandResult);
+            return commandResult;
         }
 
         CommandResult ExecuteCommandInternal(string[] arguments, out string result, bool outputToCalamariConsole)
@@ -184,17 +215,12 @@ namespace Calamari.Terraform
 
             initCommand += $" {initParams}";
 
-            ExecuteCommandInternal(
-                                   new[] { initCommand },
-                                   out _,
-                                   true)
-                .VerifySuccess();
+            ExecuteCommandAndVerifySuccess(new[] { initCommand }, out _, true);
         }
 
         Version GetVersion()
         {
-            ExecuteCommandInternal(new[] { "--version" }, out string consoleOutput, true)
-                .VerifySuccess();
+            ExecuteCommandAndVerifySuccess(new[] { "--version" }, out string consoleOutput, true);
 
             consoleOutput = consoleOutput.Replace("Terraform v", "");
             int newLinePos = consoleOutput.IndexOf('\n'); // this is always \n in all OSes for unknown reasons
@@ -204,11 +230,6 @@ namespace Calamari.Terraform
             if (!Version.TryParse(consoleOutput, out var version))
             {
                 log.Warn($"Could not determine Terraform CLI version.");
-            }
-            else
-            {
-                if (!supportedVersionRange.Satisfies(new NuGetVersion(version)))
-                    log.Warn($"Version {consoleOutput} of Terraform CLI is not supported. Supported version range is: {supportedVersionRange}");
             }
 
             return version;
@@ -220,19 +241,19 @@ namespace Calamari.Terraform
 
             if (!string.IsNullOrWhiteSpace(workspace))
             {
-                ExecuteCommandInternal(new[] { "workspace list" }, out var results, true).VerifySuccess();
+                ExecuteCommandAndVerifySuccess(new[] { "workspace list" }, out var results, true);
 
                 foreach (var line in results.Split('\n'))
                 {
                     var workspaceName = line.Trim('*', ' ');
                     if (workspaceName.Equals(workspace))
                     {
-                        ExecuteCommandInternal(new[] { $"workspace select \"{workspace}\"" }, out _, true).VerifySuccess();
+                        ExecuteCommandAndVerifySuccess(new[] { $"workspace select \"{workspace}\"" }, out _, true);
                         return;
                     }
                 }
 
-                ExecuteCommandInternal(new[] { $"workspace new \"{workspace}\"" }, out _, true).VerifySuccess();
+                ExecuteCommandAndVerifySuccess(new[] { $"workspace new \"{workspace}\"" }, out _, true);
             }
         }
 
