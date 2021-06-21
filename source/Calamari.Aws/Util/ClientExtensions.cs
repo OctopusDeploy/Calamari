@@ -9,8 +9,6 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Util
 {
-    
-    
     public static class ClientExtensions
     {
         public static TConfig AsClientConfig<TConfig>(this AwsEnvironmentGeneration environment)
@@ -19,6 +17,7 @@ namespace Calamari.Aws.Util
             return new TConfig().Tee(x =>
             {
                 x.RegionEndpoint = environment.AwsRegion;
+                x.AllowAutoRedirect = true;
             });
         }}
 
@@ -41,7 +40,7 @@ namespace Calamari.Aws.Util
 
         public static IAmazonCloudFormation CreateCloudFormationClient(AwsEnvironmentGeneration environment)
         {
-            return new AmazonCloudFormationClient(environment.AwsCredentials, 
+            return new AmazonCloudFormationClient(environment.AwsCredentials,
                 environment.AsClientConfig<AmazonCloudFormationConfig>());
         }
     }
