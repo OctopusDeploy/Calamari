@@ -9,6 +9,7 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Kubernetes;
+using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
@@ -41,10 +42,12 @@ namespace Calamari.Tests.KubernetesFixtures
         string awsVpcID;
         string awsSubnetID;
         string awsIamInstanceProfileName;
+        string region;
 
         [OneTimeSetUp]
         public async Task SetupInfrastructure()
         {
+            region = RegionRandomiser.GetARegion();
             terraformWorkingFolder = InitialiseTerraformWorkingFolder("terraform_working", "KubernetesFixtures/Terraform/Clusters");
 
             installTools = new InstallTools(TestContext.Progress.WriteLine);
@@ -134,6 +137,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "TF_IN_AUTOMATION ", Boolean.TrueString },
                 { "AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_E2E_AccessKeyId") },
                 { "AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_E2E_SecretKeyId") },
+                { "AWS_DEFAULT_REGION", region },
                 { "ARM_SUBSCRIPTION_ID", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_SubscriptionId") },
                 { "ARM_CLIENT_ID", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_ClientId") },
                 { "ARM_CLIENT_SECRET", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_Password") },
@@ -228,7 +232,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
             variables.Set(SpecialVariables.ClusterUrl, eksClusterEndpoint);
             variables.Set(SpecialVariables.EksClusterName, eksClusterName);
-            variables.Set("Octopus.Action.Aws.Region", "ap-southeast-2");
+            variables.Set("Octopus.Action.Aws.Region", region);
             var account = "eks_account";
             variables.Set("Octopus.Action.AwsAccount.Variable", account);
             variables.Set($"{account}.AccessKey", eksClientID);
@@ -250,7 +254,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "TF_VAR_cluster_name", eksClusterName },
                 { "TF_VAR_aws_vpc_id", awsVpcID },
                 { "TF_VAR_aws_subnet_id", awsSubnetID },
-                { "TF_VAR_aws_iam_instance_profile_name", awsIamInstanceProfileName }
+                { "TF_VAR_aws_iam_instance_profile_name", awsIamInstanceProfileName },
+                { "TF_VAR_aws_region", region }
             };
 
             RunTerraformInternal(terraformWorkingFolder, env, "init");
