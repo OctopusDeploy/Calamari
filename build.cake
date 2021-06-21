@@ -490,7 +490,7 @@ private IEnumerable<string> GetProjectRuntimeIds(string projectFile)
 // Sets the Octopus.Server Calamari version property
 private void SetOctopusServerCalamariVersion(string projectFile)
 {
-    ReplaceRegexInFiles(projectFile, @"<CalamariVersion>([0-9.])+<\/CalamariVersion>", $"<CalamariVersion>{nugetVersion}</CalamariVersion>");
+    ReplaceRegexInFiles(projectFile, @"<CalamariVersion>([\S])+<\/CalamariVersion>", $"<CalamariVersion>{nugetVersion}</CalamariVersion>");
 }
 
 //////////////////////////////////////////////////////////////////////
