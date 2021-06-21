@@ -1,0 +1,1 @@
+./build.ps1 -Target Local -BuildVerbosity Minimal -PackInParallel -Timestamp -SetOctopusServerVersion
