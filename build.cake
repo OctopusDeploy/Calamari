@@ -303,8 +303,7 @@ private void DoPackage(string project, string framework, string version, string 
 		BasePath = publishedTo,
 		Version = nugetVersion,
 		Verbosity = NuGetVerbosity.Normal,
-        Properties = nugetPackProperties,
-        Symbols = true
+        Properties = nugetPackProperties
     };
 
     DotNetCorePublish(projectDir, publishSettings);
