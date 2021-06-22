@@ -135,7 +135,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         public void When_TransformIsWildcardFullPath_And_TargetIsWildcardFileNameOnly_ItSucceeds()
         {
             ConfigurationTransformTestCaseBuilder
-                .ForTheScenario("Using an absolute path wildcard transform and multiple targets") 
+                .ForTheScenario("Using an absolute path wildcard transform and multiple targets")
                 .Given.FileExists(@"c:\temp\web.config")
                 .And.FileExists(@"c:\temp\app.config")
                 .And.FileExists(@"c:\temp\subdir\web.config")
@@ -352,7 +352,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        public void When_TransformIsWildcardFileNameOnly_And_TargetIsWildCardInMiddleOfFileNameOnly_ItFails()
+        public void When_TransformIsWildcardFileNameOnly_And_TargetIsWildCardInsideFileNameOnly_ItFails()
         {
             ConfigurationTransformTestCaseBuilder
                 .ForTheScenario("Not supported: Using wildcard in the middle of target filename")
@@ -505,7 +505,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 .ForTheScenario("Not supported: Applying a transform with an absolute path to target in a different directory")
                 .Given.FileExists(@"c:\temp\config\web.config")
                 .And.FileExists(@"c:\transforms\web.mytransform.config")
-                .When.UsingTransform(@"c:\transforms\web.mytransform.config => config\web.config") 
+                .When.UsingTransform(@"c:\transforms\web.mytransform.config => config\web.config")
                 .Then.SourceFile(@"c:\temp\config\web.config")
                 .Should.FailToBeTransformed()
                 .Verify(this);

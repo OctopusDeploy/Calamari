@@ -433,7 +433,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         // This test case demonstrates that even though we usually try to determine file types
         // using file extensions first, Json is still a special case which takes precedence
         [Test]
-        public void ShouldPerformReplacementInJsonFileWithFileExtensionForOtherSupportedConfigFormat()
+        public void ShouldPerformReplacementInJsonFileWithFileExtForOtherSupportedConfigFormat()
         {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(ServiceName, ServiceVersion)))
             {

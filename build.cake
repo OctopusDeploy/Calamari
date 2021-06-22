@@ -3,11 +3,13 @@
 //////////////////////////////////////////////////////////////////////
 #tool "nuget:?package=GitVersion.CommandLine&version=5.2.0"
 #addin "nuget:?package=Cake.Incubator&version=5.0.1"
+#addin "nuget:?package=Cake.FileHelpers&version=4.0.1"
 
 using Path = System.IO.Path;
 using System.Xml;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Task = System.Threading.Tasks.Task;
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
@@ -16,6 +18,10 @@ var configuration = Argument("configuration", "Release");
 var testFilter = Argument("where", "");
 var signingCertificatePath = Argument("signing_certificate_path", "");
 var signingCertificatePassword = Argument("signing_certificate_password", "");
+var buildVerbosity = Argument("build_verbosity", "normal");
+var packInParallel = Argument<bool>("packinparallel", false);
+var appendTimestamp = Argument<bool>("timestamp", false);
+var setOctopusServerVersion = Argument<bool>("setoctopusserverversion", false);
 
 ///////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
@@ -45,8 +51,10 @@ Setup(context =>
 		LogFilePath = "gitversion.log"
     });
 
-
     nugetVersion = gitVersionInfo.NuGetVersion;
+
+    if (appendTimestamp) 
+        nugetVersion = nugetVersion + "-" + DateTime.Now.ToString("yyyyMMddHHmmss");
 
     Information("Building Calamari v{0}", nugetVersion);
 });
@@ -63,7 +71,7 @@ Teardown(context =>
 Task("SetTeamCityVersion")
     .Does(() => {
         if(BuildSystem.IsRunningOnTeamCity)
-            BuildSystem.TeamCity.SetBuildNumber(gitVersionInfo.NuGetVersion);
+            BuildSystem.TeamCity.SetBuildNumber(nugetVersion);
     });
 
 Task("CheckForbiddenWords")
@@ -90,7 +98,6 @@ Task("CheckForbiddenWords")
 });
 
 Task("Clean")
-	.IsDependentOn("SetTeamCityVersion")
     .Does(() =>
 {
     CleanDirectories(publishDir);
@@ -103,7 +110,7 @@ Task("Restore")
 	.IsDependentOn("Clean")
     .Does(() => DotNetCoreRestore("source", new DotNetCoreRestoreSettings
     {
-	    ArgumentCustomization = args => args.Append($"--verbosity normal")
+	    ArgumentCustomization = args => args.Append("--verbosity").Append(buildVerbosity)
     }));
 
 Task("Build")
@@ -114,7 +121,7 @@ Task("Build")
 		DotNetCoreBuild("./source/Calamari.sln", new DotNetCoreBuildSettings
 		{
 			Configuration = configuration,
-			ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append($"--verbosity normal")
+			ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append("--verbosity").Append(buildVerbosity)
 		});
 	});
 
@@ -132,63 +139,115 @@ Task("Test")
 						args = args.Append("--where").AppendQuoted(testFilter);
 					}
 					return args.Append("--logger:trx")
-                        .Append($"--verbosity normal");
+                        .Append("--verbosity").Append(buildVerbosity);
 				}
 			});
 	});
 
-Task("Pack")
+Task("PackBinaries")
 	.IsDependentOn("Build")
-    .Does(() =>
+    .Does(async () =>
 {
+    var actions = new List<Action>();
 
-    DoPackage("Calamari", "net40", nugetVersion);
-	DoPackage("Calamari", "net452", nugetVersion, "Cloud");
-    Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip"));
+    actions.Add(() => DoPackage("Calamari", "net40", nugetVersion));
+    actions.Add(() => DoPackage("Calamari", "net452", nugetVersion, "Cloud"));
 
     // Create a portable .NET Core package
-    DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable");
+    actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable"));
 
     // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
     foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari\Calamari.csproj"))
     {
-        DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid);
+        actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid));
     }
 
-	// Create a Zip for each runtime for testing
-	foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
-    {
-		var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", nugetVersion, rid);
-		var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
-		Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
-    }
+    var dotNetCorePackSettings = GetDotNetCorePackSettings();
 
-    var dotNetCorePackSettings = new DotNetCorePackSettings
-    {
-        Configuration = configuration,
-        OutputDirectory = artifactsDir,
-        NoBuild = true,
-        IncludeSource = true,
-        ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
-    };
     var commonProjects = GetFiles("./source/**/*.Common.csproj");
     foreach(var project in commonProjects)
     {
-        DotNetCorePack(project.ToString(), dotNetCorePackSettings);
+        actions.Add(() => DotNetCorePack(project.ToString(), dotNetCorePackSettings));
     }
-    DotNetCorePack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings);
-    DotNetCorePack("./source/Calamari.Testing/Calamari.Testing.csproj", dotNetCorePackSettings);
 
+    actions.Add(() => DotNetCorePack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings));
+
+    await RunPackActions(actions);
 });
+
+Task("PackTests")
+	.IsDependentOn("Build")
+    .Does(async () =>
+{
+    var actions = new List<Action>();
+
+    actions.Add(() => Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip")));
+
+    // Create a Zip for each runtime for testing
+	foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
+    {
+        actions.Add(() => {
+            var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", nugetVersion, rid);
+            var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
+            Zip(Path.Combine(publishedLocation, rid), Path.Combine(artifactsDir, zipName));
+        });
+    }
+
+    var dotNetCorePackSettings = GetDotNetCorePackSettings();
+    
+    actions.Add(() => DotNetCorePack("./source/Calamari.Testing/Calamari.Testing.csproj", dotNetCorePackSettings));
+
+    await RunPackActions(actions);
+});
+
+Task("Pack")
+	.IsDependentOn("PackBinaries")
+    .IsDependentOn("PackTests");
 
 Task("CopyToLocalPackages")
     .WithCriteria(BuildSystem.IsLocalBuild)
-    .IsDependentOn("Pack")
     .Does(() =>
 {
     CreateDirectory(localPackagesDir);
     CopyFiles(Path.Combine(artifactsDir, $"Calamari.*.nupkg"), localPackagesDir);
 });
+
+Task("SetOctopusServerVersion")
+    .WithCriteria(BuildSystem.IsLocalBuild)
+    .WithCriteria(setOctopusServerVersion)
+    .Does(() =>
+{
+    var serverProjectFile = Path.GetFullPath("../OctopusDeploy/source/Octopus.Server/Octopus.Server.csproj");
+    if (FileExists(serverProjectFile))
+    {
+        Information("Setting Calamari version in Octopus Server project {0} to {1}", serverProjectFile, nugetVersion);
+        SetOctopusServerCalamariVersion(serverProjectFile);
+    }
+    else 
+    {
+        Information("Could not set Calamari version in Octopus Server project {0} to {1} as could not find project file", serverProjectFile, nugetVersion);
+    }
+});
+
+private async Task RunPackActions(List<Action> actions) 
+{
+    if (packInParallel)
+    {
+        var tasks = new List<Task>();
+        foreach (var action in actions)
+        {
+            tasks.Add(Task.Run(action));
+        }
+        await Task.WhenAll(tasks);
+    }        
+    else
+    {
+        foreach (var action in actions)
+        {
+            action();
+        }
+    }
+}
 
 private string DoPublish(string project, string framework, string version, string runtimeId = null) {
 	var projectDir = Path.Combine("./source", project);
@@ -199,7 +258,7 @@ private string DoPublish(string project, string framework, string version, strin
         Configuration = configuration,
         OutputDirectory = publishedTo,
         Framework = framework,
-		ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append($"--verbosity normal")
+		ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append("--verbosity").Append(buildVerbosity)
     };
 
 	 if (!string.IsNullOrEmpty(runtimeId))
@@ -226,7 +285,7 @@ private void DoPackage(string project, string framework, string version, string 
         Configuration = configuration,
         OutputDirectory = publishedTo,
         Framework = framework,
-		ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append($"--verbosity normal")
+		ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}").Append($"--verbosity").Append(buildVerbosity)
     };
     if (!string.IsNullOrEmpty(runtimeId))
     {
@@ -403,13 +462,37 @@ private IEnumerable<string> GetProjectRuntimeIds(string projectFile)
     return rids.Split(';');
 }
 
+// Sets the Octopus.Server Calamari version property
+private void SetOctopusServerCalamariVersion(string projectFile)
+{
+    ReplaceRegexInFiles(projectFile, @"<CalamariVersion>([\S])+<\/CalamariVersion>", $"<CalamariVersion>{nugetVersion}</CalamariVersion>");
+}
+
+private DotNetCorePackSettings GetDotNetCorePackSettings()
+{
+    return new DotNetCorePackSettings
+    {
+        Configuration = configuration,
+        OutputDirectory = artifactsDir,
+        NoBuild = true,
+        IncludeSource = true,
+        ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
+    };
+}
+
 //////////////////////////////////////////////////////////////////////
 // TASKS
 //////////////////////////////////////////////////////////////////////
 Task("Default")
     .IsDependentOn("SetTeamCityVersion")
-    .IsDependentOn("CopyToLocalPackages");
+    .IsDependentOn("Pack")
+    .IsDependentOn("CopyToLocalPackages")
+    .IsDependentOn("SetOctopusServerVersion");
 
+Task("Local")
+    .IsDependentOn("PackBinaries")
+    .IsDependentOn("CopyToLocalPackages")
+    .IsDependentOn("SetOctopusServerVersion");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION

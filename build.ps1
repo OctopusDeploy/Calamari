@@ -30,6 +30,14 @@ No tasks will be executed.
 Tells Cake to use the Mono scripting engine.
 .PARAMETER SkipToolPackageRestore
 Skips restoring of packages.
+.PARAMETER BuildVerbosity
+Specifies the verbosity of any msbuild or dotnet build actions (default = Normal).
+.PARAMETER $PackInParallel
+Specifies whether to perform any pack actions in parallel (default = false)
+.PARAMETER $Timestamp
+Specifies whether to append the current timestamp to the version (default = false)
+.PARAMETER $SetOctopusServerVersion
+Specifies whether to set the Octopus Server version as part of the build (default = false)
 .PARAMETER ScriptArgs
 Remaining arguments are added here.
 
@@ -53,7 +61,12 @@ Param(
     [switch]$Mono,
     [switch]$SkipToolPackageRestore,
     [string]$SigningCertificatePath = "./certificates/OctopusDevelopment.pfx",
-    [string]$SigningCertificatePassword = "Password01!"
+    [string]$SigningCertificatePassword = "Password01!",
+    [ValidateSet("Quiet", "Minimal", "Normal", "Verbose", "Diagnostic")]
+    [string]$BuildVerbosity = "Normal",
+    [switch]$PackInParallel,
+    [switch]$Timestamp,
+    [switch]$SetOctopusServerVersion
 )
 
 [Reflection.Assembly]::LoadWithPartialName("System.Security") | Out-Null
@@ -117,6 +130,24 @@ if($Experimental.IsPresent -and !($Mono.IsPresent)) {
 $UseDryRun = "";
 if($WhatIf.IsPresent) {
     $UseDryRun = "-dryrun"
+}
+
+# Should we run pack operations in parallel
+$UsePackInParallel = ""
+if ($PackInParallel.IsPresent) {
+    $UsePackInParallel = "-packinparallel=true"
+}
+
+# Should we append a timestamp to the version
+$UseTimestamp = ""
+if ($Timestamp.IsPresent) {
+    $UseTimestamp = "-timestamp=true"
+}
+
+# Should we run pack operations in parallel
+$UseSetOctopusServerVersion = ""
+if ($SetOctopusServerVersion.IsPresent) {
+    $UseSetOctopusServerVersion = "-setoctopusserverversion=true"
 }
 
 # Make sure tools folder exists
@@ -233,5 +264,5 @@ if (!(Test-Path $CAKE_EXE)) {
 
 # Start Cake
 Write-Host "Running build script..."
-Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" $UseMono $UseDryRun $UseExperimental"
+Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" -build_verbosity=`"$BuildVerbosity`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion"
 exit $LASTEXITCODE
