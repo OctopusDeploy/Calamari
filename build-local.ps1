@@ -3,6 +3,7 @@ Write-Host "
 #                                                                                                #
 #  This is a helper script for running local Calamari builds, it's going to do the following:    #
 #    * Append a timestamp to the NuGet package versions to give you a unique version number      #
+#      without needing to commit your changes locally                                            #
 #    * Set the msbuild verbosity to minimal to reduce noise                                      #
 #    * Create NuGet packages for the various runtimes in parallel                                #
 #    * Skip creating .Tests NuGet packages                                                       #
