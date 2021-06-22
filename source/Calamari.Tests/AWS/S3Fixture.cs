@@ -5,11 +5,7 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Processes;
 using System.Threading.Tasks;
-using Calamari.Common.Plumbing.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,11 +13,11 @@ using System.Net;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
+using Amazon.S3.Model;
 using Calamari.Aws.Commands;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Serialization;
-using Calamari.Integration.FileSystem;
 using Calamari.Serialization;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
@@ -30,16 +26,17 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
-using Octostache;
 
 namespace Calamari.Tests.AWS
 {
     [TestFixture]
+    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class S3Fixture
     {
-        private const string BucketName = "octopus-e2e-tests";
+        string region;
+        string bucketName;
 
-        private static JsonSerializerSettings GetEnrichedSerializerSettings()
+        static JsonSerializerSettings GetEnrichedSerializerSettings()
         {
             return JsonSerialization.GetDefaultSerializerSettings()
                 .Tee(x =>
@@ -49,6 +46,26 @@ namespace Calamari.Tests.AWS
                 });
         }
 
+        public S3Fixture()
+        {
+            region = RegionRandomiser.GetARegion();
+            bucketName = Guid.NewGuid().ToString("N");
+        }
+
+        [OneTimeTearDown]
+        public Task TearDownInfrastructure()
+        {
+            return Validate(async client =>
+                            {
+                                var response = await client.ListObjectsAsync(bucketName);
+                                foreach (var s3Object in response.S3Objects)
+                                {
+                                    await client.DeleteObjectAsync(bucketName, s3Object.Key);
+                                }
+                                await client.DeleteBucketAsync(bucketName);
+                            });
+        }
+
         [Test]
         public async Task UploadPackage1()
         {
@@ -56,14 +73,14 @@ namespace Calamari.Tests.AWS
             {
                 new S3MultiFileSelectionProperties
                 {
-                    Pattern = "Content/**/*", 
+                    Pattern = "Content/**/*",
                     Type = S3FileSelectionTypes.MultipleFiles,
                     StorageClass = "STANDARD",
                     CannedAcl = "private"
                 },
                 new S3SingleFileSelectionProperties
                 {
-                    Path = "Extra/JavaScript.js", 
+                    Path = "Extra/JavaScript.js",
                     Type = S3FileSelectionTypes.SingleFile,
                     StorageClass = "STANDARD",
                     CannedAcl = "private",
@@ -75,9 +92,9 @@ namespace Calamari.Tests.AWS
 
             await Validate(async client =>
             {
-                await client.GetObjectAsync(BucketName, $"{prefix}Resources/TextFile.txt");
-                await client.GetObjectAsync(BucketName, $"{prefix}root/Page.html");
-                await client.GetObjectAsync(BucketName, $"{prefix}Extra/JavaScript.js");
+                await client.GetObjectAsync(bucketName, $"{prefix}Resources/TextFile.txt");
+                await client.GetObjectAsync(bucketName, $"{prefix}root/Page.html");
+                await client.GetObjectAsync(bucketName, $"{prefix}Extra/JavaScript.js");
             });
         }
 
@@ -88,7 +105,7 @@ namespace Calamari.Tests.AWS
             {
                 new S3MultiFileSelectionProperties
                 {
-                    Pattern = "**/Things/*", 
+                    Pattern = "**/Things/*",
                     Type = S3FileSelectionTypes.MultipleFiles,
                     StorageClass = "STANDARD",
                     CannedAcl = "private"
@@ -99,10 +116,10 @@ namespace Calamari.Tests.AWS
 
             await Validate(async client =>
             {
-                await client.GetObjectAsync(BucketName, $"{prefix}Wild/Things/TextFile2.txt");
+                await client.GetObjectAsync(bucketName, $"{prefix}Wild/Things/TextFile2.txt");
                 try
                 {
-                    await client.GetObjectAsync(BucketName, $"{prefix}Wild/Ignore/TextFile1.txt");
+                    await client.GetObjectAsync(bucketName, $"{prefix}Wild/Ignore/TextFile1.txt");
                 }
                 catch (AmazonS3Exception e)
                 {
@@ -119,14 +136,9 @@ namespace Calamari.Tests.AWS
             {"Cache-Control", "max-age=123"},
             {"Content-Disposition", "some disposition"},
             {"Content-Encoding", "some-encoding"},
-            {"Content-Type", "application/html"},            
+            {"Content-Type", "application/html"},
             {"Expires", DateTime.UtcNow.AddDays(1).ToString("r")}, // Need to use RFC1123 format to match how the request is serialized
             {"x-amz-website-redirect-location", "/anotherPage.html"},
-            
-            //Locking requires a bucket with versioning
-//            {"x-amz-object-lock-mode", "GOVERNANCE"},
-//            {"x-amz-object-lock-retain-until-date", DateTime.UtcNow.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss.fffK")},
-//            {"x-amz-object-lock-legal-hold", "OFF"},
         };
 
         IDictionary<string, string> userDefinedMetadata = new Dictionary<string, string>()
@@ -163,7 +175,7 @@ namespace Calamari.Tests.AWS
 
             await Validate(async client =>
             {
-                var response = await client.GetObjectAsync(BucketName, $"{prefix}Extra/JavaScript.js");
+                var response = await client.GetObjectAsync(bucketName, $"{prefix}Extra/JavaScript.js");
                 var headers = response.Headers;
                 var metadata = response.Metadata;
 
@@ -192,11 +204,11 @@ namespace Calamari.Tests.AWS
             });
         }
 
-        static async Task Validate(Func<AmazonS3Client, Task> execute)
+        async Task Validate(Func<AmazonS3Client, Task> execute)
         {
             var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"),
                 Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
-            var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.APSoutheast1};
+            var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region)};
             using (var client = new AmazonS3Client(credentials, config))
             {
                 await execute(client);
@@ -225,7 +237,7 @@ namespace Calamari.Tests.AWS
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
             variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"));
             variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
-            variables.Set("Octopus.Action.Aws.Region", RegionEndpoint.APSoutheast1.SystemName);
+            variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set(AwsSpecialVariables.S3.FileSelections,
                 JsonConvert.SerializeObject(fileSelections, GetEnrichedSerializerSettings()));
             variables.Save(variablesFile);
@@ -244,10 +256,10 @@ namespace Calamari.Tests.AWS
                     new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
                     new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log)
                 );
-                var result = command.Execute(new[] { 
-                    "--package", $"{package.FilePath}", 
-                    "--variables", $"{variablesFile}", 
-                    "--bucket", BucketName, 
+                var result = command.Execute(new[] {
+                    "--package", $"{package.FilePath}",
+                    "--variables", $"{variablesFile}",
+                    "--bucket", bucketName,
                     "--targetMode", S3TargetMode.FileSelections.ToString()});
 
                 result.Should().Be(0);

@@ -20,7 +20,12 @@ namespace Calamari.Tests.AWS.CloudFormation
 {
     public static class CloudFormationFixtureHelpers
     {
-        
+        static string region;
+        static CloudFormationFixtureHelpers()
+        {
+            region = RegionRandomiser.GetARegion();
+        }
+
         public static string GetBasicS3Template(string stackName)
         {
             return $@"
@@ -54,7 +59,7 @@ namespace Calamari.Tests.AWS.CloudFormation
         public static async Task ValidateS3(Func<AmazonS3Client, Task> execute)
         {
             var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"), Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
-            var config = new AmazonS3Config { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.APSoutheast1 };
+            var config = new AmazonS3Config { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
             using (var client = new AmazonS3Client(credentials, config))
             {
                 await execute(client);
@@ -74,7 +79,7 @@ namespace Calamari.Tests.AWS.CloudFormation
         static async Task ValidateCloudFormation(Func<AmazonCloudFormationClient, Task> execute)
         {
             var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"), Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
-            var config = new AmazonCloudFormationConfig { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.APSoutheast1 };
+            var config = new AmazonCloudFormationConfig { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
             using (var client = new AmazonCloudFormationClient(credentials, config))
             {
                 await execute(client);
@@ -87,7 +92,7 @@ namespace Calamari.Tests.AWS.CloudFormation
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
             variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"));
             variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
-            variables.Set("Octopus.Action.Aws.Region", RegionEndpoint.APSoutheast1.SystemName);
+            variables.Set("Octopus.Action.Aws.Region", region);
             variables.Save(variablesFile);
 
             using (var templateFile = new TemporaryFile(templateFilePath))
@@ -121,7 +126,7 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
             catch (Exception e)
             {
-                Log.Error($"Error occurred while attempting to delete stack {stackName} -> {e}." + 
+                Log.Error($"Error occurred while attempting to delete stack {stackName} -> {e}." +
                           $"{Environment.NewLine} Test resources may not have been deleted, please check the AWS console for the status of the stack.");
             }
         }
@@ -133,14 +138,13 @@ namespace Calamari.Tests.AWS.CloudFormation
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
             variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"));
             variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
-            variables.Set("Octopus.Action.Aws.Region", RegionEndpoint.APSoutheast1.SystemName);
+            variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set(AwsSpecialVariables.CloudFormation.StackName, stackName);
             variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
             {
                 var log = new InMemoryLog();
-                var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
                 var command = new DeleteCloudFormationCommand(
                                                               log,
                                                               variables

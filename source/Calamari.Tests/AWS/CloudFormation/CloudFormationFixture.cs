@@ -2,13 +2,13 @@
 using Calamari.Common.Plumbing.Variables;
 using System.Threading.Tasks;
 using System;
-using System.IO;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.AWS.CloudFormation
 {
     [TestFixture]
+    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class CloudFormationFixture
     {
         private string StackName;

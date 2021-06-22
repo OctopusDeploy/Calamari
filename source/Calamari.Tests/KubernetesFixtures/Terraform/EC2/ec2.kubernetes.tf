@@ -25,7 +25,7 @@ data "template_file" "script" {
 
   vars = {
     cluster_name = data.aws_eks_cluster.default.name,
-    cluster_ca   = data.aws_eks_cluster.default.certificate_authority[0].data,
+    region       = var.aws_region,
     endpoint     = data.aws_eks_cluster.default.endpoint,
   }
 }
