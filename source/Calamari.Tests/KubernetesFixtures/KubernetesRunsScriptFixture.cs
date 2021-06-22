@@ -230,6 +230,21 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrapper = CreateWrapper();
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
         }
+        
+        [Test]
+        public void ExecutionWithGoogleCloudAccount()
+        {
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
+            variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
+            var account = "gke_account";
+            variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
+            var jsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") ?? string.Empty;
+            variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
+            variables.Set("Octopus.Action.GoogleCloudAccount.Project", "gke-project");
+            variables.Set("Octopus.Action.GoogleCloudAccount.Zone", "gke-zone");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
 
         [Test]
         public void ExecutionWithCustomKubectlExecutable_FileExists()

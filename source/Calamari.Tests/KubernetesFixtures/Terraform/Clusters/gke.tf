@@ -1,5 +1,5 @@
 resource "google_container_cluster" "default" {
-  name               = "${random_pet.prefix.id}-eks"
+  name               = "${random_pet.prefix.id}-gke"
   project            = "octopus-api-tester"
   initial_node_count = 1
   node_config {

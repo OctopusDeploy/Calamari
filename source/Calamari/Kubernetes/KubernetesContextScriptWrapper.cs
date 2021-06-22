@@ -39,7 +39,9 @@ namespace Calamari.Kubernetes
         /// </summary>
         public bool IsEnabled(ScriptSyntax syntax)
         {
-            return !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName));
+            var hasClusterUrl = !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl));
+            var hasClusterName = !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.GkeClusterName));
+            return hasClusterUrl || hasClusterName;
         }
 
         public IScriptWrapper NextWrapper { get; set; }
@@ -178,7 +180,7 @@ namespace Calamari.Kubernetes
                 var isUsingPodServiceAccount = false;
                 var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
 
-                if (accountType != "AzureServicePrincipal" && string.IsNullOrEmpty(clusterUrl))
+                if (accountType != "AzureServicePrincipal" && accountType != "GoogleCloudAccount" && string.IsNullOrEmpty(clusterUrl))
                 {
                     log.Error("Kubernetes cluster URL is missing");
                     return false;
@@ -671,7 +673,7 @@ namespace Calamari.Kubernetes
 
                     log.Verbose("Authenticating to gcloud with key file");
                     var bytes = Convert.FromBase64String(jsonKey);
-                    using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, Path.GetRandomFileName())))
+                    using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, "gcpJsonKey.json")))
                     {
                         File.WriteAllBytes(keyFile.FilePath, bytes);
                         ExecuteCommand(gcloud,
