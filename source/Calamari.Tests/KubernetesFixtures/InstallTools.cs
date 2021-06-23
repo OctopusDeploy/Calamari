@@ -98,8 +98,8 @@ namespace Calamari.Tests.KubernetesFixtures
                                                      async () =>
                                                      {
                                                          var googleClient = await GetGoogleStorageClient();
-                                                         var latestObject = RetrieveLatestObjectFromGoogleCloudStorage(googleClient);
-                                                         return (latestObject.Id.ToString(), null);
+                                                         var latestObject = await RetrieveLatestObjectFromGoogleCloudStorage(googleClient);
+                                                         return (Path.GetFileNameWithoutExtension(latestObject.Name), null);
                                                      },
                                                      async (destinationDirectoryName, tuple) => await DownloadGcloud(destinationDirectoryName));
             }
@@ -208,6 +208,11 @@ namespace Calamari.Tests.KubernetesFixtures
                 if (path == null)
                 {
                     return null;
+                }
+
+                if (toolName == "gcloud")
+                {
+                    path = Path.Combine(path, "google-cloud-sdk", "bin", $"gcloud{(CalamariEnvironment.IsRunningOnWindows ? ".cmd" : String.Empty)}");
                 }
 
                 log($"Using existing {toolName} located in {path}");
