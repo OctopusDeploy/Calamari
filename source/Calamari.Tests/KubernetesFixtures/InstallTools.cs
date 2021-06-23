@@ -205,14 +205,13 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
 
                 var path = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                if (path == null)
-                {
-                    return null;
-                }
-
                 if (toolName == "gcloud")
                 {
-                    path = Path.Combine(path, "google-cloud-sdk", "bin", $"gcloud{(CalamariEnvironment.IsRunningOnWindows ? ".cmd" : String.Empty)}");
+                    path = Path.Combine(destinationDirectoryName, "google-cloud-sdk", "bin", $"gcloud{(CalamariEnvironment.IsRunningOnWindows ? ".cmd" : String.Empty)}");
+                }
+                if (path == null || !File.Exists(path))
+                {
+                    return null;
                 }
 
                 log($"Using existing {toolName} located in {path}");
@@ -304,19 +303,19 @@ namespace Calamari.Tests.KubernetesFixtures
                     await client.DownloadObjectAsync(fileToDownload, fileStream);
                 }
             }
-
-            var destinationDirectory = Path.Combine(destinationDirectoryName, Path.GetFileNameWithoutExtension(fileToDownload.Name) ?? string.Empty);
-            var gcloudExe = Path.Combine(destinationDirectory, "google-cloud-sdk", "bin", $"gcloud{(CalamariEnvironment.IsRunningOnWindows ? ".cmd" : String.Empty)}");
+            
+            var gcloudExe = Path.Combine(destinationDirectoryName, "google-cloud-sdk", "bin", $"gcloud{(CalamariEnvironment.IsRunningOnWindows ? ".cmd" : String.Empty)}");
 
             if (!File.Exists(gcloudExe))
             {
-                Directory.CreateDirectory(destinationDirectory);
+                Directory.CreateDirectory(destinationDirectoryName);
                 using (Stream stream = File.OpenRead(zipFile))
                 using (var reader = ReaderFactory.Open(stream))
                 {
-                    reader.WriteAllToDirectory(destinationDirectory,
+                    reader.WriteAllToDirectory(destinationDirectoryName,
                                                new ExtractionOptions {ExtractFullPath = true});
                 }
+                File.Delete(zipFile);
             }
             
             return gcloudExe;
