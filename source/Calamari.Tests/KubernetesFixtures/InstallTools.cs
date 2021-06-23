@@ -11,6 +11,8 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Retry;
 using Calamari.Testing.Helpers;
 using Newtonsoft.Json.Linq;
+using SharpCompress.Common;
+using SharpCompress.Readers;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -223,8 +225,11 @@ namespace Calamari.Tests.KubernetesFixtures
             using (new TemporaryFile(zipPath))
             {
                 await Download(zipPath, client, downloadUrl);
-
-                ZipFile.ExtractToDirectory(zipPath, destination);
+                using (Stream stream = File.OpenRead(zipPath))
+                using (var reader = ReaderFactory.Open(stream))
+                {
+                    reader.WriteAllToDirectory(destination, new ExtractionOptions {ExtractFullPath = true});
+                }
             }
         }
 
