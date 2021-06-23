@@ -228,7 +228,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 using (Stream stream = File.OpenRead(zipPath))
                 using (var reader = ReaderFactory.Open(stream))
                 {
-                    reader.WriteAllToDirectory(destination, new ExtractionOptions {ExtractFullPath = true});
+                    reader.WriteAllToDirectory(destination, new ExtractionOptions {ExtractFullPath = true, Overwrite = true});
                 }
             }
         }
