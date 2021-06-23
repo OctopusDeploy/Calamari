@@ -26,6 +26,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public string TerraformExecutable { get; private set; }
         public string KubectlExecutable { get; private set; }
         public string AwsAuthenticatorExecutable { get; private set; }
+        public string GcloudExecutable { get; private set; }
 
         public async Task Install()
         {
@@ -84,6 +85,19 @@ namespace Calamari.Tests.KubernetesFixtures
 
                                                                    var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
                                                                    return terraformExecutable;
+                                                               });
+                
+                GcloudExecutable = await DownloadCli("gcloud",
+                                                               () => Task.FromResult<(string, string)>(("346.0.0", string.Empty)),
+                                                               async (destinationDirectoryName, tuple) =>
+                                                               {
+                                                                   var downloadUrl = GetGcloudDownloadLink(tuple.latestVersion);
+                                                                   var fileName = GetGcloudZipFileName(tuple.latestVersion);
+                                                                   var extractPath = Path.Combine(destinationDirectoryName, Path.GetFileNameWithoutExtension(fileName));
+
+                                                                   await DownloadGcloud(GetGcloudZipFileName(tuple.latestVersion), client, downloadUrl, extractPath);
+
+                                                                   return GetGcloudExecutablePath(extractPath);
                                                                });
             }
         }
@@ -149,6 +163,31 @@ namespace Calamari.Tests.KubernetesFixtures
 
             return $"https://dl.k8s.io/release/{currentVersion}/bin/windows/amd64/kubectl.exe";
         }
+        
+        static string GetGcloudDownloadLink(string currentVersion)
+        {
+            return $"https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/{GetGcloudZipFileName(currentVersion)}";
+        }
+        
+        static string GetGcloudZipFileName(string currentVersion)
+        {
+            if (CalamariEnvironment.IsRunningOnNix)
+                return $"google-cloud-sdk-{currentVersion}-linux-x86_64.tar.gz";
+            if (CalamariEnvironment.IsRunningOnMac)
+                return $"google-cloud-sdk-{currentVersion}-darwin-x86_64-bundled-python.tar.gz";
+
+            return $"google-cloud-sdk-{currentVersion}-windows-x86_64-bundled-python.zip";
+        }
+        
+        static string GetGcloudExecutablePath(string extractPath)
+        {
+            var executableName = string.Empty;
+            if (CalamariEnvironment.IsRunningOnWindows)
+                executableName = "gcloud.cmd";
+            else
+                executableName = "gcloud";
+            return Path.Combine(extractPath, "google-cloud-sdk", "bin", executableName);
+        }
 
         static async Task Download(string path,
                                    HttpClient client,
@@ -174,6 +213,20 @@ namespace Calamari.Tests.KubernetesFixtures
                 ZipFile.ExtractToDirectory(zipPath, destination);
             }
         }
+        
+        static async Task DownloadGcloud(string fileName,
+                                            HttpClient client,
+                                            string downloadUrl,
+                                            string destination)
+        {
+            var zipPath = Path.Combine(Path.GetTempPath(), fileName);
+            using (new TemporaryFile(zipPath))
+            {
+                await Download(zipPath, client, downloadUrl);
+
+                ZipFile.ExtractToDirectory(zipPath, destination);
+            }
+        }
 
         async Task<string> DownloadCli(string toolName, Func<Task<(string latestVersion, string data)>> versionFetcher, Func<string, (string latestVersion, string data), Task<string>> downloader)
         {
@@ -188,7 +241,14 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
 
                 var path = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                if (path == null)
+                if (toolName == "gcloud")
+                {
+                    path = GetGcloudExecutablePath(Path.Combine(
+                                                                destinationDirectoryName, 
+                                                                Path.GetFileNameWithoutExtension(GetGcloudZipFileName(data.latestVersion) ?? string.Empty)
+                                                                ));
+                }
+                if (path == null || !File.Exists(path))
                 {
                     return null;
                 }
