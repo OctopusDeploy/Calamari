@@ -80,6 +80,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 currentPath += delimiter;
             }
             currentPath += Path.GetDirectoryName(installTools.AwsAuthenticatorExecutable);
+            currentPath += delimiter;
+            currentPath += Path.GetDirectoryName(installTools.GcloudExecutable);
 
             return new Dictionary<string, string> { { "PATH", currentPath } };
         }

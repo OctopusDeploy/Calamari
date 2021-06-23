@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -10,7 +11,12 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Retry;
 using Calamari.Testing.Helpers;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Storage.V1;
 using Newtonsoft.Json.Linq;
+using SharpCompress.Common;
+using SharpCompress.Readers;
+using Object = Google.Apis.Storage.v1.Data.Object;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -22,10 +28,13 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             this.log = log;
         }
+        
+        static readonly string EnvironmentJsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY");
 
         public string TerraformExecutable { get; private set; }
         public string KubectlExecutable { get; private set; }
         public string AwsAuthenticatorExecutable { get; private set; }
+        public string GcloudExecutable { get; private set; }
 
         public async Task Install()
         {
@@ -85,6 +94,14 @@ namespace Calamari.Tests.KubernetesFixtures
                                                                    var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
                                                                    return terraformExecutable;
                                                                });
+                GcloudExecutable = await DownloadCli("gcloud",
+                                                     async () =>
+                                                     {
+                                                         var googleClient = await GetGoogleStorageClient();
+                                                         var latestObject = RetrieveLatestObjectFromGoogleCloudStorage(googleClient);
+                                                         return (latestObject.Id.ToString(), null);
+                                                     },
+                                                     async (destinationDirectoryName, tuple) => await DownloadGcloud(destinationDirectoryName));
             }
         }
 
@@ -230,6 +247,92 @@ namespace Calamari.Tests.KubernetesFixtures
             log($"Downloaded {toolName} to {executablePath}");
 
             return executablePath;
+        }
+        
+        async Task<Object> RetrieveLatestObjectFromGoogleCloudStorage(StorageClient client)
+        {
+            var results = await client.ListObjectsAsync("cloud-sdk-release", "google-cloud-sdk-").ToList();
+
+            var listOfFilesSortedByCreatedDate =
+                new SortedList<DateTime, Object>(Comparer<DateTime>.Create((a, b) => b.CompareTo(a)));
+
+            foreach (var result in results)
+            {
+                if (result.TimeCreated.HasValue)
+                {
+                    listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
+                }
+            }
+
+            string postfix = "";
+
+            if (CalamariEnvironment.IsRunningOnNix)
+            {
+                postfix = "-linux-x86_64.tar.gz";
+            }
+            else if (CalamariEnvironment.IsRunningOnWindows)
+            {
+                postfix = "-windows-x86_64-bundled-python.zip";
+            }
+            else if (CalamariEnvironment.IsRunningOnMac)
+            {
+                postfix = "-darwin-x86_64-bundled-python.tar.gz";
+            }
+
+            var latestFile = listOfFilesSortedByCreatedDate.FirstOrDefault(z => z.Value.Name.EndsWith(postfix));
+            return latestFile.Value;
+        }
+        
+        async Task<string> DownloadGcloud(string destinationDirectoryName)
+        {
+            var client = await GetGoogleStorageClient();
+
+            var fileToDownload = await RetrieveLatestObjectFromGoogleCloudStorage(client);
+
+            var zipFile = Path.Combine(destinationDirectoryName, fileToDownload.Name);
+
+            if (!File.Exists(zipFile))
+            {
+                using (var fileStream = 
+                    new FileStream(zipFile, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await client.DownloadObjectAsync(fileToDownload, fileStream);
+                }
+            }
+
+            var destinationDirectory = Path.Combine(destinationDirectoryName, Path.GetFileNameWithoutExtension(fileToDownload.Name) ?? string.Empty);
+            var gcloudExe = Path.Combine(destinationDirectory, "google-cloud-sdk", "bin", $"gcloud{(CalamariEnvironment.IsRunningOnWindows ? ".cmd" : String.Empty)}");
+
+            if (!File.Exists(gcloudExe))
+            {
+                Directory.CreateDirectory(destinationDirectory);
+                using (Stream stream = File.OpenRead(zipFile))
+                using (var reader = ReaderFactory.Open(stream))
+                {
+                    reader.WriteAllToDirectory(destinationDirectory,
+                                               new ExtractionOptions {ExtractFullPath = true});
+                }
+            }
+            
+            return gcloudExe;
+        }
+
+        Task<StorageClient> GetGoogleStorageClient()
+        {
+            if (EnvironmentJsonKey == null)
+            {
+                throw new Exception($"Environment Variable `GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY` could not be found. The value can be found in the password store under GoogleCloud - OctopusAPITester");
+            }
+            GoogleCredential credential;
+            try
+            {
+                credential = GoogleCredential.FromJson(EnvironmentJsonKey);
+            }
+            catch (InvalidOperationException)
+            {
+                throw new Exception("Error reading json key file, please ensure file is correct.");
+            }
+            return StorageClient.CreateAsync(credential);
         }
     }
 }
