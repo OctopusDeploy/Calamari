@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Retry;
 using Calamari.Testing.Helpers;
 using Newtonsoft.Json.Linq;
+using NUnit.Framework;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 
@@ -228,9 +229,14 @@ namespace Calamari.Tests.KubernetesFixtures
                 using (Stream stream = File.OpenRead(zipPath))
                 using (var reader = ReaderFactory.Open(stream))
                 {
-                    reader.WriteAllToDirectory(destination, new ExtractionOptions {ExtractFullPath = true, Overwrite = true});
+                    reader.WriteAllToDirectory(destination, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, WriteSymbolicLink = WarnThatSymbolicLinksAreNotSupported});
                 }
             }
+        }
+        
+        static void WarnThatSymbolicLinksAreNotSupported(string sourcepath, string targetpath)
+        {
+            TestContext.Progress.WriteLine("Cannot create symbolic link: {0}, Calamari does not currently support the extraction of symbolic links", sourcepath);
         }
 
         async Task<string> DownloadCli(string toolName, Func<Task<(string latestVersion, string data)>> versionFetcher, Func<string, (string latestVersion, string data), Task<string>> downloader)
