@@ -96,11 +96,10 @@ namespace Calamari.Tests.KubernetesFixtures
                                                                {
                                                                    var downloadUrl = GetGcloudDownloadLink(tuple.latestVersion);
                                                                    var fileName = GetGcloudZipFileName(tuple.latestVersion);
-                                                                   var extractPath = Path.Combine(destinationDirectoryName, Path.GetFileNameWithoutExtension(fileName));
 
-                                                                   await DownloadGcloud(GetGcloudZipFileName(tuple.latestVersion), client, downloadUrl, extractPath);
+                                                                   await DownloadGcloud(GetGcloudZipFileName(tuple.latestVersion), client, downloadUrl, destinationDirectoryName);
 
-                                                                   return GetGcloudExecutablePath(extractPath);
+                                                                   return GetGcloudExecutablePath(destinationDirectoryName);
                                                                });
             }
         }
@@ -254,10 +253,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 var path = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
                 if (toolName == "gcloud")
                 {
-                    path = GetGcloudExecutablePath(Path.Combine(
-                                                                destinationDirectoryName, 
-                                                                Path.GetFileNameWithoutExtension(GetGcloudZipFileName(data.latestVersion) ?? string.Empty)
-                                                                ));
+                    path = GetGcloudExecutablePath(destinationDirectoryName);
                 }
                 if (path == null || !File.Exists(path))
                 {
