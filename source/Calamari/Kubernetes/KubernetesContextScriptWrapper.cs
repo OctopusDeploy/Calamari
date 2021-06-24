@@ -508,7 +508,6 @@ namespace Calamari.Kubernetes
             {
                 var gkeClusterName = variables.Get(SpecialVariables.GkeClusterName);
                 var project = variables.Get("Octopus.Action.GoogleCloudAccount.Project");
-                var region = variables.Get("Octopus.Action.GoogleCloudAccount.Region");
                 var zone = variables.Get("Octopus.Action.GoogleCloudAccount.Zone");
                 log.Info($"Creating kubectl context to GKE Cluster called {gkeClusterName} (namespace {@namespace}) using a Google Cloud Account");
 
@@ -526,17 +525,9 @@ namespace Calamari.Kubernetes
                     "container",
                     "clusters",
                     "get-credentials",
-                    gkeClusterName
+                    gkeClusterName,
+                    $"--zone={zone}"
                 });
-                
-                if (!string.IsNullOrEmpty(region))
-                {
-                    arguments.Add($"--region={region}");
-                }
-                if (!string.IsNullOrEmpty(zone))
-                {
-                    arguments.Add($"--zone={zone}");
-                }
                 
                 ExecuteCommand(gcloud, LogType.Info, arguments.ToArray());
                 ExecuteKubectlCommand("config",
@@ -664,6 +655,10 @@ namespace Calamari.Kubernetes
                 {
                     var accountVariable = variables.Get("Octopus.Action.GoogleCloudAccount.Variable");
                     var jsonKey = variables.Get($"{accountVariable}.JsonKey");
+                    if (string.IsNullOrEmpty(accountVariable) || string.IsNullOrEmpty(jsonKey))
+                    {
+                        jsonKey = variables.Get("Octopus.Action.GoogleCloudAccount.JsonKey");
+                    }
 
                     if (jsonKey == null)
                     {
