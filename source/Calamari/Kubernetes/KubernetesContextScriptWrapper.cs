@@ -190,7 +190,7 @@ namespace Calamari.Kubernetes
 
                 string podServiceAccountToken = null;
                 string serverCert = null;
-                if (string.IsNullOrEmpty(accountType) && string.IsNullOrEmpty(clientCert) && eksUseInstanceRole == false)
+                if (string.IsNullOrEmpty(accountType) && string.IsNullOrEmpty(clientCert) && !eksUseInstanceRole && !useVmServiceAccount)
                 {
                     if (string.IsNullOrEmpty(podServiceAccountTokenPath) && string.IsNullOrEmpty(serverCertPath))
                     {
@@ -244,7 +244,7 @@ namespace Calamari.Kubernetes
 
                     SetupContextForAzureServicePrincipal(kubeConfig, @namespace);
                 }
-                else if (accountType == "GoogleCloudAccount")
+                else if (accountType == "GoogleCloudAccount" || useVmServiceAccount)
                 {
                     if (!TrySetGcloud())
                     {
@@ -252,7 +252,7 @@ namespace Calamari.Kubernetes
                         return false;
                     }
                     
-                    ConfigureGcloudAccount();
+                    ConfigureGcloudAccount(useVmServiceAccount);
                     SetupContextForGoogleCloudAccount(kubeConfig, @namespace);
                 }
                 else
@@ -628,9 +628,8 @@ namespace Calamari.Kubernetes
                 log.Info("Successfully authenticated with the Azure CLI");
             }
 
-            void ConfigureGcloudAccount()
+            void ConfigureGcloudAccount(bool useVmServiceAccount)
             {
-                var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
                 string impersonationEmails = null;
                 if (variables.GetFlag("Octopus.Action.GoogleCloud.ImpersonateServiceAccount"))
                 {
