@@ -39,7 +39,9 @@ namespace Calamari.Kubernetes
         /// </summary>
         public bool IsEnabled(ScriptSyntax syntax)
         {
-            return !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName));
+            var hasClusterUrl = !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl));
+            var hasClusterName = !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.GkeClusterName));
+            return hasClusterUrl || hasClusterName;
         }
 
         public IScriptWrapper NextWrapper { get; set; }
@@ -111,6 +113,7 @@ namespace Calamari.Kubernetes
             readonly string workingDirectory;
             string kubectl;
             string az;
+            string gcloud;
             Dictionary<string, string> redactMap = new Dictionary<string, string>();
 
             public SetupKubectlAuthentication(IVariables variables,
@@ -176,8 +179,12 @@ namespace Calamari.Kubernetes
                 var serverCertPath = variables.Get("Octopus.Action.Kubernetes.CertificateAuthorityPath");
                 var isUsingPodServiceAccount = false;
                 var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
+                var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
 
-                if (accountType != "AzureServicePrincipal" && string.IsNullOrEmpty(clusterUrl))
+                var isUsingGoogleCloudAuth = accountType == "GoogleCloudAccount" || useVmServiceAccount;
+                var isUsingAzureServicePrincipalAuth = accountType == "AzureServicePrincipal";
+                
+                if (!isUsingAzureServicePrincipalAuth && !isUsingGoogleCloudAuth && string.IsNullOrEmpty(clusterUrl))
                 {
                     log.Error("Kubernetes cluster URL is missing");
                     return false;
@@ -185,7 +192,7 @@ namespace Calamari.Kubernetes
 
                 string podServiceAccountToken = null;
                 string serverCert = null;
-                if (string.IsNullOrEmpty(accountType) && string.IsNullOrEmpty(clientCert) && eksUseInstanceRole == false)
+                if (string.IsNullOrEmpty(accountType) && string.IsNullOrEmpty(clientCert) && !eksUseInstanceRole && !useVmServiceAccount)
                 {
                     if (string.IsNullOrEmpty(podServiceAccountTokenPath) && string.IsNullOrEmpty(serverCertPath))
                     {
@@ -227,7 +234,7 @@ namespace Calamari.Kubernetes
                     }
                 }
 
-                if (accountType == "AzureServicePrincipal")
+                if (isUsingAzureServicePrincipalAuth)
                 {
                     if (!TrySetAz())
                     {
@@ -238,6 +245,17 @@ namespace Calamari.Kubernetes
                     ConfigureAzAccount();
 
                     SetupContextForAzureServicePrincipal(kubeConfig, @namespace);
+                }
+                else if (isUsingGoogleCloudAuth)
+                {
+                    if (!TrySetGcloud())
+                    {
+                        log.Error("Could not find gcloud. Make sure gcloud is on the PATH.");
+                        return false;
+                    }
+                    
+                    ConfigureGcloudAccount(useVmServiceAccount);
+                    SetupContextForGoogleCloudAccount(kubeConfig, @namespace);
                 }
                 else
                 {
@@ -490,6 +508,38 @@ namespace Calamari.Kubernetes
                                       $"--namespace={@namespace}");
             }
 
+            void SetupContextForGoogleCloudAccount(string kubeConfig, string @namespace)
+            {
+                var gkeClusterName = variables.Get(SpecialVariables.GkeClusterName);
+                var project = variables.Get("Octopus.Action.GoogleCloud.Project");
+                var zone = variables.Get("Octopus.Action.GoogleCloud.Zone");
+                log.Info($"Creating kubectl context to GKE Cluster called {gkeClusterName} (namespace {@namespace}) using a Google Cloud Account");
+
+                if (!string.IsNullOrEmpty(project))
+                {
+                    ExecuteCommand(gcloud,
+                                   LogType.Info,
+                                   "config",
+                                   "set",
+                                   "project",
+                                   project);
+                }
+                var arguments = new List<string>(new[]
+                {
+                    "container",
+                    "clusters",
+                    "get-credentials",
+                    gkeClusterName,
+                    $"--zone={zone}"
+                });
+                
+                ExecuteCommand(gcloud, LogType.Info, arguments.ToArray());
+                ExecuteKubectlCommand("config",
+                                      "set-context",
+                                      gkeClusterName,
+                                      $"--namespace={@namespace}");
+            }
+
             bool TrySetAz()
             {
                 az = CalamariEnvironment.IsRunningOnWindows
@@ -503,6 +553,21 @@ namespace Calamari.Kubernetes
 
                 az = az.Trim();
 
+                return true;
+            }
+
+            bool TrySetGcloud()
+            {
+                gcloud = CalamariEnvironment.IsRunningOnWindows
+                    ? ExecuteCommandAndReturnOutput("where", "gcloud.cmd").FirstOrDefault()
+                    : ExecuteCommandAndReturnOutput("which", "gcloud").FirstOrDefault();
+                
+                if (string.IsNullOrEmpty(gcloud))
+                {
+                    return false;
+                }
+
+                gcloud = gcloud.Trim();
                 return true;
             }
 
@@ -563,6 +628,77 @@ namespace Calamari.Kubernetes
                                subscriptionId);
 
                 log.Info("Successfully authenticated with the Azure CLI");
+            }
+
+            void ConfigureGcloudAccount(bool useVmServiceAccount)
+            {
+                string impersonationEmails = null;
+                if (variables.GetFlag("Octopus.Action.GoogleCloud.ImpersonateServiceAccount"))
+                {
+                    impersonationEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
+                }
+
+                var project = variables.Get("Octopus.Action.GoogleCloud.Project") ?? string.Empty;
+                var region = variables.Get("Octopus.Action.GoogleCloud.Region") ?? string.Empty;
+                var zone = variables.Get("Octopus.Action.GoogleCloud.Zone") ?? string.Empty;
+                if (!string.IsNullOrEmpty(project))
+                {
+                    environmentVars.Add("CLOUDSDK_CORE_PROJECT", project);
+                }
+                if (!string.IsNullOrEmpty(region))
+                {
+                    environmentVars.Add("CLOUDSDK_COMPUTE_REGION", region);
+                }
+                if (!string.IsNullOrEmpty(zone))
+                {
+                    environmentVars.Add("CLOUDSDK_COMPUTE_ZONE", zone);
+                }
+                
+                if (!useVmServiceAccount)
+                {
+                    var accountVariable = variables.Get("Octopus.Action.GoogleCloudAccount.Variable");
+                    var jsonKey = variables.Get($"{accountVariable}.JsonKey");
+                    if (string.IsNullOrEmpty(accountVariable) || string.IsNullOrEmpty(jsonKey))
+                    {
+                        jsonKey = variables.Get("Octopus.Action.GoogleCloudAccount.JsonKey");
+                    }
+
+                    if (jsonKey == null)
+                    {
+                        log.Error("Failed to authenticate with gcloud. Key file is empty.");
+                        return;
+                    }
+
+                    log.Verbose("Authenticating to gcloud with key file");
+                    var bytes = Convert.FromBase64String(jsonKey);
+                    using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, "gcpJsonKey.json")))
+                    {
+                        File.WriteAllBytes(keyFile.FilePath, bytes);
+                        ExecuteCommand(gcloud,
+                                       LogType.Info,
+                                       "auth",
+                                       "activate-service-account",
+                                       $"--key-file=\"{keyFile.FilePath}\"");
+
+                    }
+
+                    log.Verbose("Successfully authenticated with gcloud");
+                }
+                else
+                {
+                    log.Verbose("Bypassing authentication with gcloud");
+                }
+                
+                if (impersonationEmails != null)
+                {
+                    ExecuteCommand(gcloud,
+                                   LogType.Info, 
+                                   "config",
+                                   "set",
+                                   "auth/impersonate_service_account",
+                                   impersonationEmails);
+                    log.Verbose("Impersonation emails set.");
+                }
             }
 
             string ConfigureCliExecution()

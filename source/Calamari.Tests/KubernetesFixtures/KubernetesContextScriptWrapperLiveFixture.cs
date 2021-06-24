@@ -1,4 +1,4 @@
-﻿#if NETCORE
+#if NETCORE
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,8 +32,11 @@ namespace Calamari.Tests.KubernetesFixtures
         string aksClusterClientKey;
         string aksClusterCaCertificate;
         string gkeToken;
+        string gkeProject;
+        string gkeLocation;
         string gkeClusterCaCertificate;
         string gkeClusterEndpoint;
+        string gkeClusterName;
         string eksClusterName;
         string aksClusterName;
         string azurermResourceGroup;
@@ -77,6 +80,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 currentPath += delimiter;
             }
             currentPath += Path.GetDirectoryName(installTools.AwsAuthenticatorExecutable);
+            currentPath += delimiter;
+            currentPath += Path.GetDirectoryName(installTools.GcloudExecutable);
 
             return new Dictionary<string, string> { { "PATH", currentPath } };
         }
@@ -107,6 +112,9 @@ namespace Calamari.Tests.KubernetesFixtures
             gkeClusterEndpoint = jsonOutput["gke_cluster_endpoint"]["value"].Value<string>();
             gkeClusterCaCertificate = jsonOutput["gke_cluster_ca_certificate"]["value"].Value<string>();
             gkeToken = jsonOutput["gke_token"]["value"].Value<string>();
+            gkeClusterName = jsonOutput["gke_cluster_name"]["value"].Value<string>();
+            gkeProject = jsonOutput["gke_cluster_project"]["value"].Value<string>();
+            gkeLocation = jsonOutput["gke_cluster_location"]["value"].Value<string>();
         }
 
         void RunTerraformDestroy(string terraformWorkingFolder, Dictionary<string, string> env = null)
@@ -222,6 +230,21 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Azure.TenantId", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_TenantId"));
             variables.Set("Octopus.Action.Azure.Password", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_Password"));
             variables.Set("Octopus.Action.Azure.ClientId", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_ClientId"));
+            var wrapper = CreateWrapper();
+            TestScript(wrapper, "Test-Script");
+        }
+        
+        [Test]
+        public void AuthorisingWithGoogleCloudAccount()
+        {
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
+            variables.Set(SpecialVariables.GkeClusterName, gkeClusterName);
+            var account = "gke_account";
+            variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
+            var jsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") ?? string.Empty;
+            variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
+            variables.Set("Octopus.Action.GoogleCloud.Project", gkeProject);
+            variables.Set("Octopus.Action.GoogleCloud.Zone", gkeLocation);
             var wrapper = CreateWrapper();
             TestScript(wrapper, "Test-Script");
         }
