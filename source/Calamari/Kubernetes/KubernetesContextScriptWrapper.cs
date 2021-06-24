@@ -179,8 +179,10 @@ namespace Calamari.Kubernetes
                 var serverCertPath = variables.Get("Octopus.Action.Kubernetes.CertificateAuthorityPath");
                 var isUsingPodServiceAccount = false;
                 var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
+                var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
 
-                if (accountType != "AzureServicePrincipal" && accountType != "GoogleCloudAccount" && string.IsNullOrEmpty(clusterUrl))
+                var isUsingGoogleCloudAuth = accountType == "GoogleCloudAccount" || useVmServiceAccount;
+                if (accountType != "AzureServicePrincipal" && !isUsingGoogleCloudAuth && string.IsNullOrEmpty(clusterUrl))
                 {
                     log.Error("Kubernetes cluster URL is missing");
                     return false;
