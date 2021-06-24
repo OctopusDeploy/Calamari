@@ -182,7 +182,9 @@ namespace Calamari.Kubernetes
                 var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
 
                 var isUsingGoogleCloudAuth = accountType == "GoogleCloudAccount" || useVmServiceAccount;
-                if (accountType != "AzureServicePrincipal" && !isUsingGoogleCloudAuth && string.IsNullOrEmpty(clusterUrl))
+                var isUsingAzureServicePrincipalAuth = accountType == "AzureServicePrincipal";
+                
+                if (!isUsingAzureServicePrincipalAuth && !isUsingGoogleCloudAuth && string.IsNullOrEmpty(clusterUrl))
                 {
                     log.Error("Kubernetes cluster URL is missing");
                     return false;
@@ -232,7 +234,7 @@ namespace Calamari.Kubernetes
                     }
                 }
 
-                if (accountType == "AzureServicePrincipal")
+                if (isUsingAzureServicePrincipalAuth)
                 {
                     if (!TrySetAz())
                     {
@@ -244,7 +246,7 @@ namespace Calamari.Kubernetes
 
                     SetupContextForAzureServicePrincipal(kubeConfig, @namespace);
                 }
-                else if (accountType == "GoogleCloudAccount" || useVmServiceAccount)
+                else if (isUsingGoogleCloudAuth)
                 {
                     if (!TrySetGcloud())
                     {
