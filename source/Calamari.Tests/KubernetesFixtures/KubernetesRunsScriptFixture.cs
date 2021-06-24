@@ -263,17 +263,6 @@ namespace Calamari.Tests.KubernetesFixtures
                 TestScriptInReadOnlyMode(wrapper).AssertSuccess();
             }
         }
-        
-        [Test]
-        public async Task DownloadCliTest()
-        {
-            var installTools = new InstallTools(TestContext.Progress.WriteLine);
-            await installTools.Install();
-            Assert.NotNull(installTools.GcloudExecutable);
-            Assert.NotNull(installTools.KubectlExecutable);
-            Assert.NotNull(installTools.TerraformExecutable);
-            Assert.NotNull(installTools.AwsAuthenticatorExecutable);
-        }
 
         KubernetesContextScriptWrapper CreateWrapper()
         {
