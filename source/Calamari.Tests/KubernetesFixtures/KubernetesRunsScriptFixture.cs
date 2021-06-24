@@ -240,8 +240,8 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
             var jsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") ?? string.Empty;
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
-            variables.Set("Octopus.Action.GoogleCloudAccount.Project", "gke-project");
-            variables.Set("Octopus.Action.GoogleCloudAccount.Zone", "gke-zone");
+            variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
+            variables.Set("Octopus.Action.GoogleCloud.Zone", "gke-zone");
             var wrapper = CreateWrapper();
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
         }
