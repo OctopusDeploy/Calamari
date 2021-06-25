@@ -3,9 +3,7 @@
 [Verbose] Authenticating to gcloud with key file
 [Verbose] "gcloud" auth activate-service-account --key-file="<path>gcpJsonKey.json"
 [Verbose] Successfully authenticated with gcloud
-[Verbose] "gcloud" config unset auth/impersonate_service_account
 [Info] Creating kubectl context to GKE Cluster called gke-cluster-name (namespace calamari-testing) using a Google Cloud Account
-[Verbose] "gcloud" config set project gke-project
 [Verbose] "gcloud" container clusters get-credentials gke-cluster-name --zone=gke-zone
 [Verbose] "kubectl" config set-context gke-cluster-name --namespace=calamari-testing --request-timeout=1m
 [Verbose] "kubectl" get namespace calamari-testing --request-timeout=1m
