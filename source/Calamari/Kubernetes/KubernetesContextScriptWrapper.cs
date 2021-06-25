@@ -632,12 +632,6 @@ namespace Calamari.Kubernetes
 
             void ConfigureGcloudAccount(bool useVmServiceAccount)
             {
-                string impersonationEmails = null;
-                if (variables.GetFlag("Octopus.Action.GoogleCloud.ImpersonateServiceAccount"))
-                {
-                    impersonationEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
-                }
-
                 var project = variables.Get("Octopus.Action.GoogleCloud.Project") ?? string.Empty;
                 var region = variables.Get("Octopus.Action.GoogleCloud.Region") ?? string.Empty;
                 var zone = variables.Get("Octopus.Action.GoogleCloud.Zone") ?? string.Empty;
@@ -689,16 +683,29 @@ namespace Calamari.Kubernetes
                     log.Verbose("Bypassing authentication with gcloud");
                 }
                 
-                if (impersonationEmails != null)
+                if (variables.GetFlag("Octopus.Action.GoogleCloud.ImpersonateServiceAccount"))
+                {
+                    var impersonationEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
+                    if (!string.IsNullOrEmpty(impersonationEmails))
+                    {
+                        ExecuteCommand(gcloud,
+                                       LogType.Info, 
+                                       "config",
+                                       "set",
+                                       "auth/impersonate_service_account",
+                                       impersonationEmails);
+                        log.Verbose("Impersonation emails set.");
+                    }
+                }
+                else
                 {
                     ExecuteCommand(gcloud,
                                    LogType.Info, 
                                    "config",
-                                   "set",
-                                   "auth/impersonate_service_account",
-                                   impersonationEmails);
-                    log.Verbose("Impersonation emails set.");
+                                   "unset",
+                                   "auth/impersonate_service_account");
                 }
+                
             }
 
             string ConfigureCliExecution()
