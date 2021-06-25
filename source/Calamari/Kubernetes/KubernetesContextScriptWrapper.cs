@@ -511,19 +511,9 @@ namespace Calamari.Kubernetes
             void SetupContextForGoogleCloudAccount(string kubeConfig, string @namespace)
             {
                 var gkeClusterName = variables.Get(SpecialVariables.GkeClusterName);
-                var project = variables.Get("Octopus.Action.GoogleCloud.Project");
                 var zone = variables.Get("Octopus.Action.GoogleCloud.Zone");
                 log.Info($"Creating kubectl context to GKE Cluster called {gkeClusterName} (namespace {@namespace}) using a Google Cloud Account");
 
-                if (!string.IsNullOrEmpty(project))
-                {
-                    ExecuteCommand(gcloud,
-                                   LogType.Info,
-                                   "config",
-                                   "set",
-                                   "project",
-                                   project);
-                }
                 var arguments = new List<string>(new[]
                 {
                     "container",
@@ -687,23 +677,7 @@ namespace Calamari.Kubernetes
                 {
                     var impersonationEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
                     if (!string.IsNullOrEmpty(impersonationEmails))
-                    {
-                        ExecuteCommand(gcloud,
-                                       LogType.Info, 
-                                       "config",
-                                       "set",
-                                       "auth/impersonate_service_account",
-                                       impersonationEmails);
-                        log.Verbose("Impersonation emails set.");
-                    }
-                }
-                else
-                {
-                    ExecuteCommand(gcloud,
-                                   LogType.Info, 
-                                   "config",
-                                   "unset",
-                                   "auth/impersonate_service_account");
+                        environmentVars.Add("CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT", impersonationEmails);
                 }
                 
             }
