@@ -89,12 +89,17 @@ namespace Calamari.Tests.KubernetesFixtures
         protected void TestScript(IScriptWrapper wrapper, string scriptName)
         {
             using (var dir = TemporaryDirectory.Create())
-            using (var temp = new TemporaryFile(Path.Combine(dir.DirectoryPath, $"{scriptName}.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
             {
-                File.WriteAllText(temp.FilePath, "kubectl cluster-info");
+                var folderPath = Path.Combine(dir.DirectoryPath, "Folder with spaces");
 
-                var output = ExecuteScript(wrapper, temp.FilePath);
-                output.AssertSuccess();
+                using (var temp = new TemporaryFile(Path.Combine(folderPath, $"{scriptName}.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
+                {
+                    Directory.CreateDirectory(folderPath);
+                    File.WriteAllText(temp.FilePath, "kubectl cluster-info");
+
+                    var output = ExecuteScript(wrapper, temp.FilePath);
+                    output.AssertSuccess();
+                }
             }
         }
     }
