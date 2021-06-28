@@ -693,7 +693,7 @@ namespace Calamari.Kubernetes
 
                 if (scriptSyntax == ScriptSyntax.Bash)
                 {
-                    ExecuteCommand("chmod", LogType.Verbose, "u=rw,g=,o=", kubeConfig);
+                    ExecuteCommand("chmod", LogType.Verbose, "u=rw,g=,o=", $"\"{kubeConfig}\"");
                 }
 
                 log.Verbose($"Temporary kubectl config set to {kubeConfig}");
