@@ -233,7 +233,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrapper = CreateWrapper();
             TestScript(wrapper, "Test-Script");
         }
-        
+
         [Test]
         public void AuthorisingWithGoogleCloudAccount()
         {

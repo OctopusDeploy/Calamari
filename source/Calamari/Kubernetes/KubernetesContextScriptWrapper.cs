@@ -183,7 +183,7 @@ namespace Calamari.Kubernetes
 
                 var isUsingGoogleCloudAuth = accountType == "GoogleCloudAccount" || useVmServiceAccount;
                 var isUsingAzureServicePrincipalAuth = accountType == "AzureServicePrincipal";
-                
+
                 if (!isUsingAzureServicePrincipalAuth && !isUsingGoogleCloudAuth && string.IsNullOrEmpty(clusterUrl))
                 {
                     log.Error("Kubernetes cluster URL is missing");
@@ -253,9 +253,9 @@ namespace Calamari.Kubernetes
                         log.Error("Could not find gcloud. Make sure gcloud is on the PATH.");
                         return false;
                     }
-                    
+
                     ConfigureGcloudAccount(useVmServiceAccount);
-                    SetupContextForGoogleCloudAccount(kubeConfig, @namespace);
+                    SetupContextForGoogleCloudAccount(@namespace);
                 }
                 else
                 {
@@ -491,7 +491,7 @@ namespace Calamari.Kubernetes
                     "--name",
                     azureCluster,
                     "--file",
-                    kubeConfig,
+                    $"\"{kubeConfig}\"",
                     "--overwrite-existing"
                 });
                 if (azureAdmin)
@@ -508,7 +508,7 @@ namespace Calamari.Kubernetes
                                       $"--namespace={@namespace}");
             }
 
-            void SetupContextForGoogleCloudAccount(string kubeConfig, string @namespace)
+            void SetupContextForGoogleCloudAccount(string @namespace)
             {
                 var gkeClusterName = variables.Get(SpecialVariables.GkeClusterName);
                 var zone = variables.Get("Octopus.Action.GoogleCloud.Zone");
@@ -522,7 +522,7 @@ namespace Calamari.Kubernetes
                     gkeClusterName,
                     $"--zone={zone}"
                 });
-                
+
                 ExecuteCommand(gcloud, LogType.Info, arguments.ToArray());
                 ExecuteKubectlCommand("config",
                                       "set-context",
@@ -551,7 +551,7 @@ namespace Calamari.Kubernetes
                 gcloud = CalamariEnvironment.IsRunningOnWindows
                     ? ExecuteCommandAndReturnOutput("where", "gcloud.cmd").FirstOrDefault()
                     : ExecuteCommandAndReturnOutput("which", "gcloud").FirstOrDefault();
-                
+
                 if (string.IsNullOrEmpty(gcloud))
                 {
                     return false;
@@ -637,7 +637,7 @@ namespace Calamari.Kubernetes
                 {
                     environmentVars.Add("CLOUDSDK_COMPUTE_ZONE", zone);
                 }
-                
+
                 if (!useVmServiceAccount)
                 {
                     var accountVariable = variables.Get("Octopus.Action.GoogleCloudAccount.Variable");
@@ -672,14 +672,14 @@ namespace Calamari.Kubernetes
                 {
                     log.Verbose("Bypassing authentication with gcloud");
                 }
-                
+
                 if (variables.GetFlag("Octopus.Action.GoogleCloud.ImpersonateServiceAccount"))
                 {
                     var impersonationEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
                     if (!string.IsNullOrEmpty(impersonationEmails))
                         environmentVars.Add("CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT", impersonationEmails);
                 }
-                
+
             }
 
             string ConfigureCliExecution()
@@ -693,7 +693,7 @@ namespace Calamari.Kubernetes
 
                 if (scriptSyntax == ScriptSyntax.Bash)
                 {
-                    ExecuteCommand("chmod", LogType.Verbose, "u=rw,g=,o=", kubeConfig);
+                    ExecuteCommand("chmod", LogType.Verbose, "u=rw,g=,o=", $"\"{kubeConfig}\"");
                 }
 
                 log.Verbose($"Temporary kubectl config set to {kubeConfig}");

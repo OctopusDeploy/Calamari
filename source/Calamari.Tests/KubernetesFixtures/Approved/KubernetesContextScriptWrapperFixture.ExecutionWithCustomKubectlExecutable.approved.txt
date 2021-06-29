@@ -1,3 +1,3 @@
-[Verbose] "chmod" u=rw,g=,o= <path>\kubectl-octo.yml
+[Verbose] "chmod" u=rw,g=,o= "<path>kubectl-octo.yml"
 [Verbose] Temporary kubectl config set to <path>\kubectl-octo.yml
 [Error] The custom kubectl location of mykubectl does not exist. See https://g.octopushq.com/KubernetesTarget for more information.

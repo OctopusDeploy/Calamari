@@ -1,4 +1,4 @@
-[Verbose] "chmod" u=rw,g=,o= <path>kubectl-octo.yml
+[Verbose] "chmod" u=rw,g=,o= "<path>kubectl-octo.yml"
 [Verbose] Temporary kubectl config set to <path>kubectl-octo.yml
 [Verbose] "kubectl" version --client --short --request-timeout=1m
 [Verbose] "az" cloud set --name AzureCloud
@@ -8,6 +8,6 @@
 [Verbose] "az" account set --subscription azSubscriptionId
 [Info] Successfully authenticated with the Azure CLI
 [Info] Creating kubectl context to AKS Cluster in resource group clusterRG called asCluster (namespace calamari-testing) using a AzureServicePrincipal
-[Verbose] "az" aks get-credentials --resource-group clusterRG --name asCluster --file <path>kubectl-octo.yml --overwrite-existing
+[Verbose] "az" aks get-credentials --resource-group clusterRG --name asCluster --file "<path>kubectl-octo.yml" --overwrite-existing
 [Verbose] "kubectl" config set-context asCluster --namespace=calamari-testing --request-timeout=1m
 [Verbose] "kubectl" get namespace calamari-testing --request-timeout=1m
