@@ -837,13 +837,6 @@ namespace Calamari.Kubernetes
                 Info,
                 Error
             }
-
-            enum LogType
-            {
-                None,
-                Verbose,
-                Info
-            }
         }
     }
 }
