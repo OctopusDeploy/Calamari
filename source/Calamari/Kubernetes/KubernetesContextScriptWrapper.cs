@@ -520,7 +520,7 @@ namespace Calamari.Kubernetes
                     "get-credentials",
                     gkeClusterName
                 });
-                    
+
                 ExecuteCommand(gcloud, arguments.ToArray());
                 ExecuteKubectlCommand("config",
                                       "set-context",
