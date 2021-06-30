@@ -322,7 +322,9 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             public CommandResult Execute(CommandLineInvocation invocation)
             {
-                invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));
+                // We only want to output executable string. eg. ExecuteCommandAndReturnOutput("where", "kubectl.exe")
+                if (new string[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd" }.Contains(invocation.Arguments)) 
+                    invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));
                 return new CommandResult(invocation.ToString(), 0);
             }
         }
