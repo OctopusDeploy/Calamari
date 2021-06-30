@@ -500,7 +500,7 @@ namespace Calamari.Kubernetes
                     azureCluster += "-admin";
                 }
 
-                ExecuteCommand(az, LogType.Info, arguments.ToArray());
+                ExecuteCommand(az, arguments.ToArray());
 
                 ExecuteKubectlCommand("config",
                                       "set-context",
@@ -521,7 +521,7 @@ namespace Calamari.Kubernetes
                     gkeClusterName
                 });
                     
-                ExecuteCommand(gcloud, LogType.Info, arguments.ToArray());
+                ExecuteCommand(gcloud, arguments.ToArray());
                 ExecuteKubectlCommand("config",
                                       "set-context",
                                       gkeClusterName,
@@ -585,7 +585,6 @@ namespace Calamari.Kubernetes
 
                 environmentVars.Add("AZURE_CONFIG_DIR", Path.Combine(workingDirectory, "azure-cli"));
                 TryExecuteCommand(az,
-                               LogType.Info,
                                "cloud",
                                "set",
                                "--name",
@@ -599,7 +598,6 @@ namespace Calamari.Kubernetes
                 var password = variables.Get("Octopus.Action.Azure.Password");
 
                 ExecuteCommand(az,
-                               LogType.Info,
                                "login",
                                "--service-principal",
                                // Use the full argument with an '=' because of https://github.com/Azure/azure-cli/issues/12105
@@ -609,7 +607,6 @@ namespace Calamari.Kubernetes
 
                 log.Verbose($"Azure CLI: Setting active subscription to {subscriptionId}");
                 ExecuteCommand(az,
-                               LogType.Info,
                                "account",
                                "set",
                                "--subscription",
@@ -657,7 +654,6 @@ namespace Calamari.Kubernetes
                     {
                         File.WriteAllBytes(keyFile.FilePath, bytes);
                         ExecuteCommand(gcloud,
-                                       LogType.Info,
                                        "auth",
                                        "activate-service-account",
                                        $"--key-file=\"{keyFile.FilePath}\"");
@@ -691,7 +687,7 @@ namespace Calamari.Kubernetes
 
                 if (scriptSyntax == ScriptSyntax.Bash)
                 {
-                    ExecuteCommand("chmod", LogType.Verbose, "u=rw,g=,o=", $"\"{kubeConfig}\"");
+                    ExecuteCommand("chmod", "u=rw,g=,o=", $"\"{kubeConfig}\"");
                 }
 
                 log.Verbose($"Temporary kubectl config set to {kubeConfig}");
@@ -731,27 +727,27 @@ namespace Calamari.Kubernetes
                 return false;
             }
 
-            void ExecuteCommand(string executable, LogType logType, params string[] arguments)
+            void ExecuteCommand(string executable, params string[] arguments)
             {
-                ExecuteCommand(new CommandLineInvocation(executable, arguments), logType).VerifySuccess();
+                ExecuteCommand(new CommandLineInvocation(executable, arguments)).VerifySuccess();
             }
 
-            bool TryExecuteCommand(string executable, LogType logType, params string[] arguments)
+            bool TryExecuteCommand(string executable, params string[] arguments)
             {
-                return ExecuteCommand(new CommandLineInvocation(executable, arguments), logType).ExitCode == 0;
+                return ExecuteCommand(new CommandLineInvocation(executable, arguments)).ExitCode == 0;
             }
 
             void ExecuteKubectlCommand(params string[] arguments)
             {
-                ExecuteCommand(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray()), LogType.Info).VerifySuccess();
+                ExecuteCommand(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).VerifySuccess();
             }
 
             bool TryExecuteKubectlCommand(params string[] arguments)
             {
-                return ExecuteCommand(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray()), LogType.Info).ExitCode == 0;
+                return ExecuteCommand(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
             }
 
-            CommandResult ExecuteCommand(CommandLineInvocation invocation, LogType logType)
+            CommandResult ExecuteCommand(CommandLineInvocation invocation)
             {
                 invocation.EnvironmentVars = environmentVars;
                 invocation.WorkingDirectory = workingDirectory;
@@ -761,13 +757,10 @@ namespace Calamari.Kubernetes
                 var captureCommandOutput = new CaptureCommandOutput();
                 invocation.AdditionalInvocationOutputSink = captureCommandOutput;
 
-                if (logType != LogType.None)
-                {
-                    var message = invocation.ToString();
-                    message = redactMap.Aggregate(message, (current, pair) => current.Replace(pair.Key, pair.Value));
-                    log.Verbose(message);
-                }
-
+                var commandString = invocation.ToString();
+                commandString = redactMap.Aggregate(commandString, (current, pair) => current.Replace(pair.Key, pair.Value));
+                log.Verbose(commandString);
+                
                 var result = commandLineRunner.Execute(invocation);
 
                 foreach (var message in captureCommandOutput.Messages)
