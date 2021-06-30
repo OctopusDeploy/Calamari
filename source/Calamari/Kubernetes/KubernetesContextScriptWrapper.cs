@@ -755,8 +755,11 @@ namespace Calamari.Kubernetes
             {
                 invocation.EnvironmentVars = environmentVars;
                 invocation.WorkingDirectory = workingDirectory;
-                invocation.OutputAsVerbose = logType == LogType.Verbose;
-                invocation.OutputToLog = logType == LogType.Info;
+                invocation.OutputAsVerbose = false;
+                invocation.OutputToLog = false;
+
+                var captureCommandOutput = new CaptureCommandOutput();
+                invocation.AdditionalInvocationOutputSink = captureCommandOutput;
 
                 if (logType != LogType.None)
                 {
@@ -766,6 +769,25 @@ namespace Calamari.Kubernetes
                 }
 
                 var result = commandLineRunner.Execute(invocation);
+
+                foreach (var message in captureCommandOutput.Messages)
+                {
+                    if (result.ExitCode == 0)
+                    {
+                        log.Verbose(message.Text);
+                        continue;
+                    }
+
+                    switch (message.Level)
+                    {
+                        case Level.Info:
+                            log.Verbose(message.Text);
+                            break;
+                        case Level.Error:
+                            log.Error(message.Text);
+                            break;
+                    }
+                }
 
                 return result;
             }
@@ -785,24 +807,42 @@ namespace Calamari.Kubernetes
                 var result = commandLineRunner.Execute(invocation);
 
                 return result.ExitCode == 0
-                    ? captureCommandOutput.Text
+                    ? captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray()
                     : Enumerable.Empty<string>();
             }
 
             class CaptureCommandOutput : ICommandInvocationOutputSink
             {
-                List<string> lines = new List<string>();
+                private List<Message> messages = new List<Message>();
 
-                public IList<string> Text => lines;
+                public List<Message> Messages => messages;
 
                 public void WriteInfo(string line)
                 {
-                    lines.Add(line);
+                    Messages.Add(new Message(Level.Info, line));
                 }
 
                 public void WriteError(string line)
                 {
+                    Messages.Add(new Message(Level.Error, line));
                 }
+            }
+
+            class Message
+            {
+                public Level Level { get; }
+                public string Text { get; }
+                public Message(Level level, string text)
+                {
+                    Level = level;
+                    Text = text;
+                }
+            }
+
+            enum Level
+            {
+                Info,
+                Error
             }
 
             enum LogType
