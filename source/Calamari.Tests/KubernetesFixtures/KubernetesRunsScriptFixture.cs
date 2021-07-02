@@ -278,7 +278,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
-        public void ExecutionWithGoogleCloudAccount_WhenEitherZoneAndRegionIsProvided()
+        public void ExecutionWithGoogleCloudAccount_WhenNeitherZoneOrRegionAreProvided()
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
