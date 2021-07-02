@@ -232,7 +232,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
-        public void ExecutionWithGoogleCloudAccount()
+        public void ExecutionWithGoogleCloudAccount_WhenZoneIsProvided()
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
@@ -244,6 +244,51 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.GoogleCloud.Zone", "gke-zone");
             var wrapper = CreateWrapper();
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+        
+        [Test]
+        public void ExecutionWithGoogleCloudAccount_WhenRegionIsProvided()
+        {
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
+            variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
+            var account = "gke_account";
+            variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
+            var jsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") ?? string.Empty;
+            variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
+            variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
+            variables.Set("Octopus.Action.GoogleCloud.Region", "gke-region");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+        
+        [Test]
+        public void ExecutionWithGoogleCloudAccount_WhenBothZoneAndRegionAreProvided()
+        {
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
+            variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
+            var account = "gke_account";
+            variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
+            var jsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") ?? string.Empty;
+            variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
+            variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
+            variables.Set("Octopus.Action.GoogleCloud.Region", "gke-region");
+            variables.Set("Octopus.Action.GoogleCloud.Zone", "gke-zone");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+        
+        [Test]
+        public void ExecutionWithGoogleCloudAccount_WhenNeitherZoneOrRegionAreProvided()
+        {
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
+            variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
+            var account = "gke_account";
+            variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
+            var jsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") ?? string.Empty;
+            variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
+            variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
+            var wrapper = CreateWrapper();
+            Assert.Throws<ArgumentException>(() => TestScriptInReadOnlyMode(wrapper));
         }
 
         [Test]

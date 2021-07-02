@@ -521,6 +521,21 @@ namespace Calamari.Kubernetes
                     gkeClusterName
                 });
 
+                var region = variables.Get("Octopus.Action.GoogleCloud.Region");
+                var zone = variables.Get("Octopus.Action.GoogleCloud.Zone");
+                if (!string.IsNullOrWhiteSpace(zone))
+                {
+                    arguments.Add($"--zone={zone}");
+                } 
+                else if (!string.IsNullOrWhiteSpace(region))
+                {
+                    arguments.Add($"--region={region}");
+                }
+                else
+                {
+                    throw new ArgumentException("Either zone or region must be defined.");
+                }
+
                 ExecuteCommand(gcloud, arguments.ToArray());
                 ExecuteKubectlCommand("config",
                                       "set-context",
