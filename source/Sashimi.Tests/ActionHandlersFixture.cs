@@ -17,8 +17,6 @@ using Calamari.Tests.Shared;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using NUnit.Framework.Interfaces;
-using NUnit.Framework.Internal;
 using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Terraform.ActionHandler;
 using Sashimi.Terraform.Tests.CommonTemplates;
@@ -29,6 +27,7 @@ using TestEnvironment = Sashimi.Tests.Shared.TestEnvironment;
 namespace Sashimi.Terraform.Tests
 {
     [TestFixture(BundledCliFixture.TerraformVersion)]
+    [TestFixture("0.13.0")]
     [TestFixture("1.0.0")]
     public class ActionHandlersFixture
     {
@@ -716,6 +715,14 @@ output ""config-map-aws-auth"" {{
                                                                        _.OutputVariables.ContainsKey("TerraformValueOutputs[random]").Should().BeTrue();
                                                                        _.OutputVariables["TerraformValueOutputs[random]"].Value.Should().Be(randomNumber);
                                                                    });
+        }
+
+        [Test]
+        public void CanDetermineTerraformVersion()
+        {
+            ExecuteAndReturnLogOutput<TerraformApplyActionHandler>(_ => { _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Workspace, "testversionspace"); }, "Simple")
+                .Should()
+                .NotContain("Could not parse Terraform CLI version");
         }
 
         [Test]
