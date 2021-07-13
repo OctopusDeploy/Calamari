@@ -391,7 +391,7 @@ void SignFilesWithAzureSignTool(IEnumerable<FilePath> files, string vaultUrl, st
   foreach (var file in files)
     signArguments.AppendQuoted(file.FullPath);
 
-    var azureSignToolPath = MakeAbsolute(File("./tools/Cake/azuresigntool.exe"));
+    var azureSignToolPath = MakeAbsolute(File("./tools/azuresigntool.exe"));
 
     if (!FileExists(azureSignToolPath))
         throw new Exception($"The azure signing tool was expected to be at the path '{azureSignToolPath}' but wasn't available.");
