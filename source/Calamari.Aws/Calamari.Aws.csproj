@@ -27,10 +27,10 @@
     <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.CloudFormation" Version="3.3.13" />
-    <PackageReference Include="AWSSDK.IdentityManagement" Version="3.3.8.1" />
-    <PackageReference Include="AWSSDK.S3" Version="3.3.110.10" />
-    <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.4.34" />
+    <PackageReference Include="AWSSDK.CloudFormation" Version="3.3.106" />
+    <PackageReference Include="AWSSDK.IdentityManagement" Version="3.3.106.34" />
+    <PackageReference Include="AWSSDK.S3" Version="3.3.111.37" />
+    <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.105.43" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
