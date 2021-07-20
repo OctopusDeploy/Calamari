@@ -170,6 +170,7 @@ resource "aws_iam_user_policy_attachment" "default" {
 }
 
 data "aws_availability_zones" "available" {
+  state = "available"
 }
 
 resource "aws_iam_access_key" "default" {
