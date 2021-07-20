@@ -30,6 +30,14 @@ terraform {
 }
 
 provider "aws" {
+  default_tags {
+    tags = {
+      Team = "#team-steps"
+      WorkloadName = "E2E-Test"
+      ApplicationName = "Calamari"
+      Criticality = "not-important"
+    }
+  }
 }
 
 provider "archive" {
