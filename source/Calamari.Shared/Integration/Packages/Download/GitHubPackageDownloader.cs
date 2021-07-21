@@ -37,15 +37,15 @@ namespace Calamari.Integration.Packages.Download
             this.freeSpaceChecker = freeSpaceChecker;
         }
 
-        public PackagePhysicalFileMetadata DownloadPackage(
-            string packageId,
-            IVersion version,
-            string feedId,
-            Uri feedUri,
-            ICredentials feedCredentials,
-            bool forcePackageDownload,
-            int maxDownloadAttempts,
-            TimeSpan downloadAttemptBackoff)
+        public PackagePhysicalFileMetadata DownloadPackage(string packageId,
+                                                           IVersion version,
+                                                           string feedId,
+                                                           Uri feedUri,
+                                                           string? feedUsername,
+                                                           string? feedPassword,
+                                                           bool forcePackageDownload,
+                                                           int maxDownloadAttempts,
+                                                           TimeSpan downloadAttemptBackoff)
         {
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
@@ -63,7 +63,7 @@ namespace Calamari.Integration.Packages.Download
             return DownloadPackage(packageId,
                                    version,
                                    feedUri,
-                                   feedCredentials,
+                                   feedPassword,
                                    cacheDirectory,
                                    maxDownloadAttempts,
                                    downloadAttemptBackoff);
@@ -111,7 +111,7 @@ namespace Calamari.Integration.Packages.Download
             string packageId,
             IVersion version,
             Uri feedUri,
-            ICredentials feedCredentials,
+            string? authorizationToken,
             string cacheDirectory,
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
@@ -131,7 +131,7 @@ namespace Calamari.Integration.Packages.Download
             while (req == null || req.Count != 0 && req.Count < 1000)
             {
                 var uri = feedUri.AbsoluteUri + $"repos/{Uri.EscapeUriString(owner)}/{Uri.EscapeUriString(repository)}/tags?page={++page}&per_page=1000";
-                req = PerformRequest(feedCredentials, uri) as JArray;
+                req = PerformRequest(authorizationToken, uri) as JArray;
                 if (req == null)
                     break;
 
@@ -146,7 +146,7 @@ namespace Calamari.Integration.Packages.Download
                                         cacheDirectory,
                                         packageId,
                                         version,
-                                        feedCredentials,
+                                        authorizationToken,
                                         maxDownloadAttempts,
                                         downloadAttemptBackoff);
                 }
@@ -170,7 +170,7 @@ namespace Calamari.Integration.Packages.Download
                                                  string cacheDirectory,
                                                  string packageId,
                                                  IVersion version,
-                                                 ICredentials feedCredentials,
+                                                 string? authorizationToken,
                                                  int maxDownloadAttempts,
                                                  TimeSpan downloadAttemptBackoff)
         {
@@ -190,7 +190,7 @@ namespace Calamari.Integration.Packages.Download
                     {
                         client.CachePolicy = new RequestCachePolicy(RequestCacheLevel.CacheIfAvailable);
                         client.Headers.Set(HttpRequestHeader.UserAgent, GetUserAgent());
-                        client.Headers.Set(HttpRequestHeader.Authorization, GetAuthorization(feedCredentials, uri));
+                        AddAuthorization(client, authorizationToken);
                         client.DownloadFileWithProgress(uri, tempPath, (progress, total) => log.Progress(progress, $"Downloading {packageId} v{version}"));
 
                         DeNestContents(tempPath, localDownloadName);
@@ -207,7 +207,7 @@ namespace Calamari.Integration.Packages.Download
             throw new Exception("Failed to download the package.");
         }
 
-        JToken PerformRequest(ICredentials feedCredentials, string uri)
+        JToken PerformRequest(string? authorizationToken, string uri)
         {
             try
             {
@@ -216,7 +216,7 @@ namespace Calamari.Integration.Packages.Download
                     client.CachePolicy = new RequestCachePolicy(RequestCacheLevel.BypassCache);
                     client.Headers.Set(HttpRequestHeader.UserAgent, GetUserAgent());
                     client.Headers.Set("Accept", "application/vnd.github.v3+json");
-                    client.Headers.Set(HttpRequestHeader.Authorization, GetAuthorization(feedCredentials, uri));
+                    AddAuthorization(client, authorizationToken);
                     using (var readStream = client.OpenRead(uri))
                     {
                         var reader =
@@ -238,9 +238,12 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
-        string GetAuthorization(ICredentials feedCredentials, string uri)
+        void AddAuthorization(WebClient client, string? authorizationToken)
         {
-            return String.Concat("token ", feedCredentials.GetCredential(new Uri(uri), "token").Password);
+            if (!String.IsNullOrWhiteSpace(authorizationToken))
+            {
+                client.Headers.Set(HttpRequestHeader.Authorization, String.Concat("token ", authorizationToken));
+            }
         }
 
         void VerifyRateLimit(HttpWebResponse response)

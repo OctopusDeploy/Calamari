@@ -35,8 +35,15 @@ namespace Calamari.Integration.Packages.Download
             endpointProxy = new HelmEndpointProxy(client);
         }
 
-        public PackagePhysicalFileMetadata DownloadPackage(string packageId, IVersion version, string feedId, Uri feedUri,
-            ICredentials feedCredentials, bool forcePackageDownload, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
+        public PackagePhysicalFileMetadata DownloadPackage(string packageId,
+                                                           IVersion version,
+                                                           string feedId,
+                                                           Uri feedUri,
+                                                           string? feedUsername,
+                                                           string? feedPassword,
+                                                           bool forcePackageDownload,
+                                                           int maxDownloadAttempts,
+                                                           TimeSpan downloadAttemptBackoff)
         {
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
@@ -51,7 +58,9 @@ namespace Calamari.Integration.Packages.Download
                 }
             }
 
-            var package = GetChartDetails(feedUri, feedCredentials,  packageId, CancellationToken.None);
+            var feedCredentials = GetFeedCredentials(feedUsername, feedPassword);
+
+            var package = GetChartDetails(feedUri, feedCredentials, packageId, CancellationToken.None);
 
             if (string.IsNullOrEmpty(package.PackageId))
             {
@@ -163,6 +172,16 @@ namespace Calamari.Integration.Packages.Download
             }
 
             return null;
+        }
+        
+        static ICredentials GetFeedCredentials(string? feedUsername, string? feedPassword)
+        {
+            ICredentials credentials = CredentialCache.DefaultNetworkCredentials;
+            if (!String.IsNullOrWhiteSpace(feedUsername))
+            {
+                credentials = new NetworkCredential(feedUsername, feedPassword);
+            }
+            return credentials;
         }
     }
 }

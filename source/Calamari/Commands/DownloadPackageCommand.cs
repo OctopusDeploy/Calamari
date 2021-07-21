@@ -114,7 +114,8 @@ namespace Calamari.Commands
                     feedId,
                     uri,
                     feedType,
-                    GetFeedCredentials(feedUsername, feedPassword),
+                    feedUsername,
+                    feedPassword,
                     forcePackageDownload,
                     parsedMaxDownloadAttempts,
                     parsedAttemptBackoff);
@@ -131,16 +132,6 @@ namespace Calamari.Commands
             }
 
             return 0;
-        }
-
-        static ICredentials GetFeedCredentials(string feedUsername, string feedPassword)
-        {
-            ICredentials credentials = CredentialCache.DefaultNetworkCredentials;
-            if (!String.IsNullOrWhiteSpace(feedUsername))
-            {
-                credentials = new NetworkCredential(feedUsername, feedPassword);
-            }
-            return credentials;
         }
 
         // ReSharper disable UnusedParameter.Local
