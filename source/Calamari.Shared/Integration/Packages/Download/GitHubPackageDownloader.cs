@@ -190,7 +190,7 @@ namespace Calamari.Integration.Packages.Download
                     {
                         client.CachePolicy = new RequestCachePolicy(RequestCacheLevel.CacheIfAvailable);
                         client.Headers.Set(HttpRequestHeader.UserAgent, GetUserAgent());
-                        client.Credentials = feedCredentials;
+                        client.Headers.Set(HttpRequestHeader.Authorization, GetAuthorization(feedCredentials, uri));
                         client.DownloadFileWithProgress(uri, tempPath, (progress, total) => log.Progress(progress, $"Downloading {packageId} v{version}"));
 
                         DeNestContents(tempPath, localDownloadName);
@@ -216,7 +216,7 @@ namespace Calamari.Integration.Packages.Download
                     client.CachePolicy = new RequestCachePolicy(RequestCacheLevel.BypassCache);
                     client.Headers.Set(HttpRequestHeader.UserAgent, GetUserAgent());
                     client.Headers.Set("Accept", "application/vnd.github.v3+json");
-                    client.Credentials = feedCredentials;
+                    client.Headers.Set(HttpRequestHeader.Authorization, GetAuthorization(feedCredentials, uri));
                     using (var readStream = client.OpenRead(uri))
                     {
                         var reader =
@@ -236,6 +236,11 @@ namespace Calamari.Integration.Packages.Download
 
                 throw;
             }
+        }
+
+        string GetAuthorization(ICredentials feedCredentials, string uri)
+        {
+            return String.Concat("token ", feedCredentials.GetCredential(new Uri(uri), "token").Password);
         }
 
         void VerifyRateLimit(HttpWebResponse response)
