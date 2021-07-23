@@ -157,6 +157,7 @@ Task("PackBinaries")
     // make nuget packages out of Common and CloudAccounts so that they can be used by Sashimi packages
     actions.Add(() => DoPackage("Calamari.Common", "net40", nugetVersion));
     actions.Add(() => DoPackage("Calamari.Common", "net452", nugetVersion));
+    actions.Add(() => DoPackage("Calamari.Common", "netstandard2.1", nugetVersion));
     actions.Add(() => DoPackage("Calamari.CloudAccounts", "net452", nugetVersion));
 
     // Create a portable .NET Core package
