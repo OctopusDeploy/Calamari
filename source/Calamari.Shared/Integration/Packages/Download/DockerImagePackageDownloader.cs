@@ -43,12 +43,18 @@ namespace Calamari.Integration.Packages.Download
             this.variables = variables;
         }
 
-        public PackagePhysicalFileMetadata DownloadPackage(string packageId, IVersion version, string feedId, Uri feedUri,
-            ICredentials feedCredentials, bool forcePackageDownload, int maxDownloadAttempts, TimeSpan downloadAttemptBackoff)
+        public PackagePhysicalFileMetadata DownloadPackage(string packageId,
+                                                           IVersion version,
+                                                           string feedId,
+                                                           Uri feedUri,
+                                                           string? username,
+                                                           string? password,
+                                                           bool forcePackageDownload,
+                                                           int maxDownloadAttempts,
+                                                           TimeSpan downloadAttemptBackoff)
         {
             //Always try re-pull image, docker engine can take care of the rest
             var fullImageName = GetFullImageName(packageId, version, feedUri);
-            var (username, password) = ExtractCredentials(feedCredentials, feedUri);
 
             var feedHost = GetFeedHost(feedUri);
             PerformPull(username, password, fullImageName, feedHost);
@@ -122,19 +128,6 @@ namespace Calamari.Integration.Packages.Download
 
             return (hash, size);
         }
-
-
-        (string? username, string? password) ExtractCredentials(ICredentials feedCredentials, Uri feedUri)
-        {
-            if (feedCredentials == null)
-            {
-                return (null, null);
-            }
-
-            var creds = feedCredentials.GetCredential(feedUri, "basic");
-            return (creds.UserName, creds.Password);
-        }
-
 
         string GetFetchScript()
         {

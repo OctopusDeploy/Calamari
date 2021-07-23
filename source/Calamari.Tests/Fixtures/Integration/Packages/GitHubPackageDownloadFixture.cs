@@ -53,7 +53,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var downloader = new GitHubPackageDownloader(new InMemoryLog(), fileSystem, freeSpaceChecker);
 
             var file = downloader.DownloadPackage("OctopusDeploy/Octostache", new SemanticVersion("2.1.8"), "feed-github",
-                new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, FeedPassword), true, 3,
+                new Uri(AuthFeedUri), FeedUsername, FeedPassword,
+                true, 3,
                 TimeSpan.FromSeconds(3));
 
             Assert.Greater(file.Size, 0);
@@ -67,13 +68,13 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var downloader = new GitHubPackageDownloader(new InMemoryLog(), fileSystem, freeSpaceChecker);
 
             var file1 = downloader.DownloadPackage("OctopusDeploy/Octostache", new SemanticVersion("2.1.7"), "feed-github",
-                new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, FeedPassword), true, 3,
+                new Uri(AuthFeedUri), FeedUsername, FeedPassword, true, 3,
                 TimeSpan.FromSeconds(3));
 
             Assert.Greater(file1.Size, 0);
 
             var file2 = downloader.DownloadPackage("OctopusDeploy/Octostache", new SemanticVersion("2.1.7"), "feed-github",
-                new Uri("https://WillFailIfInvoked"), null, false, 3,
+                new Uri("https://WillFailIfInvoked"), null, null, false, 3,
                 TimeSpan.FromSeconds(3));
 
             Assert.AreEqual(file1.FullFilePath, file1.FullFilePath);
@@ -88,7 +89,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var downloader = new GitHubPackageDownloader(new InMemoryLog(), fileSystem, freeSpaceChecker);
 
             var file = downloader.DownloadPackage("octokit/octokit.net", new SemanticVersion("0.28.0"), "feed-github",
-                new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, FeedPassword), true, 3,
+                new Uri(AuthFeedUri), FeedUsername, FeedPassword, true, 3,
                 TimeSpan.FromSeconds(3));
 
             Assert.Greater(file.Size, 0);
