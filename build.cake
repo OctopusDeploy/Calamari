@@ -57,7 +57,6 @@ Setup(context =>
     if (appendTimestamp) 
         nugetVersion = nugetVersion + "-" + DateTime.Now.ToString("yyyyMMddHHmmss");
 
-    Information($"Started with SignFiles = {signFiles}");
     Information("Building Calamari v{0}", nugetVersion);
 });
 
@@ -273,7 +272,6 @@ private string DoPublish(string project, string framework, string version, strin
 
 private void DoPackage(string project, string framework, string version, string runtimeId = null)
 {
-
     var publishedTo = Path.Combine(publishDir, project, framework);
     var projectDir = Path.Combine("./source", project);
     var packageId = $"{project}";
