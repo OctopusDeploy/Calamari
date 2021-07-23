@@ -42,7 +42,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void PackageWithCredentials_Loads()
         {
-            var pkg = downloader.DownloadPackage("mychart", new SemanticVersion("0.3.7"), "helm-feed", new Uri(AuthFeedUri), new NetworkCredential(FeedUsername, FeedPassword), true, 1,
+            var pkg = downloader.DownloadPackage("mychart", new SemanticVersion("0.3.7"), "helm-feed", new Uri(AuthFeedUri), FeedUsername, FeedPassword, true, 1,
                 TimeSpan.FromSeconds(3));
             pkg.PackageId.Should().Be("mychart");
             pkg.Version.Should().Be(new SemanticVersion("0.3.7"));
@@ -55,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var badUrl = new Uri($"https://octopusdeploy.jfrog.io/gobbelygook/{Guid.NewGuid().ToString("N")}");
             var badEndpointDownloader = new HelmChartPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
-            Action action = () => badEndpointDownloader.DownloadPackage("something", new SemanticVersion("99.9.7"), "gobbely", new Uri(badUrl, "something.99.9.7"), new NetworkCredential(FeedUsername, FeedPassword), true, 1, TimeSpan.FromSeconds(3));
+            Action action = () => badEndpointDownloader.DownloadPackage("something", new SemanticVersion("99.9.7"), "gobbely", new Uri(badUrl, "something.99.9.7"), FeedUsername, FeedPassword, true, 1, TimeSpan.FromSeconds(3));
             action.Should().Throw<Exception>().And.Message.Should().Contain("Unable to read Helm index file").And.Contain("404");
         }
     }
