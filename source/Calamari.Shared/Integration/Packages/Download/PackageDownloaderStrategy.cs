@@ -40,16 +40,16 @@ namespace Calamari.Integration.Packages.Download
             this.variables = variables;
         }
 
-        public PackagePhysicalFileMetadata DownloadPackage(
-            string packageId,
-            IVersion version,
-            string feedId,
-            Uri feedUri,
-            FeedType feedType,
-            ICredentials feedCredentials,
-            bool forcePackageDownload,
-            int maxDownloadAttempts,
-            TimeSpan downloadAttemptBackoff)
+        public PackagePhysicalFileMetadata DownloadPackage(string packageId,
+                                                           IVersion version,
+                                                           string feedId,
+                                                           Uri feedUri,
+                                                           FeedType feedType,
+                                                           string feedUsername,
+                                                           string feedPassword,
+                                                           bool forcePackageDownload,
+                                                           int maxDownloadAttempts,
+                                                           TimeSpan downloadAttemptBackoff)
         {
             IPackageDownloader? downloader = null;
             switch (feedType)
@@ -80,7 +80,8 @@ namespace Calamari.Integration.Packages.Download
                 version,
                 feedId,
                 feedUri,
-                feedCredentials,
+                feedUsername,
+                feedPassword,
                 forcePackageDownload,
                 maxDownloadAttempts,
                 downloadAttemptBackoff);

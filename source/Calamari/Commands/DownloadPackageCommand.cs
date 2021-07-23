@@ -62,10 +62,10 @@ namespace Calamari.Commands
                     }
                     versionFormat = format;
                 });
-            Options.Add("feedId=", "Id of the NuGet feed", v => feedId = v);
-            Options.Add("feedUri=", "URL to NuGet feed", v => feedUri = v);
-            Options.Add("feedUsername=", "[Optional] Username to use for an authenticated NuGet feed", v => feedUsername = v);
-            Options.Add("feedPassword=", "[Optional] Password to use for an authenticated NuGet feed", v => feedPassword = v);
+            Options.Add("feedId=", "Id of the feed", v => feedId = v);
+            Options.Add("feedUri=", "URL to feed", v => feedUri = v);
+            Options.Add("feedUsername=", "[Optional] Username to use for an authenticated feed", v => feedUsername = v);
+            Options.Add("feedPassword=", "[Optional] Password to use for an authenticated feed", v => feedPassword = v);
             Options.Add("feedType=", $"[Optional] Type of feed. Options {string.Join(", ", Enum.GetNames(typeof(FeedType)))}. Defaults to `{FeedType.NuGet}`.",
                 v =>
                 {
@@ -114,7 +114,8 @@ namespace Calamari.Commands
                     feedId,
                     uri,
                     feedType,
-                    GetFeedCredentials(feedUsername, feedPassword),
+                    feedUsername,
+                    feedPassword,
                     forcePackageDownload,
                     parsedMaxDownloadAttempts,
                     parsedAttemptBackoff);
@@ -131,16 +132,6 @@ namespace Calamari.Commands
             }
 
             return 0;
-        }
-
-        static ICredentials GetFeedCredentials(string feedUsername, string feedPassword)
-        {
-            ICredentials credentials = CredentialCache.DefaultNetworkCredentials;
-            if (!String.IsNullOrWhiteSpace(feedUsername))
-            {
-                credentials = new NetworkCredential(feedUsername, feedPassword);
-            }
-            return credentials;
         }
 
         // ReSharper disable UnusedParameter.Local

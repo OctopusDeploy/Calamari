@@ -41,15 +41,15 @@ namespace Calamari.Integration.Packages.Download
             this.freeSpaceChecker = freeSpaceChecker;
         }
 
-        public PackagePhysicalFileMetadata DownloadPackage(
-            string packageId,
-            IVersion version,
-            string feedId,
-            Uri feedUri,
-            ICredentials feedCredentials,
-            bool forcePackageDownload,
-            int maxDownloadAttempts,
-            TimeSpan downloadAttemptBackoff)
+        public PackagePhysicalFileMetadata DownloadPackage(string packageId,
+                                                           IVersion version,
+                                                           string feedId,
+                                                           Uri feedUri,
+                                                           string? feedUsername,
+                                                           string? feedPassword,
+                                                           bool forcePackageDownload,
+                                                           int maxDownloadAttempts,
+                                                           TimeSpan downloadAttemptBackoff)
         {
             ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
@@ -68,7 +68,7 @@ namespace Calamari.Integration.Packages.Download
             return DownloadPackage(packageId,
                 version,
                 feedUri,
-                feedCredentials,
+                GetFeedCredentials(feedUsername, feedPassword),
                 cacheDirectory,
                 maxDownloadAttempts,
                 downloadAttemptBackoff);
@@ -349,6 +349,16 @@ namespace Calamari.Integration.Packages.Download
                     .Select(node => node.SelectSingleNode("./*[local-name()='value']")?.InnerText)
                     .FirstOrDefault() ??
                 defaultVersion;
+        }
+        
+        static ICredentials GetFeedCredentials(string? feedUsername, string? feedPassword)
+        {
+            ICredentials credentials = CredentialCache.DefaultNetworkCredentials;
+            if (!String.IsNullOrWhiteSpace(feedUsername))
+            {
+                credentials = new NetworkCredential(feedUsername, feedPassword);
+            }
+            return credentials;
         }
     }
 }

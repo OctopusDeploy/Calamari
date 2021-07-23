@@ -46,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var downloader = GetDownloader();
             var pkg = downloader.DownloadPackage("alpine",
                 new SemanticVersion("3.6.5"), "docker-feed",
-                new Uri(DockerHubFeedUri), null, true, 1,
+                new Uri(DockerHubFeedUri), null, null, true, 1,
                 TimeSpan.FromSeconds(3));
 
             Assert.AreEqual("alpine", pkg.PackageId);
@@ -66,7 +66,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 version,
                 "docker-feed",
                 new Uri(DockerHubFeedUri),
-                new NetworkCredential(DockerTestUsername, DockerTestPassword),
+                DockerTestUsername, DockerTestPassword,
                 true,
                 1,
                 TimeSpan.FromSeconds(3));
@@ -85,7 +85,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 new SemanticVersion("1.1"),
                 "docker-feed",
                 new Uri(AuthFeedUri),
-                new NetworkCredential(FeedUsername, FeedPassword), true, 1,
+                FeedUsername, FeedPassword,
+                true, 1,
                 TimeSpan.FromSeconds(3));
 
             Assert.AreEqual("octopus-echo", pkg.PackageId);
@@ -101,7 +102,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var exception = Assert.Throws<CommandException>(() => downloader.DownloadPackage("octopus-echo",
                 new SemanticVersion("1.1"), "docker-feed",
                 new Uri(AuthFeedUri),
-                new NetworkCredential(FeedUsername, "SuperDooper"), true, 1,
+                FeedUsername, "SuperDooper",
+                true, 1,
                 TimeSpan.FromSeconds(3)));
 
             StringAssert.Contains("Unable to pull Docker image", exception.Message);

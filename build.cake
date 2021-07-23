@@ -4,6 +4,9 @@
 #tool "nuget:?package=GitVersion.CommandLine&version=5.2.0"
 #addin "nuget:?package=Cake.Incubator&version=5.0.1"
 #addin "nuget:?package=Cake.FileHelpers&version=4.0.1"
+// see https://www.gep13.co.uk/blog/introducing-cake.dotnettool.module
+#module nuget:?package=Cake.DotNetTool.Module&version=0.1.0
+#tool "dotnet:?package=AzureSignTool&version=2.0.17"
 
 using Path = System.IO.Path;
 using System.Xml;
@@ -19,6 +22,12 @@ var testFilter = Argument("where", "");
 var signFiles = Argument<bool>("sign_files", false);
 var signingCertificatePath = Argument("signing_certificate_path", "");
 var signingCertificatePassword = Argument("signing_certificate_password", "");
+// We sign all of our own assemblies - these are the arguments required to sign code using Azure Key Vault
+// If these arguments are null then the signing defaults to using the local certificate and SignTool
+var keyVaultUrl = Argument("AzureKeyVaultUrl", "");
+var keyVaultAppId = Argument("AzureKeyVaultAppId", "");
+var keyVaultAppSecret = Argument("AzureKeyVaultAppSecret", "");
+var keyVaultCertificateName = Argument("AzureKeyVaultCertificateName", "");
 var buildVerbosity = Argument("build_verbosity", "normal");
 var packInParallel = Argument<bool>("packinparallel", false);
 var appendTimestamp = Argument<bool>("timestamp", false);
@@ -331,8 +340,16 @@ private void SignAndTimestampBinaries(string outputDirectory)
          .Where(f => !HasAuthenticodeSignature(f))
          .ToArray();
 
-    Information($"Using signtool in {signToolPath}");
-    SignFiles(unsignedExecutablesAndLibraries, signingCertificatePath, signingCertificatePassword);
+    if (String.IsNullOrEmpty(keyVaultUrl) && String.IsNullOrEmpty(keyVaultAppId) && String.IsNullOrEmpty(keyVaultAppSecret) && String.IsNullOrEmpty(keyVaultCertificateName))
+    {
+      Information("Signing files using signtool and the self-signed development code signing certificate.");
+      SignFilesWithSignTool(unsignedExecutablesAndLibraries, signingCertificatePath, signingCertificatePassword);
+    }
+    else
+    {
+      Information("Signing files using azuresigntool and the production code signing certificate");
+      SignFilesWithAzureSignTool(unsignedExecutablesAndLibraries, keyVaultUrl, keyVaultAppId, keyVaultAppSecret, keyVaultCertificateName);
+    }
     TimeStampFiles(unsignedExecutablesAndLibraries);
 }
 // note: Doesn't check if existing signatures are valid, only that one exists
@@ -350,12 +367,43 @@ private bool HasAuthenticodeSignature(FilePath filePath)
     }
 }
 
-void SignFiles(IEnumerable<FilePath> files, FilePath certificatePath, string certificatePassword, string display = "", string displayUrl = "")
+void SignFilesWithAzureSignTool(IEnumerable<FilePath> files, string vaultUrl, string vaultAppId, string vaultAppSecret, string vaultCertificateName, string display = "", string displayUrl = "")
+{
+  var signArguments = new ProcessArgumentBuilder()
+    .Append("sign")
+    .Append("--azure-key-vault-url").AppendQuoted(vaultUrl)
+    .Append("--azure-key-vault-client-id").AppendQuoted(vaultAppId)
+    .Append("--azure-key-vault-client-secret").AppendQuotedSecret(vaultAppSecret)
+    .Append("--azure-key-vault-certificate").AppendQuoted(vaultCertificateName)
+    .Append("--file-digest sha256");
+
+  if (!string.IsNullOrWhiteSpace(display))
+  {
+    signArguments
+      .Append("--description").AppendQuoted(display)
+      .Append("--description-url").AppendQuoted(displayUrl);
+  }
+
+  foreach (var file in files)
+    signArguments.AppendQuoted(file.FullPath);
+
+    var azureSignToolPath = MakeAbsolute(File("./tools/azuresigntool.exe"));
+
+    if (!FileExists(azureSignToolPath))
+        throw new Exception($"The azure signing tool was expected to be at the path '{azureSignToolPath}' but wasn't available.");
+
+  Information($"Executing: {azureSignToolPath} {signArguments.RenderSafe()}");
+  var exitCode = StartProcess(azureSignToolPath.FullPath, signArguments.Render());
+    if (exitCode != 0)
+        throw new Exception($"AzureSignTool failed with the exit code {exitCode}.");
+
+  Information($"Finished signing {files.Count()} files.");
+}
+
+void SignFilesWithSignTool(IEnumerable<FilePath> files, FilePath certificatePath, string certificatePassword, string display = "", string displayUrl = "")
 {
     if (!FileExists(signToolPath))
-    {
         throw new Exception($"The signing tool was expected to be at the path '{signToolPath}' but wasn't available.");
-    }
 
     if (!FileExists(certificatePath))
         throw new Exception($"The code-signing certificate was not found at {certificatePath}.");

@@ -63,8 +63,10 @@ Param(
     [switch]$WhatIf,
     [switch]$Mono,
     [switch]$SkipToolPackageRestore,
-    [string]$SigningCertificatePath = "./certificates/OctopusDevelopment.pfx",
-    [string]$SigningCertificatePassword = "Password01!",
+    [string]$AzureKeyVaultUrl,
+    [string]$AzureKeyVaultAppId,
+    [string]$AzureKeyVaultAppSecret,
+    [string]$AzureKeyvaultCertificateName,
     [ValidateSet("Quiet", "Minimal", "Normal", "Verbose", "Diagnostic")]
     [string]$BuildVerbosity = "Normal",
     [switch]$PackInParallel,
@@ -272,7 +274,12 @@ if (!(Test-Path $CAKE_EXE)) {
     Throw "Could not find Cake.exe at $CAKE_EXE"
 }
 
+# We added this so we can use dotnet tools
+# See https://www.gep13.co.uk/blog/introducing-cake.dotnettool.module
+Write-Host "Installing cake modules using the --bootstrap argument"
+&$CAKE_EXE --bootstrap
+
 # Start Cake
 Write-Host "Running build script..."
-Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" -build_verbosity=`"$BuildVerbosity`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild"
+Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" -build_verbosity=`"$BuildVerbosity`" -AzureKeyVaultUrl=`"$AzureKeyVaultUrl`" -AzureKeyVaultAppId=`"$AzureKeyVaultAppId`" -AzureKeyVaultAppSecret=`"$AzureKeyVaultAppSecret`" -AzureKeyvaultCertificateName=`"$AzureKeyvaultCertificateName`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild"
 exit $LASTEXITCODE
