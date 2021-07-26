@@ -167,7 +167,9 @@ Task("PackBinaries")
     actions.Add(() => DoPackage("Calamari.Common", "net40", nugetVersion));
     actions.Add(() => DoPackage("Calamari.Common", "net452", nugetVersion));
     actions.Add(() => DoPackage("Calamari.Common", "netstandard2.1", nugetVersion));
-    actions.Add(() => DoPackage("Calamari.CloudAccounts", "net452", nugetVersion));
+    actions.Add(() => DoPackage("Calamari.CloudAccounts", "net452", nugetVersion));    
+    actions.Add(() => DoPackage("Calamari.CloudAccounts", "netstandard2.1", nugetVersion));
+
 
     // Create a portable .NET Core package
     actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable"));
