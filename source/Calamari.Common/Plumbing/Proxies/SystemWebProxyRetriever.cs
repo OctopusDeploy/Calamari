@@ -16,7 +16,7 @@ namespace Calamari.Common.Plumbing.Proxies
 
                 var systemWebProxy = WebRequest.GetSystemWebProxy();
 
-                return systemWebProxy.GetProxy(TestUri).Host != TestUri.Host
+                return systemWebProxy.GetProxy(TestUri)?.Host != TestUri.Host
                     ? systemWebProxy.AsSome()
                     : Maybe<IWebProxy>.None;
             }
