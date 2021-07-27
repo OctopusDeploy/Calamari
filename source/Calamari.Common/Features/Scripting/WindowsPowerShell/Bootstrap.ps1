@@ -386,13 +386,18 @@ function Initialize-ProxySettings() {
 	if ($useDefaultProxy -and [string]::IsNullOrEmpty($proxyHost)) {
 		# Calamari ensure both http_proxy and HTTP_PROXY are set, so we don't need to worry about casing
 		if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
-			$octopusProxyUri = New-Object System.Uri($env:HTTP_PROXY)
+
+			$octopusProxyUri = $null;
+			$isUri = [System.Uri]::TryCreate($env:HTTP_PROXY, [System.UriKind]::Absolute, [ref] $octopusProxyUri)
+			if (!$isUri) {
+				$octopusProxyUri = $env:HTTP_PROXY;
+			}
 
 			# The HTTP_PROXY env variable may also contain credentials.
 			# This is a common enough pattern, but we need to extract the credentials in order to use them
 
 			# But if credentials were explicitly provided, use those ones instead
-			if (-not $hasCredentials) {
+			if (-not $hasCredentials -and $octopusProxyUri.GetType() -eq [System.Uri]) {
 				$credentialsArray = $octopusProxyUri.UserInfo.Split(":")
 				$hasCredentials = $credentialsArray.length -gt 1;
 				if ($hasCredentials) {
