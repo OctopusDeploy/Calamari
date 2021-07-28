@@ -10,15 +10,17 @@ namespace Calamari.Common.Plumbing.Proxies
     {
         public static Maybe<IWebProxy> GetSystemWebProxy()
         {
-            //Only try to retrieve the system proxy on windows + .Net full
-#if NETFRAMEWORK
             try
             {
                 var TestUri = new Uri("http://test9c7b575efb72442c85f706ef1d64afa6.com");
 
                 var systemWebProxy = WebRequest.GetSystemWebProxy();
 
-                return systemWebProxy.GetProxy(TestUri).Host != TestUri.Host
+                var proxyUri = systemWebProxy.GetProxy(TestUri);
+
+                if (proxyUri == null) return Maybe<IWebProxy>.None;
+
+                return proxyUri.Host != TestUri.Host
                     ? systemWebProxy.AsSome()
                     : Maybe<IWebProxy>.None;
             }
@@ -26,7 +28,7 @@ namespace Calamari.Common.Plumbing.Proxies
             {
                 /*
                  Ignore this exception. It is probably just an inability to get the IE proxy settings. e.g.
-                 
+
                  Unhandled Exception: System.Net.Sockets.SocketException: The requested service provider could not be loaded or initialized
                    at System.Net.SafeCloseSocketAndEvent.CreateWSASocketWithEvent(AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType, Boolean autoReset, Boolean signaled)
                    at System.Net.NetworkAddressChangePolled..ctor()
@@ -38,16 +40,12 @@ namespace Calamari.Common.Plumbing.Proxies
                    at System.Net.WebRequest.GetSystemWebProxy()
                    at Calamari.Integration.Proxies.ProxyInitializer.InitializeDefaultProxy()
                    at Calamari.Program.Execute(String[] args)
-                   at Calamari.Program.Main(String[] args)                 
+                   at Calamari.Program.Main(String[] args)
                  */
 
                 Log.Error("Failed to get the system proxy settings. Calamari will not use any proxy settings.");
                 return Maybe<IWebProxy>.None;
             }
-#else
-                Log.Verbose("Unable to get the system proxy settings due to not running under .Net Framework. Calamari will not use any proxy settings.");
-                return Maybe<IWebProxy>.None;
-#endif
         }
     }
 }
