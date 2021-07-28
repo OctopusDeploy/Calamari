@@ -1,8 +1,10 @@
 //////////////////////////////////////////////////////////////////////
 // TOOLS
 //////////////////////////////////////////////////////////////////////
-#tool "nuget:?package=GitVersion.CommandLine&version=4.0.0"
+#module nuget:?package=Cake.DotNetTool.Module&version=0.4.0
+#tool "dotnet:?package=GitVersion.Tool&version=5.3.6"
 #tool "nuget:?package=TeamCity.Dotnet.Integration&version=1.0.10"
+#tool "nuget:?package=NuGet.CommandLine&version=5.9.1"
 #addin "nuget:?package=SharpZipLib&version=1.2.0"
 #addin "nuget:?package=Cake.Compression&version=0.2.4"
 
@@ -90,54 +92,6 @@ Task("Test")
         });
     });
 
-Task("CreateTemplatesPackage")
-   .IsDependentOn("Build")
-   .Does(() => {
-        var templateCakeFiles = GetFiles("./source/Templates/*.cake");
-
-        foreach(var cakeFile in templateCakeFiles)
-        {
-            var destination = Path.GetFullPath(Path.Combine(workingDir, cakeFile.GetFilenameWithoutExtension().FullPath));
-            EnsureDirectoryExists(destination);
-
-            CakeExecuteScript(cakeFile, new CakeSettings{
-                Arguments = new Dictionary<string, string>{
-                    {"destination", destination},
-                    {"nugetVersion", nugetVersion},
-                    {"source", Path.GetFullPath("./source")},
-                    {"artifactsDir", Path.GetFullPath(artifactsDir)},
-                    {"templatePath", Path.GetFullPath(Path.Combine("./source/Templates/", cakeFile.GetFilenameWithoutExtension().FullPath))}
-                }
-            });
-        }
-
-        var nuGetPackSettings   = new NuGetPackSettings {
-                                      Id                      = "Sashimi.Templates",
-                                      Version                 = nugetVersion,
-                                      Title                   = "Sashimi.Templates",
-                                      Authors                 = new[] {"Octopus Deploy"},
-                                      Owners                  = new[] {"Octopus Deploy"},
-                                      Description             = "Sashimi templates",
-                                      ProjectUrl              = new Uri(projectUrl),
-                                      License                 = new NuSpecLicense() { Type = "expression", Value = "Apache-2.0" },
-                                      RequireLicenseAcceptance= false,
-                                      Symbols                 = false,
-                                      NoPackageAnalysis       = true,
-                                      Files                   = new [] {
-                                                                           new NuSpecContent {Source = "**/*", Target = "content"},
-                                                                        },
-                                      BasePath                = workingDir,
-                                      OutputDirectory         = artifactsDir,
-                                      ArgumentCustomization   = args=>args.Append("-NoDefaultExcludes"),
-                                      PackageTypes            = new [] {
-                                                                            new NuSpecPackageType { Name = "Template" }
-                                                                       },
-                                      Repository              = new NuGetRepository { Branch = gitVersionInfo.BranchName, Commit = gitVersionInfo.Sha, Type = "git", Url = projectUrl + ".git" }
-                                  };
-
-        NuGetPack(nuGetPackSettings);
-   });
-
 Task("PublishCalamariProjects")
     .IsDependentOn("Build")
     .Does(() => {
@@ -219,7 +173,6 @@ Task("PackSashimi")
 
 Task("PublishPackageArtifacts")
     .IsDependentOn("PackSashimi")
-    .IsDependentOn("CreateTemplatesPackage")
     .Does(() =>
 {
     var packages = GetFiles($"{artifactsDir}*.{nugetVersion}.nupkg");
