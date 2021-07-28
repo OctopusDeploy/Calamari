@@ -118,31 +118,19 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
 
         void AssertUnauthenticatedSystemProxyUsedWithException(CalamariResult output, string bypassedUrl)
         {
-#if !NETCORE
             AssertUnauthenticatedSystemProxyUsed(output);
             if (TestWebRequestDefaultProxy)
                 output.AssertPropertyValue("ProxyBypassed", bypassedUrl);
-#else
-            base.AssertNoProxyChanges(output);
-#endif
         }
 
         void AssertUnauthenticatedSystemProxyUsed(CalamariResult output)
         {
-#if !NETCORE
             AssertUnauthenticatedProxyUsed(output);
-#else
-            base.AssertNoProxyChanges(output);
-#endif
         }
-        
+
         void AssertAuthenticatedSystemProxyUsed(CalamariResult output)
         {
-#if !NETCORE
             AssertAuthenticatedProxyUsed(output);
-#else
-            base.AssertNoProxyChanges(output);
-#endif
         }
     }
 }
