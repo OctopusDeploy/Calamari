@@ -38,6 +38,9 @@ Specifies whether to perform any pack actions in parallel (default = false)
 Specifies whether to append the current timestamp to the version (default = false)
 .PARAMETER $SetOctopusServerVersion
 Specifies whether to set the Octopus Server version as part of the build (default = false)
+.PARAMETER $SignFilesOnLocalBuild
+Specifies whether to sign the files as part of a local build (default = false)
+Files are always signed on server builds.
 .PARAMETER ScriptArgs
 Remaining arguments are added here.
 
@@ -68,7 +71,8 @@ Param(
     [string]$BuildVerbosity = "Normal",
     [switch]$PackInParallel,
     [switch]$Timestamp,
-    [switch]$SetOctopusServerVersion
+    [switch]$SetOctopusServerVersion,
+    [switch]$SignFilesOnLocalBuild
 )
 
 [Reflection.Assembly]::LoadWithPartialName("System.Security") | Out-Null
@@ -146,10 +150,16 @@ if ($Timestamp.IsPresent) {
     $UseTimestamp = "-timestamp=true"
 }
 
-# Should we run pack operations in parallel
+# Should we set the octopus server version
 $UseSetOctopusServerVersion = ""
 if ($SetOctopusServerVersion.IsPresent) {
     $UseSetOctopusServerVersion = "-setoctopusserverversion=true"
+}
+
+# Should we sign the files if we're building locally
+$UseSignFilesOnLocalBuild = ""
+if ($SignFilesOnLocalBuild.IsPresent) {
+    $UseSignFilesOnLocalBuild = "-sign_files=true"
 }
 
 # Make sure tools folder exists
@@ -271,5 +281,5 @@ Write-Host "Installing cake modules using the --bootstrap argument"
 
 # Start Cake
 Write-Host "Running build script..."
-Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" -build_verbosity=`"$BuildVerbosity`" -AzureKeyVaultUrl=`"$AzureKeyVaultUrl`" -AzureKeyVaultAppId=`"$AzureKeyVaultAppId`" -AzureKeyVaultAppSecret=`"$AzureKeyVaultAppSecret`" -AzureKeyvaultCertificateName=`"$AzureKeyvaultCertificateName`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion"
+Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" -build_verbosity=`"$BuildVerbosity`" -AzureKeyVaultUrl=`"$AzureKeyVaultUrl`" -AzureKeyVaultAppId=`"$AzureKeyVaultAppId`" -AzureKeyVaultAppSecret=`"$AzureKeyVaultAppSecret`" -AzureKeyvaultCertificateName=`"$AzureKeyvaultCertificateName`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild"
 exit $LASTEXITCODE

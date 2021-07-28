@@ -19,6 +19,7 @@ using Task = System.Threading.Tasks.Task;
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var testFilter = Argument("where", "");
+var signFiles = Argument<bool>("sign_files", false);
 var signingCertificatePath = Argument("signing_certificate_path", "");
 var signingCertificatePassword = Argument("signing_certificate_password", "");
 // We sign all of our own assemblies - these are the arguments required to sign code using Azure Key Vault
@@ -159,8 +160,16 @@ Task("PackBinaries")
 {
     var actions = new List<Action>();
 
-    actions.Add(() => DoPackage("Calamari", "net40", nugetVersion));
+    actions.Add(() => DoPackage("Calamari", "net40", nugetVersion));    
     actions.Add(() => DoPackage("Calamari", "net452", nugetVersion, "Cloud"));
+    
+    // make nuget packages out of Common and CloudAccounts so that they can be used by Sashimi packages
+    actions.Add(() => DoPackage("Calamari.Common", "net40", nugetVersion));
+    actions.Add(() => DoPackage("Calamari.Common", "net452", nugetVersion));
+    actions.Add(() => DoPackage("Calamari.Common", "netstandard2.1", nugetVersion));
+    actions.Add(() => DoPackage("Calamari.CloudAccounts", "net452", nugetVersion));    
+    actions.Add(() => DoPackage("Calamari.CloudAccounts", "netstandard2.1", nugetVersion));
+
 
     // Create a portable .NET Core package
     actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable"));
@@ -170,16 +179,6 @@ Task("PackBinaries")
     {
         actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid));
     }
-
-    var dotNetCorePackSettings = GetDotNetCorePackSettings();
-
-    var commonProjects = GetFiles("./source/**/*.Common.csproj");
-    foreach(var project in commonProjects)
-    {
-        actions.Add(() => DotNetCorePack(project.ToString(), dotNetCorePackSettings));
-    }
-
-    actions.Add(() => DotNetCorePack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings));
 
     await RunPackActions(actions);
 });
@@ -328,7 +327,7 @@ private void SignAndTimestampBinaries(string outputDirectory)
 {
     // When building locally signing isn't really necessary and it could take up to 3-4 minutes to sign all the binaries
     // as we build for many, many different runtimes so disabling it locally means quicker turn around when doing local development.
-    if (BuildSystem.IsLocalBuild) return;
+    if (BuildSystem.IsLocalBuild && !signFiles) return;
 
     Information($"Signing binaries in {outputDirectory}");
 
