@@ -81,6 +81,48 @@ namespace Calamari.Tests.Fixtures.Manifest
                 result.AssertOutput(nameof(NodeInstructions.DeploymentTargetInputsVariable));
             }
         }
+        
+        [Test]
+        public void WithNamedPackageInstructions()
+        {
+            var instructions =
+                InstructionBuilder
+                    .Create()
+                    .WithCalamariInstruction("test-calamari-instruction")
+                    .WithNodeInstruction()
+                    .AsString();
+
+            using (var temporaryDirectory = TemporaryDirectory.Create())
+            {
+                var generatedApplicationPath = CodeGenerator.GenerateConsoleApplication("node", temporaryDirectory.DirectoryPath);
+                var toolRoot = Path.Combine(temporaryDirectory.DirectoryPath, "app");
+                var destinationPath =
+                    CalamariEnvironment.IsRunningOnWindows ? toolRoot : Path.Combine(toolRoot, "bin");
+
+                DirectoryEx.Copy(generatedApplicationPath, destinationPath);
+
+                var inputs = "{\"containerNameOverride\":\"payload\",\"package\":{\"extractedToPath\":\"#{Octopus.Action.Package[package].ExtractedPath}\"},\"target\":{\"files\":[]}}";
+                var variables = new VariableDictionary
+                {
+                    { SpecialVariables.Execution.Manifest, instructions },
+                    { nameof(NodeInstructions.BootstrapperPathVariable), "BootstrapperPathVariable_Value" },
+                    { nameof(NodeInstructions.NodePathVariable), toolRoot },
+                    { nameof(NodeInstructions.TargetPathVariable), "TargetPathVariable_Value" },
+                    { nameof(NodeInstructions.InputsVariable), inputs },
+                    { nameof(NodeInstructions.DeploymentTargetInputsVariable), "deploymentTargetInputs" },
+                    { "Octopus.Action.Package[package].ExtractedPath", "C:\\OctopusTest\\Api Test\\1\\Octopus-Primary\\Work\\20210804020317-7-11\\package" },
+                };
+
+                var result = ExecuteCommand(variables, "Calamari.Tests");
+
+                result.AssertSuccess();
+                result.AssertOutput("Hello from TestCommand");
+                result.AssertOutput("Hello from my custom node!");
+                result.AssertOutput(string.Join(Path.Combine("BootstrapperPathVariable_Value", "bootstrapper.js"),
+                                                Path.Combine("TargetPathVariable_Value", "executor.js")));
+                result.AssertOutput(nameof(NodeInstructions.DeploymentTargetInputsVariable));
+            }
+        }
 
         CalamariResult ExecuteCommand(VariableDictionary variables, string extensions = "")
         {
