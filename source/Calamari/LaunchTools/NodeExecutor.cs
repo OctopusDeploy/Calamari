@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
@@ -30,6 +32,7 @@ namespace Calamari.LaunchTools
 
         protected override int ExecuteInternal(NodeInstructions instructions, params string[] args)
         {
+            Thread.Sleep(20000);
             var pathToNode = variables.Get(instructions.NodePathVariable);
             var pathToStepPackage = variables.Get(instructions.TargetPathVariable);
             var pathToBootstrapper = variables.Get(instructions.BootstrapperPathVariable);
@@ -70,8 +73,10 @@ namespace Calamari.LaunchTools
             var template = TemplateParser.ParseTemplate(rawJson);
             foreach (var templateToken in template.Tokens)
             {
-                var variableName = String.Join(".", templateToken.GetArguments());
-                var expanded = variables.Evaluate($"#{{ {variableName} | JsonEscape }}");
+                var variableName = templateToken.ToString()
+                                                .Replace("#{", string.Empty)
+                                                .Replace("}", string.Empty);
+                var expanded = variables.Evaluate($"#{{{variableName} | JsonEscape}}");
                 tempVariableDictionaryToUseForExpandedVariables.Add(variableName, expanded);
             }
 
