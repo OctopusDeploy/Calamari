@@ -58,6 +58,8 @@ namespace Calamari.Commands
                 throw new CommandException("The execution manifest must have at least one instruction.");
             }
 
+            // TODO: refactor this to use an instruction transformer. ExtractPackageInstructionTransformer
+            // https://octopusdeploy.slack.com/archives/C028E35JZH6/p1628135757073500?thread_ts=1628135383.073000&cid=C028E35JZH6
             var conventions = new List<IConvention>
             {
                 new StageScriptPackagesConvention(string.Empty, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner)),

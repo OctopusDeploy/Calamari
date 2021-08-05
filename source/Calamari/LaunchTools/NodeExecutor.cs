@@ -73,6 +73,9 @@ namespace Calamari.LaunchTools
             var template = TemplateParser.ParseTemplate(rawJson);
             foreach (var templateToken in template.Tokens)
             {
+                // TODO: we need change this to have a better way of escaping json string here
+                var arguments = templateToken.GetArguments();
+                if (!arguments.Any()) continue; // to avoid TextToken, which doesn't need to be evaluated
                 var variableName = templateToken.ToString()
                                                 .Replace("#{", string.Empty)
                                                 .Replace("}", string.Empty);
