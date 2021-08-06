@@ -32,7 +32,6 @@ namespace Calamari.LaunchTools
 
         protected override int ExecuteInternal(NodeInstructions instructions, params string[] args)
         {
-            Thread.Sleep(20000);
             var pathToNode = variables.Get(instructions.NodePathVariable);
             var pathToStepPackage = variables.Get(instructions.TargetPathVariable);
             var pathToBootstrapper = variables.Get(instructions.BootstrapperPathVariable);
