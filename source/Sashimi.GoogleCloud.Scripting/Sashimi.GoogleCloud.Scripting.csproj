@@ -21,6 +21,7 @@
       <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0003" />
       <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0004" />
       <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0009" />
+      <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0010" />
     </ItemGroup>
 
 </Project>
