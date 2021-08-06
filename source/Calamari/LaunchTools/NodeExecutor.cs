@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
@@ -11,8 +10,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Util;
-using Octostache;
-using Octostache.Templates;
 
 namespace Calamari.LaunchTools
 {
@@ -32,7 +29,6 @@ namespace Calamari.LaunchTools
 
         protected override int ExecuteInternal(NodeInstructions instructions, params string[] args)
         {
-            Thread.Sleep(20000);
             var pathToNode = variables.Get(instructions.NodePathVariable);
             var pathToStepPackage = variables.Get(instructions.TargetPathVariable);
             var pathToBootstrapper = variables.Get(instructions.BootstrapperPathVariable);
