@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -11,6 +10,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Util;
 using Octostache;
 using Octostache.Templates;
 
@@ -32,6 +32,7 @@ namespace Calamari.LaunchTools
 
         protected override int ExecuteInternal(NodeInstructions instructions, params string[] args)
         {
+            Thread.Sleep(20000);
             var pathToNode = variables.Get(instructions.NodePathVariable);
             var pathToStepPackage = variables.Get(instructions.TargetPathVariable);
             var pathToBootstrapper = variables.Get(instructions.BootstrapperPathVariable);
@@ -39,7 +40,8 @@ namespace Calamari.LaunchTools
 
             using (var variableFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                variables.Set(instructions.InputsVariable, JsonEscapeAllVariablesInOurInputs(instructions));
+                var jsonInputs = variables.GetRaw(instructions.InputsVariable) ?? string.Empty;
+                variables.Set(instructions.InputsVariable, InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables));
 
                 var variablesAsJson = variables.CloneAndEvaluate().SaveAsString();
                 File.WriteAllBytes(variableFile.FilePath, new AesEncryption(options.InputVariables.SensitiveVariablesPassword).Encrypt(variablesAsJson));
@@ -63,27 +65,6 @@ namespace Calamari.LaunchTools
 
                 return commandResult.ExitCode;
             }
-        }
-
-        string JsonEscapeAllVariablesInOurInputs(NodeInstructions instructions)
-        {
-            var rawJson = variables.GetRaw(instructions.InputsVariable);
-            var tempVariableDictionaryToUseForExpandedVariables = new VariableDictionary();
-            var template = TemplateParser.ParseTemplate(rawJson);
-            foreach (var templateToken in template.Tokens)
-            {
-                // TODO: we need change this to have a better way of escaping json string here
-                var arguments = templateToken.GetArguments();
-                if (!arguments.Any()) continue; // to avoid TextToken, which doesn't need to be evaluated
-                var variableName = templateToken.ToString()
-                                                .Replace("#{", string.Empty)
-                                                .Replace("}", string.Empty);
-                var expanded = variables.Evaluate($"#{{{variableName} | JsonEscape}}");
-                tempVariableDictionaryToUseForExpandedVariables.Add(variableName, expanded);
-            }
-
-            var evaluatedJson = tempVariableDictionaryToUseForExpandedVariables.Evaluate(rawJson);
-            return evaluatedJson;
         }
 
         static string BuildNodePath(string pathToNode) => CalamariEnvironment.IsRunningOnWindows ? Path.Combine(pathToNode, "node.exe") : Path.Combine(pathToNode, "bin", "node");
