@@ -35,7 +35,8 @@ namespace Sashimi.Terraform.Validation
                  });
 
             RuleFor(a => a.Packages)
-                .MustHaveExactlyOnePackage("Please provide the Terraform template package.")
+                .Must(packages => packages.Any(p => p.IsPrimaryPackage && !string.IsNullOrWhiteSpace(p.PackageId) && !string.IsNullOrWhiteSpace(p.FeedIdOrName?.Value)))
+                .WithMessage("Please provide the Terraform template package.")
                 .When(a => (a.ActionType == TerraformActionTypes.Apply || a.ActionType == TerraformActionTypes.Destroy) && IsTemplateFromPackage(a.Properties));
 
             AddAzureAccountRules(this);
