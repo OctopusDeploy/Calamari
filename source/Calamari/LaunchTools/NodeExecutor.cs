@@ -9,8 +9,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
-using Octostache;
-using Octostache.Templates;
+using Calamari.Util;
 
 namespace Calamari.LaunchTools
 {
@@ -37,7 +36,8 @@ namespace Calamari.LaunchTools
 
             using (var variableFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                variables.Set(instructions.InputsVariable, JsonEscapeAllVariablesInOurInputs(instructions));
+                var jsonInputs = variables.GetRaw(instructions.InputsVariable) ?? string.Empty;
+                variables.Set(instructions.InputsVariable, InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables));
 
                 var variablesAsJson = variables.CloneAndEvaluate().SaveAsString();
                 File.WriteAllBytes(variableFile.FilePath, new AesEncryption(options.InputVariables.SensitiveVariablesPassword).Encrypt(variablesAsJson));
@@ -61,22 +61,6 @@ namespace Calamari.LaunchTools
 
                 return commandResult.ExitCode;
             }
-        }
-
-        string JsonEscapeAllVariablesInOurInputs(NodeInstructions instructions)
-        {
-            var rawJson = variables.GetRaw(instructions.InputsVariable);
-            var tempVariableDictionaryToUseForExpandedVariables = new VariableDictionary();
-            var template = TemplateParser.ParseTemplate(rawJson);
-            foreach (var templateToken in template.Tokens)
-            {
-                var variableName = String.Join(".", templateToken.GetArguments());
-                var expanded = variables.Evaluate($"#{{ {variableName} | JsonEscape }}");
-                tempVariableDictionaryToUseForExpandedVariables.Add(variableName, expanded);
-            }
-
-            var evaluatedJson = tempVariableDictionaryToUseForExpandedVariables.Evaluate(rawJson);
-            return evaluatedJson;
         }
 
         static string BuildNodePath(string pathToNode) => CalamariEnvironment.IsRunningOnWindows ? Path.Combine(pathToNode, "node.exe") : Path.Combine(pathToNode, "bin", "node");
