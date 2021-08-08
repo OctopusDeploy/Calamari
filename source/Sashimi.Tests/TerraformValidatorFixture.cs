@@ -6,7 +6,7 @@ using FluentAssertions;
 using FluentValidation.TestHelper;
 using NUnit.Framework;
 using Octopus.Server.Extensibility.HostServices.Model;
-using Octopus.Server.Extensibility.HostServices.Model.Feeds;
+using Octopus.Server.MessageContracts.Features.Feeds;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers.Validation;
 using Sashimi.Server.Contracts.CloudTemplates;
@@ -149,7 +149,7 @@ namespace Sashimi.Terraform.Tests
                                                                 {
                                                                     { KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Package }
                                                                 },
-                                                                new List<PackageReference> { new PackageReference("packageId", new FeedIdOrName("feedId")) });
+                                                                new List<PackageReference> { new PackageReference("packageId", "feedId".ToFeedIdOrName()) });
 
             var result = validator.TestValidate(context);
 
