@@ -45,7 +45,7 @@ namespace Calamari.LaunchTools
                 var commandLineInvocation = new CommandLineInvocation(BuildNodePath(pathToNode),
                                                                       BuildArgs(
                                                                                 Path.Combine(pathToBootstrapper, "bootstrapper.js"),
-                                                                                Path.Combine(pathToStepPackage, "executor.js"),
+                                                                                pathToStepPackage,
                                                                                 variableFile.FilePath,
                                                                                 options.InputVariables.SensitiveVariablesPassword,
                                                                                 AesEncryption.SaltRaw,
@@ -65,7 +65,14 @@ namespace Calamari.LaunchTools
 
         static string BuildNodePath(string pathToNode) => CalamariEnvironment.IsRunningOnWindows ? Path.Combine(pathToNode, "node.exe") : Path.Combine(pathToNode, "bin", "node");
 
-        static string BuildArgs(string pathToBootstrapper, string pathToStepPackage, string pathToSensitiveVariables, string sensitiveVariablesSecret, string salt, string inputsKey, string deploymentTargetInputsKey) =>
+        static string BuildArgs(
+            string pathToBootstrapper,
+            string pathToStepPackage,
+            string pathToSensitiveVariables,
+            string sensitiveVariablesSecret,
+            string salt,
+            string inputsKey,
+            string deploymentTargetInputsKey) =>
             $"\"{pathToBootstrapper}\" \"{pathToStepPackage}\" \"{pathToSensitiveVariables}\" \"{sensitiveVariablesSecret}\" \"{salt}\" \"{inputsKey}\" \"{deploymentTargetInputsKey}\"";
     }
 
