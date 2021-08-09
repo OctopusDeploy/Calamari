@@ -16,6 +16,7 @@
     <PackageReference Include="Octopus.Server.Extensibility" Version="14.0.5" />
     <PackageReference Include="Octopus.Diagnostics" Version="2.1.1" />
     <PackageReference Include="Octopus.Data" Version="6.0.0" />
+    <PackageReference Include="Octopus.Ocl" Version="0.4.843" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.184" />
     <PackageReference Include="FluentValidation" Version="8.6.2" />
   </ItemGroup>
