@@ -18,6 +18,7 @@
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="14.0.5" />
     <PackageReference Include="Sashimi.Tests.Shared" Version="14.0.1" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="14.0.1-enh-create-deplo0008" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
   </ItemGroup>
 
