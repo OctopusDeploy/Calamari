@@ -2,7 +2,9 @@
 using NUnit.Framework;
 using System.Linq;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using NSubstitute;
 
 namespace Calamari.Tests.Fixtures.Util
 {
@@ -32,7 +34,7 @@ namespace Calamari.Tests.Fixtures.Util
         {
             var variableDictionary = ParseVariables(variables);
             string jsonInputs = "{\"testValue\":\"" + expression + "\"}";
-            string evaluatedInputs = InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variableDictionary);
+            string evaluatedInputs = InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variableDictionary, Substitute.For<ILog>());
 
             string expectedEvaluatedInputs = "{\"testValue\":\"" + expectedResult + "\"}";
             Assert.AreEqual(expectedEvaluatedInputs, evaluatedInputs);
@@ -46,20 +48,22 @@ namespace Calamari.Tests.Fixtures.Util
                 { "Octopus.Action.Package[package].ExtractedPath", "C:\\OctopusTest\\Api Test\\1\\Octopus-Primary\\Work\\20210804020317-7-11\\package" },
             };
             string jsonInputs = "{\"containerNameOverride\":\"payload\",\"package\":{\"extractedToPath\":\"#{Octopus.Action.Package[package].ExtractedPath}\"},\"target\":{\"files\":[{\"path\":\"azure-blob-container-target.0.0.0.zip\",\"fileName\":{\"type\":\"original file name\"}}]}}";
-            string evaluatedInputs = InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables);
+            string evaluatedInputs = InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables, Substitute.For<ILog>());
 
             string expectedEvaluatedInputs = "{\"containerNameOverride\":\"payload\",\"package\":{\"extractedToPath\":\"C:\\\\OctopusTest\\\\Api Test\\\\1\\\\Octopus-Primary\\\\Work\\\\20210804020317-7-11\\\\package\"},\"target\":{\"files\":[{\"path\":\"azure-blob-container-target.0.0.0.zip\",\"fileName\":{\"type\":\"original file name\"}}]}}";
             Assert.AreEqual(expectedEvaluatedInputs, evaluatedInputs);
         }
             
         [Test]
-        public void MissingVariableValue_ResultsInCommandException()
+        public void MissingVariableValue_LogsAWarning()
         {
             var variables = new CalamariVariables
             {
             };
             string jsonInputs = "{\"containerNameOverride\":\"payload\",\"package\":{\"extractedToPath\":\"#{Octopus.Action.Package[package].ExtractedPath}\"},\"target\":{\"files\":[]}}";
-            Assert.Throws<CommandException>(() => InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables));
+            var log = Substitute.For<ILog>();
+            InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables, log);
+            log.Received().Warn(Arg.Any<string>());
         }
 
         CalamariVariables ParseVariables(string variableDefinitions)
