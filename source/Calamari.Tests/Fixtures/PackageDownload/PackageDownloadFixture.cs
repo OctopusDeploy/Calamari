@@ -87,6 +87,28 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, PublicFeedUri);
         }
 
+        [TestCase("1.0.1", "8950c54441b67dcd8ae54b4dbb0fe3735be85a9b")]
+        [TestCase("1.0.0-alpha.2", "991a595d780593acf75b891c8b24edbfaa3505f2")]
+        [TestCase("1.0.0-alpha.3", "bd22572257d5ed956b0dd1716e290fba2b4f407c")]
+        [TestCase("1.0.0-alpha.3+metadata", "bd22572257d5ed956b0dd1716e290fba2b4f407c")]
+        [RequiresMonoVersion480OrAboveForTls12]
+        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
+        public void ShouldDownloadArtifactoryNuGetPackageWithReleaseVersion(string packageVersion, string hash)
+        {
+            var package = new SampleFeedPackage { Id = "artifactory-nuget", PackageId = "Artifactory.Test.NuGet", Version = new SemanticVersion(packageVersion) };
+            const string ArtifactoryFeedUrl = "https://nuget.packages.octopushq.com/";
+
+            var result = DownloadPackage(package.PackageId, package.Version.ToString(), package.Id, ArtifactoryFeedUrl);
+
+            result.AssertSuccess();
+
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", package.PackageId, package.Version, ArtifactoryFeedUrl);
+            result.AssertOutput("Downloaded package will be stored in: '{0}'", package.DownloadFolder);
+            AssertPackageHashMatchesExpected(result, hash);
+            AssertStagePackageOutputVariableSet(result, package);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", package.PackageId, package.Version, ArtifactoryFeedUrl);
+        }
+
         [Test]
         [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
