@@ -58,7 +58,7 @@ namespace Calamari.LaunchTools
                 };
 
                 var commandResult = commandLineRunner.Execute(commandLineInvocation);
-
+                
                 return commandResult.ExitCode;
             }
         }
