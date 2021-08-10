@@ -23,10 +23,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Octopus.Configuration" Version="4.0.0" />
-    <PackageReference Include="Sashimi.Azure.Accounts" Version="13.3.1" />
-    <PackageReference Include="Sashimi.Azure.Common" Version="13.3.1" />
-    <PackageReference Include="Sashimi.AzureScripting" Version="13.2.1" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1" />
+    <PackageReference Include="Sashimi.Azure.Accounts" Version="14.0.1" />
+    <PackageReference Include="Sashimi.Azure.Common" Version="14.0.1" />
+    <PackageReference Include="Sashimi.AzureScripting" Version="14.0.0" />
+    <PackageReference Include="Sashimi.Server.Contracts" Version="14.0.1" />
   </ItemGroup>
 
 </Project>
