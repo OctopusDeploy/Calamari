@@ -65,6 +65,16 @@ namespace Calamari.Tests.Fixtures.Util
             InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables, log);
             log.Received().Warn(Arg.Any<string>());
         }
+        
+        [Test]
+        public void InvalidVariableExpressionFails()
+        {
+            var variables = new CalamariVariables
+            {
+            };
+            string jsonInputs = "{\"package\":{\"extractedToPath\":\"#{Octopus.Action.Package[package]...ExtractedPath}\"}}";
+            Assert.Throws<CommandException>(() => InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables, Substitute.For<ILog>()));
+        }
 
         CalamariVariables ParseVariables(string variableDefinitions)
         {

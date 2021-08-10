@@ -12,7 +12,11 @@ namespace Calamari.Util
     {
         public static string SubstituteAndEscapeAllVariablesInJson(string jsonInputs, IVariables variables, ILog log)
         {
-            var template = TemplateParser.ParseTemplate(jsonInputs);
+            if (!TemplateParser.TryParseTemplate(jsonInputs, out var template, out string error))
+            {
+                throw new CommandException($"Variable expression could not be parsed. Error: {error}");
+            }
+            
             jsonInputs = template.ToString(); // we parse the template back to string to have a consistent representation of Octostache expressions
             foreach (var templateToken in template.Tokens)
             {
