@@ -4,8 +4,6 @@ using System.IO;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -24,8 +22,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageDownload");
         static readonly string DownloadPath = TestEnvironment.GetTestPath(TentacleHome, "Files");
 
-        static readonly string PublicFeedUri = "https://f.feedz.io/octopus-deploy/integration-tests/nuget/index.json";
-        static readonly string NuGetFeedUri = "https://www.nuget.org/api/v2/";
+        private const string FeedzUri = "https://f.feedz.io/octopus-deploy/integration-tests/nuget/index.json";
+        private const string ArtifactoryUri = "https://nuget.packages.octopushq.com/";
+        private const string NuGetFeedUri = "https://www.nuget.org/api/v2/";
 
         private static readonly string AuthFeedUri = Environment.GetEnvironmentVariable(FeedUriEnvironmentVariable);
         private static readonly string AuthFeedUsername = Environment.GetEnvironmentVariable(FeedUsernameEnvironmentVariable);
@@ -39,10 +38,10 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         static readonly string ExpectedMavenPackageHash = "3564ef3803de51fb0530a8377ec6100b33b0d073";
         static readonly long ExpectedMavenPackageSize = 2575022;
-        static readonly string MavenPublicFeedUri = "https://repo.maven.apache.org/maven2/";
+        static readonly string MavenFeedzUri = "https://repo.maven.apache.org/maven2/";
         static readonly SampleFeedPackage MavenPublicFeed = new SampleFeedPackage("#") { Id = "feeds-maven", Version = VersionFactory.CreateMavenVersion("22.0"), PackageId = "com.google.guava:guava" };
 
-       static readonly string MavenSnapshotPublicFeedUri = "https://oss.sonatype.org/content/repositories/snapshots/";
+        static readonly string MavenSnapshotFeedzUri = "https://oss.sonatype.org/content/repositories/snapshots/";
         // If this version is no longer available go to https://oss.sonatype.org/#view-repositories;releases~browseindex
         // In the bottom panel, expand Releases -> com -> google -> guava and find whatever the latest Snapshot version is
         // Also update the hash and size
@@ -75,38 +74,71 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void ShouldDownloadPackage()
         {
-            var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri);
+            var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, FeedzUri);
 
             result.AssertSuccess();
 
-            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, PublicFeedUri);
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, FeedzUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", FeedzPackage.DownloadFolder);
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, FeedzPackage);
-            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, PublicFeedUri);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, FeedzUri);
         }
 
+#if USE_NUGET_V2_LIBS
         [TestCase("1.0.1", "8950c54441b67dcd8ae54b4dbb0fe3735be85a9b")]
+        [TestCase("1.0.0-alpha02", "9e4e6db295601a70f98f2f0c8bf72c0139eec182")]
+        [TestCase("1.0.0-alpha.2", "991a595d780593acf75b891c8b24edbfaa3505f2")]
+#else
+        [TestCase("1.0.1", "8950c54441b67dcd8ae54b4dbb0fe3735be85a9b")]
+        [TestCase("1.0.2", "3967afe4c54e5f0626677d2f11606d491a453bca")] // actual package is 1.0.02
+        [TestCase("1.0.02", "3967afe4c54e5f0626677d2f11606d491a453bca")]
         [TestCase("1.0.0-alpha.2", "991a595d780593acf75b891c8b24edbfaa3505f2")]
         [TestCase("1.0.0-alpha.3", "bd22572257d5ed956b0dd1716e290fba2b4f407c")]
         [TestCase("1.0.0-alpha.3+metadata", "bd22572257d5ed956b0dd1716e290fba2b4f407c")]
+#endif
         [RequiresMonoVersion480OrAboveForTls12]
         [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
-        public void ShouldDownloadArtifactoryNuGetPackageWithReleaseVersion(string packageVersion, string hash)
+        public void ShouldDownloadArtifactoryNuGetPackage(string packageVersion, string hash)
         {
-            var package = new SampleFeedPackage { Id = "artifactory-nuget", PackageId = "Artifactory.Test.NuGet", Version = new SemanticVersion(packageVersion) };
-            const string ArtifactoryFeedUrl = "https://nuget.packages.octopushq.com/";
+            SuccessfulPackageDownloadTest("artifactory-nuget", "Artifactory.Test.NuGet", packageVersion, ArtifactoryUri, hash);
+        }
 
-            var result = DownloadPackage(package.PackageId, package.Version.ToString(), package.Id, ArtifactoryFeedUrl);
+#if USE_NUGET_V2_LIBS
+        [TestCase("1.0.2")] // actual package is 1.0.02
+        [TestCase("1.0.0-alpha2")] // actual package is 1.0.0-alpha02
+        [TestCase("1.0.0-alpha.3")] // actual package is 1.0.0-alpha.3+metadata
+        [TestCase("1.0.0-alpha.3+metadata")] // artifactory-specific nuget issue when using metadata
+#else
+        [TestCase("1.0.0-alpha2")] // actual package is 1.0.0-alpha02
+#endif
+        [RequiresMonoVersion480OrAboveForTls12]
+        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
+        public void WillFailToDownloadArtifactoryNuGetPackage(string packageVersion)
+        {
+            UnsuccessfulPackageDownloadTest("artifactory-nuget", "Artifactory.Test.NuGet", packageVersion, ArtifactoryUri);
+        }
 
-            result.AssertSuccess();
+        [TestCase("1.0.1", "6ff3395878566eba2b8bef307bd8845be5cb43ff")]
+        [TestCase("1.0.2", "d5ed35df167a8d635f43c890bcba6dd124ef77fb")] // actual package is 1.0.02
+        [TestCase("1.0.02", "d5ed35df167a8d635f43c890bcba6dd124ef77fb")]
+        [TestCase("1.0.0-alpha.2", "eb0ffcc9f614e83d3a69f0963b3da9a6460e75df")]
+        [TestCase("1.0.0-alpha.3", "d148ab7b4caa577b3f4b84960fef13a649182353")]
+        [TestCase("1.0.0-alpha.3+metadata", "d148ab7b4caa577b3f4b84960fef13a649182353")]
+        [RequiresMonoVersion480OrAboveForTls12]
+        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
+        public void ShouldDownloadFeedzNuGetPackage(string packageVersion, string hash)
+        {
+            SuccessfulPackageDownloadTest("feedz-nuget", "Feedz.Test.NuGet", packageVersion, FeedzUri, hash);
+        }
 
-            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", package.PackageId, package.Version, ArtifactoryFeedUrl);
-            result.AssertOutput("Downloaded package will be stored in: '{0}'", package.DownloadFolder);
-            AssertPackageHashMatchesExpected(result, hash);
-            AssertStagePackageOutputVariableSet(result, package);
-            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", package.PackageId, package.Version, ArtifactoryFeedUrl);
+        [TestCase("1.0.0-alpha2")] // actual package is 1.0.0-alpha02
+        [RequiresMonoVersion480OrAboveForTls12]
+        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
+        public void WillFailToDownloadFeedzNuGetPackage(string packageVersion)
+        {
+            UnsuccessfulPackageDownloadTest("feedz-nuget", "Feedz.Test.NuGet", packageVersion, FeedzUri);
         }
 
         [Test]
@@ -121,13 +153,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 MavenPublicFeed.PackageId,
                 MavenPublicFeed.Version.ToString(),
                 MavenPublicFeed.Id,
-                MavenPublicFeedUri,
+                MavenFeedzUri,
                 feedType: FeedType.Maven,
                 versionFormat: VersionFormat.Maven);
 
             result.AssertSuccess();
 
-            result.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            result.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenFeedzUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", MavenPublicFeed.DownloadFolder);
             result.AssertOutput("Found package {0} v{1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
 
@@ -135,7 +167,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
             AssertStagePackageOutputVariableSet(result, MavenPublicFeed);
             result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'",
-                MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+                MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenFeedzUri);
         }
 
         [Test]
@@ -150,13 +182,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 MavenPublicFeed.PackageId,
                 MavenPublicFeed.Version.ToString(),
                 MavenPublicFeed.Id,
-                MavenPublicFeedUri,
+                MavenFeedzUri,
                 feedType: FeedType.Maven,
                 versionFormat: VersionFormat.Maven);
 
             result.AssertSuccess();
 
-            result.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            result.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenFeedzUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", MavenPublicFeed.DownloadFolder);
             result.AssertOutput("Found package {0} v{1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
 
@@ -164,7 +196,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             AssertPackageSizeMatchesExpected(result, ExpectedMavenPackageSize);
             AssertStagePackageOutputVariableSet(result, MavenPublicFeed);
             result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'",
-                MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+                MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenFeedzUri);
         }
 
         [Test]
@@ -191,13 +223,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             DownloadPackage(FeedzPackage.PackageId,
                     FeedzPackage.Version.ToString(),
                     FeedzPackage.Id,
-                    PublicFeedUri)
+                    FeedzUri)
                 .AssertSuccess();
 
             var result = DownloadPackage(FeedzPackage.PackageId,
                 FeedzPackage.Version.ToString(),
                 FeedzPackage.Id,
-                PublicFeedUri);
+                FeedzUri);
 
             result.AssertSuccess();
 
@@ -219,7 +251,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             DownloadPackage(MavenPublicFeed.PackageId,
                     MavenPublicFeed.Version.ToString(),
                     MavenPublicFeed.Id,
-                    MavenPublicFeedUri,
+                    MavenFeedzUri,
                     feedType: FeedType.Maven,
                     versionFormat: VersionFormat.Maven)
                 .AssertSuccess();
@@ -227,7 +259,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             var result = DownloadPackage(MavenPublicFeed.PackageId,
                 MavenPublicFeed.Version.ToString(),
                 MavenPublicFeed.Id,
-                MavenPublicFeedUri,
+                MavenFeedzUri,
                 feedType: FeedType.Maven,
                 versionFormat: VersionFormat.Maven);
 
@@ -251,14 +283,14 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             DownloadPackage(MavenPublicFeed.PackageId,
                     MavenPublicFeed.Version.ToString(),
                     MavenPublicFeed.Id,
-                    MavenPublicFeedUri,
+                    MavenFeedzUri,
                     feedType: FeedType.Maven,
                     versionFormat: VersionFormat.Maven)
                 .AssertSuccess();
 
             var result = DownloadPackage(MavenPublicFeed.PackageId,
                 MavenPublicFeed.Version.ToString(),
-                MavenPublicFeed.Id, MavenPublicFeedUri,
+                MavenPublicFeed.Id, MavenFeedzUri,
                 feedType: FeedType.Maven,
                 versionFormat: VersionFormat.Maven);
 
@@ -278,21 +310,21 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         {
             DownloadPackage(FeedzPackage.PackageId,
                 FeedzPackage.Version.ToString(),
-                FeedzPackage.Id, PublicFeedUri).AssertSuccess();
+                FeedzPackage.Id, FeedzUri).AssertSuccess();
 
             var result = DownloadPackage(FeedzPackage.PackageId,
                 FeedzPackage.Version.ToString(),
-                FeedzPackage.Id, PublicFeedUri,
+                FeedzPackage.Id, FeedzUri,
                 forcePackageDownload: true);
 
             result.AssertSuccess();
 
-            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, PublicFeedUri);
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, FeedzUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", FeedzPackage.DownloadFolder);
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, FeedzPackage);
-            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, PublicFeedUri);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, FeedzUri);
         }
 
         [Test]
@@ -307,7 +339,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 MavenPublicFeed.PackageId,
                 MavenPublicFeed.Version.ToString(),
                 MavenPublicFeed.Id,
-                MavenPublicFeedUri,
+                MavenFeedzUri,
                 versionFormat: VersionFormat.Maven,
                 feedType: FeedType.Maven);
 
@@ -317,20 +349,20 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 MavenPublicFeed.PackageId,
                 MavenPublicFeed.Version.ToString(),
                 MavenPublicFeed.Id,
-                MavenPublicFeedUri,
+                MavenFeedzUri,
                 feedType: FeedType.Maven,
                 versionFormat: VersionFormat.Maven,
                 forcePackageDownload: true);
 
             secondDownload.AssertSuccess();
 
-            secondDownload.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            secondDownload.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenFeedzUri);
             secondDownload.AssertOutput("Downloaded package will be stored in: '{0}'", MavenPublicFeed.DownloadFolder);
             secondDownload.AssertOutput("Found package {0} v{1}", MavenPublicFeed.PackageId, MavenPublicFeed.Version);
             AssertPackageHashMatchesExpected(secondDownload, ExpectedMavenPackageHash);
             AssertPackageSizeMatchesExpected(secondDownload, ExpectedMavenPackageSize);
             AssertStagePackageOutputVariableSet(secondDownload, MavenPublicFeed);
-            secondDownload.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenPublicFeedUri);
+            secondDownload.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", MavenPublicFeed.PackageId, MavenPublicFeed.Version, MavenFeedzUri);
         }
 
         [Test]
@@ -343,7 +375,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 MavenSnapshotPublicFeed.PackageId,
                 MavenSnapshotPublicFeed.Version.ToString(),
                 MavenSnapshotPublicFeed.Id,
-                MavenSnapshotPublicFeedUri,
+                MavenSnapshotFeedzUri,
                 feedType: FeedType.Maven,
                 versionFormat: VersionFormat.Maven);
 
@@ -353,20 +385,20 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 MavenSnapshotPublicFeed.PackageId,
                 MavenSnapshotPublicFeed.Version.ToString(),
                 MavenSnapshotPublicFeed.Id,
-                MavenSnapshotPublicFeedUri,
+                MavenSnapshotFeedzUri,
                 feedType: FeedType.Maven,
                 versionFormat: VersionFormat.Maven,
                 forcePackageDownload: true);
 
             secondDownload.AssertSuccess();
 
-            secondDownload.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version, MavenSnapshotPublicFeedUri);
+            secondDownload.AssertOutput("Downloading Maven package {0} v{1} from feed: '{2}'", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version, MavenSnapshotFeedzUri);
             secondDownload.AssertOutput("Downloaded package will be stored in: '{0}'", MavenSnapshotPublicFeed.DownloadFolder);
             secondDownload.AssertOutput("Found package {0} v{1}", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version);
             AssertPackageHashMatchesExpected(secondDownload, ExpectedMavenSnapshotPackageHash);
             AssertPackageSizeMatchesExpected(secondDownload, ExpectedMavenSnapshotPackageSize);
             AssertStagePackageOutputVariableSet(secondDownload, MavenSnapshotPublicFeed);
-            secondDownload.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version, MavenSnapshotPublicFeedUri);
+            secondDownload.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", MavenSnapshotPublicFeed.PackageId, MavenSnapshotPublicFeed.Version, MavenSnapshotFeedzUri);
         }
 
         [Test]
@@ -522,7 +554,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [Test]
         public void ShouldFailWhenNoPackageId()
         {
-            var result = DownloadPackage("", FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri);
+            var result = DownloadPackage("", FeedzPackage.Version.ToString(), FeedzPackage.Id, FeedzUri);
             result.AssertFailure();
 
             result.AssertErrorOutput("No package ID was specified");
@@ -532,16 +564,16 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         public void ShouldFailWhenInvalidPackageId()
         {
             var invalidPackageId = string.Format("X{0}X", FeedzPackage.PackageId);
-            var result = DownloadPackage(invalidPackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri);
+            var result = DownloadPackage(invalidPackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, FeedzUri);
             result.AssertFailure();
 
-            result.AssertErrorOutput("Failed to download package {0} v{1} from feed: '{2}'", invalidPackageId, FeedzPackage.Version, PublicFeedUri);
+            result.AssertErrorOutput("Failed to download package {0} v{1} from feed: '{2}'", invalidPackageId, FeedzPackage.Version, FeedzUri);
         }
 
         [Test]
         public void ShouldFailWhenNoFeedVersion()
         {
-            var result = DownloadPackage(FeedzPackage.PackageId, "", FeedzPackage.Id, PublicFeedUri);
+            var result = DownloadPackage(FeedzPackage.PackageId, "", FeedzPackage.Id, FeedzUri);
             result.AssertFailure();
 
             result.AssertErrorOutput("No package version was specified");
@@ -551,7 +583,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         public void ShouldFailWhenInvalidFeedVersion()
         {
             const string invalidFeedVersion = "1.0.x";
-            var result = DownloadPackage(FeedzPackage.PackageId, invalidFeedVersion, FeedzPackage.Id, PublicFeedUri);
+            var result = DownloadPackage(FeedzPackage.PackageId, invalidFeedVersion, FeedzPackage.Id, FeedzUri);
             result.AssertFailure();
 
             result.AssertErrorOutput("Package version '{0}' specified is not a valid Semver version string", invalidFeedVersion);
@@ -560,7 +592,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [Test]
         public void ShouldFailWhenNoFeedId()
         {
-            var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), "", PublicFeedUri);
+            var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), "", FeedzUri);
             result.AssertFailure();
 
             result.AssertErrorOutput("No feed ID was specified");
@@ -588,13 +620,34 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [Ignore("for now, runs fine locally...not sure why it's not failing in TC, will investigate")]
         public void ShouldFailWhenUsernameIsSpecifiedButNoPassword()
         {
-            var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri, AuthFeedUsername);
+            var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, FeedzUri, AuthFeedUsername);
             result.AssertFailure();
 
             result.AssertErrorOutput("A username was specified but no password was provided");
         }
 
-        CalamariResult DownloadPackage(string packageId,
+        private void SuccessfulPackageDownloadTest(string sourceId, string packageId, string packageVersion, string nuGetUri, string hash)
+        {
+            var package = new SampleFeedPackage { Id = sourceId, PackageId = packageId, Version = new SemanticVersion(packageVersion) };
+            var result = DownloadPackage(package.PackageId, package.Version.ToString(), package.Id, nuGetUri);
+
+            result.AssertSuccess();
+            result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", package.PackageId, package.Version, nuGetUri);
+            result.AssertOutput("Downloaded package will be stored in: '{0}'", package.DownloadFolder);
+            AssertPackageHashMatchesExpected(result, hash);
+            AssertStagePackageOutputVariableSet(result, package);
+            result.AssertOutput("Package {0} v{1} successfully downloaded from feed: '{2}'", package.PackageId, package.Version, nuGetUri);
+        }
+
+        private void UnsuccessfulPackageDownloadTest(string sourceId, string packageId, string packageVersion, string nuGetUri)
+        {
+            var package = new SampleFeedPackage { Id = sourceId, PackageId = packageId, Version = new SemanticVersion(packageVersion) };
+            var result = DownloadPackage(package.PackageId, package.Version.ToString(), package.Id, nuGetUri);
+
+            result.AssertFailure(100);
+        }
+
+        private CalamariResult DownloadPackage(string packageId,
             string packageVersion,
             string feedId,
             string feedUri,
