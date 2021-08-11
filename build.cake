@@ -203,7 +203,7 @@ Task("PackTests")
         });
     }
     
-    actions.Add(() => DotNetCorePack("./source/Calamari.Testing/Calamari.Testing.csproj", GetDotNetCorePackSettings());
+    actions.Add(() => DotNetCorePack("./source/Calamari.Testing/Calamari.Testing.csproj", GetDotNetCorePackSettings()));
 
     await RunPackActions(actions);
 });
