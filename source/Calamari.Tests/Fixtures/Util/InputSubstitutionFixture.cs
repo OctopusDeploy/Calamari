@@ -4,6 +4,7 @@ using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using FluentAssertions;
 using NSubstitute;
 
 namespace Calamari.Tests.Fixtures.Util
@@ -30,14 +31,38 @@ namespace Calamari.Tests.Fixtures.Util
                      "C:\\\\A,D:\\\\B,")]
         [TestCase("#{FilterVariable | ToUpper}", "FilterVariable=C:\\somelowercase",
                      "C:\\\\SOMELOWERCASE")]
+        [TestCase("#{MyVar | Match \"a b\"}", "MyVar=a b c",
+                     "true")]
+        [TestCase("#{MyVar | StartsWith \"Ab\"}", "MyVar=Abc",
+                     "true")]
+        [TestCase("#{MyVar | Match #{pattern}}", "MyVar=a b c;pattern=a b",
+                     "true")]
+        [TestCase("#{MyVar | Substring \"8\" \"6\"}", "MyVar=Octopus Deploy",
+                     "Deploy")]
         public void CommonExpressionsAreEvaluated(string expression, string variables, string expectedResult)
         {
             var variableDictionary = ParseVariables(variables);
             string jsonInputs = "{\"testValue\":\"" + expression + "\"}";
-            string evaluatedInputs = InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variableDictionary, Substitute.For<ILog>());
+            var log = Substitute.For<ILog>();
+            string evaluatedInputs = InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variableDictionary, log);
 
             string expectedEvaluatedInputs = "{\"testValue\":\"" + expectedResult + "\"}";
             Assert.AreEqual(expectedEvaluatedInputs, evaluatedInputs);
+            log.DidNotReceive().Warn(Arg.Any<string>());
+        }
+        
+        [Test]
+        public void SimpleExpressionsAreEvaluated()
+        {
+            var variableDictionary = new CalamariVariables();
+            string jsonInputs = "{\"testValue\":\"#{ | NowDateUtc}\"}";
+            var log = Substitute.For<ILog>();
+            string evaluatedInputs = InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variableDictionary, log);
+
+            evaluatedInputs.Should().NotBeEmpty();
+            evaluatedInputs.Should().NotBeEquivalentTo(jsonInputs);
+            
+            log.DidNotReceive().Warn(Arg.Any<string>());
         }
         
         [Test]
