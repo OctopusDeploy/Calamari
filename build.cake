@@ -162,6 +162,14 @@ Task("PackBinaries")
 
     actions.Add(() => DoPackage("Calamari", "net40", nugetVersion));    
     actions.Add(() => DoPackage("Calamari", "net452", nugetVersion, "Cloud"));
+    
+    // make nuget packages out of Common and CloudAccounts so that they can be used by Sashimi packages
+    actions.Add(() => DoPackage("Calamari.Common", "net40", nugetVersion));
+    actions.Add(() => DoPackage("Calamari.Common", "net452", nugetVersion));
+    actions.Add(() => DoPackage("Calamari.Common", "netstandard2.1", nugetVersion));
+    actions.Add(() => DoPackage("Calamari.CloudAccounts", "net452", nugetVersion));    
+    actions.Add(() => DoPackage("Calamari.CloudAccounts", "netstandard2.1", nugetVersion));
+
 
     // Create a portable .NET Core package
     actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable"));
@@ -172,16 +180,6 @@ Task("PackBinaries")
         actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid));
     }
 
-    var dotNetCorePackSettings = GetDotNetCorePackSettings();
-
-    var commonProjects = GetFiles("./source/**/*.Common.csproj");
-    foreach(var project in commonProjects)
-    {
-        actions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
-    }
-    
-    actions.Add(() => SignAndPack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings));
-    
     await RunPackActions(actions);
 });
 
@@ -281,17 +279,6 @@ private string DoPublish(string project, string framework, string version, strin
 	return publishedTo;
 }
 
-private void SignAndPack(string project, DotNetCorePackSettings dotNetCorePackSettings){
-    Information("SignAndPack project: " + project);
-
-    var binariesFolder = GetDirectories($"{Path.GetDirectoryName(project)}/bin/{configuration}/*");
-
-    foreach(var directory in binariesFolder){
-        SignAndTimestampBinaries(directory.ToString());
-    }
-    
-    DotNetCorePack(project, dotNetCorePackSettings);
-}
 
 private void DoPackage(string project, string framework, string version, string runtimeId = null)
 {
