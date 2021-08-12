@@ -165,6 +165,42 @@ function Remove-OctopusTarget([string] $targetIdOrName)
 	Write-Host "##octopus[delete-target $($parameters)]"
 }
 
+function New-StepPackageTarget
+{
+	[CmdletBinding()]
+	param(
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Mandatory=$true)]
+		[string]$Name,
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Mandatory=$true)]
+		[string]$TargetId,
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Mandatory=$true)]
+		[string]$Inputs,
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Mandatory=$true)]
+		[string]$Roles,
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+		[string]$WorkerPoolIdOrName = "",
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+		[switch]$UpdateIfExisting
+	)
+	process
+	{
+		$parameters = ""
+		$tempParameter = Convert-ToServiceMessageParameter -name "name" -value $Name
+		$parameters = $parameters, $tempParameter -join ' '
+		$tempParameter = Convert-ToServiceMessageParameter -name "targetId" -value $TargetId
+		$parameters = $parameters, $tempParameter -join ' '
+		$tempParameter = Convert-ToServiceMessageParameter -name "inputs" -value $Inputs
+		$parameters = $parameters, $tempParameter -join ' '
+		$tempParameter = Convert-ToServiceMessageParameter -name "octopusRoles" -value $Roles
+		$parameters = $parameters, $tempParameter -join ' '
+		$tempParameter = Convert-ToServiceMessageParameter -name "octopusDefaultWorkerPoolIdOrName" -value $WorkerPoolIdOrName
+		$parameters = $parameters, $tempParameter -join ' '
+		$tempParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $UpdateIfExisting
+		$parameters = $parameters, $tempParameter -join ' '
+		Write-Host "##octopus[createStepPackageTarget $($parameters)]"
+	}
+}
+
 function Fail-Step([string] $message)
 {
 	if($message)

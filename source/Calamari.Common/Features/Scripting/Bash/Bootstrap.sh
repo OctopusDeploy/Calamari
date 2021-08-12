@@ -2,7 +2,7 @@
 # Octopus Linux helper function script
 # Version: 1.1.0
 # -----------------------------------------------------------------------------
- 
+
 sensitiveVariableKey=$1
 
 # -----------------------------------------------------------------------------
@@ -99,7 +99,7 @@ function set_octopusvariable
 	then
 		MESSAGE="$MESSAGE value='$(encode_servicemessagevalue "$2")'"
 	fi
-	
+
 	if [ ! -z "${3:-}" ] && [ "$3" = "-sensitive" ]
 	then
 		MESSAGE="$MESSAGE sensitive='$(encode_servicemessagevalue "True")'"
@@ -140,6 +140,57 @@ function new_octopusartifact
 	echo "##octopus[stdout-default]"
 	echo "##octopus[createArtifact path='$(encode_servicemessagevalue "$pth")' name='$(encode_servicemessagevalue "$ofn")' length='$(encode_servicemessagevalue $len)']"
 }
+
+function remove-octopustarget {
+	echo "##octopus[delete-target machine='$(encode_servicemessagevalue "$1")']"
+}
+
+function create_steppackagetarget() (
+  parameters=""
+
+  while :
+  do
+      case "$1" in
+        -n | --name)
+          parameters="$parameters name='$(encode_servicemessagevalue "$2")'"
+          shift 2
+          ;;
+        -t | --target-id)
+          parameters="$parameters targetId='$(encode_servicemessagevalue "$2")'"
+          shift 2
+          ;;
+        --inputs)
+          parameters="$parameters inputs='$(encode_servicemessagevalue "$2")'"
+          shift 2
+          ;;
+        --roles)
+          parameters="$parameters octopusRoles='$(encode_servicemessagevalue "$2")'"
+          shift 2
+          ;;
+        --worker-pool)
+          parameters="$parameters octopusDefaultWorkerPoolIdOrName='$(encode_servicemessagevalue "$2")'"
+          shift 2
+          ;;
+        --update-if-existing)
+          parameters="$parameters updateIfExisting='$(encode_servicemessagevalue "true")'"
+          shift
+          ;;
+        --) # End of all options.
+          shift
+          break
+          ;;
+        -*)
+          echo "Error: Unknown option: $1" >&2
+          exit 1
+          ;;
+        *)  # No more options
+          break
+          ;;
+      esac
+  done
+
+  echo "##octopus[createStepPackageTarget ${parameters}]"
+)
 
 # -----------------------------------------------------------------------------
 # Function to update progress
