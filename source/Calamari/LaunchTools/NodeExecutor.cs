@@ -7,6 +7,7 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Util;
@@ -19,12 +20,14 @@ namespace Calamari.LaunchTools
         readonly CommonOptions options;
         readonly IVariables variables;
         readonly ICommandLineRunner commandLineRunner;
+        readonly ILog log;
 
-        public NodeExecutor(CommonOptions options, IVariables variables, ICommandLineRunner commandLineRunner)
+        public NodeExecutor(CommonOptions options, IVariables variables, ICommandLineRunner commandLineRunner, ILog log)
         {
             this.options = options;
             this.variables = variables;
             this.commandLineRunner = commandLineRunner;
+            this.log = log;
         }
 
         protected override int ExecuteInternal(NodeInstructions instructions, params string[] args)
@@ -37,7 +40,7 @@ namespace Calamari.LaunchTools
             using (var variableFile = new TemporaryFile(Path.GetTempFileName()))
             {
                 var jsonInputs = variables.GetRaw(instructions.InputsVariable) ?? string.Empty;
-                variables.Set(instructions.InputsVariable, InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables));
+                variables.Set(instructions.InputsVariable, InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables, log));
 
                 var variablesAsJson = variables.CloneAndEvaluate().SaveAsString();
                 File.WriteAllBytes(variableFile.FilePath, new AesEncryption(options.InputVariables.SensitiveVariablesPassword).Encrypt(variablesAsJson));
@@ -58,7 +61,7 @@ namespace Calamari.LaunchTools
                 };
 
                 var commandResult = commandLineRunner.Execute(commandLineInvocation);
-
+                
                 return commandResult.ExitCode;
             }
         }

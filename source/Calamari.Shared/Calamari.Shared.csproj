@@ -56,7 +56,7 @@
     <PackageReference Include="Octodiff" Version="1.1.2" />
     <PackageReference Include="Octopus.Versioning" Version="4.3.5" />
     <PackageReference Include="scriptcs" Version="0.17.1" />
-    <PackageReference Include="Octostache" Version="2.12.0" />
+    <PackageReference Include="Octostache" Version="2.13.0" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
     <PackageReference Include="Sprache" Version="2.3.0" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />

@@ -63,6 +63,8 @@ Param(
     [switch]$WhatIf,
     [switch]$Mono,
     [switch]$SkipToolPackageRestore,
+    [string]$SigningCertificatePath = "./certificates/OctopusDevelopment.pfx",
+    [string]$SigningCertificatePassword = "Password01!",
     [string]$AzureKeyVaultUrl,
     [string]$AzureKeyVaultAppId,
     [string]$AzureKeyVaultAppSecret,
