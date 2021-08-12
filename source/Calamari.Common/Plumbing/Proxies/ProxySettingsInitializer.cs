@@ -21,9 +21,7 @@ namespace Calamari.Common.Plumbing.Proxies
                     proxyPassword
                 );
 
-            bool useDefaultProxy;
-            if (!bool.TryParse(Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy),
-                out useDefaultProxy))
+            if (!bool.TryParse(Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy), out var useDefaultProxy))
                 useDefaultProxy = true;
 
             if (useDefaultProxy)
