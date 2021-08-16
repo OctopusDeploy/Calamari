@@ -13,6 +13,8 @@ using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Model;
+using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.LaunchTools;
@@ -58,7 +60,9 @@ namespace Calamari
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
 
-            //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include the ApplyDeltaCommand, because it's defined in an external assembly.
+            builder.RegisterType<JournalJsonRepositoryFactory>().As<IJournalRepositoryFactory>();
+
+            //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
             var typesToAlwaysDecorate = new Type[] { typeof(ApplyDeltaCommand) }; //Commands from external assemblies.
 
@@ -72,7 +76,7 @@ namespace Calamari
 
             //Register the decorator for the above commands
             builder.RegisterDecorator<ICommandWithArgs>((c,
-                                                         inner) => new CommandLockDecorator(
+                                                         inner) => new CommandJournalDecorator(
                                                                                             c.Resolve<ILog>(),
                                                                                             inner,
                                                                                             c.Resolve<IVariables>(),

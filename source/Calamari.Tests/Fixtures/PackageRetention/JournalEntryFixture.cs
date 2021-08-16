@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;

@@ -1,4 +1,6 @@
-﻿namespace Calamari.Deployment.PackageRetention.Repositories
+﻿using Calamari.Deployment.PackageRetention.Model;
+
+namespace Calamari.Deployment.PackageRetention.Repositories
 {
     public interface IJournalRepository
     {

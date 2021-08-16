@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Deployment.PackageRetention.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using SharpCompress.Common;

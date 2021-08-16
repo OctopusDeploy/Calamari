@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
-using Calamari.Common.Features.Processes.Semaphores;
-using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Deployment.PackageRetention.Repositories
 {
