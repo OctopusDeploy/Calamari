@@ -11,6 +11,8 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.LaunchTools;
@@ -56,10 +58,33 @@ namespace Calamari
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
 
+            //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include the ApplyDeltaCommand, because it's defined in an external assembly.
+            var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
+            var typesToAlwaysDecorate = new Type[] { typeof(ApplyDeltaCommand) }; //Commands from external assemblies.
+
+            //Get register commands with the RetentionLockingCommand attribute;
+            builder.RegisterAssemblyTypes(assembliesToRegister)
+                   .Where(t => t.HasAttribute<RetentionLockingCommandAttribute>()
+                          || typesToAlwaysDecorate.Contains(t))
+                   .AssignableTo<ICommandWithArgs>()
+                   .WithMetadataFrom<CommandAttribute>()
+                   .Named<ICommandWithArgs>(nameof(RetentionLockingCommandAttribute));
+
+            //Register the decorator for the above commands
+            builder.RegisterDecorator<ICommandWithArgs>((c,
+                                                         inner) => new CommandLockDecorator(
+                                                                                            c.Resolve<ILog>(),
+                                                                                            inner,
+                                                                                            c.Resolve<IVariables>(),
+                                                                                            c.Resolve<Journal>()),
+                                                        fromKey: nameof(RetentionLockingCommandAttribute));
+
+            //Register the non-decorated commands
             builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
-                .AssignableTo<ICommandWithArgs>()
-                .WithMetadataFrom<CommandAttribute>()
-                .As<ICommandWithArgs>();
+                   .Where(c => !c.HasAttribute<RetentionLockingCommandAttribute>())
+                   .AssignableTo<ICommandWithArgs>()
+                   .WithMetadataFrom<CommandAttribute>()
+                   .As<ICommandWithArgs>();
 
             builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
                    .AssignableTo<ICommandWithInputs>()
@@ -72,6 +97,8 @@ namespace Calamari
                    .WithMetadataFrom<LaunchToolAttribute>()
                    .As<ILaunchTool>();
         }
+
+
 
         IEnumerable<Assembly> GetExtensionAssemblies()
         {
@@ -94,6 +121,14 @@ namespace Calamari
             {
                 yield return extensionAssembly;
             }
+        }
+    }
+
+    static class ExtensionMethods
+    {
+        public static bool HasAttribute<T>(this Type type) where T : Attribute
+        {
+            return type.GetCustomAttributes(false).Any(a => a is T);
         }
     }
 }

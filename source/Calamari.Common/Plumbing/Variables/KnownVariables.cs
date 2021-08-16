@@ -42,6 +42,11 @@ namespace Calamari.Common.Plumbing.Variables
             public static readonly string Number = "Octopus.Release.Number";
         }
 
+        public static class Deployment
+        {
+            public static readonly string Id = "Octopus.Deployment.Id";
+        }
+
         public static class Features
         {
             public const string CustomScripts = "Octopus.Features.CustomScripts";
