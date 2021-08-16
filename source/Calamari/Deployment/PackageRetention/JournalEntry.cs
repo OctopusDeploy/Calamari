@@ -1,78 +1,144 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Linq;
+using SharpCompress.Common;
+using Calamari.Deployment.PackageRetention.Repositories;
 
 namespace Calamari.Deployment.PackageRetention
 {
-
     public class Journal
     {
-        readonly List<JournalEntry> journalEntries = new List<JournalEntry>();
+        readonly IJournalRepositoryFactory repositoryFactory;
 
-        public void AddOrUpdateEntry(string deploymentId, string package)
+        public Journal(IJournalRepositoryFactory repositoryFactory)
         {
+            this.repositoryFactory = repositoryFactory;
+        }
+
+        public void RegisterPackageUse(PackageID packageID, DeploymentID deploymentID)
+        {
+            var repository = repositoryFactory.CreateJournalRepository();
+
+            if (repository.TryGetJournalEntry(packageID, out var entry))
+            {
+                entry.PackageUsage.AddUsage(deploymentID);
+                entry.PackageLocks.AddLock(deploymentID);
+            }
+            else
+            {
+                entry = new JournalEntry(packageID);
+                entry.PackageUsage.AddUsage(deploymentID);
+                entry.PackageLocks.AddLock(deploymentID);
+                repository.AddJournalEntry(entry);
+            }
+
+            repository.Commit();
+        }
+
+        public void DeregisterPackageUse(PackageID packageID, DeploymentID deploymentID)
+        {
+            var repository = repositoryFactory.CreateJournalRepository();
+
+            if (repository.TryGetJournalEntry(packageID, out var entry))
+            {
+                entry.PackageLocks.RemoveLock(deploymentID);
+            }   //TODO: Else exception?
 
         }
 
-
-        public bool HasLock(string package)
+        public bool HasLock(PackageID packageID)
         {
-            return journalEntries.Any(e => e.Package == package && e.HasLock());
+            return repositoryFactory.CreateJournalRepository()
+                                     .TryGetJournalEntry(packageID, out var entry)
+                   && entry.PackageLocks.HasLock();
+        }
+
+        public IEnumerable<DateTime> GetUsage(PackageID packageID)
+        {
+            return repositoryFactory.CreateJournalRepository()
+                                     .TryGetJournalEntry(packageID, out var entry)
+                ? entry.PackageUsage.GetUsageDetails()
+                : new DateTime[0];
+        }
+
+        public void ExpireStaleLocks()
+        {
+            throw new NotImplementedException();
         }
     }
 
     public class JournalEntry
     {
-        public string Package { get; }
-        readonly Dictionary<string, PackageLock> packageLocks;
+        public PackageID PackageID { get; }
+        public PackageLocks PackageLocks { get; }
+        public PackageUsage PackageUsage { get; }
 
-        public JournalEntry(string package, List<PackageLock> packageLocks = null)
+        public JournalEntry(PackageID packageID, PackageLocks packageLocks = null, PackageUsage packageUsage = null)
         {
-            if (package == null) throw new ArgumentNullException(nameof(package));
+            PackageID = packageID ?? throw new ArgumentNullException(nameof(packageID));
+            PackageLocks = packageLocks ?? new PackageLocks();
+            PackageUsage = packageUsage ?? new PackageUsage();
+        }
+    }
 
-            Package = package;
+    public class PackageUsage
+    {
+        readonly Dictionary<DeploymentID, List<DateTime>> usages;
 
-            this.packageLocks = packageLocks == null
-                ? new Dictionary<string, PackageLock>()
-                : packageLocks.ToDictionary(l => l.DeploymentId, l => l);
+        internal PackageUsage(Dictionary<DeploymentID, List<DateTime>> usageRecord = null)
+        {
+            usages = usageRecord ?? new Dictionary<DeploymentID, List<DateTime>>();
         }
 
-        public void AddLock(string deploymentId)
+        public void AddUsage(DeploymentID deploymentID)
         {
-            if (packageLocks.ContainsKey(deploymentId))
-            {
-                packageLocks[deploymentId].UpdateLockedWhen();
-            }
+            if (!usages.ContainsKey(deploymentID))
+                usages.Add(deploymentID, new List<DateTime>());
+
+            usages[deploymentID].Add(DateTime.Now);
+        }
+
+        public IEnumerable<DateTime> GetUsageDetails()
+        {
+            return usages.SelectMany(u => u.Value);
+        }
+
+        /*
+        public IEnumerable<(DateTime When, int Count)> GetUsageCountsWhens()
+        {
+            return usages.SelectMany(u => u.Value)
+                         .GroupBy(i => i)
+                         .Select(group => (When: group.Key, Count: group.Count()));
+        }      */
+    }
+
+    public class PackageLocks
+    {
+        readonly Dictionary<DeploymentID, DateTime> packageLocks;
+
+        internal PackageLocks(Dictionary<DeploymentID, DateTime> packageLocks)
+        {
+            this.packageLocks = packageLocks ?? new Dictionary<DeploymentID, DateTime>();
+        }
+
+        public PackageLocks() : this(new Dictionary<DeploymentID, DateTime>())
+        {
+        }
+
+        public void AddLock(DeploymentID deploymentID)
+        {
+            if (packageLocks.ContainsKey(deploymentID))
+                packageLocks[deploymentID] = DateTime.Now;
             else
-            {
-                packageLocks.Add(deploymentId, new PackageLock(deploymentId));
-            }
+                packageLocks.Add(deploymentID, DateTime.Now);
         }
 
-        public void RemoveLock(string deploymentId)
+        public void RemoveLock(DeploymentID deploymentID)
         {
-            if (packageLocks.ContainsKey(deploymentId))
-            {
-                packageLocks.Remove(deploymentId);
-            }
+            packageLocks.Remove(deploymentID);
         }
 
         public bool HasLock() => packageLocks.Count > 0;
-    }
-
-    public class PackageLock
-    {
-        public DateTime LockedWhen { get; private set; }
-        public string DeploymentId { get; set; }
-
-        public PackageLock(string deploymentId)
-        {
-            this.DeploymentId = deploymentId;
-        }
-
-        public void UpdateLockedWhen()
-        {
-            LockedWhen = DateTime.Now;
-        }
     }
 }

@@ -1,4 +1,9 @@
-﻿using Calamari.Deployment.PackageRetention;
+﻿using System.Linq;
+using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Repositories;
+using Calamari.Tests.Fixtures.Integration.FileSystem;
+using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.PackageRetention
@@ -7,54 +12,99 @@ namespace Calamari.Tests.Fixtures.PackageRetention
     public class JournalEntryFixture
     {
         [Test]
-        public void WhenALockIsAdded_ThenALockExists()
+        public void WhenPackageUsageIsRegistered_ThenALockExists()
         {
-            var thePackage = "ThePackage";
-            var entry = new JournalEntry(thePackage);
-            entry.AddLock("Deployment-1");
+            var thePackage = new PackageID("Package");
+            var theDeployment = new DeploymentID("Deployment-1");
+            var journal = new Journal(new JournalInMemoryRepositoryFactory());
 
-            Assert.IsTrue(entry.HasLock());
+            journal.RegisterPackageUse(thePackage, theDeployment);
+
+            Assert.IsTrue(journal.HasLock(thePackage));
         }
 
         [Test]
-        public void WhenSingleExistingLockIsRemoved_ThenNoLocksExist()
+        public void WhenPackageUsageIsDeregistered_ThenNoLocksExist()
         {
-            var thePackage = "ThePackage";
-            var deploymentID = "Deployment-1";
-            var entry = new JournalEntry(thePackage);
-            entry.AddLock(deploymentID);
-            entry.RemoveLock(deploymentID);
+            var thePackage = new PackageID("Package");
+            var theDeployment = new DeploymentID("Deployment-1");
+            var journal = new Journal(new JournalInMemoryRepositoryFactory());
 
-            Assert.IsFalse(entry.HasLock());
+            journal.RegisterPackageUse(thePackage, theDeployment);
+            journal.DeregisterPackageUse(thePackage, theDeployment);
+
+            Assert.IsFalse(journal.HasLock(thePackage));
         }
 
         [Test]
-        public void WhenMultipleLocksExistForSinglePackageAndOneLockIsRemoved_ThenLocksExist()
+        public void WhenPackageIsRegisteredForTwoDeploymentsAndDeregisteredForOne_ThenALockExists()
         {
-            var thePackage = "ThePackage";
-            var deploymentOne = "Deployment-1";
-            var deploymentTwo = "Deployment-2";
-            var entry = new JournalEntry(thePackage);
-            entry.AddLock(deploymentOne);
-            entry.AddLock(deploymentTwo);
-            entry.RemoveLock(deploymentOne);
+            var thePackage = new PackageID("Package");
+            var deploymentOne = new DeploymentID("Deployment-1");
+            var deploymentTwo = new DeploymentID("Deployment-2");
 
-            Assert.IsTrue(entry.HasLock());
+            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            journal.RegisterPackageUse(thePackage, deploymentOne);
+            journal.RegisterPackageUse(thePackage, deploymentTwo);
+            journal.DeregisterPackageUse(thePackage, deploymentOne);
+
+            Assert.IsTrue(journal.HasLock(thePackage));
         }
 
         [Test]
-        public void WhenMultipleLocksExistForSinglePackageAndTheLocksAreRemoved_ThenNoLocksExist()
+        public void WhenPackageIsRegisteredForTwoDeploymentsAndDeregisteredForBoth_ThenNoLocksExist()
         {
-            var thePackage = "ThePackage";
-            var deploymentOne = "Deployment-1";
-            var deploymentTwo = "Deployment-2";
-            var entry = new JournalEntry(thePackage);
-            entry.AddLock(deploymentOne);
-            entry.AddLock(deploymentTwo);
-            entry.RemoveLock(deploymentOne);
-            entry.RemoveLock(deploymentTwo);
+            var thePackage = new PackageID("Package");
+            var deploymentOne = new DeploymentID("Deployment-1");
+            var deploymentTwo = new DeploymentID("Deployment-2");
 
-            Assert.IsFalse(entry.HasLock());
+            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            journal.RegisterPackageUse(thePackage, deploymentOne);
+            journal.RegisterPackageUse(thePackage, deploymentTwo);
+            journal.DeregisterPackageUse(thePackage, deploymentOne);
+            journal.DeregisterPackageUse(thePackage, deploymentTwo);
+
+            Assert.IsFalse(journal.HasLock(thePackage));
+        }
+
+        [Test]
+        public void WhenPackageIsRegistered_ThenUsageIsRecorded()
+        {
+            var thePackage = new PackageID("Package");
+            var deploymentOne = new DeploymentID("Deployment-1");
+
+            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            journal.RegisterPackageUse(thePackage, deploymentOne);
+
+            Assert.AreEqual(1, journal.GetUsage(thePackage).Count());
+        }
+
+        [Test]
+        public void WhenTwoPackagesAreRegistered_ThenTwoUsagesAreRecorded()
+        {
+            var thePackage = new PackageID("Package");
+            var deploymentOne = new DeploymentID("Deployment-1");
+            var deploymentTwo = new DeploymentID("Deployment-1");
+
+            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            journal.RegisterPackageUse(thePackage, deploymentOne);
+            journal.RegisterPackageUse(thePackage, deploymentTwo);
+
+            Assert.AreEqual(2, journal.GetUsage(thePackage).Count());
+        }
+
+        [Test]
+        public void WhenPackageIsRegisteredAndDeregistered_ThenUsageIsStillRecorded()
+        {
+
+            var thePackage = new PackageID("Package");
+            var deploymentOne = new DeploymentID("Deployment-1");
+
+            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            journal.RegisterPackageUse(thePackage, deploymentOne);
+            journal.DeregisterPackageUse(thePackage, deploymentOne);
+
+            Assert.AreEqual(1, journal.GetUsage(thePackage).Count());
         }
     }
 }
