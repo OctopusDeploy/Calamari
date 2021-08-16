@@ -1,13 +1,13 @@
 ﻿using Calamari.Commands.Support;
-using Calamari.Common.Plumbing.Commands.Options;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Deployment.PackageRetention
 {
-    public class CommandLockDecorator : ICommandWithArgs
+    public class CommandJournalDecorator : ICommandWithArgs
     {
-        readonly ILog ilog;
+        readonly ILog log;
         readonly ICommandWithArgs command;
         readonly IVariables variables;
         readonly Journal journal;
@@ -15,18 +15,20 @@ namespace Calamari.Deployment.PackageRetention
         DeploymentID DeploymentID => new DeploymentID(variables.Get(KnownVariables.Deployment.Id));
         PackageID PackageID => new PackageID("MyPackage");   //Work out a good way of uniquely identifying the package/version
 
-        public CommandLockDecorator(ILog ilog, ICommandWithArgs command, IVariables variables, Journal journal)
+        public CommandJournalDecorator(ILog log, ICommandWithArgs command, IVariables variables, Journal journal)
         {
-            this.ilog = ilog;
+            this.log = log;
             this.command = command;
             this.variables = variables;
+            this.journal = journal;
+            
+            /*
+            var hasPackages = !string.IsNullOrWhiteSpace(packageFile) ||
+                              deployment.Variables.GetIndexes(PackageVariables.PackageCollection).Any();
 
-           // var packageFileName = variables.Get(KnownVariables.Package.)
+            var canWrite = deployment.Variables.Get(TentacleVariables.Agent.JournalPath) != null;*/
 
-           Log.Verbose($"Decorating {command.GetType().Name} with command lock.");
-           //TODO: make journal load from file here? Otherwise look at that occuring in the default constructor
-           //Will need to consider file locking/retries etc too
-           this.journal = journal;
+            log.Verbose($"Decorating {command.GetType().Name} with command journal.");
         }
 
         public int Execute(string[] commandLineArguments)
