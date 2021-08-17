@@ -13,7 +13,7 @@ namespace Calamari.Deployment.PackageRetention
         readonly Journal journal;
 
         DeploymentID DeploymentID => new DeploymentID(variables.Get(KnownVariables.Deployment.Id));
-        PackageID PackageID => new PackageID("MyPackage");   //Work out a good way of uniquely identifying the package/version
+        PackageIdentity Package => new PackageIdentity("MyPackage", "1.0");
 
         public CommandJournalDecorator(ILog log, ICommandWithArgs command, IVariables variables, Journal journal)
         {
@@ -21,7 +21,9 @@ namespace Calamari.Deployment.PackageRetention
             this.command = command;
             this.variables = variables;
             this.journal = journal;
-            
+
+
+            //Look into this: Variables.GetIndexes(PackageVariables.PackageCollection)
             /*
             var hasPackages = !string.IsNullOrWhiteSpace(packageFile) ||
                               deployment.Variables.GetIndexes(PackageVariables.PackageCollection).Any();
@@ -33,7 +35,7 @@ namespace Calamari.Deployment.PackageRetention
 
         public int Execute(string[] commandLineArguments)
         {
-            journal.RegisterPackageUse(PackageID, DeploymentID);
+            journal.RegisterPackageUse(Package, DeploymentID);
             return command.Execute(commandLineArguments);
         }
     }

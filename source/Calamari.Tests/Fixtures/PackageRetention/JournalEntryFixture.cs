@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenPackageUsageIsRegistered_ThenALockExists()
         {
-            var thePackage = new PackageID("Package");
+            var thePackage = new PackageIdentity("Package", "1.0");
             var theDeployment = new DeploymentID("Deployment-1");
             var journal = new Journal(new JournalInMemoryRepositoryFactory());
 
@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenPackageUsageIsDeregistered_ThenNoLocksExist()
         {
-            var thePackage = new PackageID("Package");
+            var thePackage = new PackageIdentity("Package", "1.0");
             var theDeployment = new DeploymentID("Deployment-1");
             var journal = new Journal(new JournalInMemoryRepositoryFactory());
 
@@ -40,7 +40,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenPackageIsRegisteredForTwoDeploymentsAndDeregisteredForOne_ThenALockExists()
         {
-            var thePackage = new PackageID("Package");
+            var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new DeploymentID("Deployment-1");
             var deploymentTwo = new DeploymentID("Deployment-2");
 
@@ -55,7 +55,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenPackageIsRegisteredForTwoDeploymentsAndDeregisteredForBoth_ThenNoLocksExist()
         {
-            var thePackage = new PackageID("Package");
+            var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new DeploymentID("Deployment-1");
             var deploymentTwo = new DeploymentID("Deployment-2");
 
@@ -71,7 +71,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenPackageIsRegistered_ThenUsageIsRecorded()
         {
-            var thePackage = new PackageID("Package");
+            var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new DeploymentID("Deployment-1");
 
             var journal = new Journal(new JournalInMemoryRepositoryFactory());
@@ -83,7 +83,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenTwoPackagesAreRegistered_ThenTwoUsagesAreRecorded()
         {
-            var thePackage = new PackageID("Package");
+            var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new DeploymentID("Deployment-1");
             var deploymentTwo = new DeploymentID("Deployment-1");
 
@@ -98,7 +98,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenPackageIsRegisteredAndDeregistered_ThenUsageIsStillRecorded()
         {
 
-            var thePackage = new PackageID("Package");
+            var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new DeploymentID("Deployment-1");
 
             var journal = new Journal(new JournalInMemoryRepositoryFactory());

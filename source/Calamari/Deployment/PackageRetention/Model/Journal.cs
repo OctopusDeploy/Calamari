@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Linq;
+using Calamari.Common.Plumbing.Variables;
 using SharpCompress.Common;
 using Calamari.Deployment.PackageRetention.Repositories;
+using Newtonsoft.Json.Bson;
+using Octopus.Versioning;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
@@ -16,18 +19,27 @@ namespace Calamari.Deployment.PackageRetention.Model
             this.repositoryFactory = repositoryFactory;
         }
 
-        public void RegisterPackageUse(PackageID packageID, DeploymentID deploymentID)
+        public void RegisterPackageUse(string packageID, IVersion version, string deploymentID)
+        {
+            RegisterPackageUse(new PackageIdentity(packageID, version.OriginalString), new DeploymentID(deploymentID));
+        }
+        public void RegisterPackageUse(IVariables variables)
+        {
+            RegisterPackageUse(new PackageIdentity(variables), new DeploymentID(variables));
+        }
+
+        public void RegisterPackageUse(PackageIdentity package, DeploymentID deploymentID)
         {
             var repository = repositoryFactory.CreateJournalRepository();
 
-            if (repository.TryGetJournalEntry(packageID, out var entry))
+            if (repository.TryGetJournalEntry(package, out var entry))
             {
                 entry.PackageUsage.AddUsage(deploymentID);
                 entry.PackageLocks.AddLock(deploymentID);
             }
             else
             {
-                entry = new JournalEntry(packageID);
+                entry = new JournalEntry(package);
                 entry.PackageUsage.AddUsage(deploymentID);
                 entry.PackageLocks.AddLock(deploymentID);
                 repository.AddJournalEntry(entry);
@@ -36,28 +48,28 @@ namespace Calamari.Deployment.PackageRetention.Model
             repository.Commit();
         }
 
-        public void DeregisterPackageUse(PackageID packageID, DeploymentID deploymentID)
+        public void DeregisterPackageUse(PackageIdentity package, DeploymentID deploymentID)
         {
             var repository = repositoryFactory.CreateJournalRepository();
 
-            if (repository.TryGetJournalEntry(packageID, out var entry))
+            if (repository.TryGetJournalEntry(package, out var entry))
             {
                 entry.PackageLocks.RemoveLock(deploymentID);
             }   //TODO: Else exception?
 
         }
 
-        public bool HasLock(PackageID packageID)
+        public bool HasLock(PackageIdentity package)
         {
             return repositoryFactory.CreateJournalRepository()
-                                     .TryGetJournalEntry(packageID, out var entry)
+                                     .TryGetJournalEntry(package, out var entry)
                    && entry.PackageLocks.HasLock();
         }
 
-        public IEnumerable<DateTime> GetUsage(PackageID packageID)
+        public IEnumerable<DateTime> GetUsage(PackageIdentity package)
         {
             return repositoryFactory.CreateJournalRepository()
-                                     .TryGetJournalEntry(packageID, out var entry)
+                                     .TryGetJournalEntry(package, out var entry)
                 ? entry.PackageUsage.GetUsageDetails()
                 : new DateTime[0];
         }

@@ -5,6 +5,8 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Integration.FileSystem;
 using Octopus.Versioning;
 
@@ -16,16 +18,21 @@ namespace Calamari.Commands
     {
         readonly ILog log;
         readonly IPackageStore packageStore;
+        readonly IVariables variables;
+        readonly Journal packageJournal;
         string packageId;
         string rawPackageVersion;
         string packageHash;
         bool exactMatchOnly;
         VersionFormat versionFormat = VersionFormat.Semver;
 
-        public FindPackageCommand(ILog log, ICalamariFileSystem fileSystem, IPackageStore packageStore)
+        //TODO: move journal/variable(?) stuff to mediator
+        public FindPackageCommand(ILog log, ICalamariFileSystem fileSystem, IPackageStore packageStore, IVariables variables, Journal packageJournal)
         {
             this.log = log;
             this.packageStore = packageStore;
+            this.variables = variables;
+            this.packageJournal = packageJournal;
             Options.Add("packageId=", "Package ID to find", v => packageId = v);
             Options.Add("packageVersion=", "Package version to find", v => rawPackageVersion = v);
             Options.Add("packageHash=", "Package hash to compare against", v => packageHash = v);
@@ -66,6 +73,10 @@ namespace Calamari.Commands
 
                 return 0;
             }
+
+            //Exact package found, so we need to register use and lock it.  We don't lock on partial finds, because there may be too many packages, blocking retention later,
+            //  and we can lock them on apply delta anyway.
+            packageJournal.RegisterPackageUse(packageId, version, variables.Get(KnownVariables.Deployment.Id));
 
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
             LogPackageFound(

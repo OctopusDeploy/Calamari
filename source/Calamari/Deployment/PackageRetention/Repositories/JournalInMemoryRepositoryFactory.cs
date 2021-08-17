@@ -5,11 +5,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 {
     public class JournalInMemoryRepositoryFactory : IJournalRepositoryFactory
     {
-        readonly Dictionary<PackageID, JournalEntry> journalEntries;
+        readonly Dictionary<PackageIdentity, JournalEntry> journalEntries;
 
         public JournalInMemoryRepositoryFactory()
         {
-            journalEntries = new Dictionary<PackageID, JournalEntry>();
+            journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
         }
 
         public IJournalRepository CreateJournalRepository()

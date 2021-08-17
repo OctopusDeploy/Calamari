@@ -11,6 +11,8 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Commands
 {
@@ -21,13 +23,16 @@ namespace Calamari.Commands
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly Journal packageJournal;
 
-        public TransferPackageCommand(ILog log, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem)
+        public TransferPackageCommand(ILog log, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem,
+                                      Journal packageJournal)
         {
             this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.packageJournal = packageJournal;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -50,6 +55,7 @@ namespace Calamari.Commands
             try
             {
                 conventionRunner.RunConventions();
+                packageJournal.RegisterPackageUse(new PackageIdentity(variables), new DeploymentID(variables));
                 deploymentJournalWriter.AddJournalEntry(deployment, true);
             }
             catch (Exception)

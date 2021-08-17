@@ -13,7 +13,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
     public class JournalJsonRepository //: IDisposable
         : IJournalRepository
     {
-        Dictionary<PackageID, JournalEntry> journalEntries;
+        Dictionary<PackageIdentity, JournalEntry> journalEntries;
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
 
         readonly ICalamariFileSystem fileSystem;
@@ -29,20 +29,20 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             Load();
         }
 
-        public bool TryGetJournalEntry(PackageID packageID, out JournalEntry entry)
+        public bool TryGetJournalEntry(PackageIdentity package, out JournalEntry entry)
         {
-            return journalEntries.TryGetValue(packageID, out entry);
+            return journalEntries.TryGetValue(package, out entry);
         }
 
-        public JournalEntry GetJournalEntry(PackageID packageID)
+        public JournalEntry GetJournalEntry(PackageIdentity package)
         {
-            journalEntries.TryGetValue(packageID, out var entry);
+            journalEntries.TryGetValue(package, out var entry);
             return entry;
         }
 
         public void AddJournalEntry(JournalEntry entry)
         {
-            journalEntries.Add(entry.PackageID, entry);
+            journalEntries.Add(entry.Package, entry);
         }
 
         public void Commit()
@@ -57,11 +57,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             {
                 var json = File.ReadAllText(journalPath);
                 journalEntries = JsonConvert.DeserializeObject<List<JournalEntry>>(json)
-                                            .ToDictionary(entry => entry.PackageID, entry => entry);
+                                            .ToDictionary(entry => entry.Package, entry => entry);
             }
             else
             {
-                journalEntries = new  Dictionary<PackageID, JournalEntry>();
+                journalEntries = new  Dictionary<PackageIdentity, JournalEntry>();
             }
         }
 

@@ -14,27 +14,27 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 {
     public class JournalInMemoryRepository : IJournalRepository
     {
-        readonly Dictionary<PackageID, JournalEntry> journalEntries;
+        readonly Dictionary<PackageIdentity, JournalEntry> journalEntries;
 
-        internal JournalInMemoryRepository(Dictionary<PackageID, JournalEntry> journalEntries)
+        internal JournalInMemoryRepository(Dictionary<PackageIdentity, JournalEntry> journalEntries)
         {
             this.journalEntries = journalEntries;
         }
 
-        public bool TryGetJournalEntry(PackageID packageID, out JournalEntry entry)
+        public bool TryGetJournalEntry(PackageIdentity package, out JournalEntry entry)
         {
-            return journalEntries.TryGetValue(packageID, out entry);
+            return journalEntries.TryGetValue(package, out entry);
         }
 
-        public JournalEntry GetJournalEntry(PackageID packageID)
+        public JournalEntry GetJournalEntry(PackageIdentity package)
         {
-            journalEntries.TryGetValue(packageID, out var entry);
+            journalEntries.TryGetValue(package, out var entry);
             return entry;
         }
 
         public void AddJournalEntry(JournalEntry entry)
         {
-            journalEntries.Add(entry.PackageID, entry);
+            journalEntries.Add(entry.Package, entry);
         }
 
         public void Commit()

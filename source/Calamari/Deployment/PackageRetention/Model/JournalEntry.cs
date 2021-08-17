@@ -4,13 +4,13 @@ namespace Calamari.Deployment.PackageRetention.Model
 {
     public class JournalEntry
     {
-        public PackageID PackageID { get; }
+        public PackageIdentity Package { get; }
         public PackageLocks PackageLocks { get; }
         public PackageUsage PackageUsage { get; }
 
-        public JournalEntry(PackageID packageID, PackageLocks packageLocks = null, PackageUsage packageUsage = null)
+        public JournalEntry(PackageIdentity package, PackageLocks packageLocks = null, PackageUsage packageUsage = null)
         {
-            PackageID = packageID ?? throw new ArgumentNullException(nameof(packageID));
+            Package = package ?? throw new ArgumentNullException(nameof(package));
             PackageLocks = packageLocks ?? new PackageLocks();
             PackageUsage = packageUsage ?? new PackageUsage();
         }

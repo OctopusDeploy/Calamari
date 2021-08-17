@@ -36,10 +36,10 @@ namespace Calamari.Deployment.PackageRetention
             return (Value != null ? Value.GetHashCode() : 0);
         }
 
-
         public static bool operator == (CaseInsensitiveTinyType first, CaseInsensitiveTinyType second)
         {
-            return string.Equals(first.Value, second.Value, StringComparison.OrdinalIgnoreCase);
+            if (first is null || second is null) return false;
+            return string.Equals(first?.Value, second?.Value, StringComparison.OrdinalIgnoreCase);
         }
 
         public static bool operator !=(CaseInsensitiveTinyType first, CaseInsensitiveTinyType second)

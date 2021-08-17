@@ -74,7 +74,7 @@ namespace Calamari
                    .WithMetadataFrom<CommandAttribute>()
                    .Named<ICommandWithArgs>(nameof(RetentionLockingCommandAttribute));
 
-            //Register the decorator for the above commands
+            //Register the decorator for the above commands.  Uses the old Autofac method because we're only on v4.8
             builder.RegisterDecorator<ICommandWithArgs>((c,
                                                          inner) => new CommandJournalDecorator(
                                                                                             c.Resolve<ILog>(),
