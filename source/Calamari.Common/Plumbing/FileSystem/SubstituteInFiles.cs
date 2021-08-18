@@ -29,6 +29,11 @@ namespace Calamari.Common.Plumbing.FileSystem
             Substitute(currentDirectory, filesToTarget);
         }
 
+        public void SubstituteBasedSettingsInSuppliedVariables(string currentDirectory, string[] filesToTarget)
+        {
+            Substitute(currentDirectory, filesToTarget);
+        }
+
         public void Substitute(string currentDirectory, IList<string> filesToTarget, bool warnIfFileNotFound = true)
         {
             foreach (var target in filesToTarget)
@@ -38,7 +43,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 if (!matchingFiles.Any())
                 {
                     if (warnIfFileNotFound && variables.GetFlag(PackageVariables.EnableNoMatchWarning, true))
-                        log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
+                        log.WarnFormat("No files were found in {0} that match the substitution target pattern '{1}'", currentDirectory, target);
 
                     continue;
                 }

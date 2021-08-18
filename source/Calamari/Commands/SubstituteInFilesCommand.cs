@@ -2,26 +2,39 @@
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Commands
 {
     [Command("substitute-in-files")]
-    public class SubstituteInFilesCommand : Command
+    public class SubstituteInFilesCommand : Command<SubstituteInFilesCommandInputs>
     {
+        readonly IVariables variables;
         readonly ISubstituteInFiles substituteInFiles;
-        readonly string targetPath;
 
         public SubstituteInFilesCommand(IVariables variables, ISubstituteInFiles substituteInFiles)
         {
-            targetPath = variables.Get(PackageVariables.Output.InstallationDirectoryPath, String.Empty);
+            this.variables = variables;
             this.substituteInFiles = substituteInFiles;
         }
 
-        public override int Execute(string[] commandLineArguments)
+        protected override int Execute(SubstituteInFilesCommandInputs inputs)
         {
-            substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(targetPath);
+            var targetPath = variables.GetRaw(inputs.TargetPathVariable);
+            if (targetPath == null)
+            {
+                throw new CommandException($"Could not locate target path from variable {inputs.TargetPathVariable} for {nameof(SubstituteInFilesCommand)}");
+            }
+
+            substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(targetPath, inputs.FilesToTarget);
             return 0;
         }
+    }
+
+    public class SubstituteInFilesCommandInputs
+    {
+        public string TargetPathVariable { get; set; }
+        public string[] FilesToTarget { get; set; }
     }
 }

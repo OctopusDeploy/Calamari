@@ -58,24 +58,11 @@ namespace Calamari.Commands
                 throw new CommandException("The execution manifest must have at least one instruction.");
             }
 
-            // TODO: refactor this to use an instruction transformer. ExtractPackageInstructionTransformer
-            // https://octopusdeploy.slack.com/archives/C028E35JZH6/p1628135757073500?thread_ts=1628135383.073000&cid=C028E35JZH6
-            var conventions = new List<IConvention>
-            {
-                new StageScriptPackagesConvention(string.Empty, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner)),
-            };
-
-            var deployment = new RunningDeployment(string.Empty, variables);
-            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
-
-            conventionRunner.RunConventions();
-
             foreach (var instruction in instructions)
             {
                 var tool = executionTools.First(x => x.Metadata.Tool == instruction.Launcher);
 
-                var result = tool.Value.Execute(instruction.LauncherInstructionsRaw,
-                    commandLineArguments.Skip(1).ToArray());
+                var result = tool.Value.Execute(instruction.LauncherInstructionsRaw);
 
                 if (result != 0)
                 {

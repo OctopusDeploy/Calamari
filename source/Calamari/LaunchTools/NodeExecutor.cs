@@ -30,7 +30,7 @@ namespace Calamari.LaunchTools
             this.log = log;
         }
 
-        protected override int ExecuteInternal(NodeInstructions instructions, params string[] args)
+        protected override int ExecuteInternal(NodeInstructions instructions)
         {
             var pathToNode = variables.Get(instructions.NodePathVariable);
             var pathToStepPackage = variables.Get(instructions.TargetPathVariable);
@@ -61,7 +61,7 @@ namespace Calamari.LaunchTools
                 };
 
                 var commandResult = commandLineRunner.Execute(commandLineInvocation);
-                
+
                 return commandResult.ExitCode;
             }
         }
@@ -78,7 +78,7 @@ namespace Calamari.LaunchTools
         public string TargetPathVariable { get; set; }
         public string BootstrapperPathVariable { get; set; }
         public string InputsVariable { get; set; }
-        
+
         public string DeploymentTargetInputsVariable { get; set; }
     }
 }
