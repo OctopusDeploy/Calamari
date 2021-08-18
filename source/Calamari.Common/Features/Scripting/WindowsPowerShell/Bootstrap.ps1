@@ -165,6 +165,42 @@ function Remove-OctopusTarget([string] $targetIdOrName)
 	Write-Host "##octopus[delete-target $($parameters)]"
 }
 
+function New-StepPackageTarget
+{
+	[CmdletBinding()]
+	param(
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Mandatory=$true)]
+		[string]$Name,
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Mandatory=$true)]
+		[string]$TargetId,
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Mandatory=$true)]
+		[string]$Inputs,
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Mandatory=$true)]
+		[string]$Roles,
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+		[string]$WorkerPoolIdOrName = "",
+		[Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+		[switch]$UpdateIfExisting
+	)
+	process
+	{
+		$parameters = ""
+		$tempParameter = Convert-ToServiceMessageParameter -name "name" -value $Name
+		$parameters = $parameters, $tempParameter -join ' '
+		$tempParameter = Convert-ToServiceMessageParameter -name "targetId" -value $TargetId
+		$parameters = $parameters, $tempParameter -join ' '
+		$tempParameter = Convert-ToServiceMessageParameter -name "inputs" -value $Inputs
+		$parameters = $parameters, $tempParameter -join ' '
+		$tempParameter = Convert-ToServiceMessageParameter -name "octopusRoles" -value $Roles
+		$parameters = $parameters, $tempParameter -join ' '
+		$tempParameter = Convert-ToServiceMessageParameter -name "octopusDefaultWorkerPoolIdOrName" -value $WorkerPoolIdOrName
+		$parameters = $parameters, $tempParameter -join ' '
+		$tempParameter = Convert-ToServiceMessageParameter -name "updateIfExisting" -value $UpdateIfExisting
+		$parameters = $parameters, $tempParameter -join ' '
+		Write-Host "##octopus[createStepPackageTarget $($parameters)]"
+	}
+}
+
 function Fail-Step([string] $message)
 {
 	if($message)
@@ -386,13 +422,18 @@ function Initialize-ProxySettings() {
 	if ($useDefaultProxy -and [string]::IsNullOrEmpty($proxyHost)) {
 		# Calamari ensure both http_proxy and HTTP_PROXY are set, so we don't need to worry about casing
 		if (![string]::IsNullOrEmpty($env:HTTP_PROXY)) {
-			$octopusProxyUri = New-Object System.Uri($env:HTTP_PROXY)
+
+			$octopusProxyUri = $null;
+			$isUri = [System.Uri]::TryCreate($env:HTTP_PROXY, [System.UriKind]::Absolute, [ref] $octopusProxyUri)
+			if (!$isUri) {
+				$octopusProxyUri = $env:HTTP_PROXY;
+			}
 
 			# The HTTP_PROXY env variable may also contain credentials.
 			# This is a common enough pattern, but we need to extract the credentials in order to use them
 
 			# But if credentials were explicitly provided, use those ones instead
-			if (-not $hasCredentials) {
+			if (-not $hasCredentials -and $octopusProxyUri.GetType() -eq [System.Uri]) {
 				$credentialsArray = $octopusProxyUri.UserInfo.Split(":")
 				$hasCredentials = $credentialsArray.length -gt 1;
 				if ($hasCredentials) {
