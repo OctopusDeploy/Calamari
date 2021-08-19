@@ -193,7 +193,7 @@ namespace Calamari.CloudAccounts
         {
             using (var client = new HttpClient())
             {
-                var body = await client.PutAsync(RoleUri, null);
+                var body = await client.PutAsync(TokenUri, null);
                 return await body.Content.ReadAsStringAsync();
             }
         }
