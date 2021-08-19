@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
@@ -48,7 +49,7 @@ namespace Calamari.Tests.Fixtures.Manifest
             var instructions =
                 InstructionBuilder
                     .Create()
-                    .WithCalamariInstruction("test-calamari-instruction")
+                    .WithCalamariInstruction("test-calamari-instruction", new { Greeting = "Hello" })
                     .WithNodeInstruction()
                     .AsString();
 
@@ -98,7 +99,7 @@ namespace Calamari.Tests.Fixtures.Manifest
     }
 
     [Command("test-calamari-instruction")]
-    public class TestCommand : Command
+    public class TestCommand : Command<TestCommandInputs>
     {
         readonly ILog log;
 
@@ -106,11 +107,16 @@ namespace Calamari.Tests.Fixtures.Manifest
         {
             this.log = log;
         }
-        public override int Execute(string[] commandLineArguments)
-        {
-            log.Info("Hello from TestCommand");
 
+        protected override int Execute(TestCommandInputs inputs)
+        {
+            log.Info($"{inputs.Greeting} from TestCommand");
             return 0;
         }
+    }
+
+    public class TestCommandInputs
+    {
+        public string Greeting { get; set; }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Calamari.LaunchTools;
 using Calamari.Serialization;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Calamari.Tests.Fixtures.Manifest
 {
@@ -19,7 +20,7 @@ namespace Calamari.Tests.Fixtures.Manifest
             return new InstructionBuilder();
         }
 
-        public InstructionBuilder WithCalamariInstruction(string commandName)
+        public InstructionBuilder WithCalamariInstruction(string commandName, object inputs)
         {
             instructions.Add(
                              new Instruction
@@ -27,7 +28,8 @@ namespace Calamari.Tests.Fixtures.Manifest
                                  Launcher = LaunchTools.LaunchTools.Calamari,
                                  LauncherInstructions = JsonConvert.SerializeObject(new CalamariInstructions
                                                                                     {
-                                                                                        Command = commandName
+                                                                                        Command = commandName,
+                                                                                        Inputs = JObject.FromObject(inputs)
                                                                                     },
                                                                                     JsonSerialization.GetDefaultSerializerSettings())
                              });
