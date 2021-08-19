@@ -18,7 +18,9 @@ namespace Calamari.CloudAccounts
     /// </summary>
     public class AwsEnvironmentGeneration
     {
+        const string TokenUri = "http://169.254.169.254/latest/api/token";
         const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
+        const string MetadataHeaderToken = "X-aws-ec2-metadata-token";
 
         readonly ILog log;
         readonly Func<Task<bool>> verifyLogin;
@@ -157,6 +159,7 @@ namespace Calamari.CloudAccounts
                     string payload;
                     using (var client = new HttpClient())
                     {
+                        client.DefaultRequestHeaders.Add(MetadataHeaderToken, await GetIMDSv2Token());
                         var instanceRole = await client.GetStringAsync(RoleUri);
 
                         payload = await client.GetStringAsync($"{RoleUri}{instanceRole}");
@@ -179,6 +182,19 @@ namespace Calamari.CloudAccounts
                         "a role assigned to it. " +
                         $"For more information visit {log.FormatLink("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0003")}", ex);
                 }
+            }
+        }
+
+        /// <summary>
+        /// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+        /// </summary>
+        /// <returns>A token to be used with any IMDS request</returns>
+        async Task<string> GetIMDSv2Token()
+        {
+            using (var client = new HttpClient())
+            {
+                var body = await client.PutAsync(RoleUri, null);
+                return await body.Content.ReadAsStringAsync();
             }
         }
 
