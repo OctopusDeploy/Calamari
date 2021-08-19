@@ -1,5 +1,4 @@
 ﻿using System;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Variables;
@@ -7,21 +6,32 @@ using Calamari.Common.Plumbing.Variables;
 namespace Calamari.Commands
 {
     [Command("structured-config-variables")]
-    public class StructuredConfigVariablesCommand : Command
+    public class StructuredConfigVariablesCommand : Command<StructuredConfigVariablesCommandInputs>
     {
+        readonly IVariables variables;
         readonly IStructuredConfigVariablesService structuredConfigVariablesService;
-        readonly string targetPath;
 
         public StructuredConfigVariablesCommand(IVariables variables, IStructuredConfigVariablesService structuredConfigVariablesService)
         {
-            targetPath = variables.Get(PackageVariables.Output.InstallationDirectoryPath, String.Empty);
+            this.variables = variables;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
         }
 
-        public override int Execute(string[] commandLineArguments)
+        protected override int Execute(StructuredConfigVariablesCommandInputs inputs)
         {
+            var targetPath = variables.GetRaw(inputs.TargetPathVariable);
+            if (targetPath == null)
+            {
+                throw new CommandException($"Could not locate target path from variable {inputs.TargetPathVariable} for {nameof(StructuredConfigVariablesCommand)}");
+            }
+
             structuredConfigVariablesService.ReplaceVariables(targetPath);
             return 0;
         }
+    }
+
+    public class StructuredConfigVariablesCommandInputs
+    {
+        public string TargetPathVariable { get; set; }
     }
 }
