@@ -21,6 +21,7 @@ namespace Calamari.CloudAccounts
         const string TokenUri = "http://169.254.169.254/latest/api/token";
         const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
         const string MetadataHeaderToken = "X-aws-ec2-metadata-token";
+        const string MetadataHeaderTTL = "X-aws-ec2-metadata-token-ttl-seconds";
 
         readonly ILog log;
         readonly Func<Task<bool>> verifyLogin;
@@ -193,6 +194,7 @@ namespace Calamari.CloudAccounts
         {
             using (var client = new HttpClient())
             {
+                client.DefaultRequestHeaders.Add(MetadataHeaderTTL, "60");
                 var body = await client.PutAsync(TokenUri, null);
                 return await body.Content.ReadAsStringAsync();
             }
