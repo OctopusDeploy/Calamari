@@ -19,7 +19,7 @@ namespace Calamari.Commands
             this.substituteInFiles = substituteInFiles;
         }
 
-        protected override int Execute(SubstituteInFilesCommandInputs inputs)
+        protected override void Execute(SubstituteInFilesCommandInputs inputs)
         {
             var targetPath = variables.GetRaw(inputs.TargetPathVariable);
             if (targetPath == null)
@@ -28,7 +28,6 @@ namespace Calamari.Commands
             }
 
             substituteInFiles.Substitute(targetPath, inputs.FilesToTarget);
-            return 0;
         }
     }
 

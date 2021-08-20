@@ -15,11 +15,9 @@ namespace Calamari.Commands
             this.extractPackage = extractPackage;
         }
 
-        protected override int Execute(ExtractPackageCommandInputs inputs)
+        protected override void Execute(ExtractPackageCommandInputs inputs)
         {
             extractPackage.ExtractToStagingDirectory(new PathToPackage(inputs.PathToPackage), inputs.ExtractedToPathOutputVariableName);
-
-            return 0;
         }
     }
 

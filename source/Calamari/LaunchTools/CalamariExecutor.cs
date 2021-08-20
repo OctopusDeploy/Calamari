@@ -23,7 +23,9 @@ namespace Calamari.LaunchTools
         {
             var commandToExecute = commands.Single(x => x.Metadata.Name.Equals(instructions.Command, StringComparison.OrdinalIgnoreCase));
 
-            return commandToExecute.Value.Value.Execute(instructions.Inputs.ToString());
+            commandToExecute.Value.Value.Execute(instructions.Inputs.ToString());
+
+            return 0;
         }
     }
 

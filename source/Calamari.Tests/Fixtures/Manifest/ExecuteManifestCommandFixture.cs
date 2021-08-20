@@ -108,10 +108,9 @@ namespace Calamari.Tests.Fixtures.Manifest
             this.log = log;
         }
 
-        protected override int Execute(TestCommandInputs inputs)
+        protected override void Execute(TestCommandInputs inputs)
         {
             log.Info($"{inputs.Greeting} from TestCommand");
-            return 0;
         }
     }
 

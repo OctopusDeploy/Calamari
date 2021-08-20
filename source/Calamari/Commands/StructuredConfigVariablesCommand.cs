@@ -17,7 +17,7 @@ namespace Calamari.Commands
             this.structuredConfigVariablesService = structuredConfigVariablesService;
         }
 
-        protected override int Execute(StructuredConfigVariablesCommandInputs inputs)
+        protected override void Execute(StructuredConfigVariablesCommandInputs inputs)
         {
             var targetPath = variables.GetRaw(inputs.TargetPathVariable);
             if (targetPath == null)
@@ -26,7 +26,6 @@ namespace Calamari.Commands
             }
 
             structuredConfigVariablesService.ReplaceVariables(targetPath);
-            return 0;
         }
     }
 
