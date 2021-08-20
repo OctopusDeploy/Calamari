@@ -41,6 +41,7 @@ namespace Calamari.LaunchTools
             {
                 var jsonInputs = variables.GetRaw(instructions.InputsVariable) ?? string.Empty;
                 variables.Set(instructions.InputsVariable, InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables, log));
+                var debugMode = variables.GetFlag("Octopus.StepPackage.Boostrap.Debug", false);
 
                 var variablesAsJson = variables.CloneAndEvaluate().SaveAsString();
                 File.WriteAllBytes(variableFile.FilePath, new AesEncryption(options.InputVariables.SensitiveVariablesPassword).Encrypt(variablesAsJson));
@@ -53,7 +54,9 @@ namespace Calamari.LaunchTools
                                                                                 options.InputVariables.SensitiveVariablesPassword,
                                                                                 AesEncryption.SaltRaw,
                                                                                 instructions.InputsVariable,
-                                                                                instructions.DeploymentTargetInputsVariable))
+                                                                                instructions.DeploymentTargetInputsVariable,
+                                                                                debugMode
+                                                                                ))
                 {
                     WorkingDirectory = runningDeployment.CurrentDirectory,
                     OutputToLog = true,
@@ -68,15 +71,15 @@ namespace Calamari.LaunchTools
 
         static string BuildNodePath(string pathToNode) => CalamariEnvironment.IsRunningOnWindows ? Path.Combine(pathToNode, "node.exe") : Path.Combine(pathToNode, "bin", "node");
 
-        static string BuildArgs(
-            string pathToBootstrapper,
-            string pathToStepPackage,
-            string pathToSensitiveVariables,
-            string sensitiveVariablesSecret,
-            string salt,
-            string inputsKey,
-            string deploymentTargetInputsKey) =>
-            $"\"{pathToBootstrapper}\" \"{pathToStepPackage}\" \"{pathToSensitiveVariables}\" \"{sensitiveVariablesSecret}\" \"{salt}\" \"{inputsKey}\" \"{deploymentTargetInputsKey}\"";
+        static string BuildArgs(string pathToBootstrapper,
+                                string pathToStepPackage,
+                                string pathToSensitiveVariables,
+                                string sensitiveVariablesSecret,
+                                string salt,
+                                string inputsKey,
+                                string deploymentTargetInputsKey,
+                                bool debugMode) =>
+            $"{(debugMode ? "--inspect-brk " : "" )}\"{pathToBootstrapper}\" \"{pathToStepPackage}\" \"{pathToSensitiveVariables}\" \"{sensitiveVariablesSecret}\" \"{salt}\" \"{inputsKey}\" \"{deploymentTargetInputsKey}\"";
     }
 
     public class NodeInstructions
