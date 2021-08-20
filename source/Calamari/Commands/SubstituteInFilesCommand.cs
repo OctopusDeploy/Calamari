@@ -27,7 +27,7 @@ namespace Calamari.Commands
                 throw new CommandException($"Could not locate target path from variable {inputs.TargetPathVariable} for {nameof(SubstituteInFilesCommand)}");
             }
 
-            substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(targetPath, inputs.FilesToTarget);
+            substituteInFiles.Substitute(targetPath, inputs.FilesToTarget);
             return 0;
         }
     }

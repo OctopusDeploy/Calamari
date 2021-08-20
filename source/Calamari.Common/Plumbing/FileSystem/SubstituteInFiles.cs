@@ -29,11 +29,6 @@ namespace Calamari.Common.Plumbing.FileSystem
             Substitute(currentDirectory, filesToTarget);
         }
 
-        public void SubstituteBasedSettingsInSuppliedVariables(string currentDirectory, string[] filesToTarget)
-        {
-            Substitute(currentDirectory, filesToTarget);
-        }
-
         public void Substitute(string currentDirectory, IList<string> filesToTarget, bool warnIfFileNotFound = true)
         {
             foreach (var target in filesToTarget)
