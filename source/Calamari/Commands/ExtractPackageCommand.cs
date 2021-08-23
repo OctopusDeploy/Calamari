@@ -1,32 +1,29 @@
 ﻿using System;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.Deployment;
-using Calamari.Common.Plumbing.Extensions;
-using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Commands
 {
     [Command("extract-package")]
-    public class ExtractPackageCommand : Command
+    public class ExtractPackageCommand : Command<ExtractPackageCommandInputs>
     {
         readonly IExtractPackage extractPackage;
-        PathToPackage pathToPrimaryPackage;
 
-        public ExtractPackageCommand(IVariables variables, IExtractPackage extractPackage, ICalamariFileSystem fileSystem)
+        public ExtractPackageCommand(IExtractPackage extractPackage)
         {
             this.extractPackage = extractPackage;
-
-            pathToPrimaryPackage = variables.GetPathToPrimaryPackage(fileSystem, true);
         }
 
-        public override int Execute(string[] commandLineArguments)
+        protected override void Execute(ExtractPackageCommandInputs inputs)
         {
-            extractPackage.ExtractToStagingDirectory(pathToPrimaryPackage);
-
-            return 0;
+            extractPackage.ExtractToStagingDirectory(new PathToPackage(inputs.PathToPackage), inputs.ExtractedToPathOutputVariableName);
         }
+    }
+
+    public class ExtractPackageCommandInputs
+    {
+        public string PathToPackage { get; set; }
+        public string ExtractedToPathOutputVariableName { get; set; }
     }
 }

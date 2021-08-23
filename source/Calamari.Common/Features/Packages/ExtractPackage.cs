@@ -27,23 +27,30 @@ namespace Calamari.Common.Features.Packages
         {
             var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
             fileSystem.EnsureDirectoryExists(targetPath);
-            Extract(pathToPackage, targetPath, customPackageExtractor);
+            Extract(pathToPackage, targetPath, PackageVariables.Output.InstallationDirectoryPath, customPackageExtractor);
+        }
+
+        public void ExtractToStagingDirectory(PathToPackage? pathToPackage, string extractedToPathOutputVariableName)
+        {
+            var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
+            fileSystem.EnsureDirectoryExists(targetPath);
+            Extract(pathToPackage, targetPath, extractedToPathOutputVariableName, null);
         }
 
         public void ExtractToEnvironmentCurrentDirectory(PathToPackage pathToPackage)
         {
             var targetPath = Environment.CurrentDirectory;
-            Extract(pathToPackage, targetPath, null);
+            Extract(pathToPackage, targetPath, PackageVariables.Output.InstallationDirectoryPath, null);
         }
 
         public void ExtractToApplicationDirectory(PathToPackage pathToPackage, IPackageExtractor? customPackageExtractor = null)
         {
             var metadata = PackageName.FromFile(pathToPackage);
             var targetPath = ApplicationDirectory.GetApplicationDirectory(metadata, variables, fileSystem);
-            Extract(pathToPackage, targetPath, customPackageExtractor);
+            Extract(pathToPackage, targetPath, PackageVariables.Output.InstallationDirectoryPath, customPackageExtractor);
         }
 
-        void Extract(PathToPackage? pathToPackage, string targetPath, IPackageExtractor? customPackageExtractor)
+        void Extract(PathToPackage? pathToPackage, string targetPath, string extractedToPathOutputVariableName,  IPackageExtractor? customPackageExtractor)
         {
             try
             {
@@ -62,7 +69,7 @@ namespace Calamari.Common.Features.Packages
                 log.Verbose("Extracted " + filesExtracted + " files");
 
                 variables.Set(KnownVariables.OriginalPackageDirectoryPath, targetPath);
-                log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, targetPath, variables);
+                log.SetOutputVariable(extractedToPathOutputVariableName, targetPath, variables);
                 log.SetOutputVariable(PackageVariables.Output.DeprecatedInstallationDirectoryPath, targetPath, variables);
                 log.SetOutputVariable(PackageVariables.Output.ExtractedFileCount, filesExtracted.ToString(), variables);
             }

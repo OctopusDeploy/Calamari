@@ -38,7 +38,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 if (!matchingFiles.Any())
                 {
                     if (warnIfFileNotFound && variables.GetFlag(PackageVariables.EnableNoMatchWarning, true))
-                        log.WarnFormat("No files were found that match the substitution target pattern '{0}'", target);
+                        log.WarnFormat("No files were found in {0} that match the substitution target pattern '{1}'", currentDirectory, target);
 
                     continue;
                 }

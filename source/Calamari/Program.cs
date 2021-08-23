@@ -61,6 +61,12 @@ namespace Calamari
                 .WithMetadataFrom<CommandAttribute>()
                 .As<ICommandWithArgs>();
 
+            builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
+                   .AssignableTo<ICommandWithInputs>()
+                   .WithMetadataFrom<CommandAttribute>()
+                   .As<ICommandWithInputs>();
+
+
             builder.RegisterAssemblyTypes(GetProgramAssemblyToRegister())
                    .Where(x => typeof(ILaunchTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
                    .WithMetadataFrom<LaunchToolAttribute>()
