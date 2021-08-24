@@ -15,15 +15,12 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
     public class CloudFormationTemplate : ICloudFormationRequestBuilder, ITemplate
     {
         readonly Func<string> content;
-        readonly Func<string, List<StackFormationNamedOutput>> parse;
 
         public CloudFormationTemplate(Func<string> content,
-                                      ITemplateInputs<Parameter> parameters,
-                                      Func<string, List<StackFormationNamedOutput>> parse)
+                                      ITemplateInputs<Parameter> parameters)
         {
             this.content = content;
             Inputs = parameters.Inputs;
-            this.parse = parse;
         }
 
         public static CloudFormationTemplate Create(ResolvedTemplatePath path,
@@ -32,8 +29,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                                                     IVariables variables)
         {
             return new CloudFormationTemplate(() => variables.Evaluate(fileSystem.ReadFile(path.Value)),
-                                              CloudFormationParametersFile.Create(parametersPath, fileSystem, variables),
-                                              JsonConvert.DeserializeObject<List<StackFormationNamedOutput>>);
+                                              CloudFormationParametersFile.Create(parametersPath, fileSystem, variables));
         }
 
         public string Content => content();
