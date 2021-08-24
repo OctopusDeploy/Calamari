@@ -5,6 +5,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.CloudFormation;
@@ -93,9 +94,14 @@ namespace Calamari.Aws.Commands
 
             ICloudFormationRequestBuilder S3TemplateFactory()
             {
-                return CloudFormationS3Template.Create(null,
-                                                       templateS3Url,
-                                                       templateParameterS3Url);
+                if (!string.IsNullOrWhiteSpace(templateParameterS3Url) && !templateParameterS3Url.StartsWith("http"))
+                    throw new CommandException("Parameters file must start with http: " + templateParameterS3Url);
+
+                return CloudFormationS3Template.Create(templateS3Url,
+                                                       templateParameterS3Url,
+                                                       fileSystem,
+                                                       variables,
+                                                       log);
             }
 
             ICloudFormationRequestBuilder TemplateFactory() => string.IsNullOrWhiteSpace(templateS3Url) ? FileTemplateFactory() : S3TemplateFactory();

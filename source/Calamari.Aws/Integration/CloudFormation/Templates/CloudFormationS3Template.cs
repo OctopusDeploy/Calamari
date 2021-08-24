@@ -1,37 +1,86 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon.S3.Util;
+using Calamari.Aws.Util;
+using Calamari.CloudAccounts;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
+using Octopus.CoreUtilities;
 using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;
+using Tag = Amazon.CloudFormation.Model.Tag;
 
 namespace Calamari.Aws.Integration.CloudFormation.Templates
 {
     public class CloudFormationS3Template : ICloudFormationRequestBuilder
     {
-        ITemplateInputs<Parameter> parameters;
+        const string ParametersFile = "parameters.json";
 
         public CloudFormationS3Template(ITemplateInputs<Parameter> parameters,
-                                        string templateS3Url,
-                                        string templateParameterS3Url)
+                                        string templateS3Url)
         {
-            this.parameters = parameters;
+            Inputs = parameters.Inputs;
             TemplateS3Url = templateS3Url;
-            TemplateParameterS3Url = templateParameterS3Url;
         }
 
-        public static CloudFormationS3Template Create(ITemplateInputs<Parameter> parameters,
-                                                      string templateS3Url,
-                                                      string templateParameterS3Url)
+        public static CloudFormationS3Template Create(string templateS3Url,
+                                                                  string templateParameterS3Url,
+                                                                  ICalamariFileSystem fileSystem,
+                                                                  IVariables variables,
+                                                                  ILog log)
         {
-            return new CloudFormationS3Template(parameters,
-                                                templateS3Url,
-                                                templateParameterS3Url);
+            var templatePath = string.IsNullOrWhiteSpace(templateParameterS3Url)
+                ? Maybe<ResolvedTemplatePath>.None
+                : new ResolvedTemplatePath(ParametersFile).AsSome();
+
+            if (templatePath.Some())
+            {
+                DownloadS3(variables, log, templateParameterS3Url);
+            }
+
+            var parameters = CloudFormationParametersFile.CreateUnprocessed(templatePath, fileSystem);
+
+            return new CloudFormationS3Template(parameters, templateS3Url);
+        }
+
+        /// <summary>
+        /// The SDK allows us to deploy a template from a URL, but does not apply parameters from a URL. So we
+        /// must download the parameters file and parse it locally.
+        /// </summary>
+        static void DownloadS3(IVariables variables, ILog log, string templateParameterS3Url)
+        {
+            try
+            {
+                var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
+                var s3Uri = new AmazonS3Uri(templateParameterS3Url);
+                using (IAmazonS3 client = ClientHelpers.CreateS3Client(environment))
+                {
+                    var request = new GetObjectRequest
+                    {
+                        BucketName = s3Uri.Bucket,
+                        Key = s3Uri.Key
+                    };
+                    var response = client.GetObjectAsync(request).GetAwaiter().GetResult();
+                    response.WriteResponseStreamToFileAsync(ParametersFile, false, new CancellationTokenSource().Token).GetAwaiter().GetResult();
+                }
+            }
+            catch (UriFormatException ex)
+            {
+                log.Error($"The parameters URL of {templateParameterS3Url} is invalid");
+                throw ex;
+            }
         }
 
         string TemplateS3Url { get; }
-        string TemplateParameterS3Url { get; }
+        public IEnumerable<Parameter> Inputs { get; }
 
         public CreateStackRequest BuildCreateStackRequest(string stackName, List<string> capabilities, bool disableRollback, string roleArn, List<Tag> tags)
         {
@@ -39,7 +88,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             {
                 StackName = stackName,
                 TemplateURL = TemplateS3Url,
-                Parameters = null,
+                Parameters = Inputs.ToList(),
                 Capabilities = capabilities,
                 DisableRollback = disableRollback,
                 RoleARN = roleArn,
@@ -53,7 +102,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             {
                 StackName = stackName,
                 TemplateURL = TemplateS3Url,
-                Parameters = null,
+                Parameters = Inputs.ToList(),
                 Capabilities = capabilities,
                 RoleARN = roleArn,
                 Tags = tags
@@ -76,21 +125,6 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                 Capabilities = capabilities,
                 RoleARN = roleArn
             };
-        }
-
-        public IEnumerable<Parameter> Inputs { get; }
-    }
-
-    public class CreateChangesetRequest : CreateChangeSetRequest
-    {
-        public CreateChangesetRequest(StackStatus status,
-                                      object name,
-                                      StackArn stack,
-                                      object invoke,
-                                      object template,
-                                      object capabilities)
-        {
-            throw new NotImplementedException();
         }
     }
 }
