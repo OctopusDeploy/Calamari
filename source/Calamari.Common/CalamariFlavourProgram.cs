@@ -60,6 +60,8 @@ namespace Calamari.Common
                 using var container = builder.Build();
                 container.Resolve<VariableLogger>().LogVariables();
 
+                #if DEBUG
+
                 var waitForDebugger = container.Resolve<IVariables>().Get(KnownVariables.Calamari.WaitForDebugger);
 
                 if (string.Equals(waitForDebugger, "true", StringComparison.CurrentCultureIgnoreCase))
@@ -72,6 +74,8 @@ namespace Calamari.Common
                         Thread.Sleep(100);
                     }
                 }
+
+                #endif
 
                 return ResolveAndExecuteCommand(container, options);
             }
