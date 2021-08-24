@@ -39,7 +39,7 @@ namespace Calamari.Deployment.PackageRetention
         public static bool operator == (CaseInsensitiveTinyType first, CaseInsensitiveTinyType second)
         {
             if (first is null || second is null) return false;
-            return string.Equals(first?.Value, second?.Value, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(first.Value, second.Value, StringComparison.OrdinalIgnoreCase);
         }
 
         public static bool operator !=(CaseInsensitiveTinyType first, CaseInsensitiveTinyType second)
