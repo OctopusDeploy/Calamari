@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
@@ -19,6 +21,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Octopus.Versioning;
 
 namespace Calamari.Common
 {
@@ -53,12 +56,24 @@ namespace Calamari.Common
 
                 var builder = new ContainerBuilder();
                 ConfigureContainer(builder, options);
-                using (var container = builder.Build())
-                {
-                    container.Resolve<VariableLogger>().LogVariables();
 
-                    return ResolveAndExecuteCommand(container, options);
+                using var container = builder.Build();
+                container.Resolve<VariableLogger>().LogVariables();
+
+                var waitForDebugger = container.Resolve<IVariables>().Get(KnownVariables.Calamari.WaitForDebugger);
+
+                if (string.Equals(waitForDebugger, "true", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    using var proc = Process.GetCurrentProcess();
+                    Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
+
+                    while (!Debugger.IsAttached)
+                    {
+                        Thread.Sleep(100);
+                    }
                 }
+
+                return ResolveAndExecuteCommand(container, options);
             }
             catch (Exception ex)
             {
