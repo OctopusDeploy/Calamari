@@ -1,41 +1,92 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using System.Linq;
+using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
-using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
-using Calamari.Integration.FileSystem;
 using Newtonsoft.Json;
-using Octopus.CoreUtilities.Extensions;
+using Octopus.CoreUtilities;
+using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;
 
 namespace Calamari.Aws.Integration.CloudFormation.Templates
 {
-    public class CloudFormationTemplate: ITemplate, ITemplateInputs<Parameter>, ITemplateOutputs<StackFormationNamedOutput>
+    public class CloudFormationTemplate : ICloudFormationRequestBuilder, ITemplate
     {
-        private readonly Func<string> content;
-        private readonly Func<string, List<StackFormationNamedOutput>> parse;
-        private ITemplateInputs<Parameter> parameters;
-        private static readonly Regex OutputsRe = new Regex("\"?Outputs\"?\\s*:");
-        
-        public CloudFormationTemplate(Func<string> content, ITemplateInputs<Parameter> parameters, Func<string, List<StackFormationNamedOutput>> parse)
+        readonly Func<string> content;
+        readonly Func<string, List<StackFormationNamedOutput>> parse;
+
+        public CloudFormationTemplate(Func<string> content,
+                                      ITemplateInputs<Parameter> parameters,
+                                      Func<string, List<StackFormationNamedOutput>> parse)
         {
             this.content = content;
-            this.parameters = parameters;
+            Inputs = parameters.Inputs;
             this.parse = parse;
         }
 
-        public static CloudFormationTemplate Create(ResolvedTemplatePath path, ITemplateInputs<Parameter> parameters, ICalamariFileSystem filesSystem, IVariables variables)
+        public static CloudFormationTemplate Create(ResolvedTemplatePath path,
+                                                    Maybe<ResolvedTemplatePath> parametersPath,
+                                                    ICalamariFileSystem fileSystem,
+                                                    IVariables variables)
         {
-            Guard.NotNull(path, "Path must not be null");
-            return new CloudFormationTemplate(() => variables.Evaluate(filesSystem.ReadFile(path.Value)), parameters, JsonConvert.DeserializeObject<List<StackFormationNamedOutput>> );
+            return new CloudFormationTemplate(() => variables.Evaluate(fileSystem.ReadFile(path.Value)),
+                                              CloudFormationParametersFile.Create(parametersPath, fileSystem, variables),
+                                              JsonConvert.DeserializeObject<List<StackFormationNamedOutput>>);
         }
 
         public string Content => content();
 
-        public IEnumerable<Parameter> Inputs => parameters.Inputs;
-        public bool HasOutputs => Content.Map(OutputsRe.IsMatch);
-        public IEnumerable<StackFormationNamedOutput> Outputs  => HasOutputs ? parse(Content) : new List<StackFormationNamedOutput>();
+        public IEnumerable<Parameter> Inputs { get; }
+
+        public CreateStackRequest BuildCreateStackRequest(string stackName,
+                                                          List<string> capabilities,
+                                                          bool disableRollback,
+                                                          string roleArn,
+                                                          List<Tag> tags)
+        {
+            return new CreateStackRequest
+            {
+                StackName = stackName,
+                TemplateBody = Content,
+                Parameters = Inputs.ToList(),
+                Capabilities = capabilities,
+                DisableRollback = disableRollback,
+                RoleARN = roleArn,
+                Tags = tags
+            };
+        }
+
+        public UpdateStackRequest BuildUpdateStackRequest(string stackName, List<string> capabilities, string roleArn, List<Tag> tags)
+        {
+            return new UpdateStackRequest
+            {
+                StackName = stackName,
+                TemplateBody = Content,
+                Parameters = Inputs.ToList(),
+                Capabilities = capabilities,
+                RoleARN = roleArn,
+                Tags = tags
+            };
+        }
+
+        public CreateChangeSetRequest BuildChangesetRequest(StackStatus status,
+                                                            string changesetName,
+                                                            StackArn stack,
+                                                            string roleArn,
+                                                            List<string> capabilities)
+        {
+            return new CreateChangeSetRequest
+            {
+                StackName = stack.Value,
+                TemplateBody = Content,
+                Parameters = Inputs.ToList(),
+                ChangeSetName = changesetName,
+                ChangeSetType = status == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,
+                Capabilities = capabilities,
+                RoleARN = roleArn
+            };
+        }
     }
 }

@@ -35,23 +35,24 @@ namespace Calamari.Aws.Deployment.Conventions
 
     public class DeployAwsCloudFormationConvention : CloudFormationInstallationConventionBase
     {
+        readonly Func<IAmazonCloudFormation> clientFactory;
+        readonly Func<ICloudFormationRequestBuilder> templateFactory;
+        readonly Func<RunningDeployment, StackArn> stackProvider;
+        readonly Func<RunningDeployment, string> roleArnProvider;
+        readonly bool waitForComplete;
+        readonly string stackName;
+        readonly bool disableRollback;
+        readonly List<string> capabilities = new List<string>();
 
-        private readonly Func<IAmazonCloudFormation> clientFactory;
-        private readonly Func<CloudFormationTemplate> templateFactory;
-        private readonly Func<RunningDeployment, StackArn> stackProvider;
-        private readonly Func<RunningDeployment, string> roleArnProvider;
-        private readonly bool waitForComplete;
-        private readonly string stackName;
-        private readonly bool disableRollback;
-        private readonly List<string> capabilities = new List<string>();
-        private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
+        readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
+
         // This must allow nulls to distinguish between no tags specified - which preserves existing CF tags,
         // and an empty list specified - which clears out all existing tags.
-        private readonly List<Tag> tags;
+        readonly List<Tag> tags;
 
         public DeployAwsCloudFormationConvention(
             Func<IAmazonCloudFormation> clientFactory,
-            Func<CloudFormationTemplate> templateFactory,
+            Func<ICloudFormationRequestBuilder> templateFactory,
             StackEventLogger logger,
             Func<RunningDeployment, StackArn> stackProvider,
             Func<RunningDeployment, string> roleArnProvider,
@@ -60,7 +61,7 @@ namespace Calamari.Aws.Deployment.Conventions
             IEnumerable<string> iamCapabilities,
             bool disableRollback,
             AwsEnvironmentGeneration awsEnvironmentGeneration,
-            IEnumerable<KeyValuePair<string, string>> tags = null): base(logger)
+            IEnumerable<KeyValuePair<string, string>> tags = null) : base(logger)
         {
             this.clientFactory = clientFactory;
             this.templateFactory = templateFactory;
@@ -89,17 +90,16 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(stack, "Stack can not be null");
             var template = templateFactory();
             Guard.NotNull(template, "CloudFormation template can not be null.");
-            
+
             await DeployCloudFormation(deployment, stack, template);
         }
-        
 
-        private async Task DeployCloudFormation(RunningDeployment deployment, StackArn stack, CloudFormationTemplate template)
+        private async Task DeployCloudFormation(RunningDeployment deployment, StackArn stack, ICloudFormationRequestBuilder template)
         {
             Guard.NotNull(deployment, "deployment can not be null");
 
             var deploymentStartTime = DateTime.Now;
-           
+
             await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, false, filter: FilterStackEventsSince(deploymentStartTime)));
             await DeployStack(deployment, stack, template, deploymentStartTime);
         }
@@ -110,15 +110,15 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="deployment">The current deployment</param>
         /// <param name="stack"></param>
         /// <param name="template"></param>
-        private async Task DeployStack(RunningDeployment deployment, StackArn stack, CloudFormationTemplate template, DateTime deploymentStartTime)
+        private async Task DeployStack(RunningDeployment deployment, StackArn stack, ICloudFormationRequestBuilder template, DateTime deploymentStartTime)
         {
             Guard.NotNull(deployment, "deployment can not be null");
-           
+
             var stackId = await template.Inputs
-                // Use the parameters to either create or update the stack
-                .Map(async parameters => await StackExists(stack, StackStatus.DoesNotExist) != StackStatus.DoesNotExist
-                    ? await UpdateCloudFormation(deployment, stack, template)
-                    : await CreateCloudFormation(deployment, template));
+                                        // Use the parameters to either create or update the stack
+                                        .Map(async parameters => await StackExists(stack, StackStatus.DoesNotExist) != StackStatus.DoesNotExist
+                                                 ? await UpdateCloudFormation(deployment, stack, template)
+                                                 : await CreateCloudFormation(deployment, template));
 
             if (waitForComplete)
             {
@@ -128,7 +128,7 @@ namespace Calamari.Aws.Deployment.Conventions
             // Take the stack ID returned by the create or update events, and save it as an output variable
             Log.SetOutputVariable("AwsOutputs[StackId]", stackId ?? "", deployment.Variables);
             Log.Info(
-                $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\"");
+                     $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\"");
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private Task<Maybe<StackEvent>> StackEvent(StackArn stack, Func<StackEvent, bool> predicate = null)
         {
             return WithAmazonServiceExceptionHandling(
-               async () => await clientFactory.GetLastStackEvent(stack, predicate));
+                                                      async () => await clientFactory.GetLastStackEvent(stack, predicate));
         }
 
         /// <summary>
@@ -151,32 +151,22 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             return WithAmazonServiceExceptionHandling(() => clientFactory.StackExistsAsync(stack, defaultValue));
         }
-        
+
         /// <summary>
         /// Creates the stack and returns the stack ID
         /// </summary>
         /// <param name="deployment">The running deployment</param>
         /// <returns>The stack id</returns>
-        private Task<string> CreateCloudFormation(RunningDeployment deployment, CloudFormationTemplate template)
+        private Task<string> CreateCloudFormation(RunningDeployment deployment, ICloudFormationRequestBuilder template)
         {
             Guard.NotNull(template, "template can not be null");
 
             return WithAmazonServiceExceptionHandling(async () =>
-            {
-                var stackId = await clientFactory.CreateStackAsync(new CreateStackRequest
-                    {
-                        StackName = stackName,
-                        TemplateBody = template.Content,
-                        Parameters = template.Inputs.ToList(),
-                        Capabilities = capabilities,
-                        DisableRollback = disableRollback,
-                        RoleARN = roleArnProvider(deployment),
-                        Tags = tags
-                    });
-                    
-                    Log.Info($"Created stack {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
-                return stackId;
-            });
+                                                      {
+                                                          var stackId = await clientFactory.CreateStackAsync(template.BuildCreateStackRequest(stackName, capabilities, disableRollback, roleArnProvider(deployment), tags));
+                                                          Log.Info($"Created stack {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
+                                                          return stackId;
+                                                      });
         }
 
         /// <summary>
@@ -185,10 +175,10 @@ namespace Calamari.Aws.Deployment.Conventions
         private Task DeleteCloudFormation(StackArn stack)
         {
             return WithAmazonServiceExceptionHandling(async () =>
-            {
-                await clientFactory.DeleteStackAsync(stack);
-                Log.Info($"Deleted stack called {stackName} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
-            });
+                                                      {
+                                                          await clientFactory.DeleteStackAsync(stack);
+                                                          Log.Info($"Deleted stack called {stackName} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
+                                                      });
         }
 
         /// <summary>
@@ -201,26 +191,19 @@ namespace Calamari.Aws.Deployment.Conventions
         private async Task<string> UpdateCloudFormation(
             RunningDeployment deployment,
             StackArn stack,
-            CloudFormationTemplate template)
+            ICloudFormationRequestBuilder template)
         {
             Guard.NotNull(deployment, "deployment can not be null");
             var deploymentStartTime = DateTime.Now;
 
             try
             {
-                var result = await ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration).UpdateStackAsync(new UpdateStackRequest
-                {
-                    StackName = stackName,
-                    TemplateBody = template.Content,
-                    Parameters = template.Inputs.ToList(),
-                    Capabilities = capabilities,
-                    RoleARN = roleArnProvider(deployment),
-                    Tags = tags
-                });
+                var result = await ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
+                                                .UpdateStackAsync(template.BuildUpdateStackRequest(stackName, capabilities, roleArnProvider(deployment), tags));
 
                 Log.Info(
-                    $"Updated stack with id {result.StackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
-                            
+                         $"Updated stack with id {result.StackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
+
                 return result.StackId;
             }
             catch (AmazonCloudFormationException ex)
@@ -233,8 +216,8 @@ namespace Calamari.Aws.Deployment.Conventions
                     if (DealWithUpdateException(ex))
                     {
                         // There was nothing to update, but we return the id for consistency anyway
-                        var  result = await QueryStackAsync(clientFactory, stack);
-                         return result.StackId;
+                        var result = await QueryStackAsync(clientFactory, stack);
+                        return result.StackId;
                     }
                 }
 
@@ -273,9 +256,7 @@ namespace Calamari.Aws.Deployment.Conventions
             if (ex.ErrorCode == "AccessDenied")
             {
                 throw new PermissionException(
-                    "The AWS account used to perform the operation does not have the required permissions to update the stack.\n" + 
-                    "Please ensure the current account has permission to perfrom action 'cloudformation:UpdateStack'.\n" +
-                    ex.Message);
+                                              "The AWS account used to perform the operation does not have the required permissions to update the stack.\n" + "Please ensure the current account has permission to perfrom action 'cloudformation:UpdateStack'.\n" + ex.Message);
             }
 
             throw new UnknownException("An unrecognised exception was thrown while updating a CloudFormation stack.\n", ex);

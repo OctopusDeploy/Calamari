@@ -33,12 +33,14 @@ namespace Calamari.Aws.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly IExtractPackage extractPackage;
-        private PathToPackage pathToPackage;
-        private string templateFile;
-        private string templateParameterFile;
-        private bool waitForComplete;
-        private string stackName;
-        private bool disableRollback;
+        PathToPackage pathToPackage;
+        string templateFile;
+        string templateParameterFile;
+        string templateS3Url;
+        string templateParameterS3Url;
+        bool waitForComplete;
+        string stackName;
+        bool disableRollback;
 
         public DeployCloudFormationCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IExtractPackage extractPackage)
         {
@@ -49,6 +51,8 @@ namespace Calamari.Aws.Commands
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
+            Options.Add("templateS3=", "S3 URL to the JSON template file.", v => templateS3Url = v);
+            Options.Add("templateS3Parameters=", "S3 URL to the JSON template parameters file.", v => templateParameterS3Url = v);
             Options.Add("waitForCompletion=", "True if the deployment process should wait for the stack to complete, and False otherwise.",
                 v => waitForComplete = !bool.FalseString.Equals(v, StringComparison.OrdinalIgnoreCase)); //True by default
             Options.Add("stackName=", "The name of the CloudFormation stack.", v => stackName = v);
@@ -73,7 +77,7 @@ namespace Calamari.Aws.Commands
             var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
             var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, variables, fileSystem, log);
 
-            CloudFormationTemplate TemplateFactory()
+            ICloudFormationRequestBuilder FileTemplateFactory()
             {
                 var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
                 var resolvedParameters = templateResolver.MaybeResolve(templateParameterFile, filesInPackage, variables);
@@ -81,9 +85,20 @@ namespace Calamari.Aws.Commands
                 if (templateParameterFile != null && !resolvedParameters.Some())
                     throw new CommandException("Could not find template parameters file: " + templateParameterFile);
 
-                var parameters = CloudFormationParametersFile.Create(resolvedParameters, fileSystem, variables);
-                return CloudFormationTemplate.Create(resolvedTemplate, parameters, fileSystem, variables);
+                return CloudFormationTemplate.Create(resolvedTemplate,
+                                                     resolvedParameters,
+                                                     fileSystem,
+                                                     variables);
             }
+
+            ICloudFormationRequestBuilder S3TemplateFactory()
+            {
+                return CloudFormationS3Template.Create(null,
+                                                       templateS3Url,
+                                                       templateParameterS3Url);
+            }
+
+            ICloudFormationRequestBuilder TemplateFactory() => string.IsNullOrWhiteSpace(templateS3Url) ? FileTemplateFactory() : S3TemplateFactory();
 
             var stackEventLogger = new StackEventLogger(log);
 
@@ -100,7 +115,7 @@ namespace Calamari.Aws.Commands
                     new DescribeCloudFormationChangeSetConvention( ClientFactory, stackEventLogger, StackProvider, ChangesetProvider),
                     new ExecuteCloudFormationChangeSetConvention(ClientFactory, stackEventLogger, StackProvider, ChangesetProvider, waitForComplete)
                         .When(ImmediateChangesetExecution),
-                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, () => TemplateFactory().HasOutputs)
+                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider)
                         .When(ImmediateChangesetExecution)
                 ).When(ChangesetsEnabled),
 
@@ -118,7 +133,7 @@ namespace Calamari.Aws.Commands
                             disableRollback,
                             environment,
                             tags),
-                        new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger,  StackProvider, () => TemplateFactory().HasOutputs)
+                        new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger,  StackProvider)
                 )
                .When(ChangesetsDisabled)
             };
