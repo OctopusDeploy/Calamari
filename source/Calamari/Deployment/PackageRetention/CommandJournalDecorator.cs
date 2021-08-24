@@ -5,7 +5,7 @@ using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Deployment.PackageRetention
 {
-    public class CommandJournalDecorator : ICommandWithArgs
+    public class CommandJournalDecorator //: ICommandWithArgs
     {
         readonly ILog log;
         readonly ICommandWithArgs command;
@@ -35,7 +35,7 @@ namespace Calamari.Deployment.PackageRetention
 
         public int Execute(string[] commandLineArguments)
         {
-            journal.RegisterPackageUse(Package, DeploymentID);
+           // journal.RegisterPackageUse(Package, DeploymentID);
             return command.Execute(commandLineArguments);
         }
     }

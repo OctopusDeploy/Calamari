@@ -35,6 +35,7 @@ namespace Calamari.Common
 
         protected virtual int Run(string[] args)
         {
+            Log.Info(string.Join(",", args));
             try
             {
                 SecurityProtocols.EnableAllSecurityProtocols();

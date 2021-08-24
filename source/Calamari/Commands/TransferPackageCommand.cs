@@ -23,16 +23,15 @@ namespace Calamari.Commands
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
-        readonly Journal packageJournal;
+        //readonly Journal packageJournal;
 
-        public TransferPackageCommand(ILog log, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem,
-                                      Journal packageJournal)
+        public TransferPackageCommand(ILog log, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem)
         {
             this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.fileSystem = fileSystem;
-            this.packageJournal = packageJournal;
+           // this.packageJournal = packageJournal;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -55,7 +54,7 @@ namespace Calamari.Commands
             try
             {
                 conventionRunner.RunConventions();
-                packageJournal.RegisterPackageUse(new PackageIdentity(variables), new DeploymentID(variables));
+               // packageJournal.RegisterPackageUse(new PackageIdentity(variables), new DeploymentID(variables));
                 deploymentJournalWriter.AddJournalEntry(deployment, true);
             }
             catch (Exception)

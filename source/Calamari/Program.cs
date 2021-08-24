@@ -65,7 +65,7 @@ namespace Calamari
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
             var typesToAlwaysDecorate = new Type[] { typeof(ApplyDeltaCommand) }; //Commands from external assemblies.
-
+                     /*
             //Get register commands with the RetentionLockingCommand attribute;
             builder.RegisterAssemblyTypes(assembliesToRegister)
                    .Where(t => t.HasAttribute<RetentionLockingCommandAttribute>()
@@ -82,10 +82,10 @@ namespace Calamari
                                                                                             c.Resolve<IVariables>(),
                                                                                             c.Resolve<Journal>()),
                                                         fromKey: nameof(RetentionLockingCommandAttribute));
-
+                                                                                                                 */
             //Register the non-decorated commands
             builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
-                   .Where(c => !c.HasAttribute<RetentionLockingCommandAttribute>())
+                   //.Where(c => !c.HasAttribute<RetentionLockingCommandAttribute>())
                    .AssignableTo<ICommandWithArgs>()
                    .WithMetadataFrom<CommandAttribute>()
                    .As<ICommandWithArgs>();

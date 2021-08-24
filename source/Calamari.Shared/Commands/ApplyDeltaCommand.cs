@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
 
@@ -28,7 +29,7 @@ namespace Calamari.Commands
         readonly ICommandLineRunner commandLineRunner;
         readonly ILog log;
 
-        public ApplyDeltaCommand(ILog log, IFreeSpaceChecker freeSpaceChecker, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+        public ApplyDeltaCommand(ILog log, IFreeSpaceChecker freeSpaceChecker, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             this.freeSpaceChecker = freeSpaceChecker;
             this.fileSystem = fileSystem;
