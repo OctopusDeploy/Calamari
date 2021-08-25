@@ -32,6 +32,11 @@ namespace Calamari.Common.Plumbing.Variables
             }
         }
 
+        public static class Calamari
+        {
+            public const string WaitForDebugger = "Octopus.Calamari.WaitForDebugger";
+        }
+
         public static class Release
         {
             public static readonly string Number = "Octopus.Release.Number";
