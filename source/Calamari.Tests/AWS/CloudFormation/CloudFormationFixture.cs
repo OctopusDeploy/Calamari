@@ -38,6 +38,21 @@ namespace Calamari.Tests.AWS.CloudFormation
         }
 
         [Test]
+        public async Task CreateOrUpdateCloudFormationS3Template()
+        {
+            try
+            {
+                CloudFormationFixtureHelpers.DeployTemplateS3(StackName, new CalamariVariables());
+
+                await CloudFormationFixtureHelpers.ValidateStackExists(StackName, true);
+            }
+            finally
+            {
+                CloudFormationFixtureHelpers.CleanupStack(StackName);
+            }
+        }
+
+        [Test]
         public async Task DeleteCloudFormationStack()
         {
             var templateFilePath = CloudFormationFixtureHelpers.WriteTemplateFile(CloudFormationFixtureHelpers.GetBasicS3Template(StackName));

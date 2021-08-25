@@ -118,6 +118,38 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
         }
 
+        public static void DeployTemplateS3(string resourceName, IVariables variables)
+        {
+            var variablesFile = Path.GetTempFileName();
+            variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
+            variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"));
+            variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
+            variables.Set("Octopus.Action.Aws.Region", region);
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var log = new InMemoryLog();
+                var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+                var command = new DeployCloudFormationCommand(
+                                                              log,
+                                                              variables,
+                                                              fileSystem,
+                                                              new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log)
+                                                             );
+                var result = command.Execute(new[]
+                {
+                    "--templateS3", "https://octopus-cloudformation-s3-test.s3.amazonaws.com/empty.yaml",
+                    "--templateS3Parameters", "https://octopus-cloudformation-s3-test.s3.amazonaws.com/properties.json",
+                    "--variables", $"{variablesFile}",
+                    "--stackName", resourceName,
+                    "--waitForCompletion", "true"
+                });
+
+                result.Should().Be(0);
+            }
+        }
+
         public static void CleanupStack(string stackName)
         {
             try
