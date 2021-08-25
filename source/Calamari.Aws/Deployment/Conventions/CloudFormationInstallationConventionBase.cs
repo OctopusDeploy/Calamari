@@ -26,9 +26,9 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Logger = logger;
         }
-        
+
         public abstract void Install(RunningDeployment deployment);
-        
+
         /// <summary>
         /// The AmazonServiceException can hold additional information that is useful to include in
         /// the log.
@@ -65,8 +65,8 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             WithAmazonServiceExceptionHandling<ValueTuple>(() => default(ValueTuple).Tee(x=> action()));
         }
-        
-        
+
+
         /// <summary>
         /// Display an warning message to the user (without duplicates)
         /// </summary>
@@ -77,7 +77,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             return Logger.Warn(errorCode, message);
         }
-        
+
         /// <summary>
         /// Creates a handler which will log stack events and throw on common rollback events
         /// </summary>
@@ -87,7 +87,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <param name="expectSuccess">Whether we expected a success</param>
         /// <param name="missingIsFailure"></param>
         /// <returns>Stack event handler</returns>
-        protected Action<Maybe<StackEvent>> LogAndThrowRollbacks(Func<IAmazonCloudFormation> clientFactory, StackArn stack, bool expectSuccess = true, bool missingIsFailure = true, Func<StackEvent, bool> filter = null) 
+        protected Action<Maybe<StackEvent>> LogAndThrowRollbacks(Func<IAmazonCloudFormation> clientFactory, StackArn stack, bool expectSuccess = true, bool missingIsFailure = true, Func<StackEvent, bool> filter = null)
         {
             return @event =>
             {
@@ -95,7 +95,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     Logger.Log(@event);
                     Logger.LogRollbackError(
-                        @event, 
+                        @event,
                         x => WithAmazonServiceExceptionHandling(() => clientFactory.GetStackEvents(stack, (e) => x(e) && (filter == null || filter(e))).GetAwaiter().GetResult()),
                         expectSuccess,
                         missingIsFailure);
@@ -105,32 +105,6 @@ namespace Calamari.Aws.Deployment.Conventions
                     Log.Warn(exception.Message);
                 }
             };
-        }
-
-        public static (IList<string> valid, IList<string> excluded) ExcludeUnknownIamCapabilities(
-            IEnumerable<string> capabilities)
-        {
-            return capabilities.Aggregate((new List<string>(), new List<string>()), (prev, current) =>
-            {
-                var (valid, excluded) = prev;
-
-                if (current.IsKnownIamCapability())
-                    valid.Add(current);
-                else
-                    excluded.Add(current);
-
-                return prev;
-            });
-        }
-
-        public static (IList<string> valid, IList<string> excluded) ExcludeAndLogUnknownIamCapabilities(IEnumerable<string> values)
-        {
-            var (valid, excluded) = ExcludeUnknownIamCapabilities(values);
-            if (excluded.Count > 0)
-            {
-                Log.Warn($"The following unknown IAM Capabilities have been removed: {String.Join(", ", excluded)}");
-            }
-            return (valid, excluded);
         }
 
         protected void SetOutputVariable(IVariables variables, string name, string value)

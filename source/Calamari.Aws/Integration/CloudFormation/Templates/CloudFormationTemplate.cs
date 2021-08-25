@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
@@ -12,35 +14,68 @@ using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;
 
 namespace Calamari.Aws.Integration.CloudFormation.Templates
 {
-    public class CloudFormationTemplate : ICloudFormationRequestBuilder, ITemplate
+    public class CloudFormationTemplate : BaseTemplate, ITemplate
     {
         readonly Func<string> content;
 
         public CloudFormationTemplate(Func<string> content,
-                                      ITemplateInputs<Parameter> parameters)
+                                      ITemplateInputs<Parameter> parameters,
+                                      string stackName,
+                                      List<string> iamCapabilities,
+                                      bool disableRollback,
+                                      string roleArn,
+                                      IEnumerable<KeyValuePair<string, string>> tags,
+                                      string changesetName,
+                                      StackArn stack,
+                                      Func<IAmazonCloudFormation> clientFactory) : base(parameters.Inputs,
+                                                                                        stackName,
+                                                                                        iamCapabilities,
+                                                                                        disableRollback,
+                                                                                        roleArn,
+                                                                                        tags,
+                                                                                        changesetName,
+                                                                                        stack,
+                                                                                        clientFactory)
         {
             this.content = content;
-            Inputs = parameters.Inputs;
         }
 
-        public static CloudFormationTemplate Create(ResolvedTemplatePath path,
-                                                    Maybe<ResolvedTemplatePath> parametersPath,
-                                                    ICalamariFileSystem fileSystem,
-                                                    IVariables variables)
+        public static ICloudFormationRequestBuilder Create(ITemplateResolver templateResolver,
+                                                           string templateFile,
+                                                           string templateParameterFile,
+                                                           bool filesInPackage,
+                                                           ICalamariFileSystem fileSystem,
+                                                           IVariables variables,
+                                                           string stackName,
+                                                           List<string> capabilities,
+                                                           bool disableRollback,
+                                                           string roleArn,
+                                                           IEnumerable<KeyValuePair<string, string>> tags,
+                                                           string changesetName,
+                                                           StackArn stack,
+                                                           Func<IAmazonCloudFormation> clientFactory)
         {
-            return new CloudFormationTemplate(() => variables.Evaluate(fileSystem.ReadFile(path.Value)),
-                                              CloudFormationParametersFile.Create(parametersPath, fileSystem, variables));
+            var resolvedTemplate = templateResolver.Resolve(templateFile, filesInPackage, variables);
+            var resolvedParameters = templateResolver.MaybeResolve(templateParameterFile, filesInPackage, variables);
+
+            if (!string.IsNullOrWhiteSpace(templateParameterFile) && !resolvedParameters.Some())
+                throw new CommandException("Could not find template parameters file: " + templateParameterFile);
+
+            return new CloudFormationTemplate(() => variables.Evaluate(fileSystem.ReadFile(resolvedTemplate.Value)),
+                                              CloudFormationParametersFile.Create(resolvedParameters, fileSystem, variables),
+                                              stackName,
+                                              capabilities,
+                                              disableRollback,
+                                              roleArn,
+                                              tags,
+                                              changesetName,
+                                              stack,
+                                              clientFactory);
         }
 
         public string Content => content();
 
-        public IEnumerable<Parameter> Inputs { get; }
-
-        public CreateStackRequest BuildCreateStackRequest(string stackName,
-                                                          List<string> capabilities,
-                                                          bool disableRollback,
-                                                          string roleArn,
-                                                          List<Tag> tags)
+        public override CreateStackRequest BuildCreateStackRequest()
         {
             return new CreateStackRequest
             {
@@ -54,7 +89,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             };
         }
 
-        public UpdateStackRequest BuildUpdateStackRequest(string stackName, List<string> capabilities, string roleArn, List<Tag> tags)
+        public override UpdateStackRequest BuildUpdateStackRequest()
         {
             return new UpdateStackRequest
             {
@@ -67,11 +102,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             };
         }
 
-        public CreateChangeSetRequest BuildChangesetRequest(StackStatus status,
-                                                            string changesetName,
-                                                            StackArn stack,
-                                                            string roleArn,
-                                                            List<string> capabilities)
+        public override async Task<CreateChangeSetRequest> BuildChangesetRequest()
         {
             return new CreateChangeSetRequest
             {
@@ -79,7 +110,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                 TemplateBody = Content,
                 Parameters = Inputs.ToList(),
                 ChangeSetName = changesetName,
-                ChangeSetType = status == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,
+                ChangeSetType = await GetStackStatus() == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,
                 Capabilities = capabilities,
                 RoleARN = roleArn
             };

@@ -11,42 +11,29 @@ using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
-using Calamari.Integration.Processes;
-using Calamari.Util;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
     public class CreateCloudFormationChangeSetConvention : CloudFormationInstallationConventionBase
     {
-        private readonly Func<IAmazonCloudFormation> clientFactory;
-        private readonly Func<RunningDeployment, StackArn> stackProvider;
-        private readonly Func<RunningDeployment, string> roleArnProvider;
-        private readonly Func<ICloudFormationRequestBuilder> templateFactory;
-
-        private readonly List<string> Capabilities = new List<string>();
+        readonly Func<IAmazonCloudFormation> clientFactory;
+        readonly Func<RunningDeployment, StackArn> stackProvider;
+        readonly Func<ICloudFormationRequestBuilder> templateFactory;
 
         public CreateCloudFormationChangeSetConvention(Func<IAmazonCloudFormation> clientFactory,
                                                        StackEventLogger logger,
                                                        Func<RunningDeployment, StackArn> stackProvider,
-                                                       Func<RunningDeployment, string> roleArnProvider,
-                                                       Func<ICloudFormationRequestBuilder> templateFactory,
-                                                       IEnumerable<string> iamCapabilities
+                                                       Func<ICloudFormationRequestBuilder> templateFactory
         ) : base(logger)
         {
             Guard.NotNull(stackProvider, "Stack provider should not be null");
             Guard.NotNull(clientFactory, "Client factory should not be null");
-            Guard.NotNull(roleArnProvider, "Role ARN provide should not be null");
             Guard.NotNull(templateFactory, "Template factory should not be null");
 
             this.clientFactory = clientFactory;
             this.stackProvider = stackProvider;
-            this.roleArnProvider = roleArnProvider;
             this.templateFactory = templateFactory;
-            var (validCapabilities, _) = ExcludeAndLogUnknownIamCapabilities(iamCapabilities);
-
-            Capabilities.AddRange(validCapabilities);
         }
 
         public override void Install(RunningDeployment deployment)
@@ -67,12 +54,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             try
             {
-                var status = await clientFactory.StackExistsAsync(stack, StackStatus.DoesNotExist);
-                var changeset = await CreateChangeSet(template.BuildChangesetRequest(status,
-                                                                                     name,
-                                                                                     stack,
-                                                                                     roleArnProvider?.Invoke(deployment),
-                                                                                     Capabilities));
+                var changeset = await CreateChangeSet(await template.BuildChangesetRequest());
                 await WaitForChangesetCompletion(changeset);
                 ApplyVariables(deployment.Variables)(changeset);
             }

@@ -41,14 +41,9 @@ namespace Calamari.Aws.Deployment.Conventions
         readonly Func<RunningDeployment, string> roleArnProvider;
         readonly bool waitForComplete;
         readonly string stackName;
-        readonly bool disableRollback;
-        readonly List<string> capabilities = new List<string>();
 
         readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
 
-        // This must allow nulls to distinguish between no tags specified - which preserves existing CF tags,
-        // and an empty list specified - which clears out all existing tags.
-        readonly List<Tag> tags;
 
         public DeployAwsCloudFormationConvention(
             Func<IAmazonCloudFormation> clientFactory,
@@ -58,10 +53,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Func<RunningDeployment, string> roleArnProvider,
             bool waitForComplete,
             string stackName,
-            IEnumerable<string> iamCapabilities,
-            bool disableRollback,
-            AwsEnvironmentGeneration awsEnvironmentGeneration,
-            IEnumerable<KeyValuePair<string, string>> tags = null) : base(logger)
+            AwsEnvironmentGeneration awsEnvironmentGeneration) : base(logger)
         {
             this.clientFactory = clientFactory;
             this.templateFactory = templateFactory;
@@ -70,12 +62,6 @@ namespace Calamari.Aws.Deployment.Conventions
             this.waitForComplete = waitForComplete;
             this.stackName = stackName;
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
-            this.disableRollback = disableRollback;
-            this.tags = tags?.Select(x => new Tag { Key = x.Key, Value = x.Value }).ToList();
-
-            // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities
-            var (validCapabilities, _) = ExcludeAndLogUnknownIamCapabilities(iamCapabilities);
-            capabilities.AddRange(validCapabilities);
         }
 
         public override void Install(RunningDeployment deployment)
@@ -163,7 +149,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             return WithAmazonServiceExceptionHandling(async () =>
                                                       {
-                                                          var stackId = await clientFactory.CreateStackAsync(template.BuildCreateStackRequest(stackName, capabilities, disableRollback, roleArnProvider(deployment), tags));
+                                                          var stackId = await clientFactory.CreateStackAsync(template.BuildCreateStackRequest());
                                                           Log.Info($"Created stack {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
                                                           return stackId;
                                                       });
@@ -199,7 +185,7 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 var result = await ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
-                                                .UpdateStackAsync(template.BuildUpdateStackRequest(stackName, capabilities, roleArnProvider(deployment), tags));
+                                                .UpdateStackAsync(template.BuildUpdateStackRequest());
 
                 Log.Info(
                          $"Updated stack with id {result.StackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");

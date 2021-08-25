@@ -10,6 +10,7 @@ using Amazon.S3.Model;
 using Amazon.S3.Util;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -20,23 +21,53 @@ using Tag = Amazon.CloudFormation.Model.Tag;
 
 namespace Calamari.Aws.Integration.CloudFormation.Templates
 {
-    public class CloudFormationS3Template : ICloudFormationRequestBuilder
+    public class CloudFormationS3Template : BaseTemplate
     {
         const string ParametersFile = "parameters.json";
 
         public CloudFormationS3Template(ITemplateInputs<Parameter> parameters,
-                                        string templateS3Url)
+                                        string templateS3Url,
+                                        string stackName,
+                                        List<string> iamCapabilities,
+                                        bool disableRollback,
+                                        string roleArn,
+                                        IEnumerable<KeyValuePair<string, string>> tags,
+                                        string changesetName,
+                                        StackArn stack,
+                                        Func<IAmazonCloudFormation> clientFactory) : base(parameters.Inputs,
+                                                                                          stackName,
+                                                                                          iamCapabilities,
+                                                                                          disableRollback,
+                                                                                          roleArn,
+                                                                                          tags,
+                                                                                          changesetName,
+                                                                                          stack,
+                                                                                          clientFactory)
         {
             Inputs = parameters.Inputs;
             TemplateS3Url = templateS3Url;
         }
 
-        public static CloudFormationS3Template Create(string templateS3Url,
-                                                                  string templateParameterS3Url,
-                                                                  ICalamariFileSystem fileSystem,
-                                                                  IVariables variables,
-                                                                  ILog log)
+        public static ICloudFormationRequestBuilder Create(string templateS3Url,
+                                                           string templateParameterS3Url,
+                                                           ICalamariFileSystem fileSystem,
+                                                           IVariables variables,
+                                                           ILog log,
+                                                           string stackName,
+                                                           List<string> capabilities,
+                                                           bool disableRollback,
+                                                           string roleArn,
+                                                           IEnumerable<KeyValuePair<string, string>> tags,
+                                                           string changesetName,
+                                                           StackArn stack,
+                                                           Func<IAmazonCloudFormation> clientFactory)
         {
+            if (!string.IsNullOrWhiteSpace(templateParameterS3Url) && !templateParameterS3Url.StartsWith("http"))
+                throw new CommandException("Parameters file must start with http: " + templateParameterS3Url);
+
+            if (!string.IsNullOrWhiteSpace(templateS3Url) && !templateS3Url.StartsWith("http"))
+                throw new CommandException("Template file must start with http: " + templateS3Url);
+
             var templatePath = string.IsNullOrWhiteSpace(templateParameterS3Url)
                 ? Maybe<ResolvedTemplatePath>.None
                 : new ResolvedTemplatePath(ParametersFile).AsSome();
@@ -46,9 +77,18 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                 DownloadS3(variables, log, templateParameterS3Url);
             }
 
-            var parameters = CloudFormationParametersFile.CreateUnprocessed(templatePath, fileSystem);
+            var parameters = CloudFormationParametersFile.Create(templatePath, fileSystem, variables);
 
-            return new CloudFormationS3Template(parameters, templateS3Url);
+            return new CloudFormationS3Template(parameters,
+                                                templateS3Url,
+                                                stackName,
+                                                capabilities,
+                                                disableRollback,
+                                                roleArn,
+                                                tags,
+                                                changesetName,
+                                                stack,
+                                                clientFactory);
         }
 
         /// <summary>
@@ -82,7 +122,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
         string TemplateS3Url { get; }
         public IEnumerable<Parameter> Inputs { get; }
 
-        public CreateStackRequest BuildCreateStackRequest(string stackName, List<string> capabilities, bool disableRollback, string roleArn, List<Tag> tags)
+        public override CreateStackRequest BuildCreateStackRequest()
         {
             return new CreateStackRequest
             {
@@ -96,7 +136,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             };
         }
 
-        public UpdateStackRequest BuildUpdateStackRequest(string stackName, List<string> capabilities, string roleArn, List<Tag> tags)
+        public override UpdateStackRequest BuildUpdateStackRequest()
         {
             return new UpdateStackRequest
             {
@@ -109,11 +149,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             };
         }
 
-        public CreateChangeSetRequest BuildChangesetRequest(StackStatus status,
-                                                            string changesetName,
-                                                            StackArn stack,
-                                                            string roleArn,
-                                                            List<string> capabilities)
+        public override async Task<CreateChangeSetRequest> BuildChangesetRequest()
         {
             return new CreateChangeSetRequest
             {
@@ -121,7 +157,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                 TemplateURL = TemplateS3Url,
                 Parameters = Inputs.ToList(),
                 ChangeSetName = changesetName,
-                ChangeSetType = status == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,
+                ChangeSetType = await GetStackStatus() == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,
                 Capabilities = capabilities,
                 RoleARN = roleArn
             };

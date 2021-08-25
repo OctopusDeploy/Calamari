@@ -22,11 +22,6 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             return new CloudFormationParametersFile(() => path.Select(x => variables.Evaluate(fileSystem.ReadFile(x.Value))), JsonConvert.DeserializeObject<List<Parameter>>);
         }
 
-        public static CloudFormationParametersFile CreateUnprocessed(Maybe<ResolvedTemplatePath> path, ICalamariFileSystem fileSystem)
-        {
-            return new CloudFormationParametersFile(() => path.Select(x => fileSystem.ReadFile(x.Value)), JsonConvert.DeserializeObject<List<Parameter>>);
-        }
-
         public CloudFormationParametersFile(Func<Maybe<string>> content, Func<string, List<Parameter>> parse)
         {
             this.content = content;
