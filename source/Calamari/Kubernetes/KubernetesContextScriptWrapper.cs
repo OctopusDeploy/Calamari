@@ -539,7 +539,7 @@ namespace Calamari.Kubernetes
                 ExecuteCommand(gcloud, arguments.ToArray());
                 ExecuteKubectlCommand("config",
                                       "set-context",
-                                      gkeClusterName,
+                                      "--current",
                                       $"--namespace={@namespace}");
             }
 
