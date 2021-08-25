@@ -69,7 +69,7 @@ namespace Calamari.Common
 
                     while (!Debugger.IsAttached)
                     {
-                        Thread.Sleep(100);
+                        Thread.Sleep(1000);
                     }
                 }
 #endif
