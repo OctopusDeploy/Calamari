@@ -124,7 +124,7 @@ namespace Calamari.Tests.AWS.CloudFormation
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
             variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"));
             variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
-            variables.Set("Octopus.Action.Aws.Region", region);
+            variables.Set("Octopus.Action.Aws.Region", "us-east-1");
             variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
