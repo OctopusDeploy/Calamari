@@ -18,8 +18,7 @@ namespace Calamari.Azure
             ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
             ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
         }
-
-        public string WhereHasMyStringGone { get; set; }
+        
         public string SubscriptionNumber { get; set; }
 
         public string ClientId { get; set; }
