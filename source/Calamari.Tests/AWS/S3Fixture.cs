@@ -26,6 +26,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
+using Octostache;
 
 namespace Calamari.Tests.AWS
 {
@@ -131,6 +132,34 @@ namespace Calamari.Tests.AWS
             });
         }
 
+        [Test]
+        public async Task UploadPackage3()
+        {
+            var fileSelections = new List<S3FileSelectionProperties>
+            {
+                new S3MultiFileSelectionProperties
+                {
+                    Pattern = "*.json",
+                    Type = S3FileSelectionTypes.MultipleFiles,
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    StructuredVariableSubstitutionPatterns = "*.json"
+                }
+            };
+
+            var variables = new CalamariVariables();
+            variables.Set("Property1:Property2:Value", "InjectedValue");
+
+            var prefix = Upload("Package3", fileSelections, variables);
+
+            await Validate(async client =>
+                           {
+                               var file = await client.GetObjectAsync(bucketName, $"{prefix}file.json");
+                               var text = new StreamReader(file.ResponseStream).ReadToEnd();
+                               text.Should().Contain("InjectedValue");
+                           });
+        }
+
         IDictionary<string, string> specialHeaders = new Dictionary<string, string>()
         {
             {"Cache-Control", "max-age=123"},
@@ -215,7 +244,7 @@ namespace Calamari.Tests.AWS
             }
         }
 
-        string Upload(string packageName, List<S3FileSelectionProperties> fileSelections)
+        string Upload(string packageName, List<S3FileSelectionProperties> fileSelections, VariableDictionary customVariables = null)
         {
             var bucketKeyPrefix = $"calamaritest/{Guid.NewGuid():N}/";
 
@@ -240,6 +269,7 @@ namespace Calamari.Tests.AWS
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set(AwsSpecialVariables.S3.FileSelections,
                 JsonConvert.SerializeObject(fileSelections, GetEnrichedSerializerSettings()));
+            if (customVariables != null) variables.Merge(customVariables);
             variables.Save(variablesFile);
 
             var packageDirectory = TestEnvironment.GetTestPath("AWS", "S3", packageName);

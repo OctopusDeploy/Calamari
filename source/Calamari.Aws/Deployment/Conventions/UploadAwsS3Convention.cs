@@ -210,7 +210,7 @@ namespace Calamari.Aws.Deployment.Conventions
             var structuredSubstitutionPatterns = selection.StructuredVariableSubstitutionPatterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
 
             if(structuredSubstitutionPatterns.Any())
-                structuredConfigVariablesService.ReplaceVariables(deployment.CurrentDirectory, substitutionPatterns.ToList());
+                structuredConfigVariablesService.ReplaceVariables(deployment.CurrentDirectory, structuredSubstitutionPatterns.ToList());
 
             foreach (var matchedFile in files)
             {

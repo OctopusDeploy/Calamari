@@ -160,6 +160,9 @@
     <Compile Remove="Fixtures\Deployment\Packages\**\obj\**" />
     <None Remove="Fixtures\Deployment\Packages\**\bin\**" />
     <None Remove="Fixtures\Deployment\Packages\**\obj\**" />
+    <None Update="AWS\S3\Package3\file.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Remove="TestResults\**" />
