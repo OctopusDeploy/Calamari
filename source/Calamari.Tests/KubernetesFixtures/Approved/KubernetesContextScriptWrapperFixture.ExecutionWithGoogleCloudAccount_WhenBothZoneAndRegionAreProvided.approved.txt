@@ -5,5 +5,5 @@
 [Verbose] Successfully authenticated with gcloud
 [Info] Creating kubectl context to GKE Cluster called gke-cluster-name (namespace calamari-testing) using a Google Cloud Account
 [Verbose] "gcloud" container clusters get-credentials gke-cluster-name --zone=gke-zone
-[Verbose] "kubectl" config set-context gke-cluster-name --namespace=calamari-testing --request-timeout=1m
+[Verbose] "kubectl" config set-context --current --namespace=calamari-testing --request-timeout=1m
 [Verbose] "kubectl" get namespace calamari-testing --request-timeout=1m
