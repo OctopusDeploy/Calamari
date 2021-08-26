@@ -160,6 +160,36 @@ namespace Calamari.Tests.AWS
                            });
         }
 
+        [Test]
+        public async Task UploadPackage3Individual()
+        {
+            var fileSelections = new List<S3FileSelectionProperties>
+            {
+                new S3SingleFileSelectionProperties
+                {
+                    Path = "file.json",
+                    Type = S3FileSelectionTypes.SingleFile,
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Custom,
+                    BucketKey = "myfile.json",
+                    PerformStructuredVariableSubstitution = true
+                }
+            };
+
+            var variables = new CalamariVariables();
+            variables.Set("Property1:Property2:Value", "InjectedValue");
+
+            Upload("Package3", fileSelections, variables);
+
+            await Validate(async client =>
+                           {
+                               var file = await client.GetObjectAsync(bucketName, $"myfile.json");
+                               var text = new StreamReader(file.ResponseStream).ReadToEnd();
+                               text.Should().Contain("InjectedValue");
+                           });
+        }
+
         IDictionary<string, string> specialHeaders = new Dictionary<string, string>()
         {
             {"Cache-Control", "max-age=123"},
