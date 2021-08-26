@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;
 
 namespace Calamari.Aws.Integration.CloudFormation.Templates
@@ -18,11 +19,11 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
         protected readonly string stackName;
         protected readonly List<string> capabilities;
         protected readonly bool disableRollback;
-        protected readonly string changesetName;
         protected readonly StackArn stack;
         protected readonly List<Tag> tags;
         protected readonly string roleArn;
         readonly Func<IAmazonCloudFormation> clientFactory;
+        protected readonly IVariables variables;
 
         public BaseTemplate(IEnumerable<Parameter> inputs,
                             string stackName,
@@ -30,18 +31,18 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                             bool disableRollback,
                             string roleArn,
                             IEnumerable<KeyValuePair<string, string>> tags,
-                            string changesetName,
                             StackArn stack,
-                            Func<IAmazonCloudFormation> clientFactory)
+                            Func<IAmazonCloudFormation> clientFactory,
+                            IVariables variables)
         {
             Inputs = inputs;
 
             this.stackName = stackName;
             this.disableRollback = disableRollback;
-            this.changesetName = changesetName;
             this.stack = stack;
             this.roleArn = roleArn;
             this.clientFactory = clientFactory;
+            this.variables = variables;
             this.tags = tags?.Select(x => new Tag { Key = x.Key, Value = x.Value }).ToList();
 
             var (validCapabilities, _) = ExcludeAndLogUnknownIamCapabilities(iamCapabilities);

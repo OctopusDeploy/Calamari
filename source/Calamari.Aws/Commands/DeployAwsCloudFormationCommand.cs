@@ -81,7 +81,6 @@ namespace Calamari.Aws.Commands
             var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
             var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, variables, fileSystem, log);
             var deployment = new RunningDeployment(pathToPackage, variables);
-            var changesetName = deployment.Variables[AwsSpecialVariables.CloudFormation.Changesets.Name];
 
             ICloudFormationRequestBuilder TemplateFactory() => string.IsNullOrWhiteSpace(templateS3Url)
                 ? CloudFormationTemplate.Create(templateResolver,
@@ -95,7 +94,6 @@ namespace Calamari.Aws.Commands
                                                 disableRollback,
                                                 RoleArnProvider(deployment),
                                                 tags,
-                                                changesetName,
                                                 StackProvider(deployment),
                                                 ClientFactory)
                 : CloudFormationS3Template.Create(templateS3Url,
@@ -108,7 +106,6 @@ namespace Calamari.Aws.Commands
                                                   disableRollback,
                                                   RoleArnProvider(deployment),
                                                   tags,
-                                                  changesetName,
                                                   StackProvider(deployment),
                                                   ClientFactory);
 

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
+using Calamari.Aws.Deployment;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -25,17 +26,17 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                                       bool disableRollback,
                                       string roleArn,
                                       IEnumerable<KeyValuePair<string, string>> tags,
-                                      string changesetName,
                                       StackArn stack,
-                                      Func<IAmazonCloudFormation> clientFactory) : base(parameters.Inputs,
+                                      Func<IAmazonCloudFormation> clientFactory,
+                                      IVariables variables) : base(parameters.Inputs,
                                                                                         stackName,
                                                                                         iamCapabilities,
                                                                                         disableRollback,
                                                                                         roleArn,
                                                                                         tags,
-                                                                                        changesetName,
                                                                                         stack,
-                                                                                        clientFactory)
+                                                                                        clientFactory,
+                                                                                        variables)
         {
             this.content = content;
         }
@@ -51,7 +52,6 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                                                            bool disableRollback,
                                                            string roleArn,
                                                            IEnumerable<KeyValuePair<string, string>> tags,
-                                                           string changesetName,
                                                            StackArn stack,
                                                            Func<IAmazonCloudFormation> clientFactory)
         {
@@ -68,9 +68,9 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                                               disableRollback,
                                               roleArn,
                                               tags,
-                                              changesetName,
                                               stack,
-                                              clientFactory);
+                                              clientFactory,
+                                              variables);
         }
 
         public string Content => content();
@@ -109,7 +109,12 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                 StackName = stack.Value,
                 TemplateBody = Content,
                 Parameters = Inputs.ToList(),
-                ChangeSetName = changesetName,
+                /*
+                 * The change set name might be passed down directly, or this variable may be
+                 * set as part of the deployment. Reading the value from the variables here
+                 * allows us to catch any deferred construction of the change stack name.
+                 */
+                ChangeSetName = variables[AwsSpecialVariables.CloudFormation.Changesets.Name],
                 ChangeSetType = await GetStackStatus() == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,
                 Capabilities = capabilities,
                 RoleARN = roleArn

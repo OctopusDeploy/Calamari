@@ -8,6 +8,7 @@ using Amazon.CloudFormation.Model;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
+using Calamari.Aws.Deployment;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
@@ -32,17 +33,17 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                                         bool disableRollback,
                                         string roleArn,
                                         IEnumerable<KeyValuePair<string, string>> tags,
-                                        string changesetName,
                                         StackArn stack,
-                                        Func<IAmazonCloudFormation> clientFactory) : base(parameters.Inputs,
-                                                                                          stackName,
-                                                                                          iamCapabilities,
-                                                                                          disableRollback,
-                                                                                          roleArn,
-                                                                                          tags,
-                                                                                          changesetName,
-                                                                                          stack,
-                                                                                          clientFactory)
+                                        Func<IAmazonCloudFormation> clientFactory,
+                                        IVariables variables) : base(parameters.Inputs,
+                                                                     stackName,
+                                                                     iamCapabilities,
+                                                                     disableRollback,
+                                                                     roleArn,
+                                                                     tags,
+                                                                     stack,
+                                                                     clientFactory,
+                                                                     variables)
         {
             Inputs = parameters.Inputs;
             TemplateS3Url = templateS3Url;
@@ -58,7 +59,6 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                                                            bool disableRollback,
                                                            string roleArn,
                                                            IEnumerable<KeyValuePair<string, string>> tags,
-                                                           string changesetName,
                                                            StackArn stack,
                                                            Func<IAmazonCloudFormation> clientFactory)
         {
@@ -86,9 +86,9 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                                                 disableRollback,
                                                 roleArn,
                                                 tags,
-                                                changesetName,
                                                 stack,
-                                                clientFactory);
+                                                clientFactory,
+                                                variables);
         }
 
         /// <summary>
@@ -156,7 +156,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                 StackName = stack.Value,
                 TemplateURL = TemplateS3Url,
                 Parameters = Inputs.ToList(),
-                ChangeSetName = changesetName,
+                ChangeSetName = variables[AwsSpecialVariables.CloudFormation.Changesets.Name],
                 ChangeSetType = await GetStackStatus() == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,
                 Capabilities = capabilities,
                 RoleARN = roleArn
