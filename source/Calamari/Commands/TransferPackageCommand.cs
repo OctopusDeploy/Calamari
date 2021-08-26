@@ -32,7 +32,7 @@ namespace Calamari.Commands
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.fileSystem = fileSystem;
-           // this.packageJournal = packageJournal;
+            this.packageJournal = packageJournal;
         }
 
         public override int Execute(string[] commandLineArguments)
