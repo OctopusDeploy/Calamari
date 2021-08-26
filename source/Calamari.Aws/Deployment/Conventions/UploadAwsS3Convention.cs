@@ -202,12 +202,12 @@ namespace Calamari.Aws.Deployment.Conventions
             }
 
             Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files");
-            var substitutionPatterns = selection.VariableSubstitutionPatterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+            var substitutionPatterns = SplitFilePatternString(selection.VariableSubstitutionPatterns);
 
             if(substitutionPatterns.Any())
                 substituteInFiles.Substitute(deployment.CurrentDirectory, substitutionPatterns);
 
-            var structuredSubstitutionPatterns = selection.StructuredVariableSubstitutionPatterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+            var structuredSubstitutionPatterns = SplitFilePatternString(selection.StructuredVariableSubstitutionPatterns);
 
             if(structuredSubstitutionPatterns.Any())
                 structuredConfigVariablesService.ReplaceVariables(deployment.CurrentDirectory, structuredSubstitutionPatterns.ToList());
@@ -222,6 +222,8 @@ namespace Calamari.Aws.Deployment.Conventions
 
             return results;
         }
+
+        string[] SplitFilePatternString(string patterns) => patterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
 
         /// <summary>
         /// Uploads a single file with the given properties
