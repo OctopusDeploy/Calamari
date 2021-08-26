@@ -11,55 +11,57 @@ namespace Calamari.Tests.AWS.CloudFormation
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class CloudFormationFixture
     {
-        private string StackName;
-
-        public CloudFormationFixture()
-        {
-            StackName = $"calamariteststack{Guid.NewGuid().ToString("N").ToLowerInvariant()}";
-        }
+        string GenerateStackName() => $"calamariteststack{Guid.NewGuid().ToString("N").ToLowerInvariant()}";
 
         [Test]
         public async Task CreateOrUpdateCloudFormationTemplate()
         {
-            var templateFilePath = CloudFormationFixtureHelpers.WriteTemplateFile(CloudFormationFixtureHelpers.GetBasicS3Template(StackName));
+            var cloudFormationFixtureHelpers = new CloudFormationFixtureHelpers();
+            var stackName = GenerateStackName();
+            var templateFilePath = cloudFormationFixtureHelpers.WriteTemplateFile(CloudFormationFixtureHelpers.GetBasicS3Template(stackName));
 
             try
             {
-                CloudFormationFixtureHelpers.DeployTemplate(StackName, templateFilePath, new CalamariVariables());
+                cloudFormationFixtureHelpers.DeployTemplate(stackName, templateFilePath, new CalamariVariables());
 
-                await CloudFormationFixtureHelpers.ValidateStackExists(StackName, true);
+                await cloudFormationFixtureHelpers.ValidateStackExists(stackName, true);
 
-                await CloudFormationFixtureHelpers.ValidateS3BucketExists(StackName);
+                await cloudFormationFixtureHelpers.ValidateS3BucketExists(stackName);
             }
             finally
             {
-                CloudFormationFixtureHelpers.CleanupStack(StackName);
+                cloudFormationFixtureHelpers.CleanupStack(stackName);
             }
         }
 
         [Test]
         public async Task CreateOrUpdateCloudFormationS3Template()
         {
+            var cloudFormationFixtureHelpers = new CloudFormationFixtureHelpers("us-east-1");
+            var stackName = GenerateStackName();
+            
             try
             {
-                CloudFormationFixtureHelpers.DeployTemplateS3(StackName, new CalamariVariables());
+                cloudFormationFixtureHelpers.DeployTemplateS3(stackName, new CalamariVariables());
 
-                await CloudFormationFixtureHelpers.ValidateStackExists(StackName, true);
+                await cloudFormationFixtureHelpers.ValidateStackExists(stackName, true);
             }
             finally
             {
-                CloudFormationFixtureHelpers.CleanupStack(StackName);
+                cloudFormationFixtureHelpers.CleanupStack(stackName);
             }
         }
 
         [Test]
         public async Task DeleteCloudFormationStack()
         {
-            var templateFilePath = CloudFormationFixtureHelpers.WriteTemplateFile(CloudFormationFixtureHelpers.GetBasicS3Template(StackName));
+            var cloudFormationFixtureHelpers = new CloudFormationFixtureHelpers();
+            var stackName = GenerateStackName();
+            var templateFilePath = cloudFormationFixtureHelpers.WriteTemplateFile(CloudFormationFixtureHelpers.GetBasicS3Template(stackName));
 
-            CloudFormationFixtureHelpers.DeployTemplate(StackName, templateFilePath, new CalamariVariables());
-            CloudFormationFixtureHelpers.DeleteStack(StackName);
-            await CloudFormationFixtureHelpers.ValidateStackExists(StackName, false);
+            cloudFormationFixtureHelpers.DeployTemplate(stackName, templateFilePath, new CalamariVariables());
+            cloudFormationFixtureHelpers.DeleteStack(stackName);
+            await cloudFormationFixtureHelpers.ValidateStackExists(stackName, false);
         }
 
     }

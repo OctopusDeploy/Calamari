@@ -18,12 +18,13 @@ using FluentAssertions;
 
 namespace Calamari.Tests.AWS.CloudFormation
 {
-    public static class CloudFormationFixtureHelpers
-    {
-        static string region;
-        static CloudFormationFixtureHelpers()
+    public class CloudFormationFixtureHelpers
+    { 
+        string region;
+        
+        public CloudFormationFixtureHelpers(string fixedRegion = null)
         {
-            region = RegionRandomiser.GetARegion();
+            region = fixedRegion ?? RegionRandomiser.GetARegion();
         }
 
         public static string GetBasicS3Template(string stackName)
@@ -41,22 +42,21 @@ namespace Calamari.Tests.AWS.CloudFormation
     }}";
         }
 
-        public static string WriteTemplateFile(string template)
+        public string WriteTemplateFile(string template)
         {
             var templateFilePath = Path.GetTempFileName();
             File.WriteAllText(templateFilePath, template);
             return templateFilePath;
         }
 
-        public static async Task ValidateS3BucketExists(string stackName)
+        public async Task ValidateS3BucketExists(string stackName)
         {
             await ValidateS3(async client =>
             {
                 await client.GetBucketLocationAsync(stackName);
             });
         }
-
-        public static async Task ValidateS3(Func<AmazonS3Client, Task> execute)
+        async Task ValidateS3(Func<AmazonS3Client, Task> execute)
         {
             var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"), Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
             var config = new AmazonS3Config { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
@@ -66,7 +66,7 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
         }
 
-        public static async Task ValidateStackExists(string stackName, bool shouldExist)
+        public async Task ValidateStackExists(string stackName, bool shouldExist)
         {
             await ValidateCloudFormation(async (client) =>
             {
@@ -75,8 +75,7 @@ namespace Calamari.Tests.AWS.CloudFormation
                 stackStatus.Should().Be(shouldExist ? Aws.Deployment.Conventions.StackStatus.Completed : Aws.Deployment.Conventions.StackStatus.DoesNotExist);
             });
         }
-
-        static async Task ValidateCloudFormation(Func<AmazonCloudFormationClient, Task> execute)
+        async Task ValidateCloudFormation(Func<AmazonCloudFormationClient, Task> execute)
         {
             var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"), Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
             var config = new AmazonCloudFormationConfig { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
@@ -86,7 +85,7 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
         }
 
-        public static void DeployTemplate(string resourceName, string templateFilePath, IVariables variables)
+        public void DeployTemplate(string resourceName, string templateFilePath, IVariables variables)
         {
             var variablesFile = Path.GetTempFileName();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
@@ -118,7 +117,7 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
         }
 
-        public static void DeployTemplateS3(string resourceName, IVariables variables)
+        public void DeployTemplateS3(string resourceName, IVariables variables)
         {
             var variablesFile = Path.GetTempFileName();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
@@ -150,7 +149,7 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
         }
 
-        public static void CleanupStack(string stackName)
+        public void CleanupStack(string stackName)
         {
             try
             {
@@ -163,7 +162,7 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
         }
 
-        public static void DeleteStack(string stackName)
+        public void DeleteStack(string stackName)
         {
             var variablesFile = Path.GetTempFileName();
             var variables = new CalamariVariables();

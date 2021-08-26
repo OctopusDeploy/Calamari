@@ -133,9 +133,9 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         /// <param name="defaultValue">The return value when the user does not have the permissions to query the stacks</param>
         /// <returns>The current status of the stack</returns>
-        private Task<StackStatus> StackExists(StackArn stack, StackStatus defaultValue)
+        async Task<StackStatus> StackExists(StackArn stack, StackStatus defaultValue)
         {
-            return WithAmazonServiceExceptionHandling(() => clientFactory.StackExistsAsync(stack, defaultValue));
+            return await WithAmazonServiceExceptionHandling(async () => await clientFactory.StackExistsAsync(stack, defaultValue));
         }
 
         /// <summary>
