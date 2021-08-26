@@ -29,14 +29,14 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                                       StackArn stack,
                                       Func<IAmazonCloudFormation> clientFactory,
                                       IVariables variables) : base(parameters.Inputs,
-                                                                                        stackName,
-                                                                                        iamCapabilities,
-                                                                                        disableRollback,
-                                                                                        roleArn,
-                                                                                        tags,
-                                                                                        stack,
-                                                                                        clientFactory,
-                                                                                        variables)
+                                                                   stackName,
+                                                                   iamCapabilities,
+                                                                   disableRollback,
+                                                                   roleArn,
+                                                                   tags,
+                                                                   stack,
+                                                                   clientFactory,
+                                                                   variables)
         {
             this.content = content;
         }
