@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Linq;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Variables;
-using SharpCompress.Common;
 using Calamari.Deployment.PackageRetention.Repositories;
-using Newtonsoft.Json.Bson;
 using Octopus.Versioning;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
-    public class Journal
+    public class Journal : IJournal
     {
         readonly IJournalRepositoryFactory repositoryFactory;
 
@@ -21,14 +18,14 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RegisterPackageUse(string packageID, IVersion version, string deploymentID)
         {
-            RegisterPackageUse(new PackageIdentity(packageID, version.OriginalString), new DeploymentID(deploymentID));
+            RegisterPackageUse(new PackageIdentity(packageID, version.OriginalString), new ServerTaskID(deploymentID));
         }
         public void RegisterPackageUse(IVariables variables)
         {
-            RegisterPackageUse(new PackageIdentity(variables), new DeploymentID(variables));
+            RegisterPackageUse(new PackageIdentity(variables), new ServerTaskID(variables));
         }
 
-        public void RegisterPackageUse(PackageIdentity package, DeploymentID deploymentID)
+        public void RegisterPackageUse(PackageIdentity package, ServerTaskID deploymentID)
         {
             var repository = repositoryFactory.CreateJournalRepository();
 
@@ -48,7 +45,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             repository.Commit();
         }
 
-        public void DeregisterPackageUse(PackageIdentity package, DeploymentID deploymentID)
+        public void DeregisterPackageUse(PackageIdentity package, ServerTaskID deploymentID)
         {
             var repository = repositoryFactory.CreateJournalRepository();
 

@@ -1,4 +1,5 @@
 ﻿using Calamari.Commands.Support;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Model;
@@ -12,7 +13,7 @@ namespace Calamari.Deployment.PackageRetention
         readonly IVariables variables;
         readonly Journal journal;
 
-        DeploymentID DeploymentID => new DeploymentID(variables.Get(KnownVariables.Deployment.Id));
+        ServerTaskID DeploymentID => new ServerTaskID(variables.Get(KnownVariables.ServerTask.Id));
         PackageIdentity Package => new PackageIdentity("MyPackage", "1.0");
 
         public CommandJournalDecorator(ILog log, ICommandWithArgs command, IVariables variables, Journal journal)

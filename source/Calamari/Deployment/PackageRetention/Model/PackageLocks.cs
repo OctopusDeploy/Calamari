@@ -1,22 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
     public class PackageLocks
     {
-        readonly Dictionary<DeploymentID, DateTime> packageLocks;
+        readonly Dictionary<ServerTaskID, DateTime> packageLocks;
 
-        internal PackageLocks(Dictionary<DeploymentID, DateTime> packageLocks)
+        internal PackageLocks(Dictionary<ServerTaskID, DateTime> packageLocks)
         {
-            this.packageLocks = packageLocks ?? new Dictionary<DeploymentID, DateTime>();
+            this.packageLocks = packageLocks ?? new Dictionary<ServerTaskID, DateTime>();
         }
 
-        public PackageLocks() : this(new Dictionary<DeploymentID, DateTime>())
+        public PackageLocks() : this(new Dictionary<ServerTaskID, DateTime>())
         {
         }
 
-        public void AddLock(DeploymentID deploymentID)
+        public void AddLock(ServerTaskID deploymentID)
         {
             if (packageLocks.ContainsKey(deploymentID))
                 packageLocks[deploymentID] = DateTime.Now;
@@ -24,7 +25,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                 packageLocks.Add(deploymentID, DateTime.Now);
         }
 
-        public void RemoveLock(DeploymentID deploymentID)
+        public void RemoveLock(ServerTaskID deploymentID)
         {
             packageLocks.Remove(deploymentID);
         }

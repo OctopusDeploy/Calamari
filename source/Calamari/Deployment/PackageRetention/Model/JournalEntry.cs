@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {

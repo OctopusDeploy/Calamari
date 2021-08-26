@@ -5,6 +5,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -17,6 +18,8 @@ namespace Calamari.Commands
     [Command("apply-delta", Description = "Applies a delta file to a package to create a new version of the package")]
     public class ApplyDeltaCommand : Command
     {
+        readonly IJournal packageJournal;
+
         string? basisFileName;
         string? fileHash;
         string? deltaFileName;
@@ -29,11 +32,13 @@ namespace Calamari.Commands
         readonly ICommandLineRunner commandLineRunner;
         readonly ILog log;
 
-        public ApplyDeltaCommand(ILog log, IFreeSpaceChecker freeSpaceChecker, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
+        public ApplyDeltaCommand(ILog log, IFreeSpaceChecker freeSpaceChecker, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner,
+                                 IJournal packageJournal)
         {
             this.freeSpaceChecker = freeSpaceChecker;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
+            this.packageJournal = packageJournal;
             this.log = log;
             Options.Add("basisFileName=", "The file that the delta was created for.", v => basisFileName = v);
             Options.Add("fileHash=", "", v => fileHash = v);

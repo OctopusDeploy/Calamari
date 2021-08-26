@@ -3,6 +3,7 @@ using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -18,6 +19,7 @@ namespace Calamari.Commands
     {
         readonly ILog log;
         readonly IPackageStore packageStore;
+        readonly IJournal packageJournal;
         string packageId;
         string rawPackageVersion;
         string packageHash;
@@ -25,10 +27,12 @@ namespace Calamari.Commands
         VersionFormat versionFormat = VersionFormat.Semver;
 
         //TODO: move journal/variable(?) stuff to mediator
-        public FindPackageCommand(ILog log, ICalamariFileSystem fileSystem, IPackageStore packageStore)
+        public FindPackageCommand(ILog log, ICalamariFileSystem fileSystem, IPackageStore packageStore, IJournal packageJournal)
         {
             this.log = log;
             this.packageStore = packageStore;
+            this.packageJournal = packageJournal;
+            
             Options.Add("packageId=", "Package ID to find", v => packageId = v);
             Options.Add("packageVersion=", "Package version to find", v => rawPackageVersion = v);
             Options.Add("packageHash=", "Package hash to compare against", v => packageHash = v);

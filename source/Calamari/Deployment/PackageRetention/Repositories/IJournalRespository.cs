@@ -1,4 +1,5 @@
-﻿using Calamari.Deployment.PackageRetention.Model;
+﻿using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Deployment.PackageRetention.Repositories
 {

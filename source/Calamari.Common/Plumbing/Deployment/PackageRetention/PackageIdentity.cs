@@ -1,9 +1,8 @@
 ﻿using System;
-using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.Versioning;
+using Calamari.Deployment.PackageRetention;
 
-namespace Calamari.Deployment.PackageRetention
+namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
     public class PackageIdentity
     {
