@@ -8,6 +8,7 @@ using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
@@ -32,7 +33,7 @@ namespace Calamari.Aws.Commands
 
         public UploadAwsS3Command(
             ILog log,
-            IVariables variables, 
+            IVariables variables,
             ICalamariFileSystem fileSystem,
             ISubstituteInFiles substituteInFiles,
             IExtractPackage extractPackage
@@ -63,7 +64,10 @@ namespace Calamari.Aws.Commands
             var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
             var bucketKeyProvider = new BucketKeyProvider();
             var targetType = GetTargetMode(targetMode);
-            
+
+            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
+            var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, variables, fileSystem, log);
+
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)).When(_ => targetType == S3TargetMode.FileSelections),
@@ -77,7 +81,8 @@ namespace Calamari.Aws.Commands
                     targetType,
                     new VariableS3TargetOptionsProvider(variables),
                     bucketKeyProvider,
-                    substituteInFiles
+                    substituteInFiles,
+                    structuredConfigVariablesService
                 )
             };
 

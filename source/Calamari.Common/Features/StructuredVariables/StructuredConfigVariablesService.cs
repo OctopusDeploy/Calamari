@@ -11,6 +11,7 @@ namespace Calamari.Common.Features.StructuredVariables
     public interface IStructuredConfigVariablesService
     {
         void ReplaceVariables(string currentDirectory);
+        void ReplaceVariables(string currentDirectory, List<string> targets);
     }
 
     public class StructuredConfigVariablesService : IStructuredConfigVariablesService
@@ -39,7 +40,11 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public void ReplaceVariables(string currentDirectory)
         {
-            var targets = variables.GetPaths(ActionVariables.StructuredConfigurationVariablesTargets);
+            ReplaceVariables(currentDirectory, variables.GetPaths(ActionVariables.StructuredConfigurationVariablesTargets));
+        }
+
+        public void ReplaceVariables(string currentDirectory, List<string> targets)
+        {
             var onlyPerformJsonReplacement = variables.GetFlag(ActionVariables.StructuredConfigurationFallbackFlag);
 
             foreach (var target in targets)
