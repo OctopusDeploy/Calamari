@@ -24,7 +24,6 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
         protected readonly string roleArn;
         readonly Func<IAmazonCloudFormation> clientFactory;
         protected readonly IVariables variables;
-
         public BaseTemplate(IEnumerable<Parameter> inputs,
                             string stackName,
                             List<string> iamCapabilities,

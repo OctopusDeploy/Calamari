@@ -18,13 +18,13 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
 using Octopus.CoreUtilities;
 using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;
-using Tag = Amazon.CloudFormation.Model.Tag;
 
 namespace Calamari.Aws.Integration.CloudFormation.Templates
 {
     public class CloudFormationS3Template : BaseTemplate
     {
         const string ParametersFile = "parameters.json";
+        readonly string templateS3Url;
 
         public CloudFormationS3Template(ITemplateInputs<Parameter> parameters,
                                         string templateS3Url,
@@ -45,8 +45,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                                                                      clientFactory,
                                                                      variables)
         {
-            Inputs = parameters.Inputs;
-            TemplateS3Url = templateS3Url;
+            this.templateS3Url = templateS3Url;
         }
 
         public static ICloudFormationRequestBuilder Create(string templateS3Url,
@@ -119,15 +118,12 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             }
         }
 
-        string TemplateS3Url { get; }
-        public IEnumerable<Parameter> Inputs { get; }
-
         public override CreateStackRequest BuildCreateStackRequest()
         {
             return new CreateStackRequest
             {
                 StackName = stackName,
-                TemplateURL = TemplateS3Url,
+                TemplateURL = templateS3Url,
                 Parameters = Inputs.ToList(),
                 Capabilities = capabilities,
                 DisableRollback = disableRollback,
@@ -141,7 +137,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             return new UpdateStackRequest
             {
                 StackName = stackName,
-                TemplateURL = TemplateS3Url,
+                TemplateURL = templateS3Url,
                 Parameters = Inputs.ToList(),
                 Capabilities = capabilities,
                 RoleARN = roleArn,
@@ -154,7 +150,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             return new CreateChangeSetRequest
             {
                 StackName = stack.Value,
-                TemplateURL = TemplateS3Url,
+                TemplateURL = templateS3Url,
                 Parameters = Inputs.ToList(),
                 ChangeSetName = variables[AwsSpecialVariables.CloudFormation.Changesets.Name],
                 ChangeSetType = await GetStackStatus() == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,

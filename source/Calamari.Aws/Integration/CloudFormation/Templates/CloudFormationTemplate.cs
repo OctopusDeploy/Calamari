@@ -9,7 +9,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
-using Newtonsoft.Json;
 using Octopus.CoreUtilities;
 using StackStatus = Calamari.Aws.Deployment.Conventions.StackStatus;
 
