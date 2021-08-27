@@ -11,8 +11,8 @@ namespace Calamari.Tests.AWS.CloudFormation
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class CloudFormationVariableReplacementFixture
     {
-        private string StackName;
-        private string ReplacedName;
+        string StackName;
+        string ReplacedName;
 
         public CloudFormationVariableReplacementFixture()
         {
@@ -24,7 +24,8 @@ namespace Calamari.Tests.AWS.CloudFormation
         [Test]
         public async Task CreateCloudFormationWithStructuredVariableReplacement()
         {
-            var templateFilePath = CloudFormationFixtureHelpers.WriteTemplateFile(CloudFormationFixtureHelpers.GetBasicS3Template(StackName));
+            var cloudFormationFixtureHelpers = new CloudFormationFixtureHelpers();
+            var templateFilePath = cloudFormationFixtureHelpers.WriteTemplateFile(CloudFormationFixtureHelpers.GetBasicS3Template(StackName));
             
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.Package.EnabledFeatures, "Octopus.Features.JsonConfigurationVariables");
@@ -33,12 +34,12 @@ namespace Calamari.Tests.AWS.CloudFormation
             
             try
             {
-                CloudFormationFixtureHelpers.DeployTemplate(StackName, templateFilePath, variables);
-                await CloudFormationFixtureHelpers.ValidateS3BucketExists(ReplacedName);
+                cloudFormationFixtureHelpers.DeployTemplate(StackName, templateFilePath, variables);
+                await cloudFormationFixtureHelpers.ValidateS3BucketExists(ReplacedName);
             }
             finally
             {
-                CloudFormationFixtureHelpers.CleanupStack(StackName);
+                cloudFormationFixtureHelpers.CleanupStack(StackName);
             }
         }
     }
