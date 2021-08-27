@@ -29,7 +29,6 @@ namespace Calamari.Terraform
         readonly string templateDirectory;
         readonly string logPath;
         Dictionary<string, string> defaultEnvironmentVariables;
-        readonly Version version;
         readonly TemporaryDirectory disposableDirectory = TemporaryDirectory.Create();
         bool haveLoggedUntestedVersionInfoMessage = false;
 
@@ -81,12 +80,14 @@ namespace Calamari.Terraform
 
             InitializeTerraformEnvironmentVariables();
 
-            this.version = GetVersion();
+            Version = GetVersion();
 
             InitializePlugins();
 
             InitializeWorkspace();
         }
+
+        public Version Version { get; }
 
         public string ActionParams => variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams);
 
@@ -157,10 +158,10 @@ namespace Calamari.Terraform
 
         void LogUntestedVersionMessageIfNeeded(CommandResult commandResult, Predicate<CommandResult> isSuccess)
         {
-            if (this.version != null && !supportedVersionRange.Satisfies(new NuGetVersion(version)))
+            if (this.Version != null && !supportedVersionRange.Satisfies(new NuGetVersion(Version)))
             {
                 var messageCode = "Terraform-Configuration-UntestedTerraformCLIVersion";
-                var message = $"{log.FormatLink($"https://g.octopushq.com/Terraform#{messageCode.ToLower()}", messageCode)}: Terraform steps are tested against versions {(supportedVersionRange.IsMinInclusive ? "" : ">")}{supportedVersionRange.MinVersion.ToNormalizedString()} to {(supportedVersionRange.IsMaxInclusive ? "" : "<")}{supportedVersionRange.MaxVersion.ToNormalizedString()} of the Terraform CLI. Version {version} of Terraform CLI has not been tested, however Terraform commands may work successfully with this version. Click the error code link for more information.";
+                var message = $"{log.FormatLink($"https://g.octopushq.com/Terraform#{messageCode.ToLower()}", messageCode)}: Terraform steps are tested against versions {(supportedVersionRange.IsMinInclusive ? "" : ">")}{supportedVersionRange.MinVersion.ToNormalizedString()} to {(supportedVersionRange.IsMaxInclusive ? "" : "<")}{supportedVersionRange.MaxVersion.ToNormalizedString()} of the Terraform CLI. Version {Version} of Terraform CLI has not been tested, however Terraform commands may work successfully with this version. Click the error code link for more information.";
                 if (isSuccess == null || !isSuccess(commandResult))
                 {
                     log.Warn(message);
@@ -211,7 +212,7 @@ namespace Calamari.Terraform
             var allowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
             string initCommand = $"init -no-color";
 
-            if (version?.IsLessThan("0.15.0") == true)
+            if (Version?.IsLessThan("0.15.0") == true)
                 initCommand += $" -get-plugins={allowPluginDownloads.ToString().ToLower()}";
 
             initCommand += $" {initParams}";
@@ -240,7 +241,7 @@ namespace Calamari.Terraform
                             args.ErrorContext.Handled = true;
                         }
             });
-            
+
             if (hasParsingFailed || !Version.TryParse(versionJsonOutput.Version, out parsedVersion))
             {
                 // fallback to regex match for older versions

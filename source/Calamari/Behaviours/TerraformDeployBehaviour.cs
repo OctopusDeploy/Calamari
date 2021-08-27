@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 
 namespace Calamari.Terraform.Behaviours
 {
-    abstract class TerraformDeployBehaviour : IDeployBehaviour
+    public abstract class TerraformDeployBehaviour : IDeployBehaviour
     {
         protected readonly ILog log;
 
