@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Newtonsoft.Json;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
     public class PackageLocks
     {
+        [JsonProperty]
         readonly Dictionary<ServerTaskID, DateTime> packageLocks;
 
+        [JsonConstructor]
         internal PackageLocks(Dictionary<ServerTaskID, DateTime> packageLocks)
         {
             this.packageLocks = packageLocks ?? new Dictionary<ServerTaskID, DateTime>();

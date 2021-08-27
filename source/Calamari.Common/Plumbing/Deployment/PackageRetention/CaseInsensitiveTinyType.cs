@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Dynamic;
 using YamlDotNet.Core.Tokens;
 
 namespace Calamari.Deployment.PackageRetention
@@ -15,6 +16,16 @@ namespace Calamari.Deployment.PackageRetention
         protected bool Equals(CaseInsensitiveTinyType other)
         {
             return Value == other.Value;
+        }
+
+        static object Create(Type type, string value)
+        {
+            return Activator.CreateInstance(type, value);
+        }
+
+        public static T Create<T>(string value) where T : CaseInsensitiveTinyType
+        {
+            return (T)Create(typeof(T), value);
         }
 
         public override bool Equals(object obj)
@@ -45,6 +56,11 @@ namespace Calamari.Deployment.PackageRetention
         public static bool operator !=(CaseInsensitiveTinyType first, CaseInsensitiveTinyType second)
         {
             return !(first == second);
+        }
+
+        public override string ToString()
+        {
+            return Value;
         }
     }
 }

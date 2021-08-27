@@ -1,9 +1,11 @@
 ﻿using System;
+using System.ComponentModel;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
 
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
+    //[TypeConverter(typeof(TinyTypeTypeConverter<ServerTaskID>))]
     public class ServerTaskID : CaseInsensitiveTinyType
     {
         public ServerTaskID(string value) : base(value)

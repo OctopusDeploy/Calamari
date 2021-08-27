@@ -1,6 +1,7 @@
 ﻿using System;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
+using Newtonsoft.Json;
 
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
@@ -21,6 +22,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
             Version = variables.Get(PackageVariables.PackageVersion);
         }
 
+        [JsonConstructor]
         public PackageIdentity(PackageID packageID, string version)
         {
             PackageID = packageID ?? throw new ArgumentNullException(nameof(packageID));
@@ -61,6 +63,11 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         public static bool operator !=(PackageIdentity first, PackageIdentity second)
         {
             return !(first == second);
+        }
+
+        public override string ToString()
+        {
+            return $"{PackageID} v{Version}";
         }
     }
 }

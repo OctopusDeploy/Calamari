@@ -28,6 +28,7 @@ namespace Calamari.Commands
         bool skipVerification;
         
         readonly IFreeSpaceChecker freeSpaceChecker;
+        readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly ILog log;
@@ -36,6 +37,7 @@ namespace Calamari.Commands
                                  IJournal packageJournal)
         {
             this.freeSpaceChecker = freeSpaceChecker;
+            this.variables = variables;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.packageJournal = packageJournal;
@@ -88,6 +90,8 @@ namespace Calamari.Commands
                     fileSystem.DeleteFile(tempNewFilePath, FailureOptions.ThrowOnFailure);
                     throw new CommandLineException("OctoDiff", result.ExitCode, result.Errors);
                 }
+
+                packageJournal.RegisterPackageUse(variables);
 
                 File.Move(tempNewFilePath, newFilePath);
 

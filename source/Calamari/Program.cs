@@ -2,6 +2,7 @@
 using Calamari.Commands.Support;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Autofac.Features.Metadata;
@@ -20,6 +21,7 @@ using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.LaunchTools;
+using IContainer = Autofac.IContainer;
 using JournalEntry = Calamari.Common.Features.Deployment.Journal.JournalEntry;
 
 namespace Calamari
@@ -53,6 +55,10 @@ namespace Calamari
 
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
+            //TODO: this is just for testing for now...
+            TypeDescriptor.AddAttributes(typeof(ServerTaskID), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskID>)));
+
+
             // Setting extensions here as in the new Modularity world we don't register extensions
             // and GetAllAssembliesToRegister doesn't get passed CommonOptions
             extensions = options.Extensions;

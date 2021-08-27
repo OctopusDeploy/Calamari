@@ -1,12 +1,11 @@
 ﻿using System.Linq;
-using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
-using Calamari.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
-using Calamari.Tests.Fixtures.Integration.FileSystem;
-using Calamari.Tests.Helpers;
+using NSubstitute;
 using NUnit.Framework;
+//using Octopus.Diagnostics;
 
 namespace Calamari.Tests.Fixtures.PackageRetention
 {
@@ -18,7 +17,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         {
             var thePackage = new PackageIdentity("Package", "1.0");
             var theDeployment = new ServerTaskID("Deployment-1");
-            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
 
             journal.RegisterPackageUse(thePackage, theDeployment);
 
@@ -30,7 +29,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         {
             var thePackage = new PackageIdentity("Package", "1.0");
             var theDeployment = new ServerTaskID("Deployment-1");
-            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
 
             journal.RegisterPackageUse(thePackage, theDeployment);
             journal.DeregisterPackageUse(thePackage, theDeployment);
@@ -45,7 +44,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var deploymentOne = new ServerTaskID("Deployment-1");
             var deploymentTwo = new ServerTaskID("Deployment-2");
 
-            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.RegisterPackageUse(thePackage, deploymentTwo);
             journal.DeregisterPackageUse(thePackage, deploymentOne);
@@ -60,7 +59,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var deploymentOne = new ServerTaskID("Deployment-1");
             var deploymentTwo = new ServerTaskID("Deployment-2");
 
-            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.RegisterPackageUse(thePackage, deploymentTwo);
             journal.DeregisterPackageUse(thePackage, deploymentOne);
@@ -75,7 +74,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new ServerTaskID("Deployment-1");
 
-            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
 
             Assert.AreEqual(1, journal.GetUsage(thePackage).Count());
@@ -88,7 +87,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var deploymentOne = new ServerTaskID("Deployment-1");
             var deploymentTwo = new ServerTaskID("Deployment-1");
 
-            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.RegisterPackageUse(thePackage, deploymentTwo);
 
@@ -102,7 +101,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new ServerTaskID("Deployment-1");
 
-            var journal = new Journal(new JournalInMemoryRepositoryFactory());
+            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.DeregisterPackageUse(thePackage, deploymentOne);
 

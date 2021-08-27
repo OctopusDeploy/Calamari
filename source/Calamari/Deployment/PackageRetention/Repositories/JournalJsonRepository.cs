@@ -70,13 +70,14 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         {
             using (semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal"))
             {
-                var json = JsonConvert.SerializeObject(journalEntries);
+                var journalEntryList = journalEntries.Select(p => p.Value);
+                var json = JsonConvert.SerializeObject(journalEntryList);
                 fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
 
                 //save to temp file first
                 var tempFilePath = $"{journalPath}.temp.{Guid.NewGuid()}.json";
 
-                fileSystem.WriteAllText(journalPath, tempFilePath, Encoding.Default);
+                fileSystem.WriteAllText(tempFilePath,json, Encoding.Default);
                 fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
             }
         }

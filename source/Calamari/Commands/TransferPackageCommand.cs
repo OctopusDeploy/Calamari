@@ -55,7 +55,7 @@ namespace Calamari.Commands
             try
             {
                 conventionRunner.RunConventions();
-                packageJournal.RegisterPackageUse(new PackageIdentity(variables), new ServerTaskID(variables));
+                packageJournal.RegisterPackageUse(variables);
                 deploymentJournalWriter.AddJournalEntry(deployment, true);
             }
             catch (Exception)

@@ -18,6 +18,7 @@ namespace Calamari.Commands
     public class FindPackageCommand : Command
     {
         readonly ILog log;
+        readonly IVariables variables;
         readonly IPackageStore packageStore;
         readonly IJournal packageJournal;
         string packageId;
@@ -27,9 +28,10 @@ namespace Calamari.Commands
         VersionFormat versionFormat = VersionFormat.Semver;
 
         //TODO: move journal/variable(?) stuff to mediator
-        public FindPackageCommand(ILog log, ICalamariFileSystem fileSystem, IPackageStore packageStore, IJournal packageJournal)
+        public FindPackageCommand(ILog log, IVariables variables, IPackageStore packageStore, IJournal packageJournal)
         {
             this.log = log;
+            this.variables = variables;
             this.packageStore = packageStore;
             this.packageJournal = packageJournal;
             
@@ -76,7 +78,7 @@ namespace Calamari.Commands
 
             //Exact package found, so we need to register use and lock it.  We don't lock on partial finds, because there may be too many packages, blocking retention later,
             //  and we can lock them on apply delta anyway.
-          //  packageJournal.RegisterPackageUse(packageId, version, variables.Get(KnownVariables.Deployment.Id));
+            packageJournal.RegisterPackageUse(variables);
 
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
             LogPackageFound(

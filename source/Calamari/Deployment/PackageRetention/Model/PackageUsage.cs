@@ -2,16 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Newtonsoft.Json;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
     public class PackageUsage
     {
+        [JsonProperty]
         readonly Dictionary<ServerTaskID, List<DateTime>> usages;
 
-        internal PackageUsage(Dictionary<ServerTaskID, List<DateTime>> usageRecord = null)
+        [JsonConstructor]
+        internal PackageUsage(Dictionary<ServerTaskID, List<DateTime>> usages = null)
         {
-            usages = usageRecord ?? new Dictionary<ServerTaskID, List<DateTime>>();
+            this.usages = usages ?? new Dictionary<ServerTaskID, List<DateTime>>();
         }
 
         public void AddUsage(ServerTaskID deploymentID)
@@ -27,6 +30,11 @@ namespace Calamari.Deployment.PackageRetention.Model
             return usages.SelectMany(u => u.Value);
         }
 
+        public Dictionary<ServerTaskID, List<DateTime>> AsDictionary()
+        {
+            return usages;
+        }
+        
         /*
         public IEnumerable<(DateTime When, int Count)> GetUsageCountsWhens()
         {
