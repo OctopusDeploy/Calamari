@@ -114,7 +114,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
             catch (UriFormatException ex)
             {
                 log.Error($"The parameters URL of {templateParameterS3Url} is invalid");
-                throw ex;
+                throw;
             }
         }
 

@@ -6,7 +6,7 @@ using Calamari.Common.Util;
 
 namespace Calamari.Aws.Integration.CloudFormation.Templates
 {
-    public interface ICloudFormationRequestBuilder : ITemplateInputs<Parameter>//, ITemplateOutputs<StackFormationNamedOutput>
+    public interface ICloudFormationRequestBuilder : ITemplateInputs<Parameter>
     {
         CreateStackRequest BuildCreateStackRequest();
 

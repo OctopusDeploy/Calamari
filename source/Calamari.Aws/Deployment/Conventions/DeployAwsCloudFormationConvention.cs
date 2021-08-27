@@ -217,7 +217,7 @@ namespace Calamari.Aws.Deployment.Conventions
             catch (AmazonServiceException ex)
             {
                 LogAmazonServiceException(ex);
-                throw ex;
+                throw;
             }
         }
 
