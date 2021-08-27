@@ -23,6 +23,7 @@ using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
@@ -156,7 +157,7 @@ namespace Calamari.Tests.AWS
                            {
                                var file = await client.GetObjectAsync(bucketName, $"{prefix}file.json");
                                var text = new StreamReader(file.ResponseStream).ReadToEnd();
-                               text.Should().Contain("InjectedValue");
+                               JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
                            });
         }
 
@@ -186,7 +187,7 @@ namespace Calamari.Tests.AWS
                            {
                                var file = await client.GetObjectAsync(bucketName, $"myfile.json");
                                var text = new StreamReader(file.ResponseStream).ReadToEnd();
-                               text.Should().Contain("InjectedValue");
+                               JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
                            });
         }
 
