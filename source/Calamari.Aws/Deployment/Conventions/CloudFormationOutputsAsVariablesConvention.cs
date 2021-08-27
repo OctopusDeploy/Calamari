@@ -24,23 +24,19 @@ namespace Calamari.Aws.Deployment.Conventions
     {
         private readonly Func<IAmazonCloudFormation> clientFactory;
         private readonly Func<RunningDeployment, StackArn> stackProvider;
-        private readonly Func<bool> hasOutputs;
 
         public CloudFormationOutputsAsVariablesConvention(
             Func<IAmazonCloudFormation> clientFactory,
             StackEventLogger logger,
-            Func<RunningDeployment, StackArn> stackProvider,
-            Func<bool> hasOutputs = null): base(logger)
+            Func<RunningDeployment, StackArn> stackProvider): base(logger)
         {
             Guard.NotNull(clientFactory, "Client factory must not be null");
             Guard.NotNull(stackProvider, "Stack provider must not be null");
-            
+
             this.clientFactory = clientFactory;
             this.stackProvider = stackProvider;
-            this.hasOutputs = hasOutputs;
-            this.hasOutputs = () => true;
         }
-        
+
         public override void Install(RunningDeployment deployment)
         {
             InstallAsync(deployment).GetAwaiter().GetResult();
@@ -50,17 +46,17 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment, "Deployment must not be null");
             var stack = stackProvider(deployment);
-            
+
             Guard.NotNull(stack, "The provided stack may not be null.");
-            
-            return GetAndPipeOutputVariablesWithRetry(() => 
-                    WithAmazonServiceExceptionHandling(async () => (await QueryStackAsync(clientFactory, stack)).ToMaybe()), 
-                deployment.Variables, 
-                true, 
-                CloudFormationDefaults.RetryCount, 
+
+            return GetAndPipeOutputVariablesWithRetry(() =>
+                    WithAmazonServiceExceptionHandling(async () => (await QueryStackAsync(clientFactory, stack)).ToMaybe()),
+                deployment.Variables,
+                true,
+                CloudFormationDefaults.RetryCount,
                 CloudFormationDefaults.StatusWaitPeriod);
         }
-      
+
         public async Task<(IReadOnlyList<VariableOutput> result, bool success)> GetOutputVariables(
             Func<Task<Maybe<Stack>>> query)
         {
@@ -70,7 +66,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 stack.Outputs.Select(p => new VariableOutput(p.OutputKey, p.OutputValue)).ToList();
 
             return (await query()).Select(ConvertStackOutputs)
-                .Map(result => (result: result.SomeOr(new List<VariableOutput>()), success: hasOutputs() || result.Some()));
+                .Map(result => (result: result.SomeOr(new List<VariableOutput>()), success: true));
         }
 
         public void PipeOutputs(IEnumerable<VariableOutput> outputs, IVariables variables, string name = "AwsOutputs")
