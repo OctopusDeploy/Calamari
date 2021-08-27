@@ -13,6 +13,7 @@ using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
@@ -36,6 +37,7 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly IProvideS3TargetOptions optionsProvider;
         readonly IBucketKeyProvider bucketKeyProvider;
         readonly ISubstituteInFiles substituteInFiles;
+        readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         private readonly bool md5HashSupported;
 
         private static readonly HashSet<S3CannedACL> CannedAcls = new HashSet<S3CannedACL>(ConstantHelpers.GetConstantValues<S3CannedACL>());
@@ -48,7 +50,8 @@ namespace Calamari.Aws.Deployment.Conventions
             S3TargetMode targetMode,
             IProvideS3TargetOptions optionsProvider,
             IBucketKeyProvider bucketKeyProvider,
-            ISubstituteInFiles substituteInFiles
+            ISubstituteInFiles substituteInFiles,
+            IStructuredConfigVariablesService structuredConfigVariablesService
         )
         {
             this.log = log;
@@ -59,6 +62,7 @@ namespace Calamari.Aws.Deployment.Conventions
             this.optionsProvider = optionsProvider;
             this.bucketKeyProvider = bucketKeyProvider;
             this.substituteInFiles = substituteInFiles;
+            this.structuredConfigVariablesService = structuredConfigVariablesService;
             this.md5HashSupported = HashCalculator.IsAvailableHashingAlgorithm(MD5.Create);
         }
 
@@ -198,10 +202,15 @@ namespace Calamari.Aws.Deployment.Conventions
             }
 
             Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files");
-            var substitutionPatterns = selection.VariableSubstitutionPatterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+            var substitutionPatterns = SplitFilePatternString(selection.VariableSubstitutionPatterns);
 
             if(substitutionPatterns.Any())
                 substituteInFiles.Substitute(deployment.CurrentDirectory, substitutionPatterns);
+
+            var structuredSubstitutionPatterns = SplitFilePatternString(selection.StructuredVariableSubstitutionPatterns);
+
+            if(structuredSubstitutionPatterns.Any())
+                structuredConfigVariablesService.ReplaceVariables(deployment.CurrentDirectory, structuredSubstitutionPatterns.ToList());
 
             foreach (var matchedFile in files)
             {
@@ -213,6 +222,8 @@ namespace Calamari.Aws.Deployment.Conventions
 
             return results;
         }
+
+        string[] SplitFilePatternString(string patterns) => patterns?.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
 
         /// <summary>
         /// Uploads a single file with the given properties
@@ -235,6 +246,9 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if(selection.PerformVariableSubstitution)
                 substituteInFiles.Substitute(deployment.CurrentDirectory, new List<string>{ filePath });
+
+            if(selection.PerformStructuredVariableSubstitution)
+                structuredConfigVariablesService.ReplaceVariables(deployment.CurrentDirectory, new List<string>{ filePath });
 
             return CreateRequest(filePath, GetBucketKey(filePath.AsRelativePathFrom(deployment.StagingDirectory), selection), selection)
                     .Tee(x => LogPutObjectRequest(filePath, x))

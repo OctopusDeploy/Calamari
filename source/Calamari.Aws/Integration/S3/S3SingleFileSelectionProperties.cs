@@ -8,5 +8,6 @@
         public BucketKeyBehaviourType BucketKeyBehaviour { get; set; }
         public string Path { get; set; }
         public bool PerformVariableSubstitution { get; set; }
+        public bool PerformStructuredVariableSubstitution { get; set; }
     }
 }

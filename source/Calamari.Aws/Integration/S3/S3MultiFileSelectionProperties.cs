@@ -8,5 +8,6 @@ namespace Calamari.Aws.Integration.S3
         public string Pattern { get; set; }
 
         public string VariableSubstitutionPatterns { get; set; }
+        public string StructuredVariableSubstitutionPatterns { get; set; }
     }
 }
