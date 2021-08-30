@@ -3,6 +3,7 @@ using Octopus.Server.Extensibility.Extensions.Mappings;
 using Sashimi.AzureAppService;
 using Sashimi.AzureAppService.Endpoints;
 using Sashimi.Server.Contracts.ActionHandlers;
+using Sashimi.Server.Contracts.CloudTemplates;
 using Sashimi.Server.Contracts.Endpoints;
 
 namespace Sashimi.AzureWebApp
@@ -26,6 +27,9 @@ namespace Sashimi.AzureWebApp
                      builder.RegisterType<AzureWebAppServiceMessageHandler>()
                             .AsSelf()
                             .InstancePerLifetimeScope();
+                     builder.RegisterType<AzureCloudTemplateHandler>()
+                            .As<ICloudTemplateHandler>()
+                            .SingleInstance();
               }
        }
 }
