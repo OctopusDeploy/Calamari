@@ -1,4 +1,5 @@
-﻿using Sashimi.Server.Contracts;
+﻿using System;
+using Sashimi.Server.Contracts;
 
 namespace Sashimi.Tests.Shared.Server
 {
@@ -7,9 +8,7 @@ namespace Sashimi.Tests.Shared.Server
         public bool IsJson(string template)
         {
             if (string.IsNullOrWhiteSpace(template))
-            {
                 return false;
-            }
 
             var enclosedInCurlies = template.StartsWith("{") && template.EndsWith("}");
             var enclosedInSquares = template.StartsWith("[") && template.EndsWith("]");
@@ -19,9 +18,7 @@ namespace Sashimi.Tests.Shared.Server
         public bool IsYaml(string template)
         {
             if (string.IsNullOrWhiteSpace(template))
-            {
                 return false;
-            }
 
             return !IsJson(template);
         }

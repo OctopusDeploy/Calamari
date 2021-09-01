@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using System;
+using Autofac;
 using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.NamingIsHard
@@ -7,9 +8,10 @@ namespace Sashimi.NamingIsHard
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<MyActionHandler>().As<IActionHandler>().AsSelf()
-                .InstancePerLifetimeScope();
-
+            builder.RegisterType<MyActionHandler>()
+                   .As<IActionHandler>()
+                   .AsSelf()
+                   .InstancePerLifetimeScope();
         }
     }
 }

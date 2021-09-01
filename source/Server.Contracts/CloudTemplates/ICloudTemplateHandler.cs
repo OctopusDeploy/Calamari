@@ -1,3 +1,4 @@
+using System;
 using Octopus.Server.Extensibility.Metadata;
 
 namespace Sashimi.Server.Contracts.CloudTemplates

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Commands;
@@ -20,10 +21,12 @@ namespace Calamari.Tests.Helpers
         public CaptureCommandInvocationOutputSink Output { get; }
 
         protected override List<ICommandInvocationOutputSink> GetCommandOutputs(CommandLineInvocation invocation)
-            => new List<ICommandInvocationOutputSink>()
+        {
+            return new()
             {
                 Output,
                 new ServiceMessageCommandInvocationOutputSink(variables)
             };
+        }
     }
 }

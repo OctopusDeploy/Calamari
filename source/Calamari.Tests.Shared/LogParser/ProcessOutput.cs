@@ -4,10 +4,6 @@ namespace Calamari.Tests.Shared.LogParser
 {
     public class ProcessOutput
     {
-        readonly ProcessOutputSource source;
-        readonly string text;
-        readonly DateTimeOffset occurred;
-
         public ProcessOutput(ProcessOutputSource source, string text)
             : this(source, text, DateTimeOffset.UtcNow)
         {
@@ -15,33 +11,15 @@ namespace Calamari.Tests.Shared.LogParser
 
         public ProcessOutput(ProcessOutputSource source, string text, DateTimeOffset occurred)
         {
-            this.source = source;
-            this.text = text;
-            this.occurred = occurred;
+            this.Source = source;
+            this.Text = text;
+            this.Occurred = occurred;
         }
 
-        public ProcessOutputSource Source
-        {
-            get
-            {
-                return this.source;
-            }
-        }
+        public ProcessOutputSource Source { get; }
 
-        public DateTimeOffset Occurred
-        {
-            get
-            {
-                return this.occurred;
-            }
-        }
+        public DateTimeOffset Occurred { get; }
 
-        public string Text
-        {
-            get
-            {
-                return this.text;
-            }
-        }
+        public string Text { get; }
     }
 }

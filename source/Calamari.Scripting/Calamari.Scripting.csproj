@@ -24,6 +24,9 @@
     <PropertyGroup Condition="'$(TargetFramework)' == 'net452' ">
         <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+        <DefineConstants>$(DefineConstants);HAS_NULLABLE_REF_TYPES</DefineConstants>
+    </PropertyGroup>
 
     <ItemGroup>
         <Content Include="FSharp/*.*">

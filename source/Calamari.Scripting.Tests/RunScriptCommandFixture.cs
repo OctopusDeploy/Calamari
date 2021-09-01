@@ -6,7 +6,6 @@ using Calamari.Tests.Shared;
 using FluentAssertions;
 using NUnit.Framework;
 using Sashimi.Server.Contracts;
-using KnownVariables = Sashimi.Server.Contracts.KnownVariables;
 using ScriptSyntax = Calamari.Common.Features.Scripts.ScriptSyntax;
 
 namespace Calamari.Scripting.Tests

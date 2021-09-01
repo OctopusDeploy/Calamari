@@ -12,7 +12,7 @@ namespace Calamari.Scripting
 {
     public class SubstituteScriptSourceBehaviour : IPreDeployBehaviour
     {
-        ISubstituteInFiles substituteInFiles;
+        readonly ISubstituteInFiles substituteInFiles;
 
         public SubstituteScriptSourceBehaviour(ISubstituteInFiles substituteInFiles)
         {
@@ -38,7 +38,6 @@ namespace Calamari.Scripting
                 throw new InvalidOperationException($"{ScriptVariables.ScriptFileName} variable value could not be found.");
             yield return Path.Combine(context.CurrentDirectory, scriptFile);
         }
-
 
         bool WasProvided(string value)
         {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Octopus.CoreUtilities;
 using Sashimi.Server.Contracts.Actions;
 
@@ -22,6 +23,8 @@ namespace Sashimi.Server.Contracts.DeploymentTools
         public string[] SupportedPlatforms { get; }
 
         public Maybe<DeploymentToolPackage> GetCompatiblePackage(string platform)
-            => platform == KnownPlatforms.Windows || platform == KnownPlatforms.WindowsNetFx ? new DeploymentToolPackage(this, Id, modulePaths).AsSome() : Maybe<DeploymentToolPackage>.None;
+        {
+            return platform == KnownPlatforms.Windows || platform == KnownPlatforms.WindowsNetFx ? new DeploymentToolPackage(this, Id, modulePaths).AsSome() : Maybe<DeploymentToolPackage>.None;
+        }
     }
 }

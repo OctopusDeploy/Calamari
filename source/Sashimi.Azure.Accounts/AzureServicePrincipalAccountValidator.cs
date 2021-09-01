@@ -27,12 +27,12 @@ namespace Sashimi.Azure.Accounts
             RuleFor(account => account.ActiveDirectoryEndpointBaseUri)
                 .NotEmpty()
                 .WithMessage("Active Directory Endpoint Base Uri can't be empty if an isolated Azure Environment was selected")
-                .When(account => !String.IsNullOrEmpty(account.AzureEnvironment));
+                .When(account => !string.IsNullOrEmpty(account.AzureEnvironment));
 
             RuleFor(account => account.ResourceManagementEndpointBaseUri)
                 .NotEmpty()
                 .WithMessage("Resource Management Endpoint Base Uri can't be empty if an isolated Azure Environment was selected")
-                .When(account => !String.IsNullOrEmpty(account.AzureEnvironment));
+                .When(account => !string.IsNullOrEmpty(account.AzureEnvironment));
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using Sashimi.Server.Contracts.Variables;
 
 namespace Sashimi.Server.Contracts.Actions.Templates

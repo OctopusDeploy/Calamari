@@ -1,18 +1,18 @@
-using System.Collections.Generic;
+using System;
 using Octopus.TinyTypes;
 
 namespace Sashimi.Server.Contracts.Actions.Templates
 {
     public class ControlType : CaseInsensitiveStringTinyType
     {
-        public static readonly ControlType SingleLineText = new ControlType("SingleLineText");
-        public static readonly ControlType MultiLineText = new ControlType("MultiLineText");
-        public static readonly ControlType Select = new ControlType("Select");
-        public static readonly ControlType Checkbox = new ControlType("Checkbox");
-        public static readonly ControlType Sensitive = new ControlType("Sensitive");
-        public static readonly ControlType StepName = new ControlType("StepName");
-        public static readonly ControlType Certificate = new ControlType("Certificate");
-        public static readonly ControlType WorkerPool = new ControlType("WorkerPool");
+        public static readonly ControlType SingleLineText = new("SingleLineText");
+        public static readonly ControlType MultiLineText = new("MultiLineText");
+        public static readonly ControlType Select = new("Select");
+        public static readonly ControlType Checkbox = new("Checkbox");
+        public static readonly ControlType Sensitive = new("Sensitive");
+        public static readonly ControlType StepName = new("StepName");
+        public static readonly ControlType Certificate = new("Certificate");
+        public static readonly ControlType WorkerPool = new("WorkerPool");
 
         public ControlType(string value) : base(value)
         {

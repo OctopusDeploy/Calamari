@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Sashimi.Server.Contracts.Variables;
 
@@ -15,10 +16,10 @@ namespace Sashimi.Server.Contracts.Endpoints
         [JsonIgnore]
         public virtual bool ScriptConsoleSupported => false;
 
-        public abstract IEnumerable<(string id, DocumentType documentType)> GetRelatedDocuments();
-
         [JsonIgnore]
         public bool AlwaysRequiresAWorker => this is IRunsOnAWorker;
+
+        public abstract IEnumerable<(string id, DocumentType documentType)> GetRelatedDocuments();
 
         public abstract IEnumerable<Variable> ContributeVariables();
     }

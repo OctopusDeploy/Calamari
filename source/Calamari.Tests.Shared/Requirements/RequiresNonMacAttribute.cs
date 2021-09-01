@@ -1,3 +1,4 @@
+using System;
 using Calamari.Common.Plumbing;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;

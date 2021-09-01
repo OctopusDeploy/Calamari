@@ -1,4 +1,6 @@
-﻿namespace Sashimi.Server.Contracts
+﻿using System;
+
+namespace Sashimi.Server.Contracts
 {
     public class FunctionParameter
     {
@@ -7,6 +9,7 @@
             Type = type;
             DependsOn = dependsOn;
         }
+
         public ParameterType Type { get; }
         public string? DependsOn { get; }
     }

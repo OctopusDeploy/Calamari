@@ -1,4 +1,6 @@
-﻿namespace Sashimi.Server.Contracts
+﻿using System;
+
+namespace Sashimi.Server.Contracts
 {
     public enum ScriptSyntax
     {

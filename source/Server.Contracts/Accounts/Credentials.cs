@@ -9,7 +9,7 @@ namespace Sashimi.Server.Contracts.Accounts
             UserName = userName;
             Password = password;
         }
-        
+
         public Credentials(string password)
         {
             Password = password;

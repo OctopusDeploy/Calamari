@@ -28,9 +28,7 @@ namespace Sashimi.Azure.Accounts.Web
             }
 
             if (operationResponse.Response.IsSuccessStatusCode)
-            {
                 return onSuccess(operationResponse);
-            }
 
             SystemLog.Warn($"{errorMessage}{Environment.NewLine}Response status code does not indicate success: {operationResponse.Response.StatusCode} ({operationResponse.Response.ReasonPhrase}).");
             throw new Exception(errorMessage);

@@ -34,18 +34,14 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         public string[] GetStrings(params string[] propertyNames)
         {
             var values = Properties.Where(x => propertyNames.Contains(x.Key))
-                .Select(x => x.Value)
-                .ToList();
+                                   .Select(x => x.Value)
+                                   .ToList();
             if (!values.Any())
-            {
                 return Array.Empty<string>();
-            }
 
             var allValues = new List<string>();
             foreach (var v in values.Where(v => !string.IsNullOrWhiteSpace(v)))
-            {
                 allValues.AddRange(v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(_ => _.Trim()));
-            }
             return allValues.ToArray();
         }
     }

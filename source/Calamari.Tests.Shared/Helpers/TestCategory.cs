@@ -1,7 +1,11 @@
+using System;
+
 namespace Calamari.Tests.Shared.Helpers
 {
     public static class TestCategory
     {
+        public const string PlatformAgnostic = "PlatformAgnostic";
+
         public static class ScriptingSupport
         {
             public const string FSharp = "fsharp";
@@ -19,7 +23,5 @@ namespace Calamari.Tests.Shared.Helpers
 
             public const string OnlyNixOrMac = "nixMacOS";
         }
-        
-        public const string PlatformAgnostic = "PlatformAgnostic";
     }
 }

@@ -9,7 +9,7 @@ namespace Sashimi.Azure.Accounts.Web
 {
     class AzureEnvironmentsListAction : IAsyncApiAction
     {
-        static readonly OctopusJsonRegistration<IReadOnlyCollection<AzureEnvironmentResource>> Result = new OctopusJsonRegistration<IReadOnlyCollection<AzureEnvironmentResource>>();
+        static readonly OctopusJsonRegistration<IReadOnlyCollection<AzureEnvironmentResource>> Result = new();
         static readonly IReadOnlyCollection<AzureEnvironmentResource> EnvironmentResources;
 
         static AzureEnvironmentsListAction()
@@ -29,15 +29,16 @@ namespace Sashimi.Azure.Accounts.Web
             var azureEnvironmentsLookup = properties.ToDictionary(x => x.Name, x => (AzureEnvironment)x.GetValue(null, null)!);
 
             var azureEnvironmentResources = azureEnvironmentsLookup.Select(x => new AzureEnvironmentResource
-            {
-                Name = x.Key,
-                DisplayName = GetKnownEnvironmentDisplayName(x.Key),
-                ManagementEndpoint = x.Value.ManagementEndpoint,
-                AuthenticationEndpoint = x.Value.AuthenticationEndpoint,
-                GraphEndpoint = x.Value.GraphEndpoint,
-                ResourceManagerEndpoint = x.Value.ResourceManagerEndpoint,
-                StorageEndpointSuffix = x.Value.StorageEndpointSuffix
-            }).ToList();
+                                                                   {
+                                                                       Name = x.Key,
+                                                                       DisplayName = GetKnownEnvironmentDisplayName(x.Key),
+                                                                       ManagementEndpoint = x.Value.ManagementEndpoint,
+                                                                       AuthenticationEndpoint = x.Value.AuthenticationEndpoint,
+                                                                       GraphEndpoint = x.Value.GraphEndpoint,
+                                                                       ResourceManagerEndpoint = x.Value.ResourceManagerEndpoint,
+                                                                       StorageEndpointSuffix = x.Value.StorageEndpointSuffix
+                                                                   })
+                                                                   .ToList();
 
             FixIncorrectAzureEndpoints(azureEnvironmentResources);
 
@@ -48,14 +49,10 @@ namespace Sashimi.Azure.Accounts.Web
         {
             var defaultCloud = azureEnvironmentResources.FirstOrDefault(x => x.Name == "AzureGlobalCloud");
             if (defaultCloud != null)
-            {
                 defaultCloud.Name = "AzureCloud";
-            }
 
             foreach (var azureEnvironmentResource in azureEnvironmentResources.Where(x => x.StorageEndpointSuffix.StartsWith(".")))
-            {
                 azureEnvironmentResource.StorageEndpointSuffix = azureEnvironmentResource.StorageEndpointSuffix.Substring(1);
-            }
         }
 
         static string GetKnownEnvironmentDisplayName(string environmentName)

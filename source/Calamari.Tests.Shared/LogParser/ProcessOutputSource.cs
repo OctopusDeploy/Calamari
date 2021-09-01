@@ -1,9 +1,11 @@
-﻿namespace Calamari.Tests.Shared.LogParser
+﻿using System;
+
+namespace Calamari.Tests.Shared.LogParser
 {
     public enum ProcessOutputSource
     {
         StdOut,
         StdErr,
-        Debug,
+        Debug
     }
 }

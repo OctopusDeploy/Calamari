@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Sashimi.Server.Contracts.CloudTemplates;
 
 namespace Sashimi.Tests.Shared.Server
@@ -13,6 +14,8 @@ namespace Sashimi.Tests.Shared.Server
         }
 
         public ICloudTemplateHandler GetHandler(string providerId, string template)
-            => cloudTemplateHandler.First(t => t.CanHandleTemplate(providerId, template));
+        {
+            return cloudTemplateHandler.First(t => t.CanHandleTemplate(providerId, template));
+        }
     }
 }

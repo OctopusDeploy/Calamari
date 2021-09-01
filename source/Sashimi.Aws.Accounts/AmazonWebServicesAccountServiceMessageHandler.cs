@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Octopus.Data.Model;
 using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts;
@@ -11,18 +12,19 @@ namespace Sashimi.Aws.Accounts
     {
         public string AuditEntryDescription => "AWS Account";
         public string ServiceMessageName => CreateAwsAccountServiceMessagePropertyNames.CreateAccountName;
+
         public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = new List<ScriptFunctionRegistration>
         {
-            new ScriptFunctionRegistration("OctopusAwsAccount",
-                                           "Creates a new Amazon Web Services Account.",
-                                           CreateAwsAccountServiceMessagePropertyNames.CreateAccountName,
-                                           new Dictionary<string, FunctionParameter>
-                                           {
-                                               { CreateAwsAccountServiceMessagePropertyNames.NameAttribute, new FunctionParameter(ParameterType.String) },
-                                               { CreateAwsAccountServiceMessagePropertyNames.SecretKeyAttribute, new FunctionParameter(ParameterType.String) },
-                                               { CreateAwsAccountServiceMessagePropertyNames.AccessKeyAttribute, new FunctionParameter(ParameterType.String) },
-                                               { CreateAwsAccountServiceMessagePropertyNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) }
-                                           })
+            new("OctopusAwsAccount",
+                "Creates a new Amazon Web Services Account.",
+                CreateAwsAccountServiceMessagePropertyNames.CreateAccountName,
+                new Dictionary<string, FunctionParameter>
+                {
+                    { CreateAwsAccountServiceMessagePropertyNames.NameAttribute, new FunctionParameter(ParameterType.String) },
+                    { CreateAwsAccountServiceMessagePropertyNames.SecretKeyAttribute, new FunctionParameter(ParameterType.String) },
+                    { CreateAwsAccountServiceMessagePropertyNames.AccessKeyAttribute, new FunctionParameter(ParameterType.String) },
+                    { CreateAwsAccountServiceMessagePropertyNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) }
+                })
         };
 
         public AccountDetails CreateAccountDetails(IDictionary<string, string> properties, ITaskLog taskLog)

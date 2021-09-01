@@ -6,7 +6,6 @@ namespace Sashimi.NamingIsHard
     {
         public static readonly string MyActionHandlerTypeName = "Octopus.MyActionType";
 
-
         public static class Action
         {
             public static readonly string MyProp = "Octopus.Action.MyActionHandler.MyProp";

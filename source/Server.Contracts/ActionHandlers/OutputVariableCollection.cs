@@ -1,14 +1,26 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Sashimi.Server.Contracts.ActionHandlers
 {
     public class OutputVariableCollection : ICollection<OutputVariable>, IReadOnlyDictionary<string, OutputVariable>
     {
-        readonly Dictionary<string, OutputVariable> items = new Dictionary<string, OutputVariable>(StringComparer.OrdinalIgnoreCase);
+        readonly Dictionary<string, OutputVariable> items = new(StringComparer.OrdinalIgnoreCase);
 
         public int Count => items.Count;
+
+        public OutputVariable this[string name]
+        {
+            get => items[name];
+            set => items[name] = value;
+        }
+
+        public IEnumerable<string> Keys => items.Keys;
+        public IEnumerable<OutputVariable> Values => items.Values;
+
+        bool ICollection<OutputVariable>.IsReadOnly => false;
 
         public void Add(OutputVariable item)
         {
@@ -20,19 +32,12 @@ namespace Sashimi.Server.Contracts.ActionHandlers
             return items.ContainsKey(name);
         }
 
-        public bool TryGetValue(string name, out OutputVariable value)
+        public bool TryGetValue(string name,
+                                [MaybeNullWhen(false)]
+                                out OutputVariable value)
         {
             return items.TryGetValue(name, out value);
         }
-
-        public OutputVariable this[string name]
-        {
-            get => items[name];
-            set => items[name] = value;
-        }
-
-        public IEnumerable<string> Keys => items.Keys;
-        public IEnumerable<OutputVariable> Values => items.Values;
 
         public void Clear()
         {
@@ -46,7 +51,7 @@ namespace Sashimi.Server.Contracts.ActionHandlers
 
         public void CopyTo(OutputVariable[] array, int arrayIndex)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         bool ICollection<OutputVariable>.Remove(OutputVariable item)
@@ -73,7 +78,5 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         {
             return GetEnumerator();
         }
-
-        bool ICollection<OutputVariable>.IsReadOnly => false;
     }
 }

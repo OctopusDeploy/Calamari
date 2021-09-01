@@ -54,28 +54,20 @@ namespace Sashimi.Azure.Accounts
             yield return new Variable(SpecialVariables.Action.Azure.TenantId, TenantId);
             yield return new Variable(SpecialVariables.Action.Azure.Password, Password);
 
-            if (!String.IsNullOrWhiteSpace(AzureEnvironment))
-            {
+            if (!string.IsNullOrWhiteSpace(AzureEnvironment))
                 yield return new Variable(SpecialVariables.Action.Azure.Environment, AzureEnvironment);
-            }
 
-            if (!String.IsNullOrWhiteSpace(ResourceManagementEndpointBaseUri))
-            {
+            if (!string.IsNullOrWhiteSpace(ResourceManagementEndpointBaseUri))
                 yield return new Variable(SpecialVariables.Action.Azure.ResourceManagementEndPoint, ResourceManagementEndpointBaseUri);
-            }
 
-            if (!String.IsNullOrWhiteSpace(ActiveDirectoryEndpointBaseUri))
-            {
+            if (!string.IsNullOrWhiteSpace(ActiveDirectoryEndpointBaseUri))
                 yield return new Variable(SpecialVariables.Action.Azure.ActiveDirectoryEndPoint, ActiveDirectoryEndpointBaseUri);
-            }
         }
 
         public override IEnumerable<Variable> ExpandVariable(Variable variable)
         {
             if (variable.Type != ExpandsVariableType)
-            {
                 throw new InvalidOperationException($"Can only expand variables for type {ExpandsVariableType}");
-            }
 
             yield return new Variable($"{variable.Name}.Client", ClientId);
             yield return new Variable($"{variable.Name}.SubscriptionNumber", SubscriptionNumber);
@@ -89,9 +81,7 @@ namespace Sashimi.Azure.Accounts
         public IEnumerable<(string property, bool isSensitive)> GetVariableReferencePropertiesToExpand(VariableType variableType)
         {
             if (variableType != ExpandsVariableType)
-            {
                 throw new InvalidOperationException($"Can only expand variables for type {ExpandsVariableType}");
-            }
 
             yield return ("Client", false);
             yield return ("SubscriptionNumber", false);
@@ -104,7 +94,7 @@ namespace Sashimi.Azure.Accounts
 
         public override Credentials GetCredential()
         {
-            return new Credentials(ClientId!, Password?.Value!);
+            return new(ClientId!, Password?.Value!);
         }
     }
 }

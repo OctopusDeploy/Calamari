@@ -1,3 +1,4 @@
+using System;
 using Octopus.Server.MessageContracts.Features.Feeds;
 
 namespace Sashimi.Server.Contracts.Endpoints

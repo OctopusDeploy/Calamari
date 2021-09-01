@@ -1,14 +1,14 @@
-﻿using NUnit.Framework;
-using Octopus.Server.Extensibility.Extensions.Infrastructure.Web.Api;
-using System;
-using System.Net.Http;
-using NSubstitute;
+﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Net.Http;
 using System.Threading;
-using FluentAssertions;
+using System.Threading.Tasks;
 using Calamari.Tests.Shared;
+using FluentAssertions;
+using NSubstitute;
+using NUnit.Framework;
 using Octopus.Data.Model;
+using Octopus.Server.Extensibility.Extensions.Infrastructure.Web.Api;
 
 namespace Sashimi.Aws.Accounts.Tests
 {
@@ -20,14 +20,15 @@ namespace Sashimi.Aws.Accounts.Tests
         {
             var httpMessageHandler = new TestHttpClientHandler();
             var awsHttpClientFactory = new AwsHttpClientFactory(new Lazy<IOctopusHttpClientFactory>(
-            () => GetOctopusHttpClientFactory(httpMessageHandler)));
+                                                                                                    () => GetOctopusHttpClientFactory(httpMessageHandler)));
             var verifier = new AmazonWebServicesAccountVerifier(awsHttpClientFactory);
 
             verifier.Verify(new AmazonWebServicesAccountDetails
-            {
-                AccessKey = ExternalVariables.Get(ExternalVariable.AwsAcessKey),
-                SecretKey = ExternalVariables.Get(ExternalVariable.AwsSecretKey).ToSensitiveString()
-            }, CancellationToken.None);
+                            {
+                                AccessKey = ExternalVariables.Get(ExternalVariable.AwsAcessKey),
+                                SecretKey = ExternalVariables.Get(ExternalVariable.AwsSecretKey).ToSensitiveString()
+                            },
+                            CancellationToken.None);
 
             httpMessageHandler.RequestLog.Should().ContainSingle(r => r.RequestUri.AbsoluteUri == "https://sts.amazonaws.com/");
         }

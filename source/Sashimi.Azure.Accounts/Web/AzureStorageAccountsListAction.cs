@@ -11,8 +11,8 @@ namespace Sashimi.Azure.Accounts.Web
 {
     class AzureStorageAccountsListAction : AzureActionBase, IAccountDetailsEndpoint
     {
-        static readonly BadRequestRegistration OnlyServicePrincipalSupported = new BadRequestRegistration("Account must be an Azure Service Principal Account.");
-        static readonly OctopusJsonRegistration<ICollection<AzureStorageAccountResource>> Results = new OctopusJsonRegistration<ICollection<AzureStorageAccountResource>>();
+        static readonly BadRequestRegistration OnlyServicePrincipalSupported = new("Account must be an Azure Service Principal Account.");
+        static readonly OctopusJsonRegistration<ICollection<AzureStorageAccountResource>> Results = new();
 
         readonly IOctopusHttpClientFactory httpClientFactory;
 
@@ -30,21 +30,23 @@ namespace Sashimi.Azure.Accounts.Web
             if (accountDetails.AccountType != AccountTypes.AzureServicePrincipalAccountType)
                 return OnlyServicePrincipalSupported.Response();
 
-            var storageAccounts = await GetStorageAccountsAsync(accountName, (AzureServicePrincipalAccountDetails) accountDetails);
+            var storageAccounts = await GetStorageAccountsAsync(accountName, (AzureServicePrincipalAccountDetails)accountDetails);
             return Results.Response(storageAccounts);
         }
 
         Task<AzureStorageAccountResource[]> GetStorageAccountsAsync(string accountName, AzureServicePrincipalAccountDetails accountDetails)
         {
             return ThrowIfNotSuccess(async () =>
-                {
-                    using (var azureClient = accountDetails.CreateStorageManagementClient(httpClientFactory.HttpClientHandler))
-                    {
-                        return await azureClient.StorageAccounts.ListWithHttpMessagesAsync();
-                    }
-                }, response => response.Body
-                    .Select(service => new AzureStorageAccountResource {Name = service.Name, Location = service.Location}).ToArray(),
-                $"Failed to retrieve list of StorageAccounts for '{accountName}' service principal.");
+                                     {
+                                         using (var azureClient = accountDetails.CreateStorageManagementClient(httpClientFactory.HttpClientHandler))
+                                         {
+                                             return await azureClient.StorageAccounts.ListWithHttpMessagesAsync();
+                                         }
+                                     },
+                                     response => response.Body
+                                                         .Select(service => new AzureStorageAccountResource { Name = service.Name, Location = service.Location })
+                                                         .ToArray(),
+                                     $"Failed to retrieve list of StorageAccounts for '{accountName}' service principal.");
         }
     }
 }

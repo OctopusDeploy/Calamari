@@ -1,4 +1,6 @@
-﻿namespace Calamari.Tests.Shared.LogParser
+﻿using System;
+
+namespace Calamari.Tests.Shared.LogParser
 {
     public class DeltaPackage
     {

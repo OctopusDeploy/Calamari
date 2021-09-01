@@ -20,7 +20,7 @@ namespace Sashimi.Azure.Accounts.Web
 
         public static AzureWebSiteResource ForResourceManagement(string name, string resourceGroup, string region)
         {
-            return new AzureWebSiteResource(name, region, resourceGroup);
+            return new(name, region, resourceGroup);
         }
     }
 }

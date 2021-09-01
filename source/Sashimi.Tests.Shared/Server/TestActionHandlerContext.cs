@@ -20,12 +20,14 @@ namespace Sashimi.Tests.Shared.Server
         public Maybe<DeploymentTargetType> DeploymentTargetType { get; set; } = Maybe<DeploymentTargetType>.None;
         public Maybe<string> DeploymentTargetName { get; set; } = Maybe<string>.None;
         IActionAndTargetScopedVariables IActionHandlerContext.Variables => Variables;
-        public TestVariableDictionary Variables { get; } = new TestVariableDictionary();
+        public TestVariableDictionary Variables { get; } = new();
         public string EnvironmentId { get; set; } = null!;
         public Maybe<string> TenantId { get; set; } = Maybe<string>.None;
 
         public IRawShellCommandBuilder RawShellCommand()
-            => throw new NotImplementedException();
+        {
+            throw new NotImplementedException();
+        }
 
         public ICalamariCommandBuilder CalamariCommand(CalamariFlavour tool, string toolCommand)
         {
@@ -37,6 +39,8 @@ namespace Sashimi.Tests.Shared.Server
         }
 
         public IScriptCommandBuilder ScriptCommand()
-            => throw new NotImplementedException();
+        {
+            throw new NotImplementedException();
+        }
     }
 }

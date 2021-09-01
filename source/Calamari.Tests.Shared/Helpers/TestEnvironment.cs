@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Calamari.Tests.Shared.Helpers
 {
-    public static class TestEnvironment 
+    public static class TestEnvironment
     {
         public static readonly string AssemblyLocalPath = typeof(TestEnvironment).Assembly.FullLocalPath();
         public static readonly string CurrentWorkingDirectory = Path.GetDirectoryName(AssemblyLocalPath);
@@ -22,4 +22,3 @@ namespace Calamari.Tests.Shared.Helpers
         }
     }
 }
-

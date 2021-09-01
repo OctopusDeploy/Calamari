@@ -12,14 +12,15 @@ namespace Calamari.Scripting
 {
     public class ExecuteScriptBehaviour : IDeployBehaviour
     {
-        private readonly IScriptEngine scriptEngine;
-        private readonly ICommandLineRunner commandLineRunner;
+        readonly IScriptEngine scriptEngine;
+        readonly ICommandLineRunner commandLineRunner;
 
         public ExecuteScriptBehaviour(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
         {
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
         }
+
         public bool IsEnabled(RunningDeployment context)
         {
             return true;

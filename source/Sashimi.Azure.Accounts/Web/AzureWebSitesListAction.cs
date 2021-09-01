@@ -11,10 +11,11 @@ namespace Sashimi.Azure.Accounts.Web
 {
     class AzureWebSitesListAction : AzureActionBase, IAccountDetailsEndpoint
     {
-        static readonly BadRequestRegistration OnlyServicePrincipalSupported = new BadRequestRegistration("Account must be an Azure Service Principal Account.");
-        static readonly OctopusJsonRegistration<ICollection<AzureWebSiteResource>> Results = new OctopusJsonRegistration<ICollection<AzureWebSiteResource>>();
+        static readonly BadRequestRegistration OnlyServicePrincipalSupported = new("Account must be an Azure Service Principal Account.");
+        static readonly OctopusJsonRegistration<ICollection<AzureWebSiteResource>> Results = new();
 
         readonly IOctopusHttpClientFactory httpClientFactory;
+
         public AzureWebSitesListAction(ISystemLog systemLog, IOctopusHttpClientFactory httpClientFactory)
             : base(systemLog)
         {
@@ -30,22 +31,26 @@ namespace Sashimi.Azure.Accounts.Web
             if (accountDetails.AccountType != AccountTypes.AzureServicePrincipalAccountType)
                 return OnlyServicePrincipalSupported.Response();
 
-            var sites = (await GetSites(accountName, (AzureServicePrincipalAccountDetails) accountDetails))
-                .OrderBy(x => x.Name).ThenBy(x => x.Region).ToArray();
+            var sites = (await GetSites(accountName, (AzureServicePrincipalAccountDetails)accountDetails))
+                        .OrderBy(x => x.Name)
+                        .ThenBy(x => x.Region)
+                        .ToArray();
             return Results.Response(sites);
         }
 
         Task<List<AzureWebSiteResource>> GetSites(string accountName, AzureServicePrincipalAccountDetails accountDetails)
         {
             return ThrowIfNotSuccess(async () =>
-            {
-                using (var webSiteClient = accountDetails.CreateWebSiteManagementClient(httpClientFactory.HttpClientHandler))
-                {
-                    return await webSiteClient.WebApps.ListWithHttpMessagesAsync().ConfigureAwait(false);
-                }
-            }, response => response.Body
-                .Select(site => AzureWebSiteResource.ForResourceManagement(site.Name, site.ResourceGroup, site.Location))
-                .ToList(), $"Failed to retrieve list of WebApps for '{accountName}' service principal.");
+                                     {
+                                         using (var webSiteClient = accountDetails.CreateWebSiteManagementClient(httpClientFactory.HttpClientHandler))
+                                         {
+                                             return await webSiteClient.WebApps.ListWithHttpMessagesAsync().ConfigureAwait(false);
+                                         }
+                                     },
+                                     response => response.Body
+                                                         .Select(site => AzureWebSiteResource.ForResourceManagement(site.Name, site.ResourceGroup, site.Location))
+                                                         .ToList(),
+                                     $"Failed to retrieve list of WebApps for '{accountName}' service principal.");
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Octopus.Server.Extensibility.HostServices.Diagnostics;
+﻿using System;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.Tests.Shared.Server

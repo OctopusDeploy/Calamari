@@ -12,10 +12,7 @@ namespace Sashimi.Azure.Accounts.Tests
 
         protected override IEnumerable<Type> KnownClassesWhoAreBendingTheRules
         {
-            get
-            {
-                yield return typeof(AccountTypes);
-            }
+            get { yield return typeof(AccountTypes); }
         }
     }
 }

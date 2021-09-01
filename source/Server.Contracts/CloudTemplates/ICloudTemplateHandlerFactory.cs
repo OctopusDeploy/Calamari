@@ -1,3 +1,5 @@
+using System;
+
 namespace Sashimi.Server.Contracts.CloudTemplates
 {
     public interface ICloudTemplateHandlerFactory

@@ -16,38 +16,34 @@ namespace Sashimi.Tests.Shared.Server
             where TActionHandler : IActionHandler
             where TCalamari : CalamariFlavourProgramAsync
         {
-            return new ActionHandlerTestBuilder<TCalamari>(typeof(TActionHandler));
+            return new(typeof(TActionHandler));
         }
 
         public static ActionHandlerTestBuilder<TCalamari> CreateAsync<TCalamari>(Type actionHandlerType)
             where TCalamari : CalamariFlavourProgramAsync
         {
-            return new ActionHandlerTestBuilder<TCalamari>(actionHandlerType);
+            return new(actionHandlerType);
         }
 
         public static ActionHandlerTestBuilder<TCalamari> Create<TActionHandler, TCalamari>()
             where TActionHandler : IActionHandler
             where TCalamari : CalamariFlavourProgram
         {
-            return new ActionHandlerTestBuilder<TCalamari>(typeof(TActionHandler));
+            return new(typeof(TActionHandler));
         }
 
         public static ActionHandlerTestBuilder<TCalamari> Create<TCalamari>(Type actionHandlerType)
             where TCalamari : CalamariFlavourProgram
         {
-            return new ActionHandlerTestBuilder<TCalamari>(actionHandlerType);
+            return new(actionHandlerType);
         }
 
         public static TestActionHandlerContext<TCalamariProgram> WithFilesToCopy<TCalamariProgram>(this TestActionHandlerContext<TCalamariProgram> context, string path)
         {
             if (File.Exists(path))
-            {
                 context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, Path.GetDirectoryName(path));
-            }
             else
-            {
                 context.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, path);
-            }
 
             context.Variables.Add("Octopus.Test.PackagePath", path);
             context.Variables.Add(KnownVariables.Action.Packages.FeedId, "FeedId");
@@ -70,8 +66,8 @@ namespace Sashimi.Tests.Shared.Server
     public class ActionHandlerTestBuilder<TCalamariProgram>
     {
         readonly List<Action<TestActionHandlerContext<TCalamariProgram>>> arrangeActions;
-        Action<TestActionHandlerResult>? assertAction;
         readonly Type actionHandlerType;
+        Action<TestActionHandlerResult>? assertAction;
 
         public ActionHandlerTestBuilder(Type actionHandlerType)
         {
@@ -101,9 +97,7 @@ namespace Sashimi.Tests.Shared.Server
             var context = new TestActionHandlerContext<TCalamariProgram>(log);
 
             foreach (var arrangeAction in arrangeActions)
-            {
                 arrangeAction?.Invoke(context);
-            }
 
             TestActionHandlerResult result;
             using (container)
@@ -134,9 +128,7 @@ namespace Sashimi.Tests.Shared.Server
             }
 
             if (assertWasSuccess)
-            {
                 result.WasSuccessful.Should().BeTrue($"{actionHandlerType} execute result was unsuccessful.");
-            }
             assertAction?.Invoke(result);
 
             return result;

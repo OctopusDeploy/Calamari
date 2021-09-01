@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using Newtonsoft.Json;
 using Octopus.Data.Model;
 using Sashimi.Aws.Common.Variables;
@@ -52,7 +51,7 @@ namespace Sashimi.Aws.Accounts
 
         public override Credentials GetCredential()
         {
-            return new Credentials(AccessKey!, SecretKey?.Value!);
+            return new(AccessKey!, SecretKey?.Value!);
         }
     }
 }

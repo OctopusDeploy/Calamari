@@ -1,4 +1,6 @@
-﻿namespace Sashimi.Server.Contracts.Calamari
+﻿using System;
+
+namespace Sashimi.Server.Contracts.Calamari
 {
     /// <summary>
     /// A package that provides Calamari to be used in the execution of an action.
@@ -27,7 +29,7 @@
         /// The name of the executable to run from the package relative to the root of the package
         /// </summary>
         public string Executable { get; }
-        
+
         /// <summary>
         /// Name of the launcher required for the Executable (eg `dotnet`, `mono`, `java`, etc) or
         /// null if the Executable can be run natively

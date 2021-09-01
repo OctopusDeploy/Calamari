@@ -10,7 +10,7 @@ namespace Calamari.Tests.Shared.LogParser
     {
         readonly Action<ProcessOutputSource, string> output;
         readonly Action<ServiceMessage> serviceMessage;
-        readonly StringBuilder buffer = new StringBuilder();
+        readonly StringBuilder buffer = new();
         State state = State.Default;
         ProcessOutputSource lastSource;
 
@@ -50,6 +50,7 @@ namespace Calamari.Tests.Shared.LogParser
                         {
                             buffer.Append(c);
                         }
+
                         break;
 
                     case State.PossibleMessage:
@@ -64,6 +65,7 @@ namespace Calamari.Tests.Shared.LogParser
                         {
                             state = State.Default;
                         }
+
                         break;
 
                     case State.InMessage:
@@ -76,6 +78,7 @@ namespace Calamari.Tests.Shared.LogParser
                         {
                             buffer.Append(c);
                         }
+
                         break;
 
                     default:
@@ -87,9 +90,7 @@ namespace Calamari.Tests.Shared.LogParser
         public void Finish()
         {
             if (buffer.Length > 0)
-            {
                 Flush(output);
-            }
         }
 
         void ProcessMessage(ProcessOutputSource source, string message)
@@ -105,9 +106,9 @@ namespace Calamari.Tests.Shared.LogParser
             }
             catch
             {
-                serviceMessage(new ServiceMessage("stdout-warning", null));
+                serviceMessage(new ServiceMessage("stdout-warning"));
                 output(source, $"Could not parse '##octopus[{message}]'");
-                serviceMessage(new ServiceMessage("stdout-default", null));
+                serviceMessage(new ServiceMessage("stdout-default"));
             }
         }
 

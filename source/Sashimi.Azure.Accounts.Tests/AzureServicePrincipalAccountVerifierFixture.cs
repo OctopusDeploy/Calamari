@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Tests.Shared;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using NSubstitute;
 using NUnit.Framework;
 using Octopus.Data.Model;
@@ -52,7 +53,7 @@ namespace Sashimi.Azure.Accounts.Tests
 
             var verifier = GetAzureServicePrincipalAccountVerifier();
 
-            Assert.ThrowsAsync<Microsoft.IdentityModel.Clients.ActiveDirectory.AdalServiceException>(() => verifier.Verify(accountDetails, CancellationToken.None));
+            Assert.ThrowsAsync<AdalServiceException>(() => verifier.Verify(accountDetails, CancellationToken.None));
         }
 
         [Test]
@@ -70,7 +71,7 @@ namespace Sashimi.Azure.Accounts.Tests
             verifier.Verify(accountDetails, CancellationToken.None);
 
             accountDetails.Password = "InvalidPassword".ToSensitiveString();
-            Assert.ThrowsAsync<Microsoft.IdentityModel.Clients.ActiveDirectory.AdalServiceException>(() => verifier.Verify(accountDetails, CancellationToken.None));
+            Assert.ThrowsAsync<AdalServiceException>(() => verifier.Verify(accountDetails, CancellationToken.None));
         }
     }
 

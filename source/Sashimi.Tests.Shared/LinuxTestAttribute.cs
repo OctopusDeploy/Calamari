@@ -13,7 +13,6 @@ namespace Sashimi.Tests.Shared
 
         public LinuxTestAttribute() : this("This test only runs on Linux")
         {
-
         }
 
         public LinuxTestAttribute(string message)
@@ -24,9 +23,7 @@ namespace Sashimi.Tests.Shared
         public void ApplyToTest(Test test)
         {
             if (test.RunState == RunState.NotRunnable || test.RunState == RunState.Ignored)
-            {
                 return;
-            }
 
             if (!PlatformDetection.IsRunningOnNix)
             {

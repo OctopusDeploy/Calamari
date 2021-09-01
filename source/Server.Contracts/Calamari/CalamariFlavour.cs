@@ -1,4 +1,6 @@
-﻿namespace Sashimi.Server.Contracts.Calamari
+﻿using System;
+
+namespace Sashimi.Server.Contracts.Calamari
 {
     public class CalamariFlavour
     {

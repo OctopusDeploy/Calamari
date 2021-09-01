@@ -3,7 +3,7 @@
         <AssemblyName>Sashimi.NamingIsHard</AssemblyName>
         <RootNamespace>Sashimi.NamingIsHard</RootNamespace>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net5.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
         <None Include="$(SolutionDir)\..\artifacts\Calamari.NamingIsHard.zip">

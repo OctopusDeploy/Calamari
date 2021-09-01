@@ -1,3 +1,5 @@
+using System;
+
 namespace Sashimi.Azure.Accounts
 {
     class SpecialVariables

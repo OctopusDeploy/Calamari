@@ -1,11 +1,13 @@
-﻿namespace Calamari.Tests.Shared.LogParser
+﻿using System;
+
+namespace Calamari.Tests.Shared.LogParser
 {
     public class CollectedArtifact
     {
         public CollectedArtifact(string name, string? path)
         {
-            this.Name = name;
-            this.Path = path;
+            Name = name;
+            Path = path;
         }
 
         public string Name { get; }

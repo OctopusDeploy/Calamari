@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 
@@ -6,18 +5,13 @@ namespace Sashimi.Server.Contracts.ActionHandlers
 {
     public class ActionHandlerResult : IActionHandlerResult
     {
-        public ActionHandlerResult()
-        {
-        }
-
         public IReadOnlyDictionary<string, OutputVariable> OutputVariables { get; protected set; } = new OutputVariableCollection();
         public IReadOnlyList<ScriptOutputAction> OutputActions { get; protected set; } = new ScriptOutputAction[0];
         public IReadOnlyList<ServiceMessage> ServiceMessages { get; protected set; } = new List<ServiceMessage>();
-        public ExecutionOutcome Outcome { get; protected set;}
+        public ExecutionOutcome Outcome { get; protected set; }
         public bool WasSuccessful => Outcome == ExecutionOutcome.Successful;
         public string? ResultMessage { get; protected set; }
         public int ExitCode { get; protected set; }
-
 
         public void AddOutputVariable(OutputVariable variable)
         {
@@ -33,11 +27,14 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         {
             Outcome = outcome;
         }
-        
-        public static ActionHandlerResult FromSuccess() => new ActionHandlerResult()
+
+        public static ActionHandlerResult FromSuccess()
         {
-            ExitCode = 0,
-            Outcome = ExecutionOutcome.Successful
-        };
+            return new()
+            {
+                ExitCode = 0,
+                Outcome = ExecutionOutcome.Successful
+            };
+        }
     }
 }

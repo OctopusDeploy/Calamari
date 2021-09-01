@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.NamingIsHard.Behaviours;

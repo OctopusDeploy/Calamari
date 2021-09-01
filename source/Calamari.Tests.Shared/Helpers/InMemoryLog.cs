@@ -6,9 +6,17 @@ namespace Calamari.Tests.Shared.Helpers
 {
     public class InMemoryLog : AbstractLog
     {
-        public List<Message> Messages { get; } = new List<Message>();
-        public List<string> StandardOut { get; } = new List<string>();
-        public List<string> StandardError  { get; }= new List<string>();
+        public enum Level
+        {
+            Verbose,
+            Info,
+            Warn,
+            Error
+        }
+
+        public List<Message> Messages { get; } = new();
+        public List<string> StandardOut { get; } = new();
+        public List<string> StandardError { get; } = new();
 
         protected override void StdOut(string message)
         {
@@ -70,14 +78,8 @@ namespace Calamari.Tests.Shared.Helpers
             base.ErrorFormat(messageFormat, args);
         }
 
-
         public class Message
         {
-            public Level Level { get; }
-            public string MessageFormat { get; }
-            public object[] Args { get; }
-            public string FormattedMessage { get; }
-
             public Message(Level level, string message, params object[] args)
             {
                 Level = level;
@@ -85,14 +87,11 @@ namespace Calamari.Tests.Shared.Helpers
                 Args = args;
                 FormattedMessage = args == null || args.Length == 0 ? message : string.Format(message, args);
             }
-        }
 
-        public enum Level
-        {
-            Verbose,
-            Info,
-            Warn,
-            Error
+            public Level Level { get; }
+            public string MessageFormat { get; }
+            public object[] Args { get; }
+            public string FormattedMessage { get; }
         }
     }
 }

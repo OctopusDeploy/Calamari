@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
@@ -8,7 +9,6 @@ using NUnit.Framework;
 
 namespace Calamari.NamingIsHard.Tests
 {
-
     [TestFixture]
     public class MyCommandFixtures
     {
@@ -27,13 +27,13 @@ namespace Calamari.NamingIsHard.Tests
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "PreDeploy.ps1"), "echo \"Hello $Name\"");
 
             return CommandTestBuilder.CreateAsync<MyCommand, Program>()
-                .WithArrange(context =>
-                {
-                    context.Variables.Add("Name", "World");
-                    context.WithFilesToCopy(tempPath.DirectoryPath);
-                })
-                .WithAssert(result => result.FullLog.Should().Contain("Hello World"))
-                .Execute();
+                                     .WithArrange(context =>
+                                                  {
+                                                      context.Variables.Add("Name", "World");
+                                                      context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                  })
+                                     .WithAssert(result => result.FullLog.Should().Contain("Hello World"))
+                                     .Execute();
         }
     }
 }

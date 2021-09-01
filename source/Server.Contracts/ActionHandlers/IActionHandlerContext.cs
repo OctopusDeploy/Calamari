@@ -1,4 +1,5 @@
-﻿using Octopus.CoreUtilities;
+﻿using System;
+using Octopus.CoreUtilities;
 using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.Variables;

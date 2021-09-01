@@ -30,7 +30,6 @@ namespace Sashimi.Server.Contracts.ActionHandlers
     {
         internal SkipPackageDeploymentContributionResult()
         {
-
         }
     }
 
@@ -38,7 +37,6 @@ namespace Sashimi.Server.Contracts.ActionHandlers
     {
         internal DoDefaultPackageDeploymentContributionResult()
         {
-
         }
     }
 
@@ -51,5 +49,4 @@ namespace Sashimi.Server.Contracts.ActionHandlers
 
         public Type Handler { get; }
     }
-
 }

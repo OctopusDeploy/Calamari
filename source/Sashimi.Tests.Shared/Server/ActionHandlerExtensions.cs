@@ -11,7 +11,6 @@ namespace Sashimi.Tests.Shared.Server
             context(variableDictionary);
 
             return new ActionHandlerBuilder(handler, variableDictionary);
-
         }
     }
 }

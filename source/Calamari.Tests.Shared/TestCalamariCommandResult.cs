@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Tests.Shared.LogParser;
 
@@ -6,9 +7,13 @@ namespace Calamari.Tests.Shared
 {
     public class TestCalamariCommandResult
     {
-        public TestCalamariCommandResult(int exitCode, IReadOnlyDictionary<string, TestOutputVariable> outputVariables,
-            IReadOnlyList<TestScriptOutputAction> outputActions, IReadOnlyList<ServiceMessage> serviceMessages,
-            string? resultMessage, IReadOnlyList<CollectedArtifact> artifacts, string fullLog)
+        public TestCalamariCommandResult(int exitCode,
+                                         IReadOnlyDictionary<string, TestOutputVariable> outputVariables,
+                                         IReadOnlyList<TestScriptOutputAction> outputActions,
+                                         IReadOnlyList<ServiceMessage> serviceMessages,
+                                         string? resultMessage,
+                                         IReadOnlyList<CollectedArtifact> artifacts,
+                                         string fullLog)
         {
             ExitCode = exitCode;
             OutputVariables = outputVariables;

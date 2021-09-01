@@ -4,12 +4,12 @@ namespace Sashimi.Server.Contracts.ActionHandlers
 {
     public class ActionHandlerCategory : IEquatable<ActionHandlerCategory>
     {
-        public static readonly ActionHandlerCategory BuiltInStep = new ActionHandlerCategory("BuiltInStep", "Built-in Steps", 9000);
-        public static readonly ActionHandlerCategory Script = new ActionHandlerCategory("Script", "Script", 200);
-        public static readonly ActionHandlerCategory Package = new ActionHandlerCategory("Package", "Package", 300);
-        public static readonly ActionHandlerCategory Terraform = new ActionHandlerCategory("Terraform", "Terraform", 1100);
-        public static readonly ActionHandlerCategory Azure = new ActionHandlerCategory("Azure", "Azure", 500);
-        public static readonly ActionHandlerCategory Atlassian = new ActionHandlerCategory("Atlassian", "Atlassian", 1300);
+        public static readonly ActionHandlerCategory BuiltInStep = new("BuiltInStep", "Built-in Steps", 9000);
+        public static readonly ActionHandlerCategory Script = new("Script", "Script", 200);
+        public static readonly ActionHandlerCategory Package = new("Package", "Package", 300);
+        public static readonly ActionHandlerCategory Terraform = new("Terraform", "Terraform", 1100);
+        public static readonly ActionHandlerCategory Azure = new("Azure", "Azure", 500);
+        public static readonly ActionHandlerCategory Atlassian = new("Atlassian", "Atlassian", 1300);
 
         public ActionHandlerCategory(string id, string name, int displayOrder)
         {
@@ -33,17 +33,23 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((ActionHandlerCategory) obj);
+            if (obj.GetType() != GetType()) return false;
+            return Equals((ActionHandlerCategory)obj);
         }
 
         public override int GetHashCode()
-            => StringComparer.OrdinalIgnoreCase.GetHashCode(Id);
+        {
+            return StringComparer.OrdinalIgnoreCase.GetHashCode(Id);
+        }
 
         public static bool operator ==(ActionHandlerCategory left, ActionHandlerCategory right)
-            => Equals(left, right);
+        {
+            return Equals(left, right);
+        }
 
         public static bool operator !=(ActionHandlerCategory left, ActionHandlerCategory right)
-            => !Equals(left, right);
+        {
+            return !Equals(left, right);
+        }
     }
 }

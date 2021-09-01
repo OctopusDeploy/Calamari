@@ -25,7 +25,7 @@ namespace Sashimi.NamingIsHard.Tests
             var context = new DeploymentActionValidationContext(SpecialVariables.MyActionHandlerTypeName,
                                                                 new Dictionary<string, string>
                                                                 {
-                                                                    {SpecialVariables.Action.MyProp, "None empty string"}
+                                                                    { SpecialVariables.Action.MyProp, "None empty string" }
                                                                 },
                                                                 new List<PackageReference>());
 

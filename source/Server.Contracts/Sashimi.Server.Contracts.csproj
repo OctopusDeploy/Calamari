@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Sashimi.Server.Contracts</AssemblyName>
     <RootNamespace>Sashimi.Server.Contracts</RootNamespace>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
@@ -11,13 +11,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Octostache" Version="2.10.0" />
-    <PackageReference Include="Octopus.TinyTypes" Version="0.1.562" />
-    <PackageReference Include="Octopus.Server.Extensibility" Version="14.0.5" />
-    <PackageReference Include="Octopus.Diagnostics" Version="2.1.1" />
-    <PackageReference Include="Octopus.Data" Version="6.0.0" />
-    <PackageReference Include="Octopus.Ocl" Version="0.4.843" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.184" />
+    <PackageReference Include="Octopus.Data" Version="7.1.5" />
+    <PackageReference Include="Octopus.Diagnostics" Version="2.1.2" />
+    <PackageReference Include="Octopus.Ocl" Version="0.4.843" />
+    <PackageReference Include="Octopus.Server.Extensibility" Version="14.3.2" />
+    <PackageReference Include="Octopus.Server.MessageContracts" Version="0.4.26" />
+    <PackageReference Include="Octopus.TinyTypes" Version="2.2.12" />
+    <PackageReference Include="Octostache" Version="2.10.0" />
     <PackageReference Include="FluentValidation" Version="8.6.2" />
   </ItemGroup>
 

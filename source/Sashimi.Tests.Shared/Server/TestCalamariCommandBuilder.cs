@@ -4,10 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Calamari.Common.Features.Processes;
-using Calamari.Common.Plumbing;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -15,17 +15,16 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
 using Calamari.Tests.Shared.Helpers;
 using Calamari.Tests.Shared.LogParser;
+using Octopus.CoreUtilities;
+using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts.ActionHandlers;
+using Sashimi.Server.Contracts.Actions;
 using Sashimi.Server.Contracts.Calamari;
 using Sashimi.Server.Contracts.CommandBuilders;
 using Sashimi.Server.Contracts.DeploymentTools;
-using Octopus.CoreUtilities;
-using Octopus.Server.Extensibility.HostServices.Diagnostics;
-using Sashimi.Server.Contracts.Actions;
 using Sashimi.Tests.Shared.Extensions;
 using Sashimi.Tests.Shared.LogParser;
 using AssemblyExtensions = Calamari.AssemblyExtensions;
-using ILog = Calamari.Common.Plumbing.Logging.ILog;
 
 namespace Sashimi.Tests.Shared.Server
 {
@@ -33,12 +32,10 @@ namespace Sashimi.Tests.Shared.Server
     {
         const string CalamariBinariesLocationEnvironmentVariable = "CalamariBinaries_RelativePath";
 
-        public static class InProcOutProcOverride
-        {
-            public static readonly string EnvironmentVariable = "Test_Calamari_InProc_OutProc_Override";
-            public static readonly string InProcValue = "InProc";
-            public static readonly string OutProcValue = "OutProc";
-        }
+        TestVariableDictionary variables = new();
+        bool withStagedPackageArgument;
+        public List<(string? filename, Stream contents)> Files = new();
+        public List<(string name, string? value)> Arguments = new();
 
         public TestCalamariCommandBuilder(CalamariFlavour calamariFlavour, string calamariCommand)
         {
@@ -46,13 +43,8 @@ namespace Sashimi.Tests.Shared.Server
             CalamariCommand = calamariCommand;
         }
 
-        TestVariableDictionary variables = new TestVariableDictionary();
-        bool withStagedPackageArgument;
-
         public CalamariFlavour CalamariFlavour { get; set; }
         public string CalamariCommand { get; set; }
-        public List<(string? filename, Stream contents)> Files = new List<(string?, Stream)>();
-        public List<(string name, string? value)> Arguments = new List<(string, string?)>();
 
         public IList<IDeploymentTool> Tools { get; } = new List<IDeploymentTool>();
 
@@ -102,10 +94,14 @@ namespace Sashimi.Tests.Shared.Server
         }
 
         public ICalamariCommandBuilder WithDataFileAsArgument(string argumentName, string fileContents, string? fileName = null)
-            => throw new NotImplementedException();
+        {
+            throw new NotImplementedException();
+        }
 
         public ICalamariCommandBuilder WithDataFileAsArgument(string argumentName, byte[] fileContents, string? fileName = null)
-            => throw new NotImplementedException();
+        {
+            throw new NotImplementedException();
+        }
 
         public ICalamariCommandBuilder WithTool(IDeploymentTool tool)
         {
@@ -119,16 +115,24 @@ namespace Sashimi.Tests.Shared.Server
         }
 
         public ICalamariCommandBuilder WithVariable(string name, bool value, bool isSensitive = false)
-            => throw new NotImplementedException();
+        {
+            throw new NotImplementedException();
+        }
 
         public ICalamariCommandBuilder WithIsolation(ExecutionIsolation executionIsolation)
-            => throw new NotImplementedException();
+        {
+            throw new NotImplementedException();
+        }
 
         public ICalamariCommandBuilder WithIsolationTimeout(TimeSpan mutexTimeout)
-            => throw new NotImplementedException();
+        {
+            throw new NotImplementedException();
+        }
 
         public string Describe()
-            => throw new NotImplementedException();
+        {
+            throw new NotImplementedException();
+        }
 
         public IActionHandlerResult Execute(ITaskLog taskLog)
         {
@@ -159,9 +163,7 @@ namespace Sashimi.Tests.Shared.Server
         List<string> InstallTools(string toolsPath)
         {
             if (!PlatformDetection.IsRunningOnWindows)
-            {
                 return new List<string>();
-            }
 
             var extractor = new NupkgExtractor(new InMemoryLog());
 
@@ -170,13 +172,9 @@ namespace Sashimi.Tests.Shared.Server
             var platform = KnownPlatforms.Windows;
 
             if (PlatformDetection.IsRunningOnNix)
-            {
                 platform = KnownPlatforms.Linux64;
-            }
             if (PlatformDetection.IsRunningOnMac)
-            {
                 platform = KnownPlatforms.Osx64;
-            }
 
             foreach (var tool in Tools)
             {
@@ -187,25 +185,19 @@ namespace Sashimi.Tests.Shared.Server
 
                 var toolPackagePath = Path.Combine(Path.GetDirectoryName(AssemblyExtensions.FullLocalPath(Assembly.GetExecutingAssembly())) ?? string.Empty, $"{tool.Id}.nupkg");
                 if (!File.Exists(toolPackagePath))
-                {
                     throw new Exception($"{tool.Id}.nupkg missing.");
-                }
 
                 extractor.Extract(toolPackagePath, toolPath);
                 var fullPathToTool = tool.SubFolder.None()
                     ? toolPath
                     : Path.Combine(toolPath, tool.SubFolder.Value);
                 if (tool.ToolPathVariableToSet.Some())
-                {
                     variables[tool.ToolPathVariableToSet.Value] = fullPathToTool
                                                                   .Replace("$HOME", "#{env:HOME}")
                                                                   .Replace("$TentacleHome", "#{env:TentacleHome}");
-                }
 
                 if (tool.AddToPath)
-                {
                     addToPath.Add(fullPathToTool);
-                }
             }
 
             var modules = string.Join(";", modulePaths);
@@ -216,12 +208,12 @@ namespace Sashimi.Tests.Shared.Server
 
         List<string> GetArgs(string workingPath)
         {
-            var args = new List<string> {CalamariCommand};
+            var args = new List<string> { CalamariCommand };
 
             args.AddRange(
-                Arguments
-                    .Select(a => $"--{a.name}{(a.value == null ? "" : $"={a.value}")}")
-            );
+                          Arguments
+                              .Select(a => $"--{a.name}{(a.value == null ? "" : $"={a.value}")}")
+                         );
 
             var varPath = Path.Combine(workingPath, "variables.json");
 
@@ -286,15 +278,15 @@ namespace Sashimi.Tests.Shared.Server
 
             var inMemoryLog = new InMemoryLog();
             var constructor = typeof(TCalamariProgram).GetConstructor(
-                BindingFlags.Public | BindingFlags.Instance,
-                null, new[] {typeof(ILog)}, new ParameterModifier[0]);
+                                                                      BindingFlags.Public | BindingFlags.Instance,
+                                                                      null,
+                                                                      new[] { typeof(ILog) },
+                                                                      new ParameterModifier[0]);
             if (constructor == null)
-            {
                 throw new Exception(
-                    $"{typeof(TCalamariProgram).Name} doesn't seem to have a `public {typeof(TCalamariProgram)}({nameof(ILog)})` constructor.");
-            }
+                                    $"{typeof(TCalamariProgram).Name} doesn't seem to have a `public {typeof(TCalamariProgram)}({nameof(ILog)})` constructor.");
 
-            var instance = (TCalamariProgram) constructor.Invoke(new object?[]
+            var instance = (TCalamariProgram)constructor.Invoke(new object?[]
             {
                 inMemoryLog
             });
@@ -302,17 +294,13 @@ namespace Sashimi.Tests.Shared.Server
             var methodInfo =
                 typeof(TCalamariProgram).GetMethod("Run", BindingFlags.Instance | BindingFlags.NonPublic);
             if (methodInfo == null)
-            {
                 throw new Exception($"{typeof(TCalamariProgram).Name}.Run method was not found.");
-            }
 
             var exitCode = await ExecuteWrapped(paths,
                                                 async () =>
                                                 {
                                                     if (methodInfo.ReturnType.IsGenericType)
-                                                    {
                                                         return await (Task<int>)methodInfo.Invoke(instance, new object?[] { args.ToArray() })!;
-                                                    }
 
                                                     return (int)methodInfo.Invoke(instance, new object?[] { args.ToArray() })!;
                                                 });
@@ -321,19 +309,18 @@ namespace Sashimi.Tests.Shared.Server
 
             var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
             foreach (var text in inMemoryLog.StandardError)
-            {
                 outputFilter.Write(ProcessOutputSource.StdErr, text);
-            }
 
             foreach (var text in inMemoryLog.StandardOut)
-            {
                 outputFilter.Write(ProcessOutputSource.StdOut, text);
-            }
 
             return new TestActionHandlerResult(exitCode,
-                outputFilter.TestOutputVariables, outputFilter.Actions,
-                outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
-                serverInMemoryLog.ToString());
+                                               outputFilter.TestOutputVariables,
+                                               outputFilter.Actions,
+                                               outputFilter.ServiceMessages,
+                                               outputFilter.ResultMessage,
+                                               outputFilter.Artifacts,
+                                               serverInMemoryLog.ToString());
         }
 
         Task<int> ExecuteWrapped(IReadOnlyCollection<string> paths, Func<Task<int>> func)
@@ -343,7 +330,7 @@ namespace Sashimi.Tests.Shared.Server
                 var originalPath = Environment.GetEnvironmentVariable("PATH");
                 try
                 {
-                    Environment.SetEnvironmentVariable("PATH", $"{originalPath};{String.Join(";", paths)}", EnvironmentVariableTarget.Process);
+                    Environment.SetEnvironmentVariable("PATH", $"{originalPath};{string.Join(";", paths)}", EnvironmentVariableTarget.Process);
 
                     return func();
                 }
@@ -363,7 +350,7 @@ namespace Sashimi.Tests.Shared.Server
                 variables.Save(variablesFile.FilePath);
 
                 var calamariFullPath = GetOutProcCalamariExePath();
-                Console.WriteLine("Running Calamari OutProc from: "+ calamariFullPath);
+                Console.WriteLine("Running Calamari OutProc from: " + calamariFullPath);
 
                 var commandLine = CreateCommandLine(calamariFullPath);
                 foreach (var argument in args)
@@ -377,19 +364,18 @@ namespace Sashimi.Tests.Shared.Server
 
                 var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
                 foreach (var text in capturedOutput.Errors)
-                {
                     outputFilter.Write(ProcessOutputSource.StdErr, text);
-                }
 
                 foreach (var text in capturedOutput.Infos)
-                {
                     outputFilter.Write(ProcessOutputSource.StdOut, text);
-                }
 
                 return new TestActionHandlerResult(calamariResult.ExitCode,
-                    outputFilter.TestOutputVariables, outputFilter.Actions,
-                    outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
-                    serverInMemoryLog.ToString());
+                                                   outputFilter.TestOutputVariables,
+                                                   outputFilter.Actions,
+                                                   outputFilter.ServiceMessages,
+                                                   outputFilter.ResultMessage,
+                                                   outputFilter.Artifacts,
+                                                   serverInMemoryLog.ToString());
             }
         }
 
@@ -433,17 +419,23 @@ namespace Sashimi.Tests.Shared.Server
             var calamariProjectFolder = Path.GetFullPath(Path.Combine(sashimiTestFolder, "../../../..", calamariFlavour));
             DotNetPublish(calamariProjectFolder, configuration, targetFramework, runtime);
 
-            return AddExeExtensionIfNecessary(Path.Combine(calamariProjectFolder, "bin", "Debug", targetFramework, runtime, "publish", calamariFlavour));
+            return AddExeExtensionIfNecessary(Path.Combine(calamariProjectFolder,
+                                                           "bin",
+                                                           "Debug",
+                                                           targetFramework,
+                                                           runtime,
+                                                           "publish",
+                                                           calamariFlavour));
 
             void DotNetPublish(string calamariProjectFolder, string configuration, string targetFramework, string runtime)
             {
                 var stdOut = new StringBuilder();
                 var stdError = new StringBuilder();
-                var result = SilentProcessRunner.ExecuteCommand($"dotnet",
-                    $"publish --framework {targetFramework} --configuration {configuration} --runtime {runtime}",
-                    calamariProjectFolder,
-                    s => stdOut.AppendLine(s),
-                    s => stdError.AppendLine(s));
+                var result = SilentProcessRunner.ExecuteCommand("dotnet",
+                                                                $"publish --framework {targetFramework} --configuration {configuration} --runtime {runtime}",
+                                                                calamariProjectFolder,
+                                                                s => stdOut.AppendLine(s),
+                                                                s => stdError.AppendLine(s));
 
                 if (result.ExitCode != 0)
                     throw new Exception(stdOut.ToString() + stdError);
@@ -467,12 +459,10 @@ namespace Sashimi.Tests.Shared.Server
             var runner = new TestCommandLineRunner(ConsoleLog.Instance, new CalamariVariables());
             var commandLineInvocation = command.Build();
             if (paths.Count > 0)
-            {
                 commandLineInvocation.EnvironmentVars = new Dictionary<string, string>
                 {
-                    { "PATH", $"{Environment.GetEnvironmentVariable("PATH")};{String.Join(";", paths)}" }
+                    { "PATH", $"{Environment.GetEnvironmentVariable("PATH")};{string.Join(";", paths)}" }
                 };
-            }
 
             var result = runner.Execute(commandLineInvocation);
             return new CalamariResult(result.ExitCode, runner.Output);
@@ -481,14 +471,10 @@ namespace Sashimi.Tests.Shared.Server
         void Copy(string sourcePath, string destinationPath)
         {
             foreach (var dirPath in Directory.EnumerateDirectories(sourcePath, "*", SearchOption.AllDirectories))
-            {
                 Directory.CreateDirectory(dirPath.Replace(sourcePath, destinationPath));
-            }
 
             foreach (var newPath in Directory.EnumerateFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-            {
                 File.Copy(newPath, newPath.Replace(sourcePath, destinationPath), true);
-            }
         }
 
         void AssertMatchingCalamariFlavour()
@@ -501,6 +487,13 @@ namespace Sashimi.Tests.Shared.Server
         public void SetVariables(TestVariableDictionary variables)
         {
             this.variables = variables;
+        }
+
+        public static class InProcOutProcOverride
+        {
+            public static readonly string EnvironmentVariable = "Test_Calamari_InProc_OutProc_Override";
+            public static readonly string InProcValue = "InProc";
+            public static readonly string OutProcValue = "OutProc";
         }
     }
 }

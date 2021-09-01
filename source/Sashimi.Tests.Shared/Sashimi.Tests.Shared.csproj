@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Sashimi.Tests.Shared</AssemblyName>
     <RootNamespace>Sashimi.Tests.Shared</RootNamespace>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
@@ -14,7 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Tests.Shared\Calamari.Tests.Shared.csproj" />
     <ProjectReference Include="..\Server.Contracts\Sashimi.Server.Contracts.csproj" />
-    <PackageReference Include="FluentAssertions" Version="5.10.3" />
+    <PackageReference Include="FluentAssertions" Version="6.1.0" />
   </ItemGroup>
 
 </Project>

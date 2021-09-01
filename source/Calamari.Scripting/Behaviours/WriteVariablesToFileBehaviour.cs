@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Calamari.Common;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
@@ -16,8 +15,8 @@ namespace Calamari.Scripting
 {
     class WriteVariablesToFileBehaviour : IBeforePackageExtractionBehaviour
     {
-        IVariables variables;
-        IScriptEngine scriptEngine;
+        readonly IVariables variables;
+        readonly IScriptEngine scriptEngine;
 
         public WriteVariablesToFileBehaviour(IVariables variables, IScriptEngine scriptEngine)
         {
@@ -32,14 +31,10 @@ namespace Calamari.Scripting
 
         public Task Execute(RunningDeployment context)
         {
-            if (!TryGetScriptFromVariables(out var scriptBody, out var relativeScriptFile, out var scriptSyntax) &&
-                !WasProvided(variables.Get(ScriptVariables.ScriptFileName)))
-            {
-                throw new CommandException($"Could not determine script to run.  Please provide either a `{ScriptVariables.ScriptBody}` variable, " +
-                                           $"or a `{ScriptVariables.ScriptFileName}` variable.");
-            }
+            if (!TryGetScriptFromVariables(out var scriptBody, out var relativeScriptFile, out var scriptSyntax) && !WasProvided(variables.Get(ScriptVariables.ScriptFileName)))
+                throw new CommandException($"Could not determine script to run.  Please provide either a `{ScriptVariables.ScriptBody}` variable, " + $"or a `{ScriptVariables.ScriptFileName}` variable.");
 
-            if (WasProvided(scriptBody))
+            if (WasProvided(scriptBody) && relativeScriptFile is not null)
             {
                 var scriptFile = Path.GetFullPath(relativeScriptFile);
 
@@ -58,7 +53,11 @@ namespace Calamari.Scripting
             return this.CompletedTask();
         }
 
-        bool TryGetScriptFromVariables([NotNullWhen(true)]out string? scriptBody, [NotNullWhen(true)]out string? scriptFileName, out ScriptSyntax syntax)
+        bool TryGetScriptFromVariables([NotNullWhen(true)]
+                                       out string? scriptBody,
+                                       [NotNullWhen(true)]
+                                       out string? scriptFileName,
+                                       out ScriptSyntax syntax)
         {
             scriptBody = variables.GetRaw(ScriptVariables.ScriptBody);
             if (WasProvided(scriptBody))
@@ -83,9 +82,7 @@ namespace Calamari.Scripting
             {
                 scriptBody = variables.GetRaw(SpecialVariables.Action.Script.ScriptBodyBySyntax(supportedSyntax));
                 if (scriptBody == null)
-                {
                     continue;
-                }
 
                 scriptFileName = "Script." + supportedSyntax.FileExtension();
                 syntax = supportedSyntax;
@@ -98,7 +95,8 @@ namespace Calamari.Scripting
             return false;
         }
 
-        bool WasProvided([NotNullWhen(true)]string? value)
+        bool WasProvided([NotNullWhen(true)]
+                         string? value)
         {
             return !string.IsNullOrEmpty(value);
         }

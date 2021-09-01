@@ -1,4 +1,6 @@
-﻿namespace Calamari.Tests.Shared.LogParser
+﻿using System;
+
+namespace Calamari.Tests.Shared.LogParser
 {
     public class ScriptServiceMessageNames
     {
@@ -88,27 +90,35 @@
 
                 public static class CreateTokenAccount
                 {
-                    [ServiceMessageName] public const string Name = "create-tokenaccount";
+                    [ServiceMessageName]
+                    public const string Name = "create-tokenaccount";
+
                     public const string Token = "token";
                 }
 
                 public static class CreateUserPassAccount
                 {
-                    [ServiceMessageName] public const string Name = "create-userpassaccount";
+                    [ServiceMessageName]
+                    public const string Name = "create-userpassaccount";
+
                     public const string Username = "username";
                     public const string Password = "password";
                 }
 
                 public static class CreateAwsAccount
                 {
-                    [ServiceMessageName] public const string Name = "create-awsaccount";
+                    [ServiceMessageName]
+                    public const string Name = "create-awsaccount";
+
                     public const string SecretKey = "secretKey";
                     public const string AccessKey = "accessKey";
                 }
 
                 public static class CreateAzureAccount
                 {
-                    [ServiceMessageName] public const string Name = "create-azureaccount";
+                    [ServiceMessageName]
+                    public const string Name = "create-azureaccount";
+
                     public const string SubscriptionAttribute = "azSubscriptionId";
 
                     public static class ServicePrincipal
@@ -131,7 +141,9 @@
 
                 public static class CreateKubernetesTarget
                 {
-                    [ServiceMessageName] public const string Name = "create-kubernetestarget";
+                    [ServiceMessageName]
+                    public const string Name = "create-kubernetestarget";
+
                     public const string Namespace = "namespace";
                     public const string ClusterUrl = "clusterUrl";
                     public const string DefaultWorkerPool = "defaultWorkerPool";
@@ -144,7 +156,9 @@
 
                 public static class CreateAzureWebAppTarget
                 {
-                    [ServiceMessageName] public const string Name = "create-azurewebapptarget";
+                    [ServiceMessageName]
+                    public const string Name = "create-azurewebapptarget";
+
                     public const string WebAppNameAttribute = "webAppName";
                     public const string ResourceGroupNameAttribute = "resourceGroupName";
                     public const string WebAppSlotNameAttribute = "webAppSlot";
@@ -152,7 +166,9 @@
 
                 public static class CreateAzureCloudServiceTarget
                 {
-                    [ServiceMessageName] public const string Name = "create-azurecloudservicetarget";
+                    [ServiceMessageName]
+                    public const string Name = "create-azurecloudservicetarget";
+
                     public const string AzureCloudServiceNameAttribute = "azureCloudServiceName";
                     public const string AzureStorageAccountAttribute = "azureStorageAccount";
                     public const string AzureDeploymentSlotAttribute = "azureDeploymentSlot";
@@ -162,7 +178,9 @@
 
                 public static class CreateAzureServiceFabricTarget
                 {
-                    [ServiceMessageName] public const string Name = "create-azureservicefabrictarget";
+                    [ServiceMessageName]
+                    public const string Name = "create-azureservicefabrictarget";
+
                     public const string ConnectionEndpointAttribute = "connectionEndpoint";
                     public const string SecurityModeAttribute = "securityMode";
                     public const string CertificateThumbprintAttribute = "certificateThumbprint";
@@ -175,7 +193,9 @@
 
             public static class DeleteTarget
             {
-                [ServiceMessageName] public const string Name = "delete-target";
+                [ServiceMessageName]
+                public const string Name = "delete-target";
+
                 public const string MachineIdOrNameAttribute = "machine";
             }
         }

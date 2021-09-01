@@ -19,23 +19,17 @@ namespace Sashimi.Azure.Accounts
 
         public static ResourceManagementClient CreateResourceManagementClient(this AzureServicePrincipalAccountDetails account, HttpClientHandler httpClientHandler)
         {
-            return string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri) ?
-                new ResourceManagementClient(account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber } :
-                new ResourceManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
+            return string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri) ? new ResourceManagementClient(account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber } : new ResourceManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
         }
 
         public static StorageManagementClient CreateStorageManagementClient(this AzureServicePrincipalAccountDetails account, HttpClientHandler httpClientHandler)
         {
-            return string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri) ?
-                new StorageManagementClient(account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber } :
-                new StorageManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
+            return string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri) ? new StorageManagementClient(account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber } : new StorageManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
         }
 
         public static WebSiteManagementClient CreateWebSiteManagementClient(this AzureServicePrincipalAccountDetails account, HttpClientHandler httpClientHandler)
         {
-            return string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri) ?
-                new WebSiteManagementClient(account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber } :
-                new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
+            return string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri) ? new WebSiteManagementClient(account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber } : new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), account.Credentials(httpClientHandler), httpClientHandler) { SubscriptionId = account.SubscriptionNumber };
         }
 
         static string GetAuthorizationToken(AzureServicePrincipalAccountDetails account, HttpMessageHandler handler)
@@ -44,9 +38,7 @@ namespace Sashimi.Azure.Accounts
 
             var resourceManagementEndpointBaseUri = "https://management.core.windows.net/";
             if (!string.IsNullOrWhiteSpace(account.ResourceManagementEndpointBaseUri))
-            {
                 resourceManagementEndpointBaseUri = account.ResourceManagementEndpointBaseUri;
-            }
 
             var result = context.AcquireTokenAsync(resourceManagementEndpointBaseUri, new ClientCredential(account.ClientId, account.Password?.Value)).GetAwaiter().GetResult();
             return result.AccessToken;
@@ -64,8 +56,8 @@ namespace Sashimi.Azure.Accounts
         // This was we are setting the same headers as the Azure impl.
         class HttpClientFactory : IHttpClientFactory
         {
-            readonly HttpClient client;
             const long MaxResponseContentBufferSizeInBytes = 1048576;
+            readonly HttpClient client;
 
             public HttpClientFactory(HttpMessageHandler handler)
             {

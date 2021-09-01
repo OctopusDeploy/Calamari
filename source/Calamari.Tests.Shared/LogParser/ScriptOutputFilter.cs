@@ -32,9 +32,20 @@ namespace Calamari.Tests.Shared.LogParser
 
     public class TestOutputVariableCollection : ICollection<TestOutputVariable>, IReadOnlyDictionary<string, TestOutputVariable>
     {
-        readonly Dictionary<string, TestOutputVariable> items = new Dictionary<string, TestOutputVariable>(StringComparer.OrdinalIgnoreCase);
+        readonly Dictionary<string, TestOutputVariable> items = new(StringComparer.OrdinalIgnoreCase);
 
         public int Count => items.Count;
+
+        public TestOutputVariable this[string name]
+        {
+            get => items[name];
+            set => items[name] = value;
+        }
+
+        public IEnumerable<string> Keys => items.Keys;
+        public IEnumerable<TestOutputVariable> Values => items.Values;
+
+        bool ICollection<TestOutputVariable>.IsReadOnly => false;
 
         public void Add(TestOutputVariable item)
         {
@@ -51,15 +62,6 @@ namespace Calamari.Tests.Shared.LogParser
             return items.TryGetValue(name, out value);
         }
 
-        public TestOutputVariable this[string name]
-        {
-            get => items[name];
-            set => items[name] = value;
-        }
-
-        public IEnumerable<string> Keys => items.Keys;
-        public IEnumerable<TestOutputVariable> Values => items.Values;
-
         public void Clear()
         {
             items.Clear();
@@ -72,7 +74,7 @@ namespace Calamari.Tests.Shared.LogParser
 
         public void CopyTo(TestOutputVariable[] array, int arrayIndex)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         bool ICollection<TestOutputVariable>.Remove(TestOutputVariable item)
@@ -99,8 +101,6 @@ namespace Calamari.Tests.Shared.LogParser
         {
             return GetEnumerator();
         }
-
-        bool ICollection<TestOutputVariable>.IsReadOnly => false;
     }
 
     public class TestScriptOutputAction
@@ -133,18 +133,14 @@ namespace Calamari.Tests.Shared.LogParser
         public string[] GetStrings(params string[] propertyNames)
         {
             var values = Properties.Where(x => propertyNames.Contains(x.Key))
-                .Select(x => x.Value)
-                .ToList();
+                                   .Select(x => x.Value)
+                                   .ToList();
             if (!values.Any())
-            {
                 return new string[0];
-            }
 
             var allValues = new List<string>();
             foreach (var v in values.Where(v => !string.IsNullOrWhiteSpace(v)))
-            {
-                allValues.AddRange(v.Split(new [] {','}, StringSplitOptions.RemoveEmptyEntries).Select(_ => _.Trim()));
-            }
+                allValues.AddRange(v.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(_ => _.Trim()));
             return allValues.ToArray();
         }
     }
@@ -155,19 +151,15 @@ namespace Calamari.Tests.Shared.LogParser
         readonly ServiceMessageParser parser;
 
         readonly Action<string> nullTarget = s =>
-        {
-        };
+                                             {
+                                             };
 
-        readonly TestOutputVariableCollection testOutputVariables = new TestOutputVariableCollection();
-        readonly List<CollectedArtifact> artifacts = new List<CollectedArtifact>();
-        readonly List<FoundPackage> foundPackages = new List<FoundPackage>();
-        readonly List<ServiceMessage> serviceMessages = new List<ServiceMessage>();
+        readonly List<ServiceMessage> serviceMessages = new();
         readonly Action<string> debugTarget;
+        readonly List<string> supportedScriptActionNames = new();
+        readonly Action<int, string> progressTarget;
         Action<string> outputTarget;
         Action<string> errorTarget;
-        readonly List<TestScriptOutputAction> actions = new List<TestScriptOutputAction>();
-        readonly List<string> supportedScriptActionNames = new List<string>();
-        readonly Action<int, string> progressTarget;
 
         public CalamariScriptOutputFilter(CalamariInMemoryTaskLog log)
         {
@@ -187,24 +179,23 @@ namespace Calamari.Tests.Shared.LogParser
         /// A copy of the collection of service messages that were recorded as part of the
         /// script execution.
         /// </summary>
-        public List<ServiceMessage> ServiceMessages => new List<ServiceMessage>(serviceMessages);
+        public List<ServiceMessage> ServiceMessages => new(serviceMessages);
 
         public bool CalamariFoundPackage { get; set; }
 
-        public TestOutputVariableCollection TestOutputVariables => testOutputVariables;
+        public TestOutputVariableCollection TestOutputVariables { get; } = new();
 
-        public List<CollectedArtifact> Artifacts => artifacts;
+        public List<CollectedArtifact> Artifacts { get; } = new();
 
-        public List<FoundPackage> FoundPackages => foundPackages;
+        public List<FoundPackage> FoundPackages { get; } = new();
 
-        public List<TestScriptOutputAction> Actions => actions;
+        public List<TestScriptOutputAction> Actions { get; } = new();
 
         public DeltaPackage? DeltaPackageVerifcation { get; set; }
 
         public string? DeltaPackageError { get; set; }
 
         public string? ResultMessage { get; private set; }
-
 
         public void Write(IEnumerable<ProcessOutput> output)
         {
@@ -262,14 +253,12 @@ namespace Calamari.Tests.Shared.LogParser
 
                     if (name != null && value != null)
                     {
-                        testOutputVariables[name] = new TestOutputVariable(name, value, isSensitive);
+                        TestOutputVariables[name] = new TestOutputVariable(name, value, isSensitive);
 
                         if (isSensitive)
-                        {
                             // If we're adding a sensitive output-variable we need to add it to the log-context
                             // so it will be masked.
                             log.WithSensitiveValue(value);
-                        }
                     }
 
                     break;
@@ -278,7 +267,7 @@ namespace Calamari.Tests.Shared.LogParser
                 case ScriptServiceMessageNames.Progress.Name:
                 {
                     var message = serviceMessage.GetValue(ScriptServiceMessageNames.Progress.Message);
-                    if (message != null && int.TryParse(serviceMessage.GetValue(ScriptServiceMessageNames.Progress.Percentage), out int percentage))
+                    if (message != null && int.TryParse(serviceMessage.GetValue(ScriptServiceMessageNames.Progress.Percentage), out var percentage))
                         progressTarget(percentage, message);
 
                     break;
@@ -288,12 +277,10 @@ namespace Calamari.Tests.Shared.LogParser
                 {
                     var name = serviceMessage.GetValue(ScriptServiceMessageNames.CreateArtifact.NameAttribute);
                     var path = serviceMessage.GetValue(ScriptServiceMessageNames.CreateArtifact.PathAttribute);
-                    long.TryParse(serviceMessage.GetValue(ScriptServiceMessageNames.CreateArtifact.LengthAttribute), out long length);
+                    long.TryParse(serviceMessage.GetValue(ScriptServiceMessageNames.CreateArtifact.LengthAttribute), out var length);
 
                     if (name != null)
-                    {
-                        artifacts.Add(new CollectedArtifact(name, path) {Length = length});
-                    }
+                        Artifacts.Add(new CollectedArtifact(name, path) { Length = length });
 
                     break;
                 }
@@ -313,9 +300,12 @@ namespace Calamari.Tests.Shared.LogParser
                     var remotePath = serviceMessage.GetValue(ScriptServiceMessageNames.FoundPackage.RemotePathAttribute);
                     var fileExtension = serviceMessage.GetValue(ScriptServiceMessageNames.FoundPackage.FileExtensionAttribute);
                     if (id != null && version != null)
-                    {
-                        foundPackages.Add(new FoundPackage(id, version, versionFormat, remotePath, hash, fileExtension));
-                    }
+                        FoundPackages.Add(new FoundPackage(id,
+                                                           version,
+                                                           versionFormat,
+                                                           remotePath,
+                                                           hash,
+                                                           fileExtension));
                     break;
 
                 case ScriptServiceMessageNames.PackageDeltaVerification.Name:
@@ -324,9 +314,7 @@ namespace Calamari.Tests.Shared.LogParser
                     var deltaVerificationSize = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.SizeAttribute);
                     DeltaPackageError = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.Error);
                     if (deltaVerificationRemotePath != null && deltaVerificationHash != null)
-                    {
                         DeltaPackageVerifcation = new DeltaPackage(deltaVerificationRemotePath, deltaVerificationHash, long.Parse(deltaVerificationSize));
-                    }
                     break;
 
                 case ScriptServiceMessageNames.StdOutBehaviour.Default:
@@ -353,9 +341,7 @@ namespace Calamari.Tests.Shared.LogParser
                 default:
                     // check to see if it is a support action name
                     if (supportedScriptActionNames.Contains(serviceMessage.Name))
-                    {
-                        actions.Add(new TestScriptOutputAction(serviceMessage.Name, serviceMessage.Properties));
-                    }
+                        Actions.Add(new TestScriptOutputAction(serviceMessage.Name, serviceMessage.Properties));
                     break;
             }
         }
@@ -371,8 +357,8 @@ namespace Calamari.Tests.Shared.LogParser
                 return;
 
             var actionNames = GetAllFieldValues(
-                    typeof(ScriptServiceMessageNames.ScriptOutputActions),
-                    x => Attribute.IsDefined(x, typeof(ServiceMessageNameAttribute)))
+                                                typeof(ScriptServiceMessageNames.ScriptOutputActions),
+                                                x => Attribute.IsDefined(x, typeof(ServiceMessageNameAttribute)))
                 .Select(x => x.ToString());
             supportedScriptActionNames.AddRange(actionNames);
         }
@@ -385,9 +371,7 @@ namespace Calamari.Tests.Shared.LogParser
 
             var nestedTypes = t.GetNestedTypes();
             foreach (var nestedType in nestedTypes)
-            {
                 values.AddRange(GetAllFieldValues(nestedType, filter));
-            }
 
             return values;
         }

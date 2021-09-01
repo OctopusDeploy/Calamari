@@ -12,7 +12,7 @@ namespace Sashimi.Azure.Accounts.Web
         {
             Links = new Dictionary<string, string>
             {
-                {"AzureEnvironments", $"~{AzureApi.AzureEnvironmentsPath}"},
+                { "AzureEnvironments", $"~{AzureApi.AzureEnvironmentsPath}" }
             };
         }
 

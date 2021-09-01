@@ -12,28 +12,19 @@ namespace Calamari.Tests.Helpers
 {
     public class CalamariResult
     {
-        private readonly int exitCode;
-        private readonly CaptureCommandInvocationOutputSink captured;
-
         public CalamariResult(int exitCode, CaptureCommandInvocationOutputSink captured)
         {
-            this.exitCode = exitCode;
-            this.captured = captured;
+            this.ExitCode = exitCode;
+            this.CapturedOutput = captured;
         }
 
-        public int ExitCode
-        {
-            get { return exitCode; }
-        }
+        public int ExitCode { get; }
 
-        public CaptureCommandInvocationOutputSink CapturedOutput
-        {
-            get { return captured; }
-        }
+        public CaptureCommandInvocationOutputSink CapturedOutput { get; }
 
         public void AssertSuccess()
         {
-            var capturedErrors = string.Join(Environment.NewLine, captured.Errors);
+            var capturedErrors = string.Join(Environment.NewLine, CapturedOutput.Errors);
             Assert.That(ExitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0, instead returned {2}{0}{0}Output:{0}{1}", Environment.NewLine, capturedErrors, ExitCode));
         }
 
@@ -42,7 +33,6 @@ namespace Calamari.Tests.Helpers
             Assert.That(ExitCode, Is.Not.EqualTo(0), "Expected a non-zero exit code");
         }
 
-
         public void AssertFailure(int code)
         {
             Assert.That(ExitCode, Is.EqualTo(code), $"Expected an exit code of {code}");
@@ -50,34 +40,38 @@ namespace Calamari.Tests.Helpers
 
         public void AssertOutput(string expectedOutputFormat, params object[] args)
         {
-            AssertOutput(String.Format(expectedOutputFormat, args));
+            AssertOutput(string.Format(expectedOutputFormat, args));
         }
 
         public void AssertOutputVariable(string name, IResolveConstraint resolveConstraint)
         {
-            var variable = captured.OutputVariables.Get(name);
+            var variable = CapturedOutput.OutputVariables.Get(name);
             Assert.That(variable, resolveConstraint);
         }
 
-        public void AssertServiceMessage(string name, IResolveConstraint? resolveConstraint = null, Dictionary<string, object>? properties = null, string message = "", params object[] args)
+        public void AssertServiceMessage(string name,
+                                         IResolveConstraint? resolveConstraint = null,
+                                         Dictionary<string, object>? properties = null,
+                                         string message = "",
+                                         params object[] args)
         {
             switch (name)
             {
                 case ServiceMessageNames.CalamariFoundPackage.Name:
-                    Assert.That(captured.CalamariFoundPackage, resolveConstraint, message, args);
+                    Assert.That(CapturedOutput.CalamariFoundPackage, resolveConstraint, message, args);
                     break;
                 case ServiceMessageNames.FoundPackage.Name:
-                    Assert.That(captured.FoundPackage, Is.Not.Null);
+                    Assert.That(CapturedOutput.FoundPackage, Is.Not.Null);
                     if (properties != null)
                     {
                         Assert.That(resolveConstraint, Is.Not.Null, "Resolve constraint was not provided");
                         foreach (var property in properties)
                         {
-                            var fp = JObject.FromObject(captured.FoundPackage);
+                            var fp = JObject.FromObject(CapturedOutput.FoundPackage);
                             string value;
                             if (property.Key.Contains("."))
                             {
-                                var props = property.Key.Split(new[] {'.'}, StringSplitOptions.RemoveEmptyEntries);
+                                var props = property.Key.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
                                 value = fp[props[0]][props[1]].ToString();
                             }
                             else
@@ -93,20 +87,19 @@ namespace Calamari.Tests.Helpers
                 case ServiceMessageNames.PackageDeltaVerification.Name:
                     if (!string.IsNullOrWhiteSpace(message))
                     {
-                        Assert.That(captured?.DeltaError?.Replace("\r\n", "\n"), Is.EqualTo(message));
+                        Assert.That(CapturedOutput?.DeltaError?.Replace("\r\n", "\n"), Is.EqualTo(message));
                         break;
                     }
 
-                    Assert.That(captured.DeltaVerification, Is.Not.Null);
+                    Assert.That(CapturedOutput.DeltaVerification, Is.Not.Null);
                     if (properties != null)
-                    {
                         foreach (var property in properties)
                         {
-                            var dv = JObject.FromObject(captured.DeltaVerification);
+                            var dv = JObject.FromObject(CapturedOutput.DeltaVerification);
                             string value;
                             if (property.Key.Contains("."))
                             {
-                                var props = property.Key.Split(new[] {'.'}, StringSplitOptions.RemoveEmptyEntries);
+                                var props = property.Key.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
                                 value = dv[props[0]][props[1]].ToString();
                             }
                             else
@@ -116,7 +109,6 @@ namespace Calamari.Tests.Helpers
 
                             AssertServiceMessageValue(property.Key, property.Value, value, resolveConstraint);
                         }
-                    }
 
                     break;
             }
@@ -126,62 +118,65 @@ namespace Calamari.Tests.Helpers
         {
             Assert.That(actual, Is.Not.Null);
             Assert.That(actual, Is.Not.Empty);
-            Assert.That(actual.Equals(expected), resolveConstraint,
-                "Expected property '{0}' to have value '{1}' but was actually '{2}'", property,
-                expected, actual);
+            Assert.That(actual.Equals(expected),
+                        resolveConstraint,
+                        "Expected property '{0}' to have value '{1}' but was actually '{2}'",
+                        property,
+                        expected,
+                        actual);
         }
 
         public void AssertNoOutput(string expectedOutput)
         {
-            var allOutput = string.Join(Environment.NewLine, captured.Infos);
+            var allOutput = string.Join(Environment.NewLine, CapturedOutput.Infos);
 
             Assert.That(allOutput, Does.Not.Contain(expectedOutput));
         }
 
         public void AssertOutput(string expectedOutput)
         {
-            var allOutput = string.Join(Environment.NewLine, captured.Infos);
+            var allOutput = string.Join(Environment.NewLine, CapturedOutput.Infos);
 
             Assert.That(allOutput, Does.Contain(expectedOutput));
         }
 
         public void AssertOutputContains(string expected)
         {
-            var allOutput = string.Join(Environment.NewLine, captured.Infos);
+            var allOutput = string.Join(Environment.NewLine, CapturedOutput.Infos);
 
             allOutput.Should().Contain(expected);
         }
 
         public void AssertOutputMatches(string regex, string? message = null)
         {
-            var allOutput = string.Join(Environment.NewLine, captured.Infos);
+            var allOutput = string.Join(Environment.NewLine, CapturedOutput.Infos);
 
             Assert.That(allOutput, Does.Match(regex), message);
         }
 
         public void AssertNoOutputMatches(string regex)
         {
-            var allOutput = string.Join(Environment.NewLine, captured.Infos);
+            var allOutput = string.Join(Environment.NewLine, CapturedOutput.Infos);
 
             Assert.That(allOutput, Does.Not.Match(regex));
         }
 
         public string GetOutputForLineContaining(string expectedOutput)
         {
-            var found = captured.Infos.SingleOrDefault(i => i.ContainsIgnoreCase(expectedOutput));
+            var found = CapturedOutput.Infos.SingleOrDefault(i => i.ContainsIgnoreCase(expectedOutput));
             found.Should().NotBeNull($"'{expectedOutput}' should exist");
             return found;
         }
 
         public void AssertErrorOutput(string expectedOutputFormat, params object[] args)
         {
-            AssertErrorOutput(String.Format(expectedOutputFormat, args));
+            AssertErrorOutput(string.Format(expectedOutputFormat, args));
         }
 
         public void AssertErrorOutput(string expectedOutput, bool noNewLines = false)
         {
-            var separator = noNewLines ? String.Empty : Environment.NewLine;
-            var allOutput = string.Join(separator, captured.Errors);
+            var separator = noNewLines ? string.Empty : Environment.NewLine;
+            var allOutput = string.Join(separator, CapturedOutput.Errors);
             Assert.That(allOutput, Does.Contain(expectedOutput));
         }
 

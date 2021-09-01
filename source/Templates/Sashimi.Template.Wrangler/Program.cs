@@ -14,9 +14,7 @@ namespace Sashimi.Template.Wrangler
             string installPath = null;
 
             if (args.Length < 2)
-            {
                 throw new Exception($"Invalid operation, Usage {typeof(Program).Namespace} <packageVersion> <installPath>");
-            }
 
             if (args.Length == 2)
             {
@@ -60,10 +58,8 @@ namespace Sashimi.Template.Wrangler
             }
 
             foreach (var (projFile, packageId) in packagesToAdd)
-            {
                 // Add package references to project
                 ProcessUtils.RunDotNetCommand("add", solutionPath, $"{projFile} package -n -v {packageVersion} {packageId}");
-            }
         }
     }
 }

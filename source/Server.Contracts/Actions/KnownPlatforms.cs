@@ -1,3 +1,5 @@
+using System;
+
 namespace Sashimi.Server.Contracts.Actions
 {
     public class KnownPlatforms
@@ -10,6 +12,6 @@ namespace Sashimi.Server.Contracts.Actions
         public static readonly string Osx64 = "osx-x64";
         public static readonly string Mono = "mono";
 
-        public static readonly string[] All = new[] { Windows, Linux64, LinuxArm, LinuxArm64, Osx64, Mono };
+        public static readonly string[] All = { Windows, Linux64, LinuxArm, LinuxArm64, Osx64, Mono };
     }
 }

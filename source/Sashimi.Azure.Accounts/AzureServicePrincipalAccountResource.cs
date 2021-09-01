@@ -1,4 +1,5 @@
 #nullable disable
+using System;
 using System.ComponentModel.DataAnnotations;
 using Octopus.Server.MessageContracts;
 using Octopus.Server.MessageContracts.Attributes;

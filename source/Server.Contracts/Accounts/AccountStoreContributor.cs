@@ -1,3 +1,5 @@
+using System;
+
 namespace Sashimi.Server.Contracts.Accounts
 {
     public abstract class AccountStoreContributor
@@ -23,12 +25,7 @@ namespace Sashimi.Server.Contracts.Accounts
 
     public class ValidationResult
     {
-        public static readonly ValidationResult Success = new ValidationResult(true, null);
-
-        public static ValidationResult Error(string errorMessage)
-        {
-            return new ValidationResult(false, errorMessage);
-        }
+        public static readonly ValidationResult Success = new(true, null);
 
         ValidationResult(bool isValid, string? errorMessage)
         {
@@ -38,5 +35,10 @@ namespace Sashimi.Server.Contracts.Accounts
 
         public bool IsValid { get; }
         public string? ErrorMessage { get; }
+
+        public static ValidationResult Error(string errorMessage)
+        {
+            return new(false, errorMessage);
+        }
     }
 }

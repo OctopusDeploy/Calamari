@@ -6,7 +6,7 @@ using Sashimi.Server.Contracts.ServiceMessages;
 
 namespace Sashimi.Server.Contracts.Accounts
 {
-    public interface IAccountTypeProvider: IContributeMappings
+    public interface IAccountTypeProvider : IContributeMappings
     {
         AccountType AccountType { get; }
         Type ModelType { get; }

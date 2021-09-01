@@ -1,4 +1,5 @@
 #nullable disable
+using System;
 using Octopus.Server.MessageContracts;
 using Octopus.Server.MessageContracts.Attributes;
 using Sashimi.Server.Contracts.Accounts;
@@ -13,7 +14,8 @@ namespace Sashimi.Aws.Accounts
         [Writeable]
         public string AccessKey { get; set; }
 
-        [Trim, Writeable]
+        [Trim]
+        [Writeable]
         public SensitiveValue SecretKey { get; set; }
     }
 }

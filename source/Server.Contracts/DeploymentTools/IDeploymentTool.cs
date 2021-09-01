@@ -1,4 +1,5 @@
-﻿using Octopus.CoreUtilities;
+﻿using System;
+using Octopus.CoreUtilities;
 
 namespace Sashimi.Server.Contracts.DeploymentTools
 {

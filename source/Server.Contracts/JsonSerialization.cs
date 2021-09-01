@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 namespace Sashimi.Server.Contracts
@@ -11,16 +12,15 @@ namespace Sashimi.Server.Contracts
         /// </summary>
         public static JsonSerializerSettings GetDefaultSerializerSettings()
         {
-            return new JsonSerializerSettings
+            return new()
             {
                 Formatting = Formatting.Indented,
                 Converters = new JsonConverterCollection
                 {
                     new StringEnumConverter(),
-                    new IsoDateTimeConverter {DateTimeFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ss.fffK"}
+                    new IsoDateTimeConverter { DateTimeFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ss.fffK" }
                 }
             };
         }
-
     }
 }

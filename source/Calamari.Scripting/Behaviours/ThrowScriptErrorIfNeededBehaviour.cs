@@ -17,9 +17,7 @@ namespace Calamari.Commands
         {
             var exitCode = context.Variables.GetInt32(SpecialVariables.Action.Script.ExitCode);
             if (exitCode != 0)
-            {
                 throw new CommandException($"Script returned non-zero exit code: {exitCode}.");
-            }
             return this.CompletedTask();
         }
     }

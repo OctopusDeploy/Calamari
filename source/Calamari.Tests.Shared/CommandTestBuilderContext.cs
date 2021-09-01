@@ -8,10 +8,10 @@ namespace Calamari.Tests.Shared
 {
     public class CommandTestBuilderContext
     {
-        public List<(string? filename, Stream contents)> Files = new List<(string?, Stream)>();
+        public List<(string? filename, Stream contents)> Files = new();
         internal bool withStagedPackageArgument;
 
-        public VariableDictionary Variables { get; } = new VariableDictionary();
+        public VariableDictionary Variables { get; } = new();
 
         public CommandTestBuilderContext WithStagedPackageArgument()
         {

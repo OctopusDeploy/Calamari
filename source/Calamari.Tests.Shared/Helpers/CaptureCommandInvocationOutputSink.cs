@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.ServiceMessages;
@@ -10,31 +11,17 @@ namespace Calamari.Tests.Helpers
     //Ideally sourced directly from Octopus.Worker repo
     public class CaptureCommandInvocationOutputSink : ICommandInvocationOutputSink
     {
-        readonly List<string> all = new List<string>();
-        readonly List<string> infos = new List<string>();
-        readonly List<string> errors = new List<string>();
+        readonly List<string> all = new();
+        readonly List<string> infos = new();
+        readonly List<string> errors = new();
         readonly ServiceMessageParser serviceMessageParser;
-        readonly IVariables outputVariables = new CalamariVariables();
 
         public CaptureCommandInvocationOutputSink()
         {
             serviceMessageParser = new ServiceMessageParser(ParseServiceMessage);
         }
 
-        public void WriteInfo(string line)
-        {
-            serviceMessageParser.Parse(line);
-            all.Add(line);
-            infos.Add(line);
-        }
-
-        public void WriteError(string line)
-        {
-            all.Add(line);
-            errors.Add(line);
-        }
-
-        public IVariables OutputVariables => outputVariables;
+        public IVariables OutputVariables { get; } = new CalamariVariables();
 
         public IList<string> Infos => infos;
 
@@ -50,6 +37,19 @@ namespace Calamari.Tests.Helpers
 
         public string? DeltaError { get; protected set; }
 
+        public void WriteInfo(string line)
+        {
+            serviceMessageParser.Parse(line);
+            all.Add(line);
+            infos.Add(line);
+        }
+
+        public void WriteError(string line)
+        {
+            all.Add(line);
+            errors.Add(line);
+        }
+
         void ParseServiceMessage(ServiceMessage message)
         {
             switch (message.Name)
@@ -59,7 +59,7 @@ namespace Calamari.Tests.Helpers
                     var variableValue = message.GetValue(ServiceMessageNames.SetVariable.ValueAttribute);
 
                     if (!string.IsNullOrWhiteSpace(variableName))
-                        outputVariables.Set(variableName, variableValue);
+                        OutputVariables.Set(variableName, variableValue);
                     break;
                 case ServiceMessageNames.CalamariFoundPackage.Name:
                     CalamariFoundPackage = true;
@@ -67,7 +67,7 @@ namespace Calamari.Tests.Helpers
                 case ServiceMessageNames.FoundPackage.Name:
                     var foundPackageId = message.GetValue(ServiceMessageNames.FoundPackage.IdAttribute);
                     var foundPackageVersion = message.GetValue(ServiceMessageNames.FoundPackage.VersionAttribute);
-                    var foundPackageVersionFormat = message.GetValue(ServiceMessageNames.FoundPackage.VersionFormat );
+                    var foundPackageVersionFormat = message.GetValue(ServiceMessageNames.FoundPackage.VersionFormat);
                     var foundPackageHash = message.GetValue(ServiceMessageNames.FoundPackage.HashAttribute);
                     var foundPackageRemotePath = message.GetValue(ServiceMessageNames.FoundPackage.RemotePathAttribute);
                     var fileExtension = message.GetValue(ServiceMessageNames.FoundPackage.FileExtensionAttribute);
@@ -86,9 +86,7 @@ namespace Calamari.Tests.Helpers
                         message.GetValue(ServiceMessageNames.PackageDeltaVerification.RemotePathAttribute);
                     DeltaError = message.GetValue(ServiceMessageNames.PackageDeltaVerification.Error);
                     if (pdvRemotePath != null && pdvHash != null)
-                    {
                         DeltaVerification = new DeltaPackage(pdvRemotePath, pdvHash, long.Parse(pdvSize));
-                    }
 
                     break;
             }

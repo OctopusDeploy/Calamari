@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace Sashimi.Template.Wrangler
 {
@@ -30,9 +29,7 @@ namespace Sashimi.Template.Wrangler
             process.WaitForExit();
 
             if (process.ExitCode != 0)
-            {
                 throw new Exception("Non zero exit code");
-            }
         }
     }
 }

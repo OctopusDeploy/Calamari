@@ -23,7 +23,7 @@ namespace Sashimi.Azure.Accounts.Tests.Web
             var response = responseProvider.Response;
             response.Should().BeOfType<OctoDataResponse>();
 
-            var environments = (IReadOnlyCollection<AzureEnvironmentResource>)((OctoDataResponse) response).Model;
+            var environments = (IReadOnlyCollection<AzureEnvironmentResource>)((OctoDataResponse)response).Model;
 
             foreach (var azureEnvironmentResource in environments)
             {

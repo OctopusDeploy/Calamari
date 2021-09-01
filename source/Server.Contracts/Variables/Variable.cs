@@ -1,3 +1,4 @@
+using System;
 using Octopus.Data.Model;
 
 namespace Sashimi.Server.Contracts.Variables

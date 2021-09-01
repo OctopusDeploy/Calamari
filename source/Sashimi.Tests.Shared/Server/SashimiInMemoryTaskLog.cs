@@ -8,13 +8,9 @@ namespace Sashimi.Tests.Shared.Server
 {
     public class SashimiInMemoryTaskLog : ITaskLog
     {
-        readonly StringBuilder log = new StringBuilder();
+        readonly StringBuilder log = new();
 
         public string CorrelationId { get; } = Guid.NewGuid().ToString();
-
-        public void Dispose()
-        {
-        }
 
         public bool IsVerboseEnabled { get; }
         public bool IsErrorEnabled { get; }
@@ -23,17 +19,21 @@ namespace Sashimi.Tests.Shared.Server
         public bool IsTraceEnabled { get; }
         public bool IsWarnEnabled { get; }
 
+        public List<(string?, Exception?)> ErrorLog { get; } = new();
+        public List<(string?, Exception?)> WarnLog { get; } = new();
+        public List<(string?, Exception?)> InfoLog { get; } = new();
+        public List<(string?, Exception?)> FatalLog { get; } = new();
+        public List<(string?, Exception?)> TraceLog { get; } = new();
+        public List<(string?, Exception?)> VerboseLog { get; } = new();
+
+        public void Dispose()
+        {
+        }
+
         public override string ToString()
         {
             return log.ToString();
         }
-
-        public List<(string?, Exception?)> ErrorLog { get; } = new List<(string?, Exception?)>();
-        public List<(string?, Exception?)> WarnLog { get; } = new List<(string?, Exception?)>();
-        public List<(string?, Exception?)> InfoLog { get; } = new List<(string?, Exception?)>();
-        public List<(string?, Exception?)> FatalLog { get; } = new List<(string?, Exception?)>();
-        public List<(string?, Exception?)> TraceLog { get; } = new List<(string?, Exception?)>();
-        public List<(string?, Exception?)> VerboseLog { get; } = new List<(string?, Exception?)>();
 
         public void WithSensitiveValues(string[] sensitiveValues)
         {
@@ -189,7 +189,7 @@ namespace Sashimi.Tests.Shared.Server
 
         public void WriteFormat(LogCategory category, Exception? error, string messageFormat, params object[] args)
         {
-            Write(category, error, String.Format(messageFormat, args));
+            Write(category, error, string.Format(messageFormat, args));
         }
 
         public void TraceFormat(string messageFormat, params object[] args)
@@ -199,7 +199,7 @@ namespace Sashimi.Tests.Shared.Server
 
         public void TraceFormat(Exception? error, string format, params object[] args)
         {
-            Trace(error, String.Format(format, args));
+            Trace(error, string.Format(format, args));
         }
 
         public void VerboseFormat(string messageFormat, params object[] args)
@@ -209,7 +209,7 @@ namespace Sashimi.Tests.Shared.Server
 
         public void VerboseFormat(Exception? error, string format, params object[] args)
         {
-            Verbose(error, String.Format(format, args));
+            Verbose(error, string.Format(format, args));
         }
 
         public void InfoFormat(string messageFormat, params object[] args)
@@ -219,7 +219,7 @@ namespace Sashimi.Tests.Shared.Server
 
         public void InfoFormat(Exception? error, string format, params object[] args)
         {
-            Info(error, String.Format(format, args));
+            Info(error, string.Format(format, args));
         }
 
         public void WarnFormat(string messageFormat, params object[] args)
@@ -229,7 +229,7 @@ namespace Sashimi.Tests.Shared.Server
 
         public void WarnFormat(Exception? error, string format, params object[] args)
         {
-            Warn(error, String.Format(format, args));
+            Warn(error, string.Format(format, args));
         }
 
         public void ErrorFormat(string messageFormat, params object[] args)
@@ -239,7 +239,7 @@ namespace Sashimi.Tests.Shared.Server
 
         public void ErrorFormat(Exception? error, string format, params object[] args)
         {
-            Error(error, String.Format(format, args));
+            Error(error, string.Format(format, args));
         }
 
         public void FatalFormat(string messageFormat, params object[] args)
@@ -249,7 +249,7 @@ namespace Sashimi.Tests.Shared.Server
 
         public void FatalFormat(Exception? error, string format, params object[] args)
         {
-            Fatal(error, String.Format(format, args));
+            Fatal(error, string.Format(format, args));
         }
 
         public void Flush()

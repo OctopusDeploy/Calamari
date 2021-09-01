@@ -14,8 +14,8 @@ namespace Sashimi.Azure.Accounts.Web
     {
         static readonly IResponderPathParameter<string> ResourceGroupName = new RequiredPathParameterProperty<string>("resourceGroupName", "Azure resource group name");
         static readonly IResponderPathParameter<string> WebsiteName = new RequiredPathParameterProperty<string>("webSiteName", "Website name");
-        static readonly BadRequestRegistration OnlyServicePrincipalSupported = new BadRequestRegistration("Account must be an Azure Service Principal Account.");
-        static readonly OctopusJsonRegistration<ICollection<AzureWebSiteSlotResource>> Results = new OctopusJsonRegistration<ICollection<AzureWebSiteSlotResource>>();
+        static readonly BadRequestRegistration OnlyServicePrincipalSupported = new("Account must be an Azure Service Principal Account.");
+        static readonly OctopusJsonRegistration<ICollection<AzureWebSiteSlotResource>> Results = new();
 
         readonly IOctopusHttpClientFactory httpClientFactory;
 
@@ -34,55 +34,39 @@ namespace Sashimi.Azure.Accounts.Web
         public async Task<IOctoResponseProvider> Respond(IOctoRequest request, string accountName, AccountDetails accountDetails)
         {
             return await request
-                .HandleAsync(ResourceGroupName, WebsiteName, async (resourceGroupName, websiteName) =>
-            {
-                var targetSite = GetAzureTargetSite(websiteName, string.Empty);
-                var siteName = targetSite.Site;
+                .HandleAsync(ResourceGroupName,
+                             WebsiteName,
+                             async (resourceGroupName, websiteName) =>
+                             {
+                                 var targetSite = GetAzureTargetSite(websiteName, string.Empty);
+                                 var siteName = targetSite.Site;
 
-                if (accountDetails.AccountType != AccountTypes.AzureServicePrincipalAccountType)
-                    return OnlyServicePrincipalSupported.Response();
+                                 if (accountDetails.AccountType != AccountTypes.AzureServicePrincipalAccountType)
+                                     return OnlyServicePrincipalSupported.Response();
 
-                var servicePrincipalAccount = (AzureServicePrincipalAccountDetails) accountDetails;
+                                 var servicePrincipalAccount = (AzureServicePrincipalAccountDetails)accountDetails;
 
-                using (var webSiteClient = servicePrincipalAccount.CreateWebSiteManagementClient(httpClientFactory.HttpClientHandler))
-                {
-                    var slots = (await GetSlots(webSiteClient, resourceGroupName, siteName)).OrderBy(s => s.Name).ToArray();
-                    return Results.Response(slots);
-                }
-
-            });
+                                 using (var webSiteClient = servicePrincipalAccount.CreateWebSiteManagementClient(httpClientFactory.HttpClientHandler))
+                                 {
+                                     var slots = (await GetSlots(webSiteClient, resourceGroupName, siteName)).OrderBy(s => s.Name).ToArray();
+                                     return Results.Response(slots);
+                                 }
+                             });
         }
 
         Task<List<AzureWebSiteSlotResource>> GetSlots(WebSiteManagementClient client, string resourceGroup, string siteName)
         {
-            return ThrowIfNotSuccess(() => client.WebApps.ListSlotsWithHttpMessagesAsync(resourceGroup, siteName), response => response.Body
-                    .Select(slot => new AzureWebSiteSlotResource {Name = GetAzureTargetSite(slot.Name, string.Empty)?.Slot, Site = slot.RepositorySiteName, ResourceGroupName = slot.ResourceGroup, Region = slot.Location})
-                    .ToList(),
-                $"Failed to retrieve list of slots for '{resourceGroup}' resource group in '{siteName}' site.");
-        }
-
-        class AzureWebSiteSlotResource
-        {
-            public string? Name { get; set; }
-            public string Site { get; set; } = null!;
-            public string ResourceGroupName { get; set; } = null!;
-            public string Region { get; set; } = null!;
-        }
-
-        public class AzureTargetSite
-        {
-            public string RawSite { get; set; } = null!;
-            public string Site { get; set; } = null!;
-            public string Slot { get; set; } = null!;
-
-            public string SiteAndSlot => HasSlot ? $"{Site}/{Slot}" : Site;
-
-            public bool HasSlot => !string.IsNullOrWhiteSpace(Slot);
+            return ThrowIfNotSuccess(() => client.WebApps.ListSlotsWithHttpMessagesAsync(resourceGroup, siteName),
+                                     response => response.Body
+                                                         .Select(slot => new AzureWebSiteSlotResource { Name = GetAzureTargetSite(slot.Name, string.Empty)?.Slot, Site = slot.RepositorySiteName, ResourceGroupName = slot.ResourceGroup, Region = slot.Location })
+                                                         .ToList(),
+                                     $"Failed to retrieve list of slots for '{resourceGroup}' resource group in '{siteName}' site.");
         }
 
         static AzureTargetSite GetAzureTargetSite(string siteAndMaybeSlotName, string slotName)
         {
-            AzureTargetSite targetSite = new AzureTargetSite { RawSite = siteAndMaybeSlotName };
+            AzureTargetSite targetSite = new()
+                { RawSite = siteAndMaybeSlotName };
 
             if (siteAndMaybeSlotName.Contains("("))
             {
@@ -105,6 +89,25 @@ namespace Sashimi.Azure.Accounts.Web
             targetSite.Site = siteAndMaybeSlotName;
             targetSite.Slot = slotName;
             return targetSite;
+        }
+
+        class AzureWebSiteSlotResource
+        {
+            public string? Name { get; set; }
+            public string Site { get; set; } = null!;
+            public string ResourceGroupName { get; set; } = null!;
+            public string Region { get; set; } = null!;
+        }
+
+        public class AzureTargetSite
+        {
+            public string RawSite { get; set; } = null!;
+            public string Site { get; set; } = null!;
+            public string Slot { get; set; } = null!;
+
+            public string SiteAndSlot => HasSlot ? $"{Site}/{Slot}" : Site;
+
+            public bool HasSlot => !string.IsNullOrWhiteSpace(Slot);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Octopus.Data.Model;
 using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts;
@@ -11,23 +12,24 @@ namespace Sashimi.Azure.Accounts
     {
         public string AuditEntryDescription => "Azure Service Principal account";
         public string ServiceMessageName => CreateAzureAccountServiceMessagePropertyNames.CreateAccountName;
+
         public IEnumerable<ScriptFunctionRegistration> ScriptFunctionRegistrations { get; } = new List<ScriptFunctionRegistration>
         {
-            new ScriptFunctionRegistration("OctopusAzureServicePrincipalAccount",
-                                           "Creates a new Azure Service Principal Account.",
-                                           CreateAzureAccountServiceMessagePropertyNames.CreateAccountName,
-                                           new Dictionary<string, FunctionParameter>
-                                           {
-                                               { CreateAzureAccountServiceMessagePropertyNames.NameAttribute, new FunctionParameter(ParameterType.String) },
-                                               { CreateAzureAccountServiceMessagePropertyNames.SubscriptionAttribute, new FunctionParameter(ParameterType.String) },
-                                               { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ApplicationAttribute, new FunctionParameter(ParameterType.String) },
-                                               { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.TenantAttribute, new FunctionParameter(ParameterType.String) },
-                                               { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.PasswordAttribute, new FunctionParameter(ParameterType.String) },
-                                               { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute, new FunctionParameter(ParameterType.String, CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute) },
-                                               { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.BaseUriAttribute, new FunctionParameter(ParameterType.String, CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute) },
-                                               { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ResourceManagementBaseUriAttribute, new FunctionParameter(ParameterType.String, CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute) },
-                                               { CreateAzureAccountServiceMessagePropertyNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) }
-                                           })
+            new("OctopusAzureServicePrincipalAccount",
+                "Creates a new Azure Service Principal Account.",
+                CreateAzureAccountServiceMessagePropertyNames.CreateAccountName,
+                new Dictionary<string, FunctionParameter>
+                {
+                    { CreateAzureAccountServiceMessagePropertyNames.NameAttribute, new FunctionParameter(ParameterType.String) },
+                    { CreateAzureAccountServiceMessagePropertyNames.SubscriptionAttribute, new FunctionParameter(ParameterType.String) },
+                    { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ApplicationAttribute, new FunctionParameter(ParameterType.String) },
+                    { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.TenantAttribute, new FunctionParameter(ParameterType.String) },
+                    { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.PasswordAttribute, new FunctionParameter(ParameterType.String) },
+                    { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute, new FunctionParameter(ParameterType.String, CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute) },
+                    { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.BaseUriAttribute, new FunctionParameter(ParameterType.String, CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute) },
+                    { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ResourceManagementBaseUriAttribute, new FunctionParameter(ParameterType.String, CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute) },
+                    { CreateAzureAccountServiceMessagePropertyNames.UpdateIfExistingAttribute, new FunctionParameter(ParameterType.Bool) }
+                })
         };
 
         public AccountDetails CreateAccountDetails(IDictionary<string, string> properties, ITaskLog taskLog)
@@ -49,8 +51,7 @@ namespace Sashimi.Azure.Accounts
                 TenantId = tenantId
             };
 
-            if (properties.TryGetValue(CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute, out var environment) &&
-                !string.IsNullOrWhiteSpace(environment))
+            if (properties.TryGetValue(CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute, out var environment) && !string.IsNullOrWhiteSpace(environment))
             {
                 properties.TryGetValue(CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.BaseUriAttribute,
                                        out var baseUri);
@@ -78,6 +79,7 @@ namespace Sashimi.Azure.Accounts
             public const string NameAttribute = "name";
             public const string UpdateIfExistingAttribute = "updateIfExisting";
             public const string SubscriptionAttribute = "azureSubscriptionId";
+
             public static class ServicePrincipal
             {
                 public const string ApplicationAttribute = "azureApplicationId";

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -6,7 +7,6 @@ using Octopus.Data.Model;
 using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.Server.Contracts.Accounts;
 using Sashimi.Server.Contracts.ServiceMessages;
-using CreateAzureAccountServiceMessagePropertyNames = Sashimi.Azure.Accounts.AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames;
 
 namespace Sashimi.Azure.Accounts.Tests
 {
@@ -25,27 +25,28 @@ namespace Sashimi.Azure.Accounts.Tests
         public void Ctor_Properties_ShouldBeInitializedCorrectly()
         {
             serviceMessageHandler.AuditEntryDescription.Should().Be("Azure Service Principal account");
-            serviceMessageHandler.ServiceMessageName.Should().Be(CreateAzureAccountServiceMessagePropertyNames.CreateAccountName);
+            serviceMessageHandler.ServiceMessageName.Should().Be(AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.CreateAccountName);
         }
 
         [Test]
         public void CreateAccountDetails_WhenEnvironmentIsMissing_ShouldCreateDetailsCorrectly()
         {
             var properties = GetMessageProperties();
-            properties.Remove(CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute);
+            properties.Remove(AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute);
 
             var details = serviceMessageHandler.CreateAccountDetails(properties, Substitute.For<ITaskLog>());
 
-            AssertAzureServicePrincipalAccountDetails(details, new ExpectedAccountDetailsValues
-            {
-                SubscriptionNumber = properties[CreateAzureAccountServiceMessagePropertyNames.SubscriptionAttribute],
-                ClientId = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ApplicationAttribute],
-                TenantId = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.TenantAttribute],
-                Password = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.PasswordAttribute].ToSensitiveString(),
-                AzureEnvironment = string.Empty,
-                ActiveDirectoryEndpointBaseUri = string.Empty,
-                ResourceManagementEndpointBaseUri = string.Empty
-            });
+            AssertAzureServicePrincipalAccountDetails(details,
+                                                      new ExpectedAccountDetailsValues
+                                                      {
+                                                          SubscriptionNumber = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.SubscriptionAttribute],
+                                                          ClientId = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ApplicationAttribute],
+                                                          TenantId = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.TenantAttribute],
+                                                          Password = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.PasswordAttribute].ToSensitiveString(),
+                                                          AzureEnvironment = string.Empty,
+                                                          ActiveDirectoryEndpointBaseUri = string.Empty,
+                                                          ResourceManagementEndpointBaseUri = string.Empty
+                                                      });
         }
 
         [Test]
@@ -55,20 +56,21 @@ namespace Sashimi.Azure.Accounts.Tests
         public void CreateAccountDetails_WhenEnvironmentIsInvalid_ShouldCreateDetailsCorrectly(string environment)
         {
             var properties = GetMessageProperties();
-            properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute] = environment;
+            properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute] = environment;
 
             var details = serviceMessageHandler.CreateAccountDetails(properties, Substitute.For<ITaskLog>());
 
-            AssertAzureServicePrincipalAccountDetails(details, new ExpectedAccountDetailsValues
-            {
-                SubscriptionNumber = properties[CreateAzureAccountServiceMessagePropertyNames.SubscriptionAttribute],
-                ClientId = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ApplicationAttribute],
-                TenantId = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.TenantAttribute],
-                Password = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.PasswordAttribute].ToSensitiveString(),
-                AzureEnvironment = string.Empty,
-                ActiveDirectoryEndpointBaseUri = string.Empty,
-                ResourceManagementEndpointBaseUri = string.Empty
-            });
+            AssertAzureServicePrincipalAccountDetails(details,
+                                                      new ExpectedAccountDetailsValues
+                                                      {
+                                                          SubscriptionNumber = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.SubscriptionAttribute],
+                                                          ClientId = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ApplicationAttribute],
+                                                          TenantId = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.TenantAttribute],
+                                                          Password = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.PasswordAttribute].ToSensitiveString(),
+                                                          AzureEnvironment = string.Empty,
+                                                          ActiveDirectoryEndpointBaseUri = string.Empty,
+                                                          ResourceManagementEndpointBaseUri = string.Empty
+                                                      });
         }
 
         [Test]
@@ -78,16 +80,17 @@ namespace Sashimi.Azure.Accounts.Tests
 
             var details = serviceMessageHandler.CreateAccountDetails(properties, Substitute.For<ITaskLog>());
 
-            AssertAzureServicePrincipalAccountDetails(details, new ExpectedAccountDetailsValues
-            {
-                SubscriptionNumber = properties[CreateAzureAccountServiceMessagePropertyNames.SubscriptionAttribute],
-                ClientId = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ApplicationAttribute],
-                TenantId = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.TenantAttribute],
-                Password = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.PasswordAttribute].ToSensitiveString(),
-                AzureEnvironment = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute],
-                ActiveDirectoryEndpointBaseUri = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.BaseUriAttribute],
-                ResourceManagementEndpointBaseUri = properties[CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ResourceManagementBaseUriAttribute]
-            });
+            AssertAzureServicePrincipalAccountDetails(details,
+                                                      new ExpectedAccountDetailsValues
+                                                      {
+                                                          SubscriptionNumber = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.SubscriptionAttribute],
+                                                          ClientId = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ApplicationAttribute],
+                                                          TenantId = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.TenantAttribute],
+                                                          Password = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.PasswordAttribute].ToSensitiveString(),
+                                                          AzureEnvironment = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute],
+                                                          ActiveDirectoryEndpointBaseUri = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.BaseUriAttribute],
+                                                          ResourceManagementEndpointBaseUri = properties[AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ResourceManagementBaseUriAttribute]
+                                                      });
         }
 
         static void AssertAzureServicePrincipalAccountDetails(AccountDetails accountDetails, ExpectedAccountDetailsValues expectedValues)
@@ -107,13 +110,13 @@ namespace Sashimi.Azure.Accounts.Tests
         {
             return new Dictionary<string, string>
             {
-                { CreateAzureAccountServiceMessagePropertyNames.SubscriptionAttribute, "Subscription"},
-                { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ApplicationAttribute, "Application" },
-                { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.PasswordAttribute, "Password" },
-                { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.TenantAttribute, "Tenant" },
-                { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute, "Test" },
-                { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.BaseUriAttribute, "https://localhost:6666" },
-                { CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ResourceManagementBaseUriAttribute, "https://localhost:8888" }
+                { AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.SubscriptionAttribute, "Subscription" },
+                { AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ApplicationAttribute, "Application" },
+                { AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.PasswordAttribute, "Password" },
+                { AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.TenantAttribute, "Tenant" },
+                { AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.EnvironmentAttribute, "Test" },
+                { AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.BaseUriAttribute, "https://localhost:6666" },
+                { AzureServicePrincipalAccountServiceMessageHandler.CreateAzureAccountServiceMessagePropertyNames.ServicePrincipal.ResourceManagementBaseUriAttribute, "https://localhost:8888" }
             };
         }
 

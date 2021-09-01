@@ -10,8 +10,8 @@ namespace Sashimi.Azure.Accounts.Web
 {
     class AzureResourceGroupsListAction : AzureActionBase, IAccountDetailsEndpoint
     {
-        static readonly BadRequestRegistration OnlyServicePrincipalSupported = new BadRequestRegistration("Account must be an Azure Service Principal Account.");
-        static readonly OctopusJsonRegistration<AzureResourceGroupResource[]> Results = new OctopusJsonRegistration<AzureResourceGroupResource[]>();
+        static readonly BadRequestRegistration OnlyServicePrincipalSupported = new("Account must be an Azure Service Principal Account.");
+        static readonly OctopusJsonRegistration<AzureResourceGroupResource[]> Results = new();
 
         readonly IOctopusHttpClientFactory httpClientFactory;
 
@@ -29,7 +29,7 @@ namespace Sashimi.Azure.Accounts.Web
             if (accountDetails.AccountType != AccountTypes.AzureServicePrincipalAccountType)
                 return OnlyServicePrincipalSupported.Response();
 
-            var servicePrincipalAccount = (AzureServicePrincipalAccountDetails) accountDetails;
+            var servicePrincipalAccount = (AzureServicePrincipalAccountDetails)accountDetails;
 
             var resourceGroups = await RetrieveResourceGroups(accountName, servicePrincipalAccount);
             return Results.Response(resourceGroups);
@@ -37,18 +37,20 @@ namespace Sashimi.Azure.Accounts.Web
 
         Task<AzureResourceGroupResource[]> RetrieveResourceGroups(string accountName, AzureServicePrincipalAccountDetails accountDetails)
         {
-
             return ThrowIfNotSuccess(async () =>
-            {
-                using (var armClient = accountDetails.CreateResourceManagementClient(httpClientFactory.HttpClientHandler))
-                {
-                    return await armClient.ResourceGroups.ListWithHttpMessagesAsync().ConfigureAwait(false);
-                }
-            }, response =>
-            {
-                return response.Body
-                    .Select(x => new AzureResourceGroupResource {Id = x.Id, Name = x.Name}).ToArray();
-            }, $"Failed to retrieve list of Resource Groups for '{accountName}' service principal.");
+                                     {
+                                         using (var armClient = accountDetails.CreateResourceManagementClient(httpClientFactory.HttpClientHandler))
+                                         {
+                                             return await armClient.ResourceGroups.ListWithHttpMessagesAsync().ConfigureAwait(false);
+                                         }
+                                     },
+                                     response =>
+                                     {
+                                         return response.Body
+                                                        .Select(x => new AzureResourceGroupResource { Id = x.Id, Name = x.Name })
+                                                        .ToArray();
+                                     },
+                                     $"Failed to retrieve list of Resource Groups for '{accountName}' service principal.");
         }
     }
 }

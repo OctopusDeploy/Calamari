@@ -1,3 +1,4 @@
+using System;
 using FluentValidation;
 
 namespace Sashimi.Server.Contracts.ActionHandlers.Validation

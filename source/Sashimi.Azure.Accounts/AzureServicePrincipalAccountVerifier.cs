@@ -14,9 +14,10 @@ namespace Sashimi.Azure.Accounts
         {
             this.httpClientFactoryLazy = httpClientFactoryLazy;
         }
+
         public async Task Verify(AccountDetails account, CancellationToken cancellationToken)
         {
-            var typedAccount = (AzureServicePrincipalAccountDetails) account;
+            var typedAccount = (AzureServicePrincipalAccountDetails)account;
             typedAccount.InvalidateTokenCache(httpClientFactoryLazy.Value.HttpClientHandler);
 
             using var resourcesClient = typedAccount.CreateResourceManagementClient(httpClientFactoryLazy.Value.HttpClientHandler);

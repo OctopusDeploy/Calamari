@@ -1,12 +1,15 @@
-﻿namespace Sashimi.Server.Contracts
+﻿using System;
+
+namespace Sashimi.Server.Contracts
 {
     public static class KnownVariables
     {
         public static readonly string UseRawScript = "OctopusUseRawScript";
         public static readonly string OriginalPackageDirectoryPath = "OctopusOriginalPackageDirectoryPath";
+
         public static class Project
         {
-             public static readonly string Id = "Octopus.Project.Id";
+            public static readonly string Id = "Octopus.Project.Id";
         }
 
         public static class Account
@@ -146,15 +149,15 @@
                 public static readonly string ScriptParameters = "Octopus.Action.Script.ScriptParameters";
                 public static readonly string ScriptSource = "Octopus.Action.Script.ScriptSource";
 
+                public static string ScriptBodyBySyntax(ScriptSyntax syntax)
+                {
+                    return $"Octopus.Action.Script.ScriptBody[{syntax.ToString()}]";
+                }
+
                 public static class ScriptSourceOptions
                 {
                     public const string Package = "Package";
                     public const string Inline = "Inline";
-                }
-
-                public static string ScriptBodyBySyntax(ScriptSyntax syntax)
-                {
-                    return $"Octopus.Action.Script.ScriptBody[{syntax.ToString()}]";
                 }
             }
 

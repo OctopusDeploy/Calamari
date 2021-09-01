@@ -10,16 +10,18 @@ namespace Sashimi.Server.Contracts.ActionHandlers
 
         public ServiceMessage(string name, Dictionary<string, string>? properties = null)
         {
-            this.Name = name;
+            Name = name;
             this.properties = properties ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
-
-        public static string EncodeValue(string value) =>
-            Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
 
         public string Name { get; }
 
         public IDictionary<string, string> Properties => properties;
+
+        public static string EncodeValue(string value)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+        }
 
         public string? GetValue(string key)
         {

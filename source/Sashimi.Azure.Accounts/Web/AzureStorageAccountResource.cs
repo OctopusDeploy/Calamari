@@ -1,5 +1,6 @@
 // CS8618 Non-nullable field {0} is uninitialized
 // Remove this when this class is converted to initialize all required properties via the constructor
+
 #pragma warning disable 8618
 
 using System;

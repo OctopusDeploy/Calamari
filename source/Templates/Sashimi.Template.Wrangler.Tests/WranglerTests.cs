@@ -54,14 +54,10 @@ namespace Sashimi.Template.Wrangler.Tests
         void Copy(string sourcePath, string destinationPath)
         {
             foreach (var dirPath in Directory.EnumerateDirectories(sourcePath, "*", SearchOption.AllDirectories))
-            {
                 Directory.CreateDirectory(dirPath.Replace(sourcePath, destinationPath));
-            }
 
             foreach (var newPath in Directory.EnumerateFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-            {
                 File.Copy(newPath, newPath.Replace(sourcePath, destinationPath), true);
-            }
         }
     }
 }

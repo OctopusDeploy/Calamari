@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -14,15 +13,15 @@ namespace Calamari.Scripting
 {
     public class StageScriptPackagesBehaviour : IAfterPackageExtractionBehaviour
     {
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly ICombinedPackageExtractor extractor;
-        private readonly bool forceExtract;
+        readonly ICalamariFileSystem fileSystem;
+        readonly ICombinedPackageExtractor extractor;
+        readonly bool forceExtract;
 
         public StageScriptPackagesBehaviour(ICalamariFileSystem fileSystem, ICombinedPackageExtractor extractor)
         {
             this.fileSystem = fileSystem;
             this.extractor = extractor;
-            this.forceExtract = false;
+            forceExtract = false;
         }
 
         public bool IsEnabled(RunningDeployment context)
@@ -53,7 +52,7 @@ namespace Calamari.Scripting
 
             // No need to check for "default" package since it gets extracted in the current directory in previous step.
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection)
-                .Where(i => !string.IsNullOrEmpty(i));
+                                                 .Where(i => !string.IsNullOrEmpty(i));
 
             foreach (var packageReferenceName in packageReferenceNames)
             {
@@ -99,13 +98,12 @@ namespace Calamari.Scripting
 
         void ExtractPackage(string packageFile, string extractionDirectory)
         {
-           Log.Info($"Extracting package '{packageFile}' to '{extractionDirectory}'");
+            Log.Info($"Extracting package '{packageFile}' to '{extractionDirectory}'");
 
             if (!File.Exists(packageFile))
                 throw new CommandException("Could not find package file: " + packageFile);
 
             extractor.Extract(packageFile, extractionDirectory);
         }
-
     }
 }

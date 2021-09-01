@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.NamingIsHard;

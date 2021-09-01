@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 
-[assembly:InternalsVisibleTo("Sashimi.Azure.Accounts.Tests")]
+[assembly: InternalsVisibleTo("Sashimi.Azure.Accounts.Tests")]

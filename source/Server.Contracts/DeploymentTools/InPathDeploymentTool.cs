@@ -1,4 +1,5 @@
-﻿using Octopus.CoreUtilities;
+﻿using System;
+using Octopus.CoreUtilities;
 
 namespace Sashimi.Server.Contracts.DeploymentTools
 {
@@ -19,6 +20,8 @@ namespace Sashimi.Server.Contracts.DeploymentTools
         public string[] SupportedPlatforms { get; }
 
         public virtual Maybe<DeploymentToolPackage> GetCompatiblePackage(string platform)
-            => new DeploymentToolPackage(this, Id).AsSome();
+        {
+            return new DeploymentToolPackage(this, Id).AsSome();
+        }
     }
 }
