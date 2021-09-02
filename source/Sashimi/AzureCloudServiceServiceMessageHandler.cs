@@ -5,6 +5,7 @@ using Octostache;
 using Sashimi.AzureCloudService.Endpoints;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
+using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Endpoints;
 using Sashimi.Server.Contracts.ServiceMessages;
 
@@ -54,6 +55,11 @@ namespace Sashimi.AzureCloudService
                                           out var cloudServiceName);
             messageProperties.TryGetValue(AzureCloudServiceServiceMessageNames.AzureStorageAccountAttribute,
                 out var storageAccountName);
+
+            if (cloudServiceName is null)
+                throw new ControlledActionFailedException("Cloud service name was not provided");
+            if (storageAccountName is null)
+                throw new ControlledActionFailedException("Storage account name was not provided");
 
             endpoint.CloudServiceName = cloudServiceName;
             endpoint.StorageAccountName = storageAccountName;

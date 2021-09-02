@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Sashimi.AzureCloudService</AssemblyName>
     <RootNamespace>Sashimi.AzureCloudService</RootNamespace>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <OutputPath>bin\</OutputPath>
     <Nullable>enable</Nullable>
@@ -26,15 +26,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Portable.BouncyCastle" Version="1.8.4" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="14.0.1" />
-    <PackageReference Include="Sashimi.AzureScripting" Version="14.0.0" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0001" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0003" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0004" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0009" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0010" />
-    <PackageReference Include="Sashimi.Server.Contracts" Version="14.0.1-enh-create-deplo0008" />
-    <PackageReference Include="Sashimi.AzureScripting" Version="13.2.0" />
+    <PackageReference Include="Sashimi.AzureScripting" Version="14.0.1" />
+    <PackageReference Include="Sashimi.Server.Contracts" Version="14.1.0" />
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.7.0" />
     <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0" />
   </ItemGroup>
