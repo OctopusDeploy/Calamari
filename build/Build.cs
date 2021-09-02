@@ -135,7 +135,7 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            var projects = SourceDirectory.GlobFiles("**/Sashimi.*.Tests.csproj");
+            var projects = SourceDirectory.GlobFiles("**/Sashimi*.Tests.csproj");
             foreach(var project in projects)
             {
                 var sashimiFlavour = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/AssemblyName");
