@@ -64,17 +64,11 @@ changeBuildType(RelativeId("Build")) {
         remove {
             equals("system.Octopus.OS", "Windows")
         }
-        remove {
-            equals("system.Octopus.Purpose", "Build")
-        }
         add {
             equals("system.Octopus.OS", "Windows", "RQ_1")
-        }
-        add {
-            equals("system.Octopus.Purpose", "Build", "RQ_2")
         }
     }
 
     expectDisabledSettings()
-    updateDisabledSettings("RQ_1", "RQ_2")
+    updateDisabledSettings("RQ_1")
 }
