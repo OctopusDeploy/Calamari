@@ -16,13 +16,7 @@
         </None>
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="Sashimi.Server.Contracts" Version="14.0.1" />
-      <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0002" />
-      <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0003" />
-      <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0004" />
-      <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0009" />
-      <PackageReference Include="Sashimi.Server.Contracts" Version="13.3.1-enh-create-deplo0010" />
-      <PackageReference Include="Sashimi.Server.Contracts" Version="14.0.1-enh-create-deplo0008" />
+      <PackageReference Include="Sashimi.Server.Contracts" Version="14.1.0" />
     </ItemGroup>
 
 </Project>
