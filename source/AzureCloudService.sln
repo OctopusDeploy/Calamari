@@ -13,16 +13,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{A5977E44-894E-4B
 	ProjectSection(SolutionItems) = preProject
 		..\.gitattributes = ..\.gitattributes
 		..\.gitignore = ..\.gitignore
-		..\build.cake = ..\build.cake
 		..\build.cmd = ..\build.cmd
 		..\build.ps1 = ..\build.ps1
 		..\CODEOWNERS = ..\CODEOWNERS
 		Directory.Build.props = Directory.Build.props
-		..\GitVersion.yml = ..\GitVersion.yml        
+		..\GitVersion.yml = ..\GitVersion.yml
 		..\readme.md = ..\readme.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Tests", "Calamari.Tests\Calamari.Tests.csproj", "{824DDE52-3DD5-463F-A299-43CF689718D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_build", "..\build\_build.csproj", "{CA452AEE-7820-4C7F-A04B-5C02A47C8AE6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,6 +47,8 @@ Global
 		{824DDE52-3DD5-463F-A299-43CF689718D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{824DDE52-3DD5-463F-A299-43CF689718D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{824DDE52-3DD5-463F-A299-43CF689718D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA452AEE-7820-4C7F-A04B-5C02A47C8AE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA452AEE-7820-4C7F-A04B-5C02A47C8AE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
