@@ -67,6 +67,9 @@ changeBuildType(RelativeId("Build")) {
         add {
             exists("system.Octopus.DotnetSdk3.1", "RQ_3")
         }
+        add {
+            exists("DotNetCoreSDK5.0_Path")
+        }
     }
 
     expectDisabledSettings()
