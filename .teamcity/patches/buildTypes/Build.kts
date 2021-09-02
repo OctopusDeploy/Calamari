@@ -59,10 +59,4 @@ changeBuildType(RelativeId("Build")) {
             }
         }
     }
-
-    requirements {
-        add {
-            exists("DotNetCoreSDK5.0_Path")
-        }
-    }
 }
