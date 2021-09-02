@@ -59,4 +59,16 @@ changeBuildType(RelativeId("Build")) {
             }
         }
     }
+
+    requirements {
+        remove {
+            equals("system.Octopus.OS", "Windows")
+        }
+        add {
+            equals("system.Octopus.OS", "Windows", "RQ_1")
+        }
+    }
+
+    expectDisabledSettings()
+    updateDisabledSettings("RQ_1")
 }
