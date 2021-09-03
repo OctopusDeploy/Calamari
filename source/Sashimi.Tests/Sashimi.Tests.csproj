@@ -3,7 +3,7 @@
   <PropertyGroup>
     <RootNamespace>Sashimi.AzureServiceFabric.Tests</RootNamespace>
     <AssemblyName>Sashimi.AzureServiceFabric.Tests</AssemblyName>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -16,8 +16,8 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
     <PackageReference Include="NSubstitute" Version="4.2.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
-    <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="14.0.5" />
-    <PackageReference Include="Sashimi.Tests.Shared" Version="14.0.1" />
+    <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="14.3.20" />
+    <PackageReference Include="Sashimi.Tests.Shared" Version="14.1.0" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
   </ItemGroup>
 

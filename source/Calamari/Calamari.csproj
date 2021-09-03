@@ -8,8 +8,8 @@
     <TargetFramework>net452</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Calamari.Common" Version="19.4.6" />
-    <PackageReference Include="Calamari.Scripting" Version="14.0.1" />
+    <PackageReference Include="Calamari.Common" Version="20.3.8" />
+    <PackageReference Include="Calamari.Scripting" Version="14.1.0" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="2.28.3" />
     <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
   </ItemGroup>
