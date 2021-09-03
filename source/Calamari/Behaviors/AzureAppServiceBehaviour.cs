@@ -46,7 +46,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (resourceGroupName == null)
                 throw new Exception("resource group name must be specified");
             string? slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
-            var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath));
+            var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
 
             switch (packageFileInfo.Extension)
             {

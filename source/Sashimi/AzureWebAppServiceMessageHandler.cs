@@ -5,6 +5,7 @@ using Octostache;
 using Sashimi.AzureAppService.Endpoints;
 using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.Accounts;
+using Sashimi.Server.Contracts.ActionHandlers;
 using Sashimi.Server.Contracts.Endpoints;
 using Sashimi.Server.Contracts.ServiceMessages;
 
@@ -49,6 +50,11 @@ namespace Sashimi.AzureAppService
 
             messageProperties.TryGetValue(AzureWebAppServiceMessageNames.WebAppNameAttribute, out var wepAppName);
             messageProperties.TryGetValue(AzureWebAppServiceMessageNames.ResourceGroupNameAttribute, out var resourceGroupName);
+
+            if (wepAppName is null)
+                throw new ControlledActionFailedException("App Service name was not provided");
+            if (resourceGroupName is null)
+                throw new ControlledActionFailedException("Resource group name was not provided");
 
             endpoint.WebAppName = wepAppName;
             endpoint.ResourceGroupName = resourceGroupName;
