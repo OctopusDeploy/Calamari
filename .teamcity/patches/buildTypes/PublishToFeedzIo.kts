@@ -199,7 +199,7 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
             equals("system.Octopus.Purpose", "Build")
         }
         add {
-            equals("system.agent.name", "nautilus-")
+            startsWith("system.agent.name", "nautilus-")
         }
     }
 }
