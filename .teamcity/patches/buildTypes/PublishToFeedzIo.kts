@@ -193,4 +193,13 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
         }
 
     }
+
+    requirements {
+        remove {
+            equals("system.Octopus.Purpose", "Build")
+        }
+        add {
+            equals("system.agent.name", "nautilus-")
+        }
+    }
 }
