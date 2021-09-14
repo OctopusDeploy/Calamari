@@ -29,7 +29,6 @@ namespace Sashimi.AzureWebApp
             }
 
             return context.CalamariCommand(AzureConstants.CalamariAzure, "deploy-azure-web")
-                          .WithCheckAccountIsNotManagementCertificate(context, taskLog)
                           .WithAzureTools(context, taskLog)
                           .WithStagedPackageArgument()
                           .Execute(taskLog);
