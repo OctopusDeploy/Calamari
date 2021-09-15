@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -57,6 +58,19 @@ namespace Calamari.Tests.Fixtures.Bash
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Para meter1");
+        }
+        
+        [Test]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldNotHaveDecryptionKeyInScopeOfUserScript()
+        {
+            var (output, _) = RunScript("parameters.sh", new Dictionary<string, string>()
+                                            { ["Name"] = "NameToEncrypt", [SpecialVariables.Action.Script.ScriptParameters] = "" }, 
+                                            sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
+
+            output.AssertSuccess();
+            output.AssertOutput("Parameters ");
+            output.AssertNoOutputMatches(@"Parameters ([A-Z0-9])+");
         }
 
         [Test]

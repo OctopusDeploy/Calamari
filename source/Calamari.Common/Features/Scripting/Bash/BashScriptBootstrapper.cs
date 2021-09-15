@@ -116,6 +116,7 @@ namespace Calamari.Common.Features.Scripting.Bash
                 writer.NewLine = LinuxNewLine;
                 writer.WriteLine("#!/bin/bash");
                 writer.WriteLine("source \"$(pwd)/" + Path.GetFileName(configurationFile) + "\"");
+                writer.WriteLine("shift");
                 writer.WriteLine("source \"$(pwd)/" + Path.GetFileName(script.File) + "\" " + script.Parameters);
                 writer.Flush();
             }
