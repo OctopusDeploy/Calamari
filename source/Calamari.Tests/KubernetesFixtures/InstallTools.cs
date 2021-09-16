@@ -208,18 +208,27 @@ namespace Calamari.Tests.KubernetesFixtures
                                             string destination)
         {
             var zipPath = Path.Combine(Path.GetTempPath(), fileName);
+            var downloadUrl = UriCombine(downloadBaseUrl, fileName);
             using (new TemporaryFile(zipPath))
             {
-                await Download(zipPath, client, $"{downloadBaseUrl}{fileName}");
+                await Download(zipPath, client, downloadUrl);
 
                 ZipFile.ExtractToDirectory(zipPath, destination);
             }
         }
-        
+
+        static string UriCombine(string downloadBaseUrl, string fileName)
+        {
+            if (downloadBaseUrl.Last() != '/')
+                downloadBaseUrl += '/';
+            
+            return $"{downloadBaseUrl}{fileName}";
+        }
+
         static async Task DownloadGcloud(string fileName,
-                                            HttpClient client,
-                                            string downloadUrl,
-                                            string destination)
+                                         HttpClient client,
+                                         string downloadUrl,
+                                         string destination)
         {
             var zipPath = Path.Combine(Path.GetTempPath(), fileName);
             using (new TemporaryFile(zipPath))
