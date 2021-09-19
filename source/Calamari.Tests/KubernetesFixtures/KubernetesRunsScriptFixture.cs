@@ -24,6 +24,7 @@ using CaptureCommandInvocationOutputSink = Calamari.Tests.Helpers.CaptureCommand
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
+    [Ignore("Temporary disablement 2021-09-20")]
     public class KubernetesContextScriptWrapperFixture
     {
         const string ServerUrl = "<server>";

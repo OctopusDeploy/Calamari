@@ -19,6 +19,7 @@ namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
+    [Ignore("Temporary disablement 2021-09-20")]
     public class KubernetesContextScriptWrapperLiveFixture: KubernetesContextScriptWrapperLiveFixtureBase
     {
         InstallTools installTools;

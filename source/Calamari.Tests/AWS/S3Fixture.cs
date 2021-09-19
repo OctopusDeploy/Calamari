@@ -71,6 +71,9 @@ namespace Calamari.Tests.AWS
         [Test]
         public async Task UploadPackage1()
         {
+            Console.WriteLine($"Region: {region}");
+            Console.WriteLine($"Bucket: {bucketName}");
+            
             var fileSelections = new List<S3FileSelectionProperties>
             {
                 new S3MultiFileSelectionProperties
@@ -91,11 +94,17 @@ namespace Calamari.Tests.AWS
             };
 
             var prefix = Upload("Package1", fileSelections);
-
+            Console.WriteLine($"Bucket Key Prefix: {prefix}");
+            
             await Validate(async client =>
             {
+                Console.WriteLine($"Verifying object at: {prefix}Resources/TextFile.txt");
                 await client.GetObjectAsync(bucketName, $"{prefix}Resources/TextFile.txt");
+                
+                Console.WriteLine($"Verifying object at: {prefix}root/Page.html");
                 await client.GetObjectAsync(bucketName, $"{prefix}root/Page.html");
+                
+                Console.WriteLine($"Verifying object at: {prefix}Extra/JavaScript.js");
                 await client.GetObjectAsync(bucketName, $"{prefix}Extra/JavaScript.js");
             });
         }
@@ -269,6 +278,7 @@ namespace Calamari.Tests.AWS
             var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"),
                 Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
             var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region)};
+            Console.WriteLine($"Validate RegionEndpoint: {config.RegionEndpoint}");
             using (var client = new AmazonS3Client(credentials, config))
             {
                 await execute(client);
@@ -278,7 +288,7 @@ namespace Calamari.Tests.AWS
         string Upload(string packageName, List<S3FileSelectionProperties> fileSelections, VariableDictionary customVariables = null)
         {
             var bucketKeyPrefix = $"calamaritest/{Guid.NewGuid():N}/";
-
+            
             fileSelections.ForEach(properties =>
             {
                 if (properties is S3MultiFileSelectionProperties multiFileSelectionProperties)

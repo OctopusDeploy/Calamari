@@ -15,6 +15,7 @@ using Octopus.Versioning.Semver;
 namespace Calamari.Tests.Fixtures.PackageDownload
 {
     [TestFixture]
+    [Ignore("Temporary disablement 2021-09-20")]
     public class PackageDownloadFixture : CalamariFixture
     {
         const string FeedUriEnvironmentVariable = "CALAMARI_AUTHURI";

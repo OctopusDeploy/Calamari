@@ -8,6 +8,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.AWS.CloudFormation
 {
     [TestFixture]
+    [Ignore("Temporary disablement 2021-09-20")]
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class CloudFormationFixture
     {
