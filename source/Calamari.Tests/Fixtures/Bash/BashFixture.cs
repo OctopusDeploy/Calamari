@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -56,7 +57,17 @@ namespace Calamari.Tests.Fixtures.Bash
                 { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1'" });
 
             output.AssertSuccess();
-            output.AssertOutput("Parameters Para meter0Para meter1");
+            output.AssertOutput("Parameters ($1='Para meter0' $2='Para meter1'");
+        }
+        
+        [Test]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldNotReceiveParametersIfNoneProvided()
+        {
+            var (output, _) = RunScript("parameters.sh", sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
+
+            output.AssertSuccess();
+            output.AssertOutput("Parameters ($1='' $2='')");
         }
 
         [Test]
