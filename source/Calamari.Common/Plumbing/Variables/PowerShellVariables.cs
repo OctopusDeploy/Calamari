@@ -10,6 +10,7 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string UserName = "Octopus.Action.PowerShell.UserName";
         public static readonly string Password = "Octopus.Action.PowerShell.Password";
         public static readonly string Edition = "Octopus.Action.PowerShell.Edition";
+        public static readonly string OutputPowerShellProgress = "Octopus.Action.PowerShell.OutputPowerShellProgress";
 
         public static class PSDebug
         {

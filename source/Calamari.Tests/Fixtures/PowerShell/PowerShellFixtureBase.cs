@@ -584,6 +584,33 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput(string.Join(Environment.NewLine, "45", "226", "128", "147"));
             AssertPowerShellEdition(output);
         }
+        
+        [Test]
+        public void ScriptWithPowerShellProgressCorrectlyWritesWarningAfter()
+        {
+            var (output, _) = RunPowerShellScript("PowerShellProgress.ps1");
+
+            output.AssertSuccess();
+            output.CapturedOutput.AllMessages.Where(x => x.EndsWith(" ##octopus[stdout-warning]")).Should().HaveCount(0);
+        }
+        
+        [Test]
+        [TestCase("true", 1)]
+        [TestCase("false", 0)]
+        [TestCase("1", 1)]
+        [TestCase("0", 0)]
+        [TestCase(null, 0)]
+        public void ScriptWithPowerShellProgressAndOverrideOutputVariableDefinedCorrectlyWritesExpectedWarningAfter(string progressVariable, int expectedOutputCount)
+        {
+            var additionalVariables = new Dictionary<string, string>
+            {
+                [PowerShellVariables.OutputPowerShellProgress] = progressVariable
+            };
+            var (output, _) = RunPowerShellScript("PowerShellProgress.ps1", additionalVariables);
+
+            output.AssertSuccess();
+            output.CapturedOutput.AllMessages.Where(x => x.EndsWith(" ##octopus[stdout-warning]")).Should().HaveCount(expectedOutputCount);
+        }
 
         static bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
 

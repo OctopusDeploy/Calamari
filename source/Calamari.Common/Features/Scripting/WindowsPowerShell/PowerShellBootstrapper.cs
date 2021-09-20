@@ -181,6 +181,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             var commandArguments = new StringBuilder();
             var executeWithoutProfile = variables[PowerShellVariables.ExecuteWithoutProfile];
             var traceCommand = GetPsDebugCommand(variables);
+            var displayProgressCommand = GetDisplayProgressCommand(variables);
 
             foreach (var argument in ContributeCommandArguments(variables))
                 commandArguments.Append(argument);
@@ -196,8 +197,21 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                 ? debuggingBootstrapFile.EscapeSingleQuotedString()
                 : bootstrapFile.EscapeSingleQuotedString();
 
-            commandArguments.AppendFormat("-Command \"{0}Try {{. {{. '{1}' -OctopusKey '{2}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", traceCommand, fileToExecute, encryptionKey);
+            commandArguments.AppendFormat("-Command \"{0} {1}Try {{. {{. '{2}' -OctopusKey '{3}'; if ((test-path variable:global:lastexitcode)) {{ exit $LastExitCode }}}};}} catch {{ throw }}\"", displayProgressCommand, traceCommand, fileToExecute, encryptionKey);
             return commandArguments.ToString();
+        }
+
+        string GetDisplayProgressCommand(IVariables variables)
+        {
+            var powerShellProgressPreferenceArg = variables[PowerShellVariables.OutputPowerShellProgress];
+            
+            int.TryParse(powerShellProgressPreferenceArg, out var processArgAsInt);
+            bool.TryParse(powerShellProgressPreferenceArg, out var processArgAsBool);
+            if (processArgAsInt > 0 || processArgAsBool)
+            {
+                return "$ProgressPreference = 'Continue';";
+            }
+            return "$ProgressPreference = 'SilentlyContinue';";
         }
 
         static string GetPsDebugCommand(IVariables variables)
