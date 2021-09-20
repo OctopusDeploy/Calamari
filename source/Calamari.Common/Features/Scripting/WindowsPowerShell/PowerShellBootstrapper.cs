@@ -201,13 +201,13 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             return commandArguments.ToString();
         }
 
-        string GetDisplayProgressCommand(IVariables variables)
+        static string GetDisplayProgressCommand(IVariables variables)
         {
             var powerShellProgressPreferenceArg = variables[PowerShellVariables.OutputPowerShellProgress];
             
-            int.TryParse(powerShellProgressPreferenceArg, out var processArgAsInt);
-            bool.TryParse(powerShellProgressPreferenceArg, out var processArgAsBool);
-            if (processArgAsInt > 0 || processArgAsBool)
+            int.TryParse(powerShellProgressPreferenceArg, out var powerShellProgressPreferenceArgAsInt);
+            bool.TryParse(powerShellProgressPreferenceArg, out var powerShellProgressPreferenceArgAsBool);
+            if (powerShellProgressPreferenceArgAsInt > 0 || powerShellProgressPreferenceArgAsBool)
             {
                 return "$ProgressPreference = 'Continue';";
             }
