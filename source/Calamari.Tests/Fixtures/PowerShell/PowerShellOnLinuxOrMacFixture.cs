@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
@@ -6,6 +8,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.PowerShell
@@ -43,6 +46,24 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 output.AssertSuccess();
                 output.AssertOutput("Hello Bash");
             }
+        }
+        
+        [Test]
+        [TestCase("true", 1)]
+        [TestCase("false", 0)]
+        [TestCase("1", 1)]
+        [TestCase("0", 0)]
+        [TestCase(null, 0)]
+        public void ScriptWithPowerShellProgressAndOverrideOutputVariableDefinedCorrectlyWritesExpectedWarningAfter(string progressVariable, int expectedOutputCount)
+        {
+            var additionalVariables = new Dictionary<string, string>
+            {
+                [PowerShellVariables.OutputPowerShellProgress] = progressVariable
+            };
+            var (output, _) = RunPowerShellScript("PowerShellProgress.ps1", additionalVariables);
+
+            output.AssertSuccess();
+            output.CapturedOutput.AllMessages.Where(x => x.EndsWith(" ##octopus[stdout-warning]")).Should().HaveCount(expectedOutputCount);
         }
 
         protected override PowerShellEdition PowerShellEdition => PowerShellEdition.Core;

@@ -595,21 +595,21 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
         
         [Test]
-        [TestCase("true", 1)]
-        [TestCase("false", 0)]
-        [TestCase("1", 1)]
-        [TestCase("0", 0)]
-        [TestCase(null, 0)]
-        public void ScriptWithPowerShellProgressAndOverrideOutputVariableDefinedCorrectlyWritesExpectedWarningAfter(string progressVariable, int expectedOutputCount)
+        [TestCase("true", "Continue")]
+        [TestCase("false", "SilentlyContinue")]
+        [TestCase("1", "Continue")]
+        [TestCase("0", "SilentlyContinue")]
+        [TestCase(null, "SilentlyContinue")]
+        public void ScriptWithPowerShellProgressAndOverrideOutputVariableDefinedCorrectlySetProgressPreferenceVariable(string progressVariable, string expectedOutput)
         {
             var additionalVariables = new Dictionary<string, string>
             {
                 [PowerShellVariables.OutputPowerShellProgress] = progressVariable
             };
-            var (output, _) = RunPowerShellScript("PowerShellProgress.ps1", additionalVariables);
+            var (output, _) = RunPowerShellScript("PowerShellProgressPreferenceCheck.ps1", additionalVariables);
 
             output.AssertSuccess();
-            output.CapturedOutput.AllMessages.Where(x => x.EndsWith(" ##octopus[stdout-warning]")).Should().HaveCount(expectedOutputCount);
+            output.AssertOutput($"ProgressPreference = {expectedOutput}");
         }
 
         static bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
@@ -651,7 +651,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
 
-        (CalamariResult result, IVariables variables) RunPowerShellScript(string scriptName,
+        protected (CalamariResult result, IVariables variables) RunPowerShellScript(string scriptName,
             Dictionary<string, string> additionalVariables = null,
             Dictionary<string, string> additionalParameters = null,
             string sensitiveVariablesPassword = null)
