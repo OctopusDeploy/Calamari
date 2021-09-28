@@ -31,7 +31,8 @@ namespace Calamari.Tests.Fixtures.Variables
                 Assert.Ignore("This test is designed to run on *nix");
 
             var variables = AddEnvironmentVariables();
-            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Does.StartWith("My home starts at /home/"));
+            // When running Dockerised, we may be running as root and so $HOME will be /root.
+            Assert.That(variables.Evaluate("My home starts at #{env:HOME}"), Does.StartWith("My home starts at /home/").Or.StartsWith("My home starts at /root"));
         }
 
         [Test]
