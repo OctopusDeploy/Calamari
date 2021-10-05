@@ -1,4 +1,4 @@
-﻿// Much of this class was based on code from https://github.com/NuGet/NuGet.Client. It was ported, as the NuGet libraries are .NET 4.5 and Calamari is .NET 4.0
+// Much of this class was based on code from https://github.com/NuGet/NuGet.Client. It was ported, as the NuGet libraries are .NET 4.5 and Calamari is .NET 4.0
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.//
 #if USE_NUGET_V2_LIBS
@@ -8,9 +8,13 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
+using System.Web;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning;
 using Octopus.Versioning.Semver;
 
@@ -30,20 +34,35 @@ namespace Calamari.Integration.Packages.NuGet
 
         static bool IsJsonEndpoint(Uri feedUri, ICredentials feedCredentials, TimeSpan httpTimeout)
         {
+#if NET40
+            var request = WebRequest.Create(feedUri);
+            request.Credentials = feedCredentials;
+            request.Timeout = (int)httpTimeout.TotalMilliseconds;
+            using (var response = (HttpWebResponse)request.GetResponse())
+            {
+                if (response.IsSuccessStatusCode())
+                {
+                    return response.ContentType == "application/json";
+                }
+
+                throw new HttpException((int)response.StatusCode, $"Received status code that indicate not successful response. Uri:{feedUri}");
+            }
+#else
             var request = new HttpRequestMessage(HttpMethod.Get, feedUri);
 
             using (var httpClient = CreateHttpClient(feedCredentials, httpTimeout))
             {
                 var sending = httpClient.SendAsync(request);
                 sending.Wait();
-                
+
                 using (var response = sending.Result)
                 {
                     response.EnsureSuccessStatusCode();
-
+                
                     return response.Content.Headers.ContentType.MediaType == "application/json";
                 }
             }
+#endif
         }
 
         public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, TimeSpan httpTimeout)
@@ -54,6 +73,8 @@ namespace Calamari.Integration.Packages.NuGet
             {
                 throw new InvalidOperationException($"Unable to find url to download package: {version} with version: {version} from feed: {feedUri}");
             }
+            
+            Log.Verbose($"Downloading package from '{downloadUri}'");
 
             using (var nupkgFile = new FileStream(targetFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
             {
@@ -184,6 +205,26 @@ namespace Calamari.Integration.Packages.NuGet
 
         static void GetHttp(Uri uri, ICredentials credentials, TimeSpan httpTimeout, Action<Stream> processContent)
         {
+#if NET40
+            var request = WebRequest.Create(uri);
+            request.Credentials = credentials;
+            request.Timeout = (int)httpTimeout.TotalMilliseconds;
+            using (var response = (HttpWebResponse)request.GetResponse())
+            {
+                if (response.IsSuccessStatusCode())
+                {
+                    using (var respStream = response.GetResponseStream())
+                    {
+                        processContent(respStream);
+                    }
+                }
+                else
+                {
+                    throw new HttpException((int)response.StatusCode, $"Received status code that indicate not successful response. Uri:{uri}");
+                }
+            }
+            
+#else
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
             using (var httpClient = CreateHttpClient(credentials, httpTimeout))
@@ -198,6 +239,7 @@ namespace Calamari.Integration.Packages.NuGet
                     processContent(readingStream.Result);
                 }
             }
+#endif
         }
 
         static Uri? GetPackageBaseUri(IDictionary<string, List<Uri>> resources)
