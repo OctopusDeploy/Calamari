@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using Calamari.Common.Features.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -15,17 +13,22 @@ namespace Calamari.Tests.Fixtures.PackageDownload
     
     public class NuGetFeedVersionSupportFixture : CalamariFixture
     {
-        const string FeedzPackageId = "Calamari.Tests.Fixtures.PackageDownload.NuGetFeedSupport";
-        const string ArtifactoryPackageId = "Artifactory.Test.NuGet";
+        const string FeedzV2UriEnvironmentVariable = "CALAMARI_FEEDZV2URI";
+        const string FeedzV3UriEnvironmentVariable = "CALAMARI_FEEDZV3URI";
+        const string ArtifactoryV2UriEnvironmentVariable = "CALAMARI_ARTIFACTORYV2URI";
+        const string ArtifactoryV3FeedUriEnvironmentVariable = "CALAMARI_ARTIFACTORYV3URI";
         
+        const string TestNuGetPackageId = "Calamari.Tests.Fixtures.PackageDownload.NuGetFeedSupport";
+
         // TODO: Packages here were generated using the nuspec file in the .\NuGetFeedSupport folder
-        // Right now, they have been manually uploaded to the feedz.io repository below.
+        // Right now, they have been manually uploaded to the feedz.io and Artifactory repositories below.
         // In future, we should ensure this test fixture sets its own data up from scratch before running
         // and tears it down on completion, rather than relying on external state as it currently does.
-        const string FeedzNuGetV2FeedUrl = "https://f.feedz.io/octopus-deploy/integration-tests/nuget";
-        const string FeedzNuGetV3FeedUrl = "https://f.feedz.io/octopus-deploy/integration-tests/nuget/index.json";
-        const string ArtifactoryNuGetV2FeedUrl = "https://nuget.packages.octopushq.com/";
-        const string ArtifactoryNuGetV3FeedUrl = "https://packages.octopushq.com/artifactory/api/nuget/v3/nuget";
+
+        static readonly string FeedzNuGetV2FeedUrl = Environment.GetEnvironmentVariable(FeedzV2UriEnvironmentVariable);
+        static readonly string FeedzNuGetV3FeedUrl = Environment.GetEnvironmentVariable(FeedzV3UriEnvironmentVariable);
+        static readonly string ArtifactoryNuGetV2FeedUrl = Environment.GetEnvironmentVariable(ArtifactoryV2UriEnvironmentVariable);
+        static readonly string ArtifactoryNuGetV3FeedUrl = Environment.GetEnvironmentVariable(ArtifactoryV3FeedUriEnvironmentVariable);
         
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageDownload");
 
@@ -55,7 +58,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [TestCaseSource(nameof(FeedzNuGet2SupportedVersionStrings))]
         public void ShouldSupportFeedzNuGetVersion2Feeds(string versionString)
         {
-            var calamariResult = DownloadPackage(FeedzPackageId, versionString, "nuget-local", FeedzNuGetV2FeedUrl);
+            var calamariResult = DownloadPackage(TestNuGetPackageId, versionString, "nuget-local", FeedzNuGetV2FeedUrl);
             calamariResult.AssertSuccess();
         }
         
@@ -64,7 +67,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [TestCaseSource(nameof(FeedzNuGet3SupportedVersionStrings))]
         public void ShouldSupportFeedzNuGetVersion3Feeds(string versionString)
         {
-            var calamariResult = DownloadPackage(FeedzPackageId, versionString, "nuget-local", FeedzNuGetV3FeedUrl);
+            var calamariResult = DownloadPackage(TestNuGetPackageId, versionString, "nuget-local", FeedzNuGetV3FeedUrl);
             
             calamariResult.AssertSuccess();
         }
@@ -75,7 +78,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [Platform("Net-4.5")]
         public void ArtifactoryShouldSupportNuGetVersion3Feeds(string versionString)
         {
-            var calamariResult = DownloadPackage(ArtifactoryPackageId,  versionString, "nuget-local", ArtifactoryNuGetV3FeedUrl);
+            var calamariResult = DownloadPackage(TestNuGetPackageId,  versionString, "nuget-local", ArtifactoryNuGetV3FeedUrl);
             calamariResult.AssertSuccess();
         }
         
@@ -83,7 +86,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [TestCaseSource(nameof(ArtifactoryNuGet2SupportedVersionStrings))]
         public void ArtifactoryShouldSupportNuGetVersion2Feeds(string versionString)
         {
-            var calamariResult = DownloadPackage(ArtifactoryPackageId,  versionString, "nuget-local", ArtifactoryNuGetV2FeedUrl);
+            var calamariResult = DownloadPackage(TestNuGetPackageId,  versionString, "nuget-local", ArtifactoryNuGetV2FeedUrl);
             calamariResult.AssertSuccess();
         }
 
