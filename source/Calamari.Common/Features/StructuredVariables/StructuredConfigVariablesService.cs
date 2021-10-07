@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Autofac;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -9,6 +10,22 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.StructuredVariables
 {
+    /// <summary>
+    /// Order matters, so we opt for explicit registration over scanning
+    /// </summary>
+    public class StructuredConfigVariablesModule : Module
+    {
+        protected override void Load(ContainerBuilder builder)
+        {
+            builder.RegisterType<JsonFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+            builder.RegisterType<XmlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+            builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+            builder.RegisterType<PropertiesFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+
+            builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
+        }
+    }
+
     public interface IStructuredConfigVariablesService
     {
         void ReplaceVariables(RunningDeployment deployment);
@@ -30,7 +47,7 @@ namespace Calamari.Common.Features.StructuredVariables
             this.log = log;
 
             allReplacers = replacers;
-            
+
             jsonReplacer = replacers.FirstOrDefault(r => r.FileFormatName == StructuredConfigVariablesFileFormats.Json)
                            ?? throw new Exception("No JSON replacer was supplied. A JSON replacer is required as a fallback.");
         }
@@ -38,8 +55,8 @@ namespace Calamari.Common.Features.StructuredVariables
         public void ReplaceVariables(RunningDeployment deployment)
         {
             var targets = deployment.Variables.GetPaths(ActionVariables.StructuredConfigurationVariablesTargets);
-            var onlyPerformJsonReplacement = deployment.Variables.GetFlag(ActionVariables.StructuredConfigurationFallbackFlag);	
-            
+            var onlyPerformJsonReplacement = deployment.Variables.GetFlag(ActionVariables.StructuredConfigurationFallbackFlag);
+
             foreach (var target in targets)
             {
                 if (fileSystem.DirectoryExists(target))

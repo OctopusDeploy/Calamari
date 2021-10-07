@@ -10,6 +10,7 @@ using Calamari.Common.Features.FunctionScriptContributions;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
@@ -113,6 +114,8 @@ namespace Calamari.Common
                 .Named<ICommand>(t => ((CommandAttribute)Attribute.GetCustomAttribute(t, typeof(CommandAttribute))).Name);
 
             builder.RegisterInstance(options).AsSelf().SingleInstance();
+
+            builder.RegisterModule<StructuredConfigVariablesModule>();
         }
 
         protected virtual Assembly GetProgramAssemblyToRegister()
