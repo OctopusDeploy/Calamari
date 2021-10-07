@@ -38,8 +38,6 @@ namespace Calamari.Common
             this.log = log;
         }
 
-
-
         protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -58,7 +56,6 @@ namespace Calamari.Common
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
             builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
             builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
-            builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
             builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
@@ -92,18 +89,7 @@ namespace Calamari.Common
                     .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>().Name);
 
-            RegisterFileFormatVariableReplacers(builder);
-        }
-
-        /// <summary>
-        /// Order matters, so we opt for explicit registration over scanning
-        /// </summary>
-        void RegisterFileFormatVariableReplacers(ContainerBuilder builder)
-        {
-            builder.RegisterType<JsonFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<XmlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<PropertiesFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+            builder.RegisterModule<StructuredConfigVariablesModule>();
         }
 
         protected virtual IEnumerable<Assembly> GetProgramAssembliesToRegister()
