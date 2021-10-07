@@ -38,6 +38,8 @@ namespace Calamari.Common
             this.log = log;
         }
 
+
+
         protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -56,14 +58,14 @@ namespace Calamari.Common
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
             builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
             builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
-            builder.RegisterType<JsonFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
             builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
             builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
+
+            builder.RegisterAssemblyTypes(assemblies).AssignableTo<IFileFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
 
             builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
 
@@ -89,6 +91,19 @@ namespace Calamari.Common
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
                     .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>().Name);
+
+            RegisterFileFormatVariableReplacers(builder);
+        }
+
+        /// <summary>
+        /// Order matters, so we opt for explicit registration over scanning
+        /// </summary>
+        void RegisterFileFormatVariableReplacers(ContainerBuilder builder)
+        {
+            builder.RegisterType<JsonFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+            builder.RegisterType<XmlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+            builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+            builder.RegisterType<PropertiesFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
         }
 
         protected virtual IEnumerable<Assembly> GetProgramAssembliesToRegister()
