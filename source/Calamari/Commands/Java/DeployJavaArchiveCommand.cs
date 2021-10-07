@@ -37,6 +37,7 @@ namespace Calamari.Commands.Java
         readonly ICommandLineRunner commandLineRunner;
         readonly ISubstituteInFiles substituteInFiles;
         readonly IExtractPackage extractPackage;
+        readonly IStructuredConfigVariablesService structuredConfigVariablesService;
 
         public DeployJavaArchiveCommand(
             ILog log,
@@ -45,7 +46,8 @@ namespace Calamari.Commands.Java
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
             ISubstituteInFiles substituteInFiles,
-            IExtractPackage extractPackage
+            IExtractPackage extractPackage,
+            IStructuredConfigVariablesService structuredConfigVariablesService
         )
         {
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = new PathToPackage(Path.GetFullPath(v)));
@@ -57,6 +59,7 @@ namespace Calamari.Commands.Java
             this.commandLineRunner = commandLineRunner;
             this.substituteInFiles = substituteInFiles;
             this.extractPackage = extractPackage;
+            this.structuredConfigVariablesService = structuredConfigVariablesService;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -73,8 +76,6 @@ namespace Calamari.Commands.Java
 
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
-            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
-            var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, fileSystem, log);
             var jarTools = new JarTool(commandLineRunner, log, variables);
             var packageExtractor = new JarPackageExtractor(jarTools);
             var embeddedResources = new AssemblyEmbeddedResources();
