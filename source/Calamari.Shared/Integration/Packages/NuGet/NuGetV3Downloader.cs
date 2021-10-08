@@ -4,6 +4,7 @@
 #if USE_NUGET_V2_LIBS
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -11,6 +12,7 @@ using System.Net.Http;
 using System.Web;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Deployment;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
@@ -27,7 +29,7 @@ namespace Calamari.Integration.Packages.NuGet
             {
                 return true;
             }
-            
+
             return IsJsonEndpoint(feedUri, feedCredentials, httpTimeout);
         }
 
@@ -57,22 +59,39 @@ namespace Calamari.Integration.Packages.NuGet
                 using (var response = sending.Result)
                 {
                     response.EnsureSuccessStatusCode();
-                
+
                     return response.Content.Headers.ContentType.MediaType == "application/json";
                 }
             }
 #endif
         }
 
+        class PackageIdentifier
+        {
+            public PackageIdentifier(string packageId, IVersion version)
+            {
+                Id = packageId.ToLowerInvariant();
+                Version = version.ToString().ToLowerInvariant();
+                SemanticVersion = version;
+                SemanticVersionWithoutMetadata = new SemanticVersion(version.Major, version.Minor, version.Patch, version.Revision, version.Release, null);
+            }
+
+            public string Id { get; }
+            public string Version { get; }
+            public IVersion SemanticVersion { get; }
+            public IVersion SemanticVersionWithoutMetadata { get; }
+        }
+
         public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath, TimeSpan httpTimeout)
         {
-            var downloadUri = DownloadUri(packageId, version, feedUri, feedCredentials, httpTimeout);
+            var packageIdentifier = new PackageIdentifier(packageId, version);
 
+            var downloadUri = GetDownloadUri(packageIdentifier, feedUri, feedCredentials, httpTimeout);
             if (downloadUri == null)
             {
                 throw new InvalidOperationException($"Unable to find url to download package: {version} with version: {version} from feed: {feedUri}");
             }
-            
+
             Log.Verbose($"Downloading package from '{downloadUri}'");
 
             using (var nupkgFile = new FileStream(targetFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
@@ -84,88 +103,73 @@ namespace Calamari.Integration.Packages.NuGet
             }
         }
 
-        static Uri? DownloadUri(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, TimeSpan httpTimeout)
+        static Uri? GetDownloadUri(PackageIdentifier packageIdentifier, Uri feedUri, ICredentials feedCredentials, TimeSpan httpTimeout)
         {
-            var normalizedId = packageId.ToLowerInvariant();
-            var normalizedVersion = version.ToString().ToLowerInvariant();
-            
-            var packageBaseDownloadUri = GetPackageBaseDownloadUri(feedUri, feedCredentials, httpTimeout, normalizedId, normalizedVersion, out IDictionary<string, List<Uri>> resources);
-            if (packageBaseDownloadUri != null) return packageBaseDownloadUri;
-
-            return GetPackageRegistrationDownloadUri(version, feedCredentials, httpTimeout, resources, normalizedId, normalizedVersion);
-        }
-
-        static Uri? GetPackageRegistrationDownloadUri(IVersion version, ICredentials feedCredentials, TimeSpan httpTimeout, IDictionary<string, List<Uri>> resources, string normalizedId, string normalizedVersion)
-        {
-            var packageRegistrationUri = GetPackageRegistrationUri(resources, normalizedId);
-
-            var packageRegistrationResponse = GetJsonResponse(packageRegistrationUri, feedCredentials, httpTimeout);
-            var packageRegistrationId = packageRegistrationResponse["@id"];
-
-            if (packageRegistrationId.Type == JTokenType.String)
-            {
-                var packageRegistrationIdResponse = GetJsonResponse(new Uri(packageRegistrationId.ToString()), feedCredentials, httpTimeout);
-
-                if (packageRegistrationIdResponse.TryGetValue("items", out JToken entries))
-                {
-                    foreach (var entry in entries)
-                    {
-                        var entryObject = entry.ToObject<JObject>();
-                        var entryObjectId = entryObject["@id"];
-
-                        if (entryObjectId == null)
-                        {
-                            continue;
-                        }
-
-                        var entryObjectIdResponse = GetJsonResponse(new Uri(entryObjectId.ToString()), feedCredentials, httpTimeout);
-
-                        if (entryObjectIdResponse.TryGetValue("items", out JToken catalogItems))
-                        {
-                            foreach (var catalogItem in catalogItems)
-                            {
-                                var catalogEntry = catalogItem["catalogEntry"];
-
-                                if (catalogEntry?["version"] != null)
-                                {
-                                    var packageVersion = new SemanticVersion(catalogEntry["version"].ToString());
-
-                                    if (VersionComparer.Default.Compare(packageVersion, version) == 0)
-                                    {
-                                        var url = catalogEntry["packageContent"]?.ToString();
-                                        if (url == null) continue;
-                                        {
-                                            return new Uri($"{url.Remove(url.LastIndexOfAny("/".ToCharArray()) + 1)}{normalizedVersion}");
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        static Uri? GetPackageBaseDownloadUri(Uri feedUri, ICredentials feedCredentials, TimeSpan httpTimeout, string normalizedId, string normalizedVersion, out IDictionary<string, List<Uri>>? resources)
-        {
-            
             var json = GetServiceIndexJson(feedUri, feedCredentials, httpTimeout);
-
             if (json == null)
             {
                 throw new CommandException($"'{feedUri}' is not a valid NuGet v3 feed");
             }
 
-            resources = GetServiceResources(json);
+            var resources = GetServiceResources(json);
 
+            var packageBaseDownloadUri = GetPackageBaseDownloadUri(resources, packageIdentifier);
+            if (packageBaseDownloadUri != null) return packageBaseDownloadUri;
+
+            return GetPackageRegistrationDownloadUri(feedCredentials, httpTimeout, resources, packageIdentifier);
+        }
+
+        static Uri? GetPackageRegistrationDownloadUri(ICredentials feedCredentials, TimeSpan httpTimeout, IDictionary<string, List<Uri>> resources, PackageIdentifier packageIdentifier)
+        {
+            var packageRegistrationUri = GetPackageRegistrationUri(resources, packageIdentifier.Id);
+            var packageRegistrationResponse = GetJsonResponse(packageRegistrationUri, feedCredentials, httpTimeout);
+
+            // Package Registration Response structure
+            // https://docs.microsoft.com/en-us/nuget/api/registration-base-url-resource#response
+            var registrationPages = packageRegistrationResponse["items"];
+
+            // Registration Page structure
+            // https://docs.microsoft.com/en-us/nuget/api/registration-base-url-resource#registration-page-object
+            foreach (var registrationPage in registrationPages)
+            {
+                var registrationLeaves = registrationPage["items"];
+                if (registrationLeaves == null)
+                {
+                    // narrow version to specific page.
+                    var versionedRegistrationPage = registrationPages.FirstOrDefault(x => VersionComparer.Default.Compare(new SemanticVersion(x["lower"].ToString()), packageIdentifier.SemanticVersionWithoutMetadata) <= 0 && VersionComparer.Default.Compare(new SemanticVersion(x["upper"].ToString()), packageIdentifier.SemanticVersionWithoutMetadata) >= 0);
+
+                    // If we can't find a page for the version we are looking for, return null.
+                    if (versionedRegistrationPage == null) return null;
+
+                    var versionedRegistrationPageResponse = GetJsonResponse(new Uri(versionedRegistrationPage["@id"].ToString()), feedCredentials, httpTimeout);
+                    registrationLeaves = versionedRegistrationPageResponse["items"];
+                }
+
+                // Leaf Structure
+                // https://docs.microsoft.com/en-us/nuget/api/registration-base-url-resource#registration-leaf-object-in-a-page
+                var leaf = registrationLeaves.FirstOrDefault(x => string.Equals(x["catalogEntry"]["version"].ToString(), packageIdentifier.Version, StringComparison.OrdinalIgnoreCase));
+                // If we can't find the leaf registration for the version we are looking for, return null.
+                if (leaf == null) return null;
+
+                var contentUri = leaf["packageContent"].ToString();
+
+                // Note: We reformat the packageContent Uri here as Artifactory (and possibly others) does not include +metadata suffixes on its packageContent Uri's
+                var downloadUri = new Uri($"{contentUri.Remove(contentUri.LastIndexOfAny("/".ToCharArray()) + 1)}{packageIdentifier.Version}");
+
+                return downloadUri;
+            }
+
+            return null;
+        }
+
+        static Uri? GetPackageBaseDownloadUri(IDictionary<string, List<Uri>> resources, PackageIdentifier packageIdentifier)
+        {
             var packageBaseUri = GetPackageBaseUri(resources);
 
             if (packageBaseUri?.AbsoluteUri.TrimEnd('/') != null)
             {
                 {
-                    return new Uri($"{packageBaseUri}/{normalizedId}/{normalizedVersion}/{normalizedId}.{normalizedVersion}.nupkg");
+                    return new Uri($"{packageBaseUri}/{packageIdentifier.Id}/{packageIdentifier.Version}/{packageIdentifier.Id}.{packageIdentifier.Version}.nupkg");
                 }
             }
 
@@ -222,7 +226,7 @@ namespace Calamari.Integration.Packages.NuGet
                     throw new HttpException((int)response.StatusCode, $"Received status code that indicate not successful response. Uri:{uri}");
                 }
             }
-            
+
 #else
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
@@ -255,7 +259,7 @@ namespace Calamari.Integration.Packages.NuGet
             var json = GetJsonResponse(feedUri, feedCredentials, httpTimeout);
 
             if (!IsValidV3Json(json)) return null;
-            
+
             return json;
         }
 
