@@ -1,6 +1,9 @@
-﻿using System;
+using System;
+using System.Diagnostics;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Retry;
@@ -87,25 +90,28 @@ namespace Calamari.Integration.Packages.NuGet
 
         private void DownloadPackageAction(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
         {
+
             // FileSystem feed 
             if (feedUri.IsFile)
             {
                 NuGetFileSystemDownloader.DownloadPackage(packageId, version, feedUri, targetFilePath);
+                return;
             }
-
+            
 #if USE_NUGET_V2_LIBS
-            // NuGet V3 feed 
-            else if (IsHttp(feedUri.ToString()) && feedUri.ToString().EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-            {
-                var timeout = GetHttpTimeout();
-                NuGetV3Downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, timeout);
-            }
+            var timeout = GetHttpTimeout();
 
-            // V2 feed
-            else
+            if (IsHttp(feedUri.ToString()))
             {
-                WarnIfHttpTimeoutHasBeenSet();
-                NuGetV2Downloader.DownloadPackage(packageId, version.ToString(), feedUri, feedCredentials, targetFilePath);
+                if (NuGetV3Downloader.CanHandle(feedUri, feedCredentials, timeout))
+                {
+                    NuGetV3Downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, timeout);
+                }
+                else
+                {
+                    WarnIfHttpTimeoutHasBeenSet();
+                    NuGetV2Downloader.DownloadPackage(packageId, version.ToString(), feedUri, feedCredentials, targetFilePath);
+                }
             }
 #else
             else
