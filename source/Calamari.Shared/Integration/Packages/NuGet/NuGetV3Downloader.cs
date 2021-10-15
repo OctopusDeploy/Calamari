@@ -168,9 +168,7 @@ namespace Calamari.Integration.Packages.NuGet
 
             if (packageBaseUri?.AbsoluteUri.TrimEnd('/') != null)
             {
-                {
-                    return new Uri($"{packageBaseUri}/{packageIdentifier.Id}/{packageIdentifier.Version}/{packageIdentifier.Id}.{packageIdentifier.Version}.nupkg");
-                }
+                return new Uri($"{packageBaseUri}/{packageIdentifier.Id}/{packageIdentifier.Version}/{packageIdentifier.Id}.{packageIdentifier.Version}.nupkg");
             }
 
             return null;
