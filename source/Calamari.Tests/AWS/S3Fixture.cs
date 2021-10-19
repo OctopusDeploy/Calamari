@@ -243,6 +243,7 @@ namespace Calamari.Tests.AWS
     }
 
     [TestFixture]
+    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class S3FixtureForNewBucket : S3Fixture
     {
         [Test]
