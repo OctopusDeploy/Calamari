@@ -27,6 +27,7 @@ using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
 using Octostache;
+using Calamari.Testing;
 
 namespace Calamari.Tests.AWS
 {
@@ -341,8 +342,8 @@ namespace Calamari.Tests.AWS
         protected async Task Validate(Func<AmazonS3Client, Task> execute)
         {
             var credentials = new BasicAWSCredentials(
-                Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"),
-                Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
+                ExternalVariables.Get(ExternalVariable.AwsAcessKey),
+                ExternalVariables.Get(ExternalVariable.AwsSecretKey));
 
             var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region)};
             
@@ -373,8 +374,8 @@ namespace Calamari.Tests.AWS
             var variables = new CalamariVariables();
 
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"));
-            variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
+            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
+            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set(AwsSpecialVariables.S3.FileSelections, JsonConvert.SerializeObject(fileSelections, GetEnrichedSerializerSettings()));
 

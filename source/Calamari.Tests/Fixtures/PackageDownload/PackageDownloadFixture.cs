@@ -4,8 +4,7 @@ using System.IO;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Integration.FileSystem;
-using Calamari.Integration.Packages;
+using Calamari.Testing;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -17,19 +16,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
     [TestFixture]
     public class PackageDownloadFixture : CalamariFixture
     {
-        const string FeedUriEnvironmentVariable = "CALAMARI_AUTHURI";
-        const string FeedUsernameEnvironmentVariable = "CALAMARI_AUTHUSERNAME";
-        const string FeedPasswordEnvironmentVariable = "CALAMARI_AUTHPASSWORD";
-
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageDownload");
         static readonly string DownloadPath = TestEnvironment.GetTestPath(TentacleHome, "Files");
 
         static readonly string PublicFeedUri = "https://f.feedz.io/octopus-deploy/integration-tests/nuget/index.json";
         static readonly string NuGetFeedUri = "https://www.nuget.org/api/v2/";
 
-        private static readonly string AuthFeedUri = Environment.GetEnvironmentVariable(FeedUriEnvironmentVariable);
-        private static readonly string AuthFeedUsername = Environment.GetEnvironmentVariable(FeedUsernameEnvironmentVariable);
-        private static readonly string AuthFeedPassword = Environment.GetEnvironmentVariable(FeedPasswordEnvironmentVariable);
+        private static readonly string AuthFeedUri = ExternalVariables.Get(ExternalVariable.MyGetFeedUrl);
+        private static readonly string AuthFeedUsername = ExternalVariables.Get(ExternalVariable.MyGetFeedUsername);
+        private static readonly string AuthFeedPassword = ExternalVariables.Get(ExternalVariable.MyGetFeedPassword);
         static readonly string ExpectedPackageHash = "1e0856338eb5ada3b30903b980cef9892ebf7201";
 
         static readonly long ExpectedPackageSize = 3749;
@@ -349,7 +344,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         [Test]
         [Ignore("Auth Feed Failing On Mono")]
-        [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldDownloadPackage()
         {
             var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, AuthFeedUri, AuthFeedUsername, AuthFeedPassword);
@@ -368,7 +362,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         [Test]
         [Ignore("Auth Feed Failing On Mono")]
-        [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldUsePackageFromCache()
         {
             DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, AuthFeedUri, AuthFeedUsername, AuthFeedPassword)
@@ -387,7 +380,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         [Test]
         [Ignore("Auth Feed Failing On Mono")]
-        [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldByPassCacheAndDownloadPackage()
         {
             DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, AuthFeedUri, AuthFeedUsername, AuthFeedPassword).AssertSuccess();
@@ -409,7 +401,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         [Test]
         [Ignore("Auth Feed Failing On Mono")]
-        [AuthenticatedTest(FeedUriEnvironmentVariable, FeedUsernameEnvironmentVariable, FeedPasswordEnvironmentVariable)]
         public void PrivateNuGetFeedShouldFailDownloadPackageWhenInvalidCredentials()
         {
             var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, AuthFeedUri, "fake-feed-username", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
