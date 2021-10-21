@@ -29,6 +29,7 @@ namespace Calamari.Tests.Fixtures.Util
         [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void TildePrefixReplacedWithHome()
         {
+            // This usage of Environment.GetEnvironmentVariable is fine as it's not accessing a test dependency variable
             var home = Environment.GetEnvironmentVariable("HOME");
             Assert.IsNotNull(home, "Expected $HOME environment variable to be set.");
 

@@ -15,6 +15,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
+using Calamari.Testing;
 
 namespace Calamari.Tests.AWS.CloudFormation
 {
@@ -56,9 +57,10 @@ namespace Calamari.Tests.AWS.CloudFormation
                 await client.GetBucketLocationAsync(stackName);
             });
         }
+
         async Task ValidateS3(Func<AmazonS3Client, Task> execute)
         {
-            var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"), Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
+            var credentials = new BasicAWSCredentials(ExternalVariables.Get(ExternalVariable.AwsAcessKey), ExternalVariables.Get(ExternalVariable.AwsSecretKey));
             var config = new AmazonS3Config { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
             using (var client = new AmazonS3Client(credentials, config))
             {
@@ -77,7 +79,7 @@ namespace Calamari.Tests.AWS.CloudFormation
         }
         async Task ValidateCloudFormation(Func<AmazonCloudFormationClient, Task> execute)
         {
-            var credentials = new BasicAWSCredentials(Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"), Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
+            var credentials = new BasicAWSCredentials(ExternalVariables.Get(ExternalVariable.AwsAcessKey), ExternalVariables.Get(ExternalVariable.AwsSecretKey));
             var config = new AmazonCloudFormationConfig { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
             using (var client = new AmazonCloudFormationClient(credentials, config))
             {
@@ -89,8 +91,8 @@ namespace Calamari.Tests.AWS.CloudFormation
         {
             var variablesFile = Path.GetTempFileName();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"));
-            variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
+            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
+            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Save(variablesFile);
 
@@ -121,8 +123,8 @@ namespace Calamari.Tests.AWS.CloudFormation
         {
             var variablesFile = Path.GetTempFileName();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"));
-            variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
+            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
+            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
             variables.Set("Octopus.Action.Aws.Region", "us-east-1");
             variables.Save(variablesFile);
 
@@ -167,8 +169,8 @@ namespace Calamari.Tests.AWS.CloudFormation
             var variablesFile = Path.GetTempFileName();
             var variables = new CalamariVariables();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Access"));
-            variables.Set("AWSAccount.SecretKey", Environment.GetEnvironmentVariable("AWS_OctopusAPITester_Secret"));
+            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
+            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set(AwsSpecialVariables.CloudFormation.StackName, stackName);
             variables.Save(variablesFile);

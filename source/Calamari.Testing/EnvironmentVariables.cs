@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Calamari.Common.Plumbing.Logging;
+using NUnit.Framework;
 
 namespace Calamari.Testing
 {
@@ -52,7 +53,31 @@ namespace Calamari.Testing
         AwsCloudFormationAndS3AccessKey,
 
         [EnvironmentVariable("AWS_E2E_SecretKeyId", "AWS E2E Test User Keys")]
-        AwsCloudFormationAndS3SecretKey
+        AwsCloudFormationAndS3SecretKey,
+
+        [EnvironmentVariable("CALAMARI_FEEDZV2URI", "Not LastPass; Calamari TC Config Variables")]
+        FeedzNuGetV2FeedUrl,
+
+        [EnvironmentVariable("CALAMARI_FEEDZV3URI", "Not LastPass; Calamari TC Config Variables")]
+        FeedzNuGetV3FeedUrl,
+        
+        [EnvironmentVariable("CALAMARI_ARTIFACTORYV2URI", "Not LastPass; Calamari TC Config Variables")]
+        ArtifactoryNuGetV2FeedUrl,
+
+        [EnvironmentVariable("CALAMARI_ARTIFACTORYV3URI", "Not LastPass; Calamari TC Config Variables")]
+        ArtifactoryNuGetV3FeedUrl,
+        
+        [EnvironmentVariable("CALAMARI_AUTHURI", "OctopusMyGetTester")]
+        MyGetFeedUrl,
+
+        [EnvironmentVariable("CALAMARI_AUTHUSERNAME", "OctopusMyGetTester")]
+        MyGetFeedUsername,
+
+        [EnvironmentVariable("CALAMARI_AUTHPASSWORD", "OctopusMyGetTester")]
+        MyGetFeedPassword,
+
+        [EnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY", "GoogleCloud - OctopusAPITester")]
+        GoogleCloudJsonKeyfile
     }
 
     public static class ExternalVariables

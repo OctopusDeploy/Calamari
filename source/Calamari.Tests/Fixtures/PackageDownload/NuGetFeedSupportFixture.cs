@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Common.Features.Packages;
+using Calamari.Testing;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octopus.Versioning;
@@ -12,12 +13,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
     
     public class NuGetFeedVersionSupportFixture : CalamariFixture
-    {
-        const string FeedzV2UriEnvironmentVariable = "CALAMARI_FEEDZV2URI";
-        const string FeedzV3UriEnvironmentVariable = "CALAMARI_FEEDZV3URI";
-        const string ArtifactoryV2UriEnvironmentVariable = "CALAMARI_ARTIFACTORYV2URI";
-        const string ArtifactoryV3FeedUriEnvironmentVariable = "CALAMARI_ARTIFACTORYV3URI";
-        
+    {        
         const string TestNuGetPackageId = "Calamari.Tests.Fixtures.PackageDownload.NuGetFeedSupport";
 
         // TODO: Packages here were generated using the nuspec file in the .\NuGetFeedSupport folder
@@ -25,10 +21,10 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         // In future, we should ensure this test fixture sets its own data up from scratch before running
         // and tears it down on completion, rather than relying on external state as it currently does.
 
-        static readonly string FeedzNuGetV2FeedUrl = Environment.GetEnvironmentVariable(FeedzV2UriEnvironmentVariable);
-        static readonly string FeedzNuGetV3FeedUrl = Environment.GetEnvironmentVariable(FeedzV3UriEnvironmentVariable);
-        static readonly string ArtifactoryNuGetV2FeedUrl = Environment.GetEnvironmentVariable(ArtifactoryV2UriEnvironmentVariable);
-        static readonly string ArtifactoryNuGetV3FeedUrl = Environment.GetEnvironmentVariable(ArtifactoryV3FeedUriEnvironmentVariable);
+        static readonly string FeedzNuGetV2FeedUrl = ExternalVariables.Get(ExternalVariable.FeedzNuGetV2FeedUrl);
+        static readonly string FeedzNuGetV3FeedUrl = ExternalVariables.Get(ExternalVariable.FeedzNuGetV3FeedUrl);
+        static readonly string ArtifactoryNuGetV2FeedUrl = ExternalVariables.Get(ExternalVariable.ArtifactoryNuGetV2FeedUrl);
+        static readonly string ArtifactoryNuGetV3FeedUrl = ExternalVariables.Get(ExternalVariable.ArtifactoryNuGetV3FeedUrl);
         
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageDownload");
 

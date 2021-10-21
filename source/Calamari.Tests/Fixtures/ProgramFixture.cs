@@ -25,6 +25,7 @@ namespace Calamari.Tests.Fixtures
         {
             EnvironmentHelper.SetEnvironmentVariable("OctopusCalamariWorkingDirectory", null);
             RunProgram();
+            // This usage of Environment.GetEnvironmentVariable is fine as it's not accessing a test dependency variable
             Environment.GetEnvironmentVariable("OctopusCalamariWorkingDirectory").Should().NotBeNullOrWhiteSpace();
         }
         

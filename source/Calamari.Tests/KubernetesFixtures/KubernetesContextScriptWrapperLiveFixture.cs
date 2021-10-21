@@ -9,6 +9,7 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Kubernetes;
+using Calamari.Testing;
 using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -143,18 +144,18 @@ namespace Calamari.Tests.KubernetesFixtures
             var environmentVars = new Dictionary<string, string>(env)
             {
                 { "TF_IN_AUTOMATION ", Boolean.TrueString },
-                { "AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_E2E_AccessKeyId") },
-                { "AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_E2E_SecretKeyId") },
+                { "AWS_ACCESS_KEY_ID", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey) },
+                { "AWS_SECRET_ACCESS_KEY", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey) },
                 { "AWS_DEFAULT_REGION", region },
-                { "ARM_SUBSCRIPTION_ID", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_SubscriptionId") },
-                { "ARM_CLIENT_ID", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_ClientId") },
-                { "ARM_CLIENT_SECRET", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_Password") },
-                { "ARM_TENANT_ID", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_TenantId") },
-                { "TF_VAR_aks_client_id", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_ClientId") },
-                { "TF_VAR_aks_client_secret", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_Password") },
+                { "ARM_SUBSCRIPTION_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionId) },
+                { "ARM_CLIENT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId) },
+                { "ARM_CLIENT_SECRET", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword) },
+                { "ARM_TENANT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId) },
+                { "TF_VAR_aks_client_id", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId) },
+                { "TF_VAR_aks_client_secret", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword) },
                 { "TF_VAR_tests_source_dir", testFolder },
                 { "TF_VAR_test_namespace", testNamespace },
-                { "GOOGLE_CLOUD_KEYFILE_JSON", Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") }
+                { "GOOGLE_CLOUD_KEYFILE_JSON", ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile) }
             };
 
             var result = SilentProcessRunner.ExecuteCommand(installTools.TerraformExecutable,
@@ -226,10 +227,10 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", azurermResourceGroup);
             variables.Set(SpecialVariables.AksClusterName, aksClusterName);
             variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.FalseString);
-            variables.Set("Octopus.Action.Azure.SubscriptionId", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_SubscriptionId"));
-            variables.Set("Octopus.Action.Azure.TenantId", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_TenantId"));
-            variables.Set("Octopus.Action.Azure.Password", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_Password"));
-            variables.Set("Octopus.Action.Azure.ClientId", Environment.GetEnvironmentVariable("Azure_OctopusAPITester_ClientId"));
+            variables.Set("Octopus.Action.Azure.SubscriptionId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionId));
+            variables.Set("Octopus.Action.Azure.TenantId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
+            variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
+            variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
             var wrapper = CreateWrapper();
             TestScript(wrapper, "Test-Script");
         }
@@ -241,7 +242,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, gkeClusterName);
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") ?? string.Empty;
+            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", gkeProject);
             variables.Set("Octopus.Action.GoogleCloud.Zone", gkeLocation);

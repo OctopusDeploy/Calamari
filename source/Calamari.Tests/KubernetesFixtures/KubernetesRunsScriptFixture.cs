@@ -14,6 +14,7 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
@@ -238,7 +239,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") ?? string.Empty;
+            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             variables.Set("Octopus.Action.GoogleCloud.Zone", "gke-zone");
@@ -253,7 +254,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") ?? string.Empty;
+            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             variables.Set("Octopus.Action.GoogleCloud.Region", "gke-region");
@@ -268,7 +269,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") ?? string.Empty;
+            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             variables.Set("Octopus.Action.GoogleCloud.Region", "gke-region");
@@ -284,7 +285,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = Environment.GetEnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY") ?? string.Empty;
+            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             var wrapper = CreateWrapper();
