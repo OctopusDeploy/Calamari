@@ -145,7 +145,7 @@ function remove-octopustarget {
 	echo "##octopus[delete-target machine='$(encode_servicemessagevalue "$1")']"
 }
 
-function create_steppackagetarget() (
+function new_octopustarget() (
   parameters=""
 
   while :
