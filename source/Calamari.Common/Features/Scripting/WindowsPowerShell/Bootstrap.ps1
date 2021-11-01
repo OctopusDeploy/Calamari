@@ -165,7 +165,7 @@ function Remove-OctopusTarget([string] $targetIdOrName)
 	Write-Host "##octopus[delete-target $($parameters)]"
 }
 
-function New-StepPackageTarget
+function New-OctopusTarget
 {
 	[CmdletBinding()]
 	param(
