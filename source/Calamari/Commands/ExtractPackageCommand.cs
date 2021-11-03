@@ -2,11 +2,12 @@
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.Deployment;
+using Calamari.Deployment.PackageRetention;
 
 namespace Calamari.Commands
 {
     [Command("extract-package")]
-    [RetentionLockingCommand]
+    [PackageLockingCommand]
     public class ExtractPackageCommand : Command<ExtractPackageCommandInputs>
     {
         readonly IExtractPackage extractPackage;

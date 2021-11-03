@@ -51,7 +51,8 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             Save();
         }
 
-        //TODO: how to handle concurrency? For now we can just use JSON, but we may have to use something else.
+        //TODO: Handle concurrency. We should be able to use a semaphore for this (i.e. wait/lock/release), otherwise we may need to use something else.
+        //We are always just opening the file, adding to it, then saving it in pretty much one atomic step, so a semaphore should work ok. See Journal.RegisterPackageUse for an example.
         void Load()
         {
             if (File.Exists(journalPath))

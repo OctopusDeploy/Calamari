@@ -1,5 +1,8 @@
 ﻿using System;
 
-public class RetentionLockingCommandAttribute : Attribute
+namespace Calamari.Deployment.PackageRetention
 {
+    public class PackageLockingCommandAttribute : Attribute
+    {
+    }
 }

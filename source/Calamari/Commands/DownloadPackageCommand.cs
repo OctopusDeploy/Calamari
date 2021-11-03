@@ -10,13 +10,14 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention;
 using Calamari.Integration.Packages.Download;
 using Octopus.Versioning;
 
 namespace Calamari.Commands
 {
     [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
-    [RetentionLockingCommand]
+    [PackageLockingCommand]
     public class DownloadPackageCommand : Command
     {
         private readonly IScriptEngine scriptEngine;

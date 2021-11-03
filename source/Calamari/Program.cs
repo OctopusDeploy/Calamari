@@ -41,7 +41,7 @@ namespace Calamari
 
         protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
         {
-            var lockingCommands = container.ResolveKeyed<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>(nameof(RetentionLockingCommandAttribute));
+            var lockingCommands = container.ResolveKeyed<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>(nameof(PackageLockingCommandAttribute));
             var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>()
                                     .Where(c => lockingCommands.All(lc => !lc.Metadata.Name.Equals(c.Metadata.Name, StringComparison.OrdinalIgnoreCase)))
                                     .Union(lockingCommands);
@@ -85,11 +85,11 @@ namespace Calamari
 
             //Get register commands with the RetentionLockingCommand attribute;
             builder.RegisterAssemblyTypes(assembliesToRegister)
-                   .Where(t => t.HasAttribute<RetentionLockingCommandAttribute>()
+                   .Where(t => t.HasAttribute<PackageLockingCommandAttribute>()
                                || typesToAlwaysDecorate.Contains(t))
                    .AssignableTo<ICommandWithArgs>()
                    .WithMetadataFrom<CommandAttribute>()
-                   .Named<ICommandWithArgs>(nameof(RetentionLockingCommandAttribute) + "From");
+                   .Named<ICommandWithArgs>(nameof(PackageLockingCommandAttribute) + "From");
 
             //Register the decorator for the above commands.  Uses the old Autofac method because we're only on v4.8
             builder.RegisterDecorator<ICommandWithArgs>((c, inner)
@@ -97,12 +97,12 @@ namespace Calamari
                                                                                            inner,
                                                                                            c.Resolve<IVariables>(),
                                                                                            c.Resolve<IJournal>()),
-                                                        fromKey: nameof(RetentionLockingCommandAttribute) + "From",
-                                                        toKey: nameof(RetentionLockingCommandAttribute));
+                                                        fromKey: nameof(PackageLockingCommandAttribute) + "From",
+                                                        toKey: nameof(PackageLockingCommandAttribute));
 
             //Register the non-decorated commands
             builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
-                   .Where(c => !c.HasAttribute<RetentionLockingCommandAttribute>() && c != typeof(CommandJournalDecorator))
+                   .Where(c => !c.HasAttribute<PackageLockingCommandAttribute>() && c != typeof(CommandJournalDecorator))
                    .AssignableTo<ICommandWithArgs>()
                    .WithMetadataFrom<CommandAttribute>()
                    .As<ICommandWithArgs>();

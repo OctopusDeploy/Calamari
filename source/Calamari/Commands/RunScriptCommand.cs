@@ -20,11 +20,12 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention;
 
 namespace Calamari.Commands
 {
     [Command("run-script", Description = "Invokes a script")]
-    [RetentionLockingCommand]
+    [PackageLockingCommand]
     public class RunScriptCommand : Command
     {
         string scriptFileArg;
