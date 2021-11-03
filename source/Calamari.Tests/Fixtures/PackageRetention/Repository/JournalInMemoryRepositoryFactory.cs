@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Deployment.PackageRetention.Model;
+using Calamari.Deployment.PackageRetention.Repositories;
 
-namespace Calamari.Deployment.PackageRetention.Repositories
+namespace Calamari.Tests.Fixtures.PackageRetention.Repository
 {
     public class JournalInMemoryRepositoryFactory : IJournalRepositoryFactory
     {

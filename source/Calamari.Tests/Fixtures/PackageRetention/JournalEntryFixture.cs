@@ -3,6 +3,7 @@ using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
+using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using NSubstitute;
 using NUnit.Framework;
 //using Octopus.Diagnostics;

@@ -24,6 +24,7 @@ using Calamari.Common.Plumbing.Variables;
 namespace Calamari.Commands
 {
     [Command("run-script", Description = "Invokes a script")]
+    [RetentionLockingCommand]
     public class RunScriptCommand : Command
     {
         string scriptFileArg;

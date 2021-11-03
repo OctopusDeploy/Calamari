@@ -1,17 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Deployment.PackageRetention.Model;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using SharpCompress.Common;
+using Calamari.Deployment.PackageRetention.Repositories;
 
-namespace Calamari.Deployment.PackageRetention.Repositories
+namespace Calamari.Tests.Fixtures.PackageRetention.Repository
 {
     public class JournalInMemoryRepository : IJournalRepository
     {

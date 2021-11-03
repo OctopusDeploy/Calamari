@@ -6,6 +6,7 @@ using Calamari.Common.Plumbing.Deployment;
 namespace Calamari.Commands
 {
     [Command("extract-package")]
+    [RetentionLockingCommand]
     public class ExtractPackageCommand : Command<ExtractPackageCommandInputs>
     {
         readonly IExtractPackage extractPackage;

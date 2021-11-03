@@ -18,8 +18,11 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         {
             if (variables == null) throw new ArgumentNullException(nameof(variables));
 
-            PackageID = new PackageID(variables.Get(PackageVariables.PackageId));
-            Version = variables.Get(PackageVariables.PackageVersion);
+            var package = variables.Get(PackageVariables.PackageId) ?? throw new Exception("Package ID not found.");
+            var version = variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
+
+            PackageID = new PackageID(package);
+            Version = version;
         }
 
         [JsonConstructor]

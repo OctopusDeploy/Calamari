@@ -16,6 +16,7 @@ using Octopus.Versioning;
 namespace Calamari.Commands
 {
     [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
+    [RetentionLockingCommand]
     public class DownloadPackageCommand : Command
     {
         private readonly IScriptEngine scriptEngine;

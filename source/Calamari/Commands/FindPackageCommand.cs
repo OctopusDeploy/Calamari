@@ -14,7 +14,6 @@ using Octopus.Versioning;
 namespace Calamari.Commands
 {
     [Command("find-package", Description = "Finds the package that matches the specified ID and version. If no exact match is found, it returns a list of the nearest packages that matches the ID")]
-    [RetentionLockingCommand]
     public class FindPackageCommand : Command
     {
         readonly ILog log;

@@ -29,6 +29,7 @@ using Calamari.Integration.Nginx;
 namespace Calamari.Commands
 {
     [Command("deploy-package", Description = "Extracts and installs a deployment package")]
+    [RetentionLockingCommand]
     public class DeployPackageCommand : Command
     {
         readonly ILog log;

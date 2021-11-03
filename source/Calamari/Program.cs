@@ -41,7 +41,10 @@ namespace Calamari
 
         protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
         {
-            var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>();
+            var lockingCommands = container.ResolveKeyed<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>(nameof(RetentionLockingCommandAttribute));
+            var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>()
+                                    .Where(c => lockingCommands.All(lc => !lc.Metadata.Name.Equals(c.Metadata.Name, StringComparison.OrdinalIgnoreCase)))
+                                    .Union(lockingCommands);
 
             var commandCandidates = commands.Where(x => x.Metadata.Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase)).ToArray();
 
@@ -50,6 +53,10 @@ namespace Calamari
             if (commandCandidates.Length > 1)
                 throw new CommandException($"Multiple commands found with the name {options.Command}");
 
+            var command = commandCandidates[0].Value.Value;
+
+            //if(command.GetType().HasAttribute<RetentionLockingCommandAttribute>();
+
             return commandCandidates[0].Value.Value.Execute(options.RemainingArguments.ToArray());
         }
 
@@ -57,7 +64,6 @@ namespace Calamari
         {
             //TODO: this is just for testing for now...
             TypeDescriptor.AddAttributes(typeof(ServerTaskID), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskID>)));
-
 
             // Setting extensions here as in the new Modularity world we don't register extensions
             // and GetAllAssembliesToRegister doesn't get passed CommonOptions
@@ -73,31 +79,30 @@ namespace Calamari
             builder.RegisterType<JournalJsonRepositoryFactory>().As<IJournalRepositoryFactory>();
             builder.RegisterType<Journal>().As<IJournal>();
 
-
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
             var typesToAlwaysDecorate = new Type[] { typeof(ApplyDeltaCommand) }; //Commands from external assemblies.
-                     /*
+
             //Get register commands with the RetentionLockingCommand attribute;
             builder.RegisterAssemblyTypes(assembliesToRegister)
                    .Where(t => t.HasAttribute<RetentionLockingCommandAttribute>()
-                          || typesToAlwaysDecorate.Contains(t))
+                               || typesToAlwaysDecorate.Contains(t))
                    .AssignableTo<ICommandWithArgs>()
                    .WithMetadataFrom<CommandAttribute>()
-                   .Named<ICommandWithArgs>(nameof(RetentionLockingCommandAttribute));
+                   .Named<ICommandWithArgs>(nameof(RetentionLockingCommandAttribute) + "From");
 
             //Register the decorator for the above commands.  Uses the old Autofac method because we're only on v4.8
-            builder.RegisterDecorator<ICommandWithArgs>((c,
-                                                         inner) => new CommandJournalDecorator(
-                                                                                            c.Resolve<ILog>(),
-                                                                                            inner,
-                                                                                            c.Resolve<IVariables>(),
-                                                                                            c.Resolve<Journal>()),
-                                                        fromKey: nameof(RetentionLockingCommandAttribute));
-                                                                                                                 */
+            builder.RegisterDecorator<ICommandWithArgs>((c, inner)
+                                                            => new CommandJournalDecorator(c.Resolve<ILog>(),
+                                                                                           inner,
+                                                                                           c.Resolve<IVariables>(),
+                                                                                           c.Resolve<IJournal>()),
+                                                        fromKey: nameof(RetentionLockingCommandAttribute) + "From",
+                                                        toKey: nameof(RetentionLockingCommandAttribute));
+
             //Register the non-decorated commands
             builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
-                   //.Where(c => !c.HasAttribute<RetentionLockingCommandAttribute>())
+                   .Where(c => !c.HasAttribute<RetentionLockingCommandAttribute>() && c != typeof(CommandJournalDecorator))
                    .AssignableTo<ICommandWithArgs>()
                    .WithMetadataFrom<CommandAttribute>()
                    .As<ICommandWithArgs>();
@@ -113,8 +118,6 @@ namespace Calamari
                    .WithMetadataFrom<LaunchToolAttribute>()
                    .As<ILaunchTool>();
         }
-
-
 
         IEnumerable<Assembly> GetExtensionAssemblies()
         {

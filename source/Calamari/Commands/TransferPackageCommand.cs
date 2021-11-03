@@ -5,34 +5,30 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.Journal;
-using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Deployment.PackageRetention;
-using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Commands
 {
     [Command("transfer-package", Description = "Copies a deployment package to a specific directory")]
+    [RetentionLockingCommand]
     public class TransferPackageCommand : Command
     {
         readonly ILog log;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
-        readonly IJournal packageJournal;
 
-        public TransferPackageCommand(ILog log, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem, IJournal packageJournal)
+        public TransferPackageCommand(ILog log, IDeploymentJournalWriter deploymentJournalWriter, IVariables variables, ICalamariFileSystem fileSystem)
         {
             this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.fileSystem = fileSystem;
-            this.packageJournal = packageJournal;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -55,7 +51,6 @@ namespace Calamari.Commands
             try
             {
                 conventionRunner.RunConventions();
-                packageJournal.RegisterPackageUse(variables);
                 deploymentJournalWriter.AddJournalEntry(deployment, true);
             }
             catch (Exception)
