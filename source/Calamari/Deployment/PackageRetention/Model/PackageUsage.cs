@@ -17,12 +17,12 @@ namespace Calamari.Deployment.PackageRetention.Model
             this.usages = usages ?? new Dictionary<ServerTaskID, List<DateTime>>();
         }
 
-        public void AddUsage(ServerTaskID deploymentID)
+        public void AddUsage(ServerTaskID deploymentTaskID)
         {
-            if (!usages.ContainsKey(deploymentID))
-                usages.Add(deploymentID, new List<DateTime>());
+            if (!usages.ContainsKey(deploymentTaskID))
+                usages.Add(deploymentTaskID, new List<DateTime>());
 
-            usages[deploymentID].Add(DateTime.Now);
+            usages[deploymentTaskID].Add(DateTime.Now);
         }
 
         public IEnumerable<DateTime> GetUsageDetails()

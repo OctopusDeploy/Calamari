@@ -12,7 +12,7 @@ namespace Calamari.Deployment.PackageRetention
         readonly IJournal journal;
         
         PackageIdentity Package { get; }
-        ServerTaskID DeploymentID {get;}
+        ServerTaskID DeploymentTaskID {get;}
 
         public CommandJournalDecorator(ILog log, ICommandWithArgs command, IVariables variables, IJournal journal)
         {
@@ -20,7 +20,7 @@ namespace Calamari.Deployment.PackageRetention
             this.command = command;
             this.journal = journal;
 
-            DeploymentID = new ServerTaskID(variables);
+            DeploymentTaskID = new ServerTaskID(variables);
             Package = new PackageIdentity(variables);
 
 #if DEBUG
@@ -30,7 +30,7 @@ namespace Calamari.Deployment.PackageRetention
 
         public int Execute(string[] commandLineArguments)
         {
-            journal.RegisterPackageUse(Package, DeploymentID);
+            journal.RegisterPackageUse(Package, DeploymentTaskID);
             return command.Execute(commandLineArguments);
         }
     }

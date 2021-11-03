@@ -20,17 +20,17 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
         }
 
-        public void AddLock(ServerTaskID deploymentID)
+        public void AddLock(ServerTaskID deploymentTaskID)
         {
-            if (packageLocks.ContainsKey(deploymentID))
-                packageLocks[deploymentID] = DateTime.Now;
+            if (packageLocks.ContainsKey(deploymentTaskID))
+                packageLocks[deploymentTaskID] = DateTime.Now;
             else
-                packageLocks.Add(deploymentID, DateTime.Now);
+                packageLocks.Add(deploymentTaskID, DateTime.Now);
         }
 
-        public void RemoveLock(ServerTaskID deploymentID)
+        public void RemoveLock(ServerTaskID deploymentTaskID)
         {
-            packageLocks.Remove(deploymentID);
+            packageLocks.Remove(deploymentTaskID);
         }
 
         public bool HasLock() => packageLocks.Count > 0;
