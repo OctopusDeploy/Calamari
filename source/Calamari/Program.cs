@@ -160,6 +160,6 @@ namespace Calamari
     }
     public static class PackageRetentionState
     {
-        public static bool Enabled { get; } = true;
+        public static bool Enabled { get; } = false;
     }
 }
