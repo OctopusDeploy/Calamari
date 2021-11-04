@@ -31,49 +31,65 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RegisterPackageUse(PackageIdentity package, ServerTaskID serverTaskID)
         {
-            var repository = repositoryFactory.CreateJournalRepository();
+            try
+            {
+                var repository = repositoryFactory.CreateJournalRepository();
 
-            if (repository.TryGetJournalEntry(package, out var entry))
-            {
-                entry.PackageUsage.AddUsage(serverTaskID);
-                entry.PackageLocks.AddLock(serverTaskID);
-            }
-            else
-            {
-                entry = new JournalEntry(package);
-                entry.PackageUsage.AddUsage(serverTaskID);
-                entry.PackageLocks.AddLock(serverTaskID);
-                repository.AddJournalEntry(entry);
-            }
+                if (repository.TryGetJournalEntry(package, out var entry))
+                {
+                    entry.PackageUsage.AddUsage(serverTaskID);
+                    entry.PackageLocks.AddLock(serverTaskID);
+                }
+                else
+                {
+                    entry = new JournalEntry(package);
+                    entry.PackageUsage.AddUsage(serverTaskID);
+                    entry.PackageLocks.AddLock(serverTaskID);
+                    repository.AddJournalEntry(entry);
+                }
 
 #if DEBUG
-            log.Verbose($"Registered package use/lock for {package} and task {serverTaskID}");
+                log.Verbose($"Registered package use/lock for {package} and task {serverTaskID}");
 #endif
 
-            repository.Commit();
+                repository.Commit();
+            }
+            catch (Exception ex)
+            {
+                //We need to ensure that an issue with the journal doesn't interfere with the deployment.
+                log.Error($"Unable to register package use for retention.{Environment.NewLine}{ex.ToString()}");
+            }
         }
 
         public void DeregisterPackageUse(PackageIdentity package, ServerTaskID serverTaskID)
         {
-            var repository = repositoryFactory.CreateJournalRepository();
-
-            if (repository.TryGetJournalEntry(package, out var entry))
+            try
             {
-                entry.PackageLocks.RemoveLock(serverTaskID);
+                var repository = repositoryFactory.CreateJournalRepository();
+
+                if (repository.TryGetJournalEntry(package, out var entry))
+                {
+                    entry.PackageLocks.RemoveLock(serverTaskID);
+                }
+            }
+            catch (Exception ex)
+            {
+                //We need to ensure that an issue with the journal doesn't interfere with the deployment.
+                log.Error($"Unable to deregister package use for retention.{Environment.NewLine}{ex.ToString()}");
             }
         }
 
         public bool HasLock(PackageIdentity package)
         {
             return repositoryFactory.CreateJournalRepository()
-                                     .TryGetJournalEntry(package, out var entry)
+                                    .TryGetJournalEntry(package, out var entry)
                    && entry.PackageLocks.HasLock();
         }
 
         public IEnumerable<DateTime> GetUsage(PackageIdentity package)
         {
             return repositoryFactory.CreateJournalRepository()
-                                     .TryGetJournalEntry(package, out var entry)
+                                    .TryGetJournalEntry(package, out var entry)
                 ? entry.PackageUsage.GetUsageDetails()
                 : new DateTime[0];
         }
