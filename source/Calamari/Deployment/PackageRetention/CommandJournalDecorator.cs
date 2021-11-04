@@ -22,10 +22,13 @@ namespace Calamari.Deployment.PackageRetention
             this.command = command;
             this.journal = journal;
 
-            DeploymentTaskID = new ServerTaskID(variables);
-            Package = new PackageIdentity(variables);
-
             retentionEnabled = variables.IsPackageRetentionEnabled();
+
+            if (retentionEnabled)
+            {
+                DeploymentTaskID = new ServerTaskID(variables);
+                Package = new PackageIdentity(variables);
+            }
 
 #if DEBUG
             log.Verbose($"Decorating {command.GetType().Name} with command journal.");
