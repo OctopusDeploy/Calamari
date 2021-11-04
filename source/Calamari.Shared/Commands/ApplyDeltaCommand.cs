@@ -18,8 +18,6 @@ namespace Calamari.Commands
     [Command("apply-delta", Description = "Applies a delta file to a package to create a new version of the package")]
     public class ApplyDeltaCommand : Command
     {
-        readonly IJournal packageJournal;
-
         string? basisFileName;
         string? fileHash;
         string? deltaFileName;
@@ -33,14 +31,12 @@ namespace Calamari.Commands
         readonly ICommandLineRunner commandLineRunner;
         readonly ILog log;
 
-        public ApplyDeltaCommand(ILog log, IFreeSpaceChecker freeSpaceChecker, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner,
-                                 IJournal packageJournal)
+        public ApplyDeltaCommand(ILog log, IFreeSpaceChecker freeSpaceChecker, IVariables variables, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             this.freeSpaceChecker = freeSpaceChecker;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
-            this.packageJournal = packageJournal;
             this.log = log;
             Options.Add("basisFileName=", "The file that the delta was created for.", v => basisFileName = v);
             Options.Add("fileHash=", "", v => fileHash = v);
@@ -90,8 +86,6 @@ namespace Calamari.Commands
                     fileSystem.DeleteFile(tempNewFilePath, FailureOptions.ThrowOnFailure);
                     throw new CommandLineException("OctoDiff", result.ExitCode, result.Errors);
                 }
-
-                if (variables.IsPackageRetentionEnabled()) packageJournal.RegisterPackageUse(variables);
 
                 File.Move(tempNewFilePath, newFilePath);
 

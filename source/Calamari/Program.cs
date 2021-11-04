@@ -74,7 +74,7 @@ namespace Calamari
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
 
-            //TODO: Do this using Autofac - this is just for testing for now...
+            //TODO: Do this using Autofac
             TypeDescriptor.AddAttributes(typeof(ServerTaskID), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskID>)));
 
             var typesToAlwaysDecorate = new Type[] { typeof(ApplyDeltaCommand) }; //Commands from external assemblies.
