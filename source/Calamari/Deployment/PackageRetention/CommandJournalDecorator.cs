@@ -1,5 +1,6 @@
 ﻿using Calamari.Commands.Support;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -10,6 +11,7 @@ namespace Calamari.Deployment.PackageRetention
         readonly ILog log;
         readonly ICommandWithArgs command;
         readonly IJournal journal;
+        readonly bool retentionEnabled = false;
         
         PackageIdentity Package { get; }
         ServerTaskID DeploymentTaskID {get;}
@@ -23,6 +25,8 @@ namespace Calamari.Deployment.PackageRetention
             DeploymentTaskID = new ServerTaskID(variables);
             Package = new PackageIdentity(variables);
 
+            retentionEnabled = variables.IsPackageRetentionEnabled();
+
 #if DEBUG
             log.Verbose($"Decorating {command.GetType().Name} with command journal.");
 #endif
@@ -30,7 +34,7 @@ namespace Calamari.Deployment.PackageRetention
 
         public int Execute(string[] commandLineArguments)
         {
-            journal.RegisterPackageUse(Package, DeploymentTaskID);
+            if (retentionEnabled) journal.RegisterPackageUse(Package, DeploymentTaskID);
             return command.Execute(commandLineArguments);
         }
     }

@@ -34,6 +34,13 @@ namespace Calamari.Common.Plumbing.Extensions
             return features.Contains(featureName);
         }
 
+        public static bool IsPackageRetentionEnabled(this IVariables variables)
+        {
+            bool.TryParse(variables.Get(KnownVariables.Calamari.EnablePackageRetention, bool.FalseString),  out var retentionEnabled);
+
+            return retentionEnabled;
+        }
+
         public static void SetOutputVariable(this IVariables variables, string name, string? value)
         {
             variables.Set(name, value);

@@ -35,6 +35,7 @@ namespace Calamari.Common.Plumbing.Variables
         public static class Calamari
         {
             public const string WaitForDebugger = "Octopus.Calamari.WaitForDebugger";
+            public const string EnablePackageRetention = "Octopus.Calamari.EnablePackageRetention";
         }
 
         public static class Release

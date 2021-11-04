@@ -4,6 +4,7 @@ using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -77,7 +78,7 @@ namespace Calamari.Commands
 
             //Exact package found, so we need to register use and lock it.  We don't lock on partial finds, because there may be too many packages, blocking retention later,
             //  and we can lock them on apply delta anyway.
-            if (PackageRetentionState.Enabled) packageJournal.RegisterPackageUse(variables);
+            if (variables.IsPackageRetentionEnabled()) packageJournal.RegisterPackageUse(variables);
 
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
             LogPackageFound(

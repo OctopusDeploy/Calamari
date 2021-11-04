@@ -91,7 +91,7 @@ namespace Calamari.Commands
                     throw new CommandLineException("OctoDiff", result.ExitCode, result.Errors);
                 }
 
-                packageJournal.RegisterPackageUse(variables);
+                if (variables.IsPackageRetentionEnabled()) packageJournal.RegisterPackageUse(variables);
 
                 File.Move(tempNewFilePath, newFilePath);
 
