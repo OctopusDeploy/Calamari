@@ -61,8 +61,6 @@ namespace Calamari.Common.Plumbing.Variables
                     ? fileSystem.ReadFile(sensitiveFilePath)
                     : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
 
-                Log.Verbose(rawVariables);
-
                 try
                 {
                     var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
@@ -84,8 +82,6 @@ namespace Calamari.Common.Plumbing.Variables
 
             var rawVariables = DecryptWithMachineKey(fileSystem.ReadFile(outputVariablesFilePath), options.InputVariables.OutputVariablesPassword);
 
-            Log.Verbose(rawVariables);
-            
             try
             {
                 var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
