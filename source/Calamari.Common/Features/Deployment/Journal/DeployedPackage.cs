@@ -10,14 +10,12 @@ namespace Calamari.Common.Features.Deployment.Journal
 {
     public class DeployedPackage
     {
-        public string PackageId { get; }
-        public string PackageVersion { get; }
-        public string? DeployedFrom { get; }
-
         public DeployedPackage(string? packageId, string? packageVersion, string? deployedFrom)
         {
-            PackageId = packageId ?? throw new ArgumentNullException(nameof(packageId), "Deployed package must have an Id");
-            PackageVersion = packageVersion ?? throw new ArgumentNullException(nameof(packageVersion), "Deployed package must have a version");;
+            Guard.NotNullOrWhiteSpace(packageId, "Deployed package must have an Id");
+            Guard.NotNullOrWhiteSpace(packageVersion, "Deployed package must have a version");
+            PackageId = packageId;
+            PackageVersion = packageVersion;
             DeployedFrom = deployedFrom;
         }
 
@@ -28,6 +26,10 @@ namespace Calamari.Common.Features.Deployment.Journal
                 element.Attribute("DeployedFrom")?.Value)
         {
         }
+
+        public string PackageId { get; }
+        public string PackageVersion { get; }
+        public string? DeployedFrom { get; }
 
         public XElement ToXmlElement()
         {
