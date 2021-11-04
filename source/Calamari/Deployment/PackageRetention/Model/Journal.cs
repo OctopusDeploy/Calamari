@@ -19,10 +19,11 @@ namespace Calamari.Deployment.PackageRetention.Model
             this.log = log;
         }
 
-        public void RegisterPackageUse(string packageID, IVersion version, string serverTaskID)
+        public void RegisterPackageUse(string packageID, string version, string serverTaskID)
         {
-            RegisterPackageUse(new PackageIdentity(packageID, version.OriginalString), new ServerTaskID(serverTaskID));
+            RegisterPackageUse(new PackageIdentity(packageID, version), new ServerTaskID(serverTaskID));
         }
+
         public void RegisterPackageUse(IVariables variables)
         {
             RegisterPackageUse(new PackageIdentity(variables), new ServerTaskID(variables));
@@ -45,7 +46,9 @@ namespace Calamari.Deployment.PackageRetention.Model
                 repository.AddJournalEntry(entry);
             }
 
+#if DEBUG
             log.Verbose($"Registered package use/lock for {package} and task {serverTaskID}");
+#endif
 
             repository.Commit();
         }
@@ -57,7 +60,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             if (repository.TryGetJournalEntry(package, out var entry))
             {
                 entry.PackageLocks.RemoveLock(serverTaskID);
-            }   //TODO: Else exception?
+            }
         }
 
         public bool HasLock(PackageIdentity package)

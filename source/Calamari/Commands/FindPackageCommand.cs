@@ -33,7 +33,7 @@ namespace Calamari.Commands
             this.variables = variables;
             this.packageStore = packageStore;
             this.packageJournal = packageJournal;
-            
+
             Options.Add("packageId=", "Package ID to find", v => packageId = v);
             Options.Add("packageVersion=", "Package version to find", v => rawPackageVersion = v);
             Options.Add("packageHash=", "Package hash to compare against", v => packageHash = v);
@@ -77,7 +77,7 @@ namespace Calamari.Commands
 
             //Exact package found, so we need to register use and lock it.  We don't lock on partial finds, because there may be too many packages, blocking retention later,
             //  and we can lock them on apply delta anyway.
-            packageJournal.RegisterPackageUse(variables);
+            if (PackageRetentionState.Enabled) packageJournal.RegisterPackageUse(variables);
 
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
             LogPackageFound(

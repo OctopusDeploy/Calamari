@@ -13,7 +13,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         {
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
-            this.journalPath = "d:\\journal.json";
+            this.journalPath = "c:\\Octopus\\journal.json"; 
         }
 
         public IJournalRepository CreateJournalRepository()

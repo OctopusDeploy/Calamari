@@ -21,7 +21,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
                 throw new Exception($"Cannot convert {value.GetType().Name} to {typeof(T).Name}.");
             }
 
-            return CaseInsensitiveTinyType.Create<T>(value as string);
+            return CaseInsensitiveTinyType.Create<T>((string)value);
         }
     }
 }

@@ -12,9 +12,10 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         {
         }
 
-        public ServerTaskID(IVariables variables) : base(variables.Get(KnownVariables.ServerTask.Id))
+        public ServerTaskID(IVariables variables)
+            : base(variables.Get(KnownVariables.ServerTask.Id)
+                   ?? throw new Exception("ServerTaskID not set."))
         {
-            //TODO: do we need validation on the task id here?
         }
     }
 }

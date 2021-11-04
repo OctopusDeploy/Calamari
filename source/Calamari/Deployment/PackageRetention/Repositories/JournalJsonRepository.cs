@@ -53,6 +53,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
         //TODO: Handle concurrency. We should be able to use a semaphore for this (i.e. wait/lock/release), otherwise we may need to use something else.
         //We are always just opening the file, adding to it, then saving it in pretty much one atomic step, so a semaphore should work ok. See Journal.RegisterPackageUse for an example.
+        //We will need to use the semaphore across the load/save though, which needs to be worked out.  Maybe make repositories disposable and have the semaphore held until dispose?
         void Load()
         {
             if (File.Exists(journalPath))

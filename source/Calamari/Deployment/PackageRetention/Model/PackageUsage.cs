@@ -34,13 +34,5 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             return usages;
         }
-        
-        /*
-        public IEnumerable<(DateTime When, int Count)> GetUsageCountsWhens()
-        {
-            return usages.SelectMany(u => u.Value)
-                         .GroupBy(i => i)
-                         .Select(group => (When: group.Key, Count: group.Count()));
-        }      */
     }
 }

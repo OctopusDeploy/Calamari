@@ -7,7 +7,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
     public interface IJournal
     {
-        void RegisterPackageUse(string packageID, IVersion version, string serverTaskID);
+        void RegisterPackageUse(string packageID, string version, string serverTaskID);
         void RegisterPackageUse(IVariables variables);
         void RegisterPackageUse(PackageIdentity package, ServerTaskID serverTaskID);
         void DeregisterPackageUse(PackageIdentity package, ServerTaskID serverTaskID);
