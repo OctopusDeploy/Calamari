@@ -7,7 +7,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
 using Octostache;
 
@@ -81,7 +80,6 @@ namespace Calamari.Common.Plumbing.Variables
                 return;
 
             var rawVariables = DecryptWithMachineKey(fileSystem.ReadFile(outputVariablesFilePath), options.InputVariables.OutputVariablesPassword);
-
             try
             {
                 var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
@@ -123,7 +121,6 @@ namespace Calamari.Common.Plumbing.Variables
             {
                 var readVars = new VariableDictionary(path);
                 variables.Merge(readVars);
-                
             }
             catch (Exception e)
             {
