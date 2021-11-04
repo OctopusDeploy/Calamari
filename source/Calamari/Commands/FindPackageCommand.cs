@@ -26,8 +26,7 @@ namespace Calamari.Commands
         string packageHash;
         bool exactMatchOnly;
         VersionFormat versionFormat = VersionFormat.Semver;
-
-        //TODO: move journal/variable(?) stuff to mediator
+        
         public FindPackageCommand(ILog log, IVariables variables, IPackageStore packageStore, IJournal packageJournal)
         {
             this.log = log;
