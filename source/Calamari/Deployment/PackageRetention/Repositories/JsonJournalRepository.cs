@@ -21,11 +21,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         readonly ISemaphoreFactory semaphoreFactory;
         readonly string journalPath;
 
-        internal JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath)
+        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory)
         {
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
-            this.journalPath = journalPath;
+            this.journalPath = @"C:\Octopus\PackageJournal.json";//journalPath;
 
             Load();
         }
