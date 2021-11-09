@@ -21,12 +21,12 @@ namespace Calamari.Commands
     {
         readonly IVariables variables;
         readonly ILog log;
-        readonly IJournal packageJournal;
+        readonly IManagePackageUse packageJournal;
 
         string packageId;
         string packageVersion;
 
-        public ReleasePackageLockCommand(IVariables variables, IJournal packageJournal, ILog log)
+        public ReleasePackageLockCommand(IVariables variables, IManagePackageUse packageJournal, ILog log)
         {
             this.variables = variables;
             this.log = log;
@@ -37,7 +37,7 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            var taskID = new ServerTaskID(variables);
+            var taskID = new ServerTaskId(variables);
 
             try
             {

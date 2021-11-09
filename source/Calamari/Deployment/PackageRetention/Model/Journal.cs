@@ -8,33 +8,26 @@ using Octopus.Versioning;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
-    public class Journal : IJournal
+    public class Journal : IManagePackageUse
     {
-        readonly IJournalRepositoryFactory repositoryFactory;
+        readonly IJournalRepository repository;
         readonly ILog log;
 
-        public Journal(IJournalRepositoryFactory repositoryFactory, ILog log)
+        public Journal(IJournalRepository repository, ILog log)
         {
-            this.repositoryFactory = repositoryFactory;
+            this.repository = repository;
             this.log = log;
-        }
-
-        public void RegisterPackageUse(string packageID, string version, string serverTaskID)
-        {
-            RegisterPackageUse(new PackageIdentity(packageID, version), new ServerTaskID(serverTaskID));
         }
 
         public void RegisterPackageUse(IVariables variables)
         {
-            RegisterPackageUse(new PackageIdentity(variables), new ServerTaskID(variables));
+            RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables));
         }
 
-        public void RegisterPackageUse(PackageIdentity package, ServerTaskID serverTaskID)
+        public void RegisterPackageUse(PackageIdentity package, ServerTaskId serverTaskID)
         {
             try
             {
-                var repository = repositoryFactory.CreateJournalRepository();
-
                 if (repository.TryGetJournalEntry(package, out var entry))
                 {
                     entry.PackageUsage.AddUsage(serverTaskID);
@@ -61,15 +54,14 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public void DeregisterPackageUse(PackageIdentity package, ServerTaskID serverTaskID)
+        public void DeregisterPackageUse(PackageIdentity package, ServerTaskId serverTaskID)
         {
             try
             {
-                var repository = repositoryFactory.CreateJournalRepository();
-
                 if (repository.TryGetJournalEntry(package, out var entry))
                 {
                     entry.PackageLocks.RemoveLock(serverTaskID);
+                    repository.Commit();
                 }
             }
             catch (Exception ex)
@@ -81,15 +73,13 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public bool HasLock(PackageIdentity package)
         {
-            return repositoryFactory.CreateJournalRepository()
-                                    .TryGetJournalEntry(package, out var entry)
+            return repository.TryGetJournalEntry(package, out var entry)
                    && entry.PackageLocks.HasLock();
         }
 
         public IEnumerable<DateTime> GetUsage(PackageIdentity package)
         {
-            return repositoryFactory.CreateJournalRepository()
-                                    .TryGetJournalEntry(package, out var entry)
+            return repository.TryGetJournalEntry(package, out var entry)
                 ? entry.PackageUsage.GetUsageDetails()
                 : new DateTime[0];
         }

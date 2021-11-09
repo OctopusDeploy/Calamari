@@ -3,9 +3,9 @@ using Octopus.Versioning;
 
 namespace Calamari.Deployment.PackageRetention
 {
-    public class PackageID : CaseInsensitiveTinyType
+    public class PackageId : CaseInsensitiveTinyType
     {
-        public PackageID(string value) : base(value)
+        public PackageId(string value) : base(value)
         {
         }
     }

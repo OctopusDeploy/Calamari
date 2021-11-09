@@ -6,13 +6,17 @@ using Calamari.Deployment.PackageRetention.Repositories;
 
 namespace Calamari.Tests.Fixtures.PackageRetention.Repository
 {
-    public class JournalInMemoryRepository : IJournalRepository
+    public class InMemoryJournalRepository : IJournalRepository
     {
         readonly Dictionary<PackageIdentity, JournalEntry> journalEntries;
 
-        internal JournalInMemoryRepository(Dictionary<PackageIdentity, JournalEntry> journalEntries)
+        public InMemoryJournalRepository(Dictionary<PackageIdentity, JournalEntry> journalEntries)
         {
             this.journalEntries = journalEntries;
+        }
+
+        public InMemoryJournalRepository() : this(new Dictionary<PackageIdentity, JournalEntry>())
+        {
         }
 
         public bool TryGetJournalEntry(PackageIdentity package, out JournalEntry entry)

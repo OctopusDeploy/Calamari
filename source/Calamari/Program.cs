@@ -68,14 +68,13 @@ namespace Calamari
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
 
             builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
-            builder.RegisterType<JournalJsonRepositoryFactory>().As<IJournalRepositoryFactory>();
-            builder.RegisterType<Journal>().As<IJournal>();
+            builder.RegisterType<Journal>().As<IManagePackageUse>();
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
 
             //TODO: Do this using Autofac
-            TypeDescriptor.AddAttributes(typeof(ServerTaskID), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskID>)));
+            TypeDescriptor.AddAttributes(typeof(ServerTaskId), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskId>)));
 
             var typesToAlwaysDecorate = new Type[] { typeof(ApplyDeltaCommand) }; //Commands from external assemblies.
 
@@ -89,16 +88,16 @@ namespace Calamari
 
             //Register the decorator for the above commands.  Uses the old Autofac method because we're only on v4.8
             builder.RegisterDecorator<ICommandWithArgs>((c, inner)
-                                                            => new CommandJournalDecorator(c.Resolve<ILog>(),
+                                                            => new PackageJournalCommandDecorator(c.Resolve<ILog>(),
                                                                                            inner,
                                                                                            c.Resolve<IVariables>(),
-                                                                                           c.Resolve<IJournal>()),
+                                                                                           c.Resolve<IManagePackageUse>()),
                                                         fromKey: nameof(PackageLockingCommandAttribute) + "From",
                                                         toKey: nameof(PackageLockingCommandAttribute));
 
             //Register the non-decorated commands
             builder.RegisterAssemblyTypes(assembliesToRegister)
-                   .Where(c => !c.HasAttribute<PackageLockingCommandAttribute>() && c != typeof(CommandJournalDecorator))
+                   .Where(c => !c.HasAttribute<PackageLockingCommandAttribute>() && c != typeof(PackageJournalCommandDecorator))
                    .AssignableTo<ICommandWithArgs>()
                    .WithMetadataFrom<CommandAttribute>()
                    .As<ICommandWithArgs>();

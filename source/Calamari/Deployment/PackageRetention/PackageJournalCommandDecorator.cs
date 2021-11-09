@@ -7,17 +7,17 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Deployment.PackageRetention
 {
-    public class CommandJournalDecorator : ICommandWithArgs
+    public class PackageJournalCommandDecorator : ICommandWithArgs
     {
         readonly ILog log;
         readonly ICommandWithArgs command;
-        readonly IJournal journal;
+        readonly IManagePackageUse journal;
         readonly bool retentionEnabled = false;
 
         PackageIdentity Package { get; }
-        ServerTaskID DeploymentTaskID { get; }
+        ServerTaskId DeploymentTaskID { get; }
 
-        public CommandJournalDecorator(ILog log, ICommandWithArgs command, IVariables variables, IJournal journal)
+        public PackageJournalCommandDecorator(ILog log, ICommandWithArgs command, IVariables variables, IManagePackageUse journal)
         {
             this.log = log;
             this.command = command;
@@ -29,7 +29,7 @@ namespace Calamari.Deployment.PackageRetention
             {
                 try
                 {
-                    DeploymentTaskID = new ServerTaskID(variables);
+                    DeploymentTaskID = new ServerTaskId(variables);
                     Package = new PackageIdentity(variables);
                 }
                 catch (Exception ex)
@@ -39,7 +39,7 @@ namespace Calamari.Deployment.PackageRetention
             }
 
 #if DEBUG
-            log.Verbose($"Decorating {command.GetType().Name} with command journal.");
+            log.Verbose($"Decorating {command.GetType().Name} with PackageJournalCommandDecorator.");
 #endif
         }
 

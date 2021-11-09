@@ -9,20 +9,20 @@ namespace Calamari.Deployment.PackageRetention.Model
     public class PackageUsage
     {
         [JsonProperty]
-        readonly Dictionary<ServerTaskID, List<DateTime>> usages;
+        readonly Dictionary<ServerTaskId, List<DateTime>> usages;
 
         [JsonConstructor]
-        internal PackageUsage(Dictionary<ServerTaskID, List<DateTime>> usages = null)
+        internal PackageUsage(Dictionary<ServerTaskId, List<DateTime>> usages = null)
         {
-            this.usages = usages ?? new Dictionary<ServerTaskID, List<DateTime>>();
+            this.usages = usages ?? new Dictionary<ServerTaskId, List<DateTime>>();
         }
 
-        public void AddUsage(ServerTaskID deploymentTaskID)
+        public void AddUsage(ServerTaskId deploymentTaskId)
         {
-            if (!usages.ContainsKey(deploymentTaskID))
-                usages.Add(deploymentTaskID, new List<DateTime>());
+            if (!usages.ContainsKey(deploymentTaskId))
+                usages.Add(deploymentTaskId, new List<DateTime>());
 
-            usages[deploymentTaskID].Add(DateTime.Now);
+            usages[deploymentTaskId].Add(DateTime.Now);
         }
 
         public IEnumerable<DateTime> GetUsageDetails()
@@ -30,7 +30,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             return usages.SelectMany(u => u.Value);
         }
 
-        public Dictionary<ServerTaskID, List<DateTime>> AsDictionary()
+        public Dictionary<ServerTaskId, List<DateTime>> AsDictionary()
         {
             return usages;
         }

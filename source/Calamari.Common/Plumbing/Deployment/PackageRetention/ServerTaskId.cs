@@ -6,15 +6,15 @@ using Calamari.Deployment.PackageRetention;
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
     //[TypeConverter(typeof(TinyTypeTypeConverter<ServerTaskID>))]
-    public class ServerTaskID : CaseInsensitiveTinyType
+    public class ServerTaskId : CaseInsensitiveTinyType
     {
-        public ServerTaskID(string value) : base(value)
+        public ServerTaskId(string value) : base(value)
         {
         }
 
-        public ServerTaskID(IVariables variables)
+        public ServerTaskId(IVariables variables)
             : base(variables.Get(KnownVariables.ServerTask.Id)
-                   ?? throw new Exception("ServerTaskID not set."))
+                   ?? throw new Exception("ServerTask.Id not set."))
         {
         }
     }
