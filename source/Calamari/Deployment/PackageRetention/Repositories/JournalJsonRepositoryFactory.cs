@@ -15,7 +15,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         {
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
-            this.journalPath = variables.Get(PackageRetentionVariables.JournalPath);
+            this.journalPath = variables.Get(PackageRetentionVariables.PackageRetentionJournalPath);
         }
 
         public IJournalRepository CreateJournalRepository()

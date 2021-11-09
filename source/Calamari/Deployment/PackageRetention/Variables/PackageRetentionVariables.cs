@@ -2,6 +2,6 @@
 {
     public static class PackageRetentionVariables
     {
-        public const string JournalPath = "env:PackageRetentionJournal";
+        public const string PackageRetentionJournalPath = "env:CalamariPackageRetentionJournalPath";
     }
 }
