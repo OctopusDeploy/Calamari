@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 
 namespace Calamari.Deployment.PackageRetention.Repositories
 {
-    public class JournalJsonRepository //: IDisposable
+    public class JsonJournalRepository
         : IJournalRepository
     {
         Dictionary<PackageIdentity, JournalEntry> journalEntries;
@@ -21,11 +21,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         readonly ISemaphoreFactory semaphoreFactory;
         readonly string journalPath;
 
-        internal JournalJsonRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath)
+        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory)
         {
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
-            this.journalPath = journalPath;
+            this.journalPath = @"C:\Octopus\PackageJournal.json";//journalPath;
 
             Load();
         }

@@ -5,14 +5,13 @@ using Octopus.Versioning;
 
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
-    public interface IJournal
+    public interface IManagePackageUse 
     {
-        void RegisterPackageUse(string packageID, string version, string serverTaskID);
         void RegisterPackageUse(IVariables variables);
-        void RegisterPackageUse(PackageIdentity package, ServerTaskID serverTaskID);
-        void DeregisterPackageUse(PackageIdentity package, ServerTaskID serverTaskID);
-        bool HasLock(PackageIdentity package);
+        void RegisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId);
+        void DeregisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId);
         IEnumerable<DateTime> GetUsage(PackageIdentity package);
+        bool HasLock(PackageIdentity package);
         void ExpireStaleLocks();
     }
 }

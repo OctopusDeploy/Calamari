@@ -8,29 +8,26 @@ namespace Calamari.Deployment.PackageRetention.Model
     public class PackageLocks
     {
         [JsonProperty]
-        readonly Dictionary<ServerTaskID, DateTime> packageLocks;
+        readonly Dictionary<ServerTaskId, DateTime> packageLocks;
 
         [JsonConstructor]
-        internal PackageLocks(Dictionary<ServerTaskID, DateTime> packageLocks)
+        internal PackageLocks(Dictionary<ServerTaskId, DateTime> packageLocks)
         {
-            this.packageLocks = packageLocks ?? new Dictionary<ServerTaskID, DateTime>();
+            this.packageLocks = packageLocks ?? new Dictionary<ServerTaskId, DateTime>();
         }
 
-        public PackageLocks() : this(new Dictionary<ServerTaskID, DateTime>())
+        public PackageLocks() : this(new Dictionary<ServerTaskId, DateTime>())
         {
         }
 
-        public void AddLock(ServerTaskID deploymentTaskID)
+        public void AddLock(ServerTaskId deploymentTaskId)
         {
-            if (packageLocks.ContainsKey(deploymentTaskID))
-                packageLocks[deploymentTaskID] = DateTime.Now;
-            else
-                packageLocks.Add(deploymentTaskID, DateTime.Now);
+            packageLocks[deploymentTaskId] = DateTime.Now;
         }
 
-        public void RemoveLock(ServerTaskID deploymentTaskID)
+        public void RemoveLock(ServerTaskId deploymentTaskId)
         {
-            packageLocks.Remove(deploymentTaskID);
+            packageLocks.Remove(deploymentTaskId);
         }
 
         public bool HasLock() => packageLocks.Count > 0;

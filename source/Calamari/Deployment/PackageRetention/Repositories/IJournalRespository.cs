@@ -6,7 +6,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
     public interface IJournalRepository
     {
         bool TryGetJournalEntry(PackageIdentity package, out JournalEntry entry);
-        JournalEntry GetJournalEntry(PackageIdentity packageID);
+        JournalEntry GetJournalEntry(PackageIdentity packageId);
         void AddJournalEntry(JournalEntry entry);
         void Commit();
     }

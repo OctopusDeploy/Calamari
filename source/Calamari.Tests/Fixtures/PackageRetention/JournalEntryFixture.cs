@@ -17,8 +17,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenPackageUsageIsRegistered_ThenALockExists()
         {
             var thePackage = new PackageIdentity("Package", "1.0");
-            var theDeployment = new ServerTaskID("Deployment-1");
-            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
+            var theDeployment = new ServerTaskId("Deployment-1");
+            var journal = new Journal(new InMemoryJournalRepository(), Substitute.For<ILog>());
 
             journal.RegisterPackageUse(thePackage, theDeployment);
 
@@ -29,8 +29,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenPackageUsageIsDeregistered_ThenNoLocksExist()
         {
             var thePackage = new PackageIdentity("Package", "1.0");
-            var theDeployment = new ServerTaskID("Deployment-1");
-            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
+            var theDeployment = new ServerTaskId("Deployment-1");
+            var journal = new Journal(new InMemoryJournalRepository(), Substitute.For<ILog>());
 
             journal.RegisterPackageUse(thePackage, theDeployment);
             journal.DeregisterPackageUse(thePackage, theDeployment);
@@ -42,10 +42,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenPackageIsRegisteredForTwoDeploymentsAndDeregisteredForOne_ThenALockExists()
         {
             var thePackage = new PackageIdentity("Package", "1.0");
-            var deploymentOne = new ServerTaskID("Deployment-1");
-            var deploymentTwo = new ServerTaskID("Deployment-2");
+            var deploymentOne = new ServerTaskId("Deployment-1");
+            var deploymentTwo = new ServerTaskId("Deployment-2");
 
-            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
+            var journal = new Journal(new InMemoryJournalRepository(), Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.RegisterPackageUse(thePackage, deploymentTwo);
             journal.DeregisterPackageUse(thePackage, deploymentOne);
@@ -57,10 +57,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenPackageIsRegisteredForTwoDeploymentsAndDeregisteredForBoth_ThenNoLocksExist()
         {
             var thePackage = new PackageIdentity("Package", "1.0");
-            var deploymentOne = new ServerTaskID("Deployment-1");
-            var deploymentTwo = new ServerTaskID("Deployment-2");
+            var deploymentOne = new ServerTaskId("Deployment-1");
+            var deploymentTwo = new ServerTaskId("Deployment-2");
 
-            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
+            var journal = new Journal(new InMemoryJournalRepository(), Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.RegisterPackageUse(thePackage, deploymentTwo);
             journal.DeregisterPackageUse(thePackage, deploymentOne);
@@ -73,22 +73,37 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenPackageIsRegistered_ThenUsageIsRecorded()
         {
             var thePackage = new PackageIdentity("Package", "1.0");
-            var deploymentOne = new ServerTaskID("Deployment-1");
+            var deploymentOne = new ServerTaskId("Deployment-1");
 
-            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
+            var journal = new Journal(new InMemoryJournalRepository(), Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
 
             Assert.AreEqual(1, journal.GetUsage(thePackage).Count());
         }
 
         [Test]
-        public void WhenTwoPackagesAreRegistered_ThenTwoUsagesAreRecorded()
+        public void WhenTwoPackagesAreRegisteredAgainstTheSameDeployment_ThenTwoSeparateUsagesAreRecorded()
         {
-            var thePackage = new PackageIdentity("Package", "1.0");
-            var deploymentOne = new ServerTaskID("Deployment-1");
-            var deploymentTwo = new ServerTaskID("Deployment-1");
+            var package1 = new PackageIdentity("Package1", "1.0");
+            var package2 = new PackageIdentity("Package2", "1.0");
+            var theDeployment = new ServerTaskId("Deployment-1");
 
-            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
+            var journal = new Journal(new InMemoryJournalRepository(), Substitute.For<ILog>());
+            journal.RegisterPackageUse(package1, theDeployment);
+            journal.RegisterPackageUse(package2, theDeployment);
+
+            Assert.AreEqual(1, journal.GetUsage(package1).Count());
+            Assert.AreEqual(1, journal.GetUsage(package2).Count());
+        }
+
+        [Test]
+        public void WhenOnePackageIsRegisteredForTwoDeployments_ThenTwoSeparateUsagesAreRecorded()
+        {
+            var thePackage = new PackageIdentity("Package1", "1.0");
+            var deploymentOne = new ServerTaskId("Deployment-1");
+            var deploymentTwo = new ServerTaskId("Deployment-2");
+
+            var journal = new Journal(new InMemoryJournalRepository(), Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.RegisterPackageUse(thePackage, deploymentTwo);
 
@@ -100,9 +115,9 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         {
 
             var thePackage = new PackageIdentity("Package", "1.0");
-            var deploymentOne = new ServerTaskID("Deployment-1");
+            var deploymentOne = new ServerTaskId("Deployment-1");
 
-            var journal = new Journal(new JournalInMemoryRepositoryFactory(), Substitute.For<ILog>());
+            var journal = new Journal(new InMemoryJournalRepository(), Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.DeregisterPackageUse(thePackage, deploymentOne);
 

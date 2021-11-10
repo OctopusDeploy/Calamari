@@ -15,14 +15,14 @@ namespace Calamari.Tests.Fixtures.TypeConverters
         [Test]
         public void WhenValueIsNull_ThenThrowException()
         {
-              var tc = new TinyTypeTypeConverter<ServerTaskID>();
+              var tc = new TinyTypeTypeConverter<ServerTaskId>();
               Assert.Throws<ArgumentNullException>(() => tc.ConvertFrom(null));
         }
 
         [Test]
         public void WhenValueIsNonString_ThenThrowException()
         {
-            var tc = new TinyTypeTypeConverter<ServerTaskID>();
+            var tc = new TinyTypeTypeConverter<ServerTaskId>();
             Assert.Throws<Exception>(() => tc.ConvertFrom(1));
         }
 
@@ -30,9 +30,9 @@ namespace Calamari.Tests.Fixtures.TypeConverters
         public void WhenValueIsValidString_ThenProduceTinyType()
         {
             var validString = "Valid String";
-            var tc = new TinyTypeTypeConverter<ServerTaskID>();
-            var result = tc.ConvertFrom(validString) as ServerTaskID;
-            var expectedResult = CaseInsensitiveTinyType.Create<ServerTaskID>(validString);
+            var tc = new TinyTypeTypeConverter<ServerTaskId>();
+            var result = tc.ConvertFrom(validString) as ServerTaskId;
+            var expectedResult = CaseInsensitiveTinyType.Create<ServerTaskId>(validString);
             Assert.AreEqual(expectedResult, result);
         }
     }
