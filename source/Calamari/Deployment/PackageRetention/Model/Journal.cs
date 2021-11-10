@@ -24,25 +24,25 @@ namespace Calamari.Deployment.PackageRetention.Model
             RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables));
         }
 
-        public void RegisterPackageUse(PackageIdentity package, ServerTaskId serverTaskID)
+        public void RegisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId)
         {
             try
             {
                 if (repository.TryGetJournalEntry(package, out var entry))
                 {
-                    entry.PackageUsage.AddUsage(serverTaskID);
-                    entry.PackageLocks.AddLock(serverTaskID);
+                    entry.PackageUsage.AddUsage(serverTaskId);
+                    entry.PackageLocks.AddLock(serverTaskId);
                 }
                 else
                 {
                     entry = new JournalEntry(package);
-                    entry.PackageUsage.AddUsage(serverTaskID);
-                    entry.PackageLocks.AddLock(serverTaskID);
+                    entry.PackageUsage.AddUsage(serverTaskId);
+                    entry.PackageLocks.AddLock(serverTaskId);
                     repository.AddJournalEntry(entry);
                 }
 
 #if DEBUG
-                log.Verbose($"Registered package use/lock for {package} and task {serverTaskID}");
+                log.Verbose($"Registered package use/lock for {package} and task {serverTaskId}");
 #endif
 
                 repository.Commit();
@@ -54,13 +54,13 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public void DeregisterPackageUse(PackageIdentity package, ServerTaskId serverTaskID)
+        public void DeregisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId)
         {
             try
             {
                 if (repository.TryGetJournalEntry(package, out var entry))
                 {
-                    entry.PackageLocks.RemoveLock(serverTaskID);
+                    entry.PackageLocks.RemoveLock(serverTaskId);
                     repository.Commit();
                 }
             }

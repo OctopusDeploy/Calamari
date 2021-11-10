@@ -37,7 +37,7 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            var taskID = new ServerTaskId(variables);
+            var taskId = new ServerTaskId(variables);
 
             try
             {
@@ -48,11 +48,11 @@ namespace Calamari.Commands
 
                 var packageIdentity = new PackageIdentity(packageId, packageVersion);
 
-                packageJournal.DeregisterPackageUse(packageIdentity, taskID);
+                packageJournal.DeregisterPackageUse(packageIdentity, taskId);
             }
             catch (Exception ex)
             {
-                log.ErrorFormat("Failed to release lock for {0} v{1} for server task '{2}'", packageId, packageVersion, taskID);
+                log.ErrorFormat("Failed to release lock for {0} v{1} for server task '{2}'", packageId, packageVersion, taskId);
                 return ConsoleFormatter.PrintError(log, ex);
             }
 

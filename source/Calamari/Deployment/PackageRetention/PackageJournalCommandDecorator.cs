@@ -15,7 +15,7 @@ namespace Calamari.Deployment.PackageRetention
         readonly bool retentionEnabled = false;
 
         PackageIdentity Package { get; }
-        ServerTaskId DeploymentTaskID { get; }
+        ServerTaskId DeploymentTaskId { get; }
 
         public PackageJournalCommandDecorator(ILog log, ICommandWithArgs command, IVariables variables, IManagePackageUse journal)
         {
@@ -29,7 +29,7 @@ namespace Calamari.Deployment.PackageRetention
             {
                 try
                 {
-                    DeploymentTaskID = new ServerTaskId(variables);
+                    DeploymentTaskId = new ServerTaskId(variables);
                     Package = new PackageIdentity(variables);
                 }
                 catch (Exception ex)
@@ -45,7 +45,7 @@ namespace Calamari.Deployment.PackageRetention
 
         public int Execute(string[] commandLineArguments)
         {
-            if (retentionEnabled) journal.RegisterPackageUse(Package, DeploymentTaskID);
+            if (retentionEnabled) journal.RegisterPackageUse(Package, DeploymentTaskId);
 
             return command.Execute(commandLineArguments);
         }
