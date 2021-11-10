@@ -17,10 +17,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
     {
         Dictionary<PackageIdentity, JournalEntry> journalEntries;
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
+        internal const string DefaultJournalName = "PackageRetentionJournal.json";
 
         readonly ICalamariFileSystem fileSystem;
         readonly ISemaphoreFactory semaphoreFactory;
-        readonly string journalPath;
+        internal string JournalPath { get; }
 
         public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, IVariables variables)
         {
@@ -31,9 +32,9 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             if (packageRetentionJournalPath == null)
             {
                 var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome) ?? throw new Exception("Environment variable 'TentacleHome' has not been set.");
-                packageRetentionJournalPath = Path.Combine(tentacleHome, "PackageRetentionJournal.json");
+                packageRetentionJournalPath = Path.Combine(tentacleHome, DefaultJournalName);
             }
-            journalPath = packageRetentionJournalPath;
+            JournalPath = packageRetentionJournalPath;
 
             Load();
         }
@@ -64,9 +65,9 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         //We will need to use the semaphore across the load/save though, which needs to be worked out.  Maybe make repositories disposable and have the semaphore held until dispose?
         void Load()
         {
-            if (File.Exists(journalPath))
+            if (File.Exists(JournalPath))
             {
-                var json = File.ReadAllText(journalPath);
+                var json = File.ReadAllText(JournalPath);
                 journalEntries = JsonConvert.DeserializeObject<List<JournalEntry>>(json)
                                             .ToDictionary(entry => entry.Package, entry => entry);
             }
@@ -82,13 +83,13 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             {
                 var journalEntryList = journalEntries.Select(p => p.Value);
                 var json = JsonConvert.SerializeObject(journalEntryList);
-                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
+                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(JournalPath));
 
                 //save to temp file first
-                var tempFilePath = $"{journalPath}.temp.{Guid.NewGuid()}.json";
+                var tempFilePath = $"{JournalPath}.temp.{Guid.NewGuid()}.json";
 
                 fileSystem.WriteAllText(tempFilePath,json, Encoding.Default);
-                fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
+                fileSystem.OverwriteAndDelete(JournalPath, tempFilePath);
             }
         }
     }
