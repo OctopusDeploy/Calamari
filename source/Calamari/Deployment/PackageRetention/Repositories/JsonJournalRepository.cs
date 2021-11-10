@@ -79,7 +79,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
                 else
                 {
                     var journalFileName = journalPath.Substring(0, journalPath.LastIndexOf(".", StringComparison.Ordinal));
-                    var backupJournalPath = $"{journalFileName}_{DateTimeOffset.UtcNow:yyyyMMddTHHmmss}.json"; // PackageRetentionJournal_20210101T120000.json
+                    var backupJournalPath = $"{journalFileName}_{DateTimeOffset.UtcNow:yyyyMMddTHHmmss}.json"; // eg. PackageRetentionJournal_20210101T120000.json
 
                     log.Warn($"The existing package retention journal file {journalPath} could not be read. The file will be renamed to {backupJournalPath}. A new journal will be created.");
                     File.Move(journalPath, backupJournalPath);
