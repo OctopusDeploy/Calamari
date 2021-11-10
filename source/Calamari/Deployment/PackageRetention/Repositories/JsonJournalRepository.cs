@@ -21,7 +21,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
         readonly ICalamariFileSystem fileSystem;
         readonly ISemaphoreFactory semaphoreFactory;
-        internal string JournalPath { get; }
+        readonly string journalPath;
 
         public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, IVariables variables)
         {
@@ -34,7 +34,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
                 var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome) ?? throw new Exception("Environment variable 'TentacleHome' has not been set.");
                 packageRetentionJournalPath = Path.Combine(tentacleHome, DefaultJournalName);
             }
-            JournalPath = packageRetentionJournalPath;
+            journalPath = packageRetentionJournalPath;
 
             Load();
         }
@@ -65,9 +65,9 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         //We will need to use the semaphore across the load/save though, which needs to be worked out.  Maybe make repositories disposable and have the semaphore held until dispose?
         void Load()
         {
-            if (File.Exists(JournalPath))
+            if (File.Exists(journalPath))
             {
-                var json = File.ReadAllText(JournalPath);
+                var json = File.ReadAllText(journalPath);
                 journalEntries = JsonConvert.DeserializeObject<List<JournalEntry>>(json)
                                             .ToDictionary(entry => entry.Package, entry => entry);
             }
@@ -83,13 +83,13 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             {
                 var journalEntryList = journalEntries.Select(p => p.Value);
                 var json = JsonConvert.SerializeObject(journalEntryList);
-                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(JournalPath));
+                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
 
                 //save to temp file first
-                var tempFilePath = $"{JournalPath}.temp.{Guid.NewGuid()}.json";
+                var tempFilePath = $"{journalPath}.temp.{Guid.NewGuid()}.json";
 
                 fileSystem.WriteAllText(tempFilePath,json, Encoding.Default);
-                fileSystem.OverwriteAndDelete(JournalPath, tempFilePath);
+                fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
             }
         }
     }
