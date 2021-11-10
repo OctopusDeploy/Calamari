@@ -14,10 +14,26 @@ namespace Calamari.Tests.Fixtures.PackageRetention
     [TestFixture]
     public class JsonJournalRepositoryFixture
     {
+        static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "JsonJournalRepository");
+
+        [SetUp]
+        public void SetUp()
+        {
+            if (!Directory.Exists(TentacleHome))
+                Directory.CreateDirectory(TentacleHome);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (Directory.Exists(TentacleHome))
+                Directory.Delete(TentacleHome, true);
+        }
+
         [Test]
         public void WhenCalamariPackageRetentionJournalPathExists_ThenTheJournalIsCreatedAtTheGivenPath()
         {
-            var journalPath = TestEnvironment.GetTestPath("PackageRetentionJournal.json");
+            var journalPath = Path.Combine(TentacleHome, "PackageRetentionJournal.json");
 
             var variables = Substitute.For<IVariables>();
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns(journalPath);
@@ -31,13 +47,13 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenCalamariPackageRetentionJournalPathDoesNotExist_ThenTheJournalIsCreatedAtTheDefaultPath()
         {
-            var homeDir = TestEnvironment.GetTestPath();
+            var homeDir = TentacleHome;
 
             var variables = Substitute.For<IVariables>();
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns((string) null);
             variables.Get(TentacleVariables.Agent.TentacleHome).Returns(homeDir);
 
-            var repository = new JsonJournalRepository(Substitute.For<ICalamariFileSystem>(), Substitute.For<ISemaphoreFactory>(), variables);
+            var repository = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
 
             var expectedPath = Path.Combine(homeDir, JsonJournalRepository.DefaultJournalName);
 
