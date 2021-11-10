@@ -6,6 +6,7 @@ using System.Text;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Model;
 using Newtonsoft.Json;
@@ -22,11 +23,13 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         readonly ICalamariFileSystem fileSystem;
         readonly ISemaphoreFactory semaphoreFactory;
         readonly string journalPath;
+        readonly ILog log;
 
-        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, IVariables variables)
+        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, IVariables variables, ILog log)
         {
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
+            this.log = log;
 
             var packageRetentionJournalPath = variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath);
             if (packageRetentionJournalPath == null)
@@ -68,8 +71,21 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             if (File.Exists(journalPath))
             {
                 var json = File.ReadAllText(journalPath);
-                journalEntries = JsonConvert.DeserializeObject<List<JournalEntry>>(json)
-                                            .ToDictionary(entry => entry.Package, entry => entry);
+
+                if (TryParseJournal(json, out var journalContents))
+                {
+                    journalEntries = journalContents.ToDictionary(entry => entry.Package, entry => entry);
+                }
+                else
+                {
+                    var journalFileName = journalPath.Substring(0, journalPath.LastIndexOf(".", StringComparison.Ordinal));
+                    var backupJournalPath = $"{journalFileName}_{DateTimeOffset.UtcNow:yyyyMMddTHHmmss}.json"; // PackageRetentionJournal_20210101T120000.json
+
+                    log.Warn($"The existing package retention journal file {journalPath} could not be read. The file will be renamed to {backupJournalPath}. A new journal will be created.");
+                    File.Move(journalPath, backupJournalPath);
+
+                    journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
+                }
             }
             else
             {
@@ -90,6 +106,21 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
                 fileSystem.WriteAllText(tempFilePath,json, Encoding.Default);
                 fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
+            }
+        }
+
+        static bool TryParseJournal(string json, out List<JournalEntry> result)
+        {
+            try
+            {
+                result = JsonConvert.DeserializeObject<List<JournalEntry>>(json);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Unable to parse the package retention journal file. Error message: {e.Message}");
+                result = new List<JournalEntry>();
+                return false;
             }
         }
     }
