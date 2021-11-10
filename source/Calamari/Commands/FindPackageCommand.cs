@@ -3,8 +3,12 @@ using System.Linq;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Integration.FileSystem;
 using Octopus.Versioning;
 
@@ -14,17 +18,22 @@ namespace Calamari.Commands
     public class FindPackageCommand : Command
     {
         readonly ILog log;
+        readonly IVariables variables;
         readonly IPackageStore packageStore;
+        readonly IManagePackageUse packageJournal;
         string packageId;
         string rawPackageVersion;
         string packageHash;
         bool exactMatchOnly;
         VersionFormat versionFormat = VersionFormat.Semver;
-
-        public FindPackageCommand(ILog log, ICalamariFileSystem fileSystem, IPackageStore packageStore)
+        
+        public FindPackageCommand(ILog log, IVariables variables, IPackageStore packageStore, IManagePackageUse packageJournal)
         {
             this.log = log;
+            this.variables = variables;
             this.packageStore = packageStore;
+            this.packageJournal = packageJournal;
+
             Options.Add("packageId=", "Package ID to find", v => packageId = v);
             Options.Add("packageVersion=", "Package version to find", v => rawPackageVersion = v);
             Options.Add("packageHash=", "Package hash to compare against", v => packageHash = v);
@@ -65,6 +74,11 @@ namespace Calamari.Commands
 
                 return 0;
             }
+
+            //Exact package found, so we need to register use and lock it.
+            // This command can't use the PackageJournalCommandDecorator because we don't lock on partial finds, which the decorator would include.  We don't lock on partials because there may be too many packages, blocking retention later,
+            //  and we will lock them on apply delta anyway.
+            if (variables.IsPackageRetentionEnabled()) packageJournal.RegisterPackageUse(variables);
 
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
             LogPackageFound(

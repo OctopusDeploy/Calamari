@@ -2,18 +2,26 @@
 using Calamari.Commands.Support;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Autofac.Features.Metadata;
 using Calamari.Commands;
 using Calamari.Common;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Deployment.Journal;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Model;
+using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.LaunchTools;
+using IContainer = Autofac.IContainer;
 
 namespace Calamari
 {
@@ -32,7 +40,10 @@ namespace Calamari
 
         protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
         {
-            var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>();
+            var lockingCommands = container.ResolveKeyed<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>(nameof(PackageLockingCommandAttribute));
+            var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>()
+                                    .Where(c => lockingCommands.All(lc => !lc.Metadata.Name.Equals(c.Metadata.Name, StringComparison.OrdinalIgnoreCase)))
+                                    .Union(lockingCommands);
 
             var commandCandidates = commands.Where(x => x.Metadata.Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase)).ToArray();
 
@@ -56,16 +67,46 @@ namespace Calamari
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
 
-            builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
-                .AssignableTo<ICommandWithArgs>()
-                .WithMetadataFrom<CommandAttribute>()
-                .As<ICommandWithArgs>();
+            builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
+            builder.RegisterType<JsonJournalRepository>().As<IJournalRepository>();
+            builder.RegisterType<Journal>().As<IManagePackageUse>();
 
-            builder.RegisterAssemblyTypes(GetAllAssembliesToRegister().ToArray())
+            //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
+            var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
+
+            //TODO: Do this using Autofac
+            TypeDescriptor.AddAttributes(typeof(ServerTaskId), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskId>)));
+
+            var typesToAlwaysDecorate = new Type[] { typeof(ApplyDeltaCommand) }; //Commands from external assemblies.
+
+            //Get register commands with the RetentionLockingCommand attribute;
+            builder.RegisterAssemblyTypes(assembliesToRegister)
+                   .Where(t => t.HasAttribute<PackageLockingCommandAttribute>()
+                               || typesToAlwaysDecorate.Contains(t))
+                   .AssignableTo<ICommandWithArgs>()
+                   .WithMetadataFrom<CommandAttribute>()
+                   .Named<ICommandWithArgs>(nameof(PackageLockingCommandAttribute) + "From");
+
+            //Register the decorator for the above commands.  Uses the old Autofac method because we're only on v4.8
+            builder.RegisterDecorator<ICommandWithArgs>((c, inner)
+                                                            => new PackageJournalCommandDecorator(c.Resolve<ILog>(),
+                                                                                           inner,
+                                                                                           c.Resolve<IVariables>(),
+                                                                                           c.Resolve<IManagePackageUse>()),
+                                                        fromKey: nameof(PackageLockingCommandAttribute) + "From",
+                                                        toKey: nameof(PackageLockingCommandAttribute));
+
+            //Register the non-decorated commands
+            builder.RegisterAssemblyTypes(assembliesToRegister)
+                   .Where(c => !c.HasAttribute<PackageLockingCommandAttribute>() && c != typeof(PackageJournalCommandDecorator))
+                   .AssignableTo<ICommandWithArgs>()
+                   .WithMetadataFrom<CommandAttribute>()
+                   .As<ICommandWithArgs>();
+
+            builder.RegisterAssemblyTypes(assembliesToRegister)
                    .AssignableTo<ICommandWithInputs>()
                    .WithMetadataFrom<CommandAttribute>()
                    .As<ICommandWithInputs>();
-
 
             builder.RegisterAssemblyTypes(GetProgramAssemblyToRegister())
                    .Where(x => typeof(ILaunchTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
@@ -94,6 +135,14 @@ namespace Calamari
             {
                 yield return extensionAssembly;
             }
+        }
+    }
+
+    static class ExtensionMethods
+    {
+        public static bool HasAttribute<T>(this Type type) where T : Attribute
+        {
+            return type.GetCustomAttributes(false).Any(a => a is T);
         }
     }
 }
