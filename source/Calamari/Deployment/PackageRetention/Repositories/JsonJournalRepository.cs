@@ -6,6 +6,7 @@ using System.Text;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Model;
 using Newtonsoft.Json;
 
@@ -21,11 +22,18 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         readonly ISemaphoreFactory semaphoreFactory;
         readonly string journalPath;
 
-        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory)
+        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, IVariables variables)
         {
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
-            this.journalPath = @"C:\Octopus\PackageJournal.json";//journalPath;
+
+            var packageRetentionJournalPath = variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath);
+            if (packageRetentionJournalPath == null)
+            {
+                var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome) ?? throw new Exception("Environment variable 'TentacleHome' has not been set.");
+                packageRetentionJournalPath = Path.Combine(tentacleHome, "PackageRetentionJournal.json");
+            }
+            journalPath = packageRetentionJournalPath;
 
             Load();
         }
