@@ -10,12 +10,13 @@ namespace Calamari.Deployment.PackageRetention.Model
 {
     public class Journal : IManagePackageUse
     {
-        readonly IJournalRepository repository;
+        // add factory
+        readonly IJournalRepositoryFactory repositoryFactory;
         readonly ILog log;
 
-        public Journal(IJournalRepository repository, ILog log)
+        public Journal(IJournalRepositoryFactory repositoryFactory, ILog log)
         {
-            this.repository = repository;
+            this.repositoryFactory = repositoryFactory;
             this.log = log;
         }
 
@@ -28,6 +29,7 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
+                var repository = repositoryFactory.CreateJournalRepository();
                 if (repository.TryGetJournalEntry(package, out var entry))
                 {
                     entry.PackageUsage.AddUsage(serverTaskId);
@@ -58,6 +60,7 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
+                var repository = repositoryFactory.CreateJournalRepository();
                 if (repository.TryGetJournalEntry(package, out var entry))
                 {
                     entry.PackageLocks.RemoveLock(serverTaskId);
@@ -73,12 +76,14 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public bool HasLock(PackageIdentity package)
         {
+            var repository = repositoryFactory.CreateJournalRepository();
             return repository.TryGetJournalEntry(package, out var entry)
                    && entry.PackageLocks.HasLock();
         }
 
         public IEnumerable<DateTime> GetUsage(PackageIdentity package)
         {
+            var repository = repositoryFactory.CreateJournalRepository();
             return repository.TryGetJournalEntry(package, out var entry)
                 ? entry.PackageUsage.GetUsageDetails()
                 : new DateTime[0];

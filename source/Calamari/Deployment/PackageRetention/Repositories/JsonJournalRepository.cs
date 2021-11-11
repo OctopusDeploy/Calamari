@@ -6,35 +6,27 @@ using System.Text;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Model;
 using Newtonsoft.Json;
 
 namespace Calamari.Deployment.PackageRetention.Repositories
 {
     public class JsonJournalRepository
-        : IJournalRepository
+        : IJournalRepository, IDisposable
     {
         Dictionary<PackageIdentity, JournalEntry> journalEntries;
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
-        internal const string DefaultJournalName = "PackageRetentionJournal.json";
 
         readonly ICalamariFileSystem fileSystem;
         readonly ISemaphoreFactory semaphoreFactory;
         readonly string journalPath;
 
-        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, IVariables variables)
+        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath)
         {
+            // TODO: Get lock?
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
-
-            var packageRetentionJournalPath = variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath);
-            if (packageRetentionJournalPath == null)
-            {
-                var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome) ?? throw new Exception("Environment variable 'TentacleHome' has not been set.");
-                packageRetentionJournalPath = Path.Combine(tentacleHome, DefaultJournalName);
-            }
-            journalPath = packageRetentionJournalPath;
+            this.journalPath = journalPath;
 
             Load();
         }
@@ -91,6 +83,10 @@ namespace Calamari.Deployment.PackageRetention.Repositories
                 fileSystem.WriteAllText(tempFilePath,json, Encoding.Default);
                 fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
             }
+        }
+
+        public void Dispose()
+        {
         }
     }
 }
