@@ -22,6 +22,8 @@ namespace Calamari.LaunchTools
         readonly ICommandLineRunner commandLineRunner;
         readonly ILog log;
 
+        const string DebugVariableName = "Octopus.StepPackage.Bootstrap.Debug";
+
         public NodeExecutor(CommonOptions options, IVariables variables, ICommandLineRunner commandLineRunner, ILog log)
         {
             this.options = options;
@@ -41,7 +43,7 @@ namespace Calamari.LaunchTools
             {
                 var jsonInputs = variables.GetRaw(instructions.InputsVariable) ?? string.Empty;
                 variables.Set(instructions.InputsVariable, InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables, log));
-                var debugMode = variables.GetFlag("Octopus.StepPackage.Boostrap.Debug", false);
+                var debugMode = variables.GetFlag(DebugVariableName, false);
 
                 var variablesAsJson = variables.CloneAndEvaluate().SaveAsString();
                 File.WriteAllBytes(variableFile.FilePath, new AesEncryption(options.InputVariables.SensitiveVariablesPassword).Encrypt(variablesAsJson));
