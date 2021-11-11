@@ -11,9 +11,9 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.PackageRetention
 {
     [TestFixture]
-    public class JsonJournalRepositoryFixture
+    public class JsonJournalRepositoryFactoryFixture
     {
-        static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "JsonJournalRepository");
+        static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "JsonJournalRepositoryFactory");
 
         [SetUp]
         public void SetUp()
@@ -37,7 +37,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var variables = Substitute.For<IVariables>();
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns(journalPath);
 
-            var repository = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
+            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
+            var repository = repositoryFactory.CreateJournalRepository();
 
             repository.Commit();
             Assert.IsTrue(File.Exists(journalPath));
@@ -52,9 +53,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns((string) null);
             variables.Get(TentacleVariables.Agent.TentacleHome).Returns(homeDir);
 
-            var repository = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
+            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
+            var repository = repositoryFactory.CreateJournalRepository();
 
-            var expectedPath = Path.Combine(homeDir, JsonJournalRepository.DefaultJournalName);
+            var expectedPath = Path.Combine(homeDir, JsonJournalRepositoryFactory.DefaultJournalName);
 
             repository.Commit();
             Assert.IsTrue(File.Exists(expectedPath));

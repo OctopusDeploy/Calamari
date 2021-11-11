@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
@@ -12,8 +13,10 @@ using Newtonsoft.Json;
 namespace Calamari.Deployment.PackageRetention.Repositories
 {
     public class JsonJournalRepository
-        : IJournalRepository, IDisposable
+        : IJournalRepository
     {
+        static readonly Semaphore JournalSemaphore = new Semaphore(1, 1);
+
         Dictionary<PackageIdentity, JournalEntry> journalEntries;
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
 
@@ -23,7 +26,8 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
         public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath)
         {
-            // TODO: Get lock?
+            JournalSemaphore.WaitOne();
+
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
             this.journalPath = journalPath;
@@ -87,6 +91,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
         public void Dispose()
         {
+            JournalSemaphore.Release();
         }
     }
 }

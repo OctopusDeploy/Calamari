@@ -10,7 +10,6 @@ namespace Calamari.Deployment.PackageRetention.Model
 {
     public class Journal : IManagePackageUse
     {
-        // add factory
         readonly IJournalRepositoryFactory repositoryFactory;
         readonly ILog log;
 
@@ -29,25 +28,28 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
-                var repository = repositoryFactory.CreateJournalRepository();
-                if (repository.TryGetJournalEntry(package, out var entry))
+                using (var repository = repositoryFactory.CreateJournalRepository())
                 {
-                    entry.PackageUsage.AddUsage(serverTaskId);
-                    entry.PackageLocks.AddLock(serverTaskId);
-                }
-                else
-                {
-                    entry = new JournalEntry(package);
-                    entry.PackageUsage.AddUsage(serverTaskId);
-                    entry.PackageLocks.AddLock(serverTaskId);
-                    repository.AddJournalEntry(entry);
-                }
+
+                    if (repository.TryGetJournalEntry(package, out var entry))
+                    {
+                        entry.PackageUsage.AddUsage(serverTaskId);
+                        entry.PackageLocks.AddLock(serverTaskId);
+                    }
+                    else
+                    {
+                        entry = new JournalEntry(package);
+                        entry.PackageUsage.AddUsage(serverTaskId);
+                        entry.PackageLocks.AddLock(serverTaskId);
+                        repository.AddJournalEntry(entry);
+                    }
 
 #if DEBUG
-                log.Verbose($"Registered package use/lock for {package} and task {serverTaskId}");
+                    log.Verbose($"Registered package use/lock for {package} and task {serverTaskId}");
 #endif
 
-                repository.Commit();
+                    repository.Commit();
+                }
             }
             catch (Exception ex)
             {
@@ -60,11 +62,13 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
-                var repository = repositoryFactory.CreateJournalRepository();
-                if (repository.TryGetJournalEntry(package, out var entry))
+                using (var repository = repositoryFactory.CreateJournalRepository())
                 {
-                    entry.PackageLocks.RemoveLock(serverTaskId);
-                    repository.Commit();
+                    if (repository.TryGetJournalEntry(package, out var entry))
+                    {
+                        entry.PackageLocks.RemoveLock(serverTaskId);
+                        repository.Commit();
+                    }
                 }
             }
             catch (Exception ex)
@@ -76,17 +80,21 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public bool HasLock(PackageIdentity package)
         {
-            var repository = repositoryFactory.CreateJournalRepository();
-            return repository.TryGetJournalEntry(package, out var entry)
-                   && entry.PackageLocks.HasLock();
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                return repository.TryGetJournalEntry(package, out var entry)
+                       && entry.PackageLocks.HasLock();
+            }
         }
 
         public IEnumerable<DateTime> GetUsage(PackageIdentity package)
         {
-            var repository = repositoryFactory.CreateJournalRepository();
-            return repository.TryGetJournalEntry(package, out var entry)
-                ? entry.PackageUsage.GetUsageDetails()
-                : new DateTime[0];
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                return repository.TryGetJournalEntry(package, out var entry)
+                    ? entry.PackageUsage.GetUsageDetails()
+                    : new DateTime[0];
+            }
         }
 
         public void ExpireStaleLocks()

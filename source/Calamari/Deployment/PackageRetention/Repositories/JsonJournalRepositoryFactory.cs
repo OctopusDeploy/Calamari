@@ -6,7 +6,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Deployment.PackageRetention.Repositories
 {
-    public class JournalJsonRepositoryFactory : IJournalRepositoryFactory
+    public class JsonJournalRepositoryFactory : IJournalRepositoryFactory
     {
         internal const string DefaultJournalName = "PackageRetentionJournal.json";
 
@@ -14,7 +14,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         readonly ISemaphoreFactory semaphoreFactory;
         readonly string journalPath;
 
-        public JournalJsonRepositoryFactory(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, IVariables variables)
+        public JsonJournalRepositoryFactory(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, IVariables variables)
         {
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
