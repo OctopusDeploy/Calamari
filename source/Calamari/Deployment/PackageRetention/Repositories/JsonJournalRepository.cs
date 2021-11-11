@@ -15,7 +15,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
     public class JsonJournalRepository
         : IJournalRepository
     {
-        static readonly Semaphore JournalSemaphore = new Semaphore(1, 1);
+        static readonly SemaphoreSlim JournalSemaphore = new SemaphoreSlim(1, 1);
 
         Dictionary<PackageIdentity, JournalEntry> journalEntries;
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
@@ -26,7 +26,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
         public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath)
         {
-            JournalSemaphore.WaitOne();
+            JournalSemaphore.Wait();
 
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
@@ -56,9 +56,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             Save();
         }
 
-        //TODO: Handle concurrency. We should be able to use a semaphore for this (i.e. wait/lock/release), otherwise we may need to use something else.
-        //We are always just opening the file, adding to it, then saving it in pretty much one atomic step, so a semaphore should work ok. See Journal.RegisterPackageUse for an example.
-        //We will need to use the semaphore across the load/save though, which needs to be worked out.  Maybe make repositories disposable and have the semaphore held until dispose?
         void Load()
         {
             if (File.Exists(journalPath))
