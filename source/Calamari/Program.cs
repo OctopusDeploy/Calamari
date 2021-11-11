@@ -67,8 +67,7 @@ namespace Calamari
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
 
-            builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
-            builder.RegisterType<JsonJournalRepository>().As<IJournalRepository>();
+            builder.RegisterType<JsonJournalRepositoryFactory>().As<IJournalRepositoryFactory>();
             builder.RegisterType<Journal>().As<IManagePackageUse>();
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
