@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -26,6 +27,8 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RegisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId)
         {
+            var journal = new JsonJournalRepository();
+            var potato = new CalamariVariables();
             try
             {
                 using (var repository = repositoryFactory.CreateJournalRepository())

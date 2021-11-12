@@ -55,10 +55,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                 var journal = new Journal(repositoryFactory, new InMemoryLog());
                 var package = new PackageIdentity($"Package-{i}", $"0.0.{i}");
                 var serverTask = new ServerTaskId($"ServerTasks-{i}");
-                tasks.Add(Task.Factory.StartNew(() => journal.RegisterPackageUse(package, serverTask)));
+                tasks.Add(Task.Run(() => journal.RegisterPackageUse(package, serverTask)));
             }
 
-            Task.WaitAll(tasks.ToArray());
+            Task.WaitAll(tasks.ToArray(), TimeSpan.FromSeconds(30));
 
             var json = File.ReadAllText(journalPath);
             var journalEntries = JsonConvert.DeserializeObject<List<JournalEntry>>(json);
