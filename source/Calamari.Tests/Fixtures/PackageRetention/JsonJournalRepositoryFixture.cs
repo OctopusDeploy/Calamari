@@ -13,26 +13,26 @@ namespace Calamari.Tests.Fixtures.PackageRetention
     [TestFixture]
     public class JsonJournalRepositoryFixture
     {
-        static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "JsonJournalRepository");
+        readonly string tentacleHome = TestEnvironment.GetTestPath("Fixtures", "JsonJournalRepository");
 
         [SetUp]
         public void SetUp()
         {
-            if (!Directory.Exists(TentacleHome))
-                Directory.CreateDirectory(TentacleHome);
+            if (!Directory.Exists(tentacleHome))
+                Directory.CreateDirectory(tentacleHome);
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (Directory.Exists(TentacleHome))
-                Directory.Delete(TentacleHome, true);
+            if (Directory.Exists(tentacleHome))
+                Directory.Delete(tentacleHome, true);
         }
 
         [Test]
         public void WhenCalamariPackageRetentionJournalPathExists_ThenTheJournalIsCreatedAtTheGivenPath()
         {
-            var journalPath = Path.Combine(TentacleHome, "PackageRetentionJournal.json");
+            var journalPath = Path.Combine(tentacleHome, "PackageRetentionJournal.json");
 
             var variables = Substitute.For<IVariables>();
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns(journalPath);
@@ -46,7 +46,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenCalamariPackageRetentionJournalPathDoesNotExist_ThenTheJournalIsCreatedAtTheDefaultPath()
         {
-            var homeDir = TentacleHome;
+            var homeDir = tentacleHome;
 
             var variables = Substitute.For<IVariables>();
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns((string) null);
