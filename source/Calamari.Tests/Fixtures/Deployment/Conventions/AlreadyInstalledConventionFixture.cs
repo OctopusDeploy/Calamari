@@ -8,7 +8,7 @@ using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Conventions
+namespace Calamari.Tests.Fixtures.Deployment.Conventions
 {
     [TestFixture]
     public class AlreadyInstalledConventionFixture
