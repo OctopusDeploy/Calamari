@@ -73,7 +73,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var variables = Substitute.For<IVariables>();
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns(journalPath);
 
-            // Load()
             var repository = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables, Substitute.For<ILog>());
 
             Directory.GetFiles(TentacleHome, "PackageRetentionJournal_*.json").Length.Should().Be(1);

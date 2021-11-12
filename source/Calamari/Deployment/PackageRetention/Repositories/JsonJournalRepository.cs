@@ -78,11 +78,13 @@ namespace Calamari.Deployment.PackageRetention.Repositories
                 }
                 else
                 {
-                    var journalFileName = journalPath.Substring(0, journalPath.LastIndexOf(".", StringComparison.Ordinal));
+                    var journalFileName = Path.GetFileNameWithoutExtension(journalPath);
                     var backupJournalPath = $"{journalFileName}_{DateTimeOffset.UtcNow:yyyyMMddTHHmmss}.json"; // eg. PackageRetentionJournal_20210101T120000.json
 
                     log.Warn($"The existing package retention journal file {journalPath} could not be read. The file will be renamed to {backupJournalPath}. A new journal will be created.");
-                    File.Move(journalPath, backupJournalPath);
+                    // NET Framework 4.0 doesn't have FIle.Move(source, dest, overwrite) so we use Copy and Delete to replicate this
+                    File.Copy(journalPath, backupJournalPath, true);
+                    File.Delete(journalPath);
 
                     journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
                 }
@@ -118,7 +120,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             }
             catch (Exception e)
             {
-                Log.Error($"Unable to parse the package retention journal file. Error message: {e.Message}");
+                Log.Verbose($"Unable to parse the package retention journal file. Error message: {e.ToString()}");
                 result = new List<JournalEntry>();
                 return false;
             }
