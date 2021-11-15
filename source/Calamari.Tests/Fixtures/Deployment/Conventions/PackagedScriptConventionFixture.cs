@@ -1,4 +1,5 @@
-﻿using Calamari.Common.Commands;
+﻿using System;
+using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Processes;
@@ -13,7 +14,7 @@ using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Conventions
+namespace Calamari.Tests.Fixtures.Deployment.Conventions
 {
     [TestFixture]
     public class PackagedScriptConventionFixture

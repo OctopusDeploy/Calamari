@@ -80,7 +80,7 @@
     <None Include="Fixtures\Bash\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\Conventions\ConfigTransforms\**">
+    <None Include="Fixtures\Deployment\Conventions\ConfigTransforms\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Service\**">
