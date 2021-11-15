@@ -17,7 +17,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
     {
         Dictionary<PackageIdentity, JournalEntry> journalEntries;
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
-        internal const string DefaultJournalName = "PackageRetentionJournal.json";
+        const string DefaultJournalName = "PackageRetentionJournal.json";
 
         readonly ICalamariFileSystem fileSystem;
         readonly ISemaphoreFactory semaphoreFactory;

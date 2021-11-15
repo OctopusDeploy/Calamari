@@ -1,10 +1,13 @@
 ﻿using System;
 using System.IO;
 using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -33,31 +36,40 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenCalamariPackageRetentionJournalPathExists_ThenTheJournalIsCreatedAtTheGivenPath()
         {
             var journalPath = Path.Combine(tentacleHome, "PackageRetentionJournal.json");
+            var thePackage = new PackageIdentity("TestPackageWithJournalPath", "0.0.1");
+            var journalEntry = new JournalEntry(thePackage);
 
             var variables = Substitute.For<IVariables>();
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns(journalPath);
 
             var repository = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
 
+            repository.AddJournalEntry(journalEntry);
             repository.Commit();
-            Assert.IsTrue(File.Exists(journalPath));
+
+            var updated = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
+            updated.TryGetJournalEntry(thePackage, out var journalEntryFromFile).Should().BeTrue();
+            journalEntryFromFile.Package.Should().BeEquivalentTo(thePackage);
         }
 
         [Test]
         public void WhenCalamariPackageRetentionJournalPathDoesNotExist_ThenTheJournalIsCreatedAtTheDefaultPath()
         {
-            var homeDir = tentacleHome;
+            var thePackage = new PackageIdentity("TestPackageWithTentacleHome", "0.0.1");
+            var journalEntry = new JournalEntry(thePackage);
 
             var variables = Substitute.For<IVariables>();
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns((string) null);
-            variables.Get(TentacleVariables.Agent.TentacleHome).Returns(homeDir);
+            variables.Get(TentacleVariables.Agent.TentacleHome).Returns(tentacleHome);
 
             var repository = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
 
-            var expectedPath = Path.Combine(homeDir, JsonJournalRepository.DefaultJournalName);
-
+            repository.AddJournalEntry(journalEntry);
             repository.Commit();
-            Assert.IsTrue(File.Exists(expectedPath));
+
+            var updated = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
+            updated.TryGetJournalEntry(thePackage, out var journalEntryFromFile).Should().BeTrue();
+            journalEntryFromFile.Package.Should().BeEquivalentTo(thePackage);
         }
     }
 } 
