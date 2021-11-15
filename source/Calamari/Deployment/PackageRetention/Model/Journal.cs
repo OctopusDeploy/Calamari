@@ -27,8 +27,6 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RegisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId)
         {
-            var journal = new JsonJournalRepository();
-            var potato = new CalamariVariables();
             try
             {
                 using (var repository = repositoryFactory.CreateJournalRepository())
