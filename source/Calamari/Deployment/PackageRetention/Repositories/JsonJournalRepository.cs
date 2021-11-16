@@ -6,7 +6,6 @@ using System.Text;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Model;
 using Newtonsoft.Json;
 
