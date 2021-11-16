@@ -42,12 +42,13 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var variables = Substitute.For<IVariables>();
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns(journalPath);
 
-            var repository = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
+            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
 
+            var repository = repositoryFactory.CreateJournalRepository();
             repository.AddJournalEntry(journalEntry);
             repository.Commit();
 
-            var updated = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
+            var updated = repositoryFactory.CreateJournalRepository();
             updated.TryGetJournalEntry(thePackage, out var journalEntryFromFile).Should().BeTrue();
             journalEntryFromFile.Package.Should().BeEquivalentTo(thePackage);
         }
@@ -62,12 +63,13 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns((string) null);
             variables.Get(TentacleVariables.Agent.TentacleHome).Returns(tentacleHome);
 
-            var repository = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
+            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
 
+            var repository = repositoryFactory.CreateJournalRepository();
             repository.AddJournalEntry(journalEntry);
             repository.Commit();
 
-            var updated = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
+            var updated = repositoryFactory.CreateJournalRepository();
             updated.TryGetJournalEntry(thePackage, out var journalEntryFromFile).Should().BeTrue();
             journalEntryFromFile.Package.Should().BeEquivalentTo(thePackage);
         }

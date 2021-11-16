@@ -17,26 +17,17 @@ namespace Calamari.Deployment.PackageRetention.Repositories
     {
         Dictionary<PackageIdentity, JournalEntry> journalEntries;
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
-        const string DefaultJournalName = "PackageRetentionJournal.json";
 
         readonly ICalamariFileSystem fileSystem;
         readonly string journalPath;
+
         readonly IDisposable semaphore;
 
-        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, IVariables variables)
         public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath)
         {
             this.fileSystem = fileSystem;
-            this.semaphoreFactory = semaphoreFactory;
-
-            var packageRetentionJournalPath = variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath);
-            if (packageRetentionJournalPath == null)
-            {
-                var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome) ?? throw new Exception("Environment variable 'TentacleHome' has not been set.");
-                packageRetentionJournalPath = Path.Combine(tentacleHome, DefaultJournalName);
-            }
-            journalPath = packageRetentionJournalPath;
             this.journalPath = journalPath;
+
             this.semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
 
             Load();
