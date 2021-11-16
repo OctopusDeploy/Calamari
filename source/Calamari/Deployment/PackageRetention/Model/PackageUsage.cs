@@ -9,30 +9,27 @@ namespace Calamari.Deployment.PackageRetention.Model
     public class PackageUsage
     {
         [JsonProperty]
-        readonly Dictionary<ServerTaskId, List<DateTime>> usages;
+        readonly List<UsageDetails> usages;
 
         [JsonConstructor]
-        internal PackageUsage(Dictionary<ServerTaskId, List<DateTime>> usages = null)
+        internal PackageUsage(List<UsageDetails> usages = null)
         {
-            this.usages = usages ?? new Dictionary<ServerTaskId, List<DateTime>>();
+            this.usages = usages ?? new List<UsageDetails>();
         }
 
-        public void AddUsage(ServerTaskId deploymentTaskId)
+        public void AddUsage(ServerTaskId deploymentTaskId, int cacheAge)
         {
-            if (!usages.ContainsKey(deploymentTaskId))
-                usages.Add(deploymentTaskId, new List<DateTime>());
-
-            usages[deploymentTaskId].Add(DateTime.Now);
+            usages.Add(new UsageDetails(deploymentTaskId, cacheAge));
         }
 
-        public IEnumerable<DateTime> GetUsageDetails()
-        {
-            return usages.SelectMany(u => u.Value);
-        }
-
-        public Dictionary<ServerTaskId, List<DateTime>> AsDictionary()
+        public IEnumerable<UsageDetails> GetUsageDetails()
         {
             return usages;
+        }
+
+        public int GetUsageCount()
+        {
+            return GetUsageDetails().Count();
         }
     }
 }

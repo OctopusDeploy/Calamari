@@ -10,7 +10,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         void RegisterPackageUse(IVariables variables);
         void RegisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId);
         void DeregisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId);
-        IEnumerable<DateTime> GetUsage(PackageIdentity package);
+        IEnumerable<IUsageDetails> GetUsage(PackageIdentity package);
         bool HasLock(PackageIdentity package);
         void ExpireStaleLocks();
     }

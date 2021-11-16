@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
 
@@ -28,6 +30,17 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
         {
             journalEntries.TryGetValue(package, out var entry);
             return entry;
+        }
+
+        public IList<JournalEntry> GetJournalEntries(PackageId packageId)
+        {
+            return journalEntries.Where(pair => pair.Key.PackageId == packageId)
+                                 .Select(pair => pair.Value).ToList();
+        }
+
+        public IList<JournalEntry> GetAllJournalEntries()
+        {
+            return journalEntries.Select(pair => pair.Value).ToList();
         }
 
         public void AddJournalEntry(JournalEntry entry)

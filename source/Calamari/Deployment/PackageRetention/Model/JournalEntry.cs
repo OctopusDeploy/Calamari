@@ -14,6 +14,6 @@ namespace Calamari.Deployment.PackageRetention.Model
             Package = package ?? throw new ArgumentNullException(nameof(package));
             PackageLocks = packageLocks ?? new PackageLocks();
             PackageUsage = packageUsage ?? new PackageUsage();
-        }
+        }                                                                   
     }
 }

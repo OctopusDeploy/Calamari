@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
 using Calamari.Common.Features.Processes.Semaphores;
@@ -12,11 +13,12 @@ using Newtonsoft.Json;
 
 namespace Calamari.Deployment.PackageRetention.Repositories
 {
-    public class JsonJournalRepository
-        : IJournalRepository
+    public class JsonJournalRepository : IJournalRepository
     {
 
         Dictionary<PackageIdentity, JournalEntry> journalEntries;
+        PackageCache cache = new PackageCache();
+
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
 
         readonly ICalamariFileSystem fileSystem;
@@ -27,7 +29,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         {
             this.fileSystem = fileSystem;
             this.journalPath = journalPath;
-            this.semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
+            semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
 
             Load();
         }
@@ -41,6 +43,19 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         {
             journalEntries.TryGetValue(package, out var entry);
             return entry;
+        }
+
+        public IList<JournalEntry> GetJournalEntries(PackageId packageId)
+        {
+            return journalEntries.Where(pair => pair.Key.PackageId == packageId)
+                                 .Select(pair => pair.Value)
+                                 .ToList();
+        }
+
+        public IList<JournalEntry> GetAllJournalEntries()
+        {
+            return journalEntries.Select(pair => pair.Value)
+                                 .ToList();
         }
 
         public void AddJournalEntry(JournalEntry entry)
@@ -58,12 +73,15 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             if (File.Exists(journalPath))
             {
                 var json = File.ReadAllText(journalPath);
-                journalEntries = JsonConvert.DeserializeObject<List<JournalEntry>>(json)
-                                            .ToDictionary(entry => entry.Package, entry => entry);
+                var packageData = JsonConvert.DeserializeObject<PackageData>(json);
+
+                journalEntries = packageData
+                                 .JournalEntries
+                                 .ToDictionary(entry => entry.Package, entry => entry);
             }
             else
             {
-                journalEntries = new  Dictionary<PackageIdentity, JournalEntry>();
+                journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
             }
         }
 
@@ -72,7 +90,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             var journalEntryList = journalEntries.Select(p => p.Value);
             var json = JsonConvert.SerializeObject(journalEntryList);
             fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
-
             //save to temp file first
             var tempFilePath = $"{journalPath}.temp.{Guid.NewGuid()}.json";
 
@@ -84,5 +101,22 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         {
             semaphore.Dispose();
         }
+
+        class PackageData
+        {
+            public List<JournalEntry> JournalEntries { get; }
+            public PackageCache Cache { get; }
+
+            public PackageData(List<JournalEntry> journalEntries, PackageCache cache)
+            {
+                JournalEntries = journalEntries;
+                Cache = cache;
+            }
+        }
+    }
+
+    public class PackageCache
+    {
+        public int CacheAge { get; set; }
     }
 }
