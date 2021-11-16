@@ -39,5 +39,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
         {
             //This does nothing in the in-memory implementation
         }
+
+        public void Dispose()
+        {
+            //This does nothing in the in-memory implementation
+        }
     }
 }

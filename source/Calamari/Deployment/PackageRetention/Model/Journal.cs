@@ -4,18 +4,17 @@ using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Repositories;
-using Octopus.Versioning;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
     public class Journal : IManagePackageUse
     {
-        readonly IJournalRepository repository;
+        readonly IJournalRepositoryFactory repositoryFactory;
         readonly ILog log;
 
-        public Journal(IJournalRepository repository, ILog log)
+        public Journal(IJournalRepositoryFactory repositoryFactory, ILog log)
         {
-            this.repository = repository;
+            this.repositoryFactory = repositoryFactory;
             this.log = log;
         }
 
@@ -28,24 +27,28 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
-                if (repository.TryGetJournalEntry(package, out var entry))
+                using (var repository = repositoryFactory.CreateJournalRepository())
                 {
-                    entry.PackageUsage.AddUsage(serverTaskId);
-                    entry.PackageLocks.AddLock(serverTaskId);
-                }
-                else
-                {
-                    entry = new JournalEntry(package);
-                    entry.PackageUsage.AddUsage(serverTaskId);
-                    entry.PackageLocks.AddLock(serverTaskId);
-                    repository.AddJournalEntry(entry);
-                }
+
+                    if (repository.TryGetJournalEntry(package, out var entry))
+                    {
+                        entry.PackageUsage.AddUsage(serverTaskId);
+                        entry.PackageLocks.AddLock(serverTaskId);
+                    }
+                    else
+                    {
+                        entry = new JournalEntry(package);
+                        entry.PackageUsage.AddUsage(serverTaskId);
+                        entry.PackageLocks.AddLock(serverTaskId);
+                        repository.AddJournalEntry(entry);
+                    }
 
 #if DEBUG
-                log.Verbose($"Registered package use/lock for {package} and task {serverTaskId}");
+                    log.Verbose($"Registered package use/lock for {package} and task {serverTaskId}");
 #endif
 
-                repository.Commit();
+                    repository.Commit();
+                }
             }
             catch (Exception ex)
             {
@@ -58,10 +61,13 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
-                if (repository.TryGetJournalEntry(package, out var entry))
+                using (var repository = repositoryFactory.CreateJournalRepository())
                 {
-                    entry.PackageLocks.RemoveLock(serverTaskId);
-                    repository.Commit();
+                    if (repository.TryGetJournalEntry(package, out var entry))
+                    {
+                        entry.PackageLocks.RemoveLock(serverTaskId);
+                        repository.Commit();
+                    }
                 }
             }
             catch (Exception ex)
@@ -73,15 +79,21 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public bool HasLock(PackageIdentity package)
         {
-            return repository.TryGetJournalEntry(package, out var entry)
-                   && entry.PackageLocks.HasLock();
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                return repository.TryGetJournalEntry(package, out var entry)
+                       && entry.PackageLocks.HasLock();
+            }
         }
 
         public IEnumerable<DateTime> GetUsage(PackageIdentity package)
         {
-            return repository.TryGetJournalEntry(package, out var entry)
-                ? entry.PackageUsage.GetUsageDetails()
-                : new DateTime[0];
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                return repository.TryGetJournalEntry(package, out var entry)
+                    ? entry.PackageUsage.GetUsageDetails()
+                    : new DateTime[0];
+            }
         }
 
         public void ExpireStaleLocks()
