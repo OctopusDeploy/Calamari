@@ -15,19 +15,19 @@ namespace Calamari.Deployment.PackageRetention.Repositories
     public class JsonJournalRepository
         : IJournalRepository
     {
-        static readonly SemaphoreSlim JournalSemaphore = new SemaphoreSlim(1, 1);
 
         Dictionary<PackageIdentity, JournalEntry> journalEntries;
+        const string SemaphoreName = "Octopus.Calamari.PackageJournal";
 
         readonly ICalamariFileSystem fileSystem;
         readonly string journalPath;
+        readonly IDisposable semaphore;
 
-        public JsonJournalRepository(ICalamariFileSystem fileSystem, string journalPath)
+        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath)
         {
-            JournalSemaphore.Wait();
-
             this.fileSystem = fileSystem;
             this.journalPath = journalPath;
+            this.semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
 
             Load();
         }
@@ -82,7 +82,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
         public void Dispose()
         {
-            JournalSemaphore.Release();
+            semaphore.Dispose();
         }
     }
 }

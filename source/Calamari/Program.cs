@@ -67,6 +67,7 @@ namespace Calamari
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
 
+            builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
             builder.RegisterType<JsonJournalRepositoryFactory>().As<IJournalRepositoryFactory>();
             builder.RegisterType<Journal>().As<IManagePackageUse>();
 
