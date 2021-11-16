@@ -591,6 +591,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var variableDictionary = variables ?? new CalamariVariables();
             variableDictionary.Add(PowerShellVariables.Edition, GetPowerShellEditionVariable());
+            variableDictionary.Add(TentacleVariables.Agent.TentacleHome, TestEnvironment.GetTestPath("Fixtures", "TentacleHome")); // This should be unused, so the path doesn't matter
 
             using (var variablesFile = CreateVariablesFile(variableDictionary))
             {
