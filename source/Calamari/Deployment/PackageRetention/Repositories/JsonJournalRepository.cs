@@ -20,10 +20,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         const string DefaultJournalName = "PackageRetentionJournal.json";
 
         readonly ICalamariFileSystem fileSystem;
-        readonly ISemaphoreFactory semaphoreFactory;
         readonly string journalPath;
+        readonly IDisposable semaphore;
 
         public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, IVariables variables)
+        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath)
         {
             this.fileSystem = fileSystem;
             this.semaphoreFactory = semaphoreFactory;
@@ -35,6 +36,8 @@ namespace Calamari.Deployment.PackageRetention.Repositories
                 packageRetentionJournalPath = Path.Combine(tentacleHome, DefaultJournalName);
             }
             journalPath = packageRetentionJournalPath;
+            this.journalPath = journalPath;
+            this.semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
 
             Load();
         }
@@ -60,9 +63,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             Save();
         }
 
-        //TODO: Handle concurrency. We should be able to use a semaphore for this (i.e. wait/lock/release), otherwise we may need to use something else.
-        //We are always just opening the file, adding to it, then saving it in pretty much one atomic step, so a semaphore should work ok. See Journal.RegisterPackageUse for an example.
-        //We will need to use the semaphore across the load/save though, which needs to be worked out.  Maybe make repositories disposable and have the semaphore held until dispose?
         void Load()
         {
             if (File.Exists(journalPath))
@@ -79,18 +79,20 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
         void Save()
         {
-            using (semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal"))
-            {
-                var journalEntryList = journalEntries.Select(p => p.Value);
-                var json = JsonConvert.SerializeObject(journalEntryList);
-                fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
+            var journalEntryList = journalEntries.Select(p => p.Value);
+            var json = JsonConvert.SerializeObject(journalEntryList);
+            fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
 
-                //save to temp file first
-                var tempFilePath = $"{journalPath}.temp.{Guid.NewGuid()}.json";
+            //save to temp file first
+            var tempFilePath = $"{journalPath}.temp.{Guid.NewGuid()}.json";
 
-                fileSystem.WriteAllText(tempFilePath,json, Encoding.Default);
-                fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
-            }
+            fileSystem.WriteAllText(tempFilePath,json, Encoding.Default);
+            fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
+        }
+
+        public void Dispose()
+        {
+            semaphore.Dispose();
         }
     }
 }
