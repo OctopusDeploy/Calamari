@@ -42,12 +42,12 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             //TODO: Do this using Autofac
             TypeDescriptor.AddAttributes(typeof(ServerTaskId), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskId>)));
 
-            // var journalPath = Path.Combine(TentacleHome, "PackageRetentionJournal.json");
+            var journalPath = Path.Combine(TentacleHome, "PackageRetentionJournal.json");
 
-            // var variables = Substitute.For<IVariables>();
-            // variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns(journalPath);
+            var variables = Substitute.For<IVariables>();
+            variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns(journalPath);
 
-            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), SemaphoreFactory.Get());
+            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), SemaphoreFactory.Get(), variables);
 
             var tasks = new List<Task>();
             for (var i = 1; i <= 5; i++)
@@ -60,7 +60,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             Task.WaitAll(tasks.ToArray(), TimeSpan.FromSeconds(30));
 
-            var json = File.ReadAllText(@"C:\Octopus\PackageJournal.json");
+            var json = File.ReadAllText(journalPath);
             var journalEntries = JsonConvert.DeserializeObject<List<JournalEntry>>(json);
             journalEntries.Count.Should().Be(5);
         }
