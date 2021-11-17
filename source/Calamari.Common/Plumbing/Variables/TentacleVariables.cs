@@ -14,6 +14,7 @@ namespace Calamari.Common.Plumbing.Variables
             public static readonly string InstanceName = "Octopus.Tentacle.Agent.InstanceName";
             public static readonly string ApplicationDirectoryPath = "Octopus.Tentacle.Agent.ApplicationDirectoryPath";
             public static readonly string JournalPath = "env:TentacleJournal";
+            public static readonly string TentacleHome = "env:TentacleHome";
         }
 
         public static class PreviousInstallation
