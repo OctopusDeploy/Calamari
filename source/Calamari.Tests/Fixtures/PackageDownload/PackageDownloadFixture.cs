@@ -142,6 +142,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         [Test]
         [RequiresMonoVersion480OrAboveForTls12]
+        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void ShouldDownloadPackageWithRepositoryMetadata()
         {
             var result = DownloadPackage(NuGetFeed.PackageId, NuGetFeed.Version.ToString(), NuGetFeed.Id, NuGetFeedUri);
