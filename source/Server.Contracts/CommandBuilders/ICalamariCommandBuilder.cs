@@ -27,6 +27,7 @@ namespace Sashimi.Server.Contracts.CommandBuilders
         IActionHandlerResult Execute(ITaskLog taskLog);
         ICalamariCommandBuilder WithIsolation(ExecutionIsolation executionIsolation);
         ICalamariCommandBuilder WithIsolationTimeout(TimeSpan mutexTimeout);
+        ICalamariCommandBuilder WithIsolationName(string name);
         string Describe();
     }
 

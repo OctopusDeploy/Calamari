@@ -129,6 +129,11 @@ namespace Sashimi.Tests.Shared.Server
             throw new NotImplementedException();
         }
 
+        public ICalamariCommandBuilder WithIsolationName(string name)
+        {
+            throw new NotImplementedException();
+        }
+
         public string Describe()
         {
             throw new NotImplementedException();
