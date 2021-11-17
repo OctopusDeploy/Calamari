@@ -16,52 +16,34 @@ namespace Calamari.Tests.Fixtures.PackageRetention
     [TestFixture]
     public class JsonJournalRepositoryFixture
     {
-        readonly string tentacleHome = TestEnvironment.GetTestPath("Fixtures", "JsonJournalRepository");
+        readonly string testDir = TestEnvironment.GetTestPath("Fixtures", "JsonJournalRepository");
 
         [SetUp]
         public void SetUp()
         {
-            if (!Directory.Exists(tentacleHome))
-                Directory.CreateDirectory(tentacleHome);
+            if (!Directory.Exists(testDir))
+                Directory.CreateDirectory(testDir);
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (Directory.Exists(tentacleHome))
-                Directory.Delete(tentacleHome, true);
+            if (Directory.Exists(testDir))
+                Directory.Delete(testDir, true);
         }
 
-        [Test]
-        public void WhenCalamariPackageRetentionJournalPathExists_ThenTheJournalIsCreatedAtTheGivenPath()
+        [TestCase("PackageRetentionJournal.json")]
+        [TestCase(null)]
+        public void WhenTheJournalIsLoadedAndCommittedTo_ThenTheJournalContainsTheCorrectContents(string packageRetentionJournalPath)
         {
-            var journalPath = Path.Combine(tentacleHome, "PackageRetentionJournal.json");
-            var thePackage = new PackageIdentity("TestPackageWithJournalPath", "0.0.1");
-            var journalEntry = new JournalEntry(thePackage);
+            var journalPath = packageRetentionJournalPath == null ? null : Path.Combine(testDir, packageRetentionJournalPath);
 
             var variables = Substitute.For<IVariables>();
             variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns(journalPath);
+            variables.Get(TentacleVariables.Agent.TentacleHome).Returns(testDir);
 
-            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
-
-            var repository = repositoryFactory.CreateJournalRepository();
-            repository.AddJournalEntry(journalEntry);
-            repository.Commit();
-
-            var updated = repositoryFactory.CreateJournalRepository();
-            updated.TryGetJournalEntry(thePackage, out var journalEntryFromFile).Should().BeTrue();
-            journalEntryFromFile.Package.Should().BeEquivalentTo(thePackage);
-        }
-
-        [Test]
-        public void WhenCalamariPackageRetentionJournalPathDoesNotExist_ThenTheJournalIsCreatedAtTheDefaultPath()
-        {
-            var thePackage = new PackageIdentity("TestPackageWithTentacleHome", "0.0.1");
+            var thePackage = new PackageIdentity("TestPackage", "0.0.1");
             var journalEntry = new JournalEntry(thePackage);
-
-            var variables = Substitute.For<IVariables>();
-            variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns((string) null);
-            variables.Get(TentacleVariables.Agent.TentacleHome).Returns(tentacleHome);
 
             var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
 
