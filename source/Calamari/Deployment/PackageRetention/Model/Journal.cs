@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Repositories;
@@ -75,6 +76,12 @@ namespace Calamari.Deployment.PackageRetention.Model
                 //We need to ensure that an issue with the journal doesn't interfere with the deployment.
                 log.Error($"Unable to deregister package use for retention.{Environment.NewLine}{ex.ToString()}");
             }
+        }
+
+        public bool IsRetentionEnabled(IVariables variables)
+        {
+            var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome);
+            return variables.IsPackageRetentionEnabled() && tentacleHome != null;
         }
 
         public bool HasLock(PackageIdentity package)

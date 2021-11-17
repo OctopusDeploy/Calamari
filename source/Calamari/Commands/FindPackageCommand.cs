@@ -78,8 +78,7 @@ namespace Calamari.Commands
             //Exact package found, so we need to register use and lock it.
             // This command can't use the PackageJournalCommandDecorator because we don't lock on partial finds, which the decorator would include.  We don't lock on partials because there may be too many packages, blocking retention later,
             //  and we will lock them on apply delta anyway.
-            var tentacleHome = Environment.GetEnvironmentVariable("TentacleHome");
-            if (variables.IsPackageRetentionEnabled() && tentacleHome != null) packageJournal.RegisterPackageUse(variables);
+            if (packageJournal.IsRetentionEnabled(variables)) packageJournal.RegisterPackageUse(variables);
 
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
             LogPackageFound(

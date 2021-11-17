@@ -23,7 +23,7 @@ namespace Calamari.Deployment.PackageRetention
             this.command = command;
             this.journal = journal;
 
-            retentionEnabled = variables.IsPackageRetentionEnabled();
+            retentionEnabled = journal.IsRetentionEnabled(variables);
 
             if (retentionEnabled)
             {
