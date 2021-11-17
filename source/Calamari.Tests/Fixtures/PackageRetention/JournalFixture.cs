@@ -47,7 +47,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             // var variables = Substitute.For<IVariables>();
             // variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns(journalPath);
 
-            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>());
+            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), SemaphoreFactory.Get());
 
             var tasks = new List<Task>();
             for (var i = 1; i <= 5; i++)
