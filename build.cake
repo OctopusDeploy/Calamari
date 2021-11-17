@@ -191,7 +191,7 @@ Task("PackTests")
 {
     var actions = new List<Action>();
 
-    actions.Add(() => Zip("./source/Calamari.Tests/bin/Release/net452/", Path.Combine(artifactsDir, "Binaries.zip")));
+    actions.Add(() => Zip("./source/Calamari.Tests/bin/Release/net461/", Path.Combine(artifactsDir, "Binaries.zip")));
 
     // Create a Zip for each runtime for testing
 	foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
