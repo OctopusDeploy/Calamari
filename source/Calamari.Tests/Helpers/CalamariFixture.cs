@@ -105,7 +105,6 @@ namespace Calamari.Tests.Helpers
             variables.Set(ScriptVariables.ScriptFileName, scriptName);
             variables.Set(ScriptVariables.ScriptBody, File.ReadAllText(GetFixtureResource("Scripts", scriptName)));
             variables.Set(ScriptVariables.Syntax, scriptName.ToScriptType().ToString());
-            variables.Set(TentacleVariables.Agent.TentacleHome, TestEnvironment.GetTestPath("Fixtures", "TentacleHome")); // This should be unused, so the path doesn't matter
 
             additionalVariables?.ToList().ForEach(v => variables[v.Key] = v.Value);
 

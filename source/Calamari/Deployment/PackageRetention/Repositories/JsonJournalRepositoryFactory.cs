@@ -22,7 +22,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             var packageRetentionJournalPath = variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath);
             if (packageRetentionJournalPath == null)
             {
-                var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome) ?? throw new Exception("Environment variable 'TentacleHome' has not been set.");
+                var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome) ?? ""; // Retention is only enabled when TentacleHome exists
                 packageRetentionJournalPath = Path.Combine(tentacleHome, DefaultJournalName);
             }
             journalPath = packageRetentionJournalPath;
