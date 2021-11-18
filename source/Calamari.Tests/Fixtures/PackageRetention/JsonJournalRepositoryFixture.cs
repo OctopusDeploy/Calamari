@@ -32,8 +32,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                 Directory.Delete(testDir, true);
         }
 
-        [TestCase("PackageRetentionJournal.json")]
-        [TestCase(null)]
+        [TestCase("PackageRetentionJournal.json", TestName = "CalamariPackageRetentionJournalPath is set to a non-null value")]
+        [TestCase(null, TestName = "CalamariPackageRetentionJournalPath is null; default to TentacleHome")]
         public void WhenTheJournalIsLoadedAndCommittedTo_ThenTheJournalContainsTheCorrectContents(string packageRetentionJournalPath)
         {
             var journalPath = packageRetentionJournalPath == null ? null : Path.Combine(testDir, packageRetentionJournalPath);
