@@ -1,15 +1,15 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Iis;
 using NSubstitute;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Conventions
+namespace Calamari.Tests.Fixtures.Deployment.Conventions
 {
     [TestFixture]
     public class LegacyIisWebSiteConventionFixture

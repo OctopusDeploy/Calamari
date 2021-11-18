@@ -1,13 +1,11 @@
 ﻿using System;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.Processes;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Conventions
+namespace Calamari.Tests.Fixtures.Deployment.Conventions
 {
 
     [TestFixture]
