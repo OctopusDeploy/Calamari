@@ -79,7 +79,7 @@
     <None Include="Fixtures\Bash\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\Conventions\ConfigTransforms\**">
+    <None Include="Fixtures\**\ConfigTransforms\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Acme.Service\**">
@@ -161,75 +161,6 @@
     <None Remove="Fixtures\Deployment\Packages\**\bin\**" />
     <None Remove="Fixtures\Deployment\Packages\**\obj\**" />
     <None Update="AWS\S3\Package3\file.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\config\fizz.buzz.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\config\fizz.sitemap.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\config\fizz.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\transform\fizz.buzz.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\transform\fizz.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\transform\fizz.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\bar.blah">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\bar.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\bar.foo.blah">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\bar.Production.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\bar.Release.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\bar.sitemap">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\bar.Tenant-1.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\foo.bar.additional.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\foo.bar.blah">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\foo.bar.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\foo.bar.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\foo.baz">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\foo.blah">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\foo.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\foo.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\xyz.bar.blah">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\Deployment\Conventions\ConfigTransforms\xyz.foo.blah">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
