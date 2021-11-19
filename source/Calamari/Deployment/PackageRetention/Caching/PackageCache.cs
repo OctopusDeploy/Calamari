@@ -1,8 +1,30 @@
 ﻿using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Deployment.PackageRetention.Model;
+using Newtonsoft.Json;
 
 namespace Calamari.Deployment.PackageRetention.Caching
 {
+    public class PackageCache
+    {
+        [JsonProperty]
+        public CacheAge CacheAge { get; private set; }
+
+        public PackageCache(int cacheAge)
+        {
+            CacheAge = new CacheAge(cacheAge);
+        }
+
+        [JsonConstructor]
+        public PackageCache(CacheAge cacheAge)
+        {
+            CacheAge = cacheAge;
+        }
+
+        public void IncrementCacheAge()
+        {
+            CacheAge.IncrementAge();
+        }
+    }
     /*
     public class PackageCache
     {

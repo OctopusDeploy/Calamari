@@ -13,7 +13,7 @@ namespace Calamari.Deployment.PackageRetention
             handlers.Add(new WeakReference(handler));
         }
 
-        public async Task RaiseEvent<TEvent>(IEventArguments<TEvent> args) where TEvent : IEvent
+        public void RaiseEvent<TEvent>(IEventArguments<TEvent> args) where TEvent : IEvent
         {
             handlers.RemoveAll(h => !h.IsAlive);
 
@@ -21,7 +21,7 @@ namespace Calamari.Deployment.PackageRetention
             {
                 if (weakReference.IsAlive && weakReference.Target is IHandleEvent<TEvent> handler)
                 {
-                    await handler.Handle(args);
+                    handler.Handle(args);
                 }
             }
         }
@@ -30,17 +30,17 @@ namespace Calamari.Deployment.PackageRetention
     public interface ISimpleMediator
     {
         void RegisterHandler<TEvent>(IHandleEvent<TEvent> handler) where TEvent : IEvent;
-        Task RaiseEvent<TEvent>(IEventArguments<TEvent> args) where TEvent : IEvent;
+        void RaiseEvent<TEvent>(IEventArguments<TEvent> args) where TEvent : IEvent;
     }
 
     public interface IRaiseEvents
     {
-        Task RaiseEvent<TEvent>(IEventArguments<TEvent> args) where TEvent : IEvent;
+        void RaiseEvent<TEvent>(IEventArguments<TEvent> args) where TEvent : IEvent;
     }
 
     public interface IHandleEvent<TEvent> : IHandleEvent where TEvent : IEvent
     {
-        Task Handle(IEventArguments<TEvent> args);
+        void Handle(IEventArguments<TEvent> args);
     }
 
     public interface IHandleEvent

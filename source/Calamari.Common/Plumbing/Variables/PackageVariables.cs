@@ -15,9 +15,10 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string SubstituteInFilesOutputEncoding = "Octopus.Action.SubstituteInFiles.OutputEncoding";
         public static readonly string SubstituteInFilesTargets = "Octopus.Action.SubstituteInFiles.TargetFiles";
         public static readonly string PackageCollection = "Octopus.Action.Package";
-
         public static string PackageId => IndexedPackageId(string.Empty);
         public static string PackageVersion => IndexedPackageVersion(string.Empty);
+
+        public static readonly string PackageVersion = "Octopus.Action.Package.PackageVersion";
 
         public static string IndexedPackageId(string packageReferenceName) => $"Octopus.Action.Package[{packageReferenceName}].PackageId";
 

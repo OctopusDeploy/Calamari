@@ -10,25 +10,27 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
     public class PackageIdentity
     {
         public PackageId PackageId { get; }
-        public string Version { get; }
+        public IVersion Version { get; }
 
-        public PackageIdentity(string packageId, string version) : this(new PackageId(packageId), version)
+        public PackageIdentity(string packageId, string version, VersionFormat versionFormat) : this(new PackageId(packageId), VersionFactory.CreateVersion(version, versionFormat))
         {
         }
 
-        public PackageIdentity(IVariables variables)
+        public PackageIdentity(IVariables variables, VersionFormat versionFormat)
         {
             if (variables == null) throw new ArgumentNullException(nameof(variables));
 
             var package = variables.Get(PackageVariables.PackageId) ?? throw new Exception("Package ID not found.");
-            var version =  variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
+            var version = variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
+
+            var nullableVersion = VersionFactory.TryCreateVersion(version, versionFormat);
+            Version = nullableVersion ?? throw new Exception("Unable to determine package version.");
 
             PackageId = new PackageId(package);
-            Version = version;
         }
 
         [JsonConstructor]
-        public PackageIdentity(PackageId packageId, string version)
+        public PackageIdentity(PackageId packageId, IVersion version)
         {
             PackageId = packageId ?? throw new ArgumentNullException(nameof(packageId));
             Version = version ?? throw new ArgumentNullException(nameof(version));

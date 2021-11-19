@@ -8,17 +8,15 @@ using System.Threading;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
 namespace Calamari.Deployment.PackageRetention.Repositories
 {
-    public class JsonJournalRepository : IJournalRepository
+    public class JsonJournalRepository : JournalRepositoryBase
     {
-        Dictionary<PackageIdentity, JournalEntry> journalEntries;
-        PackageCache cache;
-
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
 
         readonly ICalamariFileSystem fileSystem;
@@ -34,38 +32,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             Load();
         }
 
-        public bool TryGetJournalEntry(PackageIdentity package, out JournalEntry entry)
-        {
-            return journalEntries.TryGetValue(package, out entry);
-        }
-
-        public JournalEntry GetJournalEntry(PackageIdentity package)
-        {
-            journalEntries.TryGetValue(package, out var entry);
-            return entry;
-        }
-
-        public IList<JournalEntry> GetJournalEntries(PackageId packageId)
-        {
-            return journalEntries.Where(pair => pair.Key.PackageId == packageId)
-                                 .Select(pair => pair.Value)
-                                 .ToList();
-        }
-
-        public IList<JournalEntry> GetAllJournalEntries()
-        {
-            return journalEntries.Select(pair => pair.Value)
-                                 .ToList();
-        }
-
-        public void AddJournalEntry(JournalEntry entry)
-        {
-           if (journalEntries.ContainsKey(entry.Package)) //This shouldn't happen - if it already exists, then we should have just added to that entry.
-            
-            journalEntries.Add(entry.Package, entry);
-        }
-
-        public void Commit()
+        public override void Commit()
         {
             Save();
         }
@@ -81,7 +48,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
                                  ?.JournalEntries
                                  ?.ToDictionary(entry => entry.Package, entry => entry)
                                  ?? new Dictionary<PackageIdentity, JournalEntry>();
-                cache = packageData?.Cache ?? new PackageCache(0);
+                Cache = packageData?.Cache ?? new PackageCache(0);
             }
             else
             {
@@ -92,7 +59,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         void Save()
         {
             var onlyJournalEntries = journalEntries.Select(p => p.Value);
-            var json = JsonConvert.SerializeObject(new PackageData(onlyJournalEntries, cache));
+            var json = JsonConvert.SerializeObject(new PackageData(onlyJournalEntries, Cache));
 
             fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
             //save to temp file first
@@ -102,7 +69,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             semaphore.Dispose();
         }
@@ -118,18 +85,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
                 JournalEntries = journalEntries;
                 Cache = packageCache;
             }
-        }
-    }
-
-    public class PackageCache
-    {
-        [JsonProperty]
-        public int CacheAge { get; set; }
-
-        [JsonConstructor]
-        public PackageCache(int cacheAge)
-        {
-            CacheAge = cacheAge;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Caching;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {

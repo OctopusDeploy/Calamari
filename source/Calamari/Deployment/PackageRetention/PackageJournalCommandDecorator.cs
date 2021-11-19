@@ -30,6 +30,8 @@ namespace Calamari.Deployment.PackageRetention
                 try
                 {
                     DeploymentTaskId = new ServerTaskId(variables);
+                    var version = variables.Get(PackageVariables.) ?? throw new Exception("Package Version not found.");
+
                     Package = new PackageIdentity(variables);
                 }
                 catch (Exception ex)

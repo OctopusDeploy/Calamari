@@ -4,7 +4,9 @@ using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Repositories;
+using Octopus.Versioning;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
@@ -28,12 +30,14 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
-                var age = new CacheAge(0); //TODO: remove
                 using (var repository = repositoryFactory.CreateJournalRepository())
                 {
+                    repository.Cache.IncrementCacheAge();
+                    var age = repository.Cache.CacheAge;
+
                     if (repository.TryGetJournalEntry(package, out var entry))
                     {
-                        entry.AddUsage(deploymentTaskId, age);   //TODO: fix this to use the actual age.
+                        entry.AddUsage(deploymentTaskId, age); //TODO: fix this to use the actual age.
                         entry.AddLock(deploymentTaskId, age);
                     }
                     else
@@ -87,7 +91,6 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-
         //*** Cache functions from here - maybe move into separate class and/or interface? - MC ***
         public IEnumerable<IUsageDetails> GetUsage(PackageIdentity package)
         {
@@ -104,29 +107,41 @@ namespace Calamari.Deployment.PackageRetention.Model
             return GetUsage(package).Count();
         }
 
+        public bool TryGetVersionFormat(PackageId packageId, ServerTaskId deploymentTaskID, out VersionFormat? format)
+        {
+            //We can call this if we don't know the package version format from variables - if this isn't the first time this package has been references by this server task, then we should be able to get it from an earlier use (eg from FindPackageCommand)
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                return repository.GetJournalEntries(packageId, deploymentTaskID)
+                                 .TryGetFirstValidVersionFormat(out format);
+            }
+        }
+
         public void ExpireStaleLocks()
         {
             throw new NotImplementedException();
         }
 
-
         /// <summary>
         /// Age is the number of other packages which have been registered or accessed since this one.
         /// </summary>
-        /// <param name="packageId"></param>
-        /// <returns></returns>
         public int GetPackageAge(PackageIdentity package)
         {
             using (var repository = repositoryFactory.CreateJournalRepository())
             {
-                if (!repository.TryGetJournalEntry(package, out var journalEntry)) return int.MaxValue; //TODO: it doesn't exist, so for now return int.MAx value. Later => fail?
-                 /*
-                var oldestUsageDate = journalEntry.PackageUsage.GetUsageDetails().OrderBy(dt => dt).FirstOrDefault();
-                var entries = repository.GetAllJournalEntries();
-                var allUsageDates = entries.SelectMany(je => je.PackageUsage.GetUsageDetails());
-                var age = allUsageDates.Count(d => d > oldestUsageDate);
-               */
-                 return 1; //TODO: return the actual date
+                //TODO: fail if not found?
+                return repository.TryGetJournalEntry(package, out var journalEntry) ? journalEntry.GetUsageDetails().Max(m => m.CacheAge.Value) : int.MinValue;
+            }
+        }
+
+        public int GetNewerVersionCount(PackageIdentity package)
+        {
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                var allEntries = repository.GetJournalEntries(package.PackageId);
+
+                return allEntries.Count(e => e.Package.Version > package.Version);
+
             }
         }
 

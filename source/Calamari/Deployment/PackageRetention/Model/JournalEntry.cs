@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Caching;
 using Newtonsoft.Json;
 
 namespace Calamari.Deployment.PackageRetention.Model
@@ -8,7 +9,7 @@ namespace Calamari.Deployment.PackageRetention.Model
     public class JournalEntry
     {
         public PackageIdentity Package { get; }
-
+       // log.SetOutputVariableButDoNotAddToVariables("StagedPackage.Size", pkg.Size.ToString(CultureInfo.InvariantCulture));
         [JsonProperty]
         readonly PackageUsages usages;
 
