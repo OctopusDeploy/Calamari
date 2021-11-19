@@ -28,19 +28,19 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
+                var age = new CacheAge(0); //TODO: remove
                 using (var repository = repositoryFactory.CreateJournalRepository())
                 {
-
                     if (repository.TryGetJournalEntry(package, out var entry))
                     {
-                        entry.PackageUsage.AddUsage(deploymentTaskId, 0);   //TODO: fix this to use the actual age.
-                        entry.PackageLocks.AddLock(deploymentTaskId);
+                        entry.AddUsage(deploymentTaskId, age);   //TODO: fix this to use the actual age.
+                        entry.AddLock(deploymentTaskId, age);
                     }
                     else
                     {
                         entry = new JournalEntry(package);
-                        entry.PackageUsage.AddUsage(deploymentTaskId, 0);
-                        entry.PackageLocks.AddLock(deploymentTaskId);
+                        entry.AddUsage(deploymentTaskId, age);
+                        entry.AddLock(deploymentTaskId, age);
                         repository.AddJournalEntry(entry);
                     }
 
@@ -66,7 +66,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                 {
                     if (repository.TryGetJournalEntry(package, out var entry))
                     {
-                        entry.PackageLocks.RemoveLock(serverTaskId);
+                        entry.RemoveLock(serverTaskId);
                         repository.Commit();
                     }
                 }
@@ -83,7 +83,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             using (var repository = repositoryFactory.CreateJournalRepository())
             {
                 return repository.TryGetJournalEntry(package, out var entry)
-                       && entry.PackageLocks.HasLock();
+                       && entry.HasLock();
             }
         }
 
@@ -94,7 +94,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             using (var repository = repositoryFactory.CreateJournalRepository())
             {
                 return repository.TryGetJournalEntry(package, out var entry)
-                    ? entry.PackageUsage.GetUsageDetails()
+                    ? entry.GetUsageDetails()
                     : new UsageDetails[0];
             }
         }

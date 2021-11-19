@@ -10,14 +10,14 @@ using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Deployment.PackageRetention.Model;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Calamari.Deployment.PackageRetention.Repositories
 {
     public class JsonJournalRepository : IJournalRepository
     {
-
         Dictionary<PackageIdentity, JournalEntry> journalEntries;
-        PackageCache cache = new PackageCache();
+        PackageCache cache;
 
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
 
@@ -60,6 +60,8 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
         public void AddJournalEntry(JournalEntry entry)
         {
+           if (journalEntries.ContainsKey(entry.Package)) //This shouldn't happen - if it already exists, then we should have just added to that entry.
+            
             journalEntries.Add(entry.Package, entry);
         }
 
@@ -76,8 +78,10 @@ namespace Calamari.Deployment.PackageRetention.Repositories
                 var packageData = JsonConvert.DeserializeObject<PackageData>(json);
 
                 journalEntries = packageData
-                                 .JournalEntries
-                                 .ToDictionary(entry => entry.Package, entry => entry);
+                                 ?.JournalEntries
+                                 ?.ToDictionary(entry => entry.Package, entry => entry)
+                                 ?? new Dictionary<PackageIdentity, JournalEntry>();
+                cache = packageData?.Cache ?? new PackageCache(0);
             }
             else
             {
@@ -87,13 +91,14 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
         void Save()
         {
-            var journalEntryList = journalEntries.Select(p => p.Value);
-            var json = JsonConvert.SerializeObject(journalEntryList);
+            var onlyJournalEntries = journalEntries.Select(p => p.Value);
+            var json = JsonConvert.SerializeObject(new PackageData(onlyJournalEntries, cache));
+
             fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
             //save to temp file first
             var tempFilePath = $"{journalPath}.temp.{Guid.NewGuid()}.json";
 
-            fileSystem.WriteAllText(tempFilePath,json, Encoding.Default);
+            fileSystem.WriteAllText(tempFilePath, json, Encoding.Default);
             fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
         }
 
@@ -104,19 +109,27 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
         class PackageData
         {
-            public List<JournalEntry> JournalEntries { get; }
-            public PackageCache Cache { get; }
+            public IEnumerable<JournalEntry> JournalEntries { get; }
+            public PackageCache Cache { get;  }
 
-            public PackageData(List<JournalEntry> journalEntries, PackageCache cache)
+            [JsonConstructor]
+            public PackageData(IEnumerable<JournalEntry> journalEntries, PackageCache packageCache)
             {
                 JournalEntries = journalEntries;
-                Cache = cache;
+                Cache = packageCache;
             }
         }
     }
 
     public class PackageCache
     {
+        [JsonProperty]
         public int CacheAge { get; set; }
+
+        [JsonConstructor]
+        public PackageCache(int cacheAge)
+        {
+            CacheAge = cacheAge;
+        }
     }
 }

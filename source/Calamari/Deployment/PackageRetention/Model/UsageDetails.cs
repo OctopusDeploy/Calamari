@@ -5,17 +5,17 @@ namespace Calamari.Deployment.PackageRetention.Model
 {
     public class UsageDetails : IUsageDetails
     {
-        public int CacheAge { get; }
+        public CacheAge CacheAge { get; }
         public DateTime DateTime { get; }
         public ServerTaskId DeploymentTaskId { get; }
 
         /// <summary> Defaults DateTime to DateTime.Now </summary>
-        public UsageDetails(ServerTaskId deploymentTaskId, int cacheAge)
+        public UsageDetails(ServerTaskId deploymentTaskId, CacheAge cacheAge)
             : this(deploymentTaskId, cacheAge, DateTime.Now)
         {
         }
 
-        public UsageDetails(ServerTaskId deploymentTaskId, int cacheAge, DateTime dateTime)
+        public UsageDetails(ServerTaskId deploymentTaskId, CacheAge cacheAge, DateTime dateTime)
         {
             CacheAge = cacheAge;
             DateTime = dateTime;
