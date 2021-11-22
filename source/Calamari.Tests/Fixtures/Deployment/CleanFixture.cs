@@ -70,7 +70,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertSuccess();
 
             Assert.False(fileSystem.DirectoryExists(Path.Combine(stagingDirectory, "Acme.1.0.0")));
-            Assert.False(fileSystem.FileExists(Path.Combine(packagesDirectory, "Acme.1.0.0.nupkg")));
         }
 
         [Test]
@@ -81,7 +80,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertSuccess();
 
             Assert.False(fileSystem.DirectoryExists(Path.Combine(stagingDirectory, "Acme.1.0.0")));
-            Assert.False(fileSystem.FileExists(Path.Combine(packagesDirectory, "Acme.1.0.0.nupkg")));
         }
 
         private void CreateDeployment(string extractedFrom, string extractedTo, DateTimeOffset date, string retentionPolicySet)
