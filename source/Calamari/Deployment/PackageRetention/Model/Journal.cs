@@ -11,12 +11,14 @@ namespace Calamari.Deployment.PackageRetention.Model
     public class Journal : IManagePackageUse
     {
         readonly IJournalRepositoryFactory repositoryFactory;
+        readonly IVariables variables;
         readonly ILog log;
 
-        public Journal(IJournalRepositoryFactory repositoryFactory, ILog log)
+        public Journal(IJournalRepositoryFactory repositoryFactory, IVariables variables, ILog log)
         {
             this.repositoryFactory = repositoryFactory;
             this.log = log;
+            this.variables = variables;
         }
 
         public void RegisterPackageUse(IVariables variables)
@@ -26,6 +28,9 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RegisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId)
         {
+            if (!IsRetentionEnabled())
+                return;
+
             try
             {
                 using (var repository = repositoryFactory.CreateJournalRepository())
@@ -78,7 +83,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public bool IsRetentionEnabled(IVariables variables)
+        bool IsRetentionEnabled()
         {
             var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome);
             return variables.IsPackageRetentionEnabled() && tentacleHome != null;

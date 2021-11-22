@@ -12,7 +12,6 @@ namespace Calamari.Deployment.PackageRetention
         readonly ILog log;
         readonly ICommandWithArgs command;
         readonly IManagePackageUse journal;
-        readonly bool retentionEnabled = false;
 
         PackageIdentity Package { get; }
         ServerTaskId DeploymentTaskId { get; }
@@ -23,19 +22,14 @@ namespace Calamari.Deployment.PackageRetention
             this.command = command;
             this.journal = journal;
 
-            retentionEnabled = journal.IsRetentionEnabled(variables);
-
-            if (retentionEnabled)
+            try
             {
-                try
-                {
-                    DeploymentTaskId = new ServerTaskId(variables);
-                    Package = new PackageIdentity(variables);
-                }
-                catch (Exception ex)
-                {
-                    log.Error($"Unable to get deployment details for retention from variables.{Environment.NewLine}{ex.ToString()}");
-                }
+                DeploymentTaskId = new ServerTaskId(variables);
+                Package = new PackageIdentity(variables);
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Unable to get deployment details for retention from variables.{Environment.NewLine}{ex.ToString()}");
             }
 
 #if DEBUG
@@ -45,7 +39,7 @@ namespace Calamari.Deployment.PackageRetention
 
         public int Execute(string[] commandLineArguments)
         {
-            if (retentionEnabled) journal.RegisterPackageUse(Package, DeploymentTaskId);
+            journal.RegisterPackageUse(Package, DeploymentTaskId);
 
             return command.Execute(commandLineArguments);
         }
