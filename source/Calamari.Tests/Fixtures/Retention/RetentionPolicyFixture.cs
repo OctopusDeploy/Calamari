@@ -215,12 +215,10 @@ namespace Calamari.Tests.Fixtures.Retention
 
             // The older artifacts should have been removed
             fileSystem.Received().DeleteDirectory(fourDayOldSuccessfulDeployment.ExtractedTo);
-            fileSystem.Received().DeleteFile(fourDayOldSuccessfulDeployment.Package.DeployedFrom, Arg.Any<FailureOptions>());
 
             // The newer artifacts, and those from the non-matching policy-set, should have been kept
             // In other words, nothing but the matching deployment should have been removed
             fileSystem.DidNotReceive().DeleteDirectory(Arg.Is<string>(s => !s.Equals(fourDayOldSuccessfulDeployment.ExtractedTo)));
-            fileSystem.DidNotReceive().DeleteFile(Arg.Is<string>(s => !s.Equals(fourDayOldSuccessfulDeployment.Package.DeployedFrom)), Arg.Any<FailureOptions>());
 
             // The older entry should have been removed from the journal
             deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Count() == 1 && ids.Contains(fourDayOldSuccessfulDeployment.Id)));
@@ -250,7 +248,6 @@ namespace Calamari.Tests.Fixtures.Retention
             foreach (var deployment in deploymentsExpectedToRemove)
             {
                 fileSystem.Received().DeleteDirectory(deployment.ExtractedTo);
-                fileSystem.Received().DeleteFile(deployment.Package.DeployedFrom, Arg.Any<FailureOptions>());
             }
 
             // The newer artifacts, and those from the non-matching policy-set, should have been kept
@@ -259,7 +256,6 @@ namespace Calamari.Tests.Fixtures.Retention
             foreach (var deployment in deploymentsExpectedToKeep)
             {
                 fileSystem.DidNotReceive().DeleteDirectory(deployment.ExtractedTo);
-                fileSystem.DidNotReceive().DeleteFile(deployment.Package.DeployedFrom, Arg.Any<FailureOptions>());
             }
 
             // The older entry should have been removed from the journal
@@ -282,7 +278,6 @@ namespace Calamari.Tests.Fixtures.Retention
             retentionPolicy.ApplyRetentionPolicy(policySet1, null, 1);
 
             fileSystem.DidNotReceive().DeleteDirectory(sevenDayOldUnsuccessfulDeployment.ExtractedTo);
-            fileSystem.DidNotReceive().DeleteFile(sevenDayOldUnsuccessfulDeployment.Package.DeployedFrom, Arg.Any<FailureOptions>());
 
             deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Contains(sevenDayOldUnsuccessfulDeployment.Id)));
         }
@@ -305,23 +300,6 @@ namespace Calamari.Tests.Fixtures.Retention
             fileSystem.DidNotReceive().DeleteFile(Arg.Any<string>(), Arg.Any<FailureOptions>());
 
             deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => !ids.Any()));
-        }
-
-        [Test]
-        public void ShouldApplyRetentionToMultiplePackages()
-        {
-            const int days = 3;
-            retentionPolicy.ApplyRetentionPolicy(policySet3, days, null);
-
-            // One deployment will be cleaned, and one will be kept.
-            // The one being cleaned contains two packages, one which has a DeployedFrom value which matches the kept deployment, and so will not be deleted.
-            // The other package (foo) should be deleted.
-            var fooPackage = fourDayOldMultiPackageDeployment.Packages.Single(p => p.PackageId == "foo");
-            fileSystem.Received().DeleteFile(fooPackage.DeployedFrom, Arg.Any<FailureOptions>());
-            fileSystem.DidNotReceive().DeleteFile(Arg.Is<string>(s => !s.Equals(fooPackage.DeployedFrom)), Arg.Any<FailureOptions>());
-
-            // The older entry should have been removed from the journal
-            deploymentJournal.Received().RemoveJournalEntries(Arg.Is<IEnumerable<string>>(ids => ids.Count() == 1 && ids.Contains(fourDayOldMultiPackageDeployment.Id)));
         }
 
         [Test]
