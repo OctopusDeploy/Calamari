@@ -19,9 +19,9 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [SetUp]
         public void Setup()
         {
-            variables = Substitute.For<IVariables>();
-            variables.Get(KnownVariables.Calamari.EnablePackageRetention, Arg.Any<string>()).Returns(bool.TrueString);
-            variables.Get(TentacleVariables.Agent.TentacleHome).Returns("SomeDirectory");
+            variables = new CalamariVariables();
+            variables.Set(KnownVariables.Calamari.EnablePackageRetention, bool.TrueString);
+            variables.Set(TentacleVariables.Agent.TentacleHome, "SomeDirectory");
         }
 
         [Test]

@@ -23,6 +23,9 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RegisterPackageUse(IVariables variables)
         {
+            if (!IsRetentionEnabled())
+                return;
+
             RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables));
         }
 
