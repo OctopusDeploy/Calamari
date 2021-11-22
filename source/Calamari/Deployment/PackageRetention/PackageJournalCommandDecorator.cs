@@ -1,9 +1,11 @@
 ﻿using System;
 using Calamari.Commands.Support;
+using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Octopus.Versioning;
 
 namespace Calamari.Deployment.PackageRetention
 {
@@ -30,9 +32,13 @@ namespace Calamari.Deployment.PackageRetention
                 try
                 {
                     DeploymentTaskId = new ServerTaskId(variables);
-                    var version = variables.Get(PackageVariables.) ?? throw new Exception("Package Version not found.");
 
-                    Package = new PackageIdentity(variables);
+
+
+
+                    var version = variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
+
+                    Package = new PackageIdentity(variables, version);
                 }
                 catch (Exception ex)
                 {
@@ -43,6 +49,23 @@ namespace Calamari.Deployment.PackageRetention
 #if DEBUG
             log.Verbose($"Decorating {command.GetType().Name} with PackageJournalCommandDecorator.");
 #endif
+        }
+
+        void TryGetPackageIdentity(IVariables variables)
+        {
+            VersionFormat versionFormat;
+
+
+            //Use package path info
+            var packagePath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
+            if (packagePath != null)
+            {
+                var packageFileMetadata = PackageName.FromFile(packagePath);
+                versionFormat = packageFileMetadata.Version.Format;
+            }
+
+            //Use variables
+            Package = new PackageIdentity(variables, version)
         }
 
         public int Execute(string[] commandLineArguments)

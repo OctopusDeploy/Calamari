@@ -18,7 +18,7 @@ namespace Calamari.Common.Plumbing.Variables
         public static string PackageId => IndexedPackageId(string.Empty);
         public static string PackageVersion => IndexedPackageVersion(string.Empty);
 
-        public static readonly string PackageVersion = "Octopus.Action.Package.PackageVersion";
+       // public static readonly string PackageVersion2 = "Octopus.Action.Package.PackageVersion";
 
         public static string IndexedPackageId(string packageReferenceName) => $"Octopus.Action.Package[{packageReferenceName}].PackageId";
 
