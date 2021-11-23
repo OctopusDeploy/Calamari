@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
@@ -15,18 +14,19 @@ namespace Calamari.Deployment.PackageRetention.Repositories
     public class JsonJournalRepository
         : IJournalRepository
     {
-
         Dictionary<PackageIdentity, JournalEntry> journalEntries;
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
 
         readonly ICalamariFileSystem fileSystem;
         readonly string journalPath;
+
         readonly IDisposable semaphore;
 
         public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath)
         {
             this.fileSystem = fileSystem;
             this.journalPath = journalPath;
+
             this.semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
 
             Load();
