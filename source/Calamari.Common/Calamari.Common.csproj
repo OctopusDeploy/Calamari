@@ -61,7 +61,7 @@
       <PackageReference Include="JavaPropertiesParser" Version="0.2.1" />
       <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
       <PackageReference Include="Octopus.Versioning" Version="4.3.5" />
-      <PackageReference Include="Octostache" Version="2.13.0" />
+      <PackageReference Include="Octostache" Version="2.14.0" />
       <PackageReference Include="SharpCompress" Version="0.24.0" />
       <PackageReference Include="XPath2" Version="1.0.12" />
       <PackageReference Include="YamlDotNet" Version="8.1.2" />
