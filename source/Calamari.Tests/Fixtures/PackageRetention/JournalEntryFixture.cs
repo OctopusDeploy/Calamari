@@ -123,5 +123,19 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             Assert.AreEqual(1, journal.GetUsage(thePackage).Count());
         }
+
+        [Test]
+        public void WhenStaleLocksAreExpired_TheLocksAreRemoved()
+        {
+            var thePackage = new PackageIdentity("Package", "1.0");
+            var deploymentOne = new ServerTaskId("Deployment-1");
+
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(), Substitute.For<ILog>());
+            journal.RegisterPackageUse(thePackage, deploymentOne);
+            
+            journal.ExpireStaleLocks();
+            
+            Assert.IsFalse(journal.HasLock(thePackage));
+        }
     }
 }

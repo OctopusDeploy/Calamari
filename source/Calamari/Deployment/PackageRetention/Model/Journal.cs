@@ -98,7 +98,26 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void ExpireStaleLocks()
         {
-            throw new NotImplementedException();
+            try
+            {
+                using (var repository = repositoryFactory.CreateJournalRepository())
+                {
+                    var entries = repository.GetEntriesWithStaleTasks();
+
+                    foreach (var (entry, staleTasks) in entries)
+                    {
+                        foreach (var taskId in staleTasks)
+                        {
+                            entry.PackageLocks.RemoveLock(taskId);   
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Unable to expire stale locks.{Environment.NewLine}{ex.ToString()}");
+            }
         }
     }
 }

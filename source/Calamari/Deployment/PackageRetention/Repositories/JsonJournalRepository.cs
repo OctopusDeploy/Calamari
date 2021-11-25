@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
@@ -22,11 +21,13 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         readonly ICalamariFileSystem fileSystem;
         readonly string journalPath;
         readonly IDisposable semaphore;
+        readonly int daysToHoldLock;
 
-        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath)
+        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath, int daysToHoldLock)
         {
             this.fileSystem = fileSystem;
             this.journalPath = journalPath;
+            this.daysToHoldLock = daysToHoldLock;
             this.semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
 
             Load();
@@ -41,6 +42,16 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         {
             journalEntries.TryGetValue(package, out var entry);
             return entry;
+        }
+
+        public IEnumerable<(JournalEntry, List<ServerTaskId>)> GetEntriesWithStaleTasks()
+        {
+            return from kv in journalEntries
+                   select kv.Value into journalEntry
+                   let packageUsages = journalEntry.PackageUsage.AsDictionary()
+                   let staleServerTasks = packageUsages.Where(k => k.Value.Any(d => d < d.AddDays(daysToHoldLock))).Select(k => k.Key).ToList()
+                   where staleServerTasks.Any()
+                   select (journalEntry, staleServerTasks);
         }
 
         public void AddJournalEntry(JournalEntry entry)

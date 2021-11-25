@@ -56,6 +56,8 @@ namespace Calamari.Commands
                 return ConsoleFormatter.PrintError(log, ex);
             }
 
+            packageJournal.ExpireStaleLocks();
+
             return 0;
         }
     }

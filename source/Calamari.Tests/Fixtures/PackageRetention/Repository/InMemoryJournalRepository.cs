@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
@@ -33,6 +34,16 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
         public void AddJournalEntry(JournalEntry entry)
         {
             journalEntries.Add(entry.Package, entry);
+        }
+
+        public IEnumerable<(JournalEntry, List<ServerTaskId>)> GetEntriesWithStaleTasks()
+        {
+            return from kv in journalEntries
+                   select kv.Value into journalEntry
+                   let packageUsages = journalEntry.PackageUsage.AsDictionary()
+                   let staleServerTasks = packageUsages.Where(k => k.Value.Any(d => d < DateTime.Now)).Select(k => k.Key).ToList()
+                   where staleServerTasks.Any()
+                   select (journalEntry, staleServerTasks);
         }
 
         public void Commit()
