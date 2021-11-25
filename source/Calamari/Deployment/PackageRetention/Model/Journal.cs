@@ -21,11 +21,6 @@ namespace Calamari.Deployment.PackageRetention.Model
             this.log = log;
         }
 
-        public void RegisterPackageUse(IVariables variables)
-        {
-            RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables));
-        }
-
         public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId)
         {
             try
@@ -91,6 +86,17 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
+        public bool TryGetVersionFormat(PackageId packageId, string version, out VersionFormat versionFormat)
+        {
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                var format = repository.GetJournalEntries(packageId).FirstOrDefault()?.Package?.Version?.Format;
+                versionFormat = format ?? VersionFormat.Semver;
+
+                return format != null;
+            }
+        }
+
         //*** Cache functions from here - maybe move into separate class and/or interface? - MC ***
         public IEnumerable<IUsageDetails> GetUsage(PackageIdentity package)
         {
@@ -140,7 +146,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 var allEntries = repository.GetJournalEntries(package.PackageId);
 
-                return allEntries.Count(e => e.Package.Version > package.Version);
+                return allEntries.Count(e => e.Package.Version.CompareTo(package.Version) == 1);
 
             }
         }

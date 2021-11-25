@@ -26,7 +26,7 @@ namespace Calamari.Commands
         string packageHash;
         bool exactMatchOnly;
         VersionFormat versionFormat = VersionFormat.Semver;
-        
+
         public FindPackageCommand(ILog log, IVariables variables, IPackageStore packageStore, IManagePackageUse packageJournal)
         {
             this.log = log;
@@ -37,16 +37,17 @@ namespace Calamari.Commands
             Options.Add("packageId=", "Package ID to find", v => packageId = v);
             Options.Add("packageVersion=", "Package version to find", v => rawPackageVersion = v);
             Options.Add("packageHash=", "Package hash to compare against", v => packageHash = v);
-            Options.Add("packageVersionFormat=", $"[Optional] Format of version. Options {string.Join(", ", Enum.GetNames(typeof(VersionFormat)))}. Defaults to `{VersionFormat.Semver}`.",
-                v =>
-                {
-                    if (!Enum.TryParse(v, out VersionFormat format))
-                    {
-                        throw new CommandException($"The provided version format `{format}` is not recognised.");
-                    }
+            Options.Add("packageVersionFormat=",
+                        $"[Optional] Format of version. Options {string.Join(", ", Enum.GetNames(typeof(VersionFormat)))}. Defaults to `{VersionFormat.Semver}`.",
+                        v =>
+                        {
+                            if (!Enum.TryParse(v, out VersionFormat format))
+                            {
+                                throw new CommandException($"The provided version format `{format}` is not recognised.");
+                            }
 
-                    versionFormat = format;
-                });
+                            versionFormat = format;
+                        });
             Options.Add("exactMatch=", "Only return exact matches", v => exactMatchOnly = bool.Parse(v));
         }
 
@@ -78,17 +79,29 @@ namespace Calamari.Commands
             //Exact package found, so we need to register use and lock it.
             // This command can't use the PackageJournalCommandDecorator because we don't lock on partial finds, which the decorator would include.  We don't lock on partials because there may be too many packages, blocking retention later,
             //  and we will lock them on apply delta anyway.
-            if (variables.IsPackageRetentionEnabled()) packageJournal.RegisterPackageUse(variables);
+            if (variables.IsPackageRetentionEnabled())
+            {
+                try
+                {
+                    var deploymentTaskId = new ServerTaskId(variables);
+                    var packageIdentity = PackageIdentity.GetPackageIdentity(packageJournal, variables, commandLineArguments);
+                    packageJournal.RegisterPackageUse(packageIdentity, deploymentTaskId);
+                }
+                catch (Exception ex)
+                {
+                    log.Error($"Unable to register package use.{Environment.NewLine}{ex.ToString()}");
+                }
+            }
 
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
             LogPackageFound(
-                package.PackageId,
-                package.Version,
-                package.Hash,
-                package.Extension,
-                package.FullFilePath,
-                true
-            );
+                            package.PackageId,
+                            package.Version,
+                            package.Hash,
+                            package.Extension,
+                            package.FullFilePath,
+                            true
+                           );
             return 0;
         }
 
@@ -102,21 +115,22 @@ namespace Calamari.Commands
             }
 
             log.VerboseFormat("Found {0} earlier {1} of {2} on this Tentacle",
-                nearestPackages.Count, nearestPackages.Count == 1 ? "version" : "versions", packageId);
+                              nearestPackages.Count,
+                              nearestPackages.Count == 1 ? "version" : "versions",
+                              packageId);
             foreach (var nearestPackage in nearestPackages)
             {
                 log.VerboseFormat("  - {0}: {1}", nearestPackage.Version, nearestPackage.FullFilePath);
                 LogPackageFound(
-                    nearestPackage.PackageId,
-                    nearestPackage.Version,
-                    nearestPackage.Hash,
-                    nearestPackage.Extension,
-                    nearestPackage.FullFilePath,
-                    false
-                );
+                                nearestPackage.PackageId,
+                                nearestPackage.Version,
+                                nearestPackage.Hash,
+                                nearestPackage.Extension,
+                                nearestPackage.FullFilePath,
+                                false
+                               );
             }
         }
-
 
         public void LogPackageFound(
             string packageId,
@@ -131,12 +145,12 @@ namespace Calamari.Commands
                 log.Verbose("##octopus[calamari-found-package]");
 
             log.VerboseFormat("##octopus[foundPackage id=\"{0}\" version=\"{1}\" versionFormat=\"{2}\" hash=\"{3}\" remotePath=\"{4}\" fileExtension=\"{5}\"]",
-                AbstractLog.ConvertServiceMessageValue(packageId),
-                AbstractLog.ConvertServiceMessageValue(packageVersion.ToString()),
-                AbstractLog.ConvertServiceMessageValue(packageVersion.Format.ToString()),
-                AbstractLog.ConvertServiceMessageValue(packageHash),
-                AbstractLog.ConvertServiceMessageValue(packageFullPath),
-                AbstractLog.ConvertServiceMessageValue(packageFileExtension));
+                              AbstractLog.ConvertServiceMessageValue(packageId),
+                              AbstractLog.ConvertServiceMessageValue(packageVersion.ToString()),
+                              AbstractLog.ConvertServiceMessageValue(packageVersion.Format.ToString()),
+                              AbstractLog.ConvertServiceMessageValue(packageHash),
+                              AbstractLog.ConvertServiceMessageValue(packageFullPath),
+                              AbstractLog.ConvertServiceMessageValue(packageFileExtension));
         }
     }
 }

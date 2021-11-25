@@ -13,6 +13,7 @@ using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDiscovery;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
@@ -70,6 +71,14 @@ namespace Calamari
             builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
             builder.RegisterType<JsonJournalRepositoryFactory>().As<IJournalRepositoryFactory>();
             builder.RegisterType<Journal>().As<IManagePackageUse>();
+
+            //Note: this could be done with a factory, but it just felt like overkill for this.
+            var versionFormatDiscovery = GetProgramAssemblyToRegister()
+                                         .GetTypes()
+                                         .Where(p => typeof(ITryToDiscoverVersionFormat).IsAssignableFrom(p));
+
+            var discoveryInstances = versionFormatDiscovery.Select(d => Activator.CreateInstance(d) as ITryToDiscoverVersionFormat).ToArray();
+            PackageIdentity.SetVersionFormatDiscoverers(discoveryInstances);
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();

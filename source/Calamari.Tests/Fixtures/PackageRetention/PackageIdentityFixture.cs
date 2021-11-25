@@ -1,5 +1,9 @@
-﻿using Calamari.Common.Plumbing.Deployment.PackageRetention;
+﻿using System;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention.Model;
 using NUnit.Framework;
+using Octopus.Versioning;
 
 namespace Calamari.Tests.Fixtures.PackageRetention
 {
@@ -30,6 +34,35 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var package2 = new PackageIdentity("Package2", "1.0");
 
             Assert.AreNotEqual(package1,package2);
+        }
+
+        [TestCase("Package", null)]
+        [TestCase(null, "1.0")]
+        [TestCase(null, null)]
+        public void WhenVariablesMissing_ThenThrowException(string packageId, string version)
+        {
+            var variables = new CalamariVariables();
+            variables.Add(PackageVariables.PackageId, packageId);
+            variables.Add(PackageVariables.PackageVersion, version);
+
+            Assert.Throws(Is.TypeOf<Exception>().And.Message.Contains("not found").IgnoreCase,
+                          () => PackageIdentity.GetPackageIdentity(new Journal(null, null), variables, new string[0]));
+        }
+
+        [TestCase("Octopus", VersionFormat.Octopus)]
+        [TestCase("ThisShouldDefaultToSemver", VersionFormat.Semver)]
+        public void WhenCommandLineArgsContainsValidVersionFormat_ThenUseThatFormat(string formatString, VersionFormat expectedFormat)
+        {
+            var variables = new CalamariVariables();
+            variables.Add(PackageVariables.PackageId, "Package1");
+            variables.Add(PackageVariables.PackageVersion, "1.0");
+
+            var commandLineArgs = new string[2] { "--packageVersionFormat", formatString};
+
+            var identity = PackageIdentity.GetPackageIdentity(new Journal(null, null), variables, commandLineArgs);
+            Assert.AreEqual("1.0", identity.Version.OriginalString);
+            Assert.AreEqual("Package1", identity.PackageId.Value);
+            Assert.AreEqual(expectedFormat, identity.Version.Format);
         }
     }
 }

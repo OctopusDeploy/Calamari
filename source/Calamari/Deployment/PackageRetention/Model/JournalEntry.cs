@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Deployment.PackageRetention.Caching;
 using Newtonsoft.Json;
@@ -36,11 +37,14 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RemoveLock(ServerTaskId deploymentTaskId)
         {
-            locks.RemoveAll(l => l.DeploymentTaskId == deploymentTaskId);
+            //We only remove the first lock that matches the deployment task id, in case we have a deployment that uses the same package twice.
+            var usageLock = locks.FirstOrDefault(l => l.DeploymentTaskId == deploymentTaskId);
+            locks.Remove(usageLock);
         }
 
         public bool HasLock() => locks.Count > 0;
 
         public IEnumerable<UsageDetails> GetUsageDetails() => usages;
+        public IEnumerable<UsageDetails> GetLockDetails() => locks;
     }
 }

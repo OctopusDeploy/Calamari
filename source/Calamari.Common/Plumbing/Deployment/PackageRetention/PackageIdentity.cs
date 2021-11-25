@@ -1,4 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing.Commands.Options;
+using Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDiscovery;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
 using Newtonsoft.Json;
@@ -11,12 +16,12 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
     {
         public PackageId PackageId { get; }
         public IVersion Version { get; }
-
-        public PackageIdentity(string packageId, string version, VersionFormat versionFormat) : this(new PackageId(packageId), VersionFactory.CreateVersion(version, versionFormat))
+        
+        public PackageIdentity(string packageId, string version, VersionFormat versionFormat = VersionFormat.Semver) : this(new PackageId(packageId), VersionFactory.CreateVersion(version, versionFormat))
         {
         }
 
-        public PackageIdentity(IVariables variables, VersionFormat versionFormat)
+        public PackageIdentity(IVariables variables, VersionFormat versionFormat = VersionFormat.Semver)
         {
             if (variables == null) throw new ArgumentNullException(nameof(variables));
 
@@ -35,7 +40,6 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
             PackageId = packageId ?? throw new ArgumentNullException(nameof(packageId));
             Version = version ?? throw new ArgumentNullException(nameof(version));
         }
-
 
         public override bool Equals(object obj)
         {
@@ -76,6 +80,26 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         public override string ToString()
         {
             return $"{PackageId} v{Version}";
+        }
+
+        static List<ITryToDiscoverVersionFormat> versionFormatDiscoverers = new List<ITryToDiscoverVersionFormat>();
+
+        public static void SetVersionFormatDiscoverers(params ITryToDiscoverVersionFormat[] formatDiscoverers)
+        {
+            versionFormatDiscoverers = new List<ITryToDiscoverVersionFormat>(formatDiscoverers);
+        }
+
+        public static PackageIdentity GetPackageIdentity(IManagePackageUse journal, IVariables variables, string[] commandLineArguments)
+        {
+            var packageStr = variables.Get(PackageVariables.PackageId) ?? throw new Exception("Package Id not found.");
+            var versionStr = variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
+            var packageId = new PackageId(packageStr);
+            var versionFormat = VersionFormat.Semver;
+
+            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+            versionFormatDiscoverers.FirstOrDefault(d => d.TryDiscoverVersionFormat(journal, variables, commandLineArguments, out versionFormat));
+;
+            return new PackageIdentity(packageId, VersionFactory.CreateVersion(versionStr, versionFormat));
         }
     }
 }
