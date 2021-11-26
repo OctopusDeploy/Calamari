@@ -16,8 +16,11 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
     {
         public PackageId PackageId { get; }
         public IVersion Version { get; }
+        public string? Path { get; }
+        public long FileSizeBytes { get; set; } = -1;
         
-        public PackageIdentity(string packageId, string version, VersionFormat versionFormat = VersionFormat.Semver) : this(new PackageId(packageId), VersionFactory.CreateVersion(version, versionFormat))
+        public PackageIdentity(string packageId, string version, VersionFormat versionFormat = VersionFormat.Semver, string? path = null)
+            : this(new PackageId(packageId), VersionFactory.CreateVersion(version, versionFormat), path)
         {
         }
 
@@ -27,6 +30,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 
             var package = variables.Get(PackageVariables.PackageId) ?? throw new Exception("Package ID not found.");
             var version = variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
+            var Path = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
 
             var nullableVersion = VersionFactory.TryCreateVersion(version, versionFormat);
             Version = nullableVersion ?? throw new Exception("Unable to determine package version.");
@@ -35,10 +39,11 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         }
 
         [JsonConstructor]
-        public PackageIdentity(PackageId packageId, IVersion version)
+        public PackageIdentity(PackageId packageId, IVersion version, string? path = null)
         {
             PackageId = packageId ?? throw new ArgumentNullException(nameof(packageId));
             Version = version ?? throw new ArgumentNullException(nameof(version));
+            Path = path;
         }
 
         public override bool Equals(object obj)
@@ -93,6 +98,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         {
             var packageStr = variables.Get(PackageVariables.PackageId) ?? throw new Exception("Package Id not found.");
             var versionStr = variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
+            var packagePath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
             var packageId = new PackageId(packageStr);
             var versionFormat = VersionFormat.Semver;
 

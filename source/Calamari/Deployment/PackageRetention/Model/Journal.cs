@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
@@ -32,11 +34,13 @@ namespace Calamari.Deployment.PackageRetention.Model
 
                     if (repository.TryGetJournalEntry(package, out var entry))
                     {
-                        entry.AddUsage(deploymentTaskId, age); //TODO: fix this to use the actual age.
+                        entry.Package.FileSizeBytes = ConfirmPackageSizeBytes(entry.Package);
+                        entry.AddUsage(deploymentTaskId, age);
                         entry.AddLock(deploymentTaskId, age);
                     }
                     else
                     {
+                        package.FileSizeBytes = ConfirmPackageSizeBytes(package);
                         entry = new JournalEntry(package);
                         entry.AddUsage(deploymentTaskId, age);
                         entry.AddLock(deploymentTaskId, age);
@@ -74,6 +78,21 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 //We need to ensure that an issue with the journal doesn't interfere with the deployment.
                 log.Error($"Unable to deregister package use for retention.{Environment.NewLine}{ex.ToString()}");
+            }
+        }
+
+        long ConfirmPackageSizeBytes(PackageIdentity package)
+        {
+            if (package.FileSizeBytes > 0)  return package.FileSizeBytes;
+            if (string.IsNullOrWhiteSpace(package.Path)) return -1;
+
+            try
+            {
+                return CalamariPhysicalFileSystem.GetPhysicalFileSystem().GetFileSize(package.Path);
+            }
+            catch (FileNotFoundException ex)
+            {
+                //TODO: work out what to do here.
             }
         }
 
@@ -145,9 +164,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             using (var repository = repositoryFactory.CreateJournalRepository())
             {
                 var allEntries = repository.GetJournalEntries(package.PackageId);
-
                 return allEntries.Count(e => e.Package.Version.CompareTo(package.Version) == 1);
-
             }
         }
 
