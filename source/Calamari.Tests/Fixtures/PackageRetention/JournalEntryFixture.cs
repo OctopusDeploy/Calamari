@@ -1,8 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.PackageRetention.Model;
-using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using NSubstitute;
 using NUnit.Framework;
@@ -133,7 +133,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var journal = new Journal(new InMemoryJournalRepositoryFactory(), Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             
-            journal.ExpireStaleLocks();
+            journal.ExpireStaleLocks(TimeSpan.Zero);
             
             Assert.IsFalse(journal.HasLock(thePackage));
         }

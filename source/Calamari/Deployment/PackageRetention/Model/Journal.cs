@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -96,22 +97,23 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public void ExpireStaleLocks()
+        public void ExpireStaleLocks(TimeSpan timeSpan)
         {
             try
             {
                 using (var repository = repositoryFactory.CreateJournalRepository())
                 {
-                    var entries = repository.GetEntriesWithStaleTasks();
-
-                    foreach (var (entry, staleTasks) in entries)
+                    foreach (var entry in repository.GetAllJournalEntries())
                     {
-                        foreach (var taskId in staleTasks)
+                        var staleServerTasks = entry.PackageUsage.AsDictionary()
+                                                    .Where(pair => pair.Value.Any(d => d.Add(timeSpan) <= DateTime.Now))
+                                                    .Select(pair => pair.Key);
+
+                        foreach (var taskId in staleServerTasks)
                         {
-                            entry.PackageLocks.RemoveLock(taskId);   
+                            entry.PackageLocks.RemoveLock(taskId);
                         }
                     }
-
                 }
             }
             catch (Exception ex)

@@ -11,7 +11,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         readonly ICalamariFileSystem fileSystem;
         readonly ISemaphoreFactory semaphoreFactory;
         readonly string journalPath;
-        readonly int daysToHoldLock;
 
         public JsonJournalRepositoryFactory(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory)
         {
@@ -19,12 +18,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             this.semaphoreFactory = semaphoreFactory;
 
             this.journalPath = @"C:\Octopus\PackageJournal.json";//journalPath;
-            this.daysToHoldLock = 14;
         }
 
         public IJournalRepository CreateJournalRepository()
         {
-            return new JsonJournalRepository(fileSystem, semaphoreFactory, journalPath, daysToHoldLock);
+            return new JsonJournalRepository(fileSystem, semaphoreFactory, journalPath);
         }
     }
 }

@@ -9,8 +9,8 @@ namespace Calamari.Deployment.PackageRetention.Repositories
     {
         bool TryGetJournalEntry(PackageIdentity package, out JournalEntry entry);
         JournalEntry GetJournalEntry(PackageIdentity packageId);
+        IList<JournalEntry> GetAllJournalEntries();
         void AddJournalEntry(JournalEntry entry);
-        IEnumerable<(JournalEntry, List<ServerTaskId>)> GetEntriesWithStaleTasks();
         void Commit();
     }
 }

@@ -3,16 +3,10 @@ using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Packages;
-using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.Packages.Download;
-using Octopus.Versioning;
 
 namespace Calamari.Commands
 {
@@ -56,7 +50,7 @@ namespace Calamari.Commands
                 return ConsoleFormatter.PrintError(log, ex);
             }
 
-            packageJournal.ExpireStaleLocks();
+            packageJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
             return 0;
         }

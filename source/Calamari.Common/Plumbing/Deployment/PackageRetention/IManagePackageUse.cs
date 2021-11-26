@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.Versioning;
 
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
@@ -12,6 +11,6 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         void DeregisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId);
         IEnumerable<DateTime> GetUsage(PackageIdentity package);
         bool HasLock(PackageIdentity package);
-        void ExpireStaleLocks();
+        void ExpireStaleLocks(TimeSpan timeBeforeExpiration);
     }
 }

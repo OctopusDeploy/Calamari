@@ -31,6 +31,12 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
             return entry;
         }
 
+        public IList<JournalEntry> GetAllJournalEntries()
+        {
+            return journalEntries.Select(pair => pair.Value)
+                                 .ToList();
+        }
+
         public void AddJournalEntry(JournalEntry entry)
         {
             journalEntries.Add(entry.Package, entry);
