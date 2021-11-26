@@ -42,16 +42,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
             journalEntries.Add(entry.Package, entry);
         }
 
-        public IEnumerable<(JournalEntry, List<ServerTaskId>)> GetEntriesWithStaleTasks()
-        {
-            return from kv in journalEntries
-                   select kv.Value into journalEntry
-                   let packageUsages = journalEntry.PackageUsage.AsDictionary()
-                   let staleServerTasks = packageUsages.Where(k => k.Value.Any(d => d < DateTime.Now)).Select(k => k.Key).ToList()
-                   where staleServerTasks.Any()
-                   select (journalEntry, staleServerTasks);
-        }
-
         public void Commit()
         {
             //This does nothing in the in-memory implementation
