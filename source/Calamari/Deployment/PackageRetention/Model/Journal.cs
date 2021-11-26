@@ -97,7 +97,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public void ExpireStaleLocks(TimeSpan timeSpan)
+        public void ExpireStaleLocks(TimeSpan timeBeforeExpiration)
         {
             try
             {
@@ -106,7 +106,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                     foreach (var entry in repository.GetAllJournalEntries())
                     {
                         var staleServerTasks = entry.PackageUsage.AsDictionary()
-                                                    .Where(pair => pair.Value.Any(d => d.Add(timeSpan) <= DateTime.Now))
+                                                    .Where(pair => pair.Value.Any(d => d.Add(timeBeforeExpiration) <= DateTime.Now))
                                                     .Select(pair => pair.Key);
 
                         foreach (var taskId in staleServerTasks)
