@@ -346,11 +346,11 @@ namespace Sashimi.Terraform.Tests
                                                                    },
                                                                    "Simple")
                 .Should()
-                .Contain("No files were found that match the substitution target pattern '**/*.tfvars.json'")
+                .MatchRegex("No files were found in (.*) that match the substitution target pattern '\\*\\*/\\*\\.tfvars\\.json'")
                 .And
-                .Contain("No files were found that match the substitution target pattern 'doesNotExist.txt'");
+                .MatchRegex("No files were found in (.*) that match the substitution target pattern 'doesNotExist.txt'");
         }
-
+        
         [Test]
         public void EnableNoMatchWarningIsTrue()
         {
@@ -361,9 +361,9 @@ namespace Sashimi.Terraform.Tests
                                                                    },
                                                                    "Simple")
                 .Should()
-                .Contain("No files were found that match the substitution target pattern '**/*.tfvars.json'")
+                .MatchRegex("No files were found in (.*) that match the substitution target pattern '\\*\\*/\\*\\.tfvars\\.json'")
                 .And
-                .Contain("No files were found that match the substitution target pattern 'doesNotExist.txt'");
+                .MatchRegex("No files were found in (.*) that match the substitution target pattern 'doesNotExist.txt'");
         }
 
         [Test]
