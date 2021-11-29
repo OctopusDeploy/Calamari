@@ -15,11 +15,13 @@ namespace Calamari.Deployment.PackageRetention.Model
     public class Journal : IManagePackageUse, IDisposable
     {
         readonly IJournalRepositoryFactory repositoryFactory;
+        readonly IRetentionAlgorithm retentionAlgorithm;
         readonly ILog log;
 
-        public Journal(IJournalRepositoryFactory repositoryFactory, ILog log)
+        public Journal(IJournalRepositoryFactory repositoryFactory, IRetentionAlgorithm retentionAlgorithm, ILog log)
         {
             this.repositoryFactory = repositoryFactory;
+            this.retentionAlgorithm = retentionAlgorithm;
             this.log = log;
         }
 
@@ -90,9 +92,10 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 return CalamariPhysicalFileSystem.GetPhysicalFileSystem().GetFileSize(package.Path);
             }
-            catch (FileNotFoundException ex)
+            catch// (FileNotFoundException ex)
             {
                 //TODO: work out what to do here.
+                throw;
             }
         }
 
@@ -147,26 +150,17 @@ namespace Calamari.Deployment.PackageRetention.Model
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// Age is the number of other packages which have been registered or accessed since this one.
-        /// </summary>
-        public int GetPackageAge(PackageIdentity package)
+        public void ApplyRetention(long spaceNeeded)
         {
             using (var repository = repositoryFactory.CreateJournalRepository())
             {
-                //TODO: fail if not found?
-                return repository.TryGetJournalEntry(package, out var journalEntry) ? journalEntry.GetUsageDetails().Max(m => m.CacheAge.Value) : int.MinValue;
+                var journalEntries = repository.GetAllJournalEntries();
+                var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalEntries, spaceNeeded);
+                //TODO: implement this.
             }
         }
 
-        public int GetNewerVersionCount(PackageIdentity package)
-        {
-            using (var repository = repositoryFactory.CreateJournalRepository())
-            {
-                var allEntries = repository.GetJournalEntries(package.PackageId);
-                return allEntries.Count(e => e.Package.Version.CompareTo(package.Version) == 1);
-            }
-        }
+
 
         protected virtual void Dispose(bool disposing)
         {

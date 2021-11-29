@@ -5,6 +5,7 @@ using Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDiscover
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using NSubstitute;
@@ -22,7 +23,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void TestArgumentsAndResults(string existingPackageId, string existingVersion, VersionFormat existingFormat, string thisPackageId, string thisVersion, VersionFormat defaultFormat, bool expectedResult, VersionFormat expectedFormat)
         {
             var discovery = new JournalVersionFormatDiscovery();
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), Substitute.For<ILog>());
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(), Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());
             var package = new PackageIdentity(existingPackageId, existingVersion, existingFormat);
 
             journal.RegisterPackageUse(package, new ServerTaskId("Task-1"));

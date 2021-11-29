@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
-using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Deployment.PackageRetention.Repositories

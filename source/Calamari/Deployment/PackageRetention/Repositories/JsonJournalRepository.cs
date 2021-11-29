@@ -8,7 +8,6 @@ using System.Threading;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;

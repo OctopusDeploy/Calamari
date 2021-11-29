@@ -46,7 +46,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             variables.Add(PackageVariables.PackageVersion, version);
 
             Assert.Throws(Is.TypeOf<Exception>().And.Message.Contains("not found").IgnoreCase,
-                          () => PackageIdentity.GetPackageIdentity(new Journal(null, null), variables, new string[0]));
+                          () => PackageIdentity.GetPackageIdentity(new Journal(null, null, null), variables, new string[0]));
         }
 
         [TestCase("Octopus", VersionFormat.Octopus)]
@@ -59,7 +59,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             var commandLineArgs = new string[2] { "--packageVersionFormat", formatString};
 
-            var identity = PackageIdentity.GetPackageIdentity(new Journal(null, null), variables, commandLineArgs);
+            var identity = PackageIdentity.GetPackageIdentity(new Journal(null, null, null), variables, commandLineArgs);
             Assert.AreEqual("1.0", identity.Version.OriginalString);
             Assert.AreEqual("Package1", identity.PackageId.Value);
             Assert.AreEqual(expectedFormat, identity.Version.Format);

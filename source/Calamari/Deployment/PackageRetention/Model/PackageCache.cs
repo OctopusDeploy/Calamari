@@ -1,8 +1,8 @@
-﻿using Calamari.Common.Plumbing.Deployment.PackageRetention;
-using Calamari.Deployment.PackageRetention.Model;
+﻿using System;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Newtonsoft.Json;
 
-namespace Calamari.Deployment.PackageRetention.Caching
+namespace Calamari.Deployment.PackageRetention.Model
 {
     public class PackageCache
     {
