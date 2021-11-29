@@ -4,47 +4,16 @@ using YamlDotNet.Core.Tokens;
 
 namespace Calamari.Deployment.PackageRetention
 {
-    //TODO: Replace this basic tiny types implementation with the Octopus one.
-    public abstract class CaseInsensitiveTinyType
+    public abstract class CaseInsensitiveTinyType : TinyType<string>
     {
-        public readonly string Value;
-
-        public CaseInsensitiveTinyType(string value)
+        protected CaseInsensitiveTinyType(string value)
+            : base(value)
         {
-            this.Value = value;
         }
+
         protected bool Equals(CaseInsensitiveTinyType other)
         {
             return Value == other.Value;
-        }
-
-        static object Create(Type type, string value)
-        {
-            return Activator.CreateInstance(type, value);
-        }
-
-        public static T Create<T>(string value) where T : CaseInsensitiveTinyType
-        {
-            return (T)Create(typeof(T), value);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-                return false;
-            if (ReferenceEquals(this, obj))
-                return true;
-            if (obj.GetType() != this.GetType())
-                return false;
-
-            var other = (CaseInsensitiveTinyType)obj;
-
-            return this == other;
-        }
-
-        public override int GetHashCode()
-        {
-            return (Value != null ? Value.GetHashCode() : 0);
         }
 
         public static bool operator == (CaseInsensitiveTinyType first, CaseInsensitiveTinyType second)
@@ -56,11 +25,6 @@ namespace Calamari.Deployment.PackageRetention
         public static bool operator !=(CaseInsensitiveTinyType first, CaseInsensitiveTinyType second)
         {
             return !(first == second);
-        }
-
-        public override string ToString()
-        {
-            return Value;
         }
     }
 }
