@@ -5,7 +5,7 @@ using YamlDotNet.Core.Tokens;
 namespace Calamari.Deployment.PackageRetention
 {
     //TODO: At some point, replace this basic tiny types implementation with the Octopus one.  The blocking issue is Net40 atm.
-    public abstract class TinyType<T> : IComparable, IEquatable<TinyType<T>> where T : IComparable
+    public abstract class TinyType<T> where T : IComparable
     {
         public readonly T Value;
 
@@ -13,12 +13,6 @@ namespace Calamari.Deployment.PackageRetention
         {
             this.Value = value;
         }
-
-        public bool Equals(TinyType<T> other)
-        {
-            return Value.Equals(other.Value);
-        }
-
         static object Create(Type type, T value)
         {
             return Activator.CreateInstance(type, value);
@@ -29,7 +23,7 @@ namespace Calamari.Deployment.PackageRetention
             return (U)Create(typeof(U), value);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj))
                 return false;
@@ -45,18 +39,13 @@ namespace Calamari.Deployment.PackageRetention
 
         public override int GetHashCode()
         {
-            return (Value != null ? Value.GetHashCode() : 0);
+            return GetType().GetHashCode() ^ (Value != null ? Value.GetHashCode() : 0);
         }
 
-        public int CompareTo(object obj)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static bool operator == (TinyType<T> first, TinyType<T> second)
+        public static bool operator == (TinyType<T>? first, TinyType<T>? second)
         {
             if (first is null || second is null) return false;
-            return first.Value.Equals(second.Value);
+            return first.Equals(second);
         }
 
         public static bool operator !=(TinyType<T> first, TinyType<T> second)
