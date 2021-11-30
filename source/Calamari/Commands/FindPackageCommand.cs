@@ -78,7 +78,19 @@ namespace Calamari.Commands
             //Exact package found, so we need to register use and lock it.
             // This command can't use the PackageJournalCommandDecorator because we don't lock on partial finds, which the decorator would include.  We don't lock on partials because there may be too many packages, blocking retention later,
             //  and we will lock them on apply delta anyway.
-            if (variables.IsPackageRetentionEnabled()) packageJournal.RegisterPackageUse(variables);
+            if (variables.IsPackageRetentionEnabled())
+            {
+                try
+                {
+                    var deploymentTaskId = new ServerTaskId(variables);
+                    var packageIdentity = PackageIdentity.GetPackageIdentity(packageJournal, variables, commandLineArguments);
+                    packageJournal.RegisterPackageUse(packageIdentity, deploymentTaskId);
+                }
+                catch (Exception ex)
+                {
+                    log.Error($"Unable to register package use.{Environment.NewLine}{ex.ToString()}");
+                }
+            }
 
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
             LogPackageFound(

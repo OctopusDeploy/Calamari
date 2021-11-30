@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
 using Calamari.Common.Features.Processes.Semaphores;
@@ -9,14 +10,12 @@ using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Deployment.PackageRetention.Model;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Calamari.Deployment.PackageRetention.Repositories
 {
-    public class JsonJournalRepository
-        : IJournalRepository
+    public class JsonJournalRepository : JournalRepositoryBase
     {
-
-        Dictionary<PackageIdentity, JournalEntry> journalEntries;
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
 
         readonly ICalamariFileSystem fileSystem;
@@ -27,28 +26,12 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         {
             this.fileSystem = fileSystem;
             this.journalPath = journalPath;
-            this.semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
+            semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
 
             Load();
         }
 
-        public bool TryGetJournalEntry(PackageIdentity package, out JournalEntry entry)
-        {
-            return journalEntries.TryGetValue(package, out entry);
-        }
-
-        public JournalEntry GetJournalEntry(PackageIdentity package)
-        {
-            journalEntries.TryGetValue(package, out var entry);
-            return entry;
-        }
-
-        public void AddJournalEntry(JournalEntry entry)
-        {
-            journalEntries.Add(entry.Package, entry);
-        }
-
-        public void Commit()
+        public override void Commit()
         {
             Save();
         }
@@ -58,31 +41,49 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             if (File.Exists(journalPath))
             {
                 var json = File.ReadAllText(journalPath);
-                journalEntries = JsonConvert.DeserializeObject<List<JournalEntry>>(json)
-                                            .ToDictionary(entry => entry.Package, entry => entry);
+                var packageData = JsonConvert.DeserializeObject<PackageData>(json);
+
+                journalEntries = packageData
+                                 ?.JournalEntries
+                                 ?.ToDictionary(entry => entry.Package, entry => entry)
+                                 ?? new Dictionary<PackageIdentity, JournalEntry>();
+                Cache = packageData?.Cache ?? new PackageCache(0);
             }
             else
             {
-                journalEntries = new  Dictionary<PackageIdentity, JournalEntry>();
+                journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
             }
         }
 
         void Save()
         {
-            var journalEntryList = journalEntries.Select(p => p.Value);
-            var json = JsonConvert.SerializeObject(journalEntryList);
-            fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
+            var onlyJournalEntries = journalEntries.Select(p => p.Value);
+            var json = JsonConvert.SerializeObject(new PackageData(onlyJournalEntries, Cache));
 
+            fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
             //save to temp file first
             var tempFilePath = $"{journalPath}.temp.{Guid.NewGuid()}.json";
 
-            fileSystem.WriteAllText(tempFilePath,json, Encoding.Default);
+            fileSystem.WriteAllText(tempFilePath, json, Encoding.Default);
             fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             semaphore.Dispose();
+        }
+
+        class PackageData
+        {
+            public IEnumerable<JournalEntry> JournalEntries { get; }
+            public PackageCache Cache { get;  }
+
+            [JsonConstructor]
+            public PackageData(IEnumerable<JournalEntry> journalEntries, PackageCache packageCache)
+            {
+                JournalEntries = journalEntries;
+                Cache = packageCache;
+            }
         }
     }
 }
