@@ -45,9 +45,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var tt2 = AnotherTinyType.Create<AnotherTinyType>("value");
             Assert.AreNotEqual(tt1.GetHashCode(), tt2.GetHashCode());
         }
-
-
-
+        
         class ATinyType : CaseInsensitiveTinyType
         {
             public ATinyType(string value) : base(value)
