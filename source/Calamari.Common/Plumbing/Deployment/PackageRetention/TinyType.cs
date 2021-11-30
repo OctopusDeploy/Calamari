@@ -34,7 +34,7 @@ namespace Calamari.Deployment.PackageRetention
 
             var other = (TinyType<T>)obj;
 
-            return this == other;
+            return this.Value.Equals(other.Value);
         }
 
         public override int GetHashCode()
