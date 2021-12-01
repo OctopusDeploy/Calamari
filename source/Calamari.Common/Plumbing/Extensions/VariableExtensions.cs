@@ -38,7 +38,10 @@ namespace Calamari.Common.Plumbing.Extensions
         {
             bool.TryParse(variables.Get(KnownVariables.Calamari.EnablePackageRetention, bool.FalseString),  out var retentionEnabled);
 
-            return retentionEnabled;
+            var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome);
+            var packageRetentionJournalPath = variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath);
+
+            return retentionEnabled && (!string.IsNullOrWhiteSpace(packageRetentionJournalPath) || !string.IsNullOrWhiteSpace(tentacleHome));
         }
 
         public static void SetOutputVariable(this IVariables variables, string name, string? value)

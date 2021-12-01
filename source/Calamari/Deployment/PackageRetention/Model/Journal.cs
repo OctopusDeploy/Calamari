@@ -25,7 +25,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             this.variables = variables;
         }
 
-        public void RegisterPackageUse(IVariables variables)
+        public void RegisterPackageUse()
         {
             if (!IsRetentionEnabled())
                 return;
@@ -94,8 +94,7 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         bool IsRetentionEnabled()
         {
-            var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome);
-            return variables.IsPackageRetentionEnabled() && tentacleHome != null;
+            return variables.IsPackageRetentionEnabled();
         }
 
         public bool HasLock(PackageIdentity package)
