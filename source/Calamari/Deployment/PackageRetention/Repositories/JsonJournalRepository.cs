@@ -73,9 +73,8 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
                     log.Warn($"The existing package retention journal file {journalPath} could not be read. The file will be renamed to {backupJournalFileName}. A new journal will be created.");
 
-                    var backupJournalPath = Path.GetDirectoryName(journalPath) + Path.DirectorySeparatorChar + backupJournalFileName;
                     // NET Framework 4.0 doesn't have File.Move(source, dest, overwrite) so we use Copy and Delete to replicate this
-                    File.Copy(journalPath, backupJournalPath, true);
+                    File.Copy(journalPath, Path.Combine(Path.GetDirectoryName(journalPath), backupJournalFileName), true);
                     File.Delete(journalPath);
 
                     journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
