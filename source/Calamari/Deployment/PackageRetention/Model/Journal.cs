@@ -73,7 +73,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public void DeregisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId)
+        public void DeregisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId)
         {
             try
             {
@@ -81,7 +81,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                 {
                     if (repository.TryGetJournalEntry(package, out var entry))
                     {
-                        entry.RemoveLock(serverTaskId);
+                        entry.RemoveLock(deploymentTaskId);
                         repository.Commit();
                     }
                 }
