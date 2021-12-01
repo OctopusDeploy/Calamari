@@ -145,6 +145,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [TestCase(false, false, false, false)]
         public void WhenRetentionIsDisabled_DoNotAllowPackageUsageToBeRecorded(bool setRetentionEnabledFromServer, bool setPackageRetentionJournalPath, bool setTentacleHome, bool shouldBeEnabled)
         {
+            //Retention should only be enabled if EnablePackageRetention is true, and either of TentacleHome and PackageRetentionJournalPath are set.
             var ourVariables = new CalamariVariables();
 
             if (setRetentionEnabledFromServer)
