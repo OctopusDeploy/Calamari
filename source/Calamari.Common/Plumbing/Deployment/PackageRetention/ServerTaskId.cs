@@ -6,7 +6,6 @@ using Newtonsoft.Json;
 
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
-    //[TypeConverter(typeof(TinyTypeTypeConverter<ServerTaskID>))]
     public class ServerTaskId : CaseInsensitiveTinyType
     {
         [JsonConstructor]
