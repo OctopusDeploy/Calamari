@@ -91,7 +91,6 @@ namespace Calamari
             builder.RegisterDecorator<ICommandWithArgs>((c, inner)
                                                             => new PackageJournalCommandDecorator(c.Resolve<ILog>(),
                                                                                            inner,
-                                                                                           c.Resolve<IVariables>(),
                                                                                            c.Resolve<IManagePackageUse>()),
                                                         fromKey: nameof(PackageLockingCommandAttribute) + "From",
                                                         toKey: nameof(PackageLockingCommandAttribute));
