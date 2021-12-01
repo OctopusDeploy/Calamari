@@ -5,6 +5,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Tests.Fixtures.PackageRetention.Repository;
+using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 //using Octopus.Diagnostics;
@@ -124,7 +125,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenPackageIsRegisteredAndDeregistered_ThenUsageIsStillRecorded()
         {
-
             var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new ServerTaskId("Deployment-1");
 
@@ -133,6 +133,36 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             journal.DeregisterPackageUse(thePackage, deploymentOne);
 
             Assert.AreEqual(1, journal.GetUsage(thePackage).Count());
+        }
+
+        [TestCase(true, true, true, true)]
+        [TestCase(true, true, false, true)]
+        [TestCase(true, false, true, true)]
+        [TestCase(true, false, false, false)]
+        [TestCase(false, true, true, false)]
+        [TestCase(false, true, false, false)]
+        [TestCase(false, false, true, false)]
+        [TestCase(false, false, false, false)]
+        public void WhenRetentionIsDisabled_DoNotAllowPackageUsageToBeRecorded(bool setRetentionEnabledFromServer, bool setPackageRetentionJournalPath, bool setTentacleHome, bool shouldBeEnabled)
+        {
+            var ourVariables = new CalamariVariables();
+
+            if (setRetentionEnabledFromServer)
+                ourVariables.Set(KnownVariables.Calamari.EnablePackageRetention, Boolean.TrueString);
+
+            if (setTentacleHome)
+                ourVariables.Set(TentacleVariables.Agent.TentacleHome, "TentacleHome");
+
+            if (setPackageRetentionJournalPath)
+                ourVariables.Set(KnownVariables.Calamari.PackageRetentionJournalPath, "JournalPath");
+
+            var thePackage = new PackageIdentity("Package", "1.0");
+            var deploymentOne = new ServerTaskId("Deployment-1");
+
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(), ourVariables, Substitute.For<ILog>());
+            journal.RegisterPackageUse(thePackage, deploymentOne);
+            var didRegisterPackage = journal.GetUsageCount(thePackage) == 1;
+            Assert.That(didRegisterPackage == shouldBeEnabled);
         }
     }
 }
