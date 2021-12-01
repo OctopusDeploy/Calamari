@@ -62,7 +62,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             {
                 var json = File.ReadAllText(journalPath);
 
-                if (TryParseJournal(json, out var journalContents))
+                if (TryDeserializeJournalEntries(json, out var journalContents))
                 {
                     journalEntries = journalContents.ToDictionary(entry => entry.Package, entry => entry);
                 }
@@ -104,7 +104,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             semaphore.Dispose();
         }
 
-        static bool TryParseJournal(string json, out List<JournalEntry> result)
+        static bool TryDeserializeJournalEntries(string json, out List<JournalEntry> result)
         {
             try
             {
@@ -113,7 +113,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             }
             catch (Exception e)
             {
-                Log.Verbose($"Unable to parse the package retention journal file. Error message: {e.ToString()}");
+                Log.Verbose($"Unable to deserialize entries in the package retention journal file. Error message: {e.ToString()}");
                 result = new List<JournalEntry>();
                 return false;
             }
