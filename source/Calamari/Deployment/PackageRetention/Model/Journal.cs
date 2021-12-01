@@ -24,10 +24,14 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RegisterPackageUse()
         {
-            if (!IsRetentionEnabled())
-                return;
-
-            RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables));
+            try
+            {
+                RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables));
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Unable to register package use for retention.{Environment.NewLine}{ex.ToString()}");
+            }
         }
 
         public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId)
