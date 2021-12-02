@@ -21,16 +21,16 @@ namespace Calamari.Commands
     {
         readonly IVariables variables;
         readonly ILog log;
-        readonly IManagePackageUse packageJournal;
+        readonly IManagePackageUse journal;
 
         string packageId;
         string packageVersion;
 
-        public ReleasePackageLockCommand(IVariables variables, IManagePackageUse packageJournal, ILog log)
+        public ReleasePackageLockCommand(IVariables variables, IManagePackageUse journal, ILog log)
         {
             this.variables = variables;
             this.log = log;
-            this.packageJournal = packageJournal;
+            this.journal = journal;
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
         }
@@ -46,9 +46,9 @@ namespace Calamari.Commands
                 Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
                 Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
 
-                var packageIdentity = new PackageIdentity(packageId, packageVersion);
+                var packageIdentity = PackageIdentity.GetPackageIdentity(journal, variables, commandLineArguments);
 
-                packageJournal.DeregisterPackageUse(packageIdentity, taskId);
+                journal.DeregisterPackageUse(packageIdentity, taskId);
             }
             catch (Exception ex)
             {
