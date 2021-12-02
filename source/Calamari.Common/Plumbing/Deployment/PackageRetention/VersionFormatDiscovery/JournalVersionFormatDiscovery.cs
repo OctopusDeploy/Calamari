@@ -17,7 +17,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDisc
 
             if (packageStr != null && versionStr != null)
             {
-                success = journal.TryGetVersionFormat(new PackageId(packageStr), packageStr, out formatFromJournal);
+                success = journal.TryGetVersionFormat(new PackageId(packageStr), versionStr, out formatFromJournal);
             }
 
             format = success ? formatFromJournal : defaultFormat;
