@@ -49,21 +49,5 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             Assert.Throws(Is.TypeOf<Exception>().And.Message.Contains("not found").IgnoreCase,
                           () => PackageIdentity.GetPackageIdentity(new Journal(null, null, null), variables, new string[0]));
         }
-
-        [TestCase("Octopus", VersionFormat.Octopus)]
-        [TestCase("ThisShouldDefaultToSemver", VersionFormat.Semver)]
-        public void WhenCommandLineArgsContainsValidVersionFormat_ThenUseThatFormat(string formatString, VersionFormat expectedFormat)
-        {
-            var variables = new CalamariVariables();
-            variables.Add(PackageVariables.PackageId, "Package1");
-            variables.Add(PackageVariables.PackageVersion, "1.0");
-
-            var commandLineArgs = new string[2] { "--packageVersionFormat", formatString};
-
-            var identity = PackageIdentity.GetPackageIdentity(new Journal(null, null, null), variables, commandLineArgs);
-            Assert.AreEqual("1.0", identity.Version.OriginalString);
-            Assert.AreEqual("Package1", identity.PackageId.Value);
-            Assert.AreEqual(expectedFormat, identity.Version.Format);
-        }
     }
 }

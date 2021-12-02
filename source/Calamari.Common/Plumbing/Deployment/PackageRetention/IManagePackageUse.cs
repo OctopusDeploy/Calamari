@@ -15,5 +15,6 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         bool TryGetVersionFormat(PackageId packageId, string version, out VersionFormat versionFormat);
         bool HasLock(PackageIdentity package);
         void ExpireStaleLocks();
+        void ApplyRetention(long spaceNeeded);
     }
 }

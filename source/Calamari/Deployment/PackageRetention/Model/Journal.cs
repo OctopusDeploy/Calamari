@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Repositories;
 using Octopus.Versioning;
 
@@ -13,14 +15,16 @@ namespace Calamari.Deployment.PackageRetention.Model
     public class Journal : IManagePackageUse
     {
         readonly IJournalRepositoryFactory repositoryFactory;
+        readonly IRetentionAlgorithm retentionAlgorithm;
         readonly IVariables variables;
         readonly ILog log;
 
-        public Journal(IJournalRepositoryFactory repositoryFactory, IVariables variables, ILog log)
+        public Journal(IJournalRepositoryFactory repositoryFactory, IVariables variables, IRetentionAlgorithm retentionAlgorithm, ILog log)
         {
             this.repositoryFactory = repositoryFactory;
-            this.log = log;
             this.variables = variables;
+            this.retentionAlgorithm = retentionAlgorithm;
+            this.log = log;
         }
 
         public void RegisterPackageUse()
@@ -49,6 +53,7 @@ namespace Calamari.Deployment.PackageRetention.Model
 
                     if (repository.TryGetJournalEntry(package, out var entry))
                     {
+                        entry.Package.UpdatePackageSize();
                         entry.AddUsage(deploymentTaskId, age);
                         entry.AddLock(deploymentTaskId, age);
                     }
@@ -151,6 +156,16 @@ namespace Calamari.Deployment.PackageRetention.Model
         public void ExpireStaleLocks()
         {
             throw new NotImplementedException();
+        }
+
+        public void ApplyRetention(long spaceNeeded)
+        {
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                var journalEntries = repository.GetAllJournalEntries();
+                var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalEntries, spaceNeeded);
+                //TODO: implement this.
+            }
         }
     }
 }
