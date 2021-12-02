@@ -47,7 +47,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             variables.Add(PackageVariables.PackageVersion, version);
 
             Assert.Throws(Is.TypeOf<Exception>().And.Message.Contains("not found").IgnoreCase,
-                          () => PackageIdentity.GetPackageIdentity(new Journal(null, null, null), variables, new string[0]));
+                          () => PackageIdentity.GetPackageIdentity(new Journal(null, null, null, null), variables, new string[0]));
         }
     }
 }
