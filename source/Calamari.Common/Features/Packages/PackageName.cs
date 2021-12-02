@@ -182,7 +182,7 @@ namespace Calamari.Common.Features.Packages
                 metadata = FromFile(path);
                 return true;
             }
-            catch(Exception ex)
+            catch
             {
                 metadata = new PackageFileNameMetadata("", new SemanticVersion(0,0,0) ,"");
                 return false;

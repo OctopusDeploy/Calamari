@@ -6,6 +6,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Repositories;
+using Octopus.Versioning;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
@@ -121,6 +122,30 @@ namespace Calamari.Deployment.PackageRetention.Model
         public int GetUsageCount(PackageIdentity package)
         {
             return GetUsage(package).Count();
+        }
+
+        public bool TryGetVersionFormat(PackageId packageId, string version, out VersionFormat versionFormat)
+        {
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                //Try to match on version, if that doesn't work, then just get another entry.
+                var entryMatchingVersion = repository.GetJournalEntries(packageId).FirstOrDefault(je => je.Package.Version.OriginalString == version)
+                                        ?? repository.GetJournalEntries(packageId).FirstOrDefault();
+
+                versionFormat = entryMatchingVersion == null ? VersionFormat.Semver : entryMatchingVersion.Package.Version.Format;
+
+                return entryMatchingVersion != null;
+            }
+        }
+
+        public bool TryGetVersionFormat(PackageId packageId, ServerTaskId deploymentTaskID, out VersionFormat? format)
+        {
+            //We can call this if we don't know the package version format from variables - if this isn't the first time this package has been referenced by this server task, then we should be able to get it from an earlier use (eg from FindPackageCommand)
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                return repository.GetJournalEntries(packageId, deploymentTaskID)
+                                 .TryGetFirstValidVersionFormat(out format);
+            }
         }
 
         public void ExpireStaleLocks()
