@@ -7,31 +7,47 @@ namespace Calamari.Tests.Fixtures.PackageRetention
     public class TinyTypeFixture
     {
         [Test]
-        public void EquivalentValuesAreEqualTinyTypes()
+        public void EquivalentValuesWithSameTypesAreEqualTinyTypes()
         {
-            var tt1 = ATinyType.Create<ATinyType>("Value");
-            var tt2 = AnotherTinyType.Create<AnotherTinyType>("Value");
+            var tt1 = ATinyType.Create<ATinyType>(10);
+            var tt2 = ATinyType.Create<ATinyType>(10);
             Assert.AreEqual(tt1, tt2);
         }
 
         [Test]
-        public void EquivalentValuesHaveEqualHashCodes()
+        public void EquivalentValuesWithDifferentTypesAreNotEqualTinyTypes()
         {
-            var tt1 = ATinyType.Create<ATinyType>("Value");
-            var tt2 = AnotherTinyType.Create<AnotherTinyType>("Value");
+            var tt1 = ATinyType.Create<ATinyType>(10);
+            var tt2 = AnotherTinyType.Create<AnotherTinyType>(10);
+            Assert.AreNotEqual(tt1, tt2);
+        }
+
+        [Test]
+        public void EquivalentValuesWithSameTypesHaveEqualHashCodes()
+        {
+            var tt1 = ATinyType.Create<ATinyType>(10);
+            var tt2 = ATinyType.Create<ATinyType>(10);
             Assert.AreEqual(tt1.GetHashCode(), tt2.GetHashCode());
         }
 
-        class ATinyType : TinyType<string>
+        [Test]
+        public void EquivalentValuesWithDifferentTypesHaveUnequalHashCodes()
         {
-            public ATinyType(string value) : base(value)
+            var tt1 = ATinyType.Create<ATinyType>(10);
+            var tt2 = AnotherTinyType.Create<AnotherTinyType>(10);
+            Assert.AreNotEqual(tt1.GetHashCode(), tt2.GetHashCode());
+        }
+
+        class ATinyType : TinyType<int>
+        {
+            public ATinyType(int value) : base(value)
             {
             }
         }
 
-        class AnotherTinyType : TinyType<string>
+        class AnotherTinyType : TinyType<int>
         {
-            public AnotherTinyType(string value) : base(value)
+            public AnotherTinyType(int value) : base(value)
             {
             }
         }
