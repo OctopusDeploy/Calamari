@@ -9,7 +9,7 @@ namespace Calamari.Deployment.PackageRetention.Model
     public class JournalEntry
     {
         public PackageIdentity Package { get; }
-        
+
         [JsonProperty]
         readonly PackageUsages usages;
 
@@ -36,9 +36,7 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RemoveLock(ServerTaskId deploymentTaskId)
         {
-            //We only remove the first lock that matches the deployment task id, in case we have a deployment that uses the same package twice.
-            var usageLock = locks.FirstOrDefault(l => l.DeploymentTaskId == deploymentTaskId);
-            locks.Remove(usageLock);
+            locks.RemoveAll(l => l.DeploymentTaskId == deploymentTaskId);
         }
 
         public bool HasLock() => locks.Count > 0;
