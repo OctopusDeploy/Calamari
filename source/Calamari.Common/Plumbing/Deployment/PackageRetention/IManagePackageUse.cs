@@ -12,6 +12,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         void DeregisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId);
         IEnumerable<DateTime> GetUsage(PackageIdentity package);
         bool HasLock(PackageIdentity package);
+        void ApplyRetention(ulong spaceRequired);
         void ExpireStaleLocks();
     }
 }

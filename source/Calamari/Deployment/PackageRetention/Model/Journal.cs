@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Repositories;
 
 namespace Calamari.Deployment.PackageRetention.Model
@@ -13,11 +15,16 @@ namespace Calamari.Deployment.PackageRetention.Model
         readonly IJournalRepositoryFactory repositoryFactory;
         readonly IVariables variables;
         readonly ILog log;
-
-        public Journal(IJournalRepositoryFactory repositoryFactory, IVariables variables, ILog log)
+        readonly ICalamariFileSystem fileSystem;
+        readonly IRetentionAlgorithm retentionAlgorithm;
+        
+        public Journal(IJournalRepositoryFactory repositoryFactory, ILog log, ICalamariFileSystem fileSystem, IRetentionAlgorithm retentionAlgorithm,
+                       IVariables variables)
         {
             this.repositoryFactory = repositoryFactory;
             this.log = log;
+            this.fileSystem = fileSystem;
+            this.retentionAlgorithm = retentionAlgorithm;
             this.variables = variables;
         }
 
@@ -98,6 +105,24 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 return repository.TryGetJournalEntry(package, out var entry)
                        && entry.PackageLocks.HasLock();
+            }
+        }
+
+        public void ApplyRetention(ulong spaceRequired)
+        {
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), spaceRequired);
+
+                foreach (var package in packagesToRemove)
+                {
+                    if (string.IsNullOrWhiteSpace(package.Path) || !fileSystem.FileExists(package.Path)) return;
+
+                    Log.Info($"Removing package file '{package.Path}'");
+                    fileSystem.DeleteFile(package.Path, FailureOptions.IgnoreFailure);
+
+                    repository.RemovePackageEntry(package);
+                }
             }
         }
 

@@ -35,6 +35,16 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
             journalEntries.Add(entry.Package, entry);
         }
 
+        public IList<JournalEntry> GetAllJournalEntries()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RemovePackageEntry(PackageIdentity packageIdentity)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Commit()
         {
             //This does nothing in the in-memory implementation

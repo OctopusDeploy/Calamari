@@ -35,6 +35,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             Load();
         }
 
+        public void RemovePackageEntry(PackageIdentity package)
+        {
+            journalEntries.Remove(package);
+        }
+
         public bool TryGetJournalEntry(PackageIdentity package, out JournalEntry entry)
         {
             return journalEntries.TryGetValue(package, out entry);
@@ -97,6 +102,12 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
             fileSystem.WriteAllText(tempFilePath,json, Encoding.Default);
             fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
+        }
+        
+        public IList<JournalEntry> GetAllJournalEntries()
+        {
+            return journalEntries.Select(pair => pair.Value)
+                                 .ToList();
         }
 
         public void Dispose()

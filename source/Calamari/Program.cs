@@ -16,6 +16,7 @@ using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Integration.Certificates;
@@ -70,6 +71,7 @@ namespace Calamari
             builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
             builder.RegisterType<JsonJournalRepositoryFactory>().As<IJournalRepositoryFactory>();
             builder.RegisterType<Journal>().As<IManagePackageUse>();
+            builder.RegisterType<RetentionAlgorithm>().As<IRetentionAlgorithm>();
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
