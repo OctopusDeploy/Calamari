@@ -76,7 +76,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
             return $"{PackageId} v{Version}";
         }
 
-        public static PackageIdentity GetPackageIdentity(IManagePackageUse journal, IVariables variables, string[] commandLineArguments)
+        public static PackageIdentity GetPackageIdentity(IVariables variables)
         {
             var packageStr = variables.Get(PackageVariables.PackageId) ?? throw new Exception("Package Id not found.");
             var versionStr = variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
