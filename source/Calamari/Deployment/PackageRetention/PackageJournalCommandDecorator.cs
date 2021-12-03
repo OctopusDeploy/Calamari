@@ -34,7 +34,7 @@ namespace Calamari.Deployment.PackageRetention
                 try
                 {
                     var deploymentTaskId = new ServerTaskId(variables);
-                    var package = PackageIdentity.GetPackageIdentity(journal, variables, commandLineArguments);
+                    var package = PackageIdentity.CreatePackageIdentity(journal, variables, commandLineArguments);
 
                     journal.RegisterPackageUse(package, deploymentTaskId);
                 }

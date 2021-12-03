@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Commands.Options;
 using Calamari.Common.Plumbing.Variables;
 using Octopus.Versioning;
@@ -11,15 +12,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDisc
         {
             var success = false;
             var parsedFormat = defaultFormat;
-            var customOptions = new OptionSet();
-            customOptions.Add("packageVersionFormat=",
-                              $"",
-                              v =>
-                              {
-                                  success = Enum.TryParse(v, out parsedFormat);
-                              });
-
-            customOptions.Parse(commandLineArguments);
+            commandLineArguments.ParseArgument("packageVersionFormat", v => success = Enum.TryParse(v, out parsedFormat));
             format = success ? parsedFormat : defaultFormat;
             return success;
         }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Commands.Options;
 using Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDiscovery;
 using Calamari.Common.Plumbing.FileSystem;
@@ -92,18 +93,28 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
             versionFormatDiscoverers = new List<ITryToDiscoverVersionFormat>(formatDiscoverers);
         }
 
-        public static PackageIdentity GetPackageIdentity(IManagePackageUse journal, IVariables variables, string[] commandLineArguments)
+        /// <summary>
+        /// Creates a 
+        /// </summary>
+        /// <param name="journal"></param>
+        /// <param name="variables"></param>
+        /// <param name="commandLineArguments"></param>
+        /// <param name="packageId"></param>
+        /// <param name="version"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static PackageIdentity CreatePackageIdentity(IManagePackageUse journal, IVariables variables, string[] commandLineArguments, string? packageId = null, string? version = null )
         {
-            var packageStr = variables.Get(PackageVariables.PackageId) ?? throw new Exception("Package Id not found.");
-            var versionStr = variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
+            var versionStr = version ?? variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
             var packagePath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
-            var packageId = new PackageId(packageStr);
-            var versionFormat = VersionFormat.Semver;
 
+            var packageIdObj = PackageId.CreatePackageId(packageId, variables, commandLineArguments);
+
+            var versionFormat = VersionFormat.Semver;
             // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
             versionFormatDiscoverers.FirstOrDefault(d => d.TryDiscoverVersionFormat(journal, variables, commandLineArguments, out versionFormat));
 
-            return new PackageIdentity(packageId, VersionFactory.CreateVersion(versionStr, versionFormat));
+            return new PackageIdentity(packageIdObj, VersionFactory.CreateVersion(versionStr, versionFormat), packagePath);
         }
 
         public void UpdatePackageSize()
