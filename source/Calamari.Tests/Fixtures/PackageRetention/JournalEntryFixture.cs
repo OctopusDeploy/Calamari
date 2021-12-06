@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
@@ -6,7 +7,9 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.PackageRetention.Repository;
+using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -17,7 +20,11 @@ namespace Calamari.Tests.Fixtures.PackageRetention
     [TestFixture]
     public class JournalEntryFixture
     {
+        static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageJournal");
+        static readonly string PackageDirectory = Path.Combine(TentacleHome, "Files");
+
         IVariables variables;
+        ICalamariFileSystem fileSystem;
 
         [SetUp]
         public void Setup()
@@ -25,6 +32,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             variables = new CalamariVariables();
             variables.Set(KnownVariables.Calamari.EnablePackageRetention, bool.TrueString);
             variables.Set(TentacleVariables.Agent.TentacleHome, "SomeDirectory");
+            
+            fileSystem = Substitute.For<ICalamariFileSystem>();
         }
 
         [Test]
@@ -136,13 +145,31 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             Assert.AreEqual(1, journal.GetUsage(thePackage).Count());
         }
+        
+        [Test]
+        public void ApplyRetention_RemovesPackageFile_AndUsage()
+        {
+            var thePackage = new PackageIdentity("Package", "1.0");
+            var deploymentOne = new ServerTaskId("Deployment-1");
+    
+            var journal = GetPackageJournal();
+            journal.RegisterPackageUse(thePackage, deploymentOne);
+
+            journal.ApplyRetention(PackageDirectory);
+
+            // TODO: Fix these assertions
+            // How do we ensure the given package will be marked for removal?
+            // How do we simulate needing more disk space
+            journal.GetUsage(thePackage).Should().BeEmpty();
+            fileSystem.Received().DeleteFile(thePackage.Path);
+        }
 
         Journal GetPackageJournal()
         {
             return new Journal(
                                new InMemoryJournalRepositoryFactory(),
                                Substitute.For<ILog>(),
-                               Substitute.For<ICalamariFileSystem>(),
+                               fileSystem,
                                Substitute.For<IRetentionAlgorithm>(),
                                variables,
                                Substitute.For<IFreeSpaceChecker>()
