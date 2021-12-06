@@ -32,12 +32,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         {
             var thePackage = new PackageIdentity("Package", "1.0");
             var theDeployment = new ServerTaskId("Deployment-1");
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(),
-                                      Substitute.For<ILog>(),
-                                      Substitute.For<ICalamariFileSystem>(),
-                                      Substitute.For<IRetentionAlgorithm>(),
-                                      Substitute.For<IVariables>(),
-                                      Substitute.For<IFreeSpaceChecker>());
+            var journal = GetPackageJournal();
 
             journal.RegisterPackageUse(thePackage, theDeployment);
 
@@ -142,14 +137,14 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             Assert.AreEqual(1, journal.GetUsage(thePackage).Count());
         }
 
-        public static Journal GetPackageJournal()
+        Journal GetPackageJournal()
         {
             return new Journal(
                                new InMemoryJournalRepositoryFactory(),
                                Substitute.For<ILog>(),
                                Substitute.For<ICalamariFileSystem>(),
                                Substitute.For<IRetentionAlgorithm>(),
-                               Substitute.For<IVariables>(),
+                               variables,
                                Substitute.For<IFreeSpaceChecker>()
                               );
         }

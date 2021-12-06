@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
@@ -37,12 +38,13 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
 
         public IList<JournalEntry> GetAllJournalEntries()
         {
-            throw new NotImplementedException();
+            return journalEntries.Select(pair => pair.Value)
+                                 .ToList();
         }
 
         public void RemovePackageEntry(PackageIdentity packageIdentity)
         {
-            throw new NotImplementedException();
+            journalEntries.Remove(packageIdentity);
         }
 
         public void Commit()
