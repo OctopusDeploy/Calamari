@@ -28,9 +28,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static readonly string FeedPassword = ExternalVariables.Get(ExternalVariable.GitHubPassword);
 
         static readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        static readonly FreeSpaceChecker freeSpaceChecker = new FreeSpaceChecker(fileSystem, new CalamariVariables());
-            
-        private static string home = Path.GetTempPath();
+
+        static string home = Path.GetTempPath();
         [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
@@ -106,7 +105,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             return new GitHubPackageDownloader(
                                                new InMemoryLog(),
                                                fileSystem,
-                                               freeSpaceChecker,
                                                new Journal(
                                                            new InMemoryJournalRepositoryFactory(),
                                                            Substitute.For<ILog>(),

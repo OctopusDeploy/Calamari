@@ -28,15 +28,13 @@ namespace Calamari.Integration.Packages.Download
 
         public static readonly string DownloadingExtension = ".downloading";
         readonly ICalamariFileSystem fileSystem;
-        readonly IFreeSpaceChecker freeSpaceChecker;
         readonly IManagePackageUse packageJournal;
         readonly ILog log;
 
-        public GitHubPackageDownloader(ILog log, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, IManagePackageUse packageJournal)
+        public GitHubPackageDownloader(ILog log, ICalamariFileSystem fileSystem, IManagePackageUse packageJournal)
         {
             this.log = log;
             this.fileSystem = fileSystem;
-            this.freeSpaceChecker = freeSpaceChecker;
             this.packageJournal = packageJournal;
         }
 

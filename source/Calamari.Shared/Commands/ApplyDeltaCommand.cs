@@ -23,17 +23,15 @@ namespace Calamari.Commands
         string? newFileName;
         bool showProgress;
         bool skipVerification;
-        
-        readonly IFreeSpaceChecker freeSpaceChecker;
+
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly IManagePackageUse packageJournal;
         readonly ILog log;
 
-        public ApplyDeltaCommand(ILog log, IFreeSpaceChecker freeSpaceChecker, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner,
+        public ApplyDeltaCommand(ILog log, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner,
                                  IManagePackageUse packageJournal)
         {
-            this.freeSpaceChecker = freeSpaceChecker;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.packageJournal = packageJournal;

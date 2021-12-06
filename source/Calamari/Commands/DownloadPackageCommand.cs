@@ -22,7 +22,6 @@ namespace Calamari.Commands
     public class DownloadPackageCommand : Command
     {
         private readonly IScriptEngine scriptEngine;
-        readonly IFreeSpaceChecker freeSpaceChecker;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
@@ -43,7 +42,6 @@ namespace Calamari.Commands
 
         public DownloadPackageCommand(
             IScriptEngine scriptEngine,
-            IFreeSpaceChecker freeSpaceChecker,
             IVariables variables,
             ICalamariFileSystem fileSystem,
 			ICommandLineRunner commandLineRunner,
@@ -51,7 +49,6 @@ namespace Calamari.Commands
             IManagePackageUse packageJournal)
         {
             this.scriptEngine = scriptEngine;
-            this.freeSpaceChecker = freeSpaceChecker;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.log = log;
@@ -111,7 +108,6 @@ namespace Calamari.Commands
                 var packageDownloaderStrategy = new PackageDownloaderStrategy(log,
                     scriptEngine,
                     fileSystem,
-                    freeSpaceChecker,
                     commandLineRunner,
                     variables,
                     packageJournal);
