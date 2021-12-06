@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Net;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.FileSystem;
+using Calamari.Deployment.PackageRetention.Caching;
+using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Integration.Packages.Download;
-using Calamari.Integration.Processes;
-using Calamari.Tests.Fixtures.Integration.FileSystem;
+using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using Calamari.Tests.Helpers;
+using NSubstitute;
 using NUnit.Framework;
 using Octopus.Versioning;
 
@@ -34,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [RequiresNonFreeBSDPlatform]
         public void DownloadMavenPackage()
         {
-            var downloader = new MavenPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new FreeSpaceChecker(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CalamariVariables()));
+            var downloader = GetDownloader();
             var pkg = downloader.DownloadPackage("com.google.guava:guava", VersionFactory.CreateMavenVersion("22.0"), "feed-maven",
                 new Uri("https://repo.maven.apache.org/maven2/"), "", "", true, 3, TimeSpan.FromSeconds(3));
 
@@ -46,11 +48,25 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [RequiresNonFreeBSDPlatform]
         public void DownloadMavenSourcePackage()
         {
-            var downloader = new MavenPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new FreeSpaceChecker(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new CalamariVariables()));
+            var downloader = GetDownloader();
             var pkg = downloader.DownloadPackage("com.google.guava:guava:jar:sources", VersionFactory.CreateMavenVersion("22.0"), "feed-maven",
                 new Uri("https://repo.maven.apache.org/maven2/"), "", "", true, 3, TimeSpan.FromSeconds(3));
 
             Assert.AreEqual("com.google.guava:guava:jar:sources", pkg.PackageId);
+        }
+
+        static MavenPackageDownloader GetDownloader()
+        {
+            return new MavenPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
+                                              new Journal(
+                                                          new InMemoryJournalRepositoryFactory(),
+                                                          Substitute.For<ILog>(),
+                                                          Substitute.For<ICalamariFileSystem>(),
+                                                          Substitute.For<IRetentionAlgorithm>(),
+                                                          Substitute.For<IVariables>(),
+                                                          Substitute.For<IFreeSpaceChecker>()
+                                                         )
+                                             );
         }
     }
 }

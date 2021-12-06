@@ -2,10 +2,15 @@
 using System.IO;
 using System.Net;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention.Caching;
+using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
+using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using Calamari.Tests.Helpers;
+using NSubstitute;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
@@ -50,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
         public void DownloadsPackageFromGitHub()
         {
-            var downloader = new GitHubPackageDownloader(new InMemoryLog(), fileSystem, freeSpaceChecker);
+            var downloader = GetDownloader();
 
             var file = downloader.DownloadPackage("OctopusDeploy/Octostache", new SemanticVersion("2.1.8"), "feed-github",
                 new Uri(AuthFeedUri), FeedUsername, FeedPassword,
@@ -65,7 +70,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
         public void WillReUseFileIfItExists()
         {
-            var downloader = new GitHubPackageDownloader(new InMemoryLog(), fileSystem, freeSpaceChecker);
+            var downloader = GetDownloader();
 
             var file1 = downloader.DownloadPackage("OctopusDeploy/Octostache", new SemanticVersion("2.1.7"), "feed-github",
                 new Uri(AuthFeedUri), FeedUsername, FeedPassword, true, 3,
@@ -86,7 +91,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Category(TestCategory.CompatibleOS.OnlyWindows)] //Keeps rate limit low
         public void DownloadsPackageFromGitHubWithDifferentVersionFormat()
         {
-            var downloader = new GitHubPackageDownloader(new InMemoryLog(), fileSystem, freeSpaceChecker);
+            var downloader = GetDownloader();
 
             var file = downloader.DownloadPackage("octokit/octokit.net", new SemanticVersion("0.28.0"), "feed-github",
                 new Uri(AuthFeedUri), FeedUsername, FeedPassword, true, 3,
@@ -94,6 +99,23 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
             Assert.Greater(file.Size, 0);
             Assert.IsFalse(String.IsNullOrWhiteSpace(file.Hash));
+        }
+
+        static GitHubPackageDownloader GetDownloader()
+        {
+            return new GitHubPackageDownloader(
+                                               new InMemoryLog(),
+                                               fileSystem,
+                                               freeSpaceChecker,
+                                               new Journal(
+                                                           new InMemoryJournalRepositoryFactory(),
+                                                           Substitute.For<ILog>(),
+                                                           Substitute.For<ICalamariFileSystem>(),
+                                                           Substitute.For<IRetentionAlgorithm>(),
+                                                           Substitute.For<IVariables>(),
+                                                           Substitute.For<IFreeSpaceChecker>()
+                                                          )
+                                              );
         }
     }
 }

@@ -58,13 +58,13 @@ namespace Calamari.Integration.Packages.Download
             switch (feedType)
             {
                 case FeedType.Maven:
-                    downloader = new MavenPackageDownloader(fileSystem, freeSpaceChecker);
+                    downloader = new MavenPackageDownloader(fileSystem, packageJournal);
                     break;
                 case FeedType.NuGet:
                     downloader = new NuGetPackageDownloader(fileSystem, freeSpaceChecker, variables, packageJournal);
                     break;
                 case FeedType.GitHub:
-                    downloader = new GitHubPackageDownloader(log, fileSystem, freeSpaceChecker);
+                    downloader = new GitHubPackageDownloader(log, fileSystem, freeSpaceChecker, packageJournal);
                     break;
                 case FeedType.Helm:
                     downloader = new HelmChartPackageDownloader(fileSystem);

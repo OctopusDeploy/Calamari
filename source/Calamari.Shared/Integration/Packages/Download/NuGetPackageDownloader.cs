@@ -106,12 +106,7 @@ namespace Calamari.Integration.Packages.Download
         {
             Log.Info("Downloading NuGet package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
-
-            var requiredSpace = freeSpaceChecker.GetRequiredSpace(cacheDirectory);
-            if (requiredSpace > 0)
-            {
-                packageJournal.ApplyRetention(requiredSpace);
-            }
+            packageJournal.ApplyRetention(cacheDirectory);
 
             var fullPathToDownloadTo = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, ".nupkg"));
 
