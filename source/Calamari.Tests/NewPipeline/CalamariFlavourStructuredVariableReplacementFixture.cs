@@ -16,6 +16,21 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.NewPipeline
 {
+    /// <summary>
+    /// Ensures that in both CalamariFlavour programs, we can fall back to the correct file replacer
+    /// for Structured Variable Replacement when the file extension of the target file doesn't match the
+    /// canonical extension for the replacer
+    /// </summary>
+    /// <remarks>
+    /// We don't support content-based fallback for Java Properties files. They must have the .properties extension.
+    ///
+    /// Because of the lack of an actual standard for .properties file (it's basically a glorified set of
+    /// key/value pairs, with very loose rules around content), it's not possible to distinguish between
+    /// a YAML and a Properties file via parsers alone. Properties files will (almost) always succeed in
+    /// the YAML parser. Given  the relative improbability of needing to replace a properties file that
+    /// doesn't have the .properties extension, and the relative ubiquity of YAML under a variety of
+    /// extensions, this is a known and accepted constraint.
+    /// </remarks>
     [TestFixture]
     public class CalamariFlavourProgramStructuredVariableReplacementFixture
     {
