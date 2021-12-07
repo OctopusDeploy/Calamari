@@ -20,7 +20,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         }
 
         [Test]
-        public void WhenOldestEntryHasEnoughSpaceToUse_ThenReturnIt()
+        public void WhenOnlyRelyingOnAge_ThenReturnOldest()
         {
             var entries = new List<JournalEntry>
             {
@@ -33,6 +33,19 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             lfu.GetPackagesToRemove(entries, 10_000).Should().ContainSingle().Which.PackageId.Value.Should().Be("package-1");
         }
 
+        [Test]
+        public void WhenOldestEntryHasEnoughSpaceToUse_ThenReturnIt()
+        {
+            var entries = new List<JournalEntry>
+            {
+                CreateEntry("package-1", "1.0.0", 10_000, new []{("task-1", 1)}),
+                CreateEntry("package-2", "1.0.0", 10_000, new []{("task-2", 10)})
+            };
+
+            var lfu = new LeastFrequentlyUsedWithAgingCacheAlgorithm();
+
+            lfu.GetPackagesToRemove(entries, 10_000).Should().ContainSingle().Which.PackageId.Value.Should().Be("package-1");
+        }
 
         JournalEntry CreateEntry(string packageId,
                                  string version,

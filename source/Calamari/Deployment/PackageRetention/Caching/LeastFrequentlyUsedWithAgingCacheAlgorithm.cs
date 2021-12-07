@@ -24,9 +24,11 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
             var packagesToRemove = orderedPackages.TakeWhile(p =>
                                                              {
-                                                                 spaceFound += p.PackageIdentity.FileSizeBytes;
-                                                                 return spaceFound < spaceNeeded;
-                                                             });
+                                                                 if (spaceFound >= spaceNeeded) return false; //Already found enough space
+
+                                                                 spaceFound += p.Package.FileSizeBytes;
+                                                                 return true;
+                                                             }).ToList();
 
             if (spaceFound < spaceNeeded)
             {
@@ -36,7 +38,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
                 throw new InsufficientCacheSpaceException($"Could only free { BytesToString(spaceFound)} for the required {BytesToString(spaceNeeded)}.");
             }
 
-            return packagesToRemove.Select(pi => pi.PackageIdentity);
+            return packagesToRemove.Select(pi => pi.Package);
         }
 
         //From https://stackoverflow.com/a/4975942
@@ -67,13 +69,15 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
         int ScaleRange(int newerVersionCount, int minNumberOfNewerVersions, int maxNumberOfNewerVersions)
         {
-            var scale = 1 / (maxNumberOfNewerVersions - minNumberOfNewerVersions); //Scales from 0..1
+            var divisor = maxNumberOfNewerVersions - minNumberOfNewerVersions;
+            divisor = divisor == 0 ? 1 : divisor;
+            var scale = 1 / divisor; //Scales from 0..1
             return (newerVersionCount - minNumberOfNewerVersions) * scale;
         }
 
         class PackageInfo
         {
-            public PackageIdentity PackageIdentity { get; set; }
+            public PackageIdentity Package { get; set; }
 
             public CacheAge Age { get; }
             public int HitCount { get; }
@@ -81,6 +85,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
             public PackageInfo(JournalEntry entry, IEnumerable<JournalEntry> entries)
             {
+                Package = entry.Package;
                 Age = GetAge(entry);
                 HitCount = GetHitCount(entry);
                 NewerVersionCount = GetNumberOfNewerVersions(entry, entries);
