@@ -47,7 +47,7 @@ namespace Calamari.Common.Features.StructuredVariables
             this.log = log;
 
             allReplacers = replacers;
-
+            
             jsonReplacer = replacers.FirstOrDefault(r => r.FileFormatName == StructuredConfigVariablesFileFormats.Json)
                            ?? throw new Exception("No JSON replacer was supplied. A JSON replacer is required as a fallback.");
         }
@@ -76,6 +76,9 @@ namespace Calamari.Common.Features.StructuredVariables
                 foreach (var filePath in matchingFiles)
                 {
                     var replacersToTry = GetReplacersToTryForFile(filePath, onlyPerformJsonReplacement).ToArray();
+                    
+                    log.Verbose($"The registered replacers we will try, in order, are: " + string.Join(",", replacersToTry.Select(r => r.GetType().Name)));
+                    
                     DoReplacement(filePath, deployment.Variables, replacersToTry);
                 }
             }
@@ -135,7 +138,7 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             log.Verbose($"The file at {filePath} does not match any known filename patterns. "
                         + "The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed.");
-
+            
             // Order so that the json replacer comes first
             yield return jsonReplacer;
             foreach (var replacer in allReplacers.Except(new [] { jsonReplacer }))
