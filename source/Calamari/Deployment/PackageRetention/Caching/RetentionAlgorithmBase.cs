@@ -25,13 +25,13 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
         internal int GetCacheAgeAtLastPackageUse(JournalEntry entry)
         {
-            return entry?.GetUsageDetails()?.Max(m => m.CacheAge.Value)
+            return entry?.GetUsageDetails()?.Max(m => m.CacheAgeAtUsage.Value)
                    ?? int.MinValue;
         }
 
         internal int GetCacheAgeAtFirstPackageUse(JournalEntry entry)
         {
-            return entry?.GetUsageDetails()?.Min(m => m.CacheAge.Value)
+            return entry?.GetUsageDetails()?.Min(m => m.CacheAgeAtUsage.Value)
                    ?? int.MaxValue;
         }
 

@@ -6,7 +6,7 @@ namespace Calamari.Deployment.PackageRetention.Model
 {
     public class UsageDetails : IUsageDetails
     {
-        public CacheAge CacheAge { get; }
+        public CacheAge CacheAgeAtUsage { get; }
         public DateTime DateTime { get; }
         public ServerTaskId DeploymentTaskId { get; }
 
@@ -17,9 +17,9 @@ namespace Calamari.Deployment.PackageRetention.Model
         }
 
         [JsonConstructor]
-        public UsageDetails(ServerTaskId deploymentTaskId, CacheAge cacheAge, DateTime dateTime)
+        public UsageDetails(ServerTaskId deploymentTaskId, CacheAge cacheAgeAtUsage, DateTime dateTime)
         {
-            CacheAge = cacheAge;
+            CacheAgeAtUsage = cacheAgeAtUsage;
             DateTime = dateTime;
             DeploymentTaskId = deploymentTaskId;
         }

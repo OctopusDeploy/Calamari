@@ -20,6 +20,13 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         public string? Path { get; }
         public long FileSizeBytes { get; private set; } = -1;
 
+
+        public PackageIdentity(string packageId, string version, long fileSizeBytes, VersionFormat versionFormat = VersionFormat.Semver, string? path = null)
+            : this(new PackageId(packageId), VersionFactory.CreateVersion(version, versionFormat), path)
+        {
+            FileSizeBytes = fileSizeBytes;
+        }
+
         public PackageIdentity(string packageId, string version, VersionFormat versionFormat = VersionFormat.Semver, string? path = null)
             : this(new PackageId(packageId), VersionFactory.CreateVersion(version, versionFormat), path)
         {

@@ -4,7 +4,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
     public interface IUsageDetails
     {
-        CacheAge CacheAge { get; }
+        CacheAge CacheAgeAtUsage { get; }
         DateTime DateTime { get; }
         ServerTaskId DeploymentTaskId { get; }
     }
