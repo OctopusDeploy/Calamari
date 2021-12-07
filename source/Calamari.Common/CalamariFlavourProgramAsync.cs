@@ -62,8 +62,6 @@ namespace Calamari.Common
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
-            builder.RegisterAssemblyTypes(assemblies).AssignableTo<IFileFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-
             builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
