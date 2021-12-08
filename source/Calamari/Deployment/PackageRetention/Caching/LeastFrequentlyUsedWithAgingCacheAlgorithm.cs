@@ -8,9 +8,16 @@ namespace Calamari.Deployment.PackageRetention.Caching
 {
     public class LeastFrequentlyUsedWithAgingCacheAlgorithm : RetentionAlgorithmBase
     {
-        const decimal AgeFactor = 0.5m;
-        const decimal HitFactor = 1m;
-        const decimal NewerVersionFactor = 0.5m;
+        readonly decimal ageFactor;
+        readonly decimal hitFactor;
+        readonly decimal newerVersionFactor;
+
+        public LeastFrequentlyUsedWithAgingCacheAlgorithm(decimal ageFactor = 0.5m, decimal hitFactor = 1m, decimal newerVersionFactor = 1m)
+        {
+            this.ageFactor = ageFactor;
+            this.hitFactor = hitFactor;
+            this.newerVersionFactor = newerVersionFactor;
+        }
 
         public override IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries, long spaceNeeded)
         {
@@ -30,15 +37,45 @@ namespace Calamari.Deployment.PackageRetention.Caching
                                                                  return true;
                                                              }).ToList();
 
-            if (spaceFound < spaceNeeded)
-            {
-                if (spaceFound == 0)
-                    throw new InsufficientCacheSpaceException($"No space was available to be freed.");
+            if (spaceFound >= spaceNeeded)
+                return packagesToRemove.Select(pi => pi.Package);
 
-                throw new InsufficientCacheSpaceException($"Could only free { BytesToString(spaceFound)} for the required {BytesToString(spaceNeeded)}.");
-            }
+            if (spaceFound == 0)
+                throw new InsufficientCacheSpaceException($"No space was available to be freed.");
 
-            return packagesToRemove.Select(pi => pi.Package);
+            throw new InsufficientCacheSpaceException($"Could only free { BytesToString(spaceFound)} for the required {BytesToString(spaceNeeded)}.");
+        }
+
+        IEnumerable<PackageInfo> OrderByValue(IEnumerable<JournalEntry> entries, CacheAge currentCacheAge)
+        {
+            if (!entries.Any()) return new PackageInfo[0];
+
+            var details = entries.Select(e => new PackageInfo(e, entries)).ToList();
+
+            (int Min, int Max) newVersionCountRange = (details.Min(d => d.NewerVersionCount), details.Max(d => d.NewerVersionCount));
+            //Note that the age max/min seem backwards, but that's because the larger value is more recent (we record the age of the *cache* at the time of use).
+            (int Min, int Max) ageRange = (currentCacheAge.Value - details.Max(d => d.Age.Value), currentCacheAge.Value - details.Min(d => d.Age.Value));
+            (int Min, int Max) hitCountRange = (details.Min(d => d.HitCount), details.Max(d => d.HitCount));
+
+            decimal NormaliseVersionCount(int newerVersionCount) => Normalise(newerVersionCount, newVersionCountRange.Min, newVersionCountRange.Max);
+            decimal NormaliseAge(int age) => Normalise(age, ageRange.Min, ageRange.Max);
+            decimal NormaliseHitCount(int hitCount) => Normalise(hitCount, hitCountRange.Min, hitCountRange.Max);
+            
+            //Age and hit count are related.
+            //age should decrement from hit count, but with less impact.  EG if age = 10, hits = 7, value should be 7 - (10*0.5)
+
+            return details.OrderBy(d =>
+                                       NormaliseHitCount(d.HitCount) * hitFactor
+                                        - NormaliseAge(currentCacheAge.Value - d.Age.Value) * ageFactor
+                                        - NormaliseVersionCount(d.NewerVersionCount) * newerVersionFactor);
+        }
+
+        decimal Normalise(int value, int rangeMinValue, int rangeMaxValue)
+        {
+            var divisor = rangeMaxValue - rangeMinValue;
+            divisor = divisor == 0 ? 1 : divisor;
+            var scale = 1M / divisor; //Scales from 0..1
+            return (value - rangeMinValue) * scale;
         }
 
         //From https://stackoverflow.com/a/4975942
@@ -50,29 +87,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             var bytes = Math.Abs(byteCount);
             var place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
             var num = Math.Round(bytes / Math.Pow(1024, place), 1);
-            return (Math.Sign(byteCount) * num).ToString() + suf[place];
-        }
-
-        IEnumerable<PackageInfo> OrderByValue(IEnumerable<JournalEntry> entries, CacheAge currentCacheAge)
-        {
-            if (!entries.Any()) return new PackageInfo[0];
-
-            var details = entries.Select(e => new PackageInfo(e, entries)).ToList();
-
-            var maxNumberOfNewerVersions = details.Max(d => d.NewerVersionCount);
-            var minNumberOfNewerVersions = details.Min(d => d.NewerVersionCount);
-
-            Func<int, int> scaleVersionCount = (int newerVersionCount) => ScaleRange(newerVersionCount, minNumberOfNewerVersions, maxNumberOfNewerVersions);
-
-            return details.OrderBy(d => d.HitCount * HitFactor - (currentCacheAge.Value - d.Age.Value) * AgeFactor - scaleVersionCount(d.NewerVersionCount) * NewerVersionFactor);
-        }
-
-        int ScaleRange(int newerVersionCount, int minNumberOfNewerVersions, int maxNumberOfNewerVersions)
-        {
-            var divisor = maxNumberOfNewerVersions - minNumberOfNewerVersions;
-            divisor = divisor == 0 ? 1 : divisor;
-            var scale = 1 / divisor; //Scales from 0..1
-            return (newerVersionCount - minNumberOfNewerVersions) * scale;
+            return (Math.Sign(byteCount) * num).ToString(CultureInfo.CurrentCulture) + suf[place];
         }
 
         class PackageInfo
