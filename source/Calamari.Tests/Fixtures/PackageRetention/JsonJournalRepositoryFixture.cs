@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
@@ -38,9 +39,9 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         {
             var journalPath = packageRetentionJournalPath == null ? null : Path.Combine(testDir, packageRetentionJournalPath);
 
-            var variables = Substitute.For<IVariables>();
-            variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath).Returns(journalPath);
-            variables.Get(TentacleVariables.Agent.TentacleHome).Returns(testDir);
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.Calamari.PackageRetentionJournalPath, journalPath);
+            variables.Set(TentacleVariables.Agent.TentacleHome, testDir);
 
             var thePackage = new PackageIdentity("TestPackage", "0.0.1");
             var cacheAge = new CacheAge(10);
@@ -50,7 +51,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             journalEntry.AddLock(serverTaskId, cacheAge);
             journalEntry.AddUsage(serverTaskId, cacheAge);
 
-            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables);
+            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables, Substitute.For<ILog>());
 
             var repository = repositoryFactory.CreateJournalRepository();
             repository.AddJournalEntry(journalEntry);
@@ -62,6 +63,24 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             retrieved.Package.Should().BeEquivalentTo(journalEntry.Package);
             retrieved.GetLockDetails().Should().BeEquivalentTo(journalEntry.GetLockDetails());
             retrieved.GetUsageDetails().Should().BeEquivalentTo(journalEntry.GetUsageDetails());
+        }
+
+        [Test]
+        public void WhenThereIsAnErrorReadingTheJournal_ThenTheJournalIsRenamed()
+        {
+            const string invalidJson = @"[{""a"",}]";
+            var journalPath = Path.Combine(testDir, "PackageRetentionJournal.json");
+
+            File.WriteAllText(journalPath, invalidJson);
+
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.Calamari.PackageRetentionJournalPath, journalPath);
+
+            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables, Substitute.For<ILog>());
+
+            repositoryFactory.CreateJournalRepository();
+
+            Directory.GetFiles(testDir, "PackageRetentionJournal_*.json").Length.Should().Be(1);
         }
     }
 } 
