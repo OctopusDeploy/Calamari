@@ -17,6 +17,7 @@ using Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDiscover
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Integration.Certificates;
@@ -71,6 +72,7 @@ namespace Calamari
             builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
             builder.RegisterType<JsonJournalRepositoryFactory>().As<IJournalRepositoryFactory>();
             builder.RegisterType<Journal>().As<IManagePackageUse>();
+            builder.RegisterType<LeastFrequentlyUsedWithAgingCacheAlgorithm>().As<IRetentionAlgorithm>();
 
             //Note: this could be done with a factory, but it just felt like overkill for this.
             var versionFormatDiscovery = GetProgramAssemblyToRegister()
