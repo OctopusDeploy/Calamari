@@ -5,10 +5,14 @@ using System.Threading.Tasks;
 using Calamari.Commands.Support;
 using Calamari.Common;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
@@ -38,7 +42,7 @@ namespace Calamari.Tests.NewPipeline
         [TestCase("web.config", "/app/port", "Xml")]
         [TestCase("json.txt", "app:port", "Json")]
         [TestCase("yaml.txt", "app:port", "Yaml")]
-        public void CalamariFlavourProgram_PerformsReplacementCorrectlyWithoutCanonicalFileExtension(string configFileName, string variableName, string expectedReplacer)
+        public async Task CalamariFlavourProgram_PerformsReplacementCorrectlyWithoutCanonicalFileExtension(string configFileName, string variableName, string expectedReplacer)
         {
             const string newPort = "4444";
             using (var tempPath = TemporaryDirectory.Create())
@@ -46,7 +50,7 @@ namespace Calamari.Tests.NewPipeline
                 var targetPath = Path.Combine(tempPath.DirectoryPath, configFileName);
                 File.Copy(BuildConfigPath(configFileName), targetPath);
                 
-                CommandTestBuilder.Create<NoOpTraditionalCommand, SyncFlavourProgram>()
+                await CommandTestBuilder.Create<NoOpTraditionalCommandWithStructuredVariableReplacementConvention, SyncFlavourProgram>()
                                         .WithArrange(context =>
                                                      {
                                                          context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
@@ -56,7 +60,7 @@ namespace Calamari.Tests.NewPipeline
                                                      })
                                         .WithAssert(result =>
                                                     {
-                                                        result.FullLog.Should().Contain($"Structured variable replacement succeeded on file {targetPath} with format {expectedReplacer}");
+                                                        //result.FullLog.Should().Contain($"Structured variable replacement succeeded on file {targetPath} with format {expectedReplacer}");
                                                         File.ReadAllText(targetPath).Should().Contain(newPort);
                                                     })
                                         .Execute();
@@ -104,12 +108,7 @@ namespace Calamari.Tests.NewPipeline
             return Path.Combine(workingDirectory, filename.Replace('\\', Path.DirectorySeparatorChar));
         }
 
-        class SyncFlavourProgram : CalamariFlavourProgram
-        {
-            public SyncFlavourProgram(ILog log) : base(log)
-            {
-            }
-        }
+        
         
         class AsyncFlavourProgram : CalamariFlavourProgramAsync
         {
@@ -128,9 +127,30 @@ namespace Calamari.Tests.NewPipeline
             }
         }
 
-        [Command("no-op-command")]
-        class NoOpTraditionalCommand : Command, ICommand
+        class SyncFlavourProgram : CalamariFlavourProgram
         {
+            public SyncFlavourProgram(ILog log) : base(log)
+            {
+            }
+        }
+        
+        [Command("no-op-command")]
+        class NoOpTraditionalCommandWithStructuredVariableReplacementConvention : Command, ICommand
+        {
+            readonly IStructuredConfigVariablesService structuredConfigVariablesService;
+            readonly ILog log;
+            readonly IVariables variables;
+
+            public NoOpTraditionalCommandWithStructuredVariableReplacementConvention(
+                ILog log,
+                IVariables variables,
+                IStructuredConfigVariablesService structuredConfigVariablesService)
+            {
+                this.structuredConfigVariablesService = structuredConfigVariablesService;
+                this.log = log;
+                this.variables = variables;
+            }
+            
             public override int Execute(string[] commandLineArguments)
             {
                 return Execute();
@@ -138,6 +158,16 @@ namespace Calamari.Tests.NewPipeline
 
             public int Execute()
             {
+                var deployment = new RunningDeployment(variables);
+                
+                var conventions = new List<IConvention>
+                {
+                    new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService))
+                };
+                
+                var conventionRunner = new ConventionProcessor(deployment, conventions, log);
+                conventionRunner.RunConventions();
+
                 return 0;
             }
         }
