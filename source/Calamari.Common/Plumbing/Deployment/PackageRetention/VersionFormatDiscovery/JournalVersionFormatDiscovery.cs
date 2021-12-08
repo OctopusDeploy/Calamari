@@ -13,11 +13,13 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDisc
 
             var packageStr = variables.Get(PackageVariables.PackageId);
             var versionStr = variables.Get(PackageVariables.PackageVersion);
-            //TODO: should this include server task id too?
+            var serverTaskIdStr = variables.Get(KnownVariables.ServerTask.Id);
 
-            if (packageStr != null && versionStr != null)
+            if (packageStr != null)
             {
-                success = journal.TryGetVersionFormat(new PackageId(packageStr), versionStr, out formatFromJournal);
+                success = serverTaskIdStr != null && journal.TryGetVersionFormat(new PackageId(packageStr), new ServerTaskId(serverTaskIdStr), defaultFormat, out formatFromJournal)
+                            || versionStr != null && journal.TryGetVersionFormat(new PackageId(packageStr), versionStr, defaultFormat, out formatFromJournal) ;
+
             }
 
             format = success ? formatFromJournal : defaultFormat;
