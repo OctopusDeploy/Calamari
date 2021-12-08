@@ -101,15 +101,8 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         }
 
         /// <summary>
-        /// Creates a 
+        /// Creates a PackageIdentity using the information provided to determine the information needed.
         /// </summary>
-        /// <param name="journal"></param>
-        /// <param name="variables"></param>
-        /// <param name="commandLineArguments"></param>
-        /// <param name="packageId"></param>
-        /// <param name="version"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
         public static PackageIdentity CreatePackageIdentity(IManagePackageUse journal, IVariables variables, string[] commandLineArguments, string? packageId = null, string? version = null )
         {
             var versionStr = version ?? variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
@@ -133,15 +126,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
                 return;
             }
 
-            try
-            {
-                FileSizeBytes = CalamariPhysicalFileSystem.GetPhysicalFileSystem().GetFileSize(Path);
-            }
-            catch// (FileNotFoundException ex)
-            {
-                //TODO: work out what to do here.
-                throw;
-            }
+            FileSizeBytes = CalamariPhysicalFileSystem.GetPhysicalFileSystem().GetFileSize(Path);
         }
     }
 }
