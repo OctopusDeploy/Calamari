@@ -5,7 +5,7 @@ using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Deployment.PackageRetention.Caching
 {
-    public class FifoCacheAlgorithm : RetentionAlgorithmBase
+    public class FirstInFirstOutCacheAlgorithm : RetentionAlgorithmBase
     {
         public override IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries, long spaceRequired)
         {
@@ -24,13 +24,12 @@ namespace Calamari.Deployment.PackageRetention.Caching
             }
 
             //If we haven't returned yet, then we can't clear enough space in the cache to continue.
-            throw new InsufficientCacheSpaceException();   //TODO improve the info in this exception
+            throw new InsufficientCacheSpaceException(diskSpaceFound, spaceRequired);
         }
 
 
         IEnumerable<PackageIdentity> OrderPackagesByOldestFirst(IEnumerable<JournalEntry> journalEntries)
         {
-            //TODO: optimise this.
             return journalEntries.OrderBy(GetCacheAgeAtFirstPackageUse).Select(je => je.Package);
         }
     }

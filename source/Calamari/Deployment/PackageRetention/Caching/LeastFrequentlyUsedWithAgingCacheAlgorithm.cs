@@ -19,7 +19,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             this.newerVersionFactor = newerVersionFactor;
         }
 
-        public override IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries, long spaceNeeded)
+        public override IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries, long spaceRequired)
         {
             journalEntries = journalEntries.Where(e => !e.HasLock());
 
@@ -31,19 +31,19 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
             var packagesToRemove = orderedPackages.TakeWhile(p =>
                                                              {
-                                                                 if (spaceFound >= spaceNeeded) return false; //Already found enough space
+                                                                 if (spaceFound >= spaceRequired) return false; //Already found enough space
 
                                                                  spaceFound += p.Package.FileSizeBytes;
                                                                  return true;
                                                              }).ToList();
 
-            if (spaceFound >= spaceNeeded)
+            if (spaceFound >= spaceRequired)
                 return packagesToRemove.Select(pi => pi.Package);
 
             if (spaceFound == 0)
-                throw new InsufficientCacheSpaceException($"No space was available to be freed.");
+                throw new InsufficientCacheSpaceException(spaceFound, spaceRequired, $"No space was available to be freed.");
 
-            throw new InsufficientCacheSpaceException($"Could only free { BytesToString(spaceFound)} for the required {BytesToString(spaceNeeded)}.");
+            throw new InsufficientCacheSpaceException(spaceFound, spaceRequired);
         }
 
         IEnumerable<PackageInfo> OrderByValue(IEnumerable<JournalEntry> entries, CacheAge currentCacheAge)
@@ -60,9 +60,6 @@ namespace Calamari.Deployment.PackageRetention.Caching
             decimal NormaliseVersionCount(int newerVersionCount) => Normalise(newerVersionCount, newVersionCountRange.Min, newVersionCountRange.Max);
             decimal NormaliseAge(int age) => Normalise(age, ageRange.Min, ageRange.Max);
             decimal NormaliseHitCount(int hitCount) => Normalise(hitCount, hitCountRange.Min, hitCountRange.Max);
-            
-            //Age and hit count are related.
-            //age should decrement from hit count, but with less impact.  EG if age = 10, hits = 7, value should be 7 - (10*0.5)
 
             return details.OrderBy(d =>
                                        NormaliseHitCount(d.HitCount) * hitFactor
@@ -78,17 +75,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             return (value - rangeMinValue) * scale;
         }
 
-        //From https://stackoverflow.com/a/4975942
-        static string BytesToString(long byteCount)
-        {
-            string[] suf = { "B", "KB", "MB", "GB", "TB", "PB", "EB" }; //Longs run out around EB
-            if (byteCount == 0)
-                return "0" + suf[0];
-            var bytes = Math.Abs(byteCount);
-            var place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
-            var num = Math.Round(bytes / Math.Pow(1024, place), 1);
-            return (Math.Sign(byteCount) * num).ToString(CultureInfo.CurrentCulture) + suf[place];
-        }
+
 
         class PackageInfo
         {
