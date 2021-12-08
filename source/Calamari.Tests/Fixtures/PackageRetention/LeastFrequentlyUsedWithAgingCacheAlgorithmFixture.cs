@@ -21,7 +21,17 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         }
 
         [Test]
-        public void WhenUsingAllThreeFactors_ThenReturnThePackageOneWithTheLowestValue()
+        public void WhenPackageIsLocked_ThenDoNotConsiderItForRemoval()
+        {
+            var lfu = new LeastFrequentlyUsedWithAgingCacheAlgorithm();
+            var entry = CreateEntry("package-1", "1.0", 20, ("task-1", 2));
+            entry.AddLock(new ServerTaskId("task-0"), new CacheAge(1));
+
+            Assert.Throws<InsufficientCacheSpaceException>(() => lfu.GetPackagesToRemove(new List<JournalEntry>(), 10));
+        }
+
+        [Test]
+        public void WhenUsingAllThreeFactors_ThenReturnThePackageWithTheLowestValue()
         {
             var spaceNeeded = 10;
 
@@ -29,7 +39,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             {
                 CreateEntry("package-1", "1.0", 10, ("task-1", 2), ("task-2", 3)),
                 CreateEntry("package-2", "1.1", 10, ("task-3", 1)),
-                CreateEntry("package-3", "1.0", 10, ("task-4", 2)),
+                CreateEntry("package-3", "1.0", 10, ("task-4", 2)), //Lower value - has a newer version, and is only used once.
                 CreateEntry("package-3", "1.1", 10, ("task-5", 3))
             };
 
