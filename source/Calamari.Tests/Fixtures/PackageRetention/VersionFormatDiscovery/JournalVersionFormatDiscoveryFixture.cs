@@ -15,31 +15,57 @@ namespace Calamari.Tests.Fixtures.PackageRetention
     [TestFixture]
     public class JournalVersionFormatDiscoveryFixture
     {
-
-       //TODO: Create more test cases.
-        [TestCase("Package1", "1.0", VersionFormat.Maven, "Package1", "1.0", VersionFormat.Octopus, true, VersionFormat.Maven, TestName = "WhenValidArgumentsProvided_ThenReturnCorrectFormatAndTrue")]
-        public void TestArgumentsAndResults(string existingPackageId, string existingVersion, VersionFormat existingFormat, string thisPackageId, string thisVersion, VersionFormat defaultFormat, bool expectedResult, VersionFormat expectedFormat)
+        [Test]
+        public void WhenValidArgumentsProvided_ThenReturnCorrectFormatAndTrue()
         {
-            var variables = new CalamariVariables();
-            variables.Add(KnownVariables.Calamari.PackageRetentionJournalPath, "journal.json");
-            variables.Add(KnownVariables.Calamari.EnablePackageRetention, Boolean.TrueString);
-            variables.Add(PackageVariables.PackageId, thisPackageId);
-            variables.Add(PackageVariables.PackageVersion, thisVersion);
-            
+            var packageId = "package-1";
+            var version = "1.0.0";
+            var taskId = "Task-1";
+
+            SetupRetention(out var variables, packageId, version, taskId);
+
             var discovery = new JournalVersionFormatDiscovery();
             var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());
-            var package = new PackageIdentity(existingPackageId, existingVersion, existingFormat);
 
-            journal.RegisterPackageUse(package, new ServerTaskId("Task-1"));
+            journal.RegisterPackageUse(new PackageIdentity(packageId, version, VersionFormat.Docker), new ServerTaskId("Task-2")); //Different task, forces discovery using just using the packageId and version.
+            journal.RegisterPackageUse(new PackageIdentity(packageId, "2.0.0", VersionFormat.Maven), new ServerTaskId("Task-3")); //Different task/version, should be ignored.
 
-            var success = discovery.TryDiscoverVersionFormat(journal,
-                                                             variables,
-                                                             Array.Empty<string>(),
-                                                             out var format,
-                                                             defaultFormat);
+            var success = discovery.TryDiscoverVersionFormat(journal, variables, Array.Empty<string>(), out var format);
 
-            Assert.That(success == expectedResult);
-            Assert.That(format == expectedFormat);
+            Assert.That(success);
+            Assert.That(format == VersionFormat.Docker);
+        }
+
+        [Test]
+        public void TestArgumentsAndResultsForFindingWithServerTaskId()
+        {
+            var packageId = "package-1";
+            var version = "1.0.0";
+            var taskId = "Task-2";
+
+            SetupRetention(out var variables, packageId, version, taskId);
+            var discovery = new JournalVersionFormatDiscovery();
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());
+
+            journal.RegisterPackageUse(new PackageIdentity(packageId, "2.0.0", VersionFormat.Maven), new ServerTaskId("Task-1")); //Different task, different version - should be ignored.
+            journal.RegisterPackageUse(new PackageIdentity(packageId, "2.0.0", VersionFormat.Docker), new ServerTaskId("Task-2")); //Same task, different version - ensures it determines format using the taskId and packageId only.
+
+            var success = discovery.TryDiscoverVersionFormat(journal, variables, Array.Empty<string>(),out var format);
+
+            Assert.That(success);
+            Assert.That(format == VersionFormat.Docker);
+        }
+
+        void SetupRetention(out CalamariVariables variables, string packageId, string version, string taskId)
+        {
+            variables = new CalamariVariables
+            {
+                { KnownVariables.Calamari.PackageRetentionJournalPath, "journal.json" },
+                { KnownVariables.Calamari.EnablePackageRetention, Boolean.TrueString },
+                { PackageVariables.PackageId, packageId },
+                { PackageVariables.PackageVersion, version },
+                { KnownVariables.ServerTask.Id, taskId }
+            };
         }
     }
 }
