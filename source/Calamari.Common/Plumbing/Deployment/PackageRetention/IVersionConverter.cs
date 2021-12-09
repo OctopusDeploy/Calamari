@@ -9,10 +9,9 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
     {
         public override bool CanWrite => true;
         public override bool CanRead => true;
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(IVersion);
-        }
+
+        public override bool CanConvert(Type objectType) => objectType == typeof(IVersion);
+
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var version = value as IVersion ?? throw new Exception("Type must implement IVersion to use this converter.");
