@@ -13,24 +13,11 @@ namespace Calamari.Deployment.PackageRetention
         readonly ICommandWithArgs command;
         readonly IManagePackageUse journal;
 
-        PackageIdentity Package { get; }
-        ServerTaskId DeploymentTaskId { get; }
-
-        public PackageJournalCommandDecorator(ILog log, ICommandWithArgs command, IVariables variables, IManagePackageUse journal)
+        public PackageJournalCommandDecorator(ILog log, ICommandWithArgs command, IManagePackageUse journal)
         {
             this.log = log;
             this.command = command;
             this.journal = journal;
-
-            try
-            {
-                DeploymentTaskId = new ServerTaskId(variables);
-                Package = new PackageIdentity(variables);
-            }
-            catch (Exception ex)
-            {
-                log.Error($"Unable to get deployment details for retention from variables.{Environment.NewLine}{ex.ToString()}");
-            }
 
 #if DEBUG
             log.Verbose($"Decorating {command.GetType().Name} with PackageJournalCommandDecorator.");
@@ -39,7 +26,7 @@ namespace Calamari.Deployment.PackageRetention
 
         public int Execute(string[] commandLineArguments)
         {
-            journal.RegisterPackageUse(Package, DeploymentTaskId);
+            journal.RegisterPackageUse();
 
             return command.Execute(commandLineArguments);
         }

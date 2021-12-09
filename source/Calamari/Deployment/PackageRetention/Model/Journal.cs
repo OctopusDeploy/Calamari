@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
@@ -21,15 +22,19 @@ namespace Calamari.Deployment.PackageRetention.Model
             this.variables = variables;
         }
 
-        public void RegisterPackageUse(IVariables variables)
+        public void RegisterPackageUse()
         {
-            if (!IsRetentionEnabled())
-                return;
-
-            RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables));
+            try
+            {
+                RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables));
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Unable to register package use for retention.{Environment.NewLine}{ex.ToString()}");
+            }
         }
 
-        public void RegisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId)
+        public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId)
         {
             if (!IsRetentionEnabled())
                 return;
@@ -38,22 +43,24 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 using (var repository = repositoryFactory.CreateJournalRepository())
                 {
+                    repository.Cache.IncrementCacheAge();
+                    var age = repository.Cache.CacheAge;
 
                     if (repository.TryGetJournalEntry(package, out var entry))
                     {
-                        entry.PackageUsage.AddUsage(serverTaskId);
-                        entry.PackageLocks.AddLock(serverTaskId);
+                        entry.AddUsage(deploymentTaskId, age);
+                        entry.AddLock(deploymentTaskId, age);
                     }
                     else
                     {
                         entry = new JournalEntry(package);
-                        entry.PackageUsage.AddUsage(serverTaskId);
-                        entry.PackageLocks.AddLock(serverTaskId);
+                        entry.AddUsage(deploymentTaskId, age);
+                        entry.AddLock(deploymentTaskId, age);
                         repository.AddJournalEntry(entry);
                     }
 
 #if DEBUG
-                    log.Verbose($"Registered package use/lock for {package} and task {serverTaskId}");
+                    log.Verbose($"Registered package use/lock for {package} and task {deploymentTaskId}");
 #endif
 
                     repository.Commit();
@@ -66,7 +73,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public void DeregisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId)
+        public void DeregisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId)
         {
             try
             {
@@ -74,7 +81,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                 {
                     if (repository.TryGetJournalEntry(package, out var entry))
                     {
-                        entry.PackageLocks.RemoveLock(serverTaskId);
+                        entry.RemoveLock(deploymentTaskId);
                         repository.Commit();
                     }
                 }
@@ -88,8 +95,7 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         bool IsRetentionEnabled()
         {
-            var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome);
-            return variables.IsPackageRetentionEnabled() && tentacleHome != null;
+            return variables.IsPackageRetentionEnabled();
         }
 
         public bool HasLock(PackageIdentity package)
@@ -97,18 +103,24 @@ namespace Calamari.Deployment.PackageRetention.Model
             using (var repository = repositoryFactory.CreateJournalRepository())
             {
                 return repository.TryGetJournalEntry(package, out var entry)
-                       && entry.PackageLocks.HasLock();
+                       && entry.HasLock();
             }
         }
 
-        public IEnumerable<DateTime> GetUsage(PackageIdentity package)
+        //*** Cache functions from here - maybe move into separate class and/or interface? - MC ***
+        public IEnumerable<IUsageDetails> GetUsage(PackageIdentity package)
         {
             using (var repository = repositoryFactory.CreateJournalRepository())
             {
                 return repository.TryGetJournalEntry(package, out var entry)
-                    ? entry.PackageUsage.GetUsageDetails()
-                    : new DateTime[0];
+                    ? entry.GetUsageDetails()
+                    : new UsageDetails[0];
             }
+        }
+
+        public int GetUsageCount(PackageIdentity package)
+        {
+            return GetUsage(package).Count();
         }
 
         public void ExpireStaleLocks()

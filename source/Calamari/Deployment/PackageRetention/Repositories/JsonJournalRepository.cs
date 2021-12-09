@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
@@ -9,13 +10,12 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.PackageRetention.Model;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Calamari.Deployment.PackageRetention.Repositories
 {
-    public class JsonJournalRepository
-        : IJournalRepository
+    public class JsonJournalRepository : JournalRepositoryBase
     {
-        Dictionary<PackageIdentity, JournalEntry> journalEntries;
         const string SemaphoreName = "Octopus.Calamari.PackageJournal";
 
         readonly ICalamariFileSystem fileSystem;
@@ -30,28 +30,12 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             this.journalPath = journalPath;
             this.log = log;
 
-            this.semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
+            semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
 
             Load();
         }
 
-        public bool TryGetJournalEntry(PackageIdentity package, out JournalEntry entry)
-        {
-            return journalEntries.TryGetValue(package, out entry);
-        }
-
-        public JournalEntry GetJournalEntry(PackageIdentity package)
-        {
-            journalEntries.TryGetValue(package, out var entry);
-            return entry;
-        }
-
-        public void AddJournalEntry(JournalEntry entry)
-        {
-            journalEntries.Add(entry.Package, entry);
-        }
-
-        public void Commit()
+        public override void Commit()
         {
             Save();
         }
@@ -62,9 +46,13 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             {
                 var json = File.ReadAllText(journalPath);
 
-                if (TryDeserializeJournalEntries(json, out var journalContents))
+                if (TryDeserializeJournal(json, out var journalContents))
                 {
-                    journalEntries = journalContents.ToDictionary(entry => entry.Package, entry => entry);
+                    journalEntries = journalContents
+                                     ?.JournalEntries
+                                     ?.ToDictionary(entry => entry.Package, entry => entry)
+                                     ?? new Dictionary<PackageIdentity, JournalEntry>();
+                    Cache = journalContents?.Cache ?? new PackageCache(0);
                 }
                 else
                 {
@@ -82,39 +70,58 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             }
             else
             {
-                journalEntries = new  Dictionary<PackageIdentity, JournalEntry>();
+                journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
             }
         }
 
         void Save()
         {
-            var journalEntryList = journalEntries.Select(p => p.Value);
-            var json = JsonConvert.SerializeObject(journalEntryList);
-            fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
+            var onlyJournalEntries = journalEntries.Select(p => p.Value);
+            var json = JsonConvert.SerializeObject(new PackageData(onlyJournalEntries, Cache));
 
+            fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
             //save to temp file first
             var tempFilePath = $"{journalPath}.temp.{Guid.NewGuid()}.json";
 
-            fileSystem.WriteAllText(tempFilePath,json, Encoding.Default);
+            fileSystem.WriteAllText(tempFilePath, json, Encoding.Default);
             fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             semaphore.Dispose();
         }
 
-        static bool TryDeserializeJournalEntries(string json, out List<JournalEntry> result)
+        class PackageData
+        {
+            public IEnumerable<JournalEntry> JournalEntries { get; }
+            public PackageCache Cache { get; }
+
+            [JsonConstructor]
+            public PackageData(IEnumerable<JournalEntry> journalEntries, PackageCache packageCache)
+            {
+                JournalEntries = journalEntries;
+                Cache = packageCache;
+            }
+
+            public PackageData()
+            {
+                JournalEntries = new List<JournalEntry>();
+                Cache = new PackageCache(0);
+            }
+        }
+
+        static bool TryDeserializeJournal(string json, out PackageData result)
         {
             try
             {
-                result = JsonConvert.DeserializeObject<List<JournalEntry>>(json);
+                result = JsonConvert.DeserializeObject<PackageData>(json);
                 return true;
             }
             catch (Exception e)
             {
                 Log.Verbose($"Unable to deserialize entries in the package retention journal file. Error message: {e.ToString()}");
-                result = new List<JournalEntry>();
+                result = new PackageData();
                 return false;
             }
         }
