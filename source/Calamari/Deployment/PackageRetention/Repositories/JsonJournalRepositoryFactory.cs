@@ -25,7 +25,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             var packageRetentionJournalPath = variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath);
             if (packageRetentionJournalPath == null)
             {
-                var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome) ?? string.Empty; // Retention is only enabled when TentacleHome exists
+                var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome) ?? string.Empty; // Retention is disabled if both TentacleHome and PackageRetentionJournalPath are not set.
                 packageRetentionJournalPath = Path.Combine(tentacleHome, DefaultJournalName);
             }
             journalPath = packageRetentionJournalPath;
