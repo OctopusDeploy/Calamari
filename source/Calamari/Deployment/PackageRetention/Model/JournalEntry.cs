@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Newtonsoft.Json;
+<<<<<<< HEAD
 using NuGet;
+=======
+>>>>>>> master
 
 namespace Calamari.Deployment.PackageRetention.Model
 {

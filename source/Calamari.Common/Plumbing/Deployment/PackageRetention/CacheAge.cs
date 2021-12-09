@@ -5,6 +5,19 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
     public class CacheAge : IComparable<CacheAge>, IEquatable<CacheAge>
     {
+        public int Value { get; private set; }
+
+        [JsonConstructor]
+        public CacheAge(int value)
+        {
+            Value = value;
+        }
+
+        public void IncrementAge()
+        {
+            Value++;
+        }
+
         public bool Equals(CacheAge? other)
         {
             if (ReferenceEquals(null, other))
@@ -28,20 +41,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         public override int GetHashCode()
         {
             return Value;
-        }
-
-        public int Value { get; private set; }
-
-        [JsonConstructor]
-        public CacheAge(int value)
-        {
-            Value = value;
-        }
-
-        public void IncrementAge()
-        {
-            Value++;
-        }
+        }   
 
         public int CompareTo(CacheAge? other)
         {

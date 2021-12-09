@@ -92,7 +92,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             semaphore.Dispose();
         }
 
-
         class PackageData
         {
             public IEnumerable<JournalEntry> JournalEntries { get; }

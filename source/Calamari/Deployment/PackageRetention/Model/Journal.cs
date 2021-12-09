@@ -154,6 +154,11 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
+        public int GetUsageCount(PackageIdentity package)
+        {
+            return GetUsage(package).Count();
+        }
+
         public void ExpireStaleLocks()
         {
             throw new NotImplementedException();
