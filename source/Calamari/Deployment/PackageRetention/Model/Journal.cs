@@ -112,8 +112,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                        && entry.HasLock();
             }
         }
-
-        //*** Cache functions from here - maybe move into separate class and/or interface? - MC ***
+        
         public IEnumerable<IUsageDetails> GetUsage(PackageIdentity package)
         {
             using (var repository = repositoryFactory.CreateJournalRepository())
@@ -122,11 +121,6 @@ namespace Calamari.Deployment.PackageRetention.Model
                     ? entry.GetUsageDetails()
                     : new UsageDetails[0];
             }
-        }
-
-        public int GetUsageCount(PackageIdentity package)
-        {
-            return GetUsage(package).Count();
         }
 
         public bool TryGetVersionFormat(PackageId packageId, string version, VersionFormat defaultFormat, out VersionFormat versionFormat)
