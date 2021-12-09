@@ -1,21 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
-using Calamari.Common.Features.Packages;
-using Calamari.Common.Plumbing.Commands;
-using Calamari.Common.Plumbing.Commands.Options;
 using Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDiscovery;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
-using Octopus.Versioning.Semver;
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
+
+    public class VersionConverter : JsonConverter
+    {
+        public override bool CanWrite => true;
+        public override bool CanRead => true;
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(IVersion);
+        }
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            var version = value as IVersion ?? throw new Exception("Type must implement IVersion to use this converter.");
+            var outputVersion = new { Version = version.ToString(), Format = version.Format.ToString() };
+
+            serializer.Serialize(writer, outputVersion);
+        }
+
+        public override object ReadJson(JsonReader reader,
+                                        Type objectType, object existingValue,
+                                        JsonSerializer serializer)
+        {
+            var jsonObject = JObject.Load(reader);
+            var versionString = jsonObject["Version"].Value<string>();
+            var versionFormat = (VersionFormat) Enum.Parse(typeof(VersionFormat), jsonObject["Format"].Value<string>());
+
+            var version = VersionFactory.CreateVersion(versionString, versionFormat);
+
+            return version;
+        }
+    }
+
     public class PackageIdentity
     {
         public PackageId PackageId { get; }
+        [JsonConverter(typeof(VersionConverter))]
         public IVersion Version { get; }
         public string? Path { get; }
         public long FileSizeBytes { get; private set; } = -1;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
@@ -11,6 +12,8 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Octopus.Versioning;
+using VersionConverter = Newtonsoft.Json.Converters.VersionConverter;
 
 namespace Calamari.Tests.Fixtures.PackageRetention
 {

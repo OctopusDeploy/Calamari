@@ -23,7 +23,9 @@ using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.LaunchTools;
+using Octopus.Versioning;
 using IContainer = Autofac.IContainer;
+using VersionConverter = Newtonsoft.Json.Converters.VersionConverter;
 
 namespace Calamari
 {
@@ -87,7 +89,7 @@ namespace Calamari
 
             //TODO: Do this using Autofac
             TypeDescriptor.AddAttributes(typeof(ServerTaskId), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskId>)));
-
+            
             var typesToAlwaysDecorate = new Type[] { typeof(ApplyDeltaCommand) }; //Commands from external assemblies.
 
             //Get register commands with the RetentionLockingCommand attribute;
