@@ -98,7 +98,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         }
 
         /// <summary>
-        /// Creates a PackageIdentity using the information provided to determine the information needed.
+        /// Creates a PackageIdentity using the information provided to determine the version format..
         /// </summary>
         public static PackageIdentity CreatePackageIdentity(IManagePackageUse journal, IVariables variables, string[] commandLineArguments, string? packageId = null, string? version = null )
         {
