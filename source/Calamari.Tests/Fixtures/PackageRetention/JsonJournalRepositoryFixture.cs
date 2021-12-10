@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
         [TestCase("PackageRetentionJournal.json", TestName = "CalamariPackageRetentionJournalPath is set to a non-null value")]
         [TestCase(null, TestName = "CalamariPackageRetentionJournalPath is null; default to TentacleHome")]
-        public void WhenTheJournalIsLoadedAndCommittedTo_ThenTheJournalContainsTheCorrectContents(string packageRetentionJournalPath)
+        public void WhenAJournalEntryIsCommittedAndRetrieved_ThenItShouldBeEquivalentToTheOriginal(string packageRetentionJournalPath)
         {
             var journalPath = packageRetentionJournalPath == null ? null : Path.Combine(testDir, packageRetentionJournalPath);
 
@@ -44,7 +44,12 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             variables.Set(TentacleVariables.Agent.TentacleHome, testDir);
 
             var thePackage = new PackageIdentity("TestPackage", "0.0.1");
+            var cacheAge = new CacheAge(10);
+            var serverTaskId = new ServerTaskId("TaskID-1");
+
             var journalEntry = new JournalEntry(thePackage);
+            journalEntry.AddLock(serverTaskId, cacheAge);
+            journalEntry.AddUsage(serverTaskId, cacheAge);
 
             var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables, Substitute.For<ILog>());
 
@@ -53,8 +58,11 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             repository.Commit();
 
             var updated = repositoryFactory.CreateJournalRepository();
-            updated.TryGetJournalEntry(thePackage, out var journalEntryFromFile).Should().BeTrue();
-            journalEntryFromFile.Package.Should().BeEquivalentTo(thePackage);
+            updated.TryGetJournalEntry(thePackage, out var retrieved).Should().BeTrue();
+
+            retrieved.Package.Should().BeEquivalentTo(journalEntry.Package);
+            retrieved.GetLockDetails().Should().BeEquivalentTo(journalEntry.GetLockDetails());
+            retrieved.GetUsageDetails().Should().BeEquivalentTo(journalEntry.GetUsageDetails());
         }
 
         [Test]

@@ -124,7 +124,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenPackageIsRegisteredAndDeregistered_ThenUsageIsStillRecorded()
         {
-
             var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new ServerTaskId("Deployment-1");
 
@@ -141,12 +140,43 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new ServerTaskId("Deployment-1");
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), Substitute.For<ILog>());
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             
             journal.ExpireStaleLocks(TimeSpan.Zero);
             
             Assert.IsFalse(journal.HasLock(thePackage));
+        }
+
+        [TestCase(true, true, true, true)]
+        [TestCase(true, true, false, true)]
+        [TestCase(true, false, true, true)]
+        [TestCase(true, false, false, false)]
+        [TestCase(false, true, true, false)]
+        [TestCase(false, true, false, false)]
+        [TestCase(false, false, true, false)]
+        [TestCase(false, false, false, false)]
+        public void WhenRetentionIsDisabled_DoNotAllowPackageUsageToBeRecorded(bool setRetentionEnabledFromServer, bool setPackageRetentionJournalPath, bool setTentacleHome, bool shouldBeEnabled)
+        {
+            //Retention should only be enabled if EnablePackageRetention is true, and either of TentacleHome and PackageRetentionJournalPath are set.
+            var ourVariables = new CalamariVariables();
+
+            if (setRetentionEnabledFromServer)
+                ourVariables.Set(KnownVariables.Calamari.EnablePackageRetention, Boolean.TrueString);
+
+            if (setTentacleHome)
+                ourVariables.Set(TentacleVariables.Agent.TentacleHome, "TentacleHome");
+
+            if (setPackageRetentionJournalPath)
+                ourVariables.Set(KnownVariables.Calamari.PackageRetentionJournalPath, "JournalPath");
+
+            var thePackage = new PackageIdentity("Package", "1.0");
+            var deploymentOne = new ServerTaskId("Deployment-1");
+
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(), ourVariables, Substitute.For<ILog>());
+            journal.RegisterPackageUse(thePackage, deploymentOne);
+            var didRegisterPackage = journal.GetUsageCount(thePackage) == 1;
+            Assert.That(didRegisterPackage == shouldBeEnabled);
         }
     }
 }
