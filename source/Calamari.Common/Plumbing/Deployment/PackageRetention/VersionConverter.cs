@@ -5,7 +5,7 @@ using Octopus.Versioning;
 
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
-    public class IVersionConverter : JsonConverter
+    public class VersionConverter : JsonConverter
     {
         public override bool CanWrite => true;
         public override bool CanRead => true;

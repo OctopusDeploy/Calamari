@@ -184,7 +184,7 @@ namespace Calamari.Common.Features.Packages
             }
             catch
             {
-                metadata = new PackageFileNameMetadata("", new SemanticVersion(0,0,0) ,"");
+                metadata = default;
                 return false;
             }
         }

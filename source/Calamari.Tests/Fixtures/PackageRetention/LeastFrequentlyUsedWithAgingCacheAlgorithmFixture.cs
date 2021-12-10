@@ -24,10 +24,18 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenPackageIsLocked_ThenDoNotConsiderItForRemoval()
         {
             var lfu = new LeastFrequentlyUsedWithAgingCacheAlgorithm();
-            var entry = CreateEntry("package-1", "1.0", 20, ("task-1", 2));
-            entry.AddLock(new ServerTaskId("task-0"), new CacheAge(1));
 
-            Assert.Throws<InsufficientCacheSpaceException>(() => lfu.GetPackagesToRemove(new List<JournalEntry>(), 10));
+            //If this entry wasn't locked, we would expect it to be removed
+            var lockedEntry = CreateEntry("package-locked", "1.0", 20, ("task-1", 1));
+            lockedEntry.AddLock(new ServerTaskId("task-0"), new CacheAge(1));
+
+            //This entry would not be removed if the locked entry wasn't locked, because it has multiple, more recent usages.
+            var unlockedEntry = CreateEntry("package-unlocked", "1.0", 20, ("task-2",12), ("task-3",15));
+
+            var entries = new List<JournalEntry>(new[] { lockedEntry, unlockedEntry });
+            var packagesToRemove = lfu.GetPackagesToRemove(entries, 20);
+
+            packagesToRemove.Should().BeEquivalentTo(new PackageIdentity("package-unlocked", "1.0"));
         }
 
         [Test]
@@ -49,16 +57,11 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                    .ThenBy(p => p.Version)
                                    .ToList();
 
-            packagesToRemove.Should()
-                            .ContainSingle();
-
-            var package = packagesToRemove.FirstOrDefault();
-            package.PackageId.Value.Should().BeEquivalentTo("package-3");
-            package.Version.ToString().Should().BeEquivalentTo("1.0");
+            packagesToRemove.Should().BeEquivalentTo(new PackageIdentity("package-3", "1.0"));
         }
 
         [TestCaseSource(nameof(ExpectMultiplePackageIdsTestCaseSource))]
-        public void ExpectingMultiplePackages(JournalEntry[] entries, int spaceNeeded, ExpectedPackageIdAndVersion[] expectedPackageIdVersionPairs)
+        public void ExpectingMultiplePackages(JournalEntry[] entries, int spaceNeeded, PackageIdentity[] expectedPackageIdVersionPairs)
         {
             var packagesToRemove = new LeastFrequentlyUsedWithAgingCacheAlgorithm()
                                    .GetPackagesToRemove(entries, spaceNeeded)
@@ -68,14 +71,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             packagesToRemove.Should()
                             .SatisfyRespectively(expectedPackageIdVersionPairs
-                                                 .Select<ExpectedPackageIdAndVersion, Action<PackageIdentity>>(p =>
-                                                                                                                   o =>
-                                                                                                                   {
-                                                                                                                       p.PackageId.Should().BeEquivalentTo(o.PackageId.Value);
-                                                                                                                       p.Version.Should().BeEquivalentTo(o.Version.ToString());
-                                                                                                                   })
-                                                 .ToArray()
-                                                );
+                                                 .Select<PackageIdentity, Action<PackageIdentity>>
+                                                     (p =>
+                                                          o => o.Should().BeEquivalentTo(p))
+                                                 .ToArray());
         }
 
         public static IEnumerable ExpectMultiplePackageIdsTestCaseSource()
@@ -88,8 +87,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                            CreateEntry("package-3", "1.0", 5, ("task-3", 11))
                                        },
                                        10,
-                                       new ExpectedPackageIdAndVersion("package-1"),
-                                       new ExpectedPackageIdAndVersion("package-2"));
+                                       new PackageIdentity("package-1", "1.0"),
+                                       new PackageIdentity("package-2", "1.0"));
 
             yield return SetUpTestCase("WhenOnlyRelyingOnNewerVersions_ThenReturnPackageWithFewestNewVersions",
                                        new[]
@@ -99,7 +98,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                            CreateEntry("package-2", "1.0", 10, ("task-3", 1))
                                        },
                                        10,
-                                       new ExpectedPackageIdAndVersion("package-1", "1.0"));
+                                       new PackageIdentity("package-1", "1.0"));
 
             yield return SetUpTestCase("WhenOnlyRelyingOnAge_ThenReturnOldestThatTakesEnoughSpace",
                                        new[]
@@ -108,7 +107,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                            CreateEntry("package-2", "1.0", 10, ("task-2", 10))
                                        },
                                        10,
-                                       new ExpectedPackageIdAndVersion("package-1"));
+                                       new PackageIdentity("package-1", "1.0"));
 
             yield return SetUpTestCase("WhenOnlyRelyingOnHitCount_ThenReturnPackageWithFewestHits",
                                        new[]
@@ -117,7 +116,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                            CreateEntry("package-2", "1.0", 10, ("task-2", 1))
                                        },
                                        10,
-                                       new ExpectedPackageIdAndVersion("package-2"));
+                                       new PackageIdentity("package-2", "1.0"));
 
             yield return SetUpTestCase("WhenOnlyRelyingOnNewerVersions_ThenReturnPackagesWithMostNewVersions",
                                        new[]
@@ -131,14 +130,14 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                            CreateEntry("package-2", "1.2", 10)
                                        },
                                        30,
-                                       new ExpectedPackageIdAndVersion("package-1", "1.0"),
-                                       new ExpectedPackageIdAndVersion("package-1", "1.1"),
-                                       new ExpectedPackageIdAndVersion("package-2", "1.0"));
+                                       new PackageIdentity("package-1", "1.0"),
+                                       new PackageIdentity("package-1", "1.1"),
+                                       new PackageIdentity("package-2", "1.0"));
         }
 
-        static TestCaseData SetUpTestCase(string testName, JournalEntry[] testJournalEntries, int spaceNeeded, params ExpectedPackageIdAndVersion[] expectedPackageIdAndVersions)
+        static TestCaseData SetUpTestCase(string testName, JournalEntry[] testJournalEntries, int spaceNeeded, params PackageIdentity[] expectedPackageIdentities)
         {
-            return new TestCaseData(testJournalEntries, spaceNeeded, expectedPackageIdAndVersions).SetName(testName);
+            return new TestCaseData(testJournalEntries, spaceNeeded, expectedPackageIdentities).SetName(testName);
         }
 
         static JournalEntry CreateEntry(string packageId,
@@ -153,18 +152,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             packageUsages.AddRange(usages.Select(details => new UsageDetails(new ServerTaskId(details.serverTaskId), new CacheAge(details.cacheAgeAtUsage))));
 
             return new JournalEntry(new PackageIdentity(packageId, version, packageSize), null, packageUsages);
-        }
-
-        public class ExpectedPackageIdAndVersion
-        {
-            public ExpectedPackageIdAndVersion(string packageId, string version = "1.0")
-            {
-                PackageId = packageId;
-                Version = version;
-            }
-
-            public string PackageId { get; }
-            public string Version { get; }
         }
     }
 }

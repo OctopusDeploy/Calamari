@@ -7,13 +7,14 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
 using Newtonsoft.Json;
 using Octopus.Versioning;
+
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
     public class PackageIdentity
     {
         public PackageId PackageId { get; }
 
-        [JsonConverter(typeof(IVersionConverter))]
+        [JsonConverter(typeof(VersionConverter))]
         public IVersion Version { get; }
         public string? Path { get; }
         public long FileSizeBytes { get; private set; } = -1;
@@ -64,7 +65,8 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         protected bool Equals(PackageIdentity other)
         {
             return Equals(PackageId, other.PackageId)
-                   && Equals(Version, other.Version);
+                   && Equals(Version, other.Version)
+                   && Equals(Path, other.Path);
         }
 
         public override int GetHashCode()
@@ -77,7 +79,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 
         public static bool operator == (PackageIdentity first, PackageIdentity second)
         {
-            return first.PackageId == second.PackageId && first.Version.Equals(second.Version);
+            return first.Equals(second);
         }
 
         public static bool operator !=(PackageIdentity first, PackageIdentity second)
