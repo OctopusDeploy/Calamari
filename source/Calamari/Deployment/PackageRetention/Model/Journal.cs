@@ -122,6 +122,9 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void ApplyRetention(string directory)
         {
+            if (!IsRetentionEnabled())
+                return;
+
             using (var repository = repositoryFactory.CreateJournalRepository())
             {
                 var requiredSpace = freeSpaceChecker.GetRequiredSpace(directory);
