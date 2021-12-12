@@ -13,6 +13,11 @@ To apply the patch, change the buildType with id = 'PublishToFeedzIo'
 accordingly, and delete the patch script.
 */
 changeBuildType(RelativeId("PublishToFeedzIo")) {
+    check(name == "Publish to Feedz.io") {
+        "Unexpected name: '$name'"
+    }
+    name = "Chain: Build and Test and Publish to Feedz.io"
+
     expectSteps {
         nuGetPublish {
             name = "Nuget Publish"
