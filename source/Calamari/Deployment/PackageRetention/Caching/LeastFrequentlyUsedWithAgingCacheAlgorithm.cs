@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Security.Cryptography.Xml;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Deployment.PackageRetention.Model;
+using Octopus.CoreUtilities.Extensions;
+
 namespace Calamari.Deployment.PackageRetention.Caching
 {
     public class LeastFrequentlyUsedWithAgingCacheAlgorithm : RetentionAlgorithmBase
@@ -21,17 +24,18 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
         public override IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries, long spaceRequired)
         {
-            journalEntries = journalEntries.Where(e => !e.HasLock());
+            var entries = journalEntries.Where(e => !e.HasLock()).ToList();
 
             //We don't need the actual age of cache entries, just the relative age.
-            var currentCacheAge = journalEntries.Max(je => je.GetUsageDetails().Max(u => u.CacheAgeAtUsage));
-            var orderedPackages = OrderByValue(journalEntries, currentCacheAge);
+            var currentCacheAge = entries.Max(je => je.GetUsageDetails().Max(u => u.CacheAgeAtUsage));
+            var orderedPackages = OrderByValue(entries.ToList(), currentCacheAge);
 
             var spaceFound = 0L;
 
             var packagesToRemove = orderedPackages.TakeWhile(p =>
                                                              {
-                                                                 if (spaceFound >= spaceRequired) return false; //Already found enough space
+                                                                 if (spaceFound >= spaceRequired)
+                                                                     return false; //Already found enough space
 
                                                                  spaceFound += p.Package.FileSizeBytes;
                                                                  return true;
@@ -46,67 +50,26 @@ namespace Calamari.Deployment.PackageRetention.Caching
             throw new InsufficientCacheSpaceException(spaceFound, spaceRequired);
         }
 
-        IEnumerable<PackageInfo> OrderByValue(IEnumerable<JournalEntry> entries, CacheAge currentCacheAge)
+        IEnumerable<PackageInfo> OrderByValue(IList<JournalEntry> journalEntries, CacheAge currentCacheAge)
         {
-            if (!entries.Any()) return new PackageInfo[0];
+            if (!journalEntries.Any()) return new PackageInfo[0];
 
-            var details = entries.Select(e => new PackageInfo(e, entries)).ToList();
+            var details = journalEntries.Select(e => new PackageInfo(e, journalEntries)).ToList();
 
-            (int Min, int Max) newVersionCountRange = (details.Min(d => d.NewerVersionCount), details.Max(d => d.NewerVersionCount));
-            //Note that the age max/min seem backwards, but that's because the larger value is more recent (we record the age of the *cache* at the time of use).
-            (int Min, int Max) ageRange = (currentCacheAge.Value - details.Max(d => d.Age.Value), currentCacheAge.Value - details.Min(d => d.Age.Value));
-            (int Min, int Max) hitCountRange = (details.Min(d => d.HitCount), details.Max(d => d.HitCount));
+            decimal CalculateValue(PackageInfo pi) =>
+                Normalise(pi.HitCount, details.GetHitCountRange()) * hitFactor
+                - Normalise(currentCacheAge.Value - pi.Age.Value, details.GetCacheAgeRange(currentCacheAge)) * ageFactor
+                - Normalise(pi.NewerVersionCount, details.GetNewVersionCountRange()) * newerVersionFactor;
 
-            decimal NormaliseVersionCount(int newerVersionCount) => Normalise(newerVersionCount, newVersionCountRange.Min, newVersionCountRange.Max);
-            decimal NormaliseAge(int age) => Normalise(age, ageRange.Min, ageRange.Max);
-            decimal NormaliseHitCount(int hitCount) => Normalise(hitCount, hitCountRange.Min, hitCountRange.Max);
-
-            return details.OrderBy(d =>
-                                       NormaliseHitCount(d.HitCount) * hitFactor
-                                        - NormaliseAge(currentCacheAge.Value - d.Age.Value) * ageFactor
-                                        - NormaliseVersionCount(d.NewerVersionCount) * newerVersionFactor);
+            return details.OrderBy((Func<PackageInfo, decimal>)CalculateValue);
         }
 
-        decimal Normalise(int value, int rangeMinValue, int rangeMaxValue)
+        static decimal Normalise(int value, (int Min, int Max) range)
         {
-            var divisor = rangeMaxValue - rangeMinValue;
+            var divisor = range.Max - range.Min;
             divisor = divisor == 0 ? 1 : divisor;
             var scale = 1M / divisor; //Scales from 0..1
-            return (value - rangeMinValue) * scale;
-        }
-
-
-
-        class PackageInfo
-        {
-            public PackageIdentity Package { get; set; }
-
-            public CacheAge Age { get; }
-            public int HitCount { get; }
-            public int NewerVersionCount { get; }
-
-            public PackageInfo(JournalEntry entry, IEnumerable<JournalEntry> entries)
-            {
-                Package = entry.Package;
-                Age = GetAge(entry);
-                HitCount = GetHitCount(entry);
-                NewerVersionCount = GetNumberOfNewerVersions(entry, entries);
-            }
-
-            CacheAge GetAge(JournalEntry entry)
-            {
-                return entry.GetUsageDetails().Min(ud => ud.CacheAgeAtUsage);
-            }
-
-            int GetHitCount(JournalEntry entry)
-            {
-                return entry.GetUsageDetails().Count();
-            }
-
-            int GetNumberOfNewerVersions(JournalEntry entry, IEnumerable<JournalEntry> entries)
-            {
-                return entries.Count(e => e.Package.PackageId == entry.Package.PackageId && e.Package.Version.CompareTo(entry.Package.Version) > 0);
-            }
+            return (value - range.Min) * scale;
         }
     }
 }
