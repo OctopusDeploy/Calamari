@@ -16,5 +16,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDisc
             format = success ? parsedFormat : defaultFormat;
             return success;
         }
+
+        public int Priority => 0;
     }
 }

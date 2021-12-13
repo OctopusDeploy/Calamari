@@ -23,6 +23,7 @@ using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.LaunchTools;
+using Markdig.Helpers;
 using Octopus.Versioning;
 using IContainer = Autofac.IContainer;
 using VersionConverter = Newtonsoft.Json.Converters.VersionConverter;
@@ -81,7 +82,12 @@ namespace Calamari
                                          .GetTypes()
                                          .Where(p => typeof(ITryToDiscoverVersionFormat).IsAssignableFrom(p));
 
-            var discoveryInstances = versionFormatDiscovery.Select(d => Activator.CreateInstance(d) as ITryToDiscoverVersionFormat).ToArray();
+            var discoveryInstances = versionFormatDiscovery
+                                                            .Select(d => Activator.CreateInstance(d) as ITryToDiscoverVersionFormat)
+                                                            .Where(d => d != null)
+                                                            .OrderBy(d => d.Priority)
+                                                            .ToArray();
+
             PackageIdentity.SetVersionFormatDiscoverers(discoveryInstances);
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
@@ -89,7 +95,7 @@ namespace Calamari
 
             //TODO: Do this using Autofac
             TypeDescriptor.AddAttributes(typeof(ServerTaskId), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskId>)));
-            
+
             var typesToAlwaysDecorate = new Type[] { typeof(ApplyDeltaCommand) }; //Commands from external assemblies.
 
             //Get register commands with the RetentionLockingCommand attribute;

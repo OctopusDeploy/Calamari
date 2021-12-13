@@ -102,16 +102,17 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         /// <summary>
         /// Creates a PackageIdentity using the information provided to determine the version format..
         /// </summary>
-        public static PackageIdentity CreatePackageIdentity(IManagePackageUse journal, IVariables variables, string[] commandLineArguments, string? packageId = null, string? version = null )
+        public static PackageIdentity CreatePackageIdentity(IManagePackageUse journal, IVariables variables, string[] commandLineArguments, VersionFormat defaultFormat = VersionFormat.Semver , string? packageId = null, string? version = null )
         {
             var versionStr = version ?? variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
             var packagePath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
 
             var packageIdObj = PackageId.CreatePackageId(packageId, variables, commandLineArguments);
 
-            var versionFormat = VersionFormat.Semver;
+            var versionFormat = defaultFormat;
             // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-            versionFormatDiscoverers.FirstOrDefault(d => d.TryDiscoverVersionFormat(journal, variables, commandLineArguments, out versionFormat));
+            versionFormatDiscoverers.OrderBy(d => d.Priority) 
+                                    .FirstOrDefault(d => d.TryDiscoverVersionFormat(journal, variables, commandLineArguments, out versionFormat, defaultFormat));
 
             return new PackageIdentity(packageIdObj, VersionFactory.CreateVersion(versionStr, versionFormat), packagePath);
         }
