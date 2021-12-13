@@ -46,7 +46,7 @@ namespace Calamari.Commands
                 Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
                 Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
 
-                var packageIdentity = PackageIdentity.CreatePackageIdentity(journal, variables, commandLineArguments, packageId, packageVersion);
+                var packageIdentity = PackageIdentity.CreatePackageIdentity(journal, variables, commandLineArguments, VersionFormat.Semver, packageId, packageVersion);
 
                 journal.DeregisterPackageUse(packageIdentity, taskId);
             }
