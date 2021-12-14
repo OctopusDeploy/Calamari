@@ -12,8 +12,6 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
-using Octopus.Versioning;
-using VersionConverter = Newtonsoft.Json.Converters.VersionConverter;
 
 namespace Calamari.Tests.Fixtures.PackageRetention
 {

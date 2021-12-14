@@ -13,13 +13,15 @@ namespace Calamari.Deployment.PackageRetention
         readonly ICommandWithArgs command;
         readonly IVariables variables;
         readonly IManagePackageUse journal;
+        readonly PackageIdentityFactory packageIdentityFactory;
 
-        public PackageJournalCommandDecorator(ILog log, ICommandWithArgs command, IVariables variables, IManagePackageUse journal)
+        public PackageJournalCommandDecorator(ILog log, ICommandWithArgs command, IVariables variables, IManagePackageUse journal, PackageIdentityFactory packageIdentityFactory)
         {
             this.log = log;
             this.command = command;
             this.variables = variables;
             this.journal = journal;
+            this.packageIdentityFactory = packageIdentityFactory;
 
 #if DEBUG
             log.Verbose($"Decorating {command.GetType().Name} with PackageJournalCommandDecorator.");
@@ -34,7 +36,7 @@ namespace Calamari.Deployment.PackageRetention
                 try
                 {
                     var deploymentTaskId = new ServerTaskId(variables);
-                    var package = PackageIdentity.CreatePackageIdentity(journal, variables, commandLineArguments);
+                    var package = packageIdentityFactory.CreatePackageIdentity(journal, variables, commandLineArguments);
 
                     journal.RegisterPackageUse(package, deploymentTaskId);
                 }

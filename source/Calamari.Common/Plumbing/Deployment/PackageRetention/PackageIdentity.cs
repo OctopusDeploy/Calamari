@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDiscovery;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
@@ -84,37 +81,12 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 
         public static bool operator !=(PackageIdentity first, PackageIdentity second)
         {
-            return !(first == second);
+            return !first.Equals(second);
         }
         
         public override string ToString()
         {
             return $"{PackageId} v{Version}";
-        }
-
-        static List<ITryToDiscoverVersionFormat> versionFormatDiscoverers = new List<ITryToDiscoverVersionFormat>();
-
-        public static void SetVersionFormatDiscoverers(params ITryToDiscoverVersionFormat[] formatDiscoverers)
-        {
-            versionFormatDiscoverers = new List<ITryToDiscoverVersionFormat>(formatDiscoverers);
-        }
-
-        /// <summary>
-        /// Creates a PackageIdentity using the information provided to determine the version format..
-        /// </summary>
-        public static PackageIdentity CreatePackageIdentity(IManagePackageUse journal, IVariables variables, string[] commandLineArguments, VersionFormat defaultFormat = VersionFormat.Semver , string? packageId = null, string? version = null )
-        {
-            var versionStr = version ?? variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
-            var packagePath = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
-
-            var packageIdObj = PackageId.CreatePackageId(packageId, variables, commandLineArguments);
-
-            var versionFormat = defaultFormat;
-            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-            versionFormatDiscoverers.OrderBy(d => d.Priority) 
-                                    .FirstOrDefault(d => d.TryDiscoverVersionFormat(journal, variables, commandLineArguments, out versionFormat, defaultFormat));
-
-            return new PackageIdentity(packageIdObj, VersionFactory.CreateVersion(versionStr, versionFormat), packagePath);
         }
 
         public void UpdatePackageSize()

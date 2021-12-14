@@ -76,19 +76,11 @@ namespace Calamari
             builder.RegisterType<JsonJournalRepositoryFactory>().As<IJournalRepositoryFactory>();
             builder.RegisterType<Journal>().As<IManagePackageUse>();
             builder.RegisterType<LeastFrequentlyUsedWithAgingCacheAlgorithm>().As<IRetentionAlgorithm>();
+            builder.RegisterType<PackageIdentityFactory>().As<PackageIdentityFactory>();
 
-            //Note: this could be done with a factory, but it just felt like overkill for this.
-            var versionFormatDiscovery = GetProgramAssemblyToRegister()
-                                         .GetTypes()
-                                         .Where(p => typeof(ITryToDiscoverVersionFormat).IsAssignableFrom(p));
-
-            var discoveryInstances = versionFormatDiscovery
-                                                            .Select(d => Activator.CreateInstance(d) as ITryToDiscoverVersionFormat)
-                                                            .Where(d => d != null)
-                                                            .OrderBy(d => d.Priority)
-                                                            .ToArray();
-
-            PackageIdentity.SetVersionFormatDiscoverers(discoveryInstances);
+            builder.RegisterAssemblyTypes(GetProgramAssemblyToRegister())
+                   .Where(t => t == typeof(ITryToDiscoverVersionFormat))
+                   .AsImplementedInterfaces();
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
@@ -111,7 +103,8 @@ namespace Calamari
                                                             => new PackageJournalCommandDecorator(c.Resolve<ILog>(),
                                                                                            inner,
                                                                                            c.Resolve<IVariables>(),
-                                                                                           c.Resolve<IManagePackageUse>()),
+                                                                                           c.Resolve<IManagePackageUse>(),
+                                                                                           c.Resolve<PackageIdentityFactory>()),
                                                         fromKey: nameof(PackageLockingCommandAttribute) + "From",
                                                         toKey: nameof(PackageLockingCommandAttribute));
 
