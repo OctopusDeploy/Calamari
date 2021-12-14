@@ -8,7 +8,7 @@ namespace Calamari.Deployment.PackageRetention.Model
     public class JournalEntry
     {
         public PackageIdentity Package { get; }
-        
+
         [JsonProperty]
         readonly PackageUsages usages;
 

@@ -81,9 +81,9 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 
         public static bool operator !=(PackageIdentity first, PackageIdentity second)
         {
-            return !first.Equals(second);
+            return !(first == second);
         }
-        
+
         public override string ToString()
         {
             return $"{PackageId} v{Version}";
