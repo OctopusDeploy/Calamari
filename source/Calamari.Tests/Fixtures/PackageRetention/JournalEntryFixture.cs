@@ -151,11 +151,9 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne, out var packageRegistered);
+            journal.ExpireStaleLocks(TimeSpan.Zero);
 
             Assert.IsTrue(packageRegistered);
-            
-            journal.ExpireStaleLocks(TimeSpan.Zero);
-            
             Assert.IsFalse(journal.HasLock(thePackage));
         }
 
