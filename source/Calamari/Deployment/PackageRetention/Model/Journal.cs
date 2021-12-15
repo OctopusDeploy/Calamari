@@ -158,19 +158,19 @@ namespace Calamari.Deployment.PackageRetention.Model
                 {
                     foreach (var entry in repository.GetAllJournalEntries())
                     {
-                        var usages = entry.GetLockDetails();
-                        var staleUsages = usages.Where(u => u.DateTime.Add(timeBeforeExpiration) <= DateTime.Now);
+                        var locks = entry.GetLockDetails();
+                        var staleLocks = locks.Where(u => u.DateTime.Add(timeBeforeExpiration) <= DateTime.Now);
 
-                        foreach (var staleUsage in staleUsages)
+                        foreach (var staleLock in staleLocks)
                         {
-                            entry.RemoveLock(staleUsage.DeploymentTaskId);
+                            entry.RemoveLock(staleLock.DeploymentTaskId);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                log.Error($"Unable to expire stale lock.{Environment.NewLine}{ex.ToString()}");
+                log.Error($"Unable to expire stale package locks.{Environment.NewLine}{ex.ToString()}");
             }
         }
     }
