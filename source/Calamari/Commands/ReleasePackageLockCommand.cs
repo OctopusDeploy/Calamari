@@ -16,6 +16,7 @@ namespace Calamari.Commands
         readonly IVariables variables;
         readonly ILog log;
         readonly IManagePackageUse packageJournal;
+        readonly TimeSpan timeBeforePackageExpiration;
 
         string packageId;
         string packageVersion;
@@ -25,8 +26,25 @@ namespace Calamari.Commands
             this.variables = variables;
             this.log = log;
             this.packageJournal = packageJournal;
+            timeBeforePackageExpiration = GetTimeBeforeExpiration(variables.Get(KnownVariables.Calamari.PackageRetentionLockExpiration));
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
+        }
+
+        TimeSpan GetTimeBeforeExpiration(string variable)
+        {
+            var defaultTime = TimeSpan.FromDays(14);
+            if (string.IsNullOrEmpty(variable)) return defaultTime;
+
+            try
+            {
+                return TimeSpan.Parse(variable);
+            }
+            catch
+            {
+                log.ErrorFormat("Failed to parse '{0}' into a valid TimeSpan. Using default of 14 days.", variable);
+                return defaultTime;
+            }
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -50,7 +68,7 @@ namespace Calamari.Commands
                 return ConsoleFormatter.PrintError(log, ex);
             }
 
-            packageJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
+            packageJournal.ExpireStaleLocks(timeBeforePackageExpiration);
 
             return 0;
         }
