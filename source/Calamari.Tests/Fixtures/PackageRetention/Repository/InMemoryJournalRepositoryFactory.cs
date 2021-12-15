@@ -14,6 +14,11 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
             journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
         }
 
+        public InMemoryJournalRepositoryFactory(Dictionary<PackageIdentity, JournalEntry> journalEntries)
+        {
+            this.journalEntries = journalEntries;
+        }
+
         public IJournalRepository CreateJournalRepository()
         {
             return new InMemoryJournalRepository(journalEntries);

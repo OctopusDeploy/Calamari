@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
@@ -147,14 +148,57 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenStaleLocksAreExpired_TheLocksAreRemoved()
         {
             var thePackage = new PackageIdentity("Package", "1.0");
-            var deploymentOne = new ServerTaskId("Deployment-1");
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
-            journal.RegisterPackageUse(thePackage, deploymentOne, out var packageRegistered);
-            journal.ExpireStaleLocks(TimeSpan.Zero);
+            var packageLocks = new PackageLocks
+            {
+                new UsageDetails(new ServerTaskId("Deployment-1"), new CacheAge(1), new DateTime(2021, 1, 1))
+            };
 
-            Assert.IsTrue(packageRegistered);
+            var journalEntry = new JournalEntry(thePackage, packageLocks);
+
+            var journalEntries = new Dictionary<PackageIdentity, JournalEntry>()
+            {
+                { thePackage, journalEntry }
+            };
+
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(journalEntries), variables, Substitute.For<ILog>());
+
+            journal.ExpireStaleLocks(TimeSpan.FromDays(14));
+
             Assert.IsFalse(journal.HasLock(thePackage));
+        }
+
+        [Test]
+        public void OnlyStaleLocksAreExpired()
+        {
+            var packageOne = new PackageIdentity("PackageOne", "1.0");
+            var packageTwo = new PackageIdentity("PackageTwo", "1.0");
+            
+            var packageOneLocks = new PackageLocks
+            {
+                new UsageDetails(new ServerTaskId("Deployment-1"), new CacheAge(1), new DateTime(2021, 1, 1)),
+            };
+            
+            var packageTwoLocks = new PackageLocks
+            {
+                new UsageDetails(new ServerTaskId("Deployment-2"), new CacheAge(1), DateTime.Now),
+            };
+            
+            var packageOneJournalEntry = new JournalEntry(packageOne, packageOneLocks);
+            var packageTwoJournalEntry = new JournalEntry(packageTwo, packageTwoLocks);
+
+            var journalEntries = new Dictionary<PackageIdentity, JournalEntry>()
+            {
+                { packageOne, packageOneJournalEntry },
+                { packageTwo, packageTwoJournalEntry }
+            };
+            
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(journalEntries), variables, Substitute.For<ILog>());
+
+            journal.ExpireStaleLocks(TimeSpan.FromDays(14));
+
+            Assert.IsFalse(journal.HasLock(packageOne));
+            Assert.IsTrue(journal.HasLock(packageTwo));
         }
 
         [TestCase(true, true, true, true)]

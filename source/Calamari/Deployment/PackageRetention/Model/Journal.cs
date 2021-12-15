@@ -158,7 +158,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                 {
                     foreach (var entry in repository.GetAllJournalEntries())
                     {
-                        var usages = entry.GetUsageDetails();
+                        var usages = entry.GetLockDetails();
                         var staleUsages = usages.Where(u => u.DateTime.Add(timeBeforeExpiration) <= DateTime.Now);
 
                         foreach (var staleUsage in staleUsages)
@@ -170,7 +170,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
             catch (Exception ex)
             {
-                log.Error($"Unable to expire stale locks.{Environment.NewLine}{ex.ToString()}");
+                log.Error($"Unable to expire stale lock.{Environment.NewLine}{ex.ToString()}");
             }
         }
     }
