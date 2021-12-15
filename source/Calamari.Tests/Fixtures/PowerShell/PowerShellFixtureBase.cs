@@ -57,8 +57,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Argument("script", GetFixtureResource("Scripts", ProfileScript)), 
                 variables);
 
-            Log.Verbose($"Output from invocation:{Environment.NewLine}{output}");
-
             output.AssertSuccess();
             // Need to check for "-NoProfile -NoLogo" not just "-NoProfile" because when
             // run via Cake we end up with the outer Powershell call included in the

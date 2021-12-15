@@ -7,7 +7,6 @@ using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using NSubstitute;
 using NUnit.Framework;
-//using Octopus.Diagnostics;
 
 namespace Calamari.Tests.Fixtures.PackageRetention
 {
