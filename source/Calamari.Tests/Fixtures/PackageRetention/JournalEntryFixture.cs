@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Tests.Fixtures.PackageRetention.Repository;
+using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -21,6 +23,14 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             variables = new CalamariVariables();
             variables.Set(KnownVariables.Calamari.EnablePackageRetention, bool.TrueString);
             variables.Set(TentacleVariables.Agent.TentacleHome, "SomeDirectory");
+            variables.Set(TentacleVariables.Agent.TentacleHome, "TentacleHome");
+            variables.Set(KnownVariables.Calamari.PackageRetentionJournalPath, "JournalPath");
+        }
+
+        [Test]
+        public void WhenTestSetupCompletes_ThenPackageRetentionIsEnabled()
+        {
+            variables.IsPackageRetentionEnabled().Should().BeTrue("We need retention to be enabled for these tests to be valid.");
         }
 
         [Test]
@@ -140,7 +150,9 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var deploymentOne = new ServerTaskId("Deployment-1");
 
             var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
-            journal.RegisterPackageUse(thePackage, deploymentOne);
+            journal.RegisterPackageUse(thePackage, deploymentOne, out var packageRegistered);
+
+            packageRegistered.Should().BeTrue();
             
             journal.ExpireStaleLocks(TimeSpan.Zero);
             
