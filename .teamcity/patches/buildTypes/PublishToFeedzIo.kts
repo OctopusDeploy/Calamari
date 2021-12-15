@@ -5,6 +5,8 @@ import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.CommitStatusPu
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.commitStatusPublisher
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.NuGetPublishStep
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.nuGetPublish
+import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.VcsTrigger
+import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.vcs
 import jetbrains.buildServer.configs.kotlin.v2019_2.ui.*
 
 /*
@@ -32,6 +34,23 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
         update<NuGetPublishStep>(0) {
             clearConditions()
             apiKey = "credentialsJSON:21016b86-e16b-4825-ab03-02ec2d979b7f"
+        }
+    }
+
+    triggers {
+        val trigger1 = find<VcsTrigger> {
+            vcs {
+                branchFilter = """
+                    ## We actually want to publish all builds
+                    +:refs/tags/*
+                    +:<default>
+                    +:refs/heads/*
+                """.trimIndent()
+            }
+        }
+        trigger1.apply {
+            enabled = false
+
         }
     }
 
