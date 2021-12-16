@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
@@ -149,19 +150,21 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void ApplyRetention_RemovesPackageFile_AndUsage()
         {
-            var thePackage = new PackageIdentity("Package", "1.0");
-            var deploymentOne = new ServerTaskId("Deployment-1");
-    
-            var journal = GetPackageJournal();
-            journal.RegisterPackageUse(thePackage, deploymentOne);
+            string packageOnePath = "./PackageOne.zip";
+            var packageOne = new PackageIdentity("PackageOne", "1.0", packageOnePath);
+
+            var retentionAlgorithm = Substitute.For<IRetentionAlgorithm>();
+            retentionAlgorithm.GetPackagesToRemove(Arg.Any<IEnumerable<JournalEntry>>(), Arg.Any<ulong>()).Returns(new List<PackageIdentity>(){ packageOne });
+            fileSystem.FileExists(packageOnePath).Returns(true);
+
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(), Substitute.For<ILog>(), fileSystem, retentionAlgorithm, variables, Substitute.For<IFreeSpaceChecker>());
+
+            journal.RegisterPackageUse(packageOne, new ServerTaskId("Deployment-1"));
 
             journal.ApplyRetention(PackageDirectory);
 
-            // TODO: Fix these assertions
-            // How do we ensure the given package will be marked for removal?
-            // How do we simulate needing more disk space
-            journal.GetUsage(thePackage).Should().BeEmpty();
-            fileSystem.Received().DeleteFile(thePackage.Path);
+            journal.GetUsage(packageOne).Should().BeEmpty();
+            fileSystem.Received().DeleteFile(packageOne.Path, FailureOptions.IgnoreFailure);
         }
 
         [TestCase(true, true, true, true)]

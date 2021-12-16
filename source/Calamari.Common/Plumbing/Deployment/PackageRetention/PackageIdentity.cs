@@ -13,7 +13,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         public PackageId PackageId { get; }
         public string Version { get; }
 
-        public PackageIdentity(string packageId, string version) : this(new PackageId(packageId), version)
+        public PackageIdentity(string packageId, string version, string? path = null) : this(new PackageId(packageId), version, path)
         {
         }
 
@@ -29,10 +29,11 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         }
 
         [JsonConstructor]
-        public PackageIdentity(PackageId packageId, string version)
+        public PackageIdentity(PackageId packageId, string version, string? path = null)
         {
             PackageId = packageId ?? throw new ArgumentNullException(nameof(packageId));
             Version = version ?? throw new ArgumentNullException(nameof(version));
+            Path = path;
         }
 
 
