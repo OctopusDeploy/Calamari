@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Tests.Fixtures.PackageRetention.Repository;
-using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -25,13 +23,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.Calamari.EnablePackageRetention, bool.TrueString);
             variables.Set(TentacleVariables.Agent.TentacleHome, "SomeDirectory");
-            variables.Set(KnownVariables.Calamari.PackageRetentionJournalPath, "JournalPath");
-        }
-
-        [Test]
-        public void WhenTestSetupCompletes_ThenPackageRetentionIsEnabled()
-        {
-            variables.IsPackageRetentionEnabled().Should().BeTrue("We need retention to be enabled for these tests to be valid.");
             journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());;
         }
 
@@ -153,12 +144,15 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             {
                 { thePackage, journalEntry }
             };
+            
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.Calamari.EnablePackageRetention, bool.TrueString);
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(journalEntries), variables, Substitute.For<ILog>());
+            var testJournal = new Journal(new InMemoryJournalRepositoryFactory(journalEntries), variables, Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());
 
-            journal.ExpireStaleLocks(TimeSpan.FromDays(14));
+            testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
-            Assert.IsFalse(journal.HasLock(thePackage));
+            Assert.IsFalse(testJournal.HasLock(thePackage));
         }
 
         [Test]
@@ -186,12 +180,15 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                 { packageTwo, packageTwoJournalEntry }
             };
             
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(journalEntries), variables, Substitute.For<ILog>());
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.Calamari.EnablePackageRetention, bool.TrueString);
 
-            journal.ExpireStaleLocks(TimeSpan.FromDays(14));
+            var testJournal = new Journal(new InMemoryJournalRepositoryFactory(journalEntries), variables, Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());
 
-            Assert.IsFalse(journal.HasLock(packageOne));
-            Assert.IsTrue(journal.HasLock(packageTwo));
+            testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
+
+            Assert.IsFalse(testJournal.HasLock(packageOne));
+            Assert.IsTrue(testJournal.HasLock(packageTwo));
         }
 
         [TestCase(true, true, true, true)]

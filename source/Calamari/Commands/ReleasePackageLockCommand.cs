@@ -7,6 +7,7 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Octopus.Versioning;
 
 namespace Calamari.Commands
 {
