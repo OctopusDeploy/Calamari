@@ -122,24 +122,35 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void ApplyRetention(string directory)
         {
-            if (!IsRetentionEnabled())
-                return;
-
-            using (var repository = repositoryFactory.CreateJournalRepository())
+            if (IsRetentionEnabled())
             {
-                var requiredSpace = freeSpaceChecker.GetRequiredSpace(directory);
-                
-                var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), requiredSpace);
-
-                foreach (var package in packagesToRemove)
+                try
                 {
-                    if (string.IsNullOrWhiteSpace(package.Path) || !fileSystem.FileExists(package.Path)) return;
+                    using (var repository = repositoryFactory.CreateJournalRepository())
+                    {
+                        var requiredSpace = freeSpaceChecker.GetRequiredSpace(directory);
 
-                    Log.Info($"Removing package file '{package.Path}'");
-                    fileSystem.DeleteFile(package.Path, FailureOptions.IgnoreFailure);
+                        var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), requiredSpace);
 
-                    repository.RemovePackageEntry(package);
+                        foreach (var package in packagesToRemove)
+                        {
+                            if (string.IsNullOrWhiteSpace(package.Path) || !fileSystem.FileExists(package.Path)) return;
+
+                            Log.Info($"Removing package file '{package.Path}'");
+                            fileSystem.DeleteFile(package.Path, FailureOptions.IgnoreFailure);
+
+                            repository.RemovePackageEntry(package);
+                        }
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Log.Error(ex.Message);
+                }
+            }
+            else
+            {
+                freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(directory);
             }
         }
 
