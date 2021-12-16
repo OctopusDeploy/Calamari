@@ -6,21 +6,13 @@ namespace Calamari.Deployment.PackageRetention.Model
 {
     public class UsageDetails : IUsageDetails
     {
-        public CacheAge CacheAge { get; }
-        public DateTime DateTime { get; }
+        public CacheAge CacheAgeAtUsage { get; }
         public ServerTaskId DeploymentTaskId { get; }
 
-        /// <summary> Defaults DateTime to DateTime.Now </summary>
-        public UsageDetails(ServerTaskId deploymentTaskId, CacheAge cacheAge)
-            : this(deploymentTaskId, cacheAge, DateTime.Now)
-        {
-        }
-
         [JsonConstructor]
-        public UsageDetails(ServerTaskId deploymentTaskId, CacheAge cacheAge, DateTime dateTime)
+        public UsageDetails(ServerTaskId deploymentTaskId, CacheAge cacheAgeAtUsage)
         {
-            CacheAge = cacheAge;
-            DateTime = dateTime;
+            CacheAgeAtUsage = cacheAgeAtUsage;
             DeploymentTaskId = deploymentTaskId;
         }
     }

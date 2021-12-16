@@ -1,5 +1,11 @@
-﻿using Calamari.Common.Plumbing.Deployment.PackageRetention;
+﻿using System;
+using System.Collections.Generic;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDiscovery;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention.Model;
 using NUnit.Framework;
+using Octopus.Versioning;
 
 namespace Calamari.Tests.Fixtures.PackageRetention
 {
@@ -23,6 +29,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             Assert.AreNotEqual(package1v1,package1v2);
         }
+
         [Test]
         public void WhenTwoPackagesWithADifferentNameAndSameVersionAreCompared_ThenTheyAreNotEqual()
         {
