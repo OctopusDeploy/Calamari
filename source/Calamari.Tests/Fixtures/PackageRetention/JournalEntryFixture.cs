@@ -148,7 +148,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         }
         
         [Test]
-        public void ApplyRetention_RemovesPackageFile_AndUsage()
+        public void WhenRetentionIsApplied_ThenPackageFileAndUsageAreRemoved()
         {
             string packageOnePath = "./PackageOne.zip";
             var packageOne = new PackageIdentity("PackageOne", "1.0", packageOnePath);

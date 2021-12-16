@@ -129,12 +129,15 @@ namespace Calamari.Deployment.PackageRetention.Model
                     using (var repository = repositoryFactory.CreateJournalRepository())
                     {
                         var requiredSpace = freeSpaceChecker.GetRequiredSpace(directory);
-
                         var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), requiredSpace);
 
                         foreach (var package in packagesToRemove)
                         {
-                            if (string.IsNullOrWhiteSpace(package.Path) || !fileSystem.FileExists(package.Path)) return;
+                            if (string.IsNullOrWhiteSpace(package?.Path) || !fileSystem.FileExists(package.Path))
+                            {
+                                log.Warn($"Package at {package?.Path} not found.");
+                                continue;
+                            }
 
                             Log.Info($"Removing package file '{package.Path}'");
                             fileSystem.DeleteFile(package.Path, FailureOptions.IgnoreFailure);
