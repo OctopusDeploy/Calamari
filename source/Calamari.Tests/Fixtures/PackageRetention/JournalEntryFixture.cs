@@ -21,20 +21,20 @@ namespace Calamari.Tests.Fixtures.PackageRetention
     {
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageJournal");
         static readonly string PackageDirectory = Path.Combine(TentacleHome, "Files");
-
-        IVariables variables;
+        
         ICalamariFileSystem fileSystem;
         Journal journal;
+        IVariables variables;
 
         [SetUp]
         public void Setup()
         {
-            var variables = new CalamariVariables();
+            variables = new CalamariVariables();
             variables.Set(KnownVariables.Calamari.EnablePackageRetention, bool.TrueString);
             variables.Set(TentacleVariables.Agent.TentacleHome, "SomeDirectory");
             
             fileSystem = Substitute.For<ICalamariFileSystem>();
-            journal =new Journal(
+            journal = new Journal(
                                new InMemoryJournalRepositoryFactory(),
                                Substitute.For<ILog>(),
                                fileSystem,
@@ -150,19 +150,19 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenRetentionIsApplied_ThenPackageFileAndUsageAreRemoved()
         {
             string packageOnePath = "./PackageOne.zip";
-            var packageOne = new PackageIdentity("PackageOne", "1.0", packageOnePath);
+            var packageOne = new PackageIdentity("PackageOne", "1.0", 0, packageOnePath);
 
             var retentionAlgorithm = Substitute.For<IRetentionAlgorithm>();
-            retentionAlgorithm.GetPackagesToRemove(Arg.Any<IEnumerable<JournalEntry>>(), Arg.Any<ulong>()).Returns(new List<PackageIdentity>(){ packageOne });
+            retentionAlgorithm.GetPackagesToRemove(Arg.Any<IEnumerable<JournalEntry>>(), Arg.Any<long>()).Returns(new List<PackageIdentity>(){ packageOne });
             fileSystem.FileExists(packageOnePath).Returns(true);
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), Substitute.For<ILog>(), fileSystem, retentionAlgorithm, variables, Substitute.For<IFreeSpaceChecker>());
+            var thisJournal = new Journal(new InMemoryJournalRepositoryFactory(), Substitute.For<ILog>(), fileSystem, retentionAlgorithm, variables, Substitute.For<IFreeSpaceChecker>());
 
-            journal.RegisterPackageUse(packageOne, new ServerTaskId("Deployment-1"));
+            thisJournal.RegisterPackageUse(packageOne, new ServerTaskId("Deployment-1"));
 
-            journal.ApplyRetention(PackageDirectory);
+            thisJournal.ApplyRetention(PackageDirectory);
 
-            journal.GetUsage(packageOne).Should().BeEmpty();
+            thisJournal.GetUsage(packageOne).Should().BeEmpty();
             fileSystem.Received().DeleteFile(packageOne.Path, FailureOptions.IgnoreFailure);
         }
 
@@ -191,22 +191,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new ServerTaskId("Deployment-1");
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(),Substitute.For<ILog>(), fileSystem, Substitute.For<IRetentionAlgorithm>(), ourVariables, Substitute.For<IFreeSpaceChecker>());
-            journal.RegisterPackageUse(thePackage, deploymentOne);
-            var didRegisterPackage = journal.GetUsageCount(thePackage) == 1;
+            var thisJournal = new Journal(new InMemoryJournalRepositoryFactory(),Substitute.For<ILog>(), fileSystem, Substitute.For<IRetentionAlgorithm>(), ourVariables, Substitute.For<IFreeSpaceChecker>());
+            thisJournal.RegisterPackageUse(thePackage, deploymentOne);
+            var didRegisterPackage = thisJournal.GetUsageCount(thePackage) == 1;
             Assert.That(didRegisterPackage == shouldBeEnabled);
-        }
-
-        Journal GetPackageJournal()
-        {
-            return new Journal(
-                               new InMemoryJournalRepositoryFactory(),
-                               Substitute.For<ILog>(),
-                               fileSystem,
-                               Substitute.For<IRetentionAlgorithm>(),
-                               variables,
-                               Substitute.For<IFreeSpaceChecker>()
-                              );
         }
     }
 }

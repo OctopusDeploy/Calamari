@@ -1,6 +1,7 @@
 ﻿using System;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDiscovery;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
@@ -25,7 +26,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             SetupRetention(out var variables, packageId, version, taskId);
 
             var discovery = new JournalVersionFormatDiscovery();
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(), Substitute.For<ILog>(), Substitute.For<ICalamariFileSystem>(), Substitute.For<IRetentionAlgorithm>(), variables, Substitute.For<IFreeSpaceChecker>());
 
             journal.RegisterPackageUse(new PackageIdentity(packageId, version, VersionFormat.Docker), new ServerTaskId("Task-2")); //Different task, forces discovery using just using the packageId and version.
             journal.RegisterPackageUse(new PackageIdentity(packageId, "2.0.0", VersionFormat.Maven), new ServerTaskId("Task-3")); //Different task/version, should be ignored.
@@ -45,7 +46,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             SetupRetention(out var variables, packageId, version, taskId);
             var discovery = new JournalVersionFormatDiscovery();
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(), Substitute.For<ILog>(), Substitute.For<ICalamariFileSystem>(), Substitute.For<IRetentionAlgorithm>(), variables, Substitute.For<IFreeSpaceChecker>());
 
             journal.RegisterPackageUse(new PackageIdentity(packageId, "2.0.0", VersionFormat.Maven), new ServerTaskId("Task-1")); //Different task, different version - should be ignored.
             journal.RegisterPackageUse(new PackageIdentity(packageId, "2.0.0", VersionFormat.Docker), new ServerTaskId("Task-2")); //Same task, different version - ensures it determines format using the taskId and packageId only.

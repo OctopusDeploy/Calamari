@@ -9,7 +9,6 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
     public class PackageIdentity
     {
-        public string? Path { get; }
         public PackageId PackageId { get; }
 
         [JsonConverter(typeof(VersionConverter))]

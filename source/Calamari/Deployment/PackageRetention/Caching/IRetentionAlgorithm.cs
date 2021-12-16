@@ -6,6 +6,6 @@ namespace Calamari.Deployment.PackageRetention.Caching
 {
     public interface IRetentionAlgorithm
     {
-        IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries, ulong spaceNeeded);
+        IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries, long spaceNeeded);
     }
 }

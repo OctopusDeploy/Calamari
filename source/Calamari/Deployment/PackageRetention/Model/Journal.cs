@@ -19,7 +19,6 @@ namespace Calamari.Deployment.PackageRetention.Model
         readonly IVariables variables;
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
-        readonly IRetentionAlgorithm retentionAlgorithm;
         readonly IFreeSpaceChecker freeSpaceChecker;
         
         public Journal(IJournalRepositoryFactory repositoryFactory,
@@ -132,7 +131,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                     using (var repository = repositoryFactory.CreateJournalRepository())
                     {
                         var requiredSpace = freeSpaceChecker.GetRequiredSpace(directory);
-                        var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), requiredSpace);
+                        var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), (long)requiredSpace);
 
                         foreach (var package in packagesToRemove)
                         {
