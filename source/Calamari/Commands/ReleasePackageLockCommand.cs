@@ -3,15 +3,10 @@ using System.Globalization;
 using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Packages;
-using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.Packages.Download;
 using Octopus.Versioning;
 
 namespace Calamari.Commands
@@ -23,6 +18,7 @@ namespace Calamari.Commands
         readonly ILog log;
         readonly PackageIdentityFactory packageIdentityFactory;
         readonly IManagePackageUse journal;
+        readonly TimeSpan defaultTimeBeforeLockExpiration = TimeSpan.FromDays(14);
 
         string packageId;
         string packageVersion;
@@ -36,6 +32,12 @@ namespace Calamari.Commands
 
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
+        }
+
+        TimeSpan GetTimeBeforeLockExpiration()
+        {
+            var expirationVariable = variables.Get(KnownVariables.Calamari.PackageRetentionLockExpiration);
+            return TimeSpan.TryParse(expirationVariable, out var timeBeforeLockExpiration) ? timeBeforeLockExpiration : defaultTimeBeforeLockExpiration;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -58,6 +60,8 @@ namespace Calamari.Commands
                 log.ErrorFormat("Failed to release lock for {0} v{1} for server task '{2}'", packageId, packageVersion, taskId);
                 return ConsoleFormatter.PrintError(log, ex);
             }
+
+            journal.ExpireStaleLocks(GetTimeBeforeLockExpiration());
 
             return 0;
         }
