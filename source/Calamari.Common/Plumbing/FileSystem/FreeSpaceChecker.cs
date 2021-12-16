@@ -22,6 +22,12 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public ulong GetRequiredSpace(string directoryPath)
         {
+            if (CalamariEnvironment.IsRunningOnMono && CalamariEnvironment.IsRunningOnMac)
+            {
+                Log.Verbose("Unable to determine disk free space under Mono on macOS.  Assuming there's enough.");
+                return 0;
+            }
+
             ulong requiredSpaceInBytes = 500L * 1024 * 1024;
             var freeSpaceOverrideInMegaBytes = variables.GetInt32(freeDiskSpaceOverrideInMegaBytesVariable);
 
@@ -33,7 +39,10 @@ namespace Calamari.Common.Plumbing.FileSystem
             
             var success = fileSystem.GetDiskFreeSpace(directoryPath, out ulong totalNumberOfFreeBytes);
             if (!success)
+            {
+                Log.Verbose("Unable to determine disk free space.  Assuming there's enough.");
                 return 0;
+            }
 
             if (totalNumberOfFreeBytes < requiredSpaceInBytes)
                 return requiredSpaceInBytes - totalNumberOfFreeBytes;
