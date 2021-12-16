@@ -175,6 +175,20 @@ namespace Calamari.Common.Features.Packages
             return new PackageFileNameMetadata(packageId, version, extension);
         }
 
+        public static bool TryFromFile(string? path, out PackageFileNameMetadata? metadata)
+        {
+            try
+            {
+                metadata = FromFile(path);
+                return true;
+            }
+            catch
+            {
+                metadata = default;
+                return false;
+            }
+        }
+
         static string Encode(string input)
         {
             return FileNameEscaper.Escape(input);

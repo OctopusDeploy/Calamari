@@ -5,6 +5,7 @@ using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using FluentAssertions;
@@ -16,15 +17,14 @@ namespace Calamari.Tests.Fixtures.PackageRetention
     [TestFixture]
     public class JournalEntryFixture
     {
-        IVariables variables;
+        Journal journal;
 
         [SetUp]
         public void Setup()
         {
-            variables = new CalamariVariables();
+            var variables = new CalamariVariables();
             variables.Set(KnownVariables.Calamari.EnablePackageRetention, bool.TrueString);
             variables.Set(TentacleVariables.Agent.TentacleHome, "SomeDirectory");
-            variables.Set(TentacleVariables.Agent.TentacleHome, "TentacleHome");
             variables.Set(KnownVariables.Calamari.PackageRetentionJournalPath, "JournalPath");
         }
 
@@ -32,6 +32,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenTestSetupCompletes_ThenPackageRetentionIsEnabled()
         {
             variables.IsPackageRetentionEnabled().Should().BeTrue("We need retention to be enabled for these tests to be valid.");
+            journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());;
         }
 
         [Test]
@@ -39,7 +40,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         {
             var thePackage = new PackageIdentity("Package", "1.0");
             var theDeployment = new ServerTaskId("Deployment-1");
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
 
             journal.RegisterPackageUse(thePackage, theDeployment);
 
@@ -51,7 +51,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         {
             var thePackage = new PackageIdentity("Package", "1.0");
             var theDeployment = new ServerTaskId("Deployment-1");
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
 
             journal.RegisterPackageUse(thePackage, theDeployment);
             journal.DeregisterPackageUse(thePackage, theDeployment);
@@ -66,7 +65,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var deploymentOne = new ServerTaskId("Deployment-1");
             var deploymentTwo = new ServerTaskId("Deployment-2");
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.RegisterPackageUse(thePackage, deploymentTwo);
             journal.DeregisterPackageUse(thePackage, deploymentOne);
@@ -81,7 +79,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var deploymentOne = new ServerTaskId("Deployment-1");
             var deploymentTwo = new ServerTaskId("Deployment-2");
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.RegisterPackageUse(thePackage, deploymentTwo);
             journal.DeregisterPackageUse(thePackage, deploymentOne);
@@ -96,7 +93,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new ServerTaskId("Deployment-1");
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
 
             Assert.AreEqual(1, journal.GetUsage(thePackage).Count());
@@ -109,7 +105,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var package2 = new PackageIdentity("Package2", "1.0");
             var theDeployment = new ServerTaskId("Deployment-1");
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
             journal.RegisterPackageUse(package1, theDeployment);
             journal.RegisterPackageUse(package2, theDeployment);
 
@@ -124,7 +119,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var deploymentOne = new ServerTaskId("Deployment-1");
             var deploymentTwo = new ServerTaskId("Deployment-2");
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.RegisterPackageUse(thePackage, deploymentTwo);
 
@@ -137,7 +131,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new ServerTaskId("Deployment-1");
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), variables, Substitute.For<ILog>());
             journal.RegisterPackageUse(thePackage, deploymentOne);
             journal.DeregisterPackageUse(thePackage, deploymentOne);
 
@@ -226,9 +219,9 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var thePackage = new PackageIdentity("Package", "1.0");
             var deploymentOne = new ServerTaskId("Deployment-1");
 
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), ourVariables, Substitute.For<ILog>());
-            journal.RegisterPackageUse(thePackage, deploymentOne);
-            var didRegisterPackage = journal.GetUsageCount(thePackage) == 1;
+            var myJournal = new Journal(new InMemoryJournalRepositoryFactory(), ourVariables, Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());
+            myJournal.RegisterPackageUse(thePackage, deploymentOne);
+            var didRegisterPackage = myJournal.GetUsageCount(thePackage) == 1;
             Assert.That(didRegisterPackage == shouldBeEnabled);
         }
     }

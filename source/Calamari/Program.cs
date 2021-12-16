@@ -13,15 +13,20 @@ using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDiscovery;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
+using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.LaunchTools;
+using Markdig.Helpers;
+using Octopus.Versioning;
 using IContainer = Autofac.IContainer;
+using VersionConverter = Newtonsoft.Json.Converters.VersionConverter;
 
 namespace Calamari
 {
@@ -70,12 +75,17 @@ namespace Calamari
             builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
             builder.RegisterType<JsonJournalRepositoryFactory>().As<IJournalRepositoryFactory>();
             builder.RegisterType<Journal>().As<IManagePackageUse>();
+            builder.RegisterType<LeastFrequentlyUsedWithAgingCacheAlgorithm>().As<IRetentionAlgorithm>();
+            builder.RegisterType<PackageIdentityFactory>().As<PackageIdentityFactory>();
+
+            builder.RegisterAssemblyTypes(GetProgramAssemblyToRegister())
+                   .Where(t => t == typeof(ITryToDiscoverVersionFormat))
+                   .AsImplementedInterfaces();
+
+            TypeDescriptor.AddAttributes(typeof(ServerTaskId), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskId>)));
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
-
-            //TODO: Do this using Autofac
-            TypeDescriptor.AddAttributes(typeof(ServerTaskId), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskId>)));
 
             var typesToAlwaysDecorate = new Type[] { typeof(ApplyDeltaCommand) }; //Commands from external assemblies.
 
@@ -91,7 +101,9 @@ namespace Calamari
             builder.RegisterDecorator<ICommandWithArgs>((c, inner)
                                                             => new PackageJournalCommandDecorator(c.Resolve<ILog>(),
                                                                                            inner,
-                                                                                           c.Resolve<IManagePackageUse>()),
+                                                                                           c.Resolve<IVariables>(),
+                                                                                           c.Resolve<IManagePackageUse>(),
+                                                                                           c.Resolve<PackageIdentityFactory>()),
                                                         fromKey: nameof(PackageLockingCommandAttribute) + "From",
                                                         toKey: nameof(PackageLockingCommandAttribute));
 

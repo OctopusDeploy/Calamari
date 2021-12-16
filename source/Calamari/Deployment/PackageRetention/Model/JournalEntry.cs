@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Newtonsoft.Json;
 
@@ -22,6 +21,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             Package = package ?? throw new ArgumentNullException(nameof(package));
             locks = packageLocks ?? new PackageLocks();
             usages = packageUsages ?? new PackageUsages();
+            Package.UpdatePackageSize();
         }
 
         public void AddUsage(ServerTaskId deploymentTaskId, CacheAge cacheAge)

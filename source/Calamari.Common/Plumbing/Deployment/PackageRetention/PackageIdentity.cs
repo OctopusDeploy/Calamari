@@ -1,56 +1,69 @@
 ﻿using System;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention;
 using Newtonsoft.Json;
 using Octopus.Versioning;
-using Octopus.Versioning.Semver;
 
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
     public class PackageIdentity
     {
         public PackageId PackageId { get; }
-        public string Version { get; }
 
-        public PackageIdentity(string packageId, string version) : this(new PackageId(packageId), version)
+        [JsonConverter(typeof(VersionConverter))]
+        public IVersion Version { get; }
+        public string? Path { get; }
+        public long FileSizeBytes { get; private set; } = -1;
+
+        public PackageIdentity(string packageId, string version, long fileSizeBytes, VersionFormat versionFormat = VersionFormat.Semver, string? path = null)
+            : this(new PackageId(packageId), VersionFactory.CreateVersion(version, versionFormat), path)
+        {
+            FileSizeBytes = fileSizeBytes;
+        }
+
+        public PackageIdentity(string packageId, string version, VersionFormat versionFormat = VersionFormat.Semver, string? path = null)
+            : this(new PackageId(packageId), VersionFactory.CreateVersion(version, versionFormat), path)
         {
         }
 
-        public PackageIdentity(IVariables variables)
+        public PackageIdentity(IVariables variables, VersionFormat versionFormat = VersionFormat.Semver)
         {
             if (variables == null) throw new ArgumentNullException(nameof(variables));
 
             var package = variables.Get(PackageVariables.PackageId) ?? throw new Exception("Package ID not found.");
-            var version =  variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
+            var version = variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
+            Path = variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath);
+
+            var nullableVersion = VersionFactory.TryCreateVersion(version, versionFormat);
+            Version = nullableVersion ?? throw new Exception("Unable to determine package version.");
 
             PackageId = new PackageId(package);
-            Version = version;
         }
 
         [JsonConstructor]
-        public PackageIdentity(PackageId packageId, string version)
+        public PackageIdentity(PackageId packageId, IVersion version, string? path = null)
         {
             PackageId = packageId ?? throw new ArgumentNullException(nameof(packageId));
             Version = version ?? throw new ArgumentNullException(nameof(version));
+            Path = path;
         }
 
-
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj) || obj.GetType() != this.GetType())
+            if (ReferenceEquals(null, obj) || obj.GetType() != GetType())
                 return false;
             if (ReferenceEquals(this, obj))
                 return true;
-
             var other = (PackageIdentity)obj;
-
             return this == other;
         }
 
         protected bool Equals(PackageIdentity other)
         {
             return Equals(PackageId, other.PackageId)
-                   && Equals(Version, other.Version);
+                   && Equals(Version, other.Version)
+                   && Equals(Path, other.Path);
         }
 
         public override int GetHashCode()
@@ -62,8 +75,8 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         }
 
         public static bool operator == (PackageIdentity first, PackageIdentity second)
-        {               
-            return first.PackageId == second.PackageId && first.Version == second.Version;
+        {
+            return first.Equals(second);
         }
 
         public static bool operator !=(PackageIdentity first, PackageIdentity second)
@@ -76,14 +89,16 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
             return $"{PackageId} v{Version}";
         }
 
-        public static PackageIdentity GetPackageIdentity(IVariables variables)
+        public void UpdatePackageSize()
         {
-            var packageStr = variables.Get(PackageVariables.PackageId) ?? throw new Exception("Package Id not found.");
-            var versionStr = variables.Get(PackageVariables.PackageVersion) ?? throw new Exception("Package Version not found.");
+            if (FileSizeBytes > 0) return;
+            if (string.IsNullOrWhiteSpace(Path))
+            {
+                FileSizeBytes = -1;
+                return;
+            }
 
-            var packageId = new PackageId(packageStr);
-
-            return new PackageIdentity(packageId, versionStr);
+            FileSizeBytes = CalamariPhysicalFileSystem.GetPhysicalFileSystem().GetFileSize(Path);
         }
     }
 }
