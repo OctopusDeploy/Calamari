@@ -10,7 +10,6 @@ using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.PackageRetention.Repository;
-using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Octopus.Versioning;
@@ -146,6 +145,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         }
 
         [Test]
+<<<<<<< HEAD:source/Calamari.Tests/Fixtures/PackageRetention/JournalFixture.cs
         public void WhenRetentionIsApplied_ThenPackageFileAndUsageAreRemoved()
         {
             var packageOnePath = "./PackageOne.zip";
@@ -220,6 +220,68 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             thisJournal.GetUsage(existingPackage).Should().BeEmpty();
             fileSystem.Received().DeleteFile(existingPackage.Path, FailureOptions.IgnoreFailure);
+=======
+        public void WhenStaleLocksAreExpired_TheLocksAreRemoved()
+        {
+            var thePackage = new PackageIdentity("Package", "1.0");
+
+            var packageLocks = new PackageLocks
+            {
+                new UsageDetails(new ServerTaskId("Deployment-1"), new CacheAge(1), new DateTime(2021, 1, 1))
+            };
+
+            var journalEntry = new JournalEntry(thePackage, packageLocks);
+
+            var journalEntries = new Dictionary<PackageIdentity, JournalEntry>()
+            {
+                { thePackage, journalEntry }
+            };
+            
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.Calamari.EnablePackageRetention, bool.TrueString);
+
+            var testJournal = new Journal(new InMemoryJournalRepositoryFactory(journalEntries), variables, Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());
+
+            testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
+
+            Assert.IsFalse(testJournal.HasLock(thePackage));
+        }
+
+        [Test]
+        public void OnlyStaleLocksAreExpired()
+        {
+            var packageOne = new PackageIdentity("PackageOne", "1.0");
+            var packageTwo = new PackageIdentity("PackageTwo", "1.0");
+            
+            var packageOneLocks = new PackageLocks
+            {
+                new UsageDetails(new ServerTaskId("Deployment-1"), new CacheAge(1), new DateTime(2021, 1, 1)),
+            };
+            
+            var packageTwoLocks = new PackageLocks
+            {
+                new UsageDetails(new ServerTaskId("Deployment-2"), new CacheAge(1), DateTime.Now),
+            };
+            
+            var packageOneJournalEntry = new JournalEntry(packageOne, packageOneLocks);
+            var packageTwoJournalEntry = new JournalEntry(packageTwo, packageTwoLocks);
+
+            var journalEntries = new Dictionary<PackageIdentity, JournalEntry>()
+            {
+                { packageOne, packageOneJournalEntry },
+                { packageTwo, packageTwoJournalEntry }
+            };
+            
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.Calamari.EnablePackageRetention, bool.TrueString);
+
+            var testJournal = new Journal(new InMemoryJournalRepositoryFactory(journalEntries), variables, Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());
+
+            testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
+
+            Assert.IsFalse(testJournal.HasLock(packageOne));
+            Assert.IsTrue(testJournal.HasLock(packageTwo));
+>>>>>>> master:source/Calamari.Tests/Fixtures/PackageRetention/JournalEntryFixture.cs
         }
 
         [TestCase(true, true, true, true)]

@@ -39,18 +39,31 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RegisterPackageUse()
         {
+            RegisterPackageUse(out _);
+        }
+
+        public void RegisterPackageUse(out bool packageRegistered)
+        {
             try
             {
-                RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables));
+                RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables), out packageRegistered);
             }
             catch (Exception ex)
             {
+                packageRegistered = false;
                 log.Error($"Unable to register package use for retention.{Environment.NewLine}{ex.ToString()}");
             }
         }
 
         public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId)
         {
+            RegisterPackageUse(package, deploymentTaskId, out _);
+        }
+
+        public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId, out bool packageRegistered)
+        {
+            packageRegistered = false;
+
             if (!IsRetentionEnabled())
                 return;
 
@@ -80,6 +93,7 @@ namespace Calamari.Deployment.PackageRetention.Model
 #endif
 
                     repository.Commit();
+                    packageRegistered = true;
                 }
             }
             catch (Exception ex)
@@ -91,6 +105,16 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void DeregisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId)
         {
+            DeregisterPackageUse(package, deploymentTaskId, out _);
+        }
+
+        public void DeregisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId, out bool packageDeregistered)
+        {
+            packageDeregistered = false;
+
+            if (!IsRetentionEnabled())
+                return;
+
             try
             {
                 using (var repository = repositoryFactory.CreateJournalRepository())
@@ -99,6 +123,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                     {
                         entry.RemoveLock(deploymentTaskId);
                         repository.Commit();
+                        packageDeregistered = true;
                     }
                 }
             }
@@ -111,7 +136,9 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         bool IsRetentionEnabled()
         {
-            return variables.IsPackageRetentionEnabled();
+            var enabled = variables.IsPackageRetentionEnabled();
+            log.Verbose($"Package retention is {(enabled ? "enabled" : "disabled")}.");
+            return enabled;
         }
 
         public bool HasLock(PackageIdentity package)
@@ -218,9 +245,28 @@ namespace Calamari.Deployment.PackageRetention.Model
             return GetUsage(package).Count();
         }
 
-        public void ExpireStaleLocks()
+        public void ExpireStaleLocks(TimeSpan timeBeforeExpiration)
         {
-            throw new NotImplementedException();
+            try
+            {
+                using (var repository = repositoryFactory.CreateJournalRepository())
+                {
+                    foreach (var entry in repository.GetAllJournalEntries())
+                    {
+                        var locks = entry.GetLockDetails();
+                        var staleLocks = locks.Where(u => u.DateTime.Add(timeBeforeExpiration) <= DateTime.Now);
+
+                        foreach (var staleLock in staleLocks)
+                        {
+                            entry.RemoveLock(staleLock.DeploymentTaskId);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Unable to expire stale package locks.{Environment.NewLine}{ex.ToString()}");
+            }
         }
     }
 }
