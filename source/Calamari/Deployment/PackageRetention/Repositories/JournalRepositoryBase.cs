@@ -55,6 +55,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             journalEntries.Add(entry.Package, entry);
         }
 
+        public void RemovePackageEntry(PackageIdentity packageIdentity)
+        {
+            journalEntries.Remove(packageIdentity);
+        }
+
         public abstract void Commit();
         public abstract void Dispose();
     }

@@ -3,6 +3,7 @@ using System.Net;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -18,26 +19,25 @@ namespace Calamari.Integration.Packages.Download
     {
         readonly IScriptEngine engine;
         readonly ICalamariFileSystem fileSystem;
-        readonly IFreeSpaceChecker freeSpaceChecker;
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
         readonly ILog log;
+        readonly IManagePackageUse packageJournal;
 
         public PackageDownloaderStrategy(
             ILog log,
             IScriptEngine engine,
             ICalamariFileSystem fileSystem,
-            IFreeSpaceChecker freeSpaceChecker,
             ICommandLineRunner commandLineRunner,
-            IVariables variables
-            )
+            IVariables variables,
+            IManagePackageUse packageJournal)
         {
             this.log = log;
             this.engine = engine;
             this.fileSystem = fileSystem;
-            this.freeSpaceChecker = freeSpaceChecker;
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
+            this.packageJournal = packageJournal;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
@@ -55,13 +55,13 @@ namespace Calamari.Integration.Packages.Download
             switch (feedType)
             {
                 case FeedType.Maven:
-                    downloader = new MavenPackageDownloader(fileSystem, freeSpaceChecker);
+                    downloader = new MavenPackageDownloader(fileSystem, packageJournal);
                     break;
                 case FeedType.NuGet:
-                    downloader = new NuGetPackageDownloader(fileSystem, freeSpaceChecker, variables);
+                    downloader = new NuGetPackageDownloader(fileSystem, variables, packageJournal);
                     break;
                 case FeedType.GitHub:
-                    downloader = new GitHubPackageDownloader(log, fileSystem, freeSpaceChecker);
+                    downloader = new GitHubPackageDownloader(log, fileSystem, packageJournal);
                     break;
                 case FeedType.Helm:
                     downloader = new HelmChartPackageDownloader(fileSystem);

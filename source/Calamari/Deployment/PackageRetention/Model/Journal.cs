@@ -18,13 +18,23 @@ namespace Calamari.Deployment.PackageRetention.Model
         readonly IRetentionAlgorithm retentionAlgorithm;
         readonly IVariables variables;
         readonly ILog log;
+        readonly ICalamariFileSystem fileSystem;
+        readonly IFreeSpaceChecker freeSpaceChecker;
+        public const string PackageRetentionCacheSizeInMegaBytesVariable = "OctopusPackageRetentionCacheSizeInMegaBytes";
 
-        public Journal(IJournalRepositoryFactory repositoryFactory, IVariables variables, IRetentionAlgorithm retentionAlgorithm, ILog log)
+        public Journal(IJournalRepositoryFactory repositoryFactory,
+                       ILog log,
+                       ICalamariFileSystem fileSystem,
+                       IRetentionAlgorithm retentionAlgorithm,
+                       IVariables variables,
+                       IFreeSpaceChecker freeSpaceChecker)
         {
             this.repositoryFactory = repositoryFactory;
-            this.variables = variables;
-            this.retentionAlgorithm = retentionAlgorithm;
             this.log = log;
+            this.fileSystem = fileSystem;
+            this.retentionAlgorithm = retentionAlgorithm;
+            this.variables = variables;
+            this.freeSpaceChecker = freeSpaceChecker;
         }
 
         public void RegisterPackageUse()
@@ -139,7 +149,55 @@ namespace Calamari.Deployment.PackageRetention.Model
                        && entry.HasLock();
             }
         }
-        
+
+        public void ApplyRetention(string directory)
+        {
+            if (IsRetentionEnabled())
+            {
+                try
+                {
+                    using (var repository = repositoryFactory.CreateJournalRepository())
+                    {
+                        var cacheSizeInMB = variables.Get(PackageRetentionCacheSizeInMegaBytesVariable);
+                        var cacheSpaceRequired = 0L;
+
+                        if (decimal.TryParse(cacheSizeInMB, out var cacheSizeMB))
+                        {
+                            var cacheSizeBytes = (long)Math.Round(cacheSizeMB * 1024L * 1024L);
+                            var cacheSpaceRemaining = GetCacheSpaceRemaining(cacheSizeBytes);
+                            var requiredSpaceInBytes = (long)freeSpaceChecker.GetRequiredSpaceInBytes();
+                            cacheSpaceRequired = Math.Max(0, requiredSpaceInBytes - cacheSpaceRemaining);
+                        }
+
+                        var requiredSpace = Math.Max(cacheSpaceRequired, (long)freeSpaceChecker.GetSpaceRequiredToBeFreed(directory));
+                        var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), requiredSpace);
+
+                        foreach (var package in packagesToRemove)
+                        {
+                            if (string.IsNullOrWhiteSpace(package?.Path) || !fileSystem.FileExists(package.Path))
+                            {
+                                log.Warn($"Package at {package?.Path} not found.");
+                                continue;
+                            }
+
+                            Log.Info($"Removing package file '{package.Path}'");
+                            fileSystem.DeleteFile(package.Path, FailureOptions.IgnoreFailure);
+
+                            repository.RemovePackageEntry(package);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex.Message);
+                }
+            }
+            else
+            {
+                freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(directory);
+            }
+        }
+
         public IEnumerable<IUsageDetails> GetUsage(PackageIdentity package)
         {
             using (var repository = repositoryFactory.CreateJournalRepository())
@@ -156,7 +214,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 //Try to match on version, if that doesn't work, then just get another entry.
                 var entryMatchingVersion = repository.GetJournalEntries(packageId).FirstOrDefault(je => je.Package.Version.OriginalString == version)
-                                        ?? repository.GetJournalEntries(packageId).FirstOrDefault();
+                                           ?? repository.GetJournalEntries(packageId).FirstOrDefault();
 
                 versionFormat = entryMatchingVersion == null ? defaultFormat : entryMatchingVersion.Package.Version.Format;
 
@@ -171,7 +229,14 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 return repository.GetJournalEntries(packageId, deploymentTaskID)
                                  .TryGetFirstValidVersionFormat(defaultFormat, out format);
+            }
+        }
 
+        long GetCacheSpaceRemaining(long cacheSize)
+        {
+            using (var repository = repositoryFactory.CreateJournalRepository())
+            {
+                return cacheSize - repository.GetAllJournalEntries().Sum(e => Math.Max(e.Package.FileSizeBytes, 0));
             }
         }
 
@@ -201,16 +266,6 @@ namespace Calamari.Deployment.PackageRetention.Model
             catch (Exception ex)
             {
                 log.Error($"Unable to expire stale package locks.{Environment.NewLine}{ex.ToString()}");
-            }
-        }
-
-        public void ApplyRetention(long spaceNeeded)
-        {
-            using (var repository = repositoryFactory.CreateJournalRepository())
-            {
-                var journalEntries = repository.GetAllJournalEntries();
-                var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalEntries, spaceNeeded);
-                //TODO: implement this.
             }
         }
     }

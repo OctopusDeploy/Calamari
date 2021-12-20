@@ -1,4 +1,5 @@
 ﻿using Calamari.Common.Plumbing.Deployment.PackageRetention.VersionFormatDiscovery;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
@@ -21,7 +22,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void TestArgumentsAndResults(string[] commandLineArgs, VersionFormat defaultFormat, bool expectedResult, VersionFormat expectedFormat)
         {
             var discovery = new CommandLineVersionFormatDiscovery();
-            var journal = new Journal(new InMemoryJournalRepositoryFactory(), new CalamariVariables(), Substitute.For<IRetentionAlgorithm>(), Substitute.For<ILog>());
+            var journal = new Journal(new InMemoryJournalRepositoryFactory(), Substitute.For<ILog>(), Substitute.For<ICalamariFileSystem>(), Substitute.For<IRetentionAlgorithm>(), Substitute.For<IVariables>(), Substitute.For<IFreeSpaceChecker>());
             var success = discovery.TryDiscoverVersionFormat(journal,
                                                              new CalamariVariables(),
                                                              commandLineArgs,

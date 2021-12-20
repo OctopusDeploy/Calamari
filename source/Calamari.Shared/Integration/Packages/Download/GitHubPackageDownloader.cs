@@ -6,6 +6,7 @@ using System.Net.Cache;
 using System.Threading;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -27,14 +28,14 @@ namespace Calamari.Integration.Packages.Download
 
         public static readonly string DownloadingExtension = ".downloading";
         readonly ICalamariFileSystem fileSystem;
-        readonly IFreeSpaceChecker freeSpaceChecker;
+        readonly IManagePackageUse packageJournal;
         readonly ILog log;
 
-        public GitHubPackageDownloader(ILog log, ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker)
+        public GitHubPackageDownloader(ILog log, ICalamariFileSystem fileSystem, IManagePackageUse packageJournal)
         {
             this.log = log;
             this.fileSystem = fileSystem;
-            this.freeSpaceChecker = freeSpaceChecker;
+            this.packageJournal = packageJournal;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
@@ -119,7 +120,7 @@ namespace Calamari.Integration.Packages.Download
             Log.Info("Downloading GitHub package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
-            freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
+            packageJournal.ApplyRetention(cacheDirectory);
 
             SplitPackageId(packageId, out var owner, out var repository);
             if (string.IsNullOrWhiteSpace(owner) || string.IsNullOrWhiteSpace(repository))

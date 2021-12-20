@@ -21,7 +21,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var factory = new PackageIdentityFactory(new ITryToDiscoverVersionFormat[] { new CommandLineVersionFormatDiscovery(), new PackagePathVersionFormatDiscovery(), new JournalVersionFormatDiscovery() });
 
             Assert.Throws(Is.TypeOf<Exception>().And.Message.Contains("not found").IgnoreCase,
-                          () => factory.CreatePackageIdentity(new Journal(null, null, null, null), variables, new string[0]));
+                          () => factory.CreatePackageIdentity(new Journal(null, null, null, null, variables, null), variables, new string[0]));
         }
     }
 }

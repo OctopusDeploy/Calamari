@@ -5,6 +5,7 @@ using System.Net;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -27,14 +28,14 @@ namespace Calamari.Integration.Packages.Download
         public static readonly string DownloadingExtension = ".downloading";
 
         readonly ICalamariFileSystem fileSystem;
-        readonly IFreeSpaceChecker freeSpaceChecker;
         readonly IVariables variables;
+        readonly IManagePackageUse packageJournal;
 
-        public NuGetPackageDownloader(ICalamariFileSystem fileSystem, IFreeSpaceChecker freeSpaceChecker, IVariables variables)
+        public NuGetPackageDownloader(ICalamariFileSystem fileSystem, IVariables variables, IManagePackageUse packageJournal)
         {
             this.fileSystem = fileSystem;
-            this.freeSpaceChecker = freeSpaceChecker;
             this.variables = variables;
+            this.packageJournal = packageJournal;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
@@ -103,7 +104,7 @@ namespace Calamari.Integration.Packages.Download
         {
             Log.Info("Downloading NuGet package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
-            freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(cacheDirectory);
+            packageJournal.ApplyRetention(cacheDirectory);
 
             var fullPathToDownloadTo = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, ".nupkg"));
 

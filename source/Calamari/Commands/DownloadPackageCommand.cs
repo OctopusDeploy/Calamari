@@ -7,6 +7,7 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -21,11 +22,11 @@ namespace Calamari.Commands
     public class DownloadPackageCommand : Command
     {
         private readonly IScriptEngine scriptEngine;
-        readonly IFreeSpaceChecker freeSpaceChecker;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
         readonly ICommandLineRunner commandLineRunner;
+        readonly IManagePackageUse packageJournal;
 
         string packageId;
         string packageVersion;
@@ -41,17 +42,17 @@ namespace Calamari.Commands
 
         public DownloadPackageCommand(
             IScriptEngine scriptEngine,
-            IFreeSpaceChecker freeSpaceChecker,
             IVariables variables,
             ICalamariFileSystem fileSystem,
 			ICommandLineRunner commandLineRunner,
-            ILog log)
+            ILog log,
+            IManagePackageUse packageJournal)
         {
             this.scriptEngine = scriptEngine;
-            this.freeSpaceChecker = freeSpaceChecker;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.log = log;
+            this.packageJournal = packageJournal;
             this.commandLineRunner = commandLineRunner;
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
@@ -107,9 +108,9 @@ namespace Calamari.Commands
                 var packageDownloaderStrategy = new PackageDownloaderStrategy(log,
                     scriptEngine,
                     fileSystem,
-                    freeSpaceChecker,
                     commandLineRunner,
-                    variables);
+                    variables,
+                    packageJournal);
                 var pkg = packageDownloaderStrategy.DownloadPackage(
                     packageId,
                     version,

@@ -14,6 +14,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         IList<JournalEntry> GetJournalEntries(PackageId packageId, ServerTaskId deploymentTaskId);
         IList<JournalEntry> GetAllJournalEntries();
         void AddJournalEntry(JournalEntry entry);
+        void RemovePackageEntry(PackageIdentity packageIdentity);
         void Commit();
     }
 }
