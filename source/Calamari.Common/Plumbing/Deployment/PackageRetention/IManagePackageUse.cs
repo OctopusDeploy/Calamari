@@ -17,6 +17,5 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         bool HasLock(PackageIdentity package);
         void ApplyRetention(string packageDirectory);
         void ExpireStaleLocks();
-        void ApplyRetention(long spaceNeeded);
     }
 }

@@ -11,8 +11,9 @@ namespace Calamari.Common.Plumbing.FileSystem
         readonly ICalamariFileSystem fileSystem;
         readonly IVariables variables;
 
-        readonly string skipFreeDiskSpaceCheckVariable = "OctopusSkipFreeDiskSpaceCheck";
-        readonly string freeDiskSpaceOverrideInMegaBytesVariable = "OctopusFreeDiskSpaceOverrideInMegaBytes";
+        const string SkipFreeDiskSpaceCheckVariable = "OctopusSkipFreeDiskSpaceCheck";
+        const string FreeDiskSpaceOverrideInMegaBytesVariable = "OctopusFreeDiskSpaceOverrideInMegaBytes";
+        const ulong DefaultRequiredSpaceInBytes = 500 * 1024 * 1024;
 
         public FreeSpaceChecker(ICalamariFileSystem fileSystem, IVariables variables)
         {
@@ -20,7 +21,26 @@ namespace Calamari.Common.Plumbing.FileSystem
             this.variables = variables;
         }
 
-        public ulong GetRequiredSpace(string directoryPath)
+        public ulong GetRequiredSpaceInBytes()
+        {
+            return GetRequiredSpaceInBytes(out _);
+        }
+
+        ulong GetRequiredSpaceInBytes(out bool spaceOverrideSpecified)
+        {
+            spaceOverrideSpecified = false;
+
+            var freeSpaceOverrideInMegaBytes = variables.GetInt32(FreeDiskSpaceOverrideInMegaBytesVariable);
+
+            if (!freeSpaceOverrideInMegaBytes.HasValue)
+                return DefaultRequiredSpaceInBytes;
+
+            spaceOverrideSpecified = true;
+
+            return (ulong)freeSpaceOverrideInMegaBytes * 1024 * 1024;
+        }
+
+        public ulong GetSpaceRequiredToBeFreed(string directoryPath)
         {
             if (CalamariEnvironment.IsRunningOnMono && CalamariEnvironment.IsRunningOnMac)
             {
@@ -28,15 +48,13 @@ namespace Calamari.Common.Plumbing.FileSystem
                 return 0;
             }
 
-            ulong requiredSpaceInBytes = 500 * 1024 * 1024;
-            var freeSpaceOverrideInMegaBytes = variables.GetInt32(freeDiskSpaceOverrideInMegaBytesVariable);
+            var requiredSpaceInBytes = GetRequiredSpaceInBytes(out var spaceOverrideSpecified);
 
-            if (freeSpaceOverrideInMegaBytes.HasValue)
+            if (spaceOverrideSpecified)
             {
-                requiredSpaceInBytes = (ulong)freeSpaceOverrideInMegaBytes * 1024 * 1024;
-                Log.Verbose($"{freeDiskSpaceOverrideInMegaBytesVariable} has been specified. We will check and ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has {((ulong) requiredSpaceInBytes).ToFileSizeString()} free disk space.");
+                Log.Verbose($"{FreeDiskSpaceOverrideInMegaBytesVariable} has been specified. We will check and ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has {((ulong)requiredSpaceInBytes).ToFileSizeString()} free disk space.");
             }
-            
+
             var success = fileSystem.GetDiskFreeSpace(directoryPath, out ulong totalNumberOfFreeBytes);
             if (!success)
             {
@@ -62,19 +80,19 @@ namespace Calamari.Common.Plumbing.FileSystem
                 return;
             }
 
-            if (variables.GetFlag(skipFreeDiskSpaceCheckVariable))
+            if (variables.GetFlag(SkipFreeDiskSpaceCheckVariable))
             {
-                Log.Verbose($"{skipFreeDiskSpaceCheckVariable} is enabled. The check to ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has enough free space will be skipped.");
+                Log.Verbose($"{SkipFreeDiskSpaceCheckVariable} is enabled. The check to ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has enough free space will be skipped.");
                 return;
             }
 
             ulong requiredSpaceInBytes = 500L * 1024 * 1024;
-            var freeSpaceOverrideInMegaBytes = variables.GetInt32(freeDiskSpaceOverrideInMegaBytesVariable);
+            var freeSpaceOverrideInMegaBytes = variables.GetInt32(FreeDiskSpaceOverrideInMegaBytesVariable);
 
             if (freeSpaceOverrideInMegaBytes.HasValue)
             {
                 requiredSpaceInBytes = (ulong)freeSpaceOverrideInMegaBytes * 1024 * 1024;
-                Log.Verbose($"{freeDiskSpaceOverrideInMegaBytesVariable} has been specified. We will check and ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has {requiredSpaceInBytes.ToFileSizeString()} free disk space.");
+                Log.Verbose($"{FreeDiskSpaceOverrideInMegaBytesVariable} has been specified. We will check and ensure that the drive containing the directory '{directoryPath}' on machine '{Environment.MachineName}' has {requiredSpaceInBytes.ToFileSizeString()} free disk space.");
             }
 
             var success = fileSystem.GetDiskFreeSpace(directoryPath, out var totalNumberOfFreeBytes);
