@@ -64,11 +64,13 @@ namespace Calamari.Deployment.PackageRetention.Repositories
                     File.Delete(journalPath);
 
                     journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
+                    Cache = new PackageCache(0);
                 }
             }
             else
             {
                 journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
+                Cache = new PackageCache(0);
             }
         }
 
@@ -96,10 +98,10 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             public PackageCache Cache { get; }
 
             [JsonConstructor]
-            public PackageData(IEnumerable<JournalEntry> journalEntries, PackageCache packageCache)
+            public PackageData(IEnumerable<JournalEntry> journalEntries, PackageCache cache)
             {
                 JournalEntries = journalEntries;
-                Cache = packageCache;
+                Cache = cache;
             }
 
             public PackageData()
