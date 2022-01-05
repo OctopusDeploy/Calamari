@@ -14,8 +14,5 @@ changeProject(DslContext.projectId) {
         add {
             param("teamcity.vcsTrigger.runBuildInNewEmptyBranch", "true")
         }
-        add {
-            param("FeedzIoApiKey", "credentialsJSON:4f54a8df-ea59-4d49-90df-39c9ad1afd05")
-        }
     }
 }
