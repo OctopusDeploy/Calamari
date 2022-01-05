@@ -33,7 +33,10 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
     steps {
         update<NuGetPublishStep>(0) {
             clearConditions()
-            apiKey = "credentialsJSON:21016b86-e16b-4825-ab03-02ec2d979b7f"
+            apiKey = "credentialsJSON:eee0f4e4-8dea-4c0a-b6e4-5cb7f70eca3d"
+            param("org.jfrog.artifactory.selectedDeployableServer.downloadSpecSource", "Job configuration")
+            param("org.jfrog.artifactory.selectedDeployableServer.useSpecs", "false")
+            param("org.jfrog.artifactory.selectedDeployableServer.uploadSpecSource", "Job configuration")
         }
     }
 
