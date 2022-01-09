@@ -38,6 +38,7 @@ namespace Calamari.Commands
         readonly ICommandLineRunner commandLineRunner;
         readonly ISubstituteInFiles substituteInFiles;
         readonly IExtractPackage extractPackage;
+        readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         PathToPackage pathToPackage;
 
         public DeployPackageCommand(
@@ -47,7 +48,8 @@ namespace Calamari.Commands
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
             ISubstituteInFiles substituteInFiles,
-            IExtractPackage extractPackage
+            IExtractPackage extractPackage,
+            IStructuredConfigVariablesService structuredConfigVariablesService
         )
         {
             Options.Add("package=", "Path to the deployment package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
@@ -59,6 +61,7 @@ namespace Calamari.Commands
             this.commandLineRunner = commandLineRunner;
             this.substituteInFiles = substituteInFiles;
             this.extractPackage = extractPackage;
+            this.structuredConfigVariablesService = structuredConfigVariablesService;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -75,8 +78,6 @@ namespace Calamari.Commands
             var featureClasses = new List<IFeature>();
 
             var replacer = new ConfigurationVariablesReplacer(variables, log);
-            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
-            var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, variables, fileSystem, log);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var embeddedResources = new AssemblyEmbeddedResources();
