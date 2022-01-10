@@ -27,7 +27,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         InMemoryLog log;
         string sourcePackage;
 
-
+    
         [SetUp]
         public virtual void SetUp()
         {
