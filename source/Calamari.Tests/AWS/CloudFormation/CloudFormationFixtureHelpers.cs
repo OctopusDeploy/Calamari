@@ -10,6 +10,7 @@ using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -104,8 +105,15 @@ namespace Calamari.Tests.AWS.CloudFormation
                     log,
                     variables,
                     fileSystem,
-                    new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log)
-                );
+                    new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
+                    new StructuredConfigVariablesService(new IFileFormatVariableReplacer[]
+                                                         {
+                                                             new JsonFormatVariableReplacer(fileSystem, log),
+                                                             new XmlFormatVariableReplacer(fileSystem, log),
+                                                             new YamlFormatVariableReplacer(fileSystem, log),
+                                                             new PropertiesFormatVariableReplacer(fileSystem, log),
+                                                         }, variables, fileSystem, log)
+                    );
                 var result = command.Execute(new[]
                 {
                     "--template", $"{templateFile.FilePath}",

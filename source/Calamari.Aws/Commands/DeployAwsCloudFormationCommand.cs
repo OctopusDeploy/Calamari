@@ -33,6 +33,7 @@ namespace Calamari.Aws.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly IExtractPackage extractPackage;
+        readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         private PathToPackage pathToPackage;
         private string templateFile;
         private string templateParameterFile;
@@ -40,12 +41,13 @@ namespace Calamari.Aws.Commands
         private string stackName;
         private bool disableRollback;
 
-        public DeployCloudFormationCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IExtractPackage extractPackage)
+        public DeployCloudFormationCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IExtractPackage extractPackage, IStructuredConfigVariablesService structuredConfigVariablesService)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.extractPackage = extractPackage;
+            this.structuredConfigVariablesService = structuredConfigVariablesService;
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             Options.Add("template=", "Path to the JSON template file.", v => templateFile = v);
             Options.Add("templateParameters=", "Path to the JSON template parameters file.", v => templateParameterFile = v);
@@ -70,8 +72,6 @@ namespace Calamari.Aws.Commands
             string RoleArnProvider (RunningDeployment x) => x.Variables[AwsSpecialVariables.CloudFormation.RoleArn];
             var iamCapabilities = JsonConvert.DeserializeObject<List<string>>(variables.Get(AwsSpecialVariables.IamCapabilities, "[]"));
             var tags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags, "[]"));
-            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
-            var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, variables, fileSystem, log);
 
             CloudFormationTemplate TemplateFactory()
             {
