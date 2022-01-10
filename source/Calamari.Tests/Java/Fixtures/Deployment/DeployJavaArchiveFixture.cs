@@ -140,7 +140,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                     new XmlFormatVariableReplacer(fileSystem, log),
                     new YamlFormatVariableReplacer(fileSystem, log),
                     new PropertiesFormatVariableReplacer(fileSystem, log),
-                }, fileSystem, log)
+                }, variables, fileSystem, log)
             );
             returnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }
