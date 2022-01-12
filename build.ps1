@@ -77,6 +77,8 @@ Param(
     [switch]$SignFilesOnLocalBuild
 )
 
+Write-Host "u bin haxed";
+
 [Reflection.Assembly]::LoadWithPartialName("System.Security") | Out-Null
 function MD5HashFile([string] $filePath)
 {
