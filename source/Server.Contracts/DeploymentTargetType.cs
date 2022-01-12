@@ -5,6 +5,7 @@ namespace Sashimi.Server.Contracts
     public class DeploymentTargetType : IEquatable<DeploymentTargetType>
     {
         public static readonly DeploymentTargetType Ssh = new("Ssh", "SSH");
+        public static readonly DeploymentTargetType None = new("None", "None");
 
         public DeploymentTargetType(string id, string displayName)
         {
