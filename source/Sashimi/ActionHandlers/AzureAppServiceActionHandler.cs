@@ -1,6 +1,8 @@
 using Octopus.CoreUtilities;
 using Octopus.Server.Extensibility.HostServices.Diagnostics;
+using Sashimi.AzureAppService.Endpoints;
 using Sashimi.AzureScripting;
+using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.AzureAppService
@@ -25,6 +27,8 @@ namespace Sashimi.AzureAppService
 
         public ActionHandlerCategory[] Categories => new[]
             {ActionHandlerCategory.BuiltInStep, AzureConstants.AzureActionHandlerCategory};
+
+        public DeploymentTargetType DeploymentTargetType => AzureWebAppEndpoint.AzureWebAppDeploymentTargetType;
 
         public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
