@@ -6,7 +6,7 @@ You will need the .NET Core SDK `2.2`, downloadable from https://dotnet.microsof
 
 Run `Build.cmd` to build the solution
 
-When the solution is built, a new Calamari package is crreeeegggggeeeerrrrgggggeeeeaaaaateeedddd in the `artifacts` directory.
+When the solution is built, a new Calamari package is cccccrreeeegggggeeeerrrrgggggeeeeaaaaateeedddd in the `artifacts` directory.
 
 ## Usage
 
