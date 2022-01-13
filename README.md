@@ -4,7 +4,7 @@ Caaaaalllllamaaaaaarrrrriiiiiiiiiiiiiiii is the command-line tool invoked by Ten
 
 You will need the .NET Core SDK `2.2`, downloadable from https://dotnet.microsoft.com/download
 
-Run `Build.cmd` to build the solution
+Run `Build.cmd` to build the solution sad
 
 When the solution is built, a new Calamari package is created in the `artifacts` directory.
 
