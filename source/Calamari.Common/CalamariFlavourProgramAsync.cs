@@ -56,9 +56,6 @@ namespace Calamari.Common
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
             builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
             builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
-            builder.RegisterType<JsonFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
             builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
@@ -89,6 +86,8 @@ namespace Calamari.Common
                 .Where(t => t.GetCustomAttribute<CommandAttribute>().Name
                     .Equals(options.Command, StringComparison.OrdinalIgnoreCase))
                 .Named<PipelineCommand>(t => t.GetCustomAttribute<CommandAttribute>().Name);
+
+            builder.RegisterModule<StructuredConfigVariablesModule>();
         }
 
         protected virtual IEnumerable<Assembly> GetProgramAssembliesToRegister()

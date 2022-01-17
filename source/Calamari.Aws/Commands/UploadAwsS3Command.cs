@@ -27,6 +27,7 @@ namespace Calamari.Aws.Commands
         readonly ICalamariFileSystem fileSystem;
         readonly ISubstituteInFiles substituteInFiles;
         readonly IExtractPackage extractPackage;
+        readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         PathToPackage pathToPackage;
         string bucket;
         string targetMode;
@@ -36,7 +37,8 @@ namespace Calamari.Aws.Commands
             IVariables variables,
             ICalamariFileSystem fileSystem,
             ISubstituteInFiles substituteInFiles,
-            IExtractPackage extractPackage
+            IExtractPackage extractPackage,
+            IStructuredConfigVariablesService structuredConfigVariablesService
             )
         {
             this.log = log;
@@ -44,6 +46,7 @@ namespace Calamari.Aws.Commands
             this.fileSystem = fileSystem;
             this.substituteInFiles = substituteInFiles;
             this.extractPackage = extractPackage;
+            this.structuredConfigVariablesService = structuredConfigVariablesService;
             Options.Add("package=", "Path to the package to extract that contains the package.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             Options.Add("bucket=", "The bucket to use", v => bucket = v);
             Options.Add("targetMode=", "Whether the entire package or files within the package should be uploaded to the s3 bucket", v => targetMode = v);
@@ -64,9 +67,6 @@ namespace Calamari.Aws.Commands
             var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
             var bucketKeyProvider = new BucketKeyProvider();
             var targetType = GetTargetMode(targetMode);
-
-            var allFileFormatReplacers = FileFormatVariableReplacers.BuildAllReplacers(fileSystem, log);
-            var structuredConfigVariablesService = new StructuredConfigVariablesService(allFileFormatReplacers, variables, fileSystem, log);
 
             var conventions = new List<IConvention>
             {
@@ -97,6 +97,5 @@ namespace Calamari.Aws.Commands
         {
             return Enum.TryParse<S3TargetMode>(value, out var result) ? result : S3TargetMode.EntirePackage;
         }
-
     }
 }

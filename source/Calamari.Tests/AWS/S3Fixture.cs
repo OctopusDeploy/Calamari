@@ -17,6 +17,7 @@ using Calamari.Aws.Commands;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Serialization;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Serialization;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
@@ -395,7 +396,14 @@ namespace Calamari.Tests.AWS
                     variables,
                     fileSystem,
                     new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
-                    new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log)
+                    new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
+                    new StructuredConfigVariablesService(new IFileFormatVariableReplacer[]
+                    {
+                        new JsonFormatVariableReplacer(fileSystem, log),
+                        new XmlFormatVariableReplacer(fileSystem, log),
+                        new YamlFormatVariableReplacer(fileSystem, log),
+                        new PropertiesFormatVariableReplacer(fileSystem, log),
+                    }, variables, fileSystem, log)
                 );
 
                 var result = command.Execute(new[] {

@@ -7,6 +7,7 @@ using Calamari.Commands.Java;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
@@ -39,7 +40,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             fileSystem.PurgeDirectory(applicationDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(applicationDirectory, "DeploymentJournal.xml"));
-            
+
             sourcePackage = TestEnvironment.GetTestPath("Java",
                                                             "Fixtures",
                                                             "Deployment",
@@ -101,7 +102,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             Assert.AreEqual(0, returnCode);
             log.StandardOut.Should().Contain($"Performing variable substitution on '{Path.Combine(Environment.CurrentDirectory, "staging", configFile)}'");
         }
-        
+
         [Test]
         public void CanDeployJavaArchiveUncompressed()
         {
@@ -122,9 +123,9 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             }
         }
 
-        protected void DeployPackage(string packageName, IVariables variables)
+        void DeployPackage(string packageName, IVariables variables)
         {
-            var commandLineRunner = new CommandLineRunner(log, variables); 
+            var commandLineRunner = new CommandLineRunner(log, variables);
             var command = new DeployJavaArchiveCommand(
                 log,
                 new ScriptEngine(Enumerable.Empty<IScriptWrapper>()),
@@ -132,7 +133,14 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                 fileSystem,
                 commandLineRunner,
                 new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
-                new ExtractPackage(new CombinedPackageExtractor(log, variables, commandLineRunner), fileSystem, variables, log)
+                new ExtractPackage(new CombinedPackageExtractor(log, variables, commandLineRunner), fileSystem, variables, log),
+                new StructuredConfigVariablesService(new IFileFormatVariableReplacer[]
+                {
+                    new JsonFormatVariableReplacer(fileSystem, log),
+                    new XmlFormatVariableReplacer(fileSystem, log),
+                    new YamlFormatVariableReplacer(fileSystem, log),
+                    new PropertiesFormatVariableReplacer(fileSystem, log),
+                }, variables, fileSystem, log)
             );
             returnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }
