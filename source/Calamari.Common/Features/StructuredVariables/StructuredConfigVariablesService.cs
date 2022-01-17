@@ -2,12 +2,29 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Autofac;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.StructuredVariables
 {
+    /// <summary>
+    /// Order matters, so we opt for explicit registration over scanning
+    /// </summary>
+    public class StructuredConfigVariablesModule : Module
+    {
+        protected override void Load(ContainerBuilder builder)
+        {
+            builder.RegisterType<JsonFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+            builder.RegisterType<XmlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+            builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+            builder.RegisterType<PropertiesFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+
+            builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
+        }
+    }
+
     public interface IStructuredConfigVariablesService
     {
         void ReplaceVariables(string currentDirectory);
@@ -66,6 +83,9 @@ namespace Calamari.Common.Features.StructuredVariables
                 foreach (var filePath in matchingFiles)
                 {
                     var replacersToTry = GetReplacersToTryForFile(filePath, onlyPerformJsonReplacement).ToArray();
+                    
+                    log.Verbose($"The registered replacers we will try, in order, are: " + string.Join(",", replacersToTry.Select(r => r.GetType().Name)));
+                    
                     DoReplacement(filePath, variables, replacersToTry);
                 }
             }
