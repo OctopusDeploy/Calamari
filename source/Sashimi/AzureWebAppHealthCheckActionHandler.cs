@@ -43,7 +43,7 @@ namespace Sashimi.AzureAppService
 
         public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
-            taskLog.Info("Yo I'm finding some web apps here");
+            taskLog.Info($"Yo I'm finding some web apps here in subscription '{context.Variables.Get("Octopus.Action.Azure.SubscriptionId")}'");
             return ActionHandlerResult.FromSuccess();
         }
     }
