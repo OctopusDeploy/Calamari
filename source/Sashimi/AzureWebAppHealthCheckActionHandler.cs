@@ -39,7 +39,7 @@ namespace Sashimi.AzureAppService
         public bool WhenInAChildStepRunInTheContextOfTheTargetMachine => false;
         public bool CanRunOnDeploymentTarget => false;
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Azure };
-        public string[] StepBasedVariableNameForAccountIds { get; } = { SpecialVariables.Action.Azure.AccountId };
+        public string[] StepBasedVariableNameForAccountIds { get; } = { "Octopus.Azure.Account" };
 
         public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
