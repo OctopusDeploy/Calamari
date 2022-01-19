@@ -56,7 +56,14 @@ namespace Calamari.Commands
             try
             {
                 ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
-                packageJournal.ApplyRetention(PackageStore.GetPackagesDirectory());
+                try
+                {
+                    packageJournal.ApplyRetention(PackageStore.GetPackagesDirectory());
+                }
+                catch (Exception ex)
+                {
+                    log.Info($"Unable to apply retention to package.  Error message: {ex.ToString()}");
+                }
 
                 var tempNewFilePath = newFilePath + ".partial";
 #if USE_OCTODIFF_EXE

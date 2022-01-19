@@ -42,7 +42,7 @@ namespace Calamari.Deployment.PackageRetention
                 }
                 catch (Exception ex)
                 {
-                    log.Error($"Unable to register package use.{Environment.NewLine}{ex.ToString()}");
+                    log.Info($"Unable to register package use.{Environment.NewLine}{ex.ToString()}");
                 }
             }
 
