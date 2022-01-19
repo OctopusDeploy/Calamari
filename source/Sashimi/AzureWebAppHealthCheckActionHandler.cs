@@ -27,7 +27,7 @@ namespace Sashimi.AzureAppService
         }
     }
 
-    class AzureWebAppDiscoveryActionHandler : IActionHandlerWithAccount
+    class AzureWebAppDiscoveryActionHandler : IActionHandler
     {
         static readonly CalamariFlavour CalamariAzureAppService = new CalamariFlavour("Calamari.AzureAppService");
 
@@ -39,11 +39,10 @@ namespace Sashimi.AzureAppService
         public bool WhenInAChildStepRunInTheContextOfTheTargetMachine => false;
         public bool CanRunOnDeploymentTarget => false;
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Azure };
-        public string[] StepBasedVariableNameForAccountIds { get; } = { "Octopus.Azure.Account" };
 
         public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
-            taskLog.Info($"Yo I'm finding some web apps here in subscription '{context.Variables.Get("Octopus.Action.Azure.SubscriptionId")}'");
+            taskLog.Info($"Yo I'm finding some web apps here using context '{context.Variables.Get("Octopus.DiscoverTargets.Context")}'");
             return ActionHandlerResult.FromSuccess();
         }
     }
