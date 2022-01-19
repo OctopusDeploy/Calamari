@@ -44,6 +44,12 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RegisterPackageUse(out bool packageRegistered)
         {
+            if (!IsRetentionEnabled())
+            {
+                packageRegistered = false;
+                return;
+            }
+
             try
             {
                 RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables), out packageRegistered);
@@ -51,7 +57,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             catch (Exception ex)
             {
                 packageRegistered = false;
-                log.Error($"Unable to register package use for retention.{Environment.NewLine}{ex.ToString()}");
+                log.Info($"Unable to register package use for retention.{Environment.NewLine}{ex.ToString()}");
             }
         }
 
@@ -99,7 +105,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             catch (Exception ex)
             {
                 //We need to ensure that an issue with the journal doesn't interfere with the deployment.
-                log.Error($"Unable to register package use for retention.{Environment.NewLine}{ex.ToString()}");
+                log.Info($"Unable to register package use for retention.{Environment.NewLine}{ex.ToString()}");
             }
         }
 
@@ -142,7 +148,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             catch (Exception ex)
             {
                 //We need to ensure that an issue with the journal doesn't interfere with the deployment.
-                log.Error($"Unable to deregister package use for retention.{Environment.NewLine}{ex.ToString()}");
+                log.Info($"Unable to deregister package use for retention.{Environment.NewLine}{ex.ToString()}");
             }
         }
 
@@ -198,7 +204,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                         {
                             if (string.IsNullOrWhiteSpace(package?.Path) || !fileSystem.FileExists(package.Path))
                             {
-                                log.Warn($"Package at {package?.Path} not found.");
+                                log.Info($"Package at {package?.Path} not found.");
                                 continue;
                             }
 
@@ -211,7 +217,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex.Message);
+                    Log.Info(ex.Message);
                 }
             }
             else
@@ -287,7 +293,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
             catch (Exception ex)
             {
-                log.Error($"Unable to expire stale package locks.{Environment.NewLine}{ex.ToString()}");
+                log.Info($"Unable to expire stale package locks.{Environment.NewLine}{ex.ToString()}");
             }
         }
     }
