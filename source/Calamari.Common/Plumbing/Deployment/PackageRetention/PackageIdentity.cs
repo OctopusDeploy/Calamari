@@ -42,11 +42,12 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         }
 
         [JsonConstructor]
-        public PackageIdentity(PackageId packageId, IVersion version, string? path = null)
+        public PackageIdentity(PackageId packageId, IVersion version, string? path = null, long fileSizeBytes = 0)
         {
             PackageId = packageId ?? throw new ArgumentNullException(nameof(packageId));
             Version = version ?? throw new ArgumentNullException(nameof(version));
             Path = path;
+            FileSizeBytes = fileSizeBytes;
         }
 
         public override bool Equals(object? obj)
@@ -62,8 +63,7 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         protected bool Equals(PackageIdentity other)
         {
             return Equals(PackageId, other.PackageId)
-                   && Equals(Version, other.Version)
-                   && Equals(Path, other.Path);
+                   && Equals(Version, other.Version);
         }
 
         public override int GetHashCode()
@@ -92,13 +92,15 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         public void UpdatePackageSize()
         {
             if (FileSizeBytes > 0) return;
-            if (string.IsNullOrWhiteSpace(Path))
+
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            if (string.IsNullOrWhiteSpace(Path) || !fileSystem.FileExists(Path))
             {
                 FileSizeBytes = -1;
                 return;
             }
 
-            FileSizeBytes = CalamariPhysicalFileSystem.GetPhysicalFileSystem().GetFileSize(Path);
+            FileSizeBytes = fileSystem.GetFileSize(Path);
         }
     }
 }

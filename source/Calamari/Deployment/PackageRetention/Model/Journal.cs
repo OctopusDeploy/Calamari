@@ -112,17 +112,13 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             packageDeregistered = false;
 
-#if DEBUG
-            log.Verbose(IsRetentionEnabled() ? "Package retention is enabled." : "Package retention is disabled.");
-#endif
-
             if (!IsRetentionEnabled())
                 return;
 
             try
             {
 #if DEBUG
-                log.Verbose($"Deregistering package lock for {package} and task {deploymentTaskId}");
+                Log.Verbose($"Deregistering package lock for {package} and task {deploymentTaskId}");
 #endif
 
                 using (var repository = repositoryFactory.CreateJournalRepository())
@@ -134,7 +130,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                         packageDeregistered = true;
                         
 #if DEBUG
-                        log.Verbose($"Successfully deregistered package lock for {package} and task {deploymentTaskId}");
+                        Log.Verbose($"Successfully deregistered package lock for {package} and task {deploymentTaskId}");
 #endif
                     }
                 }
@@ -164,10 +160,11 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void ApplyRetention(string directory)
         {
+            Log.Info("IN APPLY RETENTION!");
             if (IsRetentionEnabled())
             {
 #if DEBUG
-                log.Verbose($"Applying retention for folder '{directory}'");
+                Log.Verbose($"Applying retention for folder '{directory}'");
 #endif
                 try
                 {
@@ -184,13 +181,13 @@ namespace Calamari.Deployment.PackageRetention.Model
                             cacheSpaceRequired = Math.Max(0, requiredSpaceInBytes - cacheSpaceRemaining);
 
 #if DEBUG
-                            log.Verbose($"Cache size is {cacheSizeMB} MB, remaining space is {cacheSpaceRemaining/1024D/1024D:N} MB, with {cacheSpaceRequired/1024D/1024:N} MB required to be freed.");
+                            Log.Verbose($"Cache size is {cacheSizeMB} MB, remaining space is {cacheSpaceRemaining/1024D/1024D:N} MB, with {cacheSpaceRequired/1024D/1024:N} MB required to be freed.");
 #endif
                         }
 
                         var requiredSpace = Math.Max(cacheSpaceRequired, (long)freeSpaceChecker.GetSpaceRequiredToBeFreed(directory));
 #if DEBUG
-                        log.Verbose($"Total space required to be freed is {requiredSpace/1024D/1024:N} MB.");
+                        Log.Verbose($"Total space required to be freed is {requiredSpace/1024D/1024:N} MB.");
 #endif
                         var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), requiredSpace);
 
