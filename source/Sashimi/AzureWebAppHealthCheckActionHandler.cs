@@ -17,7 +17,7 @@ namespace Sashimi.AzureAppService
         public bool WhenInAChildStepRunInTheContextOfTheTargetMachine => false;
         public bool CanRunOnDeploymentTarget => false;
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, ActionHandlerCategory.Azure };
-        public string[] StepBasedVariableNameForAccountIds { get; } = {SpecialVariables.Action.Azure.AccountId};
+        public string[] StepBasedVariableNameForAccountIds { get; } = { SpecialVariables.Action.Azure.AccountId };
 
         public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
@@ -42,7 +42,7 @@ namespace Sashimi.AzureAppService
 
         public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
-            taskLog.Info($"Yo I'm finding some web apps here using context '{context.Variables.Get("Octopus.DiscoverTargets.Context")}'");
+            taskLog.Info($"Yo I'm finding some web apps here using context '{context.Variables.Get("Octopus.TargetDiscovery.Context")}'");
             return ActionHandlerResult.FromSuccess();
         }
     }
