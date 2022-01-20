@@ -15,6 +15,7 @@ namespace Sashimi.Server.Contracts.Endpoints
         Type ApiType { get; }
         IActionHandler? HealthCheckActionHandlerForTargetType { get; }
         IActionHandler? DiscoveryActionHandlerForTargetType => null;
+        bool SupportsDiscovery => DiscoveryActionHandlerForTargetType != null;
         IValidator Validator { get; }
         IEnumerable<AccountType> SupportedAccountTypes { get; }
         ICreateTargetServiceMessageHandler? CreateTargetServiceMessageHandler { get; }
