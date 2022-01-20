@@ -1,6 +1,8 @@
 ﻿using Calamari.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Tests.Shared.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -20,10 +22,14 @@ namespace Calamari.AzureAppService.Tests
             var variables = new CalamariVariables();
             var context = new RunningDeployment(variables);
             this.CreateVariables(context);
-            var sut = new TargetDiscoveryBehaviour();
+            var log = new InMemoryLog();
+            var sut = new TargetDiscoveryBehaviour(log);
 
             // Act
             await sut.Execute(context);
+
+            // Assert
+            log.StandardOut.Should().NotBeEmpty();
         }
 
         private void CreateVariables(RunningDeployment context)
