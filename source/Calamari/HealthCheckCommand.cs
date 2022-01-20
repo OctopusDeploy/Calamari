@@ -26,7 +26,7 @@ namespace Calamari.AzureAppService
 
         public Task Execute(RunningDeployment context)
         {
-            var account = new ServicePrincipalAccount(context.Variables);
+            var account = ServicePrincipalAccount.CreateFromKnownVariables(context.Variables);
 
             var resourceGroupName = context.Variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             var webAppName = context.Variables.Get(SpecialVariables.Action.Azure.WebAppName);

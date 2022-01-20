@@ -1,34 +1,61 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Calamari.AzureAppService.Azure;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Azure
 {
     class ServicePrincipalAccount
-    {
-        public ServicePrincipalAccount(IVariables variables)
+    {        
+        private ServicePrincipalAccount(
+            string subscriptionNumber,
+            string clientId,
+            string tenantId,
+            string password,
+            string azureEnvironment,
+            string resourceManagementEndpointBaseUri,
+            string activeDirectoryEndpointBaseUri)
         {
-            SubscriptionNumber = variables.Get(AccountVariables.SubscriptionId);
-            ClientId = variables.Get(AccountVariables.ClientId);
-            TenantId = variables.Get(AccountVariables.TenantId);
-            Password = variables.Get(AccountVariables.Password);
-
-            AzureEnvironment = variables.Get(AccountVariables.Environment);
-            ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
-            ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
+            this.SubscriptionNumber = subscriptionNumber;
+            this.ClientId = clientId;
+            this.TenantId = tenantId;
+            this.Password = password;
+            this.AzureEnvironment = azureEnvironment;
+            this.ResourceManagementEndpointBaseUri = resourceManagementEndpointBaseUri;
+            this.ActiveDirectoryEndpointBaseUri = activeDirectoryEndpointBaseUri;
         }
-        
-        public string SubscriptionNumber { get; set; }
 
-        public string ClientId { get; set; }
+        public static ServicePrincipalAccount CreateFromKnownVariables(IVariables variables) =>
+            new ServicePrincipalAccount(
+                subscriptionNumber:  variables.Get(AccountVariables.SubscriptionId),
+                clientId: variables.Get(AccountVariables.ClientId),
+                tenantId: variables.Get(AccountVariables.TenantId),
+                password: variables.Get(AccountVariables.Password),
+                azureEnvironment: variables.Get(AccountVariables.Environment),
+                resourceManagementEndpointBaseUri: variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint),
+                activeDirectoryEndpointBaseUri: variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint));
 
-        public string TenantId { get; set; }
+        public static ServicePrincipalAccount CreateFromTargetDiscoveryScope(TargetDiscoveryContext.AzureAccountDetails account) =>
+            new ServicePrincipalAccount(
+                subscriptionNumber: account.SubscriptionNumber,
+                clientId: account.ClientId,
+                tenantId: account.TenantId,
+                password: account.Password,
+                azureEnvironment: account.AzureEnvironment,
+                resourceManagementEndpointBaseUri: account.ResourceManagementEndpointBaseUri,
+                activeDirectoryEndpointBaseUri: account.ActiveDirectoryEndpointBaseUri);
 
-        public string Password { get; set; }
+        public string SubscriptionNumber { get;  }
 
-        public string AzureEnvironment { get; set; }
-        public string ResourceManagementEndpointBaseUri { get; set; }
-        public string ActiveDirectoryEndpointBaseUri { get; set; }
+        public string ClientId { get; }
+
+        public string TenantId { get; }
+
+        public string Password { get; }
+
+        public string AzureEnvironment { get; }
+        public string ResourceManagementEndpointBaseUri { get; }
+        public string ActiveDirectoryEndpointBaseUri { get; }
     }
 }

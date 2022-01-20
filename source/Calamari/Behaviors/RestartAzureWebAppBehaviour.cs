@@ -31,7 +31,7 @@ namespace Calamari.AzureAppService.Behaviors
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
             
-            var principalAccount = new ServicePrincipalAccount(variables);
+            var principalAccount = ServicePrincipalAccount.CreateFromKnownVariables(variables);
             var token = await Auth.GetAuthTokenAsync(principalAccount);
             var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri), new TokenCredentials(token))
                 {SubscriptionId = principalAccount.SubscriptionNumber};
