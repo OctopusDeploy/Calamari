@@ -65,14 +65,14 @@ namespace Calamari.AzureAppService
             var workerPoolId = variables.Get("Octopus.WorkerPool.Id");
             var role = webApp.Tags.First(tag => tag.Key == "role" && scope.Roles.Any(role => role == tag.Value)).Value;
             Log.Info($"##octopus[create-azurewebapptarget "
-                + $"name=\"{AbstractLog.ConvertServiceMessageValue(webApp.Name)}\" "
-                + $"azureWebApp=\"{AbstractLog.ConvertServiceMessageValue(webApp.Name)}\" "
+                + $"name=\"{AbstractLog.ConvertServiceMessageValue(webApp.Name ?? "")}\" "
+                + $"azureWebApp=\"{AbstractLog.ConvertServiceMessageValue(webApp.Name ?? "")}\" "
                 + $"azureWebAppSlot=\"\" "
-                + $"azureResourceGroupName=\"{AbstractLog.ConvertServiceMessageValue(webApp.ResourceGroupName)}\" "
-                + $"octopusAccountIdOrName=\"{AbstractLog.ConvertServiceMessageValue(accountId)}\" "
+                + $"azureResourceGroupName=\"{AbstractLog.ConvertServiceMessageValue(webApp.ResourceGroupName ?? "")}\" "
+                + $"octopusAccountIdOrName=\"{AbstractLog.ConvertServiceMessageValue(accountId ?? "")}\" "
                 + $"octopusRoles=\"{role}\" "
                 + $"updateIfExisting=\"{AbstractLog.ConvertServiceMessageValue("True")}\" "
-                + $"octopusDefaultWorkerPoolIdOrName=\"{AbstractLog.ConvertServiceMessageValue(workerPoolId)}\" ]");
+                + $"octopusDefaultWorkerPoolIdOrName=\"{AbstractLog.ConvertServiceMessageValue(workerPoolId ?? "")}\" ]");
 
         }
 
