@@ -26,13 +26,5 @@ changeBuildType(RelativeId("WindowsNetFxTesting_2019")) {
                 }
             }
         }
-        feature1.apply {
-            publisher = github {
-                githubUrl = "https://api.github.com"
-                authType = personalToken {
-                    token = "credentialsJSON:d2d6ff31-56f1-4893-a448-f7a517da6c88"
-                }
-            }
-        }
     }
 }

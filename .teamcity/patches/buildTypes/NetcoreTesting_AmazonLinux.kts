@@ -26,13 +26,5 @@ changeBuildType(RelativeId("NetcoreTesting_AmazonLinux")) {
                 }
             }
         }
-        feature1.apply {
-            publisher = github {
-                githubUrl = "https://api.github.com"
-                authType = personalToken {
-                    token = "credentialsJSON:e3abf97f-cad5-4d88-9a7a-f588c55c53ed"
-                }
-            }
-        }
     }
 }
