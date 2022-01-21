@@ -45,8 +45,7 @@ namespace Calamari.AzureAppService
 
             foreach (var webApp in webApps.Where(app => WebAppHasMatchesScope(app, targetDiscoveryContext.Scope)))
             {
-                WriteTargetCreationServiceMessage(webApp, targetDiscoveryContext.Scope);
-
+                WriteTargetCreationServiceMessage(webApp, targetDiscoveryContext.Scope, runningDeployment.Variables);
             }
         }
 
@@ -56,19 +55,24 @@ namespace Calamari.AzureAppService
             webApp.Tags.Any(tag => tag.Key == "environment" && tag.Value == scope.EnvironmentId) &&
             webApp.Tags.Any(tag => tag.Key == "role" && scope.Roles.Any(role => role == tag.Value));
 
-        private void WriteTargetCreationServiceMessage(IWebAppBasic webApp, TargetDiscoveryContext.TargetDiscoveryScope scope)
+        private void WriteTargetCreationServiceMessage(
+            IWebAppBasic webApp, TargetDiscoveryContext.TargetDiscoveryScope scope, IVariables variables)
         {
-            // TODO:
-            // - octopusAccountIdOrName
-            // - updateIfExisting
-            // - 
-            // TODO: Which role to use (matching role)?
-
-
+            // TODO: extend target discovery context to include account ID and worker pool ID directly?
+            // TODO: confirm what name to use (key? for immutable matching of existing targets?)
+            // TODO: Which role to use (all roles which matched in many-to-many matching?)
+            var accountId = variables.Get("Octopus.Account.Id");
+            var workerPoolId = variables.Get("Octopus.WorkerPool.Id");
             var role = webApp.Tags.First(tag => tag.Key == "role" && scope.Roles.Any(role => role == tag.Value)).Value;
             Log.Info($"##octopus[create-azurewebapptarget "
                 + $"name=\"{AbstractLog.ConvertServiceMessageValue(webApp.Name)}\" "
-                + $"octopusRoles=\"{role}\"]");
+                + $"azureWebApp=\"{AbstractLog.ConvertServiceMessageValue(webApp.Name)}\" "
+                + $"azureWebAppSlot=\"\" "
+                + $"azureResourceGroupName=\"{AbstractLog.ConvertServiceMessageValue(webApp.ResourceGroupName)}\" "
+                + $"octopusAccountIdOrName=\"{AbstractLog.ConvertServiceMessageValue(accountId)}\" "
+                + $"octopusRoles=\"{role}\" "
+                + $"updateIfExisting=\"{AbstractLog.ConvertServiceMessageValue("True")}\" "
+                + $"octopusDefaultWorkerPoolIdOrName=\"{AbstractLog.ConvertServiceMessageValue(workerPoolId)}\" ]");
 
         }
 
