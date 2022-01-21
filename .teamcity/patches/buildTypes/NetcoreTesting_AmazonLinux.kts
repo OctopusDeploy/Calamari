@@ -30,7 +30,7 @@ changeBuildType(RelativeId("NetcoreTesting_AmazonLinux")) {
             publisher = github {
                 githubUrl = "https://api.github.com"
                 authType = personalToken {
-                    token = "credentialsJSON:d2d6ff31-56f1-4893-a448-f7a517da6c88"
+                    token = "credentialsJSON:e3abf97f-cad5-4d88-9a7a-f588c55c53ed"
                 }
             }
         }
