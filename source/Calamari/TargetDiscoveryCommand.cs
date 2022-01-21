@@ -61,8 +61,8 @@ namespace Calamari.AzureAppService
             // TODO: extend target discovery context to include account ID and worker pool ID directly?
             // TODO: confirm what name to use (key? for immutable matching of existing targets?)
             // TODO: Which role to use (all roles which matched in many-to-many matching?)
-            var accountId = variables.Get("Octopus.Account.Id");
-            var workerPoolId = variables.Get("Octopus.WorkerPool.Id");
+            var accountId = variables.Get("OverrideAzureAccountIdForTargetDiscoverySpike") ?? "Accounts-1";
+            var workerPoolId = variables.Get("OverrideWorkerPoolIdForTargetDiscoverySpike") ?? "WorkerPools-1";
             var role = webApp.Tags.First(tag => tag.Key == "role" && scope.Roles.Any(role => role == tag.Value)).Value;
             Log.Info($"##octopus[create-azurewebapptarget "
                 + $"name=\"{AbstractLog.ConvertServiceMessageValue(webApp.Name ?? "")}\" "
@@ -70,7 +70,7 @@ namespace Calamari.AzureAppService
                 + $"azureWebAppSlot=\"\" "
                 + $"azureResourceGroupName=\"{AbstractLog.ConvertServiceMessageValue(webApp.ResourceGroupName ?? "")}\" "
                 + $"octopusAccountIdOrName=\"{AbstractLog.ConvertServiceMessageValue(accountId ?? "")}\" "
-                + $"octopusRoles=\"{role}\" "
+                + $"octopusRoles=\"{AbstractLog.ConvertServiceMessageValue(role)}\" "
                 + $"updateIfExisting=\"{AbstractLog.ConvertServiceMessageValue("True")}\" "
                 + $"octopusDefaultWorkerPoolIdOrName=\"{AbstractLog.ConvertServiceMessageValue(workerPoolId ?? "")}\" ]");
 
