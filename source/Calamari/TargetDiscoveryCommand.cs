@@ -38,14 +38,14 @@ namespace Calamari.AzureAppService
         {
             await Task.CompletedTask;
             var targetDiscoveryContext = GetTargetDiscoveryContext(runningDeployment.Variables);
-            var account = ServicePrincipalAccount.CreateFromTargetDiscoveryScope(targetDiscoveryContext.Account);
+            var account = ServicePrincipalAccount.CreateFromTargetDiscoveryScope(targetDiscoveryContext.Authentication.Account);
             var azureClient = account.CreateAzureClient();
 
             var webApps = azureClient.WebApps.ListWebAppBasic();
 
             foreach (var webApp in webApps.Where(app => WebAppHasMatchesScope(app, targetDiscoveryContext.Scope)))
             {
-                WriteTargetCreationServiceMessage(webApp, targetDiscoveryContext.Scope, runningDeployment.Variables);
+                WriteTargetCreationServiceMessage(webApp, targetDiscoveryContext, runningDeployment.Variables);
             }
         }
 
@@ -56,23 +56,21 @@ namespace Calamari.AzureAppService
             webApp.Tags.Any(tag => tag.Key == "role" && scope.Roles.Any(role => role == tag.Value));
 
         private void WriteTargetCreationServiceMessage(
-            IWebAppBasic webApp, TargetDiscoveryContext.TargetDiscoveryScope scope, IVariables variables)
+            IWebAppBasic webApp, TargetDiscoveryContext context, IVariables variables)
         {
             // TODO: extend target discovery context to include account ID and worker pool ID directly?
             // TODO: confirm what name to use (key? for immutable matching of existing targets?)
             // TODO: Which role to use (all roles which matched in many-to-many matching?)
-            var accountId = variables.Get("OverrideAzureAccountIdForTargetDiscoverySpike") ?? "Accounts-1";
-            var workerPoolId = variables.Get("OverrideWorkerPoolIdForTargetDiscoverySpike") ?? "WorkerPools-1";
-            var role = webApp.Tags.First(tag => tag.Key == "role" && scope.Roles.Any(role => role == tag.Value)).Value;
+            var role = webApp.Tags.First(tag => tag.Key == "role" && context.Scope.Roles.Any(role => role == tag.Value)).Value;
             Log.Info($"##octopus[create-azurewebapptarget "
                 + $"name=\"{AbstractLog.ConvertServiceMessageValue(webApp.Name ?? "")}\" "
                 + $"azureWebApp=\"{AbstractLog.ConvertServiceMessageValue(webApp.Name ?? "")}\" "
                 + $"azureWebAppSlot=\"\" "
                 + $"azureResourceGroupName=\"{AbstractLog.ConvertServiceMessageValue(webApp.ResourceGroupName ?? "")}\" "
-                + $"octopusAccountIdOrName=\"{AbstractLog.ConvertServiceMessageValue(accountId ?? "")}\" "
+                + $"octopusAccountIdOrName=\"{AbstractLog.ConvertServiceMessageValue(context.Authentication.AccountId ?? "")}\" "
                 + $"octopusRoles=\"{AbstractLog.ConvertServiceMessageValue(role)}\" "
                 + $"updateIfExisting=\"{AbstractLog.ConvertServiceMessageValue("True")}\" "
-                + $"octopusDefaultWorkerPoolIdOrName=\"{AbstractLog.ConvertServiceMessageValue(workerPoolId ?? "")}\" ]");
+                + $"octopusDefaultWorkerPoolIdOrName=\"{AbstractLog.ConvertServiceMessageValue(context.Scope.WorkerPoolId ?? "")}\" ]");
 
         }
 
