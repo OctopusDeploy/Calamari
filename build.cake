@@ -83,7 +83,7 @@ Task("Build")
 
 Task("Test")
     .IsDependentOn("Build")
-    .WithCriteria(BuildSystem.IsLocalBuild)
+    .WithCriteria(false)
     .Does(() => {
 		var projects = GetFiles("./source/**/*Tests.csproj");
 
