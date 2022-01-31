@@ -149,6 +149,8 @@ Task("PublishSashimiTestProjects")
 		    	    	Configuration = configuration,
                         OutputDirectory = $"{publishDir}/{sashimiFlavour}"
 		    	    });
+
+                    CopyFiles("./global.json", $"{publishDir}/{sashimiFlavour}");
                 }
 
                 RunPublish();
