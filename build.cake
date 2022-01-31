@@ -96,7 +96,7 @@ Task("Test")
     });
 
 Task("PublishCalamariProjects")
-   .IsDependentOn("Build")
+    .IsDependentOn("Build")
     .Does(() => {
         var projects = GetFiles("./source/**/Calamari*.csproj"); //We need Calamari & Calamari.Tests
 		foreach(var project in projects)
@@ -109,16 +109,18 @@ Task("PublishCalamariProjects")
             foreach(var framework in frameworks.Split(';'))
             {
                 void RunPublish(string runtime, string platform) {
-                     DotNetCorePublish(project.FullPath, new DotNetCorePublishSettings
+                    DotNetCorePublish(project.FullPath, new DotNetCorePublishSettings
 		    	    {
 		    	    	Configuration = configuration,
                         OutputDirectory = $"{publishDir}/{calamariFlavour}/{platform}",
                         Framework = framework,
                         Runtime = runtime
 		    	    });
+
+                    CopyFiles("./global.json", $"{publishDir}/{calamariFlavour}/{platform}");
                 }
 
-                if(framework.StartsWith("netcoreapp"))
+                if(framework.Equals("net5.0"))
                 {
                     var runtimes = XmlPeek(project, "Project/PropertyGroup/RuntimeIdentifiers").Split(';');
                     foreach(var runtime in runtimes)
@@ -148,6 +150,8 @@ Task("PublishSashimiTestProjects")
 		    	    	Configuration = configuration,
                         OutputDirectory = $"{publishDir}/{sashimiFlavour}"
 		    	    });
+
+                    CopyFiles("./global.json", $"{publishDir}/{sashimiFlavour}");
                 }
 
                 RunPublish();
