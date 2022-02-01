@@ -12,6 +12,7 @@ using Microsoft.Azure.Management.ResourceManager.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using AzureResourceManagerDeployment = Microsoft.Azure.Management.ResourceManager.Models.Deployment;
 
 namespace Calamari.AzureResourceGroup
 {
@@ -117,7 +118,7 @@ namespace Calamari.AzureResourceGroup
             {
                 var createDeploymentResult = await armClient.Deployments.BeginCreateOrUpdateAsync(resourceGroupName,
                                                                                                   deploymentName,
-                                                                                                  new Deployment
+                                                                                                  new AzureResourceManagerDeployment
                                                                                                   {
                                                                                                       Properties = new DeploymentProperties
                                                                                                       {

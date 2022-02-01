@@ -98,7 +98,7 @@ namespace Sashimi.AzureResourceGroup.Tests
         {
            public string GetName(TestMetadata metadata)
            {
-              var directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().FullLocalPath());
+              var directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
               return Path.Combine(directoryName, $"{metadata.TestFixture.GetType().Name}.{metadata.TestName}");
            }

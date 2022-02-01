@@ -117,9 +117,11 @@ Task("PublishCalamariProjects")
                         Framework = framework,
                         Runtime = runtime
 		    	    });
+		    	    
+		    	    CopyFiles("./global.json", $"{publishDir}/{calamariFlavour}/{platform}");
                 }
 
-                if(framework.StartsWith("netcoreapp"))
+                if(framework.Equals("net5.0"))
                 {
                     var runtimes = XmlPeek(project, "Project/PropertyGroup/RuntimeIdentifiers").Split(';');
                     foreach(var runtime in runtimes)
@@ -149,6 +151,8 @@ Task("PublishSashimiTestProjects")
 		    	    	Configuration = configuration,
                         OutputDirectory = $"{publishDir}/{sashimiFlavour}"
 		    	    });
+		    	    
+		    	    CopyFiles("./global.json", $"{publishDir}/{sashimiFlavour}");
                 }
 
                 RunPublish();
