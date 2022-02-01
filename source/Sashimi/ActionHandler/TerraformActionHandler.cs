@@ -96,11 +96,10 @@ namespace Sashimi.Terraform.ActionHandler
 
         static Dictionary<string, string> GetEnvironmentVariableArgs(IActionAndTargetScopedVariables variables)
         {
-            var rawJson = variables.Get(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables);
-            if (string.IsNullOrEmpty(rawJson))
-                return new Dictionary<string, string>();
+            var rawJson = variables.Get(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables) ?? "";
 
-            return JsonConvert.DeserializeObject<Dictionary<string, string>>(rawJson);
+            return JsonConvert.DeserializeObject<Dictionary<string, string>>(rawJson) 
+                ?? new Dictionary<string, string>();
         }
     }
 }
