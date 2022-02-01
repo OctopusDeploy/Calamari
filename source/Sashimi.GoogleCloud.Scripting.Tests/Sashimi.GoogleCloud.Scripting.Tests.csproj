@@ -13,7 +13,7 @@
         <PackageReference Include="SharpCompress" Version="0.28.2" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
         <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="14.3.20" />
-        <PackageReference Include="Sashimi.Tests.Shared" Version="14.1.0" />
+        <PackageReference Include="Sashimi.Tests.Shared" Version="14.1.3" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.GoogleCloudScripting\Calamari.GoogleCloudScripting.csproj" />
