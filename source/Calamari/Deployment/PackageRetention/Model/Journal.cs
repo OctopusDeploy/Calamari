@@ -152,12 +152,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        bool IsRetentionEnabled()
-        {
-            var enabled = variables.IsPackageRetentionEnabled();
-            log.Verbose($"Package retention is {(enabled ? "enabled" : "disabled")}.");
-            return enabled;
-        }
+        bool IsRetentionEnabled() => true;
 
         public bool HasLock(PackageIdentity package)
         {
