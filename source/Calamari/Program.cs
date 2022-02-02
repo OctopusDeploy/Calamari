@@ -87,29 +87,8 @@ namespace Calamari
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
 
-            var typesToAlwaysDecorate = new Type[] { typeof(ApplyDeltaCommand) }; //Commands from external assemblies.
-
-            //Get register commands with the RetentionLockingCommand attribute;
-            builder.RegisterAssemblyTypes(assembliesToRegister)
-                   .Where(t => t.HasAttribute<PackageLockingCommandAttribute>()
-                               || typesToAlwaysDecorate.Contains(t))
-                   .AssignableTo<ICommandWithArgs>()
-                   .WithMetadataFrom<CommandAttribute>()
-                   .Named<ICommandWithArgs>(nameof(PackageLockingCommandAttribute) + "From");
-
-            //Register the decorator for the above commands.  Uses the old Autofac method because we're only on v4.8
-            builder.RegisterDecorator<ICommandWithArgs>((c, inner)
-                                                            => new PackageJournalCommandDecorator(c.Resolve<ILog>(),
-                                                                                           inner,
-                                                                                           c.Resolve<IVariables>(),
-                                                                                           c.Resolve<IManagePackageUse>(),
-                                                                                           c.Resolve<PackageIdentityFactory>()),
-                                                        fromKey: nameof(PackageLockingCommandAttribute) + "From",
-                                                        toKey: nameof(PackageLockingCommandAttribute));
-
             //Register the non-decorated commands
             builder.RegisterAssemblyTypes(assembliesToRegister)
-                   .Where(c => !c.HasAttribute<PackageLockingCommandAttribute>() && c != typeof(PackageJournalCommandDecorator))
                    .AssignableTo<ICommandWithArgs>()
                    .WithMetadataFrom<CommandAttribute>()
                    .As<ICommandWithArgs>();
