@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -94,9 +93,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                         repository.AddJournalEntry(entry);
                     }
 
-#if DEBUG
                     log.Verbose($"Registered package use/lock for {package} and task {deploymentTaskId}");
-#endif
 
                     repository.Commit();
                     packageRegistered = true;
@@ -118,18 +115,12 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             packageDeregistered = false;
 
-#if DEBUG
-            log.Verbose(IsRetentionEnabled() ? "Package retention is enabled." : "Package retention is disabled.");
-#endif
-
             if (!IsRetentionEnabled())
                 return;
 
             try
             {
-#if DEBUG
                 log.Verbose($"Deregistering package lock for {package} and task {deploymentTaskId}");
-#endif
 
                 using (var repository = repositoryFactory.CreateJournalRepository())
                 {
@@ -139,9 +130,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                         repository.Commit();
                         packageDeregistered = true;
                         
-#if DEBUG
                         log.Verbose($"Successfully deregistered package lock for {package} and task {deploymentTaskId}");
-#endif
                     }
                 }
             }
@@ -167,9 +156,7 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             if (IsRetentionEnabled())
             {
-#if DEBUG
-                log.Verbose($"Applying retention for folder '{directory}'");
-#endif
+                log.Verbose($"Applying package retention for folder '{directory}'");
                 try
                 {
                     using (var repository = repositoryFactory.CreateJournalRepository())
@@ -184,15 +171,11 @@ namespace Calamari.Deployment.PackageRetention.Model
                             var requiredSpaceInBytes = (long)freeSpaceChecker.GetRequiredSpaceInBytes();
                             cacheSpaceRequired = Math.Max(0, requiredSpaceInBytes - cacheSpaceRemaining);
 
-#if DEBUG
                             log.Verbose($"Cache size is {cacheSizeMB} MB, remaining space is {cacheSpaceRemaining/1024D/1024D:N} MB, with {cacheSpaceRequired/1024D/1024:N} MB required to be freed.");
-#endif
                         }
 
                         var requiredSpace = Math.Max(cacheSpaceRequired, (long)freeSpaceChecker.GetSpaceRequiredToBeFreed(directory));
-#if DEBUG
                         log.Verbose($"Total space required to be freed is {requiredSpace/1024D/1024:N} MB.");
-#endif
                         var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), requiredSpace);
 
                         foreach (var package in packagesToRemove)
