@@ -34,6 +34,7 @@ namespace Calamari.Commands
         {
             try
             {
+                Options.Parse(commandLineArguments);
                 RegisterPackageUse(commandLineArguments);
             }
             catch (Exception ex)
