@@ -13,6 +13,7 @@ namespace Calamari.Commands
     {
         string packageId;
         string packageVersion;
+        string taskId;
         readonly ILog log;
         readonly IVariables variables;
         readonly IManagePackageUse journal;
@@ -26,6 +27,7 @@ namespace Calamari.Commands
             this.variables = variables;
             Options.Add("packageId=", "Package ID of the used package", v => packageId = v);
             Options.Add("packageVersion=", "Package version of the used package", v => packageVersion = v);
+            Options.Add("taskId=", "Id of the task that is using the package", v => taskId = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -45,7 +47,7 @@ namespace Calamari.Commands
 
         void RegisterPackageUse(string[] commandLineArguments)
         {
-            var deploymentTaskId = ServerTaskId.FromVariables(variables);
+            var deploymentTaskId = new ServerTaskId(taskId);
             var package = packageIdentityFactory.CreatePackageIdentity(journal,
                                                                        variables,
                                                                        commandLineArguments,
