@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Globalization;
-using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
@@ -42,7 +40,7 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            var taskId = new ServerTaskId(variables);
+            var taskId = ServerTaskId.FromVariables(variables);
 
             try
             {

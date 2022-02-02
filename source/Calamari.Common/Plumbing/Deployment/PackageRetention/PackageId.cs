@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Security.Cryptography.X509Certificates;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.Versioning;
+using Calamari.Deployment.PackageRetention;
 
-namespace Calamari.Deployment.PackageRetention
+namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
     public class PackageId : CaseInsensitiveTinyType
     {

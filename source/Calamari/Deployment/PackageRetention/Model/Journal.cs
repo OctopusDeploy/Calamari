@@ -52,7 +52,7 @@ namespace Calamari.Deployment.PackageRetention.Model
 
             try
             {
-                RegisterPackageUse(new PackageIdentity(variables), new ServerTaskId(variables), out packageRegistered);
+                RegisterPackageUse(new PackageIdentity(variables), ServerTaskId.FromVariables(variables), out packageRegistered);
             }
             catch (Exception ex)
             {
