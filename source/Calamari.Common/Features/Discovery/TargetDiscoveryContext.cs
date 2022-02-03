@@ -14,7 +14,7 @@ namespace Calamari.Common.Features.Discovery
     /// <summary>
     /// This type and the types it uses are duplicated here from Octopus.Core, because:
     /// a) There is currently no existing project to place code shared between server and Calamari, and
-    /// b) We expect a bunch of stuff in the sasimi/calamari space to be refactored back into the OctopusDeploy solution soon.
+    /// b) We expect a bunch of stuff in the Sashimi/Calamari space to be refactored back into the OctopusDeploy solution soon.
     /// </summary>
     public class TargetDiscoveryContext<TAuthentication> : ITargetDiscoveryContext
         where TAuthentication : ITargetDiscoveryAuthenticationScope
