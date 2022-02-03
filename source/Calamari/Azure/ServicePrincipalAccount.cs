@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Calamari.AzureAppService.Azure;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Features.Discovery;
 
 namespace Calamari.Azure
 {
     class ServicePrincipalAccount
     {        
-        private ServicePrincipalAccount(
+        public ServicePrincipalAccount(
             string subscriptionNumber,
             string clientId,
             string tenantId,
@@ -35,16 +35,6 @@ namespace Calamari.Azure
                 azureEnvironment: variables.Get(AccountVariables.Environment),
                 resourceManagementEndpointBaseUri: variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint),
                 activeDirectoryEndpointBaseUri: variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint));
-
-        public static ServicePrincipalAccount CreateFromTargetDiscoveryScope(TargetDiscoveryContext.AzureAccountDetails account) =>
-            new ServicePrincipalAccount(
-                subscriptionNumber: account.SubscriptionNumber,
-                clientId: account.ClientId,
-                tenantId: account.TenantId,
-                password: account.Password,
-                azureEnvironment: account.AzureEnvironment,
-                resourceManagementEndpointBaseUri: account.ResourceManagementEndpointBaseUri,
-                activeDirectoryEndpointBaseUri: account.ActiveDirectoryEndpointBaseUri);
 
         public string SubscriptionNumber { get;  }
 

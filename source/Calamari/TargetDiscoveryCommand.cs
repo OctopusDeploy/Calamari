@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Calamari.Azure;
-using Calamari.AzureAppService.Azure;
+////using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
@@ -38,7 +39,7 @@ namespace Calamari.AzureAppService
         {
             await Task.CompletedTask;
             var targetDiscoveryContext = GetTargetDiscoveryContext(runningDeployment.Variables);
-            var account = ServicePrincipalAccount.CreateFromTargetDiscoveryScope(targetDiscoveryContext.Authentication.Account);
+            var account = targetDiscoveryContext.Authentication.AccountDetails;
             var azureClient = account.CreateAzureClient();
 
             var webApps = azureClient.WebApps.ListWebAppBasic();
@@ -50,13 +51,17 @@ namespace Calamari.AzureAppService
         }
 
         // TODO: Proper tag matching (tag names, case-sensitivity etc.)
-        private bool WebAppHasMatchesScope(IWebAppBasic webApp, TargetDiscoveryContext.TargetDiscoveryScope scope) =>
+        private bool WebAppHasMatchesScope(
+            IWebAppBasic webApp,
+            TargetDiscoveryScope scope) =>
             webApp.Tags.Any(tag => tag.Key == "project" && tag.Value == scope.ProjectId) &&
             webApp.Tags.Any(tag => tag.Key == "environment" && tag.Value == scope.EnvironmentId) &&
             webApp.Tags.Any(tag => tag.Key == "role" && scope.Roles.Any(role => role == tag.Value));
 
         private void WriteTargetCreationServiceMessage(
-            IWebAppBasic webApp, TargetDiscoveryContext context, IVariables variables)
+            IWebAppBasic webApp,
+            TargetDiscoveryContext<AuthenticationAccount<ServicePrincipalAccount>> context,
+            IVariables variables)
         {
             // TODO: extend target discovery context to include account ID and worker pool ID directly?
             // TODO: confirm what name to use (key? for immutable matching of existing targets?)
@@ -74,7 +79,7 @@ namespace Calamari.AzureAppService
 
         }
 
-        private TargetDiscoveryContext GetTargetDiscoveryContext(IVariables variables)
+        private TargetDiscoveryContext<AuthenticationAccount<ServicePrincipalAccount>> GetTargetDiscoveryContext(IVariables variables)
         {
             var json = variables.Get("Octopus.TargetDiscovery.Context");
             
@@ -83,7 +88,7 @@ namespace Calamari.AzureAppService
                 PropertyNameCaseInsensitive = true
             };
 
-            return JsonSerializer.Deserialize<TargetDiscoveryContext>(json, options);
+            return JsonSerializer.Deserialize<TargetDiscoveryContext<AuthenticationAccount<ServicePrincipalAccount>>>(json, options);
         }
     }
 }
