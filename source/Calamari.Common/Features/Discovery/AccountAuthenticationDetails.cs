@@ -3,10 +3,10 @@
     /// <summary>
     /// For account-based authentication scopes.
     /// </summary>
-    public class AccountAuthenticationScope<TAccountDetails> : ITargetDiscoveryAuthenticationScope
+    public class AccountAuthenticationDetails<TAccountDetails> : ITargetDiscoveryAuthenticationDetails
 
     {
-        public AccountAuthenticationScope
+        public AccountAuthenticationDetails
             (string accountId, TAccountDetails accountDetails)
         {
             this.AccountId = accountId;

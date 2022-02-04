@@ -55,12 +55,12 @@ namespace Calamari.Testing.LogParser
                     case State.PossibleMessage:
                         buffer.Append(c);
                         var progress = buffer.ToString();
-                        if ("##octopus" == progress)
+                        if (ServiceMessage.ServiceMessageLabel == progress)
                         {
                             state = State.InMessage;
                             buffer.Clear();
                         }
-                        else if (!"##octopus".StartsWith(progress))
+                        else if (!ServiceMessage.ServiceMessageLabel.StartsWith(progress))
                         {
                             state = State.Default;
                         }
@@ -106,7 +106,7 @@ namespace Calamari.Testing.LogParser
             catch
             {
                 serviceMessage(new ServiceMessage("stdout-warning", null));
-                output(source, $"Could not parse '##octopus[{message}]'");
+                output(source, $"Could not parse '{ServiceMessage.ServiceMessageLabel}[{message}]'");
                 serviceMessage(new ServiceMessage("stdout-default", null));
             }
         }

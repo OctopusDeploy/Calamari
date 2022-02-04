@@ -1,6 +1,6 @@
 ﻿namespace Calamari.Common.Features.Discovery
 {
-    public interface ITargetDiscoveryAuthenticationScope
+    public interface ITargetDiscoveryAuthenticationDetails
     {
     }
 }

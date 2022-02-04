@@ -1,4 +1,5 @@
 using System;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Plumbing.Logging
@@ -20,5 +21,6 @@ namespace Calamari.Common.Plumbing.Logging
         void DeltaVerification(string remotePath, string hash, long size);
         void DeltaVerificationError(string error);
         string FormatLink(string uri, string? description = null);
+        void WriteServiceMessage(ServiceMessage serviceMessage);
     }
 }

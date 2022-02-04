@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Text;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Plumbing.Logging
@@ -171,6 +172,11 @@ namespace Calamari.Common.Plumbing.Logging
         public void NewOctopusArtifact(string fullPath, string name, long fileLength)
         {
             Info($"##octopus[createArtifact path=\"{ConvertServiceMessageValue(fullPath)}\" name=\"{ConvertServiceMessageValue(name)}\" length=\"{ConvertServiceMessageValue(fileLength.ToString())}\"]");
+        }
+
+        public void WriteServiceMessage(ServiceMessage serviceMessage)
+        {
+            Info(serviceMessage.ToString());
         }
 
         public void Progress(int percentage, string message)
