@@ -16,7 +16,7 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Calamari.Common" Version="21.0.2-geoffb-step-pack0001" />
+    <PackageReference Include="Calamari.Common" Version="21.0.2-geoffb-target-di0002" />
     <PackageReference Include="Microsoft.Azure.Management.AppService.Fluent" Version="1.37.1" />
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.37.1" />
     <PackageReference Include="Microsoft.Azure.Management.Websites" Version="3.1.1" />
@@ -27,6 +27,11 @@
     </PackageReference>
 	  <PackageReference Include="SharpCompress" Version="0.28.2" />
     <PackageReference Include="System.Text.Json" Version="6.0.1" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+    <PackageReference Include="Octopus.Data">
+      <Version>6.0.0</Version>
+    </PackageReference>
   </ItemGroup>
 
 </Project>

@@ -2,10 +2,10 @@
 <RunSettings>
   <RunConfiguration>
     <EnvironmentVariables>
-      <Azure_OctopusAPITester_SubscriptionId></Azure_OctopusAPITester_SubscriptionId>
-      <Azure_OctopusAPITester_TenantId></Azure_OctopusAPITester_TenantId>
-      <Azure_OctopusAPITester_ClientId></Azure_OctopusAPITester_ClientId>
-      <Azure_OctopusAPITester_Password></Azure_OctopusAPITester_Password>
-    </EnvironmentVariables>
+		<Azure_OctopusAPITester_SubscriptionId>cf21dc34-73dc-4d7d-bd86-041884e0bc75</Azure_OctopusAPITester_SubscriptionId>
+		<Azure_OctopusAPITester_Password>6aF7Q~NfpuNSp1Yo3i_svmxaNUaSIsnnm4ja9</Azure_OctopusAPITester_Password>
+		<Azure_OctopusAPITester_ClientId>0308c380-5879-4dd1-9866-156d9bbfa34c</Azure_OctopusAPITester_ClientId>
+		<Azure_OctopusAPITester_TenantId>18eb006b-c3c8-4a72-93cd-fe4b293f82ee</Azure_OctopusAPITester_TenantId>
+	</EnvironmentVariables>
   </RunConfiguration>
 </RunSettings>
