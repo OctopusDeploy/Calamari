@@ -5,6 +5,8 @@ import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.CommitStatusPu
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.commitStatusPublisher
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.NuGetPublishStep
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.nuGetPublish
+import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.VcsTrigger
+import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.vcs
 import jetbrains.buildServer.configs.kotlin.v2019_2.ui.*
 
 /*
@@ -13,6 +15,11 @@ To apply the patch, change the buildType with id = 'PublishToFeedzIo'
 accordingly, and delete the patch script.
 */
 changeBuildType(RelativeId("PublishToFeedzIo")) {
+    check(name == "Publish to Feedz.io") {
+        "Unexpected name: '$name'"
+    }
+    name = "Chain: Build and Test and Publish to Feedz.io"
+
     expectSteps {
         nuGetPublish {
             name = "Nuget Publish"
@@ -26,7 +33,27 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
     steps {
         update<NuGetPublishStep>(0) {
             clearConditions()
-            apiKey = "credentialsJSON:21016b86-e16b-4825-ab03-02ec2d979b7f"
+            apiKey = "credentialsJSON:a7d4426a-7256-4df7-a953-266292e6ad81"
+            param("org.jfrog.artifactory.selectedDeployableServer.downloadSpecSource", "Job configuration")
+            param("org.jfrog.artifactory.selectedDeployableServer.useSpecs", "false")
+            param("org.jfrog.artifactory.selectedDeployableServer.uploadSpecSource", "Job configuration")
+        }
+    }
+
+    triggers {
+        val trigger1 = find<VcsTrigger> {
+            vcs {
+                branchFilter = """
+                    ## We actually want to publish all builds
+                    +:refs/tags/*
+                    +:<default>
+                    +:refs/heads/*
+                """.trimIndent()
+            }
+        }
+        trigger1.apply {
+            enabled = false
+
         }
     }
 
