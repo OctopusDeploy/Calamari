@@ -23,37 +23,31 @@ namespace Calamari.AzureAppService.Tests
             await sut.Execute(context);
 
             // Assert
-            log.StandardOut.Should().Contain("Error: target discovery scope missing.");
+            log.StandardOut.Should().Contain(line => line.Contains("Could not find target discovery context in variable"));
+            log.StandardOut.Should().Contain(line => line.Contains("Aborting target discovery."));
         }
 
-//////        private void CreateVariables(RunningDeployment context)
-//////        {
-//////            string targetDiscoveryContext = $@"{{
-//////    ""scope"": {{
-//////        ""spaceName"": ""default"",
-//////        ""environmentName"": ""dev"",
-//////        ""projectName"": ""my-test-project"",
-//////        ""tenantName"": null,
-//////        ""roles"": [""my-azure-app-role""]
-//////    }},
-//////    ""authentication"": {{
-//////        ""accountId"": ""Accounts-1"",
-//////        ""accountDetails"": {{
-//////            ""subscriptionNumber"": ""{subscriptionId}"",
-//////            ""clientId"": ""{clientId}"",
-//////            ""tenantId"": ""{tenantId}"",
-//////            ""password"": ""{clientSecret}"",
-//////            ""azureEnvironment"": """",
-//////            ""resourceManagementEndpointBaseUri"": """",
-//////            ""activeDirectoryEndpointBaseUri"": """"
-//////        }}
-//////    }}
-//////}}
-//////";
+        [Test]
+        public async Task Exectute_LogsError_WhenContextIsInIncorrectFormat()
+        {
+            // Arrange
+            var variables = new CalamariVariables();
+            var context = new RunningDeployment(variables);
+            context.Variables.Add("Octopus.TargetDiscovery.Context", "bogus json");
+            var log = new InMemoryLog();
+            var sut = new TargetDiscoveryBehaviour(log);
 
-////            context.Variables.Add("Octopus.TargetDiscovery.Context", targetDiscoveryContext);
-////            //////context.Variables.Add("Octopus.Account.Id", "Account-1");
-////            ////context.Variables.Add("Octopus.WorkerPool.Id", "WorkerPools-1");
-////        }
+            // Act
+            await sut.Execute(context);
+
+            // Assert
+            log.StandardOut.Should().Contain(line => line.Contains("Target discovery context from variable Octopus.TargetDiscovery.Context is in wrong format"));
+            log.StandardOut.Should().Contain(line => line.Contains("Aborting target discovery."));
+        }
+
+        private void CreateVariables(RunningDeployment context, string targetDiscoveryContextJson)
+        {
+            context.Variables.Add("Octopus.TargetDiscovery.Context", targetDiscoveryContextJson);
+        }
     }
 }

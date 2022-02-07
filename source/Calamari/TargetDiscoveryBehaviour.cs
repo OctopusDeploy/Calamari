@@ -125,6 +125,7 @@ namespace Calamari.AzureAppService
             var json = variables.Get(contextVariableName);
             if (json == null)
             {
+                Log.Warn($"Could not find target discovery context in variable {contextVariableName}.");
                 return null;
             }
 
