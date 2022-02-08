@@ -36,42 +36,8 @@ namespace Calamari.Deployment.PackageRetention.Model
             this.freeSpaceChecker = freeSpaceChecker;
         }
 
-        public void RegisterPackageUse()
-        {
-            RegisterPackageUse(out _);
-        }
-
-        public void RegisterPackageUse(out bool packageRegistered)
-        {
-            if (!IsRetentionEnabled())
-            {
-                packageRegistered = false;
-                return;
-            }
-
-            try
-            {
-                RegisterPackageUse(new PackageIdentity(variables), ServerTaskId.FromVariables(variables), out packageRegistered);
-            }
-            catch (Exception ex)
-            {
-                packageRegistered = false;
-                log.Info($"Unable to register package use for retention.{Environment.NewLine}{ex.ToString()}");
-            }
-        }
-
         public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId)
         {
-            RegisterPackageUse(package, deploymentTaskId, out _);
-        }
-
-        public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId, out bool packageRegistered)
-        {
-            packageRegistered = false;
-
-            if (!IsRetentionEnabled())
-                return;
-
             try
             {
                 using (var repository = repositoryFactory.CreateJournalRepository())
@@ -96,7 +62,6 @@ namespace Calamari.Deployment.PackageRetention.Model
                     log.Verbose($"Registered package use/lock for {package} and task {deploymentTaskId}");
 
                     repository.Commit();
-                    packageRegistered = true;
                 }
             }
             catch (Exception ex)
@@ -108,16 +73,6 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void DeregisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId)
         {
-            DeregisterPackageUse(package, deploymentTaskId, out _);
-        }
-
-        public void DeregisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId, out bool packageDeregistered)
-        {
-            packageDeregistered = false;
-
-            if (!IsRetentionEnabled())
-                return;
-
             try
             {
                 log.Verbose($"Deregistering package lock for {package} and task {deploymentTaskId}");
@@ -128,8 +83,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                     {
                         entry.RemoveLock(deploymentTaskId);
                         repository.Commit();
-                        packageDeregistered = true;
-                        
+
                         log.Verbose($"Successfully deregistered package lock for {package} and task {deploymentTaskId}");
                     }
                 }
@@ -140,8 +94,6 @@ namespace Calamari.Deployment.PackageRetention.Model
                 log.Info($"Unable to deregister package use for retention.{Environment.NewLine}{ex.ToString()}");
             }
         }
-
-        bool IsRetentionEnabled() => true;
 
         public bool HasLock(PackageIdentity package)
         {
@@ -154,53 +106,46 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void ApplyRetention(string directory)
         {
-            if (IsRetentionEnabled())
+            log.Verbose($"Applying package retention for folder '{directory}'");
+            try
             {
-                log.Verbose($"Applying package retention for folder '{directory}'");
-                try
+                using (var repository = repositoryFactory.CreateJournalRepository())
                 {
-                    using (var repository = repositoryFactory.CreateJournalRepository())
+                    var cacheSizeInMB = variables.Get(PackageRetentionCacheSizeInMegaBytesVariable);
+                    var cacheSpaceRequired = 0L;
+
+                    if (decimal.TryParse(cacheSizeInMB, out var cacheSizeMB))
                     {
-                        var cacheSizeInMB = variables.Get(PackageRetentionCacheSizeInMegaBytesVariable);
-                        var cacheSpaceRequired = 0L;
+                        var cacheSizeBytes = (long)Math.Round(cacheSizeMB * 1024L * 1024L);
+                        var cacheSpaceRemaining = GetCacheSpaceRemaining(cacheSizeBytes);
+                        var requiredSpaceInBytes = (long)freeSpaceChecker.GetRequiredSpaceInBytes();
+                        cacheSpaceRequired = Math.Max(0, requiredSpaceInBytes - cacheSpaceRemaining);
 
-                        if (decimal.TryParse(cacheSizeInMB, out var cacheSizeMB))
+                        log.Verbose($"Cache size is {cacheSizeMB} MB, remaining space is {cacheSpaceRemaining / 1024D / 1024D:N} MB, with {cacheSpaceRequired / 1024D / 1024:N} MB required to be freed.");
+                    }
+
+                    var requiredSpace = Math.Max(cacheSpaceRequired, (long)freeSpaceChecker.GetSpaceRequiredToBeFreed(directory));
+                    log.Verbose($"Total space required to be freed is {requiredSpace / 1024D / 1024:N} MB.");
+                    var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), requiredSpace);
+
+                    foreach (var package in packagesToRemove)
+                    {
+                        if (string.IsNullOrWhiteSpace(package?.Path) || !fileSystem.FileExists(package.Path))
                         {
-                            var cacheSizeBytes = (long)Math.Round(cacheSizeMB * 1024L * 1024L);
-                            var cacheSpaceRemaining = GetCacheSpaceRemaining(cacheSizeBytes);
-                            var requiredSpaceInBytes = (long)freeSpaceChecker.GetRequiredSpaceInBytes();
-                            cacheSpaceRequired = Math.Max(0, requiredSpaceInBytes - cacheSpaceRemaining);
-
-                            log.Verbose($"Cache size is {cacheSizeMB} MB, remaining space is {cacheSpaceRemaining/1024D/1024D:N} MB, with {cacheSpaceRequired/1024D/1024:N} MB required to be freed.");
+                            log.Info($"Package at {package?.Path} not found.");
+                            continue;
                         }
 
-                        var requiredSpace = Math.Max(cacheSpaceRequired, (long)freeSpaceChecker.GetSpaceRequiredToBeFreed(directory));
-                        log.Verbose($"Total space required to be freed is {requiredSpace/1024D/1024:N} MB.");
-                        var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), requiredSpace);
+                        Log.Info($"Removing package file '{package.Path}'");
+                        fileSystem.DeleteFile(package.Path, FailureOptions.IgnoreFailure);
 
-                        foreach (var package in packagesToRemove)
-                        {
-                            if (string.IsNullOrWhiteSpace(package?.Path) || !fileSystem.FileExists(package.Path))
-                            {
-                                log.Info($"Package at {package?.Path} not found.");
-                                continue;
-                            }
-
-                            Log.Info($"Removing package file '{package.Path}'");
-                            fileSystem.DeleteFile(package.Path, FailureOptions.IgnoreFailure);
-
-                            repository.RemovePackageEntry(package);
-                        }
+                        repository.RemovePackageEntry(package);
                     }
                 }
-                catch (Exception ex)
-                {
-                    Log.Info(ex.Message);
-                }
             }
-            else
+            catch (Exception ex)
             {
-                freeSpaceChecker.EnsureDiskHasEnoughFreeSpace(directory);
+                Log.Info(ex.Message);
             }
         }
 
