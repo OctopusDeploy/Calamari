@@ -11,7 +11,7 @@ namespace Calamari.AzureAppService.Tests
     public class TargetDiscoveryBehaviourUnitTestFixture
     {
         [Test]
-        public async Task Exectute_LogsError_WhenContextIsMissing()
+        public async Task Execute_LogsError_WhenContextIsMissing()
         {
             // Arrange
             var variables = new CalamariVariables();

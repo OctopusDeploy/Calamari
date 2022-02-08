@@ -30,11 +30,8 @@ namespace Calamari.AzureAppService.Tests
         private string subscriptionId;
         private string resourceGroupName;
         private string authToken;
-        private string greeting = "Calamari";
         private ResourceGroupsOperations resourceGroupClient;
         private WebSiteManagementClient webMgmtClient;
-        private Site site;
-        readonly HttpClient client = new HttpClient();
         private string appName = Guid.NewGuid().ToString();
 
         [OneTimeSetUp]
@@ -82,7 +79,9 @@ namespace Calamari.AzureAppService.Tests
                 { TargetTags.EnvironmentTagName, "dev" },
                 { TargetTags.RoleTagName, "my-azure-app-role" },
             };
-            site = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, appName,
+            await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(
+                resourceGroup.Name,
+                appName,
                 new Site(resourceGroup.Location, tags: tags) { ServerFarmId = svcPlan.Id });
         }
 

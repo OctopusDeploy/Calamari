@@ -36,13 +36,17 @@ namespace Calamari.AzureAppService
                 Log.Warn("Aborting target discovery.");
                 return;
             }
-
             var account = targetDiscoveryContext.Authentication.AccountDetails;
+            Log.Verbose($"Looking for Azure web apps using:");
+            Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
+            Log.Verbose($"  Tenant ID: {account.TenantId}");
+            Log.Verbose($"  Client ID: {account.ClientId}");
             var azureClient = account.CreateAzureClient();
 
             try
             {
                 var webApps = azureClient.WebApps.ListWebAppBasic();
+                Log.Verbose($"Found {webApps.Count()} candidate web apps.");
                 foreach (var webApp in webApps)
                 {
                     var tags = GetTags(webApp);
@@ -52,6 +56,14 @@ namespace Calamari.AzureAppService
                         Log.Info($"Discovered matching web app: {webApp.Name}");
                         WriteTargetCreationServiceMessage(
                             webApp, targetDiscoveryContext, matchResult, runningDeployment.Variables);
+                    }
+                    else
+                    {
+                        Log.Verbose($"Web app {webApp.Name} does not match target requirements:");
+                        foreach (var reason in matchResult.Reasons)
+                        {
+                            Log.Verbose($"  {reason}");
+                        }
                     }
                 }
 
@@ -92,12 +104,13 @@ namespace Calamari.AzureAppService
             // TODO: handle web app slots.
             var parameters = new Dictionary<string, string?> {
                     { "name", webApp.Name },
-                    { "azureWebApp", "webApp.Name" },
+                    { "azureWebApp", webApp.Name },
                     { "azureResourceGroupName", webApp.ResourceGroupName },
                     { "octopusAccountIdOrName", context.Authentication.AccountId },
                     { "octopusRoles", matchResult.Role },
                     { "updateIfExisting", "True" },
                     { "octopusDefaultWorkerPoolIdOrName", context.Scope!.WorkerPoolId },
+                    { "isDynamic", "True" }
                 };
 
             var serviceMessage = new ServiceMessage(
