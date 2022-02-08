@@ -136,8 +136,6 @@ namespace Calamari.AzureAppService.Tests
 ";
 
             context.Variables.Add("Octopus.TargetDiscovery.Context", targetDiscoveryContext);
-            //////context.Variables.Add("Octopus.Account.Id", "Account-1");
-            ////context.Variables.Add("Octopus.WorkerPool.Id", "WorkerPools-1");
         }
     }
 }

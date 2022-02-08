@@ -89,8 +89,6 @@ namespace Calamari.AzureAppService
             TargetMatchResult matchResult,
             IVariables variables)
         {
-            // TODO: extend target discovery context to include account ID and worker pool ID directly?
-            // TODO: confirm what name to use (key? for immutable matching of existing targets?)
             // TODO: handle web app slots.
             var parameters = new Dictionary<string, string?> {
                     { "name", webApp.Name },
@@ -106,16 +104,6 @@ namespace Calamari.AzureAppService
                 "create-azurewebapptarget",
                 parameters.Where(p => p.Value != null).ToDictionary<KeyValuePair<string, string?>, string, string>(p => p.Key, p => p.Value!));
             Log.WriteServiceMessage(serviceMessage);
-            ////Log.Info($"##octopus[create-azurewebapptarget "
-            ////    + $"name=\"{AbstractLog.ConvertServiceMessageValue(webApp.Name ?? "")}\" "
-            ////    + $"azureWebApp=\"{AbstractLog.ConvertServiceMessageValue(webApp.Name ?? "")}\" "
-            ////    + $"azureWebAppSlot=\"\" "
-            ////    + $"azureResourceGroupName=\"{AbstractLog.ConvertServiceMessageValue(webApp.ResourceGroupName ?? "")}\" "
-            ////    + $"octopusAccountIdOrName=\"{AbstractLog.ConvertServiceMessageValue(context.Authentication.AccountId ?? "")}\" "
-            ////    + $"octopusRoles=\"{AbstractLog.ConvertServiceMessageValue(matchResult.Role)}\" "
-            ////    + $"updateIfExisting=\"{AbstractLog.ConvertServiceMessageValue("True")}\" "
-            ////    + $"octopusDefaultWorkerPoolIdOrName=\"{AbstractLog.ConvertServiceMessageValue(context.Scope.WorkerPoolId ?? "")}\" ]");
-
         }
 
         private TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>? GetTargetDiscoveryContext(
