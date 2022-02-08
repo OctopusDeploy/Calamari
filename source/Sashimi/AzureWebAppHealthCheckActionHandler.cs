@@ -42,7 +42,6 @@ namespace Sashimi.AzureAppService
 
         public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
-            taskLog.Info($"Yo I'm finding some web apps here using context '{context.Variables.Get("Octopus.TargetDiscovery.Context")}'");
             return context.CalamariCommand(CalamariAzureAppService, "target-discovery")
               .WithCheckAccountIsNotManagementCertificate(context, taskLog)
               .Execute(taskLog);
