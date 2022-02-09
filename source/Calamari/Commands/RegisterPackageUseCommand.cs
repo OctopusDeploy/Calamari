@@ -18,10 +18,10 @@ namespace Calamari.Commands
         PackagePath packagePath;
         ServerTaskId taskId;
         readonly ILog log;
-        readonly IManagePackageUse journal;
+        readonly IManagePackageCache journal;
         readonly ICalamariFileSystem fileSystem;
 
-        public RegisterPackageUseCommand(ILog log, IManagePackageUse journal, ICalamariFileSystem fileSystem)
+        public RegisterPackageUseCommand(ILog log, IManagePackageCache journal, ICalamariFileSystem fileSystem)
         {
             this.log = log;
             this.journal = journal;

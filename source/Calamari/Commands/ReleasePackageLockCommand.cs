@@ -14,7 +14,7 @@ namespace Calamari.Commands
     {
         readonly IVariables variables;
         readonly ILog log;
-        readonly IManagePackageUse journal;
+        readonly IManagePackageCache journal;
         readonly TimeSpan defaultTimeBeforeLockExpiration = TimeSpan.FromDays(14);
 
         PackageId packageId;
@@ -23,7 +23,7 @@ namespace Calamari.Commands
         PackagePath packagePath;
         ServerTaskId taskId;
 
-        public ReleasePackageLockCommand(IVariables variables, IManagePackageUse journal, ILog log)
+        public ReleasePackageLockCommand(IVariables variables, IManagePackageCache journal, ILog log)
         {
             this.variables = variables;
             this.log = log;

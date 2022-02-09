@@ -2,7 +2,7 @@
 
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
-    public interface IManagePackageUse
+    public interface IManagePackageCache
     {
         void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId, long packageSizeBytes);
         void DeregisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId);

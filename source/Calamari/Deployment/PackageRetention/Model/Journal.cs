@@ -10,7 +10,7 @@ using Calamari.Deployment.PackageRetention.Repositories;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
-    public class Journal : IManagePackageUse
+    public class Journal : IManagePackageCache
     {
         readonly IJournalRepositoryFactory repositoryFactory;
         readonly IRetentionAlgorithm retentionAlgorithm;
