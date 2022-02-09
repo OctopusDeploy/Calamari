@@ -7,7 +7,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Repositories;
-using Octopus.Versioning;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
@@ -36,7 +35,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             this.freeSpaceChecker = freeSpaceChecker;
         }
 
-        public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId)
+        public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId, long packageSizeBytes)
         {
             try
             {
@@ -47,13 +46,12 @@ namespace Calamari.Deployment.PackageRetention.Model
 
                     if (repository.TryGetJournalEntry(package, out var entry))
                     {
-                        entry.Package.UpdatePackageSize();
                         entry.AddUsage(deploymentTaskId, age);
                         entry.AddLock(deploymentTaskId, age);
                     }
                     else
                     {
-                        entry = new JournalEntry(package);
+                        entry = new JournalEntry(package, packageSizeBytes);
                         entry.AddUsage(deploymentTaskId, age);
                         entry.AddLock(deploymentTaskId, age);
                         repository.AddJournalEntry(entry);
@@ -130,14 +128,14 @@ namespace Calamari.Deployment.PackageRetention.Model
 
                     foreach (var package in packagesToRemove)
                     {
-                        if (string.IsNullOrWhiteSpace(package?.Path) || !fileSystem.FileExists(package.Path))
+                        if (string.IsNullOrWhiteSpace(package.Path.Value) || !fileSystem.FileExists(package.Path.Value))
                         {
                             log.Info($"Package at {package?.Path} not found.");
                             continue;
                         }
 
                         Log.Info($"Removing package file '{package.Path}'");
-                        fileSystem.DeleteFile(package.Path, FailureOptions.IgnoreFailure);
+                        fileSystem.DeleteFile(package.Path.Value, FailureOptions.IgnoreFailure);
 
                         repository.RemovePackageEntry(package);
                     }
@@ -159,35 +157,11 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public bool TryGetVersionFormat(PackageId packageId, string version, VersionFormat defaultFormat, out VersionFormat versionFormat)
-        {
-            using (var repository = repositoryFactory.CreateJournalRepository())
-            {
-                //Try to match on version, if that doesn't work, then just get another entry.
-                var entryMatchingVersion = repository.GetJournalEntries(packageId).FirstOrDefault(je => je.Package.Version.OriginalString == version)
-                                           ?? repository.GetJournalEntries(packageId).FirstOrDefault();
-
-                versionFormat = entryMatchingVersion == null ? defaultFormat : entryMatchingVersion.Package.Version.Format;
-
-                return entryMatchingVersion != null;
-            }
-        }
-
-        public bool TryGetVersionFormat(PackageId packageId, ServerTaskId deploymentTaskID, VersionFormat defaultFormat, out VersionFormat format)
-        {
-            //We can call this if we don't know the package version format from variables - if this isn't the first time this package has been referenced by this server task, then we should be able to get it from an earlier use (eg from FindPackageCommand)
-            using (var repository = repositoryFactory.CreateJournalRepository())
-            {
-                return repository.GetJournalEntries(packageId, deploymentTaskID)
-                                 .TryGetFirstValidVersionFormat(defaultFormat, out format);
-            }
-        }
-
         long GetCacheSpaceRemaining(long cacheSize)
         {
             using (var repository = repositoryFactory.CreateJournalRepository())
             {
-                return cacheSize - repository.GetAllJournalEntries().Sum(e => Math.Max(e.Package.FileSizeBytes, 0));
+                return cacheSize - repository.GetAllJournalEntries().Sum(e => Math.Max(e.FileSizeBytes, 0));
             }
         }
 

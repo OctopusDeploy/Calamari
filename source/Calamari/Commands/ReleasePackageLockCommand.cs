@@ -14,22 +14,34 @@ namespace Calamari.Commands
     {
         readonly IVariables variables;
         readonly ILog log;
-        readonly PackageIdentityFactory packageIdentityFactory;
         readonly IManagePackageUse journal;
         readonly TimeSpan defaultTimeBeforeLockExpiration = TimeSpan.FromDays(14);
 
-        string packageId;
-        string packageVersion;
+        PackageId packageId;
+        VersionFormat versionFormat;
+        IVersion packageVersion;
+        PackagePath packagePath;
+        ServerTaskId taskId;
 
-        public ReleasePackageLockCommand(IVariables variables, IManagePackageUse journal, ILog log, PackageIdentityFactory packageIdentityFactory)
+        public ReleasePackageLockCommand(IVariables variables, IManagePackageUse journal, ILog log)
         {
             this.variables = variables;
             this.log = log;
-            this.packageIdentityFactory = packageIdentityFactory;
             this.journal = journal;
 
-            Options.Add("packageId=", "Package ID to download", v => packageId = v);
-            Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
+            Options.Add("packageId=", "Package ID of the used package", v => packageId = new PackageId(v));
+            Options.Add("packageVersionFormat=", $"[Optional] Format of version. Options {string.Join(", ", Enum.GetNames(typeof(VersionFormat)))}. Defaults to `{VersionFormat.Semver}`.",
+                        v =>
+                        {
+                            if (!Enum.TryParse(v, out VersionFormat format))
+                            {
+                                throw new CommandException($"The provided version format `{format}` is not recognised.");
+                            }
+                            versionFormat = format;
+                        });
+            Options.Add("packageVersion=", "Package version of the used package", v => packageVersion = VersionFactory.TryCreateVersion(v, versionFormat));
+            Options.Add("packagePath=", "Path to the package", v => packagePath = new PackagePath(v));
+            Options.Add("taskId=", "Id of the task that is using the package", v => taskId = new ServerTaskId(v));
         }
 
         TimeSpan GetTimeBeforeLockExpiration()
@@ -40,16 +52,14 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            var taskId = ServerTaskId.FromVariables(variables);
-
             try
             {
                 Options.Parse(commandLineArguments);
 
-                Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
-                Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
+                Guard.NotNull(packageId, "No package ID was specified. Please pass --packageId YourPackage");
+                Guard.NotNull(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
 
-                var packageIdentity = packageIdentityFactory.CreatePackageIdentity(journal, variables, commandLineArguments, VersionFormat.Semver, packageId, packageVersion);
+                var packageIdentity = new PackageIdentity(packageId, packageVersion, packagePath);
 
                 journal.DeregisterPackageUse(packageIdentity, taskId);
             }

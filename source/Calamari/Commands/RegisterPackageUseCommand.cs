@@ -2,6 +2,7 @@
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Octopus.Versioning;
@@ -11,23 +12,33 @@ namespace Calamari.Commands
     [Command("register-package", Description = "Register the use of a package in the package journal")]
     public class RegisterPackageUseCommand : Command
     {
-        string packageId;
-        string packageVersion;
-        string taskId;
+        PackageId packageId;
+        VersionFormat versionFormat;
+        IVersion packageVersion;
+        PackagePath packagePath;
+        ServerTaskId taskId;
         readonly ILog log;
-        readonly IVariables variables;
         readonly IManagePackageUse journal;
-        readonly PackageIdentityFactory packageIdentityFactory;
+        readonly ICalamariFileSystem fileSystem;
 
-        public RegisterPackageUseCommand(ILog log, IManagePackageUse journal, PackageIdentityFactory packageIdentityFactory, IVariables variables)
+        public RegisterPackageUseCommand(ILog log, IManagePackageUse journal, ICalamariFileSystem fileSystem)
         {
             this.log = log;
             this.journal = journal;
-            this.packageIdentityFactory = packageIdentityFactory;
-            this.variables = variables;
-            Options.Add("packageId=", "Package ID of the used package", v => packageId = v);
-            Options.Add("packageVersion=", "Package version of the used package", v => packageVersion = v);
-            Options.Add("taskId=", "Id of the task that is using the package", v => taskId = v);
+            this.fileSystem = fileSystem;
+            Options.Add("packageId=", "Package ID of the used package", v => packageId = new PackageId(v));
+            Options.Add("packageVersionFormat=", $"[Optional] Format of version. Options {string.Join(", ", Enum.GetNames(typeof(VersionFormat)))}. Defaults to `{VersionFormat.Semver}`.",
+                        v =>
+                        {
+                            if (!Enum.TryParse(v, out VersionFormat format))
+                            {
+                                throw new CommandException($"The provided version format `{format}` is not recognised.");
+                            }
+                            versionFormat = format;
+                        });
+            Options.Add("packageVersion=", "Package version of the used package", v => packageVersion = VersionFactory.TryCreateVersion(v, versionFormat));
+            Options.Add("packagePath=", "Path to the package", v => packagePath = new PackagePath(v));
+            Options.Add("taskId=", "Id of the task that is using the package", v => taskId = new ServerTaskId(v));
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -35,7 +46,7 @@ namespace Calamari.Commands
             try
             {
                 Options.Parse(commandLineArguments);
-                RegisterPackageUse(commandLineArguments);
+                RegisterPackageUse();
             }
             catch (Exception ex)
             {
@@ -46,17 +57,11 @@ namespace Calamari.Commands
             return 0;
         }
 
-        void RegisterPackageUse(string[] commandLineArguments)
+        void RegisterPackageUse()
         {
-            var deploymentTaskId = new ServerTaskId(taskId);
-            var package = packageIdentityFactory.CreatePackageIdentity(journal,
-                                                                       variables,
-                                                                       commandLineArguments,
-                                                                       VersionFormat.Semver,
-                                                                       packageId,
-                                                                       packageVersion);
-
-            journal.RegisterPackageUse(package, deploymentTaskId);
+            var package = new PackageIdentity(packageId, packageVersion, packagePath);
+            var size = fileSystem.GetFileSize(package.Path.Value);
+            journal.RegisterPackageUse(package, taskId, size);
         }
     }
 }

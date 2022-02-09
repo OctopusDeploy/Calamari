@@ -12,6 +12,7 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Octopus.Versioning;
 
 namespace Calamari.Tests.Fixtures.PackageRetention
 {
@@ -33,6 +34,12 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             if (Directory.Exists(testDir))
                 Directory.Delete(testDir, true);
         }
+        
+        static PackageIdentity CreatePackageIdentity(string packageId, string packageVersion)
+        {
+            var version = VersionFactory.CreateSemanticVersion(packageVersion);
+            return new PackageIdentity(new PackageId(packageId), version, new PackagePath($"C:\\{packageId}.{packageVersion}.zip"));
+        }
 
         [TestCase("PackageRetentionJournal.json", TestName = "CalamariPackageRetentionJournalPath is set to a non-null value")]
         [TestCase(null, TestName = "CalamariPackageRetentionJournalPath is null; default to TentacleHome")]
@@ -44,11 +51,11 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             variables.Set(KnownVariables.Calamari.PackageRetentionJournalPath, journalPath);
             variables.Set(TentacleVariables.Agent.TentacleHome, testDir);
 
-            var thePackage = new PackageIdentity("TestPackage", "0.0.1");
+            var thePackage = CreatePackageIdentity("TestPackage", "0.0.1");
             var cacheAge = new CacheAge(10);
             var serverTaskId = new ServerTaskId("TaskID-1");
 
-            var journalEntry = new JournalEntry(thePackage);
+            var journalEntry = new JournalEntry(thePackage, 1);
             journalEntry.AddLock(serverTaskId, cacheAge);
             journalEntry.AddUsage(serverTaskId, cacheAge);
 
