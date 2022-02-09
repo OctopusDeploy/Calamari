@@ -14,7 +14,7 @@ using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.AppService.Fluent;
 
 #nullable enable
-namespace Calamari.AzureAppService
+namespace Calamari.AzureAppService.Behaviors
 {
     public class TargetDiscoveryBehaviour : IDeployBehaviour
     {
@@ -45,14 +45,16 @@ namespace Calamari.AzureAppService
 
             try
             {
+                var discoveredTargetCount = 0;
                 var webApps = azureClient.WebApps.ListWebAppBasic();
                 Log.Verbose($"Found {webApps.Count()} candidate web apps.");
                 foreach (var webApp in webApps)
                 {
-                    var tags = GetTags(webApp);
+                    var tags = AzureWebAppHelper.GetOctopusTags(webApp);
                     var matchResult = targetDiscoveryContext.Scope.Match(tags);
                     if (matchResult.IsSuccess)
                     {
+                        discoveredTargetCount++;
                         Log.Info($"Discovered matching web app: {webApp.Name}");
                         WriteTargetCreationServiceMessage(
                             webApp, targetDiscoveryContext, matchResult, runningDeployment.Variables);
@@ -60,16 +62,20 @@ namespace Calamari.AzureAppService
                     else
                     {
                         Log.Verbose($"Web app {webApp.Name} does not match target requirements:");
-                        foreach (var reason in matchResult.Reasons)
+                        foreach (var reason in matchResult.FailureReasons)
                         {
-                            Log.Verbose($"  {reason}");
+                            Log.Verbose($"- {reason}");
                         }
                     }
                 }
 
-                if (!webApps.Any())
+                if (discoveredTargetCount > 0)
                 {
-                    Log.Info("No matching web apps found.");
+                    Log.Info($"{discoveredTargetCount} targets found.");
+                }
+                else
+                {
+                    Log.Warn($"Could not find any Azure web app targets.");
                 }
             }
             catch (Exception ex)
@@ -78,21 +84,6 @@ namespace Calamari.AzureAppService
                 Log.Warn(ex.Message);
                 Log.Warn("Aborting target discovery.");
             }
-        }
-
-        private TargetTags GetTags(IWebAppBasic webApp)
-        {
-            webApp.Tags.TryGetValue(TargetTags.EnvironmentTagName, out string? environment);
-            webApp.Tags.TryGetValue(TargetTags.RoleTagName, out string? role);
-            webApp.Tags.TryGetValue(TargetTags.ProjectTagName, out string? project);
-            webApp.Tags.TryGetValue(TargetTags.SpaceTagName, out string? space);
-            webApp.Tags.TryGetValue(TargetTags.TenantTagName, out string? tenant);
-            return new TargetTags(
-                environment: environment,
-                role: role,
-                project: project,
-                space: space,
-                tenant: tenant);
         }
 
         private void WriteTargetCreationServiceMessage(

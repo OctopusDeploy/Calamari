@@ -1,4 +1,5 @@
-﻿using Calamari.Common.Commands;
+﻿using Calamari.AzureAppService.Behaviors;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Shared.Helpers;
 using FluentAssertions;

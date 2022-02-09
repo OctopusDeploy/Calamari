@@ -1,10 +1,15 @@
-﻿using System;
+﻿using Calamari.Common.Features.Discovery;
+using Microsoft.Azure.Management.AppService.Fluent;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
+#nullable enable
 namespace Calamari.Azure
 {
     static class AzureWebAppHelper
     {
-        public static TargetSite GetAzureTargetSite(string siteAndMaybeSlotName, string slotName, string resourceGroupName)
+        public static TargetSite GetAzureTargetSite(string siteAndMaybeSlotName, string? slotName, string resourceGroupName)
         {
             var targetSite = new TargetSite {RawSite = siteAndMaybeSlotName};
 
@@ -31,5 +36,22 @@ namespace Calamari.Azure
             targetSite.ResourceGroupName = resourceGroupName;
             return targetSite;
         }
+
+        public static TargetTags GetOctopusTags(IWebAppBasic webApp)
+        {
+            var caseInsensitiveTagDictionary = webApp.Tags.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.EnvironmentTagName, out string? environment);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.RoleTagName, out string? role);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.ProjectTagName, out string? project);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.SpaceTagName, out string? space);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.TenantTagName, out string? tenant);
+            return new TargetTags(
+                environment: environment,
+                role: role,
+                project: project,
+                space: space,
+                tenant: tenant);
+        }
     }
 }
+#nullable restore
