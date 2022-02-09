@@ -9,7 +9,7 @@ namespace Sashimi.AzureAppService
     {
         static readonly CalamariFlavour CalamariAzureAppService = new CalamariFlavour("Calamari.AzureAppService");
 
-        public string Id => SpecialVariables.Action.Azure.WebAppHealthCheckActionTypeName;
+        public string Id => SpecialVariables.Action.Azure.WebAppDiscoveryActionTypeName;
         public string Name => "Discover Azure Web Apps";
         public string Description => "Discover available Azure Web Apps.";
         public string? Keywords => null;
