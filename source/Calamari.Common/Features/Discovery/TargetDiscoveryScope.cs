@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Calamari.Common.Features.Discovery
 {
@@ -29,49 +30,50 @@ namespace Calamari.Common.Features.Discovery
 
         public TargetMatchResult Match(TargetTags tags)
         {
+            var failureReasons = new List<string>();
             if (tags.Role == null)
             {
-                return TargetMatchResult.Failure(
+                failureReasons.Add(
                     $"Missing role tag. Match requires '{TargetTags.RoleTagName}' tag with value from ['{string.Join("', '", Roles)}'].");
             }
-
-            if (!Roles.Contains(tags.Role))
+            else if (!Roles.Contains(tags.Role))
             {
-                return TargetMatchResult.Failure(
+                failureReasons.Add(
                     $"Mismatched role tag. Match requires '{TargetTags.RoleTagName}' tag with value from ['{string.Join("', '", Roles)}'], but found '{tags.Role}'.");
             }
 
             if (tags.Environment == null)
             {
-                return TargetMatchResult.Failure(
+                failureReasons.Add(
                     $"Missing environment tag. Match requires '{TargetTags.EnvironmentTagName}' tag with value '{EnvironmentName}'.");
             }
-
-            if (tags.Environment != EnvironmentName)
+            else if (tags.Environment != EnvironmentName)
             {
-                return TargetMatchResult.Failure(
+                failureReasons.Add(
                     $"Mismatched environment tag. Match requires '{TargetTags.EnvironmentTagName}' tag with value '{EnvironmentName}', but found '{tags.Environment}'.");
             }
 
             if (tags.Project != null && tags.Project != this.ProjectName)
             {
-                return TargetMatchResult.Failure(
+                failureReasons.Add(
                     $"Mismatched project tag. Optional '{TargetTags.ProjectTagName}' tag must match '{ProjectName}' if present, but is '{tags.Project}'.");
             }
 
             if (tags.Space != null && tags.Space != this.SpaceName)
             {
-                return TargetMatchResult.Failure(
+                failureReasons.Add(
                     $"Mismatched space tag. Optional '{TargetTags.SpaceTagName}' tag must match '{SpaceName}' if present, but is '{tags.Space}'.");
             }
 
             if (tags.Tenant != null && tags.Tenant != this.TenantName)
             {
-                return TargetMatchResult.Failure(
+                failureReasons.Add(
                     $"Mismatched tenant tag. Optional '{TargetTags.TenantTagName}' tag must match '{TenantName}' if present, but is '{tags.Tenant}'.");
             }
 
-            return TargetMatchResult.Success(this.Roles.First(r => r == tags.Role));
+            return failureReasons.Any()
+                ? TargetMatchResult.Failure(failureReasons)
+                : TargetMatchResult.Success(this.Roles.First(r => r == tags.Role));
         }
     }
 }

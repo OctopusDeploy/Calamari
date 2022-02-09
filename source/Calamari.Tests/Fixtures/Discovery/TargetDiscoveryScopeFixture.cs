@@ -1,5 +1,6 @@
 ﻿using Calamari.Common.Features.Discovery;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Discovery
@@ -32,8 +33,12 @@ namespace Calamari.Tests.Fixtures.Discovery
             var result = sut.Match(foundTags);
 
             // Assert
-            result.IsSuccess.Should().BeFalse();
-            result.Reason.Should().Be("Missing environment tag. Match requires 'octopus-environment' tag with value 'scope-environment'.");
+            using (new AssertionScope())
+            {
+                result.IsSuccess.Should().BeFalse();
+                result.FailureReasons.Should().ContainSingle().Which.Should().Be(
+                    "Missing environment tag. Match requires 'octopus-environment' tag with value 'scope-environment'.");
+            }
         }
 
         [Test]
@@ -51,8 +56,12 @@ namespace Calamari.Tests.Fixtures.Discovery
             var result = sut.Match(foundTags);
 
             // Assert
-            result.IsSuccess.Should().BeFalse();
-            result.Reason.Should().Be("Mismatched environment tag. Match requires 'octopus-environment' tag with value 'scope-environment', but found 'wrong-environment'.");
+            using (new AssertionScope())
+            {
+                result.IsSuccess.Should().BeFalse();
+                result.FailureReasons.Should().ContainSingle().Which.Should().Be(
+                    "Mismatched environment tag. Match requires 'octopus-environment' tag with value 'scope-environment', but found 'wrong-environment'.");
+            }
         }
 
         [Test]
@@ -70,8 +79,12 @@ namespace Calamari.Tests.Fixtures.Discovery
             var result = sut.Match(foundTags);
 
             // Assert
-            result.IsSuccess.Should().BeFalse();
-            result.Reason.Should().Be("Missing role tag. Match requires 'octopus-role' tag with value from ['scope-role-1', 'scope-role-2'].");
+            using (new AssertionScope())
+            {
+                result.IsSuccess.Should().BeFalse();
+                result.FailureReasons.Should().ContainSingle().Which.Should().Be(
+                    "Missing role tag. Match requires 'octopus-role' tag with value from ['scope-role-1', 'scope-role-2'].");
+            }
         }
 
         [Test]
@@ -89,8 +102,12 @@ namespace Calamari.Tests.Fixtures.Discovery
             var result = sut.Match(foundTags);
 
             // Assert
-            result.IsSuccess.Should().BeFalse();
-            result.Reason.Should().Be("Mismatched role tag. Match requires 'octopus-role' tag with value from ['scope-role-1', 'scope-role-2'], but found 'wrong-role'.");
+            using (new AssertionScope())
+            {
+                result.IsSuccess.Should().BeFalse();
+                result.FailureReasons.Should().ContainSingle().Which.Should().Be(
+                    "Mismatched role tag. Match requires 'octopus-role' tag with value from ['scope-role-1', 'scope-role-2'], but found 'wrong-role'.");
+            }
         }
 
         [Test]
@@ -144,8 +161,12 @@ namespace Calamari.Tests.Fixtures.Discovery
             var result = sut.Match(foundTags);
 
             // Assert
-            result.IsSuccess.Should().BeFalse();
-            result.Reason.Should().Be("Mismatched project tag. Optional 'octopus-project' tag must match 'scope-project' if present, but is 'wrong-project'.");
+            using (new AssertionScope())
+            {
+                result.IsSuccess.Should().BeFalse();
+                result.FailureReasons.Should().ContainSingle().Which.Should().Be(
+                    "Mismatched project tag. Optional 'octopus-project' tag must match 'scope-project' if present, but is 'wrong-project'.");
+            }
         }
 
         [Test]
@@ -163,8 +184,12 @@ namespace Calamari.Tests.Fixtures.Discovery
             var result = sut.Match(foundTags);
 
             // Assert
-            result.IsSuccess.Should().BeFalse();
-            result.Reason.Should().Be("Mismatched space tag. Optional 'octopus-space' tag must match 'scope-space' if present, but is 'wrong-space'.");
+            using (new AssertionScope())
+            {
+                result.IsSuccess.Should().BeFalse();
+                result.FailureReasons.Should().ContainSingle().Which.Should().Be(
+                    "Mismatched space tag. Optional 'octopus-space' tag must match 'scope-space' if present, but is 'wrong-space'.");
+            }
         }
 
         [Test]
@@ -182,8 +207,12 @@ namespace Calamari.Tests.Fixtures.Discovery
             var result = sut.Match(foundTags);
 
             // Assert
-            result.IsSuccess.Should().BeFalse();
-            result.Reason.Should().Be("Mismatched tenant tag. Optional 'octopus-tenant' tag must match 'scope-tenant' if present, but is 'wrong-tenant'.");
+            using (new AssertionScope())
+            {
+                result.IsSuccess.Should().BeFalse();
+                result.FailureReasons.Should().ContainSingle().Which.Should().Be(
+                    "Mismatched tenant tag. Optional 'octopus-tenant' tag must match 'scope-tenant' if present, but is 'wrong-tenant'.");
+            }
         }
 
         [Test]
@@ -202,6 +231,32 @@ namespace Calamari.Tests.Fixtures.Discovery
 
             // Assert
             result.IsSuccess.Should().BeTrue();
+        }
+
+        [Test]
+        public void Match_ShouldIncludeAllFailureReasons_IfMultipleReasonsExist()
+        {
+            // Arrange
+            var foundTags = new TargetTags(
+                environment: "wrong-environment",
+                role: "wrong-role",
+                project: "wrong-project",
+                space: "wrong-space",
+                tenant: "wrong-tenant");
+
+            // Act
+            var result = sut.Match(foundTags);
+
+            // Assert
+            using (new AssertionScope())
+            {
+                result.IsSuccess.Should().BeFalse();
+                result.FailureReasons.Should().Contain("Mismatched environment tag. Match requires 'octopus-environment' tag with value 'scope-environment', but found 'wrong-environment'.");
+                result.FailureReasons.Should().Contain("Mismatched role tag. Match requires 'octopus-role' tag with value from ['scope-role-1', 'scope-role-2'], but found 'wrong-role'.");
+                result.FailureReasons.Should().Contain("Mismatched project tag. Optional 'octopus-project' tag must match 'scope-project' if present, but is 'wrong-project'.");
+                result.FailureReasons.Should().Contain("Mismatched space tag. Optional 'octopus-space' tag must match 'scope-space' if present, but is 'wrong-space'.");
+                result.FailureReasons.Should().Contain("Mismatched tenant tag. Optional 'octopus-tenant' tag must match 'scope-tenant' if present, but is 'wrong-tenant'.");
+            }
         }
     }
 }
