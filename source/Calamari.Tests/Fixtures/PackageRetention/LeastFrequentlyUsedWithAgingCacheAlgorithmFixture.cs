@@ -7,6 +7,7 @@ using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 using FluentAssertions;
 using NUnit.Framework;
+using Octopus.Versioning;
 
 namespace Calamari.Tests.Fixtures.PackageRetention
 {
@@ -35,7 +36,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var entries = new List<JournalEntry>(new[] { lockedEntry, unlockedEntry });
             var packagesToRemove = lfu.GetPackagesToRemove(entries, 20);
 
-            packagesToRemove.Should().BeEquivalentTo(new PackageIdentity("package-unlocked", "1.0"));
+            packagesToRemove.Should().BeEquivalentTo(CreatePackageIdentity("package-unlocked", "1.0"));
         }
 
         [Test]
@@ -57,7 +58,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                    .ThenBy(p => p.Version)
                                    .ToList();
 
-            packagesToRemove.Should().BeEquivalentTo(new PackageIdentity("package-3", "1.0"));
+            packagesToRemove.Should().BeEquivalentTo(CreatePackageIdentity("package-3", "1.0"));
         }
 
         [TestCaseSource(nameof(ExpectMultiplePackageIdsTestCaseSource))]
@@ -87,8 +88,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                            CreateEntry("package-3", "1.0", 5, ("task-3", 11))
                                        },
                                        10,
-                                       new PackageIdentity("package-1", "1.0"),
-                                       new PackageIdentity("package-2", "1.0"));
+                                       CreatePackageIdentity("package-1", "1.0"),
+                                       CreatePackageIdentity("package-2", "1.0"));
 
             yield return SetUpTestCase("WhenOnlyRelyingOnNewerVersions_ThenReturnPackageWithFewestNewVersions",
                                        new[]
@@ -98,7 +99,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                            CreateEntry("package-2", "1.0", 10, ("task-3", 1))
                                        },
                                        10,
-                                       new PackageIdentity("package-1", "1.0"));
+                                       CreatePackageIdentity("package-1", "1.0"));
 
             yield return SetUpTestCase("WhenOnlyRelyingOnAge_ThenReturnOldestThatTakesEnoughSpace",
                                        new[]
@@ -107,7 +108,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                            CreateEntry("package-2", "1.0", 10, ("task-2", 10))
                                        },
                                        10,
-                                       new PackageIdentity("package-1", "1.0"));
+                                       CreatePackageIdentity("package-1", "1.0"));
 
             yield return SetUpTestCase("WhenOnlyRelyingOnHitCount_ThenReturnPackageWithFewestHits",
                                        new[]
@@ -116,7 +117,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                            CreateEntry("package-2", "1.0", 10, ("task-2", 1))
                                        },
                                        10,
-                                       new PackageIdentity("package-2", "1.0"));
+                                       CreatePackageIdentity("package-2", "1.0"));
 
             yield return SetUpTestCase("WhenOnlyRelyingOnNewerVersions_ThenReturnPackagesWithMostNewVersions",
                                        new[]
@@ -130,9 +131,9 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                            CreateEntry("package-2", "1.2", 10)
                                        },
                                        30,
-                                       new PackageIdentity("package-1", "1.0"),
-                                       new PackageIdentity("package-1", "1.1"),
-                                       new PackageIdentity("package-2", "1.0"));
+                                       CreatePackageIdentity("package-1", "1.0"),
+                                       CreatePackageIdentity("package-1", "1.1"),
+                                       CreatePackageIdentity("package-2", "1.0"));
         }
 
         static TestCaseData SetUpTestCase(string testName, JournalEntry[] testJournalEntries, int spaceNeeded, params PackageIdentity[] expectedPackageIdentities)
@@ -150,8 +151,15 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             var packageUsages = new PackageUsages();
             packageUsages.AddRange(usages.Select(details => new UsageDetails(new ServerTaskId(details.serverTaskId), new CacheAge(details.cacheAgeAtUsage))));
+            var packageIdentity = CreatePackageIdentity(packageId, version);
 
-            return new JournalEntry(new PackageIdentity(packageId, version, packageSize), null, packageUsages);
+            return new JournalEntry(packageIdentity, packageSize, null, packageUsages);
+        }
+        
+        static PackageIdentity CreatePackageIdentity(string packageId, string packageVersion)
+        {
+            var version = VersionFactory.CreateSemanticVersion(packageVersion);
+            return new PackageIdentity(new PackageId(packageId), version, new PackagePath($"C:\\{packageId}.{packageVersion}.zip"));
         }
     }
 }

@@ -37,7 +37,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
                                                                  if (spaceFound >= spaceRequired)
                                                                      return false; //Already found enough space
 
-                                                                 spaceFound += p.Package.FileSizeBytes;
+                                                                 spaceFound += p.FileSizeBytes;
                                                                  return true;
                                                              }).ToList();
 

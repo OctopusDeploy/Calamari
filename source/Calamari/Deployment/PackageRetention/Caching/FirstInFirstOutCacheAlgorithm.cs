@@ -18,7 +18,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             foreach (var package in packagesByAge)
             {
                 diskSpaceFound += package.FileSizeBytes;
-                packagesToRemove.Add(package);
+                packagesToRemove.Add(package.Package);
 
                 if (diskSpaceFound >= spaceRequired) return packagesToRemove;
             }
@@ -28,9 +28,9 @@ namespace Calamari.Deployment.PackageRetention.Caching
         }
 
 
-        IEnumerable<PackageIdentity> OrderPackagesByOldestFirst(IEnumerable<JournalEntry> journalEntries)
+        IEnumerable<JournalEntry> OrderPackagesByOldestFirst(IEnumerable<JournalEntry> journalEntries)
         {
-            return journalEntries.OrderBy(GetCacheAgeAtFirstPackageUse).Select(je => je.Package);
+            return journalEntries.OrderBy(GetCacheAgeAtFirstPackageUse);
         }
     }
 }

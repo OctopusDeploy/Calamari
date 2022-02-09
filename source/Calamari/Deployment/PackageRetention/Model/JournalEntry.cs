@@ -14,14 +14,16 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         [JsonProperty]
         readonly PackageLocks locks;
+        
+        public long FileSizeBytes { get; }
 
         [JsonConstructor]
-        public JournalEntry(PackageIdentity package, PackageLocks packageLocks = null, PackageUsages packageUsages = null)
+        public JournalEntry(PackageIdentity package, long fileSizeBytes, PackageLocks packageLocks = null, PackageUsages packageUsages = null)
         {
             Package = package ?? throw new ArgumentNullException(nameof(package));
+            FileSizeBytes = fileSizeBytes;
             locks = packageLocks ?? new PackageLocks();
             usages = packageUsages ?? new PackageUsages();
-            Package.UpdatePackageSize();
         }
 
         public void AddUsage(ServerTaskId deploymentTaskId, CacheAge cacheAge)
