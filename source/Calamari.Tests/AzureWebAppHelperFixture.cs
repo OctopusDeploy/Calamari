@@ -23,7 +23,7 @@ namespace Calamari.AzureAppService.Tests
             {
                 { "oCtoPus-eNviRonMenT", "taggedEnvironment" },
                 { "ocTopUs-roLe", "taggedRole" },
-                { "OctOpuS-ProJecY", "taggedProject" },
+                { "OctOpuS-ProJecT", "taggedProject" },
                 { "oCtoPus-sPacE", "taggedSpace" },
                 { "ocTopUs-teNanT", "taggedTenant" },
             };
