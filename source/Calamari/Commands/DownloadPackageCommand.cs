@@ -26,7 +26,6 @@ namespace Calamari.Commands
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
         readonly ICommandLineRunner commandLineRunner;
-        readonly IManagePackageCache packageJournal;
 
         string packageId;
         string packageVersion;
@@ -52,7 +51,6 @@ namespace Calamari.Commands
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.log = log;
-            this.packageJournal = packageJournal;
             this.commandLineRunner = commandLineRunner;
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
@@ -109,8 +107,7 @@ namespace Calamari.Commands
                     scriptEngine,
                     fileSystem,
                     commandLineRunner,
-                    variables,
-                    packageJournal);
+                    variables);
                 var pkg = packageDownloaderStrategy.DownloadPackage(
                     packageId,
                     version,

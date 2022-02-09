@@ -22,22 +22,19 @@ namespace Calamari.Integration.Packages.Download
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
         readonly ILog log;
-        readonly IManagePackageCache packageJournal;
 
         public PackageDownloaderStrategy(
             ILog log,
             IScriptEngine engine,
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
-            IVariables variables,
-            IManagePackageCache packageJournal)
+            IVariables variables)
         {
             this.log = log;
             this.engine = engine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
-            this.packageJournal = packageJournal;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
@@ -55,13 +52,13 @@ namespace Calamari.Integration.Packages.Download
             switch (feedType)
             {
                 case FeedType.Maven:
-                    downloader = new MavenPackageDownloader(fileSystem, packageJournal);
+                    downloader = new MavenPackageDownloader(fileSystem);
                     break;
                 case FeedType.NuGet:
-                    downloader = new NuGetPackageDownloader(fileSystem, variables, packageJournal);
+                    downloader = new NuGetPackageDownloader(fileSystem, variables);
                     break;
                 case FeedType.GitHub:
-                    downloader = new GitHubPackageDownloader(log, fileSystem, packageJournal);
+                    downloader = new GitHubPackageDownloader(log, fileSystem);
                     break;
                 case FeedType.Helm:
                     downloader = new HelmChartPackageDownloader(fileSystem);
