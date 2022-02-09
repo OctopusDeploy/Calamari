@@ -15,7 +15,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Calamari.Common" Version="20.3.9" />
+        <PackageReference Include="Calamari.Common" Version="21.0.2-geoffb-target-di0006" />
         <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
         <PackageReference Include="scriptcs" Version="0.17.1" />
     </ItemGroup>
