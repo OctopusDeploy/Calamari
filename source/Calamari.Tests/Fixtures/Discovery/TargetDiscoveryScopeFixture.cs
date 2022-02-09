@@ -234,6 +234,24 @@ namespace Calamari.Tests.Fixtures.Discovery
         }
 
         [Test]
+        public void Match_ShouldMakeOrdinalCaseInsenitiveComparisons()
+        {
+            // Arrange
+            var foundTags = new TargetTags(
+                environment: "sCoPe-eNvIrOnMeNt",
+                role: "sCoPe-rOlE-1",
+                project: "sCoPe-pRoJeCt",
+                space: "sCoPe-sPaCe",
+                tenant: "sCoPe-tEnAnT");
+
+            // Act
+            var result = sut.Match(foundTags);
+
+            // Assert
+            result.IsSuccess.Should().BeTrue();
+        }
+
+        [Test]
         public void Match_ShouldIncludeAllFailureReasons_IfMultipleReasonsExist()
         {
             // Arrange
