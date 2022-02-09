@@ -14,7 +14,7 @@
 
     <ItemGroup>
         <PackageReference Include="Assent" Version="1.6.1" />
-        <PackageReference Include="Calamari.Common" Version="21.0.2-geoffb-target-di0006" />
+        <PackageReference Include="Calamari.Common" Version="21.1.0" />
         <PackageReference Include="FluentAssertions" Version="6.1.0" />
         <PackageReference Include="NUnit" Version="3.13.2" />
         <PackageReference Include="Octopus.Diagnostics" Version="2.1.2" />
