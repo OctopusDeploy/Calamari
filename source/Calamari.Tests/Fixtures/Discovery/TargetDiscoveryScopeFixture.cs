@@ -252,6 +252,24 @@ namespace Calamari.Tests.Fixtures.Discovery
         }
 
         [Test]
+        public void Match_ShouldUseRoleCasingFromScope_WhenSucessful()
+        {
+            // Arrange
+            var foundTags = new TargetTags(
+                environment: "sCoPe-eNvIrOnMeNt",
+                role: "sCoPe-rOlE-1",
+                project: null,
+                space: null,
+                tenant: null);
+
+            // Act
+            var result = sut.Match(foundTags);
+
+            // Assert
+            result.Role.Should().Be("scope-role-1");
+        }
+
+        [Test]
         public void Match_ShouldIncludeAllFailureReasons_IfMultipleReasonsExist()
         {
             // Arrange

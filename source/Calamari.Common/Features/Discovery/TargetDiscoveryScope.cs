@@ -74,7 +74,7 @@ namespace Calamari.Common.Features.Discovery
 
             return failureReasons.Any()
                 ? TargetMatchResult.Failure(failureReasons)
-                : TargetMatchResult.Success(this.Roles.First(r => r == tags.Role));
+                : TargetMatchResult.Success(this.Roles.First(r => r.Equals(tags.Role, StringComparison.OrdinalIgnoreCase)));
         }
     }
 }
