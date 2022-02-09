@@ -34,9 +34,9 @@ namespace Calamari.Integration.Packages.Download
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
 
         readonly ICalamariFileSystem fileSystem;
-        readonly IManagePackageUse packageJournal;
+        readonly IManagePackageCache packageJournal;
 
-        public MavenPackageDownloader(ICalamariFileSystem fileSystem, IManagePackageUse packageJournal)
+        public MavenPackageDownloader(ICalamariFileSystem fileSystem, IManagePackageCache packageJournal)
         {
             this.fileSystem = fileSystem;
             this.packageJournal = packageJournal;

@@ -29,9 +29,9 @@ namespace Calamari.Integration.Packages.Download
 
         readonly ICalamariFileSystem fileSystem;
         readonly IVariables variables;
-        readonly IManagePackageUse packageJournal;
+        readonly IManagePackageCache packageJournal;
 
-        public NuGetPackageDownloader(ICalamariFileSystem fileSystem, IVariables variables, IManagePackageUse packageJournal)
+        public NuGetPackageDownloader(ICalamariFileSystem fileSystem, IVariables variables, IManagePackageCache packageJournal)
         {
             this.fileSystem = fileSystem;
             this.variables = variables;

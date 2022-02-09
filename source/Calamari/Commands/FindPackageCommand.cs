@@ -20,14 +20,14 @@ namespace Calamari.Commands
         readonly ILog log;
         readonly IVariables variables;
         readonly IPackageStore packageStore;
-        readonly IManagePackageUse packageJournal;
+        readonly IManagePackageCache packageJournal;
         string packageId;
         string rawPackageVersion;
         string packageHash;
         bool exactMatchOnly;
         VersionFormat versionFormat = VersionFormat.Semver;
         
-        public FindPackageCommand(ILog log, IVariables variables, IPackageStore packageStore, IManagePackageUse packageJournal)
+        public FindPackageCommand(ILog log, IVariables variables, IPackageStore packageStore, IManagePackageCache packageJournal)
         {
             this.log = log;
             this.variables = variables;

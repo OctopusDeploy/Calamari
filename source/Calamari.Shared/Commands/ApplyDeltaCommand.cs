@@ -26,11 +26,11 @@ namespace Calamari.Commands
 
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
-        readonly IManagePackageUse packageJournal;
+        readonly IManagePackageCache packageJournal;
         readonly ILog log;
 
         public ApplyDeltaCommand(ILog log, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner,
-                                 IManagePackageUse packageJournal)
+                                 IManagePackageCache packageJournal)
         {
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;

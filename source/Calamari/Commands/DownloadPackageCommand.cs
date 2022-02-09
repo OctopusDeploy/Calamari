@@ -26,7 +26,7 @@ namespace Calamari.Commands
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
         readonly ICommandLineRunner commandLineRunner;
-        readonly IManagePackageUse packageJournal;
+        readonly IManagePackageCache packageJournal;
 
         string packageId;
         string packageVersion;
@@ -46,7 +46,7 @@ namespace Calamari.Commands
             ICalamariFileSystem fileSystem,
 			ICommandLineRunner commandLineRunner,
             ILog log,
-            IManagePackageUse packageJournal)
+            IManagePackageCache packageJournal)
         {
             this.scriptEngine = scriptEngine;
             this.variables = variables;

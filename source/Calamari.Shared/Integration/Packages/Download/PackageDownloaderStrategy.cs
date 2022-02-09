@@ -22,7 +22,7 @@ namespace Calamari.Integration.Packages.Download
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
         readonly ILog log;
-        readonly IManagePackageUse packageJournal;
+        readonly IManagePackageCache packageJournal;
 
         public PackageDownloaderStrategy(
             ILog log,
@@ -30,7 +30,7 @@ namespace Calamari.Integration.Packages.Download
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
             IVariables variables,
-            IManagePackageUse packageJournal)
+            IManagePackageCache packageJournal)
         {
             this.log = log;
             this.engine = engine;

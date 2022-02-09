@@ -8,10 +8,10 @@ namespace Calamari.Commands
     [Command("clean-packages", Description = "Apply retention to the package cache")]
     public class CleanPackagesCommand : Command
     {
-        readonly IManagePackageUse journal;
+        readonly IManagePackageCache journal;
         readonly IPackageDownloaderUtils packageUtils = new PackageDownloaderUtils();
 
-        public CleanPackagesCommand(IManagePackageUse journal)
+        public CleanPackagesCommand(IManagePackageCache journal)
         {
             this.journal = journal;
         }
