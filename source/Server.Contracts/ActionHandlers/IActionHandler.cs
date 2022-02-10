@@ -16,6 +16,7 @@ namespace Sashimi.Server.Contracts.ActionHandlers
         bool WhenInAChildStepRunInTheContextOfTheTargetMachine { get; }
         bool CanRunOnDeploymentTarget { get; }
         ActionHandlerCategory[] Categories { get; }
+        DeploymentTargetType DeploymentTargetType => DeploymentTargetType.None;
 
         IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog);
     }
