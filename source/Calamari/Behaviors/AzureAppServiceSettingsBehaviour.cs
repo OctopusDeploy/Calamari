@@ -38,7 +38,7 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Starting App Settings Deploy");
             var variables = context.Variables;
 
-            var principalAccount = new ServicePrincipalAccount(variables);
+            var principalAccount = ServicePrincipalAccount.CreateFromKnownVariables(variables);
 
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);

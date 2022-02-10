@@ -6,6 +6,6 @@
       <Azure_OctopusAPITester_TenantId></Azure_OctopusAPITester_TenantId>
       <Azure_OctopusAPITester_ClientId></Azure_OctopusAPITester_ClientId>
       <Azure_OctopusAPITester_Password></Azure_OctopusAPITester_Password>
-    </EnvironmentVariables>
+	</EnvironmentVariables>
   </RunConfiguration>
 </RunSettings>

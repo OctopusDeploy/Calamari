@@ -36,6 +36,7 @@ namespace Sashimi.AzureAppService.Endpoints
         }
 
         public IActionHandler? HealthCheckActionHandlerForTargetType { get; } = new AzureWebAppHealthCheckActionHandler();
+        public IActionHandler? DiscoveryActionHandlerForTargetType { get; } = new AzureWebAppDiscoveryActionHandler();
 
         public IEnumerable<(string key, object value)> GetFeatureUsage(IEndpointMetricContext context)
         {

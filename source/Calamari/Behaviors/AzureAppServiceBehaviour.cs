@@ -38,7 +38,7 @@ namespace Calamari.AzureAppService.Behaviors
         public async Task Execute(RunningDeployment context)
         {
             var variables = context.Variables;
-            var servicePrincipal = new ServicePrincipalAccount(variables);
+            var servicePrincipal = ServicePrincipalAccount.CreateFromKnownVariables(variables);
             string? webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             if (webAppName == null)
                 throw new Exception("Web App Name must be specified");

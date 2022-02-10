@@ -36,7 +36,7 @@ namespace Calamari.AzureAppService.Behaviors
         {
             var variables = context.Variables;
 
-            var principalAccount = new ServicePrincipalAccount(variables);
+            var principalAccount = ServicePrincipalAccount.CreateFromKnownVariables(variables);
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
             var rgName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
