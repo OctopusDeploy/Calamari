@@ -2,6 +2,7 @@
 using Octopus.CoreUtilities;
 using Octopus.Server.Extensibility.HostServices.Diagnostics;
 using Sashimi.AzureScripting;
+using Sashimi.Server.Contracts;
 using Sashimi.Server.Contracts.ActionHandlers;
 
 namespace Sashimi.AzureWebApp
@@ -17,6 +18,7 @@ namespace Sashimi.AzureWebApp
         public bool CanRunOnDeploymentTarget => false;
         public ActionHandlerCategory[] Categories => new[] { ActionHandlerCategory.BuiltInStep, AzureConstants.AzureActionHandlerCategory, ActionHandlerCategory.Package };
         public string[] StepBasedVariableNameForAccountIds { get; } = {SpecialVariables.Action.Azure.AccountId};
+        public DeploymentTargetType DeploymentTargetType => AzureWebAppEndpoint.AzureWebAppDeploymentTargetType;
 
         public IActionHandlerResult Execute(IActionHandlerContext context, ITaskLog taskLog)
         {
