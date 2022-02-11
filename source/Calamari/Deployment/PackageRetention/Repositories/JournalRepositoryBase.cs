@@ -61,6 +61,5 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         }
 
         public abstract void Commit();
-        public abstract void Dispose();
     }
 } 

@@ -22,10 +22,5 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
         {
             //This does nothing in the in-memory implementation
         }
-
-        public override void Dispose()
-        {
-            //This does nothing in the in-memory implementation
-        }
     }
 }
