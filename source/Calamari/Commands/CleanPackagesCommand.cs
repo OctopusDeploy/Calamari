@@ -20,6 +20,7 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
+            Options.Parse(commandLineArguments);
             journal.ApplyRetention(packageUtils.RootDirectory, cacheSizeMegaBytes);
             return 0;
         }
