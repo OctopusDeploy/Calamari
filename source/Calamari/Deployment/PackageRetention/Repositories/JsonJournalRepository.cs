@@ -20,15 +20,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         readonly string journalPath;
         readonly ILog log;
 
-        readonly IDisposable semaphore;
-
         public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath, ILog log)
         {
             this.fileSystem = fileSystem;
             this.journalPath = journalPath;
             this.log = log;
-
-            semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
 
             Load();
         }
@@ -85,11 +81,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
             fileSystem.WriteAllText(tempFilePath, json, Encoding.Default);
             fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
-        }
-
-        public override void Dispose()
-        {
-            semaphore.Dispose();
         }
 
         class PackageData

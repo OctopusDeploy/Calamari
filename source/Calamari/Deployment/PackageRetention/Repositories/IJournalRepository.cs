@@ -5,7 +5,7 @@ using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Deployment.PackageRetention.Repositories
 {
-    public interface IJournalRepository : IDisposable
+    public interface IJournalRepository
     {
         bool TryGetJournalEntry(PackageIdentity package, out JournalEntry entry);
         PackageCache Cache { get; }
