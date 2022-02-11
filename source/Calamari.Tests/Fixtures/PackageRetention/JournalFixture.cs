@@ -37,7 +37,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                   Substitute.For<ILog>(),
                                   Substitute.For<ICalamariFileSystem>(),
                                   Substitute.For<IRetentionAlgorithm>(),
-                                  variables,
                                   Substitute.For<IFreeSpaceChecker>()
                                  );
         }
@@ -166,11 +165,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                           Substitute.For<ILog>(),
                                           fileSystem,
                                           retentionAlgorithm,
-                                          variables,
                                           Substitute.For<IFreeSpaceChecker>());
 
             thisJournal.RegisterPackageUse(packageOne, new ServerTaskId("Deployment-1"), 1000);
-            thisJournal.ApplyRetention(PackageDirectory);
+            thisJournal.ApplyRetention(PackageDirectory, 0);
 
             thisJournal.GetUsage(packageOne).Should().BeEmpty();
             fileSystem.Received().DeleteFile(packageOne.Path.Value, FailureOptions.IgnoreFailure);
@@ -193,17 +191,14 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                    return true;
                                });
 
-            variables.Add(Journal.PackageRetentionCacheSizeInMegaBytesVariable, "1"); //Cache size is 1MB
-
             var thisJournal = new Journal(new InMemoryJournalRepositoryFactory(),
                                           Substitute.For<ILog>(),
                                           fileSystem,
                                           retentionAlgorithm,
-                                          variables,
                                           Substitute.For<IFreeSpaceChecker>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
-            thisJournal.ApplyRetention(PackageDirectory);
+            thisJournal.ApplyRetention(PackageDirectory, 1);
 
             thisJournal.GetUsage(existingPackage).Should().BeEmpty();
             fileSystem.Received().DeleteFile(existingPackage.Path.Value, FailureOptions.IgnoreFailure);
@@ -226,17 +221,15 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                    return true;
                                });
 
-            variables.Add(Journal.PackageRetentionCacheSizeInMegaBytesVariable, "10"); //Cache size is 10MB
 
             var thisJournal = new Journal(new InMemoryJournalRepositoryFactory(),
                                           Substitute.For<ILog>(),
                                           fileSystem,
                                           retentionAlgorithm,
-                                          variables,
                                           Substitute.For<IFreeSpaceChecker>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
-            thisJournal.ApplyRetention(PackageDirectory);
+            thisJournal.ApplyRetention(PackageDirectory, 10);
 
             thisJournal.GetUsage(existingPackage).Should().BeEmpty();
             fileSystem.Received().DeleteFile(existingPackage.Path.Value, FailureOptions.IgnoreFailure);
@@ -263,7 +256,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                           Substitute.For<ILog>(),
                                           Substitute.For<ICalamariFileSystem>(),
                                           Substitute.For<IRetentionAlgorithm>(),
-                                          variables,
                                           Substitute.For<IFreeSpaceChecker>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
@@ -299,7 +291,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                           Substitute.For<ILog>(),
                                           Substitute.For<ICalamariFileSystem>(),
                                           Substitute.For<IRetentionAlgorithm>(),
-                                          variables,
                                           Substitute.For<IFreeSpaceChecker>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 

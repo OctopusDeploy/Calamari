@@ -14,24 +14,20 @@ namespace Calamari.Deployment.PackageRetention.Model
     {
         readonly IJournalRepositoryFactory repositoryFactory;
         readonly IRetentionAlgorithm retentionAlgorithm;
-        readonly IVariables variables;
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly IFreeSpaceChecker freeSpaceChecker;
-        public const string PackageRetentionCacheSizeInMegaBytesVariable = "OctopusPackageRetentionCacheSizeInMegaBytes";
 
         public Journal(IJournalRepositoryFactory repositoryFactory,
                        ILog log,
                        ICalamariFileSystem fileSystem,
                        IRetentionAlgorithm retentionAlgorithm,
-                       IVariables variables,
                        IFreeSpaceChecker freeSpaceChecker)
         {
             this.repositoryFactory = repositoryFactory;
             this.log = log;
             this.fileSystem = fileSystem;
             this.retentionAlgorithm = retentionAlgorithm;
-            this.variables = variables;
             this.freeSpaceChecker = freeSpaceChecker;
         }
 
@@ -102,24 +98,23 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public void ApplyRetention(string directory)
+        public void ApplyRetention(string directory, int cacheSizeInMegaBytes)
         {
             log.Verbose($"Applying package retention for folder '{directory}'");
             try
             {
                 using (var repository = repositoryFactory.CreateJournalRepository())
                 {
-                    var cacheSizeInMB = variables.Get(PackageRetentionCacheSizeInMegaBytesVariable);
                     var cacheSpaceRequired = 0L;
 
-                    if (decimal.TryParse(cacheSizeInMB, out var cacheSizeMB))
+                    if (cacheSizeInMegaBytes > 0)
                     {
-                        var cacheSizeBytes = (long)Math.Round(cacheSizeMB * 1024L * 1024L);
+                        var cacheSizeBytes = (long)Math.Round((decimal)(cacheSizeInMegaBytes * 1024 * 1024));
                         var cacheSpaceRemaining = GetCacheSpaceRemaining(cacheSizeBytes);
                         var requiredSpaceInBytes = (long)freeSpaceChecker.GetRequiredSpaceInBytes();
                         cacheSpaceRequired = Math.Max(0, requiredSpaceInBytes - cacheSpaceRemaining);
 
-                        log.Verbose($"Cache size is {cacheSizeMB} MB, remaining space is {cacheSpaceRemaining / 1024D / 1024D:N} MB, with {cacheSpaceRequired / 1024D / 1024:N} MB required to be freed.");
+                        log.Verbose($"Cache size is {cacheSizeInMegaBytes} MB, remaining space is {cacheSpaceRemaining / 1024D / 1024D:N} MB, with {cacheSpaceRequired / 1024D / 1024:N} MB required to be freed.");
                     }
 
                     var requiredSpace = Math.Max(cacheSpaceRequired, (long)freeSpaceChecker.GetSpaceRequiredToBeFreed(directory));
