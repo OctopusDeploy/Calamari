@@ -10,15 +10,17 @@ namespace Calamari.Commands
     {
         readonly IManagePackageCache journal;
         readonly IPackageDownloaderUtils packageUtils = new PackageDownloaderUtils();
+        int cacheSizeMegaBytes;
 
         public CleanPackagesCommand(IManagePackageCache journal)
         {
             this.journal = journal;
+            Options.Add("cacheSize=", "Maximum size of the package cache", v => cacheSizeMegaBytes = int.Parse(v));
         }
 
         public override int Execute(string[] commandLineArguments)
         {
-            journal.ApplyRetention(packageUtils.RootDirectory);
+            journal.ApplyRetention(packageUtils.RootDirectory, cacheSizeMegaBytes);
             return 0;
         }
     }
