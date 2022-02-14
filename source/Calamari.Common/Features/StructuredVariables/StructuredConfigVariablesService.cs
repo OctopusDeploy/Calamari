@@ -49,6 +49,19 @@ namespace Calamari.Common.Features.StructuredVariables
             this.log = log;
 
             allReplacers = replacers;
+            
+#if NET40
+            // Temporary fix for dependency resolution happening backwards for .NET 4.0 versus 4.5.2 and dotnet
+            allReplacers = new IFileFormatVariableReplacer[]
+            {
+                replacers.OfType<JsonFormatVariableReplacer>().FirstOrDefault(),
+                replacers.OfType<XmlFormatVariableReplacer>().FirstOrDefault(),
+                replacers.OfType<YamlFormatVariableReplacer>().FirstOrDefault(),
+                replacers.OfType<PropertiesFormatVariableReplacer>().FirstOrDefault()
+            }.Where(x => x != null).ToArray();
+#endif
+                
+            
             this.variables = variables;
 
             jsonReplacer = replacers.FirstOrDefault(r => r.FileFormatName == StructuredConfigVariablesFileFormats.Json)
