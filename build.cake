@@ -1,8 +1,6 @@
 //////////////////////////////////////////////////////////////////////
 // TOOLS
 //////////////////////////////////////////////////////////////////////
-#tool "dotnet:?package=GitVersion.Tool&version=5.8.1"
-#tool "dotnet:?package=AzureSignTool&version=3.0.0"
 #addin "Cake.Incubator&version=7.0.0"
 #addin "Cake.FileHelpers&version=5.0.0"
 

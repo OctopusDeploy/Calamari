@@ -79,10 +79,6 @@ Param(
 
 Write-Host "Preparing to run build script..."
 
-if(!$PSScriptRoot){
-    $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
-}
-
 # Should we use mono?
 $UseMono = "";
 if($Mono.IsPresent) {
@@ -141,6 +137,31 @@ if ($LASTEXITCODE -ne 0)
     }
 }
 
+dotnet-gitversion > $null
+if ($LASTEXITCODE -ne 0)
+{
+    dotnet tool install --global GitVersion.Tool
+
+    dotnet-gitversion > $null
+    if ($LASTEXITCODE -ne 0)
+    {
+        Write-Error "Unable to install cake tool with command: dotnet tool install --global GitVersion.Tool"
+        exit 1;
+    }
+}
+
+dotnet azuresigntool --version > $null
+if ($LASTEXITCODE -ne 0)
+{
+    dotnet tool install --global azuresigntool
+
+    dotnet azuresigntool --version > $null
+    if ($LASTEXITCODE -ne 0)
+    {
+        Write-Error "Unable to install cake tool with command: dotnet tool install --global azuresigntool"
+        exit 1;
+    }
+}
 
 # Restore modules from NuGet
 # if (Test-Path $MODULES_PACKAGES_CONFIG) {
