@@ -123,67 +123,10 @@ if ($SignFilesOnLocalBuild.IsPresent) {
     $UseSignFilesOnLocalBuild = "--signFiles=true"
 }
 
-# Make sure that Cake has been installed.
-dotnet-cake --version > $null
-if ($LASTEXITCODE -ne 0)
-{
-    dotnet tool install --global Cake.Tool
-
-    dotnet-cake --version > $null
-    if ($LASTEXITCODE -ne 0)
-    {
-        Write-Error "Unable to install cake tool with command: dotnet tool install --global Cake.Tool"
-        exit 1;
-    }
-}
-
-dotnet-gitversion > $null
-if ($LASTEXITCODE -ne 0)
-{
-    dotnet tool install --global GitVersion.Tool
-
-    dotnet-gitversion > $null
-    if ($LASTEXITCODE -ne 0)
-    {
-        Write-Error "Unable to install cake tool with command: dotnet tool install --global GitVersion.Tool"
-        exit 1;
-    }
-}
-
-dotnet azuresigntool --version > $null
-if ($LASTEXITCODE -ne 0)
-{
-    dotnet tool install --global azuresigntool
-
-    dotnet azuresigntool --version > $null
-    if ($LASTEXITCODE -ne 0)
-    {
-        Write-Error "Unable to install cake tool with command: dotnet tool install --global azuresigntool"
-        exit 1;
-    }
-}
-
-# Restore modules from NuGet
-# if (Test-Path $MODULES_PACKAGES_CONFIG) {
-#     Push-Location
-#     Set-Location $MODULES_DIR
-
-#     Write-Verbose -Message "Restoring modules from NuGet..."
-#     $NuGetOutput = Invoke-Expression "&`"$NUGET_EXE`" install -ExcludeVersion -OutputDirectory `"$MODULES_DIR`""
-
-#     if ($LASTEXITCODE -ne 0) {
-#         Throw "An error occured while restoring NuGet modules."
-#     }
-
-#     Write-Verbose -Message ($NuGetOutput | out-string)
-
-#     Pop-Location
-# }
-
-# Make sure that Cake has been installed.
-# if (!(Test-Path $CAKE_EXE)) {
-#     Throw "Could not find Cake.exe at $CAKE_EXE"
-# }
+# Make sure that Cake and other tools have been installed
+dotnet tool install --global Cake.Tool
+dotnet tool install --global GitVersion.Tool
+dotnet tool install --global azuresigntool
 
 # We added this so we can use dotnet tools
 # See https://www.gep13.co.uk/blog/introducing-cake.dotnettool.module
