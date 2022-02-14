@@ -65,10 +65,10 @@ Param(
     [switch]$SkipToolPackageRestore,
     [string]$SigningCertificatePath = "./certificates/OctopusDevelopment.pfx",
     [string]$SigningCertificatePassword = "Password01!",
-    [string]$AzureKeyVaultUrl,
-    [string]$AzureKeyVaultAppId,
-    [string]$AzureKeyVaultAppSecret,
-    [string]$AzureKeyvaultCertificateName,
+    [string]$AzureKeyVaultUrl = " ",
+    [string]$AzureKeyVaultAppId = " ",
+    [string]$AzureKeyVaultAppSecret = " ",
+    [string]$AzureKeyvaultCertificateName = " ",
     [ValidateSet("Quiet", "Minimal", "Normal", "Verbose", "Diagnostic")]
     [string]$BuildVerbosity = "Normal",
     [switch]$PackInParallel,
@@ -76,31 +76,6 @@ Param(
     [switch]$SetOctopusServerVersion,
     [switch]$SignFilesOnLocalBuild
 )
-
-[Reflection.Assembly]::LoadWithPartialName("System.Security") | Out-Null
-function MD5HashFile([string] $filePath)
-{
-    if ([string]::IsNullOrEmpty($filePath) -or !(Test-Path $filePath -PathType Leaf))
-    {
-        return $null
-    }
-
-    [System.IO.Stream] $file = $null;
-    [System.Security.Cryptography.MD5] $md5 = $null;
-    try
-    {
-        $md5 = [System.Security.Cryptography.MD5]::Create()
-        $file = [System.IO.File]::OpenRead($filePath)
-        return [System.BitConverter]::ToString($md5.ComputeHash($file))
-    }
-    finally
-    {
-        if ($file -ne $null)
-        {
-            $file.Dispose()
-        }
-    }
-}
 
 Write-Host "Preparing to run build script..."
 
@@ -194,9 +169,13 @@ if ($LASTEXITCODE -ne 0)
 Write-Host "Installing cake modules using the --bootstrap argument"
 dotnet-cake --bootstrap
 
-# Start Cake
-Write-Host "Running build script:"
-Write-Host "dotnet-cake `"$Script`" --target=`"$Target`" --configuration=`"$Configuration`" --verbosity=`"$Verbosity`" --signingCertificatePath=`"$SigningCertificatePath`" --signingCertificatePassword=`"$SigningCertificatePassword`" --buildVerbosity=`"$BuildVerbosity`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild"
+if ($LASTEXITCODE -eq 0)
+{
+    # Start Cake
+    Write-Host "Running build script:"
+    Write-Host "dotnet-cake `"$Script`" --target=`"$Target`" --configuration=`"$Configuration`" --verbosity=`"$Verbosity`" --signingCertificatePath=`"$SigningCertificatePath`" --signingCertificatePassword=`"$SigningCertificatePassword`" --AzureKeyVaultUrl=`"$AzureKeyVaultUrl`" --AzureKeyVaultAppId=`"$AzureKeyVaultAppId`" --AzureKeyVaultAppSecret=`"$AzureKeyVaultAppSecret`" --AzureKeyvaultCertificateName=`"$AzureKeyvaultCertificateName`" --buildVerbosity=`"$BuildVerbosity`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild"
 
-Invoke-Expression "dotnet-cake `"$Script`" --target=`"$Target`" --configuration=`"$Configuration`" --verbosity=`"$Verbosity`" --signingCertificatePath=`"$SigningCertificatePath`" --signingCertificatePassword=`"$SigningCertificatePassword`" --buildVerbosity=`"$BuildVerbosity`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild"
+    Invoke-Expression "dotnet-cake `"$Script`" --target=`"$Target`" --configuration=`"$Configuration`" --verbosity=`"$Verbosity`" --signingCertificatePath=`"$SigningCertificatePath`" --signingCertificatePassword=`"$SigningCertificatePassword`" --AzureKeyVaultUrl=`"$AzureKeyVaultUrl`" --AzureKeyVaultAppId=`"$AzureKeyVaultAppId`" --AzureKeyVaultAppSecret=`"$AzureKeyVaultAppSecret`" --AzureKeyvaultCertificateName=`"$AzureKeyvaultCertificateName`" --buildVerbosity=`"$BuildVerbosity`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild"
+}
+
 exit $LASTEXITCODE
