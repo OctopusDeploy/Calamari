@@ -19,16 +19,16 @@ var netFramworkCompatible = Argument("includeNetFramework", true);
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var testFilter = Argument("where", "");
-var signFiles = Argument<bool>("sign_files", false);
-var signingCertificatePath = Argument("signing_certificate_path", "");
-var signingCertificatePassword = Argument("signing_certificate_password", "");
+var signFiles = Argument<bool>("signFiles", false);
+var signingCertificatePath = Argument("signingCertificatePath", "");
+var signingCertificatePassword = Argument("signingCertificatePassword", "");
 // We sign all of our own assemblies - these are the arguments required to sign code using Azure Key Vault
 // If these arguments are null then the signing defaults to using the local certificate and SignTool
 var keyVaultUrl = Argument("AzureKeyVaultUrl", "");
 var keyVaultAppId = Argument("AzureKeyVaultAppId", "");
 var keyVaultAppSecret = Argument("AzureKeyVaultAppSecret", "");
 var keyVaultCertificateName = Argument("AzureKeyVaultCertificateName", "");
-var buildVerbosity = Argument("build_verbosity", "normal");
+var buildVerbosity = Argument("buildVerbosity", "normal");
 var packInParallel = Argument<bool>("packinparallel", false);
 var appendTimestamp = Argument<bool>("timestamp", false);
 var setOctopusServerVersion = Argument<bool>("setoctopusserverversion", false);

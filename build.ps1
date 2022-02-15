@@ -77,211 +77,102 @@ Param(
     [switch]$SignFilesOnLocalBuild
 )
 
-[Reflection.Assembly]::LoadWithPartialName("System.Security") | Out-Null
-function MD5HashFile([string] $filePath)
-{
-    if ([string]::IsNullOrEmpty($filePath) -or !(Test-Path $filePath -PathType Leaf))
-    {
-        return $null
-    }
-
-    [System.IO.Stream] $file = $null;
-    [System.Security.Cryptography.MD5] $md5 = $null;
-    try
-    {
-        $md5 = [System.Security.Cryptography.MD5]::Create()
-        $file = [System.IO.File]::OpenRead($filePath)
-        return [System.BitConverter]::ToString($md5.ComputeHash($file))
-    }
-    finally
-    {
-        if ($file -ne $null)
-        {
-            $file.Dispose()
-        }
-    }
+dotnet --version 2>&1 > $null
+if ($LASTEXITCODE -ne 0) {
+    Write-Error -Message "Please install dotnet cli"
+    exit $LASTEXITCODE
 }
 
-Write-Host "Preparing to run build script..."
-
-if(!$PSScriptRoot){
-    $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
+Write-Host "Installing Cake.Tool on dotnet cli"
+$cmdOutput = dotnet tool install --global Cake.Tool 2>&1
+if ($LASTEXITCODE -eq 1) {
+    Write-Warning -Message $cmdOutput
+} elseif ($LASTEXITCODE -ne 0) {
+    Write-Error -Message "Unable to install Cake.Tool with dotnet cli"
+    exit $LASTEXITCODE
 }
 
-$TOOLS_DIR = Join-Path $PSScriptRoot "tools"
-$ARTIFACTS_DIR = Join-Path $PSScriptRoot "artifacts"
-$ADDINS_DIR = Join-Path $TOOLS_DIR "addins"
-$MODULES_DIR = Join-Path $TOOLS_DIR "modules"
-$NUGET_EXE = Join-Path $TOOLS_DIR "nuget.exe"
-$CAKE_EXE = Join-Path $TOOLS_DIR "Cake/Cake.exe"
-$NUGET_URL = "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
-$PACKAGES_CONFIG = Join-Path $TOOLS_DIR "packages.config"
-$PACKAGES_CONFIG_MD5 = Join-Path $TOOLS_DIR "packages.config.md5sum"
-$ADDINS_PACKAGES_CONFIG = Join-Path $ADDINS_DIR "packages.config"
-$MODULES_PACKAGES_CONFIG = Join-Path $MODULES_DIR "packages.config"
-
-# Should we use mono?
-$UseMono = "";
-if($Mono.IsPresent) {
-    Write-Verbose -Message "Using the Mono based scripting engine."
-    $UseMono = "-mono"
+Write-Host "Bootstrapping Cake"
+dotnet cake --bootstrap
+if ($LASTEXITCODE -ne 0) {
+    Write-Error -Message "Bootstrapping cake failed."
+    exit $LASTEXITCODE
 }
 
 # Should we use the new Roslyn?
-$UseExperimental = "";
-if($Experimental.IsPresent -and !($Mono.IsPresent)) {
+if($Experimental) {
     Write-Verbose -Message "Using experimental version of Roslyn."
-    $UseExperimental = "-experimental"
+    $UseExperimental = " --experimental"
 }
 
 # Is this a dry run?
-$UseDryRun = "";
 if($WhatIf.IsPresent) {
-    $UseDryRun = "-dryrun"
+    $UseDryRun = "--dryrun"
 }
 
 # Should we run pack operations in parallel
-$UsePackInParallel = ""
 if ($PackInParallel.IsPresent) {
-    $UsePackInParallel = "-packinparallel=true"
+    $UsePackInParallel = "--packinparallel=true"
 }
 
 # Should we append a timestamp to the version
-$UseTimestamp = ""
 if ($Timestamp.IsPresent) {
-    $UseTimestamp = "-timestamp=true"
+    $UseTimestamp = "--timestamp=true"
 }
 
 # Should we set the octopus server version
-$UseSetOctopusServerVersion = ""
 if ($SetOctopusServerVersion.IsPresent) {
-    $UseSetOctopusServerVersion = "-setoctopusserverversion=true"
+    $UseSetOctopusServerVersion = "--setoctopusserverversion=true"
 }
 
 # Should we sign the files if we're building locally
-$UseSignFilesOnLocalBuild = ""
 if ($SignFilesOnLocalBuild.IsPresent) {
-    $UseSignFilesOnLocalBuild = "-sign_files=true"
+    $UseSignFilesOnLocalBuild = "--signFiles=true"
 }
 
-# Make sure tools folder exists
-if ((Test-Path $PSScriptRoot) -and !(Test-Path $TOOLS_DIR)) {
-    Write-Verbose -Message "Creating tools directory..."
-    New-Item -Path $TOOLS_DIR -Type directory | out-null
+if ($Where.IsPresent) {
+    $WhereParam="--where=`"$Where`"";
 }
 
-# Make sure artifacts folder exists
-if ((Test-Path $PSScriptRoot) -and !(Test-Path $ARTIFACTS_DIR)) {
-    Write-Verbose -Message "Creating artifacts directory..."
-    New-Item -Path $ARTIFACTS_DIR -Type directory | out-null
+if ($SigningCertificatePath.IsPresent) {
+    $SigningCertificatePathParam="--signingCertificatePath=`"$SigningCertificatePath`"";
 }
 
-# Make sure that packages.config exist.
-if (!(Test-Path $PACKAGES_CONFIG)) {
-    Write-Verbose -Message "Downloading packages.config..."
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    try { (New-Object System.Net.WebClient).DownloadFile("https://cakebuild.net/download/bootstrapper/packages", $PACKAGES_CONFIG) } catch {
-        Throw "Could not download packages.config."
-    }
+if ($SigningCertificatePassword.IsPresent) {
+    $SigningCertificatePasswordParam="--signingCertificatePassword=`"$SigningCertificatePassword`"";
 }
 
-# Try find NuGet.exe in path if not exists
-if (!(Test-Path $NUGET_EXE)) {
-    Write-Verbose -Message "Trying to find nuget.exe in PATH..."
-    $existingPaths = $Env:Path -Split ';' | Where-Object { (![string]::IsNullOrEmpty($_)) -and (Test-Path $_ -PathType Container) }
-    $NUGET_EXE_IN_PATH = Get-ChildItem -Path $existingPaths -Filter "nuget.exe" | Select -First 1
-    if ($NUGET_EXE_IN_PATH -ne $null -and (Test-Path $NUGET_EXE_IN_PATH.FullName)) {
-        Write-Verbose -Message "Found in PATH at $($NUGET_EXE_IN_PATH.FullName)."
-        $NUGET_EXE = $NUGET_EXE_IN_PATH.FullName
-    }
+if ($BuildVerbosity.IsPresent) {
+    $BuildVerbosityParam="--buildVerbosity=`"$BuildVerbosity`"";
 }
 
-# Try download NuGet.exe if not exists
-if (!(Test-Path $NUGET_EXE)) {
-    Write-Verbose -Message "Downloading NuGet.exe from $NUGET_URL to $NUGET_EXE..."
-    try {
-        (New-Object System.Net.WebClient).DownloadFile($NUGET_URL, $NUGET_EXE)
-    } catch {
-        Throw "Could not download NuGet.exe from $NUGET_URL to $NUGET_EXE " + $_.Exception.Message
-    }
+if ($AzureKeyVaultUrl.IsPresent)
+{
+    $AzureKeyVaultUrlParam="--AzureKeyVaultUrl=`"$AzureKeyVaultUrl`"";
 }
 
-# Save nuget.exe path to environment to be available to child processed
-$ENV:NUGET_EXE = $NUGET_EXE
-
-# Restore tools from NuGet?
-if(-Not $SkipToolPackageRestore.IsPresent) {
-    Push-Location
-    Set-Location $TOOLS_DIR
-
-    # Check for changes in packages.config and remove installed tools if true.
-    [string] $md5Hash = MD5HashFile($PACKAGES_CONFIG)
-    if((!(Test-Path $PACKAGES_CONFIG_MD5)) -Or
-      ($md5Hash -ne (Get-Content $PACKAGES_CONFIG_MD5 ))) {
-        Write-Verbose -Message "Missing or changed package.config hash..."
-        Remove-Item * -Recurse -Exclude packages.config,nuget.exe
-    }
-
-    Write-Verbose -Message "Restoring tools from NuGet..."
-    $NuGetOutput = Invoke-Expression "&`"$NUGET_EXE`" install -ExcludeVersion -OutputDirectory `"$TOOLS_DIR`""
-
-    if ($LASTEXITCODE -ne 0) {
-        Throw "An error occured while restoring NuGet tools."
-    }
-    else
-    {
-        $md5Hash | Out-File $PACKAGES_CONFIG_MD5 -Encoding "ASCII"
-    }
-    Write-Verbose -Message ($NuGetOutput | out-string)
-    
-    Pop-Location
+if ($AzureKeyVaultAppId.IsPresent) {
+    $AzureKeyVaultAppIdParam="--AzureKeyVaultAppId=`"$AzureKeyVaultAppId`"";
 }
 
-# Restore addins from NuGet
-if (Test-Path $ADDINS_PACKAGES_CONFIG) {
-    Push-Location
-    Set-Location $ADDINS_DIR
-
-    Write-Verbose -Message "Restoring addins from NuGet..."
-    $NuGetOutput = Invoke-Expression "&`"$NUGET_EXE`" install -ExcludeVersion -OutputDirectory `"$ADDINS_DIR`""
-
-    if ($LASTEXITCODE -ne 0) {
-        Throw "An error occured while restoring NuGet addins."
-    }
-
-    Write-Verbose -Message ($NuGetOutput | out-string)
-
-    Pop-Location
+if ($AzureKeyVaultAppSecret.IsPresent) {
+    $AzureKeyVaultAppSecretParam="--AzureKeyVaultAppSecret=`"$AzureKeyVaultAppSecret`"";
 }
 
-# Restore modules from NuGet
-if (Test-Path $MODULES_PACKAGES_CONFIG) {
-    Push-Location
-    Set-Location $MODULES_DIR
-
-    Write-Verbose -Message "Restoring modules from NuGet..."
-    $NuGetOutput = Invoke-Expression "&`"$NUGET_EXE`" install -ExcludeVersion -OutputDirectory `"$MODULES_DIR`""
-
-    if ($LASTEXITCODE -ne 0) {
-        Throw "An error occured while restoring NuGet modules."
-    }
-
-    Write-Verbose -Message ($NuGetOutput | out-string)
-
-    Pop-Location
+if($AzureKeyvaultCertificateName.IsPresent) {
+    $AzureKeyvaultCertificateNameParam="--AzureKeyvaultCertificateName=`"$AzureKeyvaultCertificateName`"";
 }
-
-# Make sure that Cake has been installed.
-if (!(Test-Path $CAKE_EXE)) {
-    Throw "Could not find Cake.exe at $CAKE_EXE"
-}
-
-# We added this so we can use dotnet tools
-# See https://www.gep13.co.uk/blog/introducing-cake.dotnettool.module
-Write-Host "Installing cake modules using the --bootstrap argument"
-&$CAKE_EXE --bootstrap
 
 # Start Cake
 Write-Host "Running build script..."
-Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" -build_verbosity=`"$BuildVerbosity`" -AzureKeyVaultUrl=`"$AzureKeyVaultUrl`" -AzureKeyVaultAppId=`"$AzureKeyVaultAppId`" -AzureKeyVaultAppSecret=`"$AzureKeyVaultAppSecret`" -AzureKeyvaultCertificateName=`"$AzureKeyvaultCertificateName`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild"
+Write-Host "dotnet cake `"$Script`" --target=`"$Target`" --configuration=`"$Configuration`" --verbosity=`"$Verbosity`" `
+$WhereParam $SigningCertificatePathParam $SigningCertificatePasswordParam $BuildVerbosityParam `
+$AzureKeyVaultUrlParam $AzureKeyVaultAppIdParam $AzureKeyVaultAppSecretParam $AzureKeyvaultCertificateNameParam `
+$UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild"
+
+dotnet cake "$Script" --target="$Target" --configuration="$Configuration" --verbosity="$Verbosity" `
+    $WhereParam $SigningCertificatePathParam $SigningCertificatePasswordParam $BuildVerbosityParam `
+    $AzureKeyVaultUrlParam $AzureKeyVaultAppIdParam $AzureKeyVaultAppSecretParam $AzureKeyvaultCertificateNameParam `
+    $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild
+
 exit $LASTEXITCODE
