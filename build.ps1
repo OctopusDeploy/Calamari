@@ -86,7 +86,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "Installing Cake.Tool on dotnet cli"
 $cmdOutput = dotnet tool install --global Cake.Tool 2>&1
 if ($LASTEXITCODE -eq 1) {
-    Write-Warning -Message $cmdOutput
+    Write-Host -Message $cmdOutput
 } elseif ($LASTEXITCODE -ne 0) {
     Write-Error -Message "Unable to install Cake.Tool with dotnet cli"
     exit $LASTEXITCODE
