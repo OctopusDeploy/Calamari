@@ -54,7 +54,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Octodiff" Version="1.1.2" />
-    <PackageReference Include="Octopus.Versioning" Version="4.3.5" />
+    <PackageReference Include="Octopus.Versioning" Version="5.0.5" /> <!-- TODO @team-deploy-fnm: Octopus.Versioning > 5.0.5 is not compatible with net40. This package should be updated when Calamari moves to net5.0 -->
+    <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
     <PackageReference Include="scriptcs" Version="0.17.1" />
     <PackageReference Include="Octostache" Version="2.14.0" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
