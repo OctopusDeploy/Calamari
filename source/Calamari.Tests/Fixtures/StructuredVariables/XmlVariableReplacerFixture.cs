@@ -44,6 +44,17 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 
             RunTest(vars, "complex.xml");
         }
+        
+        [Test]
+        public void CanReplaceACommentWithNonCanonicalFileExtension()
+        {
+            var vars = new CalamariVariables
+            {
+                { "/document/comment()", "New Comment" }
+            };
+
+            RunTest(vars, "xml.config");
+        }
 
         [Test]
         public void CanReplaceAnAttribute()
