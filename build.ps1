@@ -77,19 +77,22 @@ Param(
     [switch]$SignFilesOnLocalBuild
 )
 
+$CakeToolVersion = "2.0.0";
+$CakeToolName = "cake.tool";
+
 dotnet --version 2>&1 > $null
 if ($LASTEXITCODE -ne 0) {
     Write-Error -Message "Please install dotnet cli"
     exit $LASTEXITCODE
 }
 
-Write-Host "Installing Cake.Tool on dotnet cli"
-$cmdOutput = dotnet tool install --global Cake.Tool 2>&1
-if ($LASTEXITCODE -eq 1) {
-    Write-Host -Message $cmdOutput
-} elseif ($LASTEXITCODE -ne 0) {
-    Write-Error -Message "Unable to install Cake.Tool with dotnet cli"
-    exit $LASTEXITCODE
+$tools = (dotnet tool list -g) -replace '\s+'," " | Select-Object -skip 2 | convertfrom-csv -Delimiter ' ' -header "PackageId","Version","Command";
+if ($null -eq ($tools | Where-Object { $_.PackageId -eq $CakeToolName -and $_.Version -eq $CakeToolVersion}).Count) {
+    Write-Host "$CakeToolName (version $CakeToolVersion) is already installed - skipping"
+}
+else {
+    Write-Host "Installing $CakeToolName (version $CakeToolVersion) via dotnet cli"
+    dotnet tool install --global $CakeToolName --version $CakeToolVersion
 }
 
 Write-Host "Bootstrapping Cake"
