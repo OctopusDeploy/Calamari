@@ -1,12 +1,11 @@
 //////////////////////////////////////////////////////////////////////
 // TOOLS
 //////////////////////////////////////////////////////////////////////
-#tool "nuget:?package=GitVersion.CommandLine&version=5.2.0"
-#addin "nuget:?package=Cake.Incubator&version=5.0.1"
-#addin "nuget:?package=Cake.FileHelpers&version=4.0.1"
-// see https://www.gep13.co.uk/blog/introducing-cake.dotnettool.module
-#module nuget:?package=Cake.DotNetTool.Module&version=0.1.0
-#tool "dotnet:?package=AzureSignTool&version=2.0.17"
+#tool "dotnet:?package=GitVersion.Tool&version=5.8.1"
+#tool "dotnet:?package=AzureSignTool&version=3.0.0"
+#addin "Cake.Incubator&version=7.0.0"
+#addin "Cake.FileHelpers&version=5.0.0"
+
 
 using Path = System.IO.Path;
 using System.Xml;
@@ -16,6 +15,7 @@ using Task = System.Threading.Tasks.Task;
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
+var netFramworkCompatible = Argument("includeNetFramework", true);
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var testFilter = Argument("where", "");
@@ -160,14 +160,17 @@ Task("PackBinaries")
 {
     var actions = new List<Action>();
 
-    actions.Add(() => DoPackage("Calamari", "net40", nugetVersion));    
-    actions.Add(() => DoPackage("Calamari", "net452", nugetVersion, "Cloud"));
+    if (netFramworkCompatible)
+    {
+        actions.Add(() => DoPackage("Calamari", "net40", nugetVersion));    
+        actions.Add(() => DoPackage("Calamari", "net452", nugetVersion, "Cloud"));
+    }
 
     // Create a portable .NET Core package
     actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable"));
 
     // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-    foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari\Calamari.csproj"))
+    foreach(var rid in GetProjectRuntimeIds(@"./source/Calamari/Calamari.csproj"))
     {
         actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid));
     }
@@ -194,7 +197,7 @@ Task("PackTests")
     actions.Add(() => Zip("./source/Calamari.Tests/bin/Release/net461/", Path.Combine(artifactsDir, "Binaries.zip")));
 
     // Create a Zip for each runtime for testing
-	foreach(var rid in GetProjectRuntimeIds(@".\source\Calamari.Tests\Calamari.Tests.csproj"))
+	foreach(var rid in GetProjectRuntimeIds(@"./source/Calamari.Tests/Calamari.Tests.csproj"))
     {
         actions.Add(() => {
             var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", nugetVersion, rid);
