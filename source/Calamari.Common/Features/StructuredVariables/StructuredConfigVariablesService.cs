@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Autofac;
+using Autofac;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -15,12 +17,14 @@ namespace Calamari.Common.Features.StructuredVariables
     public class StructuredConfigVariablesModule : Module
     {
         protected override void Load(ContainerBuilder builder)
-        {
-            builder.RegisterType<JsonFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<XmlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<PropertiesFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+        {            
+            builder.RegisterType<JsonFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(1);
+            builder.RegisterType<XmlFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(2);
+            builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(3);
+            builder.RegisterType<PropertiesFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(4);
 
+            builder.RegisterPrioritisedList<IFileFormatVariableReplacer>();
+            
             builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
         }
     }
@@ -40,7 +44,7 @@ namespace Calamari.Common.Features.StructuredVariables
         readonly ILog log;
 
         public StructuredConfigVariablesService(
-            IFileFormatVariableReplacer[] replacers,
+            PrioritisedList<IFileFormatVariableReplacer> replacers,
             IVariables variables,
             ICalamariFileSystem fileSystem,
             ILog log)
@@ -48,7 +52,7 @@ namespace Calamari.Common.Features.StructuredVariables
             this.fileSystem = fileSystem;
             this.log = log;
 
-            allReplacers = replacers;
+            allReplacers = replacers.ToArray();
             this.variables = variables;
 
             jsonReplacer = replacers.FirstOrDefault(r => r.FileFormatName == StructuredConfigVariablesFileFormats.Json)
@@ -151,7 +155,7 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             log.Verbose($"The file at {filePath} does not match any known filename patterns. "
                         + "The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed.");
-
+            
             // Order so that the json replacer comes first
             yield return jsonReplacer;
             foreach (var replacer in allReplacers.Except(new[] { jsonReplacer }))
