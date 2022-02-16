@@ -11,6 +11,7 @@ using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.StructuredVariables;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -106,7 +107,7 @@ namespace Calamari.Tests.AWS.CloudFormation
                     variables,
                     fileSystem,
                     new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
-                    new StructuredConfigVariablesService(new IFileFormatVariableReplacer[]
+                    new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                                                          {
                                                              new JsonFormatVariableReplacer(fileSystem, log),
                                                              new XmlFormatVariableReplacer(fileSystem, log),
