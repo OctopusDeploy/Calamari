@@ -145,7 +145,7 @@ namespace Calamari.Tests.AWS.CloudFormation
                                                               variables,
                                                               fileSystem,
                                                               new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
-                                                              new StructuredConfigVariablesService(new IFileFormatVariableReplacer[]
+                                                              new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                                                               {
                                                                   new JsonFormatVariableReplacer(fileSystem, log),
                                                                   new XmlFormatVariableReplacer(fileSystem, log),
