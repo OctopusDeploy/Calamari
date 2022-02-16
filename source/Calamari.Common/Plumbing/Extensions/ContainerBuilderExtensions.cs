@@ -13,7 +13,7 @@ namespace Calamari.Common.Plumbing.Extensions
         
         public static void WithPriority<TLimit, TActivatorData, TRegistrationStyle>(this IRegistrationBuilder<TLimit, TActivatorData, TRegistrationStyle> target, int priority)
         {
-            target.WithMetadata(PriorityMetadata, priority);
+            target.WithMetadata(RegistrationPriorityMetadataKey, priority);
         }
 
         public static void RegisterPrioritisedList<T>(this ContainerBuilder builder)
