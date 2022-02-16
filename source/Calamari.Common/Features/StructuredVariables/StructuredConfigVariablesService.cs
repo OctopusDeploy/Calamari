@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Autofac;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -16,12 +17,14 @@ namespace Calamari.Common.Features.StructuredVariables
     public class StructuredConfigVariablesModule : Module
     {
         protected override void Load(ContainerBuilder builder)
-        {
-            builder.RegisterType<JsonFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<XmlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
-            builder.RegisterType<PropertiesFormatVariableReplacer>().As<IFileFormatVariableReplacer>();
+        {            
+            builder.RegisterType<JsonFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(1);
+            builder.RegisterType<XmlFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(2);
+            builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(3);
+            builder.RegisterType<PropertiesFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(4);
 
+            builder.RegisterPrioritisedList<IFileFormatVariableReplacer>();
+            
             builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
         }
     }
@@ -39,14 +42,14 @@ namespace Calamari.Common.Features.StructuredVariables
         readonly ILog log;
 
         public StructuredConfigVariablesService(
-            IFileFormatVariableReplacer[] replacers,
+            PrioritisedList<IFileFormatVariableReplacer> replacers,
             ICalamariFileSystem fileSystem,
             ILog log)
         {
             this.fileSystem = fileSystem;
             this.log = log;
 
-            allReplacers = replacers;
+            allReplacers = replacers.ToArray();
             
             jsonReplacer = replacers.FirstOrDefault(r => r.FileFormatName == StructuredConfigVariablesFileFormats.Json)
                            ?? throw new Exception("No JSON replacer was supplied. A JSON replacer is required as a fallback.");
