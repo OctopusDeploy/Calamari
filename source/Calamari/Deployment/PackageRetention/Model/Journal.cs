@@ -81,6 +81,12 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
+        public void RemoveAllLocks(ServerTaskId serverTaskId)
+        {
+            var repository = repositoryFactory.CreateJournalRepository();
+            repository.RemoveAllLocks(serverTaskId);
+        }
+
         public bool HasLock(PackageIdentity package)
         {
             var repository = repositoryFactory.CreateJournalRepository();
