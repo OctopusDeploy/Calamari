@@ -10,6 +10,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
@@ -134,7 +135,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                 commandLineRunner,
                 new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
                 new ExtractPackage(new CombinedPackageExtractor(log, variables, commandLineRunner), fileSystem, variables, log),
-                new StructuredConfigVariablesService(new IFileFormatVariableReplacer[]
+                new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                 {
                     new JsonFormatVariableReplacer(fileSystem, log),
                     new XmlFormatVariableReplacer(fileSystem, log),

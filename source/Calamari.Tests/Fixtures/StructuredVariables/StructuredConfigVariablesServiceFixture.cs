@@ -3,6 +3,7 @@ using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
@@ -40,7 +41,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             replacer.IsBestReplacerForFileName(Arg.Any<string>()).Returns(true);
 
             var log = new InMemoryLog();
-            var service = new StructuredConfigVariablesService(new []
+            var service = new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
             {
                 replacer
             }, fileSystem, log);
