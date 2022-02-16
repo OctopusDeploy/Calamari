@@ -13,7 +13,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Shared", "Calamari
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build files", "Build files", "{EF945982-24D4-4B53-A61A-77AE1D945037}"
 	ProjectSection(SolutionItems) = preProject
-		..\build = ..\build
 		..\build.cake = ..\build.cake
 		..\build.cmd = ..\build.cmd
 		..\build.ps1 = ..\build.ps1
@@ -21,6 +20,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build files", "Build files"
 		..\LICENSE.txt = ..\LICENSE.txt
 		..\NuGet.Config = ..\NuGet.Config
 		..\README.md = ..\README.md
+		..\build-nuke.sh = ..\build-nuke.sh
+		..\build.sh = ..\build.sh
+		..\global.json = ..\global.json
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.CloudAccounts", "Calamari.CloudAccounts\Calamari.CloudAccounts.csproj", "{58955C6D-3FC6-413F-B532-F37FF70EB818}"
@@ -29,7 +31,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Common", "Calamari
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Testing", "Calamari.Testing\Calamari.Testing.csproj", "{95A4DBA0-EA92-4FD5-A92E-4DFDB4FC4493}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_build", "..\build\_build\_build.csproj", "{82C95096-4EF7-4ED6-8016-1217969F3F27}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuke", ".nuke", "{2901AC62-E852-404D-B56C-FCED19B388A1}"
+	ProjectSection(SolutionItems) = preProject
+		..\.nuke\build.schema.json = ..\.nuke\build.schema.json
+		..\.nuke\parameters.json = ..\.nuke\parameters.json
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_build", "..\build\_build.csproj", "{331CE73F-88CA-4C5E-9921-F6D1C81C6CBE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -65,10 +73,10 @@ Global
 		{95A4DBA0-EA92-4FD5-A92E-4DFDB4FC4493}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{95A4DBA0-EA92-4FD5-A92E-4DFDB4FC4493}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{95A4DBA0-EA92-4FD5-A92E-4DFDB4FC4493}.Release|Any CPU.Build.0 = Release|Any CPU
-		{82C95096-4EF7-4ED6-8016-1217969F3F27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{82C95096-4EF7-4ED6-8016-1217969F3F27}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{82C95096-4EF7-4ED6-8016-1217969F3F27}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{82C95096-4EF7-4ED6-8016-1217969F3F27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{331CE73F-88CA-4C5E-9921-F6D1C81C6CBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{331CE73F-88CA-4C5E-9921-F6D1C81C6CBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{331CE73F-88CA-4C5E-9921-F6D1C81C6CBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{331CE73F-88CA-4C5E-9921-F6D1C81C6CBE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
