@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -14,13 +13,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 {
     public class JsonJournalRepository : JournalRepositoryBase
     {
-        const string SemaphoreName = "Octopus.Calamari.PackageJournal";
-
         readonly ICalamariFileSystem fileSystem;
         readonly string journalPath;
         readonly ILog log;
 
-        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath, ILog log)
+        public JsonJournalRepository(ICalamariFileSystem fileSystem, string journalPath, ILog log)
         {
             this.fileSystem = fileSystem;
             this.journalPath = journalPath;

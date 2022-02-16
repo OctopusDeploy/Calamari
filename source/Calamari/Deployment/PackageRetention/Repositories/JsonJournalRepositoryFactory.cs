@@ -33,7 +33,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
         public IJournalRepository CreateJournalRepository()
         {
-            return new JsonJournalRepository(fileSystem, semaphoreFactory, journalPath, log);
+            return new JsonJournalRepository(fileSystem, journalPath, log);
         }
     }
 }

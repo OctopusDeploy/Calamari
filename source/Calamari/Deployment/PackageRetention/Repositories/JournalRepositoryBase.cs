@@ -21,6 +21,12 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             return journalEntries.TryGetValue(package, out entry);
         }
 
+        public void RemoveAllLocks(ServerTaskId serverTaskId)
+        {
+            foreach (var entry in journalEntries.Values)
+                entry.RemoveLock(serverTaskId);
+        }
+
         public JournalEntry GetJournalEntry(PackageIdentity package)
         {
             journalEntries.TryGetValue(package, out var entry);
