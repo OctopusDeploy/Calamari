@@ -3,6 +3,7 @@ using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
@@ -46,7 +47,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, FileName);
             variables.Set(PackageVariables.CustomInstallationDirectory, CurrentPath);
 
-            var service = new StructuredConfigVariablesService(new []
+            var service = new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
             {
                 replacer
             }, variables, fileSystem, log);
