@@ -19,6 +19,9 @@ bld/
 [Oo]bj/
 artifacts/
 built-packages/
+.nuke/temp/
+artifactspublish/
+publish/
 
 # Roslyn cache directories
 *.ide/
