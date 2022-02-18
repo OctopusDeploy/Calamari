@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using Nuke.Common;
@@ -39,9 +40,6 @@ class Build : NukeBuild
     readonly Configuration Configuration = 
         IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    [Parameter("Test filter expression", Name = "where")] 
-    readonly string TestFilter = string.Empty;
-
     [Solution] [Required] readonly Solution? Solution;
 
     [Parameter("Whether to auto-detect the branch name - "
@@ -63,6 +61,12 @@ class Build : NukeBuild
     [Parameter("Sign Binaries")] 
     readonly bool SignBinaries = false;
 
+    [Parameter("Append Timestamp")] 
+    readonly bool AppendTimestamp = false;
+
+    [Parameter("Set Calamari Version on OctopusServer")] 
+    readonly bool SetOctopusServerVersion = false;
+
     [Parameter("AzureKeyVaultUrl")] 
     readonly string? AzureKeyVaultUrl;
     
@@ -81,20 +85,29 @@ class Build : NukeBuild
     [Parameter("SigningCertificatePassword")] 
     readonly string SigningCertificatePassword = "Password01!";
 
-    readonly string OctoVersionInfoNullMessage =
-        $"{nameof(OctoVersionInfo)} is null - this should be set by the Nuke {nameof(OctoVersionAttribute)}." + $" Ensure the CI server has set the \"{CiBranchNameEnvVariable}\" environment variable.";
-
     readonly string SolutionNullMessage =
         $"{nameof(Solution)} is null - this should be set by the Nuke {nameof(SolutionAttribute)}.";
 
-    [Required] [OctoVersion(BranchParameter = nameof(BranchName), AutoDetectBranchParameter = nameof(AutoDetectBranch))] readonly OctoVersionInfo? OctoVersionInfo;
+    [Required] 
+    [OctoVersion(BranchParameter = nameof(BranchName), AutoDetectBranchParameter = nameof(AutoDetectBranch))] 
+    readonly OctoVersionInfo? OctoVersionInfo;
 
     AbsolutePath SourceDirectory => RootDirectory / "source";
     AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
     
     AbsolutePath PublishDirectory = RootDirectory / "publish";
-
     AbsolutePath OutputDirectory => RootDirectory / "output";
+    
+    AbsolutePath LocalPackagesDir = RootDirectory / "../LocalPackages";
+
+    Lazy<string?> NugetVersion { get; } 
+
+    public Build()
+    {
+        NugetVersion = new Lazy<string?>(() => AppendTimestamp 
+                                             ? $"{OctoVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}" 
+                                             : OctoVersionInfo?.NuGetVersion);
+    }
 
     public static int Main() => Execute<Build>(x => x.BuildLocal);
 
@@ -149,33 +162,42 @@ class Build : NukeBuild
                                           DotNetBuild(_ => _.SetProjectFile(Solution)
                                                             .SetConfiguration(Configuration)
                                                             .EnableNoRestore()
-                                                            .SetVersion(OctoVersionInfo?.FullSemVer)
+                                                            .SetVersion(NugetVersion.Value)
                                                             .SetInformationalVersion(OctoVersionInfo?.InformationalVersion));
                                       });
 
     Target PackBinaries => _ => _.DependsOn(Compile)
                                  .Executes(async () =>
                                            {
-                                               var nugetVersion = OctoVersionInfo?.FullSemVer;
+                                               const string netcoreapp3_1 = "netcoreapp3.1", 
+                                                            net40 = "net40", 
+                                                            net452 = "net452", 
+                                                            mainProject = "Calamari";
 
+                                               var nugetVersion = NugetVersion.Value;
                                                if (nugetVersion is null)
                                                    throw new InvalidOperationException("Unable to get nugetVersion from OctoVersion.");
-                                               
-                                               var actions = new List<Action>();
+
+                                               var publishActions = new List<Action>();
+                                               var packageActions = new List<Action>();
 
                                                if (OperatingSystem.IsWindows())
                                                {
-                                                   actions.Add(() => DoPackage("Calamari", "net40", nugetVersion));    
-                                                   actions.Add(() => DoPackage("Calamari", "net452", nugetVersion, "Cloud"));
+                                                   publishActions.Add(() => DoPublish(mainProject, net40, nugetVersion));
+                                                   packageActions.Add(() => DoPackage(mainProject, net40, nugetVersion));
+                                                   publishActions.Add(() => DoPublish(mainProject, net452, nugetVersion, "Cloud"));
+                                                   packageActions.Add(() => DoPackage(mainProject, net452, nugetVersion, "Cloud"));
                                                }
 
                                                // Create a portable .NET Core package
-                                               actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, "portable"));
+                                               publishActions.Add(() => DoPublish(mainProject, netcoreapp3_1, nugetVersion, "portable"));
+                                               packageActions.Add(() => DoPackage(mainProject, netcoreapp3_1, nugetVersion, "portable"));
 
                                                // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-                                               foreach(var rid in Solution?.GetProject("Calamari").GetRuntimeIdentifiers()!)
+                                               foreach(var rid in Solution?.GetProject(mainProject).GetRuntimeIdentifiers()!)
                                                {
-                                                   actions.Add(() => DoPackage("Calamari", "netcoreapp3.1", nugetVersion, rid));
+                                                   publishActions.Add(() => DoPublish(mainProject, netcoreapp3_1, nugetVersion, rid));
+                                                   packageActions.Add(() => DoPackage(mainProject, netcoreapp3_1, nugetVersion, rid));
                                                }
 
                                                var dotNetCorePackSettings = new DotNetPackSettings().SetConfiguration(Configuration)
@@ -187,12 +209,17 @@ class Build : NukeBuild
                                                var commonProjects = Directory.GetFiles(SourceDirectory, "*.Common.csproj", new EnumerationOptions{ RecurseSubdirectories = true});
                                                foreach(var project in commonProjects)
                                                {
-                                                   actions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
+                                                   packageActions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
                                                }
     
-                                               actions.Add(() => SignAndPack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings));
+                                               packageActions.Add(() => SignAndPack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings));
+
+                                               foreach (var publishAction in publishActions)
+                                               {
+                                                   publishAction();
+                                               }
     
-                                               await RunPackActions(actions);
+                                               await RunPackActions(packageActions);
                                            });
 
     Target PackTests => _ => _.DependsOn(Compile)
@@ -205,22 +232,36 @@ class Build : NukeBuild
     Target Pack => _ => _.DependsOn(PackBinaries)
                          .DependsOn(PackTests);
 
-    Target CopyToLocalPackages => _ => _
-                                      //TODO: What's the Nuke equiv of .WithCriteria(BuildSystem.IsLocalBuild)
-                                      .Executes(() =>
-                                                {
-                                                    Console.WriteLine("CopyToLocalPackages");
-                                                    //TODO:
-                                                });
+    Target CopyToLocalPackages => _ => _.Requires(() => IsLocalBuild)
+                                        .DependsOn(PackBinaries)
+                                        .Executes(() =>
+                                                  {
+                                                      Directory.CreateDirectory(LocalPackagesDir);
+                                                      foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg"))
+                                                          File.Copy(file, LocalPackagesDir / Path.GetFileName(file));
+                                                  });
 
-    Target SetOctopusServerVersion => _ => _
-                                          //TODO:     .WithCriteria(BuildSystem.IsLocalBuild)
-                                          //TODO:     .WithCriteria(setOctopusServerVersion)
-                                          .Executes(() =>
-                                                    {
-                                                        Console.WriteLine("SetOctopusServerVersion");
-                                                        //TODO:
-                                                    });
+    Target UpdateCalamariVersionOnOctopusServer => _ => _.Requires(() => SetOctopusServerVersion)
+                                                         .Requires(() => IsLocalBuild)
+                                                         .DependsOn(CopyToLocalPackages)
+                                                         .Executes(() =>
+                                                                   {
+                                                                       var serverProjectFile = Path.GetFullPath("../OctopusDeploy/source/Octopus.Server/Octopus.Server.csproj");
+                                                                       if (File.Exists(serverProjectFile))
+                                                                       {
+                                                                           Console.WriteLine("Setting Calamari version in Octopus Server " + 
+                                                                                             "project {0} to {1}", 
+                                                                                             serverProjectFile, NugetVersion.Value);
+                                                                           
+                                                                           SetOctopusServerCalamariVersion(serverProjectFile);
+                                                                       }
+                                                                       else 
+                                                                       {
+                                                                           Console.WriteLine("Could not set Calamari version in Octopus Server " + 
+                                                                                             "project {0} to {1} as could not find project file", 
+                                                                                             serverProjectFile, NugetVersion.Value);
+                                                                       }
+                                                                   });
 
     Target SetTeamCityVersion => _ => _.Executes(() =>
                                                  {
@@ -230,13 +271,13 @@ class Build : NukeBuild
 
     Target BuildLocal => _ => _.DependsOn(PackBinaries)
                                .DependsOn(CopyToLocalPackages)
-                               .DependsOn(SetOctopusServerVersion);
+                               .DependsOn(UpdateCalamariVersionOnOctopusServer);
 
 
     Target BuildCI => _ => _.DependsOn(SetTeamCityVersion)
                             .DependsOn(Pack)
                             .DependsOn(CopyToLocalPackages)
-                            .DependsOn(SetOctopusServerVersion);
+                            .DependsOn(UpdateCalamariVersionOnOctopusServer);
     private async Task RunPackActions(List<Action> actions) 
     {
         if (PackInParallel)
@@ -253,7 +294,7 @@ class Build : NukeBuild
         }
     }
 
-    private AbsolutePath DoPublish(string project, string framework, string version, string? runtimeId = null) 
+    AbsolutePath DoPublish(string project, string framework, string version, string? runtimeId = null) 
     {
         var publishedTo = PublishDirectory / project / framework;
         
@@ -267,7 +308,7 @@ class Build : NukeBuild
                             .SetConfiguration(Configuration)
                             .SetOutput(publishedTo)
                             .SetFramework(framework)
-                            .SetVersion(OctoVersionInfo?.FullSemVer)
+                            .SetVersion(NugetVersion.Value)
                             .SetVerbosity(BuildVerbosity)
                             .SetRuntime(runtimeId)
                             .SetVersion(version));
@@ -288,18 +329,18 @@ class Build : NukeBuild
 
         DotNetPack(dotNetCorePackSettings.SetProject(project));
     }
-    private void DoPackage(string project, string framework, string version, string? runtimeId = null)
+    void DoPackage(string project, string framework, string version, string? runtimeId = null)
     {
+        var publishedTo = PublishDirectory / project / framework;
         var projectDir = SourceDirectory / project;
         var packageId = $"{project}";
         var nugetPackProperties = new Dictionary<string, object>();
 
-        var publishedTo = DoPublish(project, framework, version, runtimeId);
-
-        if (!string.IsNullOrEmpty(runtimeId))
+        if (!runtimeId.IsNullOrEmpty())
         {
+            publishedTo /= runtimeId;
             packageId = $"{project}.{runtimeId}";
-            nugetPackProperties.Add("runtimeId", runtimeId);
+            nugetPackProperties.Add("runtimeId", runtimeId!);
         }
 
         SignAndTimestampBinaries(publishedTo);
@@ -314,7 +355,7 @@ class Build : NukeBuild
         NuGetTasks.NuGetPack(_ => _.SetBasePath(publishedTo)
                                    .SetOutputDirectory(ArtifactsDirectory)
                                    .SetTargetPath(nuspec)
-                                   .SetVersion(OctoVersionInfo?.FullSemVer)
+                                   .SetVersion(NugetVersion.Value)
                                    .SetVerbosity(NuGetVerbosity.Normal)
                                    .SetProperties(nugetPackProperties));
     }
@@ -467,5 +508,13 @@ class Build : NukeBuild
         }
     
         Console.WriteLine($"Finished timestamping {files.Count} files.");
+    }
+    
+    // Sets the Octopus.Server Calamari version property
+    void SetOctopusServerCalamariVersion(string projectFile)
+    {
+        var text = File.ReadAllText(projectFile);
+        text = Regex.Replace(text, @"<CalamariVersion>([\S])+<\/CalamariVersion>", $"<CalamariVersion>{NugetVersion.Value}</CalamariVersion>");
+        File.WriteAllText(projectFile, text);
     }
 }
