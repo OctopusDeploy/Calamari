@@ -6,7 +6,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Xml;
 using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
@@ -17,7 +16,6 @@ using Nuke.Common.Utilities.Collections;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.NuGet;
 using Nuke.Common.Tools.SignTool;
-using Serilog.Sinks.File;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
@@ -28,7 +26,20 @@ class Build : NukeBuild
     const string LinuxRuntime = "linux-x64";
     const string WindowsRuntime = "win-x64";
     const string CiBranchNameEnvVariable = "CALAMARI_CurrentBranch";
-    
+    const string RootProjectName = "Calamari";
+    static class Frameworks
+    {
+        public const string NetCoreApp31 = "netcoreapp3.1";
+        public const string Net40 = "net40";
+        public const string Net452 = "net452";
+    }
+
+    static class FixedRuntimes
+    {
+        public const string Cloud = "Cloud";
+        public const string Portable = "portable";
+    }
+
     readonly string[] TimestampUrls = new string[]
     {
         "http://timestamp.digicert.com?alg=sha256",
@@ -100,13 +111,14 @@ class Build : NukeBuild
     
     AbsolutePath LocalPackagesDir = RootDirectory / "../LocalPackages";
 
-    Lazy<string?> NugetVersion { get; } 
+    Lazy<string> NugetVersion { get; } 
 
     public Build()
     {
-        NugetVersion = new Lazy<string?>(() => AppendTimestamp 
-                                             ? $"{OctoVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}" 
-                                             : OctoVersionInfo?.NuGetVersion);
+        NugetVersion = new Lazy<string>(() => AppendTimestamp
+                                            ? $"{OctoVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
+                                            : OctoVersionInfo?.NuGetVersion 
+                                              ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version"));
     }
 
     public static int Main() => Execute<Build>(x => x.BuildLocal);
@@ -166,38 +178,43 @@ class Build : NukeBuild
                                                             .SetInformationalVersion(OctoVersionInfo?.InformationalVersion));
                                       });
 
-    Target PackBinaries => _ => _.DependsOn(Compile)
+    Target Publish => _ => _.DependsOn(Compile)
+                            .Executes(() =>
+                                      {
+                                          var nugetVersion = NugetVersion.Value;
+                                          if (OperatingSystem.IsWindows())
+                                          {
+                                              DoPublish(RootProjectName, Frameworks.Net40, nugetVersion);
+                                              DoPublish(RootProjectName, Frameworks.Net452, nugetVersion, FixedRuntimes.Cloud);
+                                          }
+
+                                          DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, FixedRuntimes.Portable);
+
+                                          // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
+                                          foreach (var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
+                                          {
+                                              DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid);
+                                          }
+                                      });
+
+    Target PackBinaries => _ => _.DependsOn(Publish)
                                  .Executes(async () =>
                                            {
-                                               const string netcoreapp3_1 = "netcoreapp3.1", 
-                                                            net40 = "net40", 
-                                                            net452 = "net452", 
-                                                            mainProject = "Calamari";
-
                                                var nugetVersion = NugetVersion.Value;
-                                               if (nugetVersion is null)
-                                                   throw new InvalidOperationException("Unable to get nugetVersion from OctoVersion.");
-
-                                               var publishActions = new List<Action>();
                                                var packageActions = new List<Action>();
-
                                                if (OperatingSystem.IsWindows())
                                                {
-                                                   publishActions.Add(() => DoPublish(mainProject, net40, nugetVersion));
-                                                   packageActions.Add(() => DoPackage(mainProject, net40, nugetVersion));
-                                                   publishActions.Add(() => DoPublish(mainProject, net452, nugetVersion, "Cloud"));
-                                                   packageActions.Add(() => DoPackage(mainProject, net452, nugetVersion, "Cloud"));
+                                                   packageActions.Add(() => DoPackage(RootProjectName, Frameworks.Net40, nugetVersion));
+                                                   packageActions.Add(() => DoPackage(RootProjectName, Frameworks.Net452, nugetVersion, FixedRuntimes.Cloud));
                                                }
 
                                                // Create a portable .NET Core package
-                                               publishActions.Add(() => DoPublish(mainProject, netcoreapp3_1, nugetVersion, "portable"));
-                                               packageActions.Add(() => DoPackage(mainProject, netcoreapp3_1, nugetVersion, "portable"));
+                                               packageActions.Add(() => DoPackage(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, FixedRuntimes.Portable));
 
                                                // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-                                               foreach(var rid in Solution?.GetProject(mainProject).GetRuntimeIdentifiers()!)
+                                               foreach(var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
                                                {
-                                                   publishActions.Add(() => DoPublish(mainProject, netcoreapp3_1, nugetVersion, rid));
-                                                   packageActions.Add(() => DoPackage(mainProject, netcoreapp3_1, nugetVersion, rid));
+                                                   packageActions.Add(() => DoPackage(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid));
                                                }
 
                                                var dotNetCorePackSettings = new DotNetPackSettings().SetConfiguration(Configuration)
@@ -214,11 +231,6 @@ class Build : NukeBuild
     
                                                packageActions.Add(() => SignAndPack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings));
 
-                                               foreach (var publishAction in publishActions)
-                                               {
-                                                   publishAction();
-                                               }
-    
                                                await RunPackActions(packageActions);
                                            });
 
