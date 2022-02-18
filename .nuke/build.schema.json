@@ -10,6 +10,26 @@
           "type": "boolean",
           "description": "Whether to auto-detect the branch name - this is okay for a local build, but should not be used under CI"
         },
+        "AzureKeyVaultAppId": {
+          "type": "string",
+          "description": "AzureKeyVaultAppId"
+        },
+        "AzureKeyVaultAppSecret": {
+          "type": "string",
+          "description": "AzureKeyVaultAppSecret"
+        },
+        "AzureKeyVaultCertificateName": {
+          "type": "string",
+          "description": "AzureKeyVaultCertificateName"
+        },
+        "AzureKeyVaultUrl": {
+          "type": "string",
+          "description": "AzureKeyVaultUrl"
+        },
+        "BuildVerbosity": {
+          "type": "string",
+          "description": "Build verbosity"
+        },
         "CALAMARI_CurrentBranch": {
           "type": "string",
           "description": "Branch name for Calamari to use to calculate the version number. Can be set via the environment variable CALAMARI_CurrentBranch"
@@ -54,6 +74,10 @@
           "type": "boolean",
           "description": "Disables displaying the NUKE logo"
         },
+        "PackInParallel": {
+          "type": "boolean",
+          "description": "Run packing step in parallel"
+        },
         "Partition": {
           "type": "string",
           "description": "Partition to use on CI"
@@ -72,6 +96,18 @@
         "Root": {
           "type": "string",
           "description": "Root directory during build execution"
+        },
+        "SignBinaries": {
+          "type": "boolean",
+          "description": "Sign Binaries"
+        },
+        "SigningCertificatePassword": {
+          "type": "string",
+          "description": "SigningCertificatePassword"
+        },
+        "SigningCertificatePath": {
+          "type": "string",
+          "description": "SigningCertificatePath"
         },
         "Skip": {
           "type": "array",
