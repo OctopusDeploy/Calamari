@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -143,8 +143,17 @@ namespace Calamari.Aws.Deployment.Conventions
             foreach (var result in results)
             {
                 if (!result.IsSuccess()) continue;
-                log.Info($"Saving object version id to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{result.BucketKey}]\"");
-                log.SetOutputVariableButDoNotAddToVariables($"Files[{result.BucketKey}]", result.Version);
+                var packageName = Path.GetFileName(deployment.PackageFilePath);
+                log.Info($"Saving bucket key to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Package.Key[{packageName}]\"");
+                log.SetOutputVariableButDoNotAddToVariables($"Package.Key[{packageName}]", result.BucketKey);
+                log.Info($"Saving object S3 URI to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Package.S3Uri[{packageName}]\"");
+                log.SetOutputVariableButDoNotAddToVariables($"Package.S3Uri[{packageName}]", $"s3://{result.BucketName}/{result.BucketKey}");
+                log.Info($"Saving object URI to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Package.Uri[{packageName}]\"");
+                log.SetOutputVariableButDoNotAddToVariables($"Package.Uri[{packageName}]", $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{result.BucketKey}");
+                log.Info($"Saving object ARN to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Package.Arn[{packageName}]\"");
+                log.SetOutputVariableButDoNotAddToVariables($"Package.Arn", $"arn:{(awsEnvironmentGeneration.AwsRegion.SystemName.Equals("cn-north-1") ? "aws-cn" : "aws")}:s3:::{result.BucketName}/{result.BucketKey}");
+                log.Info($"Saving object version id to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Package.ObjectVersion[{packageName}]\"");
+                log.SetOutputVariableButDoNotAddToVariables($"Package.ObjectVersion[{packageName}]", result.Version);
             }
         }
 
