@@ -115,7 +115,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 (await UploadAll(options, Factory, deployment)).Tee(responses =>
                 {
-                    SetOutputVariables(Factory, deployment, responses);
+                    SetOutputVariables(deployment, responses);
                 });
             }
             catch (AmazonS3Exception exception)
@@ -136,7 +136,7 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        private void SetOutputVariables(Func<AmazonS3Client> factory, RunningDeployment deployment, IEnumerable<S3UploadResult> results)
+        private void SetOutputVariables(RunningDeployment deployment, IEnumerable<S3UploadResult> results)
         {
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FilePath, deployment.PackageFilePath);
