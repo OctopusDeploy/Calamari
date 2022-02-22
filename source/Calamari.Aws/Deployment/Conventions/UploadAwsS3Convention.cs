@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -115,7 +115,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 (await UploadAll(options, Factory, deployment)).Tee(responses =>
                 {
-                    SetOutputVariables(deployment, responses);
+                    SetOutputVariables(Factory, deployment, responses);
                 });
             }
             catch (AmazonS3Exception exception)
@@ -136,7 +136,7 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        private void SetOutputVariables(RunningDeployment deployment, IEnumerable<S3UploadResult> results)
+        private void SetOutputVariables(Func<AmazonS3Client> factory, RunningDeployment deployment, IEnumerable<S3UploadResult> results)
         {
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FilePath, deployment.PackageFilePath);
@@ -150,8 +150,9 @@ namespace Calamari.Aws.Deployment.Conventions
                 log.SetOutputVariableButDoNotAddToVariables($"Package.S3Uri[{packageName}]", $"s3://{result.BucketName}/{result.BucketKey}");
                 log.Info($"Saving object URI to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Package.Uri[{packageName}]\"");
                 log.SetOutputVariableButDoNotAddToVariables($"Package.Uri[{packageName}]", $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{result.BucketKey}");
+                //  ARN format: `arn:aws:s3:::bucket-name/key` (Note: China (Beijing region (cn-north-1) uses `aws-cn` instead of `aws`)
                 log.Info($"Saving object ARN to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Package.Arn[{packageName}]\"");
-                log.SetOutputVariableButDoNotAddToVariables($"Package.Arn", $"arn:{(awsEnvironmentGeneration.AwsRegion.SystemName.Equals("cn-north-1") ? "aws-cn" : "aws")}:s3:::{result.BucketName}/{result.BucketKey}");
+                log.SetOutputVariableButDoNotAddToVariables($"Package.Arn[{packageName}]", $"arn:{(awsEnvironmentGeneration.AwsRegion.SystemName.Equals("cn-north-1") ? "aws-cn" : "aws")}:s3:::{result.BucketName}/{result.BucketKey}");
                 log.Info($"Saving object version id to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Package.ObjectVersion[{packageName}]\"");
                 log.SetOutputVariableButDoNotAddToVariables($"Package.ObjectVersion[{packageName}]", result.Version);
             }
