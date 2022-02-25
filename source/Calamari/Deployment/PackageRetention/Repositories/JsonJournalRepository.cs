@@ -17,10 +17,10 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         readonly string journalPath;
         readonly ILog log;
 
-        public JsonJournalRepository(ICalamariFileSystem fileSystem, string journalPath, ILog log)
+        public JsonJournalRepository(ICalamariFileSystem fileSystem, IJsonJournalPathProvider pathProvider, ILog log)
         {
             this.fileSystem = fileSystem;
-            this.journalPath = journalPath;
+            journalPath = pathProvider.GetJournalPath();
             this.log = log;
 
             Load();

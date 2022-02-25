@@ -1,13 +1,13 @@
 ﻿using System;
 using System.ComponentModel;
 using System.IO;
-using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
+using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
@@ -41,15 +41,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             return new PackageIdentity(new PackageId(packageId), version, new PackagePath($"C:\\{packageId}.{packageVersion}.zip"));
         }
 
-        [TestCase("PackageRetentionJournal.json", TestName = "CalamariPackageRetentionJournalPath is set to a non-null value")]
-        [TestCase(null, TestName = "CalamariPackageRetentionJournalPath is null; default to TentacleHome")]
-        public void WhenAJournalEntryIsCommittedAndRetrieved_ThenItShouldBeEquivalentToTheOriginal(string packageRetentionJournalPath)
+        [Test]
+        public void WhenAJournalEntryIsCommittedAndRetrieved_ThenItShouldBeEquivalentToTheOriginal()
         {
-            var journalPath = packageRetentionJournalPath == null ? null : Path.Combine(testDir, packageRetentionJournalPath);
-
-            var variables = new CalamariVariables();
-            variables.Set(KnownVariables.Calamari.PackageRetentionJournalPath, journalPath);
-            variables.Set(TentacleVariables.Agent.TentacleHome, testDir);
+            var journalPath = Path.Combine(testDir, "PackageRetentionJournal.json");
 
             var thePackage = CreatePackageIdentity("TestPackage", "0.0.1");
             var cacheAge = new CacheAge(10);
@@ -59,14 +54,12 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             journalEntry.AddLock(serverTaskId, cacheAge);
             journalEntry.AddUsage(serverTaskId, cacheAge);
 
-            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables, Substitute.For<ILog>());
+            var writeRepository = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), new StaticJsonJournalPathProvider(journalPath), Substitute.For<ILog>());
+            writeRepository.AddJournalEntry(journalEntry);
+            writeRepository.Commit();
 
-            var repository = repositoryFactory.CreateJournalRepository();
-            repository.AddJournalEntry(journalEntry);
-            repository.Commit();
-
-            var updated = repositoryFactory.CreateJournalRepository();
-            updated.TryGetJournalEntry(thePackage, out var retrieved).Should().BeTrue();
+            var readRepository = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), new StaticJsonJournalPathProvider(journalPath), Substitute.For<ILog>());
+            readRepository.TryGetJournalEntry(thePackage, out var retrieved).Should().BeTrue();
 
             retrieved.Package.Should().BeEquivalentTo(journalEntry.Package);
             retrieved.GetLockDetails().Should().BeEquivalentTo(journalEntry.GetLockDetails());
@@ -84,9 +77,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.Calamari.PackageRetentionJournalPath, journalPath);
 
-            var repositoryFactory = new JsonJournalRepositoryFactory(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), Substitute.For<ISemaphoreFactory>(), variables, Substitute.For<ILog>());
-
-            repositoryFactory.CreateJournalRepository();
+            new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), new StaticJsonJournalPathProvider(journalPath), Substitute.For<ILog>());
 
             Directory.GetFiles(testDir, "PackageRetentionJournal_*.json").Length.Should().Be(1);
         }
