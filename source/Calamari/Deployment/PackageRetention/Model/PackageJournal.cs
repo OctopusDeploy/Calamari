@@ -9,21 +9,21 @@ using Calamari.Deployment.PackageRetention.Repositories;
 
 namespace Calamari.Deployment.PackageRetention.Model
 {
-    public class Journal : IManagePackageCache
+    public class PackageJournal : IManagePackageCache
     {
-        readonly IJournalRepositoryFactory repositoryFactory;
+        readonly IJournalRepository journalRepository;
         readonly IRetentionAlgorithm retentionAlgorithm;
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly IFreeSpaceChecker freeSpaceChecker;
 
-        public Journal(IJournalRepositoryFactory repositoryFactory,
-                       ILog log,
-                       ICalamariFileSystem fileSystem,
-                       IRetentionAlgorithm retentionAlgorithm,
-                       IFreeSpaceChecker freeSpaceChecker)
+        public PackageJournal(IJournalRepository journalRepository,
+                              ILog log,
+                              ICalamariFileSystem fileSystem,
+                              IRetentionAlgorithm retentionAlgorithm,
+                              IFreeSpaceChecker freeSpaceChecker)
         {
-            this.repositoryFactory = repositoryFactory;
+            this.journalRepository = journalRepository;
             this.log = log;
             this.fileSystem = fileSystem;
             this.retentionAlgorithm = retentionAlgorithm;
@@ -34,10 +34,9 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
-                var repository = repositoryFactory.CreateJournalRepository();
-                repository.Cache.IncrementCacheAge();
-                var age = repository.Cache.CacheAge;
-                if (repository.TryGetJournalEntry(package, out var entry))
+                journalRepository.Cache.IncrementCacheAge();
+                var age = journalRepository.Cache.CacheAge;
+                if (journalRepository.TryGetJournalEntry(package, out var entry))
                 {
                     entry.AddUsage(deploymentTaskId, age);
                     entry.AddLock(deploymentTaskId, age);
@@ -47,10 +46,10 @@ namespace Calamari.Deployment.PackageRetention.Model
                     entry = new JournalEntry(package, packageSizeBytes);
                     entry.AddUsage(deploymentTaskId, age);
                     entry.AddLock(deploymentTaskId, age);
-                    repository.AddJournalEntry(entry);
+                    journalRepository.AddJournalEntry(entry);
                 }
                 log.Verbose($"Registered package use/lock for {package} and task {deploymentTaskId}");
-                repository.Commit();
+                journalRepository.Commit();
             }
             catch (Exception ex)
             {
@@ -65,11 +64,10 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 log.Verbose($"Deregistering package lock for {package} and task {deploymentTaskId}");
 
-                var repository = repositoryFactory.CreateJournalRepository();
-                if (repository.TryGetJournalEntry(package, out var entry))
+                if (journalRepository.TryGetJournalEntry(package, out var entry))
                 {
                     entry.RemoveLock(deploymentTaskId);
-                    repository.Commit();
+                    journalRepository.Commit();
 
                     log.Verbose($"Successfully deregistered package lock for {package} and task {deploymentTaskId}");
                 }
@@ -83,14 +81,12 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public void RemoveAllLocks(ServerTaskId serverTaskId)
         {
-            var repository = repositoryFactory.CreateJournalRepository();
-            repository.RemoveAllLocks(serverTaskId);
+            journalRepository.RemoveAllLocks(serverTaskId);
         }
 
         public bool HasLock(PackageIdentity package)
         {
-            var repository = repositoryFactory.CreateJournalRepository();
-            return repository.TryGetJournalEntry(package, out var entry)
+            return journalRepository.TryGetJournalEntry(package, out var entry)
                    && entry.HasLock();
         }
 
@@ -99,7 +95,6 @@ namespace Calamari.Deployment.PackageRetention.Model
             log.Verbose($"Applying package retention for folder '{directory}'");
             try
             {
-                var repository = repositoryFactory.CreateJournalRepository();
                 var cacheSpaceRequired = 0L;
                 if (cacheSizeInMegaBytes > 0)
                 {
@@ -112,7 +107,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                 }
                 var requiredSpace = Math.Max(cacheSpaceRequired, (long)freeSpaceChecker.GetSpaceRequiredToBeFreed(directory));
                 log.Verbose($"Total space required to be freed is {requiredSpace / 1024D / 1024:N} MB.");
-                var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(repository.GetAllJournalEntries(), requiredSpace);
+                var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalRepository.GetAllJournalEntries(), requiredSpace);
                 foreach (var package in packagesToRemove)
                 {
                     if (string.IsNullOrWhiteSpace(package.Path.Value) || !fileSystem.FileExists(package.Path.Value))
@@ -124,7 +119,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                     Log.Info($"Removing package file '{package.Path}'");
                     fileSystem.DeleteFile(package.Path.Value, FailureOptions.IgnoreFailure);
 
-                    repository.RemovePackageEntry(package);
+                    journalRepository.RemovePackageEntry(package);
                 }
             }
             catch (Exception ex)
@@ -135,16 +130,14 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public IEnumerable<IUsageDetails> GetUsage(PackageIdentity package)
         {
-            var repository = repositoryFactory.CreateJournalRepository();
-            return repository.TryGetJournalEntry(package, out var entry)
+            return journalRepository.TryGetJournalEntry(package, out var entry)
                 ? entry.GetUsageDetails()
                 : new UsageDetails[0];
         }
 
         long GetCacheSpaceRemaining(long cacheSize)
         {
-            var repository = repositoryFactory.CreateJournalRepository();
-            return cacheSize - repository.GetAllJournalEntries().Sum(e => Math.Max(e.FileSizeBytes, 0));
+            return cacheSize - journalRepository.GetAllJournalEntries().Sum(e => Math.Max(e.FileSizeBytes, 0));
         }
 
         public int GetUsageCount(PackageIdentity package)
@@ -156,8 +149,7 @@ namespace Calamari.Deployment.PackageRetention.Model
         {
             try
             {
-                var repository = repositoryFactory.CreateJournalRepository();
-                foreach (var entry in repository.GetAllJournalEntries())
+                foreach (var entry in journalRepository.GetAllJournalEntries())
                 {
                     var locks = entry.GetLockDetails();
                     var staleLocks = locks.Where(u => u.DateTime.Add(timeBeforeExpiration) <= DateTime.Now);

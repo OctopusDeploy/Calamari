@@ -68,8 +68,8 @@ namespace Calamari
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
 
             builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
-            builder.RegisterType<JsonJournalRepositoryFactory>().As<IJournalRepositoryFactory>();
-            builder.RegisterType<Journal>().As<IManagePackageCache>();
+            builder.RegisterType<VariableJsonJournalPathProvider>().As<IJsonJournalPathProvider>();
+            builder.RegisterType<PackageJournal>().As<IManagePackageCache>().SingleInstance();
             builder.RegisterType<LeastFrequentlyUsedWithAgingCacheAlgorithm>().As<IRetentionAlgorithm>();
 
             TypeDescriptor.AddAttributes(typeof(ServerTaskId), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskId>)));
