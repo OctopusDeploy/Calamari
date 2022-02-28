@@ -19,6 +19,7 @@ namespace Calamari.Aws.Integration.S3
             return !Response.None();
         }
 
+        public string BucketName => Request.BucketName;
         public string BucketKey => Request.Key;
 
         /// <summary>
