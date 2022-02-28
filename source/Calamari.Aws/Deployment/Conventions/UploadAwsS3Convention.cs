@@ -115,7 +115,19 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 (await UploadAll(options, Factory, deployment)).Tee(responses =>
                 {
-                    SetOutputVariables(deployment, responses);
+                    var results = responses.Where(z => z.IsSuccess()).ToArray();
+                    if (targetMode == S3TargetMode.EntirePackage && results.FirstOrDefault() != null)
+                    {
+                        SetOutputVariables(deployment, results.FirstOrDefault());
+                    } 
+                    else if (targetMode == S3TargetMode.FileSelections)
+                    {
+                        foreach (var result in results)
+                        {
+                            var fileName = Path.GetFileName(result.BucketKey);
+                            SetOutputVariables(deployment, result, fileName);
+                        }
+                    }
                 });
             }
             catch (AmazonS3Exception exception)
@@ -136,48 +148,39 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        private void SetOutputVariables(RunningDeployment deployment, IEnumerable<S3UploadResult> results)
+        void SetOutputVariables(RunningDeployment deployment, S3UploadResult result, string index = "")
         {
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FilePath, deployment.PackageFilePath);
-            var successfulResults = results.Where(z => z.IsSuccess()).ToArray();
             var actionName = deployment.Variables["Octopus.Action.Name"];
-            if (successfulResults.Length == 1)
-            {
-                log.Info($"Saving bucket key to variable \"Octopus.Action[{actionName}].Output.Package.Key\"");
-                log.SetOutputVariableButDoNotAddToVariables($"Package.Key", successfulResults[0].BucketKey);
-                log.Info($"Saving object S3 URI to variable \"Octopus.Action[{actionName}].Output.Package.S3Uri\"");
-                log.SetOutputVariableButDoNotAddToVariables($"Package.S3Uri", $"s3://{successfulResults[0].BucketName}/{successfulResults[0].BucketKey}");
-                log.Info($"Saving object URI to variable \"Octopus.Action[{actionName}].Output.Package.Uri\"");
-                log.SetOutputVariableButDoNotAddToVariables($"Package.Uri", $"https://{successfulResults[0].BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{successfulResults[0].BucketName}");
-                //  ARN format: `arn:aws:s3:::bucket-name/key` (Note: China (Beijing region (cn-north-1) uses `aws-cn` instead of `aws`)
-                log.Info($"Saving object ARN to variable \"Octopus.Action[{actionName}].Output.Package.Arn\"");
-                log.SetOutputVariableButDoNotAddToVariables($"Package.Arn", $"arn:{(awsEnvironmentGeneration.AwsRegion.SystemName.Equals("cn-north-1") ? "aws-cn" : "aws")}:s3:::{successfulResults[0].BucketName}/{successfulResults[0].BucketKey}");
-                log.Info($"Saving object version id to variable \"Octopus.Action[{actionName}].Output.Package.ObjectVersion\"");
-                log.SetOutputVariableButDoNotAddToVariables($"Package.ObjectVersion", successfulResults[0].Version);
-                log.Info($"Saving object version id to variable \"Octopus.Action[{actionName}].Output.Files[{successfulResults[0].BucketKey}]\"");
-                log.SetOutputVariableButDoNotAddToVariables($"Files[{successfulResults[0].BucketKey}]", successfulResults[0].Version);
-            }
-            else
-            {
-                foreach (var result in successfulResults)
-                {
-                    var fileName = Path.GetFileName(result.BucketKey);
-                    log.Info($"Saving bucket key to variable \"Octopus.Action[{actionName}].Output.Package.Key[{fileName}]\"");
-                    log.SetOutputVariableButDoNotAddToVariables($"Package.Key[{fileName}]", result.BucketKey);
-                    log.Info($"Saving object S3 URI to variable \"Octopus.Action[{actionName}].Output.Package.S3Uri[{fileName}]\"");
-                    log.SetOutputVariableButDoNotAddToVariables($"Package.S3Uri[{fileName}]", $"s3://{result.BucketName}/{result.BucketKey}");
-                    log.Info($"Saving object URI to variable \"Octopus.Action[{actionName}].Output.Package.Uri[{fileName}]\"");
-                    log.SetOutputVariableButDoNotAddToVariables($"Package.Uri[{fileName}]", $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{result.BucketKey}");
-                    //  ARN format: `arn:aws:s3:::bucket-name/key` (Note: China (Beijing region (cn-north-1) uses `aws-cn` instead of `aws`)
-                    log.Info($"Saving object ARN to variable \"Octopus.Action[{actionName}].Output.Package.Arn[{fileName}]\"");
-                    log.SetOutputVariableButDoNotAddToVariables($"Package.Arn[{fileName}]", $"arn:{(awsEnvironmentGeneration.AwsRegion.SystemName.Equals("cn-north-1") ? "aws-cn" : "aws")}:s3:::{result.BucketName}/{result.BucketKey}");
-                    log.Info($"Saving object version id to variable \"Octopus.Action[{actionName}].Output.Package.ObjectVersion[{fileName}]\"");
-                    log.SetOutputVariableButDoNotAddToVariables($"Package.ObjectVersion[{fileName}]", result.Version);
-                    log.Info($"Saving object version id to variable \"Octopus.Action[{actionName}].Output.Files[{result.BucketKey}]\"");
-                    log.SetOutputVariableButDoNotAddToVariables($"Files[{result.BucketKey}]", result.Version);
-                }
-            }
+            log.Info($"Saving object version id to variable \"Octopus.Action[{actionName}].Output.Files[{result.BucketKey}]\"");
+            log.SetOutputVariableButDoNotAddToVariables($"Files[{result.BucketKey}]", result.Version);
+            
+            var packageKeyVariableName = index.IsNullOrEmpty() ? "Package.Key" : $"Package.Key[{index}]";
+            var packageKeyVariableValue = result.BucketKey;
+            log.Info($"Saving bucket key to variable \"Octopus.Action[{actionName}].Output.{packageKeyVariableName}\"");
+            log.SetOutputVariableButDoNotAddToVariables(packageKeyVariableName, packageKeyVariableValue);
+            
+            var packageS3UriVariableName = index.IsNullOrEmpty() ? "Package.S3Uri" : $"Package.S3Uri[{index}]";
+            var packageS3UriVariableValue = $"s3://{result.BucketName}/{result.BucketKey}";
+            log.Info($"Saving object S3 URI to variable \"Octopus.Action[{actionName}].Output.{packageS3UriVariableName}\"");
+            log.SetOutputVariableButDoNotAddToVariables(packageS3UriVariableName, packageS3UriVariableValue);
+            
+            var packageUriVariableName = index.IsNullOrEmpty() ? "Package.Uri" : $"Package.Uri[{index}]";
+            var packageUriVariableValue = $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{result.BucketName}";
+            log.Info($"Saving object URI to variable \"Octopus.Action[{actionName}].Output.{packageUriVariableName}\"");
+            log.SetOutputVariableButDoNotAddToVariables(packageUriVariableName, packageUriVariableValue);
+            
+            //  ARN format: `arn:aws:s3:::bucket-name/key` (Note: China (Beijing region (cn-north-1) uses `aws-cn` instead of `aws`)
+            var packageArnVariableName = index.IsNullOrEmpty() ? "Package.Arn" : $"Package.Arn[{index}]";
+            var packageArnVariableValue = $"arn:{(awsEnvironmentGeneration.AwsRegion.SystemName.Equals("cn-north-1") ? "aws-cn" : "aws")}:s3:::{result.BucketName}/{result.BucketKey}";
+            log.Info($"Saving object ARN to variable \"Octopus.Action[{actionName}].Output.{packageArnVariableName}\"");
+            log.SetOutputVariableButDoNotAddToVariables(packageArnVariableName, packageArnVariableValue);
+            
+            var packageObjectVersionVariableName = index.IsNullOrEmpty() ? "Package.ObjectVersion" : $"Package.ObjectVersion[{index}]";
+            var packageObjectVersionVariableValue = result.Version;
+            log.Info($"Saving object version id to variable \"Octopus.Action[{actionName}].Output.{packageObjectVersionVariableName}\"");
+            log.SetOutputVariableButDoNotAddToVariables(packageObjectVersionVariableName, packageObjectVersionVariableValue);
         }
 
         private static void ThrowInvalidFileUpload(Exception exception, string message)
