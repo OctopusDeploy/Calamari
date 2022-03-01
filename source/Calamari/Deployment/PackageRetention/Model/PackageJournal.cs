@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -16,40 +16,47 @@ namespace Calamari.Deployment.PackageRetention.Model
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly IFreeSpaceChecker freeSpaceChecker;
+        readonly ISemaphoreFactory semaphoreFactory;
 
         public PackageJournal(IJournalRepository journalRepository,
                               ILog log,
                               ICalamariFileSystem fileSystem,
                               IRetentionAlgorithm retentionAlgorithm,
-                              IFreeSpaceChecker freeSpaceChecker)
+                              IFreeSpaceChecker freeSpaceChecker,
+                              ISemaphoreFactory semaphoreFactory)
         {
             this.journalRepository = journalRepository;
             this.log = log;
             this.fileSystem = fileSystem;
             this.retentionAlgorithm = retentionAlgorithm;
             this.freeSpaceChecker = freeSpaceChecker;
+            this.semaphoreFactory = semaphoreFactory;
         }
 
         public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId, long packageSizeBytes)
         {
             try
             {
-                journalRepository.Cache.IncrementCacheAge();
-                var age = journalRepository.Cache.CacheAge;
-                if (journalRepository.TryGetJournalEntry(package, out var entry))
+                using (AcquireSemaphore())
                 {
-                    entry.AddUsage(deploymentTaskId, age);
-                    entry.AddLock(deploymentTaskId, age);
+                    journalRepository.Cache.IncrementCacheAge();
+                    var age = journalRepository.Cache.CacheAge;
+                    if (journalRepository.TryGetJournalEntry(package, out var entry))
+                    {
+                        entry.AddUsage(deploymentTaskId, age);
+                        entry.AddLock(deploymentTaskId, age);
+                    }
+                    else
+                    {
+                        entry = new JournalEntry(package, packageSizeBytes);
+                        entry.AddUsage(deploymentTaskId, age);
+                        entry.AddLock(deploymentTaskId, age);
+                        journalRepository.AddJournalEntry(entry);
+                    }
+
+                    log.Verbose($"Registered package use/lock for {package} and task {deploymentTaskId}");
+                    journalRepository.Commit();
                 }
-                else
-                {
-                    entry = new JournalEntry(package, packageSizeBytes);
-                    entry.AddUsage(deploymentTaskId, age);
-                    entry.AddLock(deploymentTaskId, age);
-                    journalRepository.AddJournalEntry(entry);
-                }
-                log.Verbose($"Registered package use/lock for {package} and task {deploymentTaskId}");
-                journalRepository.Commit();
             }
             catch (Exception ex)
             {
@@ -58,36 +65,14 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public void DeregisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId)
-        {
-            try
-            {
-                log.Verbose($"Deregistering package lock for {package} and task {deploymentTaskId}");
-
-                if (journalRepository.TryGetJournalEntry(package, out var entry))
-                {
-                    entry.RemoveLock(deploymentTaskId);
-                    journalRepository.Commit();
-
-                    log.Verbose($"Successfully deregistered package lock for {package} and task {deploymentTaskId}");
-                }
-            }
-            catch (Exception ex)
-            {
-                //We need to ensure that an issue with the journal doesn't interfere with the deployment.
-                log.Info($"Unable to deregister package use for retention.{Environment.NewLine}{ex.ToString()}");
-            }
-        }
-
         public void RemoveAllLocks(ServerTaskId serverTaskId)
         {
-            journalRepository.RemoveAllLocks(serverTaskId);
-        }
-
-        public bool HasLock(PackageIdentity package)
-        {
-            return journalRepository.TryGetJournalEntry(package, out var entry)
-                   && entry.HasLock();
+            using (AcquireSemaphore())
+            {
+                log.Verbose($"Releasing package locks for task {serverTaskId}");
+                journalRepository.RemoveAllLocks(serverTaskId);
+                journalRepository.Commit();
+            }
         }
 
         public void ApplyRetention(string directory, int cacheSizeInMegaBytes)
@@ -95,31 +80,36 @@ namespace Calamari.Deployment.PackageRetention.Model
             log.Verbose($"Applying package retention for folder '{directory}'");
             try
             {
-                var cacheSpaceRequired = 0L;
-                if (cacheSizeInMegaBytes > 0)
+                using (AcquireSemaphore())
                 {
-                    var cacheSizeBytes = (long)Math.Round((decimal)(cacheSizeInMegaBytes * 1024 * 1024));
-                    var cacheSpaceRemaining = GetCacheSpaceRemaining(cacheSizeBytes);
-                    var requiredSpaceInBytes = (long)freeSpaceChecker.GetRequiredSpaceInBytes();
-                    cacheSpaceRequired = Math.Max(0, requiredSpaceInBytes - cacheSpaceRemaining);
-
-                    log.Verbose($"Cache size is {cacheSizeInMegaBytes} MB, remaining space is {cacheSpaceRemaining / 1024D / 1024D:N} MB, with {cacheSpaceRequired / 1024D / 1024:N} MB required to be freed.");
-                }
-                var requiredSpace = Math.Max(cacheSpaceRequired, (long)freeSpaceChecker.GetSpaceRequiredToBeFreed(directory));
-                log.Verbose($"Total space required to be freed is {requiredSpace / 1024D / 1024:N} MB.");
-                var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalRepository.GetAllJournalEntries(), requiredSpace);
-                foreach (var package in packagesToRemove)
-                {
-                    if (string.IsNullOrWhiteSpace(package.Path.Value) || !fileSystem.FileExists(package.Path.Value))
+                    var cacheSpaceRequired = 0L;
+                    if (cacheSizeInMegaBytes > 0)
                     {
-                        log.Info($"Package at {package?.Path} not found.");
-                        continue;
+                        var cacheSizeBytes = (long)Math.Round((decimal)(cacheSizeInMegaBytes * 1024 * 1024));
+                        var cacheSpaceRemaining = cacheSizeBytes - journalRepository.GetAllJournalEntries().Sum(e => Math.Max(e.FileSizeBytes, 0));
+                        var requiredSpaceInBytes = (long)freeSpaceChecker.GetRequiredSpaceInBytes();
+                        cacheSpaceRequired = Math.Max(0, requiredSpaceInBytes - cacheSpaceRemaining);
+
+                        log.Verbose($"Cache size is {cacheSizeInMegaBytes} MB, remaining space is {cacheSpaceRemaining / 1024D / 1024D:N} MB, with {cacheSpaceRequired / 1024D / 1024:N} MB required to be freed.");
                     }
 
-                    Log.Info($"Removing package file '{package.Path}'");
-                    fileSystem.DeleteFile(package.Path.Value, FailureOptions.IgnoreFailure);
+                    var requiredSpace = Math.Max(cacheSpaceRequired, (long)freeSpaceChecker.GetSpaceRequiredToBeFreed(directory));
+                    log.Verbose($"Total space required to be freed is {requiredSpace / 1024D / 1024:N} MB.");
+                    var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalRepository.GetAllJournalEntries(), requiredSpace);
+                    foreach (var package in packagesToRemove)
+                    {
+                        if (string.IsNullOrWhiteSpace(package.Path.Value) || !fileSystem.FileExists(package.Path.Value))
+                        {
+                            log.Info($"Package at {package?.Path} not found.");
+                            continue;
+                        }
 
-                    journalRepository.RemovePackageEntry(package);
+                        Log.Info($"Removing package file '{package.Path}'");
+                        fileSystem.DeleteFile(package.Path.Value, FailureOptions.IgnoreFailure);
+
+                        journalRepository.RemovePackageEntry(package);
+                    }
+                    journalRepository.Commit();
                 }
             }
             catch (Exception ex)
@@ -128,42 +118,34 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public IEnumerable<IUsageDetails> GetUsage(PackageIdentity package)
-        {
-            return journalRepository.TryGetJournalEntry(package, out var entry)
-                ? entry.GetUsageDetails()
-                : new UsageDetails[0];
-        }
-
-        long GetCacheSpaceRemaining(long cacheSize)
-        {
-            return cacheSize - journalRepository.GetAllJournalEntries().Sum(e => Math.Max(e.FileSizeBytes, 0));
-        }
-
-        public int GetUsageCount(PackageIdentity package)
-        {
-            return GetUsage(package).Count();
-        }
-
         public void ExpireStaleLocks(TimeSpan timeBeforeExpiration)
         {
             try
             {
-                foreach (var entry in journalRepository.GetAllJournalEntries())
+                using (AcquireSemaphore())
                 {
-                    var locks = entry.GetLockDetails();
-                    var staleLocks = locks.Where(u => u.DateTime.Add(timeBeforeExpiration) <= DateTime.Now);
-
-                    foreach (var staleLock in staleLocks)
+                    foreach (var entry in journalRepository.GetAllJournalEntries())
                     {
-                        entry.RemoveLock(staleLock.DeploymentTaskId);
+                        var locks = entry.GetLockDetails();
+                        var staleLocks = locks.Where(u => u.DateTime.Add(timeBeforeExpiration) <= DateTime.Now);
+
+                        foreach (var staleLock in staleLocks)
+                        {
+                            entry.RemoveLock(staleLock.DeploymentTaskId);
+                        }
                     }
+                    journalRepository.Commit();
                 }
             }
             catch (Exception ex)
             {
                 log.Info($"Unable to expire stale package locks.{Environment.NewLine}{ex.ToString()}");
             }
+        }
+
+        IDisposable AcquireSemaphore()
+        {
+            return semaphoreFactory.Acquire(nameof(PackageJournal), "Another process is using the package journal");
         }
     }
 }

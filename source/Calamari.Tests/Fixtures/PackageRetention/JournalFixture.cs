@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
+using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using FluentAssertions;
@@ -23,22 +25,25 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageJournal");
         static readonly string PackageDirectory = Path.Combine(TentacleHome, "Files");
 
+        InMemoryJournalRepository journalRepository;
         PackageJournal packageJournal;
         IVariables variables;
+
         [SetUp]
         public void Setup()
         {
             variables = new CalamariVariables();
             variables.Set(KnownVariables.Calamari.EnablePackageRetention, bool.TrueString);
             variables.Set(TentacleVariables.Agent.TentacleHome, "SomeDirectory");
-
+            journalRepository = new InMemoryJournalRepository();
             packageJournal = new PackageJournal(
-                                  new InMemoryJournalRepository(),
-                                  Substitute.For<ILog>(),
-                                  Substitute.For<ICalamariFileSystem>(),
-                                  Substitute.For<IRetentionAlgorithm>(),
-                                  Substitute.For<IFreeSpaceChecker>()
-                                 );
+                                                journalRepository,
+                                                Substitute.For<ILog>(),
+                                                Substitute.For<ICalamariFileSystem>(),
+                                                Substitute.For<IRetentionAlgorithm>(),
+                                                Substitute.For<IFreeSpaceChecker>(),
+                                                Substitute.For<ISemaphoreFactory>()
+                                               );
         }
 
         PackageIdentity CreatePackageIdentity(string packageId, string packageVersion)
@@ -56,7 +61,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             packageJournal.RegisterPackageUse(thePackage, theDeployment, 1);
 
-            Assert.IsTrue(packageJournal.HasLock(thePackage));
+            Assert.IsTrue(journalRepository.HasLock(thePackage));
         }
 
         [Test]
@@ -66,9 +71,9 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var theDeployment = new ServerTaskId("Deployment-1");
 
             packageJournal.RegisterPackageUse(thePackage, theDeployment, 1);
-            packageJournal.DeregisterPackageUse(thePackage, theDeployment);
+            packageJournal.RemoveAllLocks(theDeployment);
 
-            Assert.IsFalse(packageJournal.HasLock(thePackage));
+            Assert.IsFalse(journalRepository.HasLock(thePackage));
         }
 
         [Test]
@@ -80,9 +85,9 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             packageJournal.RegisterPackageUse(thePackage, deploymentOne, 1);
             packageJournal.RegisterPackageUse(thePackage, deploymentTwo, 1);
-            packageJournal.DeregisterPackageUse(thePackage, deploymentOne);
+            packageJournal.RemoveAllLocks(deploymentOne);
 
-            Assert.IsTrue(packageJournal.HasLock(thePackage));
+            Assert.IsTrue(journalRepository.HasLock(thePackage));
         }
 
         [Test]
@@ -94,10 +99,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             packageJournal.RegisterPackageUse(thePackage, deploymentOne, 1);
             packageJournal.RegisterPackageUse(thePackage, deploymentTwo, 1);
-            packageJournal.DeregisterPackageUse(thePackage, deploymentOne);
-            packageJournal.DeregisterPackageUse(thePackage, deploymentTwo);
+            packageJournal.RemoveAllLocks(deploymentOne);
+            packageJournal.RemoveAllLocks(deploymentTwo);
 
-            Assert.IsFalse(packageJournal.HasLock(thePackage));
+            Assert.IsFalse(journalRepository.HasLock(thePackage));
         }
 
         [Test]
@@ -108,7 +113,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             packageJournal.RegisterPackageUse(thePackage, deploymentOne, 1);
 
-            Assert.AreEqual(1, packageJournal.GetUsage(thePackage).Count());
+            Assert.AreEqual(1, journalRepository.GetUsage(thePackage).Count());
         }
 
         [Test]
@@ -121,8 +126,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             packageJournal.RegisterPackageUse(package1, theDeployment, 1);
             packageJournal.RegisterPackageUse(package2, theDeployment, 1);
 
-            Assert.AreEqual(1, packageJournal.GetUsage(package1).Count());
-            Assert.AreEqual(1, packageJournal.GetUsage(package2).Count());
+            Assert.AreEqual(1, journalRepository.GetUsage(package1).Count());
+            Assert.AreEqual(1, journalRepository.GetUsage(package2).Count());
         }
 
         [Test]
@@ -135,7 +140,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             packageJournal.RegisterPackageUse(thePackage, deploymentOne, 1);
             packageJournal.RegisterPackageUse(thePackage, deploymentTwo, 1);
 
-            Assert.AreEqual(2, packageJournal.GetUsage(thePackage).Count());
+            Assert.AreEqual(2, journalRepository.GetUsage(thePackage).Count());
         }
 
         [Test]
@@ -145,9 +150,9 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var deploymentOne = new ServerTaskId("Deployment-1");
 
             packageJournal.RegisterPackageUse(thePackage, deploymentOne, 1);
-            packageJournal.DeregisterPackageUse(thePackage, deploymentOne);
+            packageJournal.RemoveAllLocks(deploymentOne);
 
-            Assert.AreEqual(1, packageJournal.GetUsage(thePackage).Count());
+            Assert.AreEqual(1, journalRepository.GetUsage(thePackage).Count());
         }
 
         [Test]
@@ -161,16 +166,18 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.FileExists(packageOne.Path.Value).Returns(true);
 
-            var thisJournal = new PackageJournal(new InMemoryJournalRepository(),
-                                          Substitute.For<ILog>(),
-                                          fileSystem,
-                                          retentionAlgorithm,
-                                          Substitute.For<IFreeSpaceChecker>());
+            var thisRepository = new InMemoryJournalRepository();
+            var thisJournal = new PackageJournal(thisRepository,
+                                                 Substitute.For<ILog>(),
+                                                 fileSystem,
+                                                 retentionAlgorithm,
+                                                 Substitute.For<IFreeSpaceChecker>(),
+                                                 Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(packageOne, new ServerTaskId("Deployment-1"), 1000);
             thisJournal.ApplyRetention(PackageDirectory, 0);
 
-            thisJournal.GetUsage(packageOne).Should().BeEmpty();
+            thisRepository.GetUsage(packageOne).Should().BeEmpty();
             fileSystem.Received().DeleteFile(packageOne.Path.Value, FailureOptions.IgnoreFailure);
         }
 
@@ -191,16 +198,18 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                    return true;
                                });
 
-            var thisJournal = new PackageJournal(new InMemoryJournalRepository(),
-                                          Substitute.For<ILog>(),
-                                          fileSystem,
-                                          retentionAlgorithm,
-                                          Substitute.For<IFreeSpaceChecker>());
+            var thisRepository = new InMemoryJournalRepository();
+            var thisJournal = new PackageJournal(thisRepository,
+                                                 Substitute.For<ILog>(),
+                                                 fileSystem,
+                                                 retentionAlgorithm,
+                                                 Substitute.For<IFreeSpaceChecker>(),
+                                                 Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
             thisJournal.ApplyRetention(PackageDirectory, 1);
 
-            thisJournal.GetUsage(existingPackage).Should().BeEmpty();
+            thisRepository.GetUsage(existingPackage).Should().BeEmpty();
             fileSystem.Received().DeleteFile(existingPackage.Path.Value, FailureOptions.IgnoreFailure);
         }
 
@@ -221,17 +230,18 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                    return true;
                                });
 
-
-            var thisJournal = new PackageJournal(new InMemoryJournalRepository(),
-                                          Substitute.For<ILog>(),
-                                          fileSystem,
-                                          retentionAlgorithm,
-                                          Substitute.For<IFreeSpaceChecker>());
+            var thisRepository = new InMemoryJournalRepository();
+            var thisJournal = new PackageJournal(thisRepository,
+                                                 Substitute.For<ILog>(),
+                                                 fileSystem,
+                                                 retentionAlgorithm,
+                                                 Substitute.For<IFreeSpaceChecker>(),
+                                                 Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
             thisJournal.ApplyRetention(PackageDirectory, 10);
 
-            thisJournal.GetUsage(existingPackage).Should().BeEmpty();
+            thisRepository.GetUsage(existingPackage).Should().BeEmpty();
             fileSystem.Received().DeleteFile(existingPackage.Path.Value, FailureOptions.IgnoreFailure);
         }
 
@@ -253,13 +263,14 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             };
 
             var testJournal = new PackageJournal(new InMemoryJournalRepository(journalEntries),
-                                          Substitute.For<ILog>(),
-                                          Substitute.For<ICalamariFileSystem>(),
-                                          Substitute.For<IRetentionAlgorithm>(),
-                                          Substitute.For<IFreeSpaceChecker>());
+                                                 Substitute.For<ILog>(),
+                                                 Substitute.For<ICalamariFileSystem>(),
+                                                 Substitute.For<IRetentionAlgorithm>(),
+                                                 Substitute.For<IFreeSpaceChecker>(),
+                                                 Substitute.For<ISemaphoreFactory>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
-            Assert.IsFalse(testJournal.HasLock(thePackage));
+            Assert.IsFalse(journalRepository.HasLock(thePackage));
         }
 
         [Test]
@@ -287,15 +298,17 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                 { packageTwo, packageTwoJournalEntry }
             };
 
-            var testJournal = new PackageJournal(new InMemoryJournalRepository(journalEntries),
-                                          Substitute.For<ILog>(),
-                                          Substitute.For<ICalamariFileSystem>(),
-                                          Substitute.For<IRetentionAlgorithm>(),
-                                          Substitute.For<IFreeSpaceChecker>());
+            var testJournalRepository = new InMemoryJournalRepository(journalEntries);
+            var testJournal = new PackageJournal(testJournalRepository,
+                                                 Substitute.For<ILog>(),
+                                                 Substitute.For<ICalamariFileSystem>(),
+                                                 Substitute.For<IRetentionAlgorithm>(),
+                                                 Substitute.For<IFreeSpaceChecker>(),
+                                                 Substitute.For<ISemaphoreFactory>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
-            Assert.IsFalse(testJournal.HasLock(packageOne));
-            Assert.IsTrue(testJournal.HasLock(packageTwo));
+            Assert.IsFalse(testJournalRepository.HasLock(packageOne));
+            Assert.IsTrue(testJournalRepository.HasLock(packageTwo));
         }
     }
 }

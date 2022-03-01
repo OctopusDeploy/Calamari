@@ -10,9 +10,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         bool TryGetJournalEntry(PackageIdentity package, out JournalEntry entry);
         PackageCache Cache { get; }
         void RemoveAllLocks(ServerTaskId serverTaskId);
-        JournalEntry GetJournalEntry(PackageIdentity packageIdentity);
-        IList<JournalEntry> GetJournalEntries(PackageId packageId);
-        IList<JournalEntry> GetJournalEntries(PackageId packageId, ServerTaskId deploymentTaskId);
         IList<JournalEntry> GetAllJournalEntries();
         void AddJournalEntry(JournalEntry entry);
         void RemovePackageEntry(PackageIdentity packageIdentity);
