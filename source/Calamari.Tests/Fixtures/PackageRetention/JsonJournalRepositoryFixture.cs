@@ -34,7 +34,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             if (Directory.Exists(testDir))
                 Directory.Delete(testDir, true);
         }
-        
+
         static PackageIdentity CreatePackageIdentity(string packageId, string packageVersion)
         {
             var version = VersionFactory.CreateSemanticVersion(packageVersion);
@@ -59,6 +59,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             writeRepository.Commit();
 
             var readRepository = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), new StaticJsonJournalPathProvider(journalPath), Substitute.For<ILog>());
+            readRepository.Load();
             readRepository.TryGetJournalEntry(thePackage, out var retrieved).Should().BeTrue();
 
             retrieved.Package.Should().BeEquivalentTo(journalEntry.Package);
@@ -77,9 +78,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.Calamari.PackageRetentionJournalPath, journalPath);
 
-            new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), new StaticJsonJournalPathProvider(journalPath), Substitute.For<ILog>());
+            var journal = new JsonJournalRepository(TestCalamariPhysicalFileSystem.GetPhysicalFileSystem(), new StaticJsonJournalPathProvider(journalPath), Substitute.For<ILog>());
+            journal.Load();
 
             Directory.GetFiles(testDir, "PackageRetentionJournal_*.json").Length.Should().Be(1);
         }
     }
-} 
+}
