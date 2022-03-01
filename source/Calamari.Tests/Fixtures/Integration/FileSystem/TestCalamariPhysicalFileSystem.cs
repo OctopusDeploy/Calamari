@@ -24,6 +24,10 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             throw new NotImplementedException("*testing* this is in TestCalamariPhysicalFileSystem");
         }
 
+        public override bool GetDiskTotalSpace(string directoryPath, out ulong totalNumberOfFreeBytes)
+        {
+            throw new NotImplementedException("*testing* this is in TestCalamariPhysicalFileSystem");
+        }
         private class TestNixCalamariPhysicalFileSystem : NixCalamariPhysicalFileSystem, ICalamariFileSystem
         {
             public new string CreateTemporaryDirectory()

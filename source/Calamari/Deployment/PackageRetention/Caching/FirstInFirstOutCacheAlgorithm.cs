@@ -1,36 +1,22 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Deployment.PackageRetention.Caching
 {
-    public class FirstInFirstOutCacheAlgorithm : RetentionAlgorithmBase
+    public class FirstInFirstOutCacheAlgorithm : IOrderJournalEntries
     {
-        public override IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries, long spaceRequired)
+        public IEnumerable<JournalEntry> Order(IEnumerable<JournalEntry> journalEntries)
         {
-            journalEntries = journalEntries.Where(e => !e.HasLock());
-            var packagesByAge = OrderPackagesByOldestFirst(journalEntries);
+            return journalEntries
+                   .Where(e => !e.HasLock())
+                   .OrderBy(GetCacheAgeAtFirstPackageUse);
 
-            var diskSpaceFound = 0L;
-            var packagesToRemove = new List<PackageIdentity>();
-
-            foreach (var package in packagesByAge)
+            int GetCacheAgeAtFirstPackageUse(JournalEntry entry)
             {
-                diskSpaceFound += package.FileSizeBytes;
-                packagesToRemove.Add(package.Package);
-
-                if (diskSpaceFound >= spaceRequired) return packagesToRemove;
+                return entry?.GetUsageDetails()?.Min(m => m.CacheAgeAtUsage.Value)
+                       ?? int.MaxValue;
             }
-
-            //If we haven't returned yet, then we can't clear enough space in the cache to continue.
-            throw new InsufficientCacheSpaceException(diskSpaceFound, spaceRequired);
-        }
-
-
-        IEnumerable<JournalEntry> OrderPackagesByOldestFirst(IEnumerable<JournalEntry> journalEntries)
-        {
-            return journalEntries.OrderBy(GetCacheAgeAtFirstPackageUse);
         }
     }
 }

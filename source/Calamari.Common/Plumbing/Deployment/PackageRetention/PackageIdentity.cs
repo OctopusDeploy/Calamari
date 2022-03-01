@@ -1,7 +1,4 @@
 ﻿using System;
-using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.PackageRetention;
 using Newtonsoft.Json;
 using Octopus.Versioning;
 

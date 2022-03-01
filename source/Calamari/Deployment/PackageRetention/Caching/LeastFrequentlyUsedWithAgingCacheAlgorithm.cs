@@ -6,7 +6,7 @@ using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Deployment.PackageRetention.Caching
 {
-    public class LeastFrequentlyUsedWithAgingCacheAlgorithm : RetentionAlgorithmBase
+    public class LeastFrequentlyUsedWithAgingCacheAlgorithm : IOrderJournalEntries
     {
         readonly decimal ageFactor;
         readonly decimal hitFactor;
@@ -19,28 +19,14 @@ namespace Calamari.Deployment.PackageRetention.Caching
             this.newerVersionFactor = newerVersionFactor;
         }
 
-        public override IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries, long spaceRequired)
+        public IEnumerable<JournalEntry> Order(IEnumerable<JournalEntry> journalEntries)
         {
             var entries = journalEntries.Where(e => !e.HasLock()).ToList();
 
             //We don't need the actual age of cache entries, just the relative age.
             var currentCacheAge = entries.Max(je => je.GetUsageDetails().Max(u => u.CacheAgeAtUsage));
-            var orderedPackages = OrderByValue(entries.ToList(), currentCacheAge);
 
-            var spaceFound = 0L;
-
-            var packagesToRemove = orderedPackages.TakeWhile(p =>
-                                                             {
-                                                                 if (spaceFound >= spaceRequired)
-                                                                     return false; //Already found enough space
-
-                                                                 spaceFound += p.FileSizeBytes;
-                                                                 return true;
-                                                             }).ToList();
-            if (spaceFound == 0)
-                throw new InsufficientCacheSpaceException(spaceFound, spaceRequired, $"No space was available to be freed.");
-
-            return packagesToRemove.Select(pi => pi.Package);
+            return OrderByValue(entries.ToList(), currentCacheAge).Select(v => v.Entry);
         }
 
         IEnumerable<PackageInfo> OrderByValue(IList<JournalEntry> journalEntries, CacheAge currentCacheAge)
@@ -54,7 +40,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
                 - Normalise(currentCacheAge.Value - pi.Age.Value, details.GetCacheAgeRange(currentCacheAge)) * ageFactor
                 - Normalise(pi.NewerVersionCount, details.GetNewVersionCountRange()) * newerVersionFactor;
 
-            return details.OrderBy((Func<PackageInfo, decimal>)CalculateValue);
+            return details.OrderBy(CalculateValue);
         }
 
         static decimal Normalise(int value, (int Min, int Max) range)

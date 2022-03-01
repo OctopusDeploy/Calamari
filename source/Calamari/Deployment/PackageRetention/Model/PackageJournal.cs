@@ -15,21 +15,18 @@ namespace Calamari.Deployment.PackageRetention.Model
         readonly IRetentionAlgorithm retentionAlgorithm;
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
-        readonly IFreeSpaceChecker freeSpaceChecker;
         readonly ISemaphoreFactory semaphoreFactory;
 
         public PackageJournal(IJournalRepository journalRepository,
                               ILog log,
                               ICalamariFileSystem fileSystem,
                               IRetentionAlgorithm retentionAlgorithm,
-                              IFreeSpaceChecker freeSpaceChecker,
                               ISemaphoreFactory semaphoreFactory)
         {
             this.journalRepository = journalRepository;
             this.log = log;
             this.fileSystem = fileSystem;
             this.retentionAlgorithm = retentionAlgorithm;
-            this.freeSpaceChecker = freeSpaceChecker;
             this.semaphoreFactory = semaphoreFactory;
         }
 
@@ -82,30 +79,18 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 using (AcquireSemaphore())
                 {
-                    var cacheSpaceRequired = 0L;
-                    if (cacheSizeInMegaBytes > 0)
-                    {
-                        var cacheSizeBytes = (long)Math.Round((decimal)(cacheSizeInMegaBytes * 1024 * 1024));
-                        var cacheSpaceRemaining = cacheSizeBytes - journalRepository.GetAllJournalEntries().Sum(e => Math.Max(e.FileSizeBytes, 0));
-                        var requiredSpaceInBytes = (long)freeSpaceChecker.GetRequiredSpaceInBytes();
-                        cacheSpaceRequired = Math.Max(0, requiredSpaceInBytes - cacheSpaceRemaining);
-
-                        log.Verbose($"Cache size is {cacheSizeInMegaBytes} MB, remaining space is {cacheSpaceRemaining / 1024D / 1024D:N} MB, with {cacheSpaceRequired / 1024D / 1024:N} MB required to be freed.");
-                    }
-
-                    var requiredSpace = Math.Max(cacheSpaceRequired, (long)freeSpaceChecker.GetSpaceRequiredToBeFreed(directory));
-                    log.Verbose($"Total space required to be freed is {requiredSpace / 1024D / 1024:N} MB.");
-                    var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalRepository.GetAllJournalEntries(), requiredSpace);
+                    var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalRepository.GetAllJournalEntries());
                     foreach (var package in packagesToRemove)
                     {
                         if (string.IsNullOrWhiteSpace(package.Path.Value) || !fileSystem.FileExists(package.Path.Value))
                         {
-                            log.Info($"Package at {package?.Path} not found.");
-                            continue;
+                            log.Info($"Package at {package.Path} not found.");
                         }
-
-                        Log.Info($"Removing package file '{package.Path}'");
-                        fileSystem.DeleteFile(package.Path.Value, FailureOptions.IgnoreFailure);
+                        else
+                        {
+                            Log.Info($"Removing package file '{package.Path}'");
+                            fileSystem.DeleteFile(package.Path.Value, FailureOptions.IgnoreFailure);
+                        }
 
                         journalRepository.RemovePackageEntry(package);
                     }
