@@ -6,7 +6,6 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
     {
         void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId, long packageSizeBytes);
         void RemoveAllLocks(ServerTaskId serverTaskId);
-        void DeregisterPackageUse(PackageIdentity package, ServerTaskId serverTaskId);
         void ApplyRetention(string packageDirectory, int cacheSizeInMegaBytes);
         void ExpireStaleLocks(TimeSpan timeBeforeExpiration);
     }
