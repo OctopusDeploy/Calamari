@@ -129,7 +129,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
         static JournalEntry CreateEntry(string packageId,
                                         string version,
-                                        long packageSize,
+                                        ulong packageSize,
                                         params (string serverTaskId, int cacheAgeAtUsage)[] usages)
         {
             if (usages.Length == 0)

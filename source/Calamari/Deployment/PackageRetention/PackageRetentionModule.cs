@@ -14,7 +14,7 @@ namespace Calamari.Deployment.PackageRetention
             builder.RegisterType<VariableJsonJournalPathProvider>().As<IJsonJournalPathProvider>();
             builder.RegisterType<PackageJournal>().As<IManagePackageCache>().SingleInstance();
             builder.RegisterType<LeastFrequentlyUsedWithAgingCacheAlgorithm>().As<IOrderJournalEntries>();
-            builder.RegisterType<FreeDiskSpacePackageCleaner>().As<IRetentionAlgorithm>();
+            builder.RegisterType<PercentFreeDiskSpacePackageCleaner>().As<IRetentionAlgorithm>();
             base.Load(builder);
         }
     }

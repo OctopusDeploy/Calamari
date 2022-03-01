@@ -173,7 +173,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(packageOne, new ServerTaskId("Deployment-1"), 1000);
-            thisJournal.ApplyRetention(PackageDirectory, 0);
+            thisJournal.ApplyRetention();
 
             thisRepository.GetUsage(packageOne).Should().BeEmpty();
             fileSystem.Received().DeleteFile(packageOne.Path.Value, FailureOptions.IgnoreFailure);
@@ -204,7 +204,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
-            thisJournal.ApplyRetention(PackageDirectory, 1);
+            thisJournal.ApplyRetention();
 
             thisRepository.GetUsage(existingPackage).Should().BeEmpty();
             fileSystem.Received().DeleteFile(existingPackage.Path.Value, FailureOptions.IgnoreFailure);
@@ -235,7 +235,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
-            thisJournal.ApplyRetention(PackageDirectory, 10);
+            thisJournal.ApplyRetention();
 
             thisRepository.GetUsage(existingPackage).Should().BeEmpty();
             fileSystem.Received().DeleteFile(existingPackage.Path.Value, FailureOptions.IgnoreFailure);

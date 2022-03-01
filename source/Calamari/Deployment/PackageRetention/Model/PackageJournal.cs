@@ -30,7 +30,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             this.semaphoreFactory = semaphoreFactory;
         }
 
-        public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId, long packageSizeBytes)
+        public void RegisterPackageUse(PackageIdentity package, ServerTaskId deploymentTaskId, ulong packageSizeBytes)
         {
             try
             {
@@ -72,9 +72,8 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
         }
 
-        public void ApplyRetention(string directory, int cacheSizeInMegaBytes)
+        public void ApplyRetention()
         {
-            log.Verbose($"Applying package retention for folder '{directory}'");
             try
             {
                 using (AcquireSemaphore())
