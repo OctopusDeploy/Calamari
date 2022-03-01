@@ -11,12 +11,10 @@ namespace Calamari.Deployment.PackageRetention.Caching
         public CacheAge Age { get; }
         public int HitCount { get; }
         public int NewerVersionCount { get; }
-        public long FileSizeBytes { get; }
 
         public PackageInfo(JournalEntry entry, IEnumerable<JournalEntry> entries)
         {
             Entry = entry;
-            FileSizeBytes = entry.FileSizeBytes;
             Age = GetOldestCacheAgeAtUsage(entry);
             HitCount = GetHitCount(entry);
             NewerVersionCount = GetNumberOfNewerVersions(entry, entries);

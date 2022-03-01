@@ -61,7 +61,7 @@ namespace Calamari.Commands
         {
             var package = new PackageIdentity(packageId, packageVersion, packagePath);
             var size = fileSystem.GetFileSize(package.Path.Value);
-            journal.RegisterPackageUse(package, taskId, size);
+            journal.RegisterPackageUse(package, taskId, (ulong)size);
         }
     }
 }

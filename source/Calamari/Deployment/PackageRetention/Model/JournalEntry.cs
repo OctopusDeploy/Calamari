@@ -15,10 +15,10 @@ namespace Calamari.Deployment.PackageRetention.Model
         [JsonProperty]
         readonly PackageLocks locks;
         
-        public long FileSizeBytes { get; }
+        public ulong FileSizeBytes { get; }
 
         [JsonConstructor]
-        public JournalEntry(PackageIdentity package, long fileSizeBytes, PackageLocks packageLocks = null, PackageUsages packageUsages = null)
+        public JournalEntry(PackageIdentity package, ulong fileSizeBytes, PackageLocks packageLocks = null, PackageUsages packageUsages = null)
         {
             Package = package ?? throw new ArgumentNullException(nameof(package));
             FileSizeBytes = fileSizeBytes;
