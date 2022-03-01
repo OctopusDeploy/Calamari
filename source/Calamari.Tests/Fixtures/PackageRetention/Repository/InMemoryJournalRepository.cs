@@ -31,6 +31,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
                 : new UsageDetails[0];
         }
 
+        public override void Load()
+        {
+        }
+
         public override void Commit()
         {
             //This does nothing in the in-memory implementation

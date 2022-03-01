@@ -22,8 +22,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             this.fileSystem = fileSystem;
             journalPath = pathProvider.GetJournalPath();
             this.log = log;
-
-            Load();
         }
 
         public override void Commit()
@@ -31,7 +29,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             Save();
         }
 
-        void Load()
+        public override void Load()
         {
             if (File.Exists(journalPath))
             {

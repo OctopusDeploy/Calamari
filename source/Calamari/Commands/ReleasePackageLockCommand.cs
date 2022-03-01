@@ -23,7 +23,6 @@ namespace Calamari.Commands
             this.log = log;
             this.journal = journal;
 
-
             Options.Add("taskId=", "Id of the task that is using the package", v => taskId = new ServerTaskId(v));
         }
 
