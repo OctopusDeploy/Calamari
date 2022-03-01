@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Security.Cryptography.Xml;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Deployment.PackageRetention.Model;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Deployment.PackageRetention.Caching
 {
@@ -40,14 +37,10 @@ namespace Calamari.Deployment.PackageRetention.Caching
                                                                  spaceFound += p.FileSizeBytes;
                                                                  return true;
                                                              }).ToList();
-
-            if (spaceFound >= spaceRequired)
-                return packagesToRemove.Select(pi => pi.Package);
-
             if (spaceFound == 0)
                 throw new InsufficientCacheSpaceException(spaceFound, spaceRequired, $"No space was available to be freed.");
 
-            throw new InsufficientCacheSpaceException(spaceFound, spaceRequired);
+            return packagesToRemove.Select(pi => pi.Package);
         }
 
         IEnumerable<PackageInfo> OrderByValue(IList<JournalEntry> journalEntries, CacheAge currentCacheAge)
