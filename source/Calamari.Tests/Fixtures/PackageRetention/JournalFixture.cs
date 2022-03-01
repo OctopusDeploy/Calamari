@@ -41,7 +41,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                 Substitute.For<ILog>(),
                                                 Substitute.For<ICalamariFileSystem>(),
                                                 Substitute.For<IRetentionAlgorithm>(),
-                                                Substitute.For<IFreeSpaceChecker>(),
                                                 Substitute.For<ISemaphoreFactory>()
                                                );
         }
@@ -161,7 +160,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var packageOne = CreatePackageIdentity("PackageOne", "1.0");
 
             var retentionAlgorithm = Substitute.For<IRetentionAlgorithm>();
-            retentionAlgorithm.GetPackagesToRemove(Arg.Any<IEnumerable<JournalEntry>>(), Arg.Any<long>()).Returns(new List<PackageIdentity>() { packageOne });
+            retentionAlgorithm.GetPackagesToRemove(Arg.Any<IEnumerable<JournalEntry>>()).Returns(new List<PackageIdentity>() { packageOne });
 
             var fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.FileExists(packageOne.Path.Value).Returns(true);
@@ -171,7 +170,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ILog>(),
                                                  fileSystem,
                                                  retentionAlgorithm,
-                                                 Substitute.For<IFreeSpaceChecker>(),
                                                  Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(packageOne, new ServerTaskId("Deployment-1"), 1000);
@@ -187,7 +185,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var existingPackage = CreatePackageIdentity("PackageOne", "1.0");
 
             var retentionAlgorithm = Substitute.For<IRetentionAlgorithm>();
-            retentionAlgorithm.GetPackagesToRemove(Arg.Any<IEnumerable<JournalEntry>>(), Arg.Any<long>()).Returns(new List<PackageIdentity>() { existingPackage });
+            retentionAlgorithm.GetPackagesToRemove(Arg.Any<IEnumerable<JournalEntry>>()).Returns(new List<PackageIdentity>() { existingPackage });
 
             var fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.FileExists(existingPackage.Path.Value).Returns(true);
@@ -203,7 +201,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ILog>(),
                                                  fileSystem,
                                                  retentionAlgorithm,
-                                                 Substitute.For<IFreeSpaceChecker>(),
                                                  Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
@@ -219,7 +216,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var existingPackage = CreatePackageIdentity("PackageOne", "1.0");
 
             var retentionAlgorithm = Substitute.For<IRetentionAlgorithm>();
-            retentionAlgorithm.GetPackagesToRemove(Arg.Any<IEnumerable<JournalEntry>>(), Arg.Any<long>()).Returns(new List<PackageIdentity>() { existingPackage });
+            retentionAlgorithm.GetPackagesToRemove(Arg.Any<IEnumerable<JournalEntry>>()).Returns(new List<PackageIdentity>() { existingPackage });
 
             var fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.FileExists(existingPackage.Path.Value).Returns(true);
@@ -235,7 +232,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ILog>(),
                                                  fileSystem,
                                                  retentionAlgorithm,
-                                                 Substitute.For<IFreeSpaceChecker>(),
                                                  Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
@@ -266,7 +262,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ILog>(),
                                                  Substitute.For<ICalamariFileSystem>(),
                                                  Substitute.For<IRetentionAlgorithm>(),
-                                                 Substitute.For<IFreeSpaceChecker>(),
                                                  Substitute.For<ISemaphoreFactory>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
@@ -303,7 +298,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                  Substitute.For<ILog>(),
                                                  Substitute.For<ICalamariFileSystem>(),
                                                  Substitute.For<IRetentionAlgorithm>(),
-                                                 Substitute.For<IFreeSpaceChecker>(),
                                                  Substitute.For<ISemaphoreFactory>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 

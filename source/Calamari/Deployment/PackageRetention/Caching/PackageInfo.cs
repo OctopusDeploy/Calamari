@@ -7,7 +7,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
 {
     public class PackageInfo
     {
-        public PackageIdentity Package { get; set; }
+        public JournalEntry Entry { get; set; }
         public CacheAge Age { get; }
         public int HitCount { get; }
         public int NewerVersionCount { get; }
@@ -15,7 +15,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
         public PackageInfo(JournalEntry entry, IEnumerable<JournalEntry> entries)
         {
-            Package = entry.Package;
+            Entry = entry;
             FileSizeBytes = entry.FileSizeBytes;
             Age = GetOldestCacheAgeAtUsage(entry);
             HitCount = GetHitCount(entry);

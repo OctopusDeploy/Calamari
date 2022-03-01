@@ -15,13 +15,6 @@ namespace Calamari.Tests.Fixtures.PackageRetention
     public class LeastFrequentlyUsedWithAgingCacheAlgorithmFixture
     {
         [Test]
-        public void WhenSpaceNeededIsGreaterThanSpaceUsed_ThenThrowException()
-        {
-            var lfu = new LeastFrequentlyUsedWithAgingCacheAlgorithm();
-            Assert.Throws<InsufficientCacheSpaceException>(() => lfu.GetPackagesToRemove(new List<JournalEntry>(), 10_000));
-        }
-
-        [Test]
         public void WhenPackageIsLocked_ThenDoNotConsiderItForRemoval()
         {
             var lfu = new LeastFrequentlyUsedWithAgingCacheAlgorithm();
@@ -31,95 +24,85 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             lockedEntry.AddLock(new ServerTaskId("task-0"), new CacheAge(1));
 
             //This entry would not be removed if the locked entry wasn't locked, because it has multiple, more recent usages.
-            var unlockedEntry = CreateEntry("package-unlocked", "1.0", 20, ("task-2",12), ("task-3",15));
+            var unlockedEntry = CreateEntry("package-unlocked",
+                                            "1.0",
+                                            20,
+                                            ("task-2", 12),
+                                            ("task-3", 15));
 
             var entries = new List<JournalEntry>(new[] { lockedEntry, unlockedEntry });
-            var packagesToRemove = lfu.GetPackagesToRemove(entries, 20);
+            var packagesToRemove = lfu.Order(entries);
 
-            packagesToRemove.Should().BeEquivalentTo(CreatePackageIdentity("package-unlocked", "1.0"));
+            packagesToRemove.Select(p => p.Package).Should().BeEquivalentTo(CreatePackageIdentity("package-unlocked", "1.0"));
         }
 
         [Test]
         public void WhenUsingAllThreeFactors_ThenReturnThePackageWithTheLowestValue()
         {
-            var spaceNeeded = 10;
-
             var entries = new[]
             {
-                CreateEntry("package-1", "1.0", 10, ("task-1", 2), ("task-2", 3)),
+                CreateEntry("package-1",
+                            "1.0",
+                            10,
+                            ("task-1", 2),
+                            ("task-2", 3)),
                 CreateEntry("package-2", "1.1", 10, ("task-3", 1)),
                 CreateEntry("package-3", "1.0", 10, ("task-4", 2)), //Lower value - has a newer version, and is only used once.
                 CreateEntry("package-3", "1.1", 10, ("task-5", 3))
             };
 
             var packagesToRemove = new LeastFrequentlyUsedWithAgingCacheAlgorithm(0.5M, 1, 1)
-                                   .GetPackagesToRemove(entries, spaceNeeded)
-                                   .OrderBy(p => p.PackageId.Value)
-                                   .ThenBy(p => p.Version)
+                                   .Order(entries)
                                    .ToList();
 
-            packagesToRemove.Should().BeEquivalentTo(CreatePackageIdentity("package-3", "1.0"));
+            packagesToRemove
+                .Select(p => p.Package)
+                .Should()
+                .BeEquivalentTo(new object[]
+                {
+                    CreatePackageIdentity("package-3", "1.0"),
+                    CreatePackageIdentity("package-2", "1.1"),
+                    CreatePackageIdentity("package-3", "1.1"),
+                    CreatePackageIdentity("package-1", "1.0")
+                });
         }
 
         [TestCaseSource(nameof(ExpectMultiplePackageIdsTestCaseSource))]
-        public void ExpectingMultiplePackages(JournalEntry[] entries, int spaceNeeded, PackageIdentity[] expectedPackageIdVersionPairs)
+        public void ExpectingMultiplePackages(JournalEntry[] entries, PackageIdentity[] expectedPackageIdVersionPairs)
         {
             var packagesToRemove = new LeastFrequentlyUsedWithAgingCacheAlgorithm()
-                                   .GetPackagesToRemove(entries, spaceNeeded)
-                                   .OrderBy(p => p.PackageId.Value)
-                                   .ThenBy(p => p.Version)
-                                   .ToList();
+                .Order(entries);
 
-            packagesToRemove.Should()
-                            .SatisfyRespectively(expectedPackageIdVersionPairs
-                                                 .Select<PackageIdentity, Action<PackageIdentity>>
-                                                     (p =>
-                                                          o => o.Should().BeEquivalentTo(p))
-                                                 .ToArray());
+            packagesToRemove.Select(p => p.Package).Should().BeEquivalentTo(expectedPackageIdVersionPairs);
         }
 
         public static IEnumerable ExpectMultiplePackageIdsTestCaseSource()
         {
-            yield return SetUpTestCase("WhenOnlyRelyingOnAge_ReturnEnoughPackagesToFreeEnoughSpace",
+            yield return SetUpTestCase("WhenOnlyRelyingOnAge_OrdersByAge",
                                        new[]
                                        {
                                            CreateEntry("package-1", "1.0", 5, ("task-1", 1)),
-                                           CreateEntry("package-2", "1.0", 5, ("task-2", 10)),
-                                           CreateEntry("package-3", "1.0", 5, ("task-3", 11))
+                                           CreateEntry("package-2", "1.0", 5, ("task-2", 3)),
+                                           CreateEntry("package-3", "1.0", 5, ("task-3", 2))
                                        },
-                                       10,
                                        CreatePackageIdentity("package-1", "1.0"),
+                                       CreatePackageIdentity("package-3", "1.0"),
                                        CreatePackageIdentity("package-2", "1.0"));
 
-            yield return SetUpTestCase("WhenOnlyRelyingOnNewerVersions_ThenReturnPackageWithFewestNewVersions",
+            yield return SetUpTestCase("WhenOnlyRelyingOnHitCount_OrderByFewestHits",
                                        new[]
                                        {
-                                           CreateEntry("package-1", "1.0", 10, ("task-1", 1)),
-                                           CreateEntry("package-1", "1.1", 10, ("task-2", 1)),
-                                           CreateEntry("package-2", "1.0", 10, ("task-3", 1))
-                                       },
-                                       10,
-                                       CreatePackageIdentity("package-1", "1.0"));
-
-            yield return SetUpTestCase("WhenOnlyRelyingOnAge_ThenReturnOldestThatTakesEnoughSpace",
-                                       new[]
-                                       {
-                                           CreateEntry("package-1", "1.0", 10, ("task-1", 1)),
-                                           CreateEntry("package-2", "1.0", 10, ("task-2", 10))
-                                       },
-                                       10,
-                                       CreatePackageIdentity("package-1", "1.0"));
-
-            yield return SetUpTestCase("WhenOnlyRelyingOnHitCount_ThenReturnPackageWithFewestHits",
-                                       new[]
-                                       {
-                                           CreateEntry("package-1", "1.0", 10, ("task-1", 1), ("task-3", 1)),
+                                           CreateEntry("package-1",
+                                                       "1.0",
+                                                       10,
+                                                       ("task-1", 1),
+                                                       ("task-3", 1)),
                                            CreateEntry("package-2", "1.0", 10, ("task-2", 1))
                                        },
-                                       10,
-                                       CreatePackageIdentity("package-2", "1.0"));
+                                       CreatePackageIdentity("package-2", "1.0"),
+                                       CreatePackageIdentity("package-1", "1.0"));
 
-            yield return SetUpTestCase("WhenOnlyRelyingOnNewerVersions_ThenReturnPackagesWithMostNewVersions",
+            yield return SetUpTestCase("WhenOnlyRelyingOnVersions_ThenReturnPackagesWithMostNewVersions",
                                        new[]
                                        {
                                            CreateEntry("package-1", "1.0", 10),
@@ -130,15 +113,18 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                            CreateEntry("package-2", "1.1", 10),
                                            CreateEntry("package-2", "1.2", 10)
                                        },
-                                       30,
                                        CreatePackageIdentity("package-1", "1.0"),
                                        CreatePackageIdentity("package-1", "1.1"),
-                                       CreatePackageIdentity("package-2", "1.0"));
+                                       CreatePackageIdentity("package-2", "1.0"),
+                                       CreatePackageIdentity("package-1", "1.2"),
+                                       CreatePackageIdentity("package-2", "1.1"),
+                                       CreatePackageIdentity("package-1", "1.3"),
+                                       CreatePackageIdentity("package-2", "1.2"));
         }
 
-        static TestCaseData SetUpTestCase(string testName, JournalEntry[] testJournalEntries, int spaceNeeded, params PackageIdentity[] expectedPackageIdentities)
+        static TestCaseData SetUpTestCase(string testName, JournalEntry[] testJournalEntries, params PackageIdentity[] expectedPackageIdentities)
         {
-            return new TestCaseData(testJournalEntries, spaceNeeded, expectedPackageIdentities).SetName(testName);
+            return new TestCaseData(testJournalEntries, expectedPackageIdentities).SetName(testName);
         }
 
         static JournalEntry CreateEntry(string packageId,
@@ -155,7 +141,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
             return new JournalEntry(packageIdentity, packageSize, null, packageUsages);
         }
-        
+
         static PackageIdentity CreatePackageIdentity(string packageId, string packageVersion)
         {
             var version = VersionFactory.CreateSemanticVersion(packageVersion);
