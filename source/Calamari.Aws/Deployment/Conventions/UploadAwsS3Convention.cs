@@ -24,6 +24,11 @@ using Calamari.Deployment.Conventions;
 using Calamari.Util;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Tar;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Writers.Tar;
+using CompressionType = SharpCompress.Common.CompressionType;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
@@ -302,20 +307,62 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(options, "Package options may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
+            var targetArchivePath = PerformVariableReplacement(deployment, options);
+
             var filename = GetNormalizedPackageFilename(deployment);
 
-            return CreateRequest(deployment.PackageFilePath,
+            return CreateRequest(targetArchivePath,
                     GetBucketKey(filename, options), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
+        }
+
+        string PerformVariableReplacement(RunningDeployment deployment, S3PackageOptions options)
+        {
+            Guard.NotNull(deployment.StagingDirectory, "deployment.StagingDirectory must not be null");
+
+            if (!options.VariableSubstitutionPatterns.Any() && !options.StructuredVariableSubstitutionPatterns.Any())
+                return deployment.PackageFilePath;
+
+            var stagingDirectory = deployment.StagingDirectory;
+            var substitutionPatterns = SplitFilePatternString(options.VariableSubstitutionPatterns);
+            substituteInFiles.Substitute(stagingDirectory, substitutionPatterns);
+
+            var structuredSubstitutionPatterns = SplitFilePatternString(options.StructuredVariableSubstitutionPatterns);
+            structuredConfigVariablesService.ReplaceVariables(stagingDirectory, structuredSubstitutionPatterns.ToList());
+
+            return Repackage(stagingDirectory, GetPackageExtension(deployment));
+        }
+
+        string Repackage(string stagingDirectory, string packageExtension)
+        {
+            using var targetArchive = fileSystem.CreateTemporaryFile(packageExtension, out var targetArchivePath);
+            if (packageExtension == ".zip")
+            {
+                using var archive = ZipArchive.Create();
+                archive.AddAllFromDirectory(stagingDirectory);
+                archive.SaveTo(targetArchive, CompressionType.Deflate);
+            }
+            else
+            {
+                using var archive = TarArchive.Create();
+                archive.AddAllFromDirectory(stagingDirectory);
+                archive.SaveTo(targetArchive, CompressionType.GZip);
+            }
+            return targetArchivePath;
         }
 
         public string GetNormalizedPackageFilename(RunningDeployment deployment)
         {
             var id = deployment.Variables.Get(PackageVariables.PackageId);
             var version = deployment.Variables.Get(PackageVariables.PackageVersion);
-            var extension = Path.GetExtension(deployment.Variables.Get(PackageVariables.IndexedOriginalPath(null)));
+            var extension = GetPackageExtension(deployment);
             return $"{id}.{version}{extension}";
+        }
+
+        static string GetPackageExtension(RunningDeployment deployment)
+        {
+            return Path.GetExtension(deployment.Variables.Get(PackageVariables.IndexedOriginalPath(null)));
         }
 
         /// <summary>
