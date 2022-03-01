@@ -42,7 +42,7 @@ namespace Calamari.Commands
             }
             catch (Exception ex)
             {
-                log.ErrorFormat("Failed to release lock for server task '{2}'", taskId);
+                log.ErrorFormat("Failed to release package locks");
                 return ConsoleFormatter.PrintError(log, ex);
             }
 
