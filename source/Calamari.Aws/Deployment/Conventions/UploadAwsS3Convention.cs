@@ -336,20 +336,27 @@ namespace Calamari.Aws.Deployment.Conventions
 
         string Repackage(string stagingDirectory, string packageExtension)
         {
-            using var targetArchive = fileSystem.CreateTemporaryFile(packageExtension, out var targetArchivePath);
-            if (packageExtension == ".zip")
+            using (var targetArchive = fileSystem.CreateTemporaryFile(packageExtension, out var targetArchivePath))
             {
-                using var archive = ZipArchive.Create();
-                archive.AddAllFromDirectory(stagingDirectory);
-                archive.SaveTo(targetArchive, CompressionType.Deflate);
+                if (packageExtension == ".zip")
+                {
+                    using (var archive = ZipArchive.Create())
+                    {
+                        archive.AddAllFromDirectory(stagingDirectory);
+                        archive.SaveTo(targetArchive, CompressionType.Deflate);
+                    }
+                }
+                else
+                {
+                    using (var archive = TarArchive.Create())
+                    {
+                        archive.AddAllFromDirectory(stagingDirectory);
+                        archive.SaveTo(targetArchive, CompressionType.GZip);
+                    }
+                }
+
+                return targetArchivePath;
             }
-            else
-            {
-                using var archive = TarArchive.Create();
-                archive.AddAllFromDirectory(stagingDirectory);
-                archive.SaveTo(targetArchive, CompressionType.GZip);
-            }
-            return targetArchivePath;
         }
 
         public string GetNormalizedPackageFilename(RunningDeployment deployment)
