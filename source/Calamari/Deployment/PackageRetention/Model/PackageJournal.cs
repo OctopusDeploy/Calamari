@@ -36,6 +36,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 using (AcquireSemaphore())
                 {
+                    journalRepository.Load();
                     journalRepository.Cache.IncrementCacheAge();
                     var age = journalRepository.Cache.CacheAge;
                     if (journalRepository.TryGetJournalEntry(package, out var entry))
@@ -67,6 +68,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             using (AcquireSemaphore())
             {
                 log.Verbose($"Releasing package locks for task {serverTaskId}");
+                journalRepository.Load();
                 journalRepository.RemoveAllLocks(serverTaskId);
                 journalRepository.Commit();
             }
@@ -78,6 +80,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 using (AcquireSemaphore())
                 {
+                    journalRepository.Load();
                     var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalRepository.GetAllJournalEntries());
                     foreach (var package in packagesToRemove)
                     {
@@ -108,6 +111,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             {
                 using (AcquireSemaphore())
                 {
+                    journalRepository.Load();
                     foreach (var entry in journalRepository.GetAllJournalEntries())
                     {
                         var locks = entry.GetLockDetails();
