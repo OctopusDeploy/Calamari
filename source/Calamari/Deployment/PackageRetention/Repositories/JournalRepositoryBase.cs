@@ -27,27 +27,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
                 entry.RemoveLock(serverTaskId);
         }
 
-        public JournalEntry GetJournalEntry(PackageIdentity package)
-        {
-            journalEntries.TryGetValue(package, out var entry);
-            return entry;
-        }
-
-        public IList<JournalEntry> GetJournalEntries(PackageId packageId)
-        {
-            return journalEntries.Where(pair => pair.Key.PackageId == packageId)
-                                 .Select(pair => pair.Value)
-                                 .ToList();
-        }
-
-        public IList<JournalEntry> GetJournalEntries(PackageId packageId, ServerTaskId deploymentTaskId)
-        {
-            return journalEntries.Where(pair => pair.Key.PackageId == packageId
-                                                && pair.Value.GetUsageDetails().Any(d => d.DeploymentTaskId == deploymentTaskId))
-                                 .Select(pair => pair.Value)
-                                 .ToList();
-        }
-
         public IList<JournalEntry> GetAllJournalEntries()
         {
             return journalEntries.Select(pair => pair.Value)

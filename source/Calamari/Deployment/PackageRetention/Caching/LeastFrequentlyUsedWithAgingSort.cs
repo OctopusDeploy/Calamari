@@ -34,9 +34,9 @@ namespace Calamari.Deployment.PackageRetention.Caching
             if (!journalEntries.Any()) return new LeastFrequentlyUsedJournalEntry[0];
             var details = CreateLeastFrequentlyUsedJournalEntries(journalEntries).ToList();
 
-            var hitCountRange = details.GetHitCountRange();
-            var cacheAgeRange = details.GetCacheAgeRange(currentCacheAge);
-            var newVersionCountRange = details.GetNewVersionCountRange();
+            var hitCountRange = GetHitCountRange(details);
+            var cacheAgeRange = GetCacheAgeRange(details, currentCacheAge);
+            var newVersionCountRange = GetVersionCountRange(details);
 
             decimal CalculateValue(LeastFrequentlyUsedJournalEntry pi) =>
                 Normalise(pi.HitCount, hitCountRange) * hitFactor
@@ -45,6 +45,15 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
             return details.OrderBy(CalculateValue);
         }
+
+        static (int Min, int Max) GetHitCountRange(List<LeastFrequentlyUsedJournalEntry> details)
+            => (details.Min(d => d.HitCount), details.Max(d => d.HitCount));
+
+        static (int Min, int Max) GetCacheAgeRange(List<LeastFrequentlyUsedJournalEntry> details, CacheAge currentCacheAge)
+            => (currentCacheAge.Value - details.Max(d => d.Age.Value), currentCacheAge.Value - details.Min(d => d.Age.Value));
+
+        static (int Min, int Max) GetVersionCountRange(List<LeastFrequentlyUsedJournalEntry> details)
+            => (details.Min(d => d.NewerVersionCount), details.Max(d => d.NewerVersionCount));
 
         static IEnumerable<LeastFrequentlyUsedJournalEntry> CreateLeastFrequentlyUsedJournalEntries(IList<JournalEntry> journalEntries)
         {
