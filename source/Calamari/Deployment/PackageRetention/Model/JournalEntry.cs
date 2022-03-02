@@ -43,7 +43,7 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public bool HasLock() => locks.Count > 0;
 
-        public IEnumerable<UsageDetails> GetUsageDetails() => usages;
+        public PackageUsages GetUsageDetails() => usages;
         public IEnumerable<UsageDetails> GetLockDetails() => locks;
     }
 }

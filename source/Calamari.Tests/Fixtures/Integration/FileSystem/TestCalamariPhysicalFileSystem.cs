@@ -24,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             throw new NotImplementedException("*testing* this is in TestCalamariPhysicalFileSystem");
         }
 
-        public override bool GetDiskTotalSpace(string directoryPath, out ulong totalNumberOfFreeBytes)
+        public override bool GetDiskTotalSpace(string directoryPath, out ulong totalNumberOfBytes)
         {
             throw new NotImplementedException("*testing* this is in TestCalamariPhysicalFileSystem");
         }

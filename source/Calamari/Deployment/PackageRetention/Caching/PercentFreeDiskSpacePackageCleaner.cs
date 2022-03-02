@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -13,7 +14,8 @@ namespace Calamari.Deployment.PackageRetention.Caching
     public class PercentFreeDiskSpacePackageCleaner : IRetentionAlgorithm
     {
         const string PackageRetentionPercentFreeDiskSpace = "OctopusPackageRetentionPercentFreeDiskSpace";
-        const int DefaultPercentFreeDiskSpace = 20;
+        const int DefaultPercentFreeDiskSpace = 10;
+        const int FreeSpacePercentBuffer = 20;
         readonly ISortJournalEntries sortJournalEntries;
         readonly IVariables variables;
         readonly ILog log;
@@ -37,14 +39,14 @@ namespace Calamari.Deployment.PackageRetention.Caching
             }
 
             var percentFreeDiskSpaceDesired = variables.GetInt32(PackageRetentionPercentFreeDiskSpace) ?? DefaultPercentFreeDiskSpace;
-            var twentyPercentOfDisk = totalNumberOfBytes * (ulong) percentFreeDiskSpaceDesired / 100;
-            if (totalNumberOfFreeBytes > twentyPercentOfDisk)
+            var desiredSpaceInBytes = totalNumberOfBytes * (ulong) percentFreeDiskSpaceDesired / 100;
+            if (totalNumberOfFreeBytes > desiredSpaceInBytes)
             {
-                log.Verbose("Detected enough space for new packages.");
+                log.VerboseFormat("Detected enough space for new packages. ({0}/{1})", totalNumberOfBytes, totalNumberOfFreeBytes);
                 return new PackageIdentity[0];
             }
 
-            var spaceRequired = twentyPercentOfDisk - totalNumberOfFreeBytes;
+            var spaceRequired = (desiredSpaceInBytes - totalNumberOfFreeBytes) * (100 + FreeSpacePercentBuffer) / 100;
             ulong spaceFreed = 0L;
             var orderedJournalEntries = sortJournalEntries.Sort(journalEntries);
             return orderedJournalEntries.TakeWhile(entry =>
