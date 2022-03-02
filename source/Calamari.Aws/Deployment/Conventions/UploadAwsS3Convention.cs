@@ -193,7 +193,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Log.Warn(message);
         }
 
-        private async Task<IEnumerable<S3UploadResult>> UploadAll(IEnumerable<S3TargetPropertiesBase> options, Func<AmazonS3Client> clientFactory, RunningDeployment deployment)
+        async Task<IEnumerable<S3UploadResult>> UploadAll(IEnumerable<S3TargetPropertiesBase> options, Func<AmazonS3Client> clientFactory, RunningDeployment deployment)
         {
             var result = new List<S3UploadResult>();
             foreach (var option in options)
@@ -305,7 +305,7 @@ namespace Calamari.Aws.Deployment.Conventions
             var filename = GetNormalizedPackageFilename(deployment);
 
             return CreateRequest(deployment.PackageFilePath,
-                    GetBucketKey(filename, options), options)
+                    GetBucketKey(filename, options, deployment.PackageFilePath), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -345,9 +345,9 @@ namespace Calamari.Aws.Deployment.Conventions
             return md5HashSupported ? request.WithMd5Digest(fileSystem) : request;
         }
 
-        public string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour)
+        string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour, string packageFilePath = "")
         {
-            return bucketKeyProvider.GetBucketKey(defaultKey, behaviour);
+            return bucketKeyProvider.GetBucketKey(defaultKey, behaviour, packageFilePath);
         }
 
         /// <summary>
