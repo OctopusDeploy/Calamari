@@ -40,10 +40,7 @@ namespace Calamari
 
         protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
         {
-            var lockingCommands = container.ResolveKeyed<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>(nameof(PackageLockingCommandAttribute));
-            var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>()
-                                    .Where(c => lockingCommands.All(lc => !lc.Metadata.Name.Equals(c.Metadata.Name, StringComparison.OrdinalIgnoreCase)))
-                                    .Union(lockingCommands);
+            var commands = container.Resolve<IEnumerable<Meta<Lazy<ICommandWithArgs>, CommandMeta>>>();
 
             var commandCandidates = commands.Where(x => x.Metadata.Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase)).ToArray();
 

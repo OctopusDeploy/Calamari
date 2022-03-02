@@ -26,9 +26,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var stopWatch = new Stopwatch();
             stopWatch.Start();
             var algo = new LeastFrequentlyUsedWithAgingSort();
-            algo
+            var result = algo
                 .Sort(journalRepo.GetAllJournalEntries())
                 .ToList();
+            result.Should().NotBeEmpty();
             stopWatch.Stop();
             stopWatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10));
         }

@@ -34,7 +34,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
         {
             if (!fileSystem.GetDiskFreeSpace(packageUtils.RootDirectory, out var totalNumberOfFreeBytes) || !fileSystem.GetDiskTotalSpace(packageUtils.RootDirectory, out var totalNumberOfBytes))
             {
-                log.Info("Unable to determine disk space. Package retention will not run.");
+                log.Info("Unable to determine disk space. Skipping free space package retention.");
                 return new PackageIdentity[0];
             }
 
@@ -42,17 +42,17 @@ namespace Calamari.Deployment.PackageRetention.Caching
             var desiredSpaceInBytes = totalNumberOfBytes * (ulong) percentFreeDiskSpaceDesired / 100;
             if (totalNumberOfFreeBytes > desiredSpaceInBytes)
             {
-                log.VerboseFormat("Detected enough space for new packages. ({0}/{1})", totalNumberOfBytes, totalNumberOfFreeBytes);
+                log.VerboseFormat("Detected enough space for new packages. ({0}/{1})", totalNumberOfBytes.ToFileSizeString(), totalNumberOfFreeBytes.ToFileSizeString());
                 return new PackageIdentity[0];
             }
 
-            var spaceRequired = (desiredSpaceInBytes - totalNumberOfFreeBytes) * (100 + FreeSpacePercentBuffer) / 100;
+            var spaceToFree = (desiredSpaceInBytes - totalNumberOfFreeBytes) * (100 + FreeSpacePercentBuffer) / 100;
             ulong spaceFreed = 0L;
             var orderedJournalEntries = sortJournalEntries.Sort(journalEntries);
             return orderedJournalEntries.TakeWhile(entry =>
                                                    {
                                                        spaceFreed += entry.FileSizeBytes;
-                                                       return spaceFreed < spaceRequired;
+                                                       return spaceFreed < spaceToFree;
                                                    })
                                         .Select(entry => entry.Package);
         }

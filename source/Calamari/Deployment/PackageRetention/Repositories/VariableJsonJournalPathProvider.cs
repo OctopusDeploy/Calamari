@@ -16,12 +16,11 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         public string GetJournalPath()
         {
             var packageRetentionJournalPath = variables.Get(KnownVariables.Calamari.PackageRetentionJournalPath);
-            if (packageRetentionJournalPath == null)
-            {
-                var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome) ?? string.Empty;
-                packageRetentionJournalPath = Path.Combine(tentacleHome, DefaultJournalName);
-            }
-            return packageRetentionJournalPath;
+            if (packageRetentionJournalPath != null)
+                return packageRetentionJournalPath;
+
+            var tentacleHome = variables.Get(TentacleVariables.Agent.TentacleHome) ?? string.Empty;
+            return Path.Combine(tentacleHome, DefaultJournalName);
         }
     }
 }

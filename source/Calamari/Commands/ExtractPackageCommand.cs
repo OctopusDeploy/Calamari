@@ -7,7 +7,6 @@ using Calamari.Deployment.PackageRetention;
 namespace Calamari.Commands
 {
     [Command("extract-package")]
-    [PackageLockingCommand]
     public class ExtractPackageCommand : Command<ExtractPackageCommandInputs>
     {
         readonly IExtractPackage extractPackage;
