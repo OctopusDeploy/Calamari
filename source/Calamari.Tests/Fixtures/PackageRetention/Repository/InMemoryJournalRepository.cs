@@ -24,11 +24,11 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
                    && entry.HasLock();
         }
 
-        public IEnumerable<IUsageDetails> GetUsage(PackageIdentity package)
+        public PackageUsages GetUsage(PackageIdentity package)
         {
             return TryGetJournalEntry(package, out var entry)
                 ? entry.GetUsageDetails()
-                : new UsageDetails[0];
+                : new PackageUsages();
         }
 
         public override void Load()

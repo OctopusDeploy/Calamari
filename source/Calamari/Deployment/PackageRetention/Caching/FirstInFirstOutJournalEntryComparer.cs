@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Deployment.PackageRetention.Caching
@@ -11,10 +11,9 @@ namespace Calamari.Deployment.PackageRetention.Caching
             return GetCacheAgeAtFirstPackageUse(x).CompareTo(GetCacheAgeAtFirstPackageUse(y));
         }
 
-        static int GetCacheAgeAtFirstPackageUse(JournalEntry entry)
+        static CacheAge GetCacheAgeAtFirstPackageUse(JournalEntry entry)
         {
-            return entry?.GetUsageDetails()?.Min(m => m.CacheAgeAtUsage.Value)
-                   ?? int.MaxValue;
+            return entry.GetUsageDetails().GetCacheAgeAtFirstPackageUse();
         }
     }
 }
