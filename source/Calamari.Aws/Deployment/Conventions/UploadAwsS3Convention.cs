@@ -167,7 +167,7 @@ namespace Calamari.Aws.Deployment.Conventions
             log.SetOutputVariableButDoNotAddToVariables(packageS3UriVariableName, packageS3UriVariableValue);
             
             var packageUriVariableName = index.IsNullOrEmpty() ? "Package.Uri" : $"Package.Uri[{index}]";
-            var packageUriVariableValue = $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{result.BucketName}";
+            var packageUriVariableValue = $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{result.BucketKey}";
             log.Info($"Saving object URI to variable \"Octopus.Action[{actionName}].Output.{packageUriVariableName}\"");
             log.SetOutputVariableButDoNotAddToVariables(packageUriVariableName, packageUriVariableValue);
             
