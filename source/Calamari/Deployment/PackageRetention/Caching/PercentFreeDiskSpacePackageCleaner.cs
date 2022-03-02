@@ -14,16 +14,16 @@ namespace Calamari.Deployment.PackageRetention.Caching
     {
         const string PackageRetentionPercentFreeDiskSpace = "OctopusPackageRetentionPercentFreeDiskSpace";
         const int DefaultPercentFreeDiskSpace = 20;
-        readonly IOrderJournalEntries orderJournalEntries;
+        readonly ISortJournalEntries sortJournalEntries;
         readonly IVariables variables;
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly IPackageDownloaderUtils packageUtils = new PackageDownloaderUtils();
 
-        public PercentFreeDiskSpacePackageCleaner(ICalamariFileSystem fileSystem, IOrderJournalEntries orderJournalEntries, IVariables variables, ILog log)
+        public PercentFreeDiskSpacePackageCleaner(ICalamariFileSystem fileSystem, ISortJournalEntries sortJournalEntries, IVariables variables, ILog log)
         {
             this.fileSystem = fileSystem;
-            this.orderJournalEntries = orderJournalEntries;
+            this.sortJournalEntries = sortJournalEntries;
             this.variables = variables;
             this.log = log;
         }
@@ -46,7 +46,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
             var spaceRequired = twentyPercentOfDisk - totalNumberOfFreeBytes;
             ulong spaceFreed = 0L;
-            var orderedJournalEntries = orderJournalEntries.Order(journalEntries);
+            var orderedJournalEntries = sortJournalEntries.Sort(journalEntries);
             return orderedJournalEntries.TakeWhile(entry =>
                                                    {
                                                        spaceFreed += entry.FileSizeBytes;

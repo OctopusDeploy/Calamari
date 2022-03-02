@@ -12,12 +12,12 @@ using Octopus.Versioning;
 namespace Calamari.Tests.Fixtures.PackageRetention
 {
     [TestFixture]
-    public class LeastFrequentlyUsedWithAgingCacheAlgorithmFixture
+    public class LeastFrequentlyUsedWithAgingSortFixture
     {
         [Test]
         public void WhenPackageIsLocked_ThenDoNotConsiderItForRemoval()
         {
-            var lfu = new LeastFrequentlyUsedWithAgingCacheAlgorithm();
+            var lfu = new LeastFrequentlyUsedWithAgingSort();
 
             //If this entry wasn't locked, we would expect it to be removed
             var lockedEntry = CreateEntry("package-locked", "1.0", 20, ("task-1", 1));
@@ -31,7 +31,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                             ("task-3", 15));
 
             var entries = new List<JournalEntry>(new[] { lockedEntry, unlockedEntry });
-            var packagesToRemove = lfu.Order(entries);
+            var packagesToRemove = lfu.Sort(entries);
 
             packagesToRemove.Select(p => p.Package).Should().BeEquivalentTo(CreatePackageIdentity("package-unlocked", "1.0"));
         }
@@ -51,8 +51,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                 CreateEntry("package-3", "1.1", 10, ("task-5", 3))
             };
 
-            var packagesToRemove = new LeastFrequentlyUsedWithAgingCacheAlgorithm(0.5M, 1, 1)
-                                   .Order(entries)
+            var packagesToRemove = new LeastFrequentlyUsedWithAgingSort(0.5M, 1, 1)
+                                   .Sort(entries)
                                    .ToList();
 
             packagesToRemove
@@ -70,8 +70,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [TestCaseSource(nameof(ExpectMultiplePackageIdsTestCaseSource))]
         public void ExpectingMultiplePackages(JournalEntry[] entries, PackageIdentity[] expectedPackageIdVersionPairs)
         {
-            var packagesToRemove = new LeastFrequentlyUsedWithAgingCacheAlgorithm()
-                .Order(entries);
+            var packagesToRemove = new LeastFrequentlyUsedWithAgingSort()
+                .Sort(entries);
 
             packagesToRemove.Select(p => p.Package).Should().BeEquivalentTo(expectedPackageIdVersionPairs);
         }

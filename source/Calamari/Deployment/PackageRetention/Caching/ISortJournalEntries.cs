@@ -3,8 +3,8 @@ using Calamari.Deployment.PackageRetention.Model;
 
 namespace Calamari.Deployment.PackageRetention.Caching
 {
-    public interface IOrderJournalEntries
+    public interface ISortJournalEntries
     {
-        IEnumerable<JournalEntry> Order(IEnumerable<JournalEntry> journalEntries);
+        IEnumerable<JournalEntry> Sort(IEnumerable<JournalEntry> journalEntries);
     }
 }
