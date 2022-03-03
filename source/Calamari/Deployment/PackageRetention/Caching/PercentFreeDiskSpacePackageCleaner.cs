@@ -47,6 +47,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             }
 
             var spaceToFree = (desiredSpaceInBytes - totalNumberOfFreeBytes) * (100 + FreeSpacePercentBuffer) / 100;
+            log.VerboseFormat("Cleaning up to {0} space from the package cache.", spaceToFree.ToFileSizeString());
             ulong spaceFreed = 0L;
             var orderedJournalEntries = sortJournalEntries.Sort(journalEntries);
             return orderedJournalEntries.TakeWhile(entry =>

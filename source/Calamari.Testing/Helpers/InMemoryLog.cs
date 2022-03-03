@@ -70,14 +70,6 @@ namespace Calamari.Testing.Helpers
             base.ErrorFormat(messageFormat, args);
         }
 
-        public void Dump()
-        {
-            foreach (var message in Messages)
-            {
-                Console.WriteLine(message);
-            }
-        }
-
         public class Message
         {
             public Level Level { get; }
