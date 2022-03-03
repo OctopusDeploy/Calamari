@@ -50,7 +50,7 @@ namespace Calamari.Commands
             catch (Exception ex)
             {
                 log.Info($"Unable to register package use.{Environment.NewLine}{ex.ToString()}");
-                return ConsoleFormatter.PrintError(log, ex); // todo: what should the impact of failure here be?
+                return ConsoleFormatter.PrintError(log, ex);
             }
 
             return 0;
