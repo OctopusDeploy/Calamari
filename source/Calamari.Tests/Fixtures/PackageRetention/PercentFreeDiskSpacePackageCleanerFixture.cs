@@ -36,29 +36,26 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var log = new InMemoryLog();
             var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), Substitute.For<IVariables>(), log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
-            log.Dump();
             result.Should().BeEmpty();
         }
 
         [Test]
-        public void WhenFreeingUp1000_PackagesAreMarkedForRemoval()
+        public void WhenFreeingUpAPackageWorthOfSpace_OnePackageIsMarkedForRemoval()
         {
             var fileSystem = new FileSystemThatHasSpace(10, 10000);
             var log = new InMemoryLog();
             var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), Substitute.For<IVariables>(), log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
-            log.Dump();
             result.Count().Should().Be(1);
         }
 
         [Test]
-        public void WhenFreeingUp2000_TwoPackagesAreMarkedForRemoval()
+        public void WhenFreeingUpTwoPackagesWorthOfSpace_TwoPackagesAreMarkedForRemoval()
         {
             var fileSystem = new FileSystemThatHasSpace(10, 20000);
             var log = new InMemoryLog();
             var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), Substitute.For<IVariables>(), log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
-            log.Dump();
             result.Count().Should().Be(2);
         }
 
