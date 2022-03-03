@@ -30,6 +30,7 @@ using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
 using Octostache;
 using Calamari.Testing;
+using SharpCompress.Archives.Zip;
 
 namespace Calamari.Tests.AWS
 {
@@ -51,7 +52,7 @@ namespace Calamari.Tests.AWS
         {
             TestContext.WriteLine("Region: " + region);
             
-            var fileSelections = new List<S3FileSelectionProperties>
+            var fileSelections = new List<S3TargetPropertiesBase>
             {
                 new S3MultiFileSelectionProperties
                 {
@@ -83,7 +84,7 @@ namespace Calamari.Tests.AWS
         [Test]
         public async Task UploadPackage2()
         {
-            var fileSelections = new List<S3FileSelectionProperties>
+            var fileSelections = new List<S3TargetPropertiesBase>
             {
                 new S3MultiFileSelectionProperties
                 {
@@ -116,7 +117,7 @@ namespace Calamari.Tests.AWS
         [Test]
         public async Task UploadPackage3()
         {
-            var fileSelections = new List<S3FileSelectionProperties>
+            var fileSelections = new List<S3TargetPropertiesBase>
             {
                 new S3MultiFileSelectionProperties
                 {
@@ -142,9 +143,38 @@ namespace Calamari.Tests.AWS
         }
 
         [Test]
+        public async Task UploadPackage3Complete()
+        {
+            var packageOptions = new List<S3TargetPropertiesBase>
+            {
+                new S3PackageOptions()
+                {
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    StructuredVariableSubstitutionPatterns = "*.json",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
+                }
+            };
+
+            var variables = new CalamariVariables();
+            variables.Set("Property1:Property2:Value", "InjectedValue");
+
+            var prefix = Upload("Package3", packageOptions, variables, S3TargetMode.EntirePackage);
+
+            await Validate(async client =>
+                           {
+                               var file = await client.GetObjectAsync(bucketName, $"{prefix}Package3.1.0.0.zip");
+                               var memoryStream = new MemoryStream();
+                               await file.ResponseStream.CopyToAsync(memoryStream);
+                               var text = await new StreamReader(ZipArchive.Open(memoryStream).Entries.First(entry => entry.Key == "file.json").OpenEntryStream()).ReadToEndAsync();
+                               JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
+                           });
+        }
+
+        [Test]
         public async Task UploadPackage3Individual()
         {
-            var fileSelections = new List<S3FileSelectionProperties>
+            var fileSelections = new List<S3TargetPropertiesBase>
             {
                 new S3SingleFileSelectionProperties
                 {
@@ -194,7 +224,7 @@ namespace Calamari.Tests.AWS
         [Test]
         public async Task UploadPackageWithMetadata()
         {
-            var fileSelections = new List<S3FileSelectionProperties>
+            var fileSelections = new List<S3TargetPropertiesBase>
             {
                 new S3SingleFileSelectionProperties
                 {
@@ -254,7 +284,7 @@ namespace Calamari.Tests.AWS
         {
             TestContext.WriteLine("Region: " + region);
             
-            var fileSelections = new List<S3FileSelectionProperties>
+            var fileSelections = new List<S3TargetPropertiesBase>
             {
                 new S3MultiFileSelectionProperties
                 {
@@ -355,38 +385,46 @@ namespace Calamari.Tests.AWS
             }
         }
 
-        protected string Upload(string packageName, List<S3FileSelectionProperties> fileSelections, VariableDictionary customVariables = null)
+        protected string Upload(string packageName, List<S3TargetPropertiesBase> propertiesList, VariableDictionary customVariables = null, S3TargetMode s3TargetMode = S3TargetMode.FileSelections)
         {
+            const string packageVersion = "1.0.0";
             var bucketKeyPrefix = $"calamaritest/{Guid.NewGuid():N}/";
+            var variables = new CalamariVariables();
 
-            fileSelections.ForEach(properties =>
+            propertiesList.ForEach(properties =>
             {
-                if (properties is S3MultiFileSelectionProperties multiFileSelectionProperties)
+                switch (properties)
                 {
-                    multiFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
-                }
-
-                if (properties is S3SingleFileSelectionProperties singleFileSelectionProperties)
-                {
-                    singleFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
+                    case S3MultiFileSelectionProperties multiFileSelectionProperties:
+                        multiFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
+                        variables.Set(AwsSpecialVariables.S3.FileSelections, JsonConvert.SerializeObject(propertiesList, GetEnrichedSerializerSettings()));
+                        break;
+                    case S3SingleFileSelectionProperties singleFileSelectionProperties:
+                        singleFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
+                        variables.Set(AwsSpecialVariables.S3.FileSelections, JsonConvert.SerializeObject(propertiesList, GetEnrichedSerializerSettings()));
+                        break;
+                    case S3PackageOptions packageOptions:
+                        packageOptions.BucketKeyPrefix = bucketKeyPrefix;
+                        variables.Set(AwsSpecialVariables.S3.PackageOptions, JsonConvert.SerializeObject(packageOptions, GetEnrichedSerializerSettings()));
+                        variables.Set(PackageVariables.PackageId, packageName);
+                        variables.Set(PackageVariables.PackageVersion, packageVersion);
+                        break;
                 }
             });
 
             var variablesFile = Path.GetTempFileName();
-            var variables = new CalamariVariables();
 
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
             variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
             variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
             variables.Set("Octopus.Action.Aws.Region", region);
-            variables.Set(AwsSpecialVariables.S3.FileSelections, JsonConvert.SerializeObject(fileSelections, GetEnrichedSerializerSettings()));
 
             if (customVariables != null) variables.Merge(customVariables);
             
             variables.Save(variablesFile);
 
             var packageDirectory = TestEnvironment.GetTestPath("AWS", "S3", packageName);
-            using (var package = new TemporaryFile(PackageBuilder.BuildSimpleZip(packageName, "1.0.0", packageDirectory)))
+            using (var package = new TemporaryFile(PackageBuilder.BuildSimpleZip(packageName, packageVersion, packageDirectory)))
             using (new TemporaryFile(variablesFile))
             {
                 var log = new InMemoryLog();
@@ -411,7 +449,7 @@ namespace Calamari.Tests.AWS
                     "--package", $"{package.FilePath}",
                     "--variables", $"{variablesFile}",
                     "--bucket", bucketName,
-                    "--targetMode", S3TargetMode.FileSelections.ToString()});
+                    "--targetMode", s3TargetMode.ToString()});
 
                 result.Should().Be(0);
             }
