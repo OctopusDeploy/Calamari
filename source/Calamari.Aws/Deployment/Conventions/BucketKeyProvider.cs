@@ -16,10 +16,6 @@ namespace Calamari.Aws.Deployment.Conventions
     {
         public string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour, string packageFilePath = "")
         {
-            if (behaviour.BucketKeyBehaviour == BucketKeyBehaviourType.FilenameWithContentHash)
-            {
-                
-            }
             switch (behaviour.BucketKeyBehaviour)
             {
                 case BucketKeyBehaviourType.Custom:
@@ -29,7 +25,9 @@ namespace Calamari.Aws.Deployment.Conventions
                 case BucketKeyBehaviourType.FilenameWithContentHash:
                     Guard.NotNullOrWhiteSpace(packageFilePath, "BucketKeyBehaviourType.FilenameWithContentHash requires a package file path value");
                     var packageContentHash = CalculateContentHash(packageFilePath);
-                    return $"@{packageContentHash}/{behaviour.BucketKeyPrefix}{defaultKey}";
+                    var fileName = Path.GetFileNameWithoutExtension(defaultKey);
+                    var extension = Path.GetExtension(defaultKey);
+                    return $"{behaviour.BucketKeyPrefix}{fileName}@{packageContentHash}{extension}";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(behaviour), "The provided bucket key behavior was not valid.");
             }
@@ -49,6 +47,14 @@ namespace Calamari.Aws.Deployment.Conventions
 
                 return computedHash.ToString();
             }
+        }
+        
+        public static string EncodeBucketKeyForUrl(string bucketKey)
+        {
+            var prefix = Path.GetDirectoryName(bucketKey)?.Replace('\\','/') ?? string.Empty;
+            var fileName = Uri.EscapeDataString(Path.GetFileNameWithoutExtension(bucketKey) ?? string.Empty);
+            var extension = Path.GetExtension(bucketKey) ?? string.Empty;
+            return $"{prefix}/{fileName}{extension}";
         }
     }
 }
