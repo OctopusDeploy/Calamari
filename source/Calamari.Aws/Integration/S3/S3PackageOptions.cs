@@ -6,7 +6,7 @@
         public string BucketKeyPrefix { get; set; }
         public BucketKeyBehaviourType BucketKeyBehaviour { get; set; }
 
-        public string VariableSubstitutionPatterns { get; set; }
-        public string StructuredVariableSubstitutionPatterns { get; set; }
+        public string VariableSubstitutionPatterns { get; set; } = "";
+        public string StructuredVariableSubstitutionPatterns { get; set; } = "";
     }
 }

@@ -369,7 +369,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
         static string GetPackageExtension(RunningDeployment deployment)
         {
-            return Path.GetExtension(deployment.Variables.Get(PackageVariables.IndexedOriginalPath(null)));
+            return Path.GetExtension(deployment.PackageFilePath);
         }
 
         /// <summary>
