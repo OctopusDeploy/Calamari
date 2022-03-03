@@ -33,7 +33,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var entries = new List<JournalEntry>(new[] { lockedEntry, unlockedEntry });
             var packagesToRemove = lfu.Sort(entries);
 
-            packagesToRemove.Select(p => p.Package).Should().BeEquivalentTo(CreatePackageIdentity("package-unlocked", "1.0"));
+            packagesToRemove.Select(p => p.Package).Should().Equal(CreatePackageIdentity("package-unlocked", "1.0"));
         }
 
         [Test]
@@ -58,7 +58,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             packagesToRemove
                 .Select(p => p.Package)
                 .Should()
-                .BeEquivalentTo(new object[]
+                .Equal(new object[]
                 {
                     CreatePackageIdentity("package-3", "1.0"),
                     CreatePackageIdentity("package-2", "1.1"),
@@ -73,7 +73,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var packagesToRemove = new LeastFrequentlyUsedWithAgingSort()
                 .Sort(entries);
 
-            packagesToRemove.Select(p => p.Package).Should().BeEquivalentTo(expectedPackageIdVersionPairs);
+            packagesToRemove.Select(p => p.Package).Should().Equal(expectedPackageIdVersionPairs);
         }
 
         public static IEnumerable ExpectMultiplePackageIdsTestCaseSource()
