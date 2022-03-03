@@ -59,12 +59,12 @@ namespace Calamari.Deployment.PackageRetention.Caching
         {
             var packageIdVersions = journalEntries
                                     .GroupBy(entry => entry.Package.PackageId)
-                                    .ToDictionary(entries => entries.Key, entries => entries.OrderByDescending(e => e.Package.Version).ToList());
+                                    .ToDictionary(entries => entries.Key, entries => entries);
 
             foreach (var kvp in packageIdVersions)
             {
-                var current = 0;
-                foreach (var entry in kvp.Value)
+                var current = -1;
+                foreach (var entry in kvp.Value.OrderByDescending(e => e.Package.Version))
                 {
                     current++;
                     var age = entry.GetUsageDetails().Min(ud => ud.CacheAgeAtUsage);
