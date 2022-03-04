@@ -10,6 +10,7 @@ namespace Calamari.Aws.Deployment.Conventions
     public interface IBucketKeyProvider
     {
         string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour, string packageFilePath = "");
+        string EncodeBucketKeyForUrl(string bucketKey);
     }
     
     public class BucketKeyProvider : IBucketKeyProvider
@@ -28,9 +29,13 @@ namespace Calamari.Aws.Deployment.Conventions
                 case BucketKeyBehaviourType.Filename:
                     return $"{SubstitutePackageHashVariable(behaviour.BucketKeyPrefix, packageContentHash)}{defaultKey}";
                 case BucketKeyBehaviourType.FilenameWithContentHash:
-                    var fileName = Path.GetFileNameWithoutExtension(defaultKey);
-                    var extension = Path.GetExtension(defaultKey);
-                    return $"{SubstitutePackageHashVariable(behaviour.BucketKeyPrefix, packageContentHash)}{fileName}@{packageContentHash}{extension}";
+                    var (fileName, extension) = GetFileNameParts(defaultKey);
+                    var bucketKey = new StringBuilder();
+                    bucketKey.Append(SubstitutePackageHashVariable(behaviour.BucketKeyPrefix, packageContentHash));
+                    bucketKey.Append(fileName);
+                    if (!packageContentHash.IsNullOrEmpty()) bucketKey.Append($"@{packageContentHash}");
+                    bucketKey.Append(extension);
+                    return bucketKey.ToString();
                 default:
                     throw new ArgumentOutOfRangeException(nameof(behaviour), "The provided bucket key behavior was not valid.");
             }
@@ -57,12 +62,24 @@ namespace Calamari.Aws.Deployment.Conventions
             return input.Replace($"#{{Octopus.Action.Package.PackageContentHash}}", contentHash);
         }
         
-        public static string EncodeBucketKeyForUrl(string bucketKey)
+        public string EncodeBucketKeyForUrl(string bucketKey)
         {
             var prefix = Path.GetDirectoryName(bucketKey)?.Replace('\\','/') ?? string.Empty;
-            var fileName = Uri.EscapeDataString(Path.GetFileNameWithoutExtension(bucketKey) ?? string.Empty);
-            var extension = Path.GetExtension(bucketKey) ?? string.Empty;
-            return $"{prefix}/{fileName}{extension}";
+            var (fileName, extension) = GetFileNameParts(Path.GetFileName(bucketKey));
+            return $"{prefix}/{Uri.EscapeDataString(fileName)}{extension}";
+        }
+
+        (string filename, string extension) GetFileNameParts(string fileNameWithExtensions)
+        {
+            var fileNameParts = fileNameWithExtensions.Split('.');
+            var fileName = fileNameParts[0];
+            var extension = string.Empty;
+            for (var i = 1; i < fileNameParts.Length; i++)
+            {
+                extension += $".{fileNameParts[i]}";
+            }
+
+            return (fileName, extension);
         }
     }
 }
