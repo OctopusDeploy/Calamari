@@ -58,17 +58,16 @@ namespace Calamari.Deployment.PackageRetention.Caching
         static IEnumerable<LeastFrequentlyUsedJournalEntry> CreateLeastFrequentlyUsedJournalEntries(IList<JournalEntry> journalEntries)
         {
             var packageIdVersions = journalEntries
-                                    .GroupBy(entry => entry.Package.PackageId)
-                                    .ToDictionary(entries => entries.Key, entries => entries);
+                                    .GroupBy(entry => entry.Package.PackageId);
 
-            foreach (var kvp in packageIdVersions)
+            foreach (var grouping in packageIdVersions)
             {
                 var current = -1;
-                foreach (var entry in kvp.Value.OrderByDescending(e => e.Package.Version))
+                foreach (var entry in grouping.OrderByDescending(e => e.Package.Version))
                 {
                     current++;
                     var age = entry.GetUsageDetails().Min(ud => ud.CacheAgeAtUsage);
-                    var hitCount = entry.GetUsageDetails().Count();
+                    var hitCount = entry.GetUsageDetails().Count;
                     yield return new LeastFrequentlyUsedJournalEntry(entry, age, hitCount, current);
                 }
             }
