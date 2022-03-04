@@ -3,7 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Aws.Integration.S3;
-using Calamari.Common.Plumbing;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
@@ -16,18 +16,21 @@ namespace Calamari.Aws.Deployment.Conventions
     {
         public string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour, string packageFilePath = "")
         {
+            var packageContentHash = string.Empty;
+            if (!packageFilePath.IsNullOrEmpty())
+            {
+                packageContentHash = CalculateContentHash(packageFilePath);
+            }
             switch (behaviour.BucketKeyBehaviour)
             {
                 case BucketKeyBehaviourType.Custom:
-                    return behaviour.BucketKey;
+                    return SubstitutePackageHashVariable(behaviour.BucketKey, packageContentHash);
                 case BucketKeyBehaviourType.Filename:
-                    return $"{behaviour.BucketKeyPrefix}{defaultKey}";
+                    return $"{SubstitutePackageHashVariable(behaviour.BucketKeyPrefix, packageContentHash)}{defaultKey}";
                 case BucketKeyBehaviourType.FilenameWithContentHash:
-                    Guard.NotNullOrWhiteSpace(packageFilePath, "BucketKeyBehaviourType.FilenameWithContentHash requires a package file path value");
-                    var packageContentHash = CalculateContentHash(packageFilePath);
                     var fileName = Path.GetFileNameWithoutExtension(defaultKey);
                     var extension = Path.GetExtension(defaultKey);
-                    return $"{behaviour.BucketKeyPrefix}{fileName}@{packageContentHash}{extension}";
+                    return $"{SubstitutePackageHashVariable(behaviour.BucketKeyPrefix, packageContentHash)}{fileName}@{packageContentHash}{extension}";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(behaviour), "The provided bucket key behavior was not valid.");
             }
@@ -47,6 +50,11 @@ namespace Calamari.Aws.Deployment.Conventions
 
                 return computedHash.ToString();
             }
+        }
+
+        string SubstitutePackageHashVariable(string input, string contentHash)
+        {
+            return input.Replace($"#{{Octopus.Action.Package.PackageContentHash}}", contentHash);
         }
         
         public static string EncodeBucketKeyForUrl(string bucketKey)
