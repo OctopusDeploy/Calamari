@@ -76,7 +76,15 @@ namespace Calamari.Aws.Deployment.Conventions
             var extension = string.Empty;
             for (var i = 1; i < fileNameParts.Length; i++)
             {
-                extension += $".{fileNameParts[i]}";
+                if (int.TryParse(fileNameParts[i], out _)) 
+                {
+                    // is a version number, should be part of file name string
+                    fileName += $".{fileNameParts[i]}";
+                }
+                else
+                {
+                    extension += $".{fileNameParts[i]}";
+                }
             }
 
             return (fileName, extension);

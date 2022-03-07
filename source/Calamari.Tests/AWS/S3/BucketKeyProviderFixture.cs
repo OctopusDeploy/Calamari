@@ -100,7 +100,8 @@ namespace Calamari.Tests.AWS.S3
         {
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "ZipPackages", "TestPackage.zip");
             var packageContentHash = CalculateContentHash(packageFilePath);
-            var result = sut.GetBucketKey("defaultKey.zip",
+            var fileName = "defaultKey";
+            var result = sut.GetBucketKey($"{fileName}.zip",
                                           new S3PackageOptions
                                           {
                                               BucketKeyPrefix = "test/",
@@ -109,13 +110,14 @@ namespace Calamari.Tests.AWS.S3
                                           },
                                           packageFilePath );
 
-            result.Should().Be($"test/defaultKey@{packageContentHash}.zip");
+            result.Should().Be($"test/{fileName}@{packageContentHash}.zip");
         }
         
         [Test]
         public void GetBucketKey_PackageOptions_ShouldNotAppendContentHash_WhenPackageFilePathNotFound()
         {
-            var result = sut.GetBucketKey("defaultKey.zip",
+            var fileName = "defaultKey";
+            var result = sut.GetBucketKey($"{fileName}.zip",
                                           new S3PackageOptions
                                           {
                                               BucketKeyPrefix = "test/",
@@ -124,7 +126,7 @@ namespace Calamari.Tests.AWS.S3
                                           },
                                           String.Empty );
 
-            result.Should().Be($"test/defaultKey.zip");
+            result.Should().Be($"test/{fileName}.zip");
         }
         
         [Test]
@@ -132,7 +134,8 @@ namespace Calamari.Tests.AWS.S3
         {
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "ZipPackages", "TestPackage.zip");
             var packageContentHash = CalculateContentHash(packageFilePath);
-            var result = sut.GetBucketKey("defaultKey.tar.gz",
+            var fileName = "defaultKey";
+            var result = sut.GetBucketKey($"{fileName}.tar.gz",
                                           new S3PackageOptions
                                           {
                                               BucketKeyPrefix = "test/",
@@ -141,7 +144,25 @@ namespace Calamari.Tests.AWS.S3
                                           },
                                           packageFilePath );
 
-            result.Should().Be($"test/defaultKey@{packageContentHash}.tar.gz");
+            result.Should().Be($"test/{fileName}@{packageContentHash}.tar.gz");
+        }
+        
+        [Test]
+        public void GetBucketKey_PackageOptions_ShouldAppendContentHash_WhenFileNameHasVersionNumbers()
+        {
+            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "ZipPackages", "TestPackage.zip");
+            var packageContentHash = CalculateContentHash(packageFilePath);
+            var fileName = "defaultKey.1.0.0";
+            var result = sut.GetBucketKey($"{fileName}.tar.gz",
+                                          new S3PackageOptions
+                                          {
+                                              BucketKeyPrefix = "test/",
+                                              BucketKey = "something",
+                                              BucketKeyBehaviour = BucketKeyBehaviourType.FilenameWithContentHash
+                                          },
+                                          packageFilePath );
+
+            result.Should().Be($"test/{fileName}@{packageContentHash}.tar.gz");
         }
         
         [Test]
@@ -149,7 +170,8 @@ namespace Calamari.Tests.AWS.S3
         {
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "ZipPackages", "TestPackage.zip");
             var packageContentHash = CalculateContentHash(packageFilePath);
-            var result = sut.GetBucketKey("defaultKey.zip",
+            var fileName = "defaultKey";
+            var result = sut.GetBucketKey($"{fileName}.zip",
                                           new S3PackageOptions
                                           {
                                               BucketKeyPrefix = "test",
