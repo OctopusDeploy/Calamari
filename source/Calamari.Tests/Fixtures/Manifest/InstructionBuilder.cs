@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Manifest
             instructions.Add(
                              new Instruction
                              {
-                                 Launcher = LaunchTools.LaunchTools.Calamari,
+                                 Launcher = Calamari.LaunchTools.LaunchTools.Calamari,
                                  LauncherInstructions = JsonConvert.SerializeObject(new CalamariInstructions
                                                                                     {
                                                                                         Command = commandName,
@@ -41,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Manifest
         {
             instructions.Add(new Instruction
             {
-                Launcher = LaunchTools.LaunchTools.Node,
+                Launcher = Calamari.LaunchTools.LaunchTools.Node,
                 LauncherInstructions = JsonConvert.SerializeObject(new NodeInstructions
                                                                    {
                                                                        BootstrapperPathVariable = nameof(NodeInstructions.BootstrapperPathVariable),
