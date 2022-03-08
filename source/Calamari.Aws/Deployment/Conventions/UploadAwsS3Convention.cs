@@ -172,7 +172,7 @@ namespace Calamari.Aws.Deployment.Conventions
             log.SetOutputVariableButDoNotAddToVariables(packageS3UriVariableName, packageS3UriVariableValue);
             
             var packageUriVariableName = index.IsNullOrEmpty() ? "Package.Uri" : $"Package.Uri[{index}]";
-            var packageUriVariableValue = $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{result.BucketName}";
+            var packageUriVariableValue = $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{bucketKeyProvider.EncodeBucketKeyForUrl(result.BucketKey)}";
             log.Info($"Saving object URI to variable \"Octopus.Action[{actionName}].Output.{packageUriVariableName}\"");
             log.SetOutputVariableButDoNotAddToVariables(packageUriVariableName, packageUriVariableValue);
             
@@ -198,7 +198,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Log.Warn(message);
         }
 
-        private async Task<IEnumerable<S3UploadResult>> UploadAll(IEnumerable<S3TargetPropertiesBase> options, Func<AmazonS3Client> clientFactory, RunningDeployment deployment)
+        async Task<IEnumerable<S3UploadResult>> UploadAll(IEnumerable<S3TargetPropertiesBase> options, Func<AmazonS3Client> clientFactory, RunningDeployment deployment)
         {
             var result = new List<S3UploadResult>();
             foreach (var option in options)
@@ -312,7 +312,7 @@ namespace Calamari.Aws.Deployment.Conventions
             var filename = GetNormalizedPackageFilename(deployment);
 
             return CreateRequest(targetArchivePath,
-                    GetBucketKey(filename, options), options)
+                    GetBucketKey(filename, options, targetArchivePath), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -399,9 +399,9 @@ namespace Calamari.Aws.Deployment.Conventions
             return md5HashSupported ? request.WithMd5Digest(fileSystem) : request;
         }
 
-        public string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour)
+        string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour, string packageFilePath = "")
         {
-            return bucketKeyProvider.GetBucketKey(defaultKey, behaviour);
+            return bucketKeyProvider.GetBucketKey(defaultKey, behaviour, packageFilePath);
         }
 
         /// <summary>

@@ -170,6 +170,26 @@ namespace Calamari.Tests.AWS
                                JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
                            });
         }
+        
+        [Test]
+        public void UploadPackageWithContentHashAppended()
+        {
+            var packageOptions = new List<S3TargetPropertiesBase>
+            {
+                new S3PackageOptions()
+                {
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    StructuredVariableSubstitutionPatterns = "*.json",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.FilenameWithContentHash,
+                }
+            };
+
+            var variables = new CalamariVariables();
+            variables.Set("Property1:Property2:Value", "InjectedValue");
+
+            Upload("Package3", packageOptions, variables, S3TargetMode.EntirePackage);
+        }
 
         [Test]
         public async Task UploadPackage3Individual()
