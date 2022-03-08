@@ -18,12 +18,24 @@ namespace Calamari.Tests.Fixtures.PackageRetention.Repository
         {
         }
 
-        public override void Commit()
+        public bool HasLock(PackageIdentity package)
         {
-            //This does nothing in the in-memory implementation
+            return TryGetJournalEntry(package, out var entry)
+                   && entry.HasLock();
         }
 
-        public override void Dispose()
+        public PackageUsages GetUsage(PackageIdentity package)
+        {
+            return TryGetJournalEntry(package, out var entry)
+                ? entry.GetUsageDetails()
+                : new PackageUsages();
+        }
+
+        public override void Load()
+        {
+        }
+
+        public override void Commit()
         {
             //This does nothing in the in-memory implementation
         }

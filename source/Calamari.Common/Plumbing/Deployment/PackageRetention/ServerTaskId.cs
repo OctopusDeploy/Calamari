@@ -13,10 +13,12 @@ namespace Calamari.Common.Plumbing.Deployment.PackageRetention
         {
         }
 
-        public ServerTaskId(IVariables variables)
-            : base(variables.Get(KnownVariables.ServerTask.Id)
-                   ?? throw new Exception("ServerTask.Id not set."))
+        public static ServerTaskId FromVariables(IVariables variables)
         {
+            var taskId = variables.Get(KnownVariables.ServerTask.Id);
+            if (taskId == null)
+                throw new Exception("ServerTask.Id not set.");
+            return new ServerTaskId(taskId);
         }
     }
 }

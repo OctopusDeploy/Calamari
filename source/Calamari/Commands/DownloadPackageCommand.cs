@@ -1,24 +1,20 @@
 ﻿using System;
 using System.Globalization;
-using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing;
-using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.PackageRetention;
 using Calamari.Integration.Packages.Download;
 using Octopus.Versioning;
 
 namespace Calamari.Commands
 {
     [Command("download-package", Description = "Downloads a NuGet package from a NuGet feed")]
-    [PackageLockingCommand]
     public class DownloadPackageCommand : Command
     {
         private readonly IScriptEngine scriptEngine;
@@ -26,7 +22,6 @@ namespace Calamari.Commands
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
         readonly ICommandLineRunner commandLineRunner;
-        readonly IManagePackageUse packageJournal;
 
         string packageId;
         string packageVersion;
@@ -45,14 +40,12 @@ namespace Calamari.Commands
             IVariables variables,
             ICalamariFileSystem fileSystem,
 			ICommandLineRunner commandLineRunner,
-            ILog log,
-            IManagePackageUse packageJournal)
+            ILog log)
         {
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.log = log;
-            this.packageJournal = packageJournal;
             this.commandLineRunner = commandLineRunner;
             Options.Add("packageId=", "Package ID to download", v => packageId = v);
             Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
@@ -109,8 +102,7 @@ namespace Calamari.Commands
                     scriptEngine,
                     fileSystem,
                     commandLineRunner,
-                    variables,
-                    packageJournal);
+                    variables);
                 var pkg = packageDownloaderStrategy.DownloadPackage(
                     packageId,
                     version,

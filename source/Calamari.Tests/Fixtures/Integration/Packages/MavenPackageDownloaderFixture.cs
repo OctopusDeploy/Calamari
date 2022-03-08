@@ -1,14 +1,7 @@
 ﻿using System;
-using System.Net;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.PackageRetention.Caching;
-using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Integration.Packages.Download;
-using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using Calamari.Tests.Helpers;
-using NSubstitute;
 using NUnit.Framework;
 using Octopus.Versioning;
 
@@ -57,16 +50,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         static MavenPackageDownloader GetDownloader()
         {
-            return new MavenPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
-                                              new Journal(
-                                                          new InMemoryJournalRepositoryFactory(),
-                                                          Substitute.For<ILog>(),
-                                                          Substitute.For<ICalamariFileSystem>(),
-                                                          Substitute.For<IRetentionAlgorithm>(),
-                                                          Substitute.For<IVariables>(),
-                                                          Substitute.For<IFreeSpaceChecker>()
-                                                         )
-                                             );
+            return new MavenPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
         }
     }
 }

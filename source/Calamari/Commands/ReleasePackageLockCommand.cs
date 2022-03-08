@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Globalization;
-using System.Net;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.Versioning;
 
 namespace Calamari.Commands
 {
@@ -16,22 +12,18 @@ namespace Calamari.Commands
     {
         readonly IVariables variables;
         readonly ILog log;
-        readonly PackageIdentityFactory packageIdentityFactory;
-        readonly IManagePackageUse journal;
+        readonly IManagePackageCache journal;
         readonly TimeSpan defaultTimeBeforeLockExpiration = TimeSpan.FromDays(14);
 
-        string packageId;
-        string packageVersion;
+        ServerTaskId taskId;
 
-        public ReleasePackageLockCommand(IVariables variables, IManagePackageUse journal, ILog log, PackageIdentityFactory packageIdentityFactory)
+        public ReleasePackageLockCommand(IVariables variables, IManagePackageCache journal, ILog log)
         {
             this.variables = variables;
             this.log = log;
-            this.packageIdentityFactory = packageIdentityFactory;
             this.journal = journal;
 
-            Options.Add("packageId=", "Package ID to download", v => packageId = v);
-            Options.Add("packageVersion=", "Package version to download", v => packageVersion = v);
+            Options.Add("taskId=", "Id of the task that is using the package", v => taskId = new ServerTaskId(v));
         }
 
         TimeSpan GetTimeBeforeLockExpiration()
@@ -42,22 +34,14 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            var taskId = new ServerTaskId(variables);
-
             try
             {
                 Options.Parse(commandLineArguments);
-
-                Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
-                Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
-
-                var packageIdentity = packageIdentityFactory.CreatePackageIdentity(journal, variables, commandLineArguments, VersionFormat.Semver, packageId, packageVersion);
-
-                journal.DeregisterPackageUse(packageIdentity, taskId);
+                journal.RemoveAllLocks(taskId);
             }
             catch (Exception ex)
             {
-                log.ErrorFormat("Failed to release lock for {0} v{1} for server task '{2}'", packageId, packageVersion, taskId);
+                log.ErrorFormat("Failed to release package locks");
                 return ConsoleFormatter.PrintError(log, ex);
             }
 

@@ -42,6 +42,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         void PurgeDirectory(string targetDirectory, FailureOptions options, params string[] globs);
         void EnsureDirectoryExists(string directoryPath);
         bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes);
+        bool GetDiskTotalSpace(string directoryPath, out ulong totalNumberOfBytes);
         string GetFullPath(string relativeOrAbsoluteFilePath);
         void OverwriteAndDelete(string originalFile, string temporaryReplacement);
         void WriteAllBytes(string filePath, byte[] data);

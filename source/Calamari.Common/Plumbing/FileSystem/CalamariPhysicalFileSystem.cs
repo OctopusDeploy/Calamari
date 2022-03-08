@@ -620,6 +620,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         }
 
         public abstract bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes);
+        public abstract bool GetDiskTotalSpace(string directoryPath, out ulong totalNumberOfBytes);
 
         public string GetRelativePath(string fromFile, string toFile)
         {

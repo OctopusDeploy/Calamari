@@ -70,7 +70,6 @@ namespace Calamari.Testing.Helpers
             base.ErrorFormat(messageFormat, args);
         }
 
-
         public class Message
         {
             public Level Level { get; }

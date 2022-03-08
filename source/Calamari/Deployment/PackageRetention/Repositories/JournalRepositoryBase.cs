@@ -21,25 +21,10 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             return journalEntries.TryGetValue(package, out entry);
         }
 
-        public JournalEntry GetJournalEntry(PackageIdentity package)
+        public void RemoveAllLocks(ServerTaskId serverTaskId)
         {
-            journalEntries.TryGetValue(package, out var entry);
-            return entry;
-        }
-
-        public IList<JournalEntry> GetJournalEntries(PackageId packageId)
-        {
-            return journalEntries.Where(pair => pair.Key.PackageId == packageId)
-                                 .Select(pair => pair.Value)
-                                 .ToList();
-        }
-
-        public IList<JournalEntry> GetJournalEntries(PackageId packageId, ServerTaskId deploymentTaskId)
-        {
-            return journalEntries.Where(pair => pair.Key.PackageId == packageId
-                                                && pair.Value.GetUsageDetails().Any(d => d.DeploymentTaskId == deploymentTaskId))
-                                 .Select(pair => pair.Value)
-                                 .ToList();
+            foreach (var entry in journalEntries.Values)
+                entry.RemoveLock(serverTaskId);
         }
 
         public IList<JournalEntry> GetAllJournalEntries()
@@ -60,7 +45,8 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             journalEntries.Remove(packageIdentity);
         }
 
+        public abstract void Load();
+
         public abstract void Commit();
-        public abstract void Dispose();
     }
 } 

@@ -16,7 +16,6 @@ using Calamari.Deployment.PackageRetention;
 namespace Calamari.Commands
 {
     [Command("transfer-package", Description = "Copies a deployment package to a specific directory")]
-    [PackageLockingCommand]
     public class TransferPackageCommand : Command
     {
         readonly ILog log;
