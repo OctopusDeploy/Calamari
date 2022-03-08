@@ -1,16 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Net;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.PackageRetention.Caching;
-using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
-using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using Calamari.Tests.Helpers;
-using NSubstitute;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
@@ -102,18 +95,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         static GitHubPackageDownloader GetDownloader()
         {
-            return new GitHubPackageDownloader(
-                                               new InMemoryLog(),
-                                               fileSystem,
-                                               new Journal(
-                                                           new InMemoryJournalRepositoryFactory(),
-                                                           Substitute.For<ILog>(),
-                                                           Substitute.For<ICalamariFileSystem>(),
-                                                           Substitute.For<IRetentionAlgorithm>(),
-                                                           Substitute.For<IVariables>(),
-                                                           Substitute.For<IFreeSpaceChecker>()
-                                                          )
-                                              );
+            return new GitHubPackageDownloader(new InMemoryLog(), fileSystem);
         }
     }
 }

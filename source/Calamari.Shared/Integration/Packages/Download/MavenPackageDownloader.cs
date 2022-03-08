@@ -10,7 +10,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.Java;
 using Calamari.Common.Plumbing;
-using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Exceptions;
@@ -34,12 +33,10 @@ namespace Calamari.Integration.Packages.Download
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
 
         readonly ICalamariFileSystem fileSystem;
-        readonly IManagePackageUse packageJournal;
 
-        public MavenPackageDownloader(ICalamariFileSystem fileSystem, IManagePackageUse packageJournal)
+        public MavenPackageDownloader(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
-            this.packageJournal = packageJournal;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
@@ -134,8 +131,6 @@ namespace Calamari.Integration.Packages.Download
 
             Log.Info("Downloading Maven package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
-            packageJournal.ApplyRetention(cacheDirectory);
-
             var mavenPackageId = MavenPackageID.CreatePackageIdFromOctopusInput(packageId, version);
 
             var snapshotMetadata = GetSnapshotMetadata(mavenPackageId,

@@ -14,14 +14,16 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         [JsonProperty]
         readonly PackageLocks locks;
+        
+        public ulong FileSizeBytes { get; }
 
         [JsonConstructor]
-        public JournalEntry(PackageIdentity package, PackageLocks packageLocks = null, PackageUsages packageUsages = null)
+        public JournalEntry(PackageIdentity package, ulong fileSizeBytes, PackageLocks packageLocks = null, PackageUsages packageUsages = null)
         {
             Package = package ?? throw new ArgumentNullException(nameof(package));
+            FileSizeBytes = fileSizeBytes;
             locks = packageLocks ?? new PackageLocks();
             usages = packageUsages ?? new PackageUsages();
-            Package.UpdatePackageSize();
         }
 
         public void AddUsage(ServerTaskId deploymentTaskId, CacheAge cacheAge)
@@ -41,7 +43,7 @@ namespace Calamari.Deployment.PackageRetention.Model
 
         public bool HasLock() => locks.Count > 0;
 
-        public IEnumerable<UsageDetails> GetUsageDetails() => usages;
+        public PackageUsages GetUsageDetails() => usages;
         public IEnumerable<UsageDetails> GetLockDetails() => locks;
     }
 }

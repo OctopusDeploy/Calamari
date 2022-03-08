@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -14,23 +13,15 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 {
     public class JsonJournalRepository : JournalRepositoryBase
     {
-        const string SemaphoreName = "Octopus.Calamari.PackageJournal";
-
         readonly ICalamariFileSystem fileSystem;
         readonly string journalPath;
         readonly ILog log;
 
-        readonly IDisposable semaphore;
-
-        public JsonJournalRepository(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphoreFactory, string journalPath, ILog log)
+        public JsonJournalRepository(ICalamariFileSystem fileSystem, IJsonJournalPathProvider pathProvider, ILog log)
         {
             this.fileSystem = fileSystem;
-            this.journalPath = journalPath;
+            journalPath = pathProvider.GetJournalPath();
             this.log = log;
-
-            semaphore = semaphoreFactory.Acquire(SemaphoreName, "Another process is using the package retention journal");
-
-            Load();
         }
 
         public override void Commit()
@@ -38,7 +29,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             Save();
         }
 
-        void Load()
+        public override void Load()
         {
             if (File.Exists(journalPath))
             {
@@ -85,11 +76,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
 
             fileSystem.WriteAllText(tempFilePath, json, Encoding.Default);
             fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
-        }
-
-        public override void Dispose()
-        {
-            semaphore.Dispose();
         }
 
         class PackageData

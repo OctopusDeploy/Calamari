@@ -25,7 +25,6 @@ using Calamari.Deployment.PackageRetention;
 namespace Calamari.Commands
 {
     [Command("run-script", Description = "Invokes a script")]
-    [PackageLockingCommand]
     public class RunScriptCommand : Command
     {
         string scriptFileArg;

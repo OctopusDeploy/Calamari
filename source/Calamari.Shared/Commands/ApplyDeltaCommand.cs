@@ -26,11 +26,11 @@ namespace Calamari.Commands
 
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
-        readonly IManagePackageUse packageJournal;
+        readonly IManagePackageCache packageJournal;
         readonly ILog log;
 
         public ApplyDeltaCommand(ILog log, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner,
-                                 IManagePackageUse packageJournal)
+                                 IManagePackageCache packageJournal)
         {
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
@@ -56,14 +56,6 @@ namespace Calamari.Commands
             try
             {
                 ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
-                try
-                {
-                    packageJournal.ApplyRetention(PackageStore.GetPackagesDirectory());
-                }
-                catch (Exception ex)
-                {
-                    log.Info($"Unable to apply retention to package.  Error message: {ex.ToString()}");
-                }
 
                 var tempNewFilePath = newFilePath + ".partial";
 #if USE_OCTODIFF_EXE

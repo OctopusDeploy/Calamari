@@ -21,5 +21,20 @@ namespace Calamari.Common.Plumbing.FileSystem
             totalNumberOfFreeBytes = 0;
             return false;
         }
+
+        public override bool GetDiskTotalSpace(string directoryPath, out ulong totalNumberOfBytes)
+        {
+            var pathRoot = Path.GetPathRoot(directoryPath);
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                if (!drive.Name.Equals(pathRoot))
+                    continue;
+                totalNumberOfBytes = (ulong)drive.TotalSize;
+                return true;
+            }
+
+            totalNumberOfBytes = 0;
+            return false;
+        }
     }
 }

@@ -24,5 +24,13 @@ namespace Calamari.Common.Plumbing.FileSystem
 
             return GetDiskFreeSpaceEx(directoryPath, out freeBytesAvailable, out totalNumberOfBytes, out totalNumberOfFreeBytes);
         }
+
+        public override bool GetDiskTotalSpace(string directoryPath, out ulong totalNumberOfBytes)
+        {
+            ulong freeBytesAvailable;
+            ulong totalNumberOfFreeBytes;
+
+            return GetDiskFreeSpaceEx(directoryPath, out freeBytesAvailable, out totalNumberOfBytes, out totalNumberOfFreeBytes);
+        }
     }
 }

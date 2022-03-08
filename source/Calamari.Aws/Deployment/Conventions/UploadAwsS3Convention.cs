@@ -24,6 +24,11 @@ using Calamari.Deployment.Conventions;
 using Calamari.Util;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Tar;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Writers.Tar;
+using CompressionType = SharpCompress.Common.CompressionType;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
@@ -115,7 +120,19 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 (await UploadAll(options, Factory, deployment)).Tee(responses =>
                 {
-                    SetOutputVariables(deployment, responses);
+                    var results = responses.Where(z => z.IsSuccess()).ToArray();
+                    if (targetMode == S3TargetMode.EntirePackage && results.FirstOrDefault() != null)
+                    {
+                        SetOutputVariables(deployment, results.FirstOrDefault());
+                    } 
+                    else if (targetMode == S3TargetMode.FileSelections)
+                    {
+                        foreach (var result in results)
+                        {
+                            var fileName = Path.GetFileName(result.BucketKey);
+                            SetOutputVariables(deployment, result, fileName);
+                        }
+                    }
                 });
             }
             catch (AmazonS3Exception exception)
@@ -136,16 +153,39 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        private void SetOutputVariables(RunningDeployment deployment, IEnumerable<S3UploadResult> results)
+        void SetOutputVariables(RunningDeployment deployment, S3UploadResult result, string index = "")
         {
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FileName, Path.GetFileName(deployment.PackageFilePath));
             log.SetOutputVariableButDoNotAddToVariables(PackageVariables.Output.FilePath, deployment.PackageFilePath);
-            foreach (var result in results)
-            {
-                if (!result.IsSuccess()) continue;
-                log.Info($"Saving object version id to variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.Files[{result.BucketKey}]\"");
-                log.SetOutputVariableButDoNotAddToVariables($"Files[{result.BucketKey}]", result.Version);
-            }
+            var actionName = deployment.Variables["Octopus.Action.Name"];
+            log.Info($"Saving object version id to variable \"Octopus.Action[{actionName}].Output.Files[{result.BucketKey}]\"");
+            log.SetOutputVariableButDoNotAddToVariables($"Files[{result.BucketKey}]", result.Version);
+            
+            var packageKeyVariableName = index.IsNullOrEmpty() ? "Package.Key" : $"Package.Key[{index}]";
+            var packageKeyVariableValue = result.BucketKey;
+            log.Info($"Saving bucket key to variable \"Octopus.Action[{actionName}].Output.{packageKeyVariableName}\"");
+            log.SetOutputVariableButDoNotAddToVariables(packageKeyVariableName, packageKeyVariableValue);
+            
+            var packageS3UriVariableName = index.IsNullOrEmpty() ? "Package.S3Uri" : $"Package.S3Uri[{index}]";
+            var packageS3UriVariableValue = $"s3://{result.BucketName}/{result.BucketKey}";
+            log.Info($"Saving object S3 URI to variable \"Octopus.Action[{actionName}].Output.{packageS3UriVariableName}\"");
+            log.SetOutputVariableButDoNotAddToVariables(packageS3UriVariableName, packageS3UriVariableValue);
+            
+            var packageUriVariableName = index.IsNullOrEmpty() ? "Package.Uri" : $"Package.Uri[{index}]";
+            var packageUriVariableValue = $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{result.BucketName}";
+            log.Info($"Saving object URI to variable \"Octopus.Action[{actionName}].Output.{packageUriVariableName}\"");
+            log.SetOutputVariableButDoNotAddToVariables(packageUriVariableName, packageUriVariableValue);
+            
+            //  ARN format: `arn:aws:s3:::bucket-name/key` (Note: China (Beijing region (cn-north-1) uses `aws-cn` instead of `aws`)
+            var packageArnVariableName = index.IsNullOrEmpty() ? "Package.Arn" : $"Package.Arn[{index}]";
+            var packageArnVariableValue = $"arn:{(awsEnvironmentGeneration.AwsRegion.SystemName.Equals("cn-north-1") ? "aws-cn" : "aws")}:s3:::{result.BucketName}/{result.BucketKey}";
+            log.Info($"Saving object ARN to variable \"Octopus.Action[{actionName}].Output.{packageArnVariableName}\"");
+            log.SetOutputVariableButDoNotAddToVariables(packageArnVariableName, packageArnVariableValue);
+            
+            var packageObjectVersionVariableName = index.IsNullOrEmpty() ? "Package.ObjectVersion" : $"Package.ObjectVersion[{index}]";
+            var packageObjectVersionVariableValue = result.Version;
+            log.Info($"Saving object version id to variable \"Octopus.Action[{actionName}].Output.{packageObjectVersionVariableName}\"");
+            log.SetOutputVariableButDoNotAddToVariables(packageObjectVersionVariableName, packageObjectVersionVariableValue);
         }
 
         private static void ThrowInvalidFileUpload(Exception exception, string message)
@@ -267,20 +307,69 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(options, "Package options may not be null");
             Guard.NotNull(clientFactory, "Client factory must not be null");
 
+            var targetArchivePath = PerformVariableReplacement(deployment, options);
+
             var filename = GetNormalizedPackageFilename(deployment);
 
-            return CreateRequest(deployment.PackageFilePath,
+            return CreateRequest(targetArchivePath,
                     GetBucketKey(filename, options), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
+        }
+
+        string PerformVariableReplacement(RunningDeployment deployment, S3PackageOptions options)
+        {
+            Guard.NotNull(deployment.StagingDirectory, "deployment.StagingDirectory must not be null");
+
+            if (!options.VariableSubstitutionPatterns.Any() && !options.StructuredVariableSubstitutionPatterns.Any())
+                return deployment.PackageFilePath;
+
+            var stagingDirectory = deployment.StagingDirectory;
+            var substitutionPatterns = SplitFilePatternString(options.VariableSubstitutionPatterns);
+            substituteInFiles.Substitute(stagingDirectory, substitutionPatterns);
+
+            var structuredSubstitutionPatterns = SplitFilePatternString(options.StructuredVariableSubstitutionPatterns);
+            structuredConfigVariablesService.ReplaceVariables(stagingDirectory, structuredSubstitutionPatterns.ToList());
+
+            return Repackage(stagingDirectory, GetPackageExtension(deployment));
+        }
+
+        string Repackage(string stagingDirectory, string packageExtension)
+        {
+            using (var targetArchive = fileSystem.CreateTemporaryFile(packageExtension, out var targetArchivePath))
+            {
+                if (packageExtension == ".zip")
+                {
+                    using (var archive = ZipArchive.Create())
+                    {
+                        archive.AddAllFromDirectory(stagingDirectory);
+                        archive.SaveTo(targetArchive, CompressionType.Deflate);
+                    }
+                }
+                else
+                {
+                    using (var archive = TarArchive.Create())
+                    {
+                        archive.AddAllFromDirectory(stagingDirectory);
+                        archive.SaveTo(targetArchive, CompressionType.GZip);
+                    }
+                }
+
+                return targetArchivePath;
+            }
         }
 
         public string GetNormalizedPackageFilename(RunningDeployment deployment)
         {
             var id = deployment.Variables.Get(PackageVariables.PackageId);
             var version = deployment.Variables.Get(PackageVariables.PackageVersion);
-            var extension = Path.GetExtension(deployment.Variables.Get(PackageVariables.IndexedOriginalPath(null)));
+            var extension = GetPackageExtension(deployment);
             return $"{id}.{version}{extension}";
+        }
+
+        static string GetPackageExtension(RunningDeployment deployment)
+        {
+            return Path.GetExtension(deployment.PackageFilePath);
         }
 
         /// <summary>

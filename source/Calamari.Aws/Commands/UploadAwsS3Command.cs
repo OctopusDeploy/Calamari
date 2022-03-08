@@ -70,7 +70,7 @@ namespace Calamari.Aws.Commands
 
             var conventions = new List<IConvention>
             {
-                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)).When(_ => targetType == S3TargetMode.FileSelections),
+                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
                 new LogAwsUserInfoConvention(environment),
                 new CreateS3BucketConvention(environment, _ => bucket),
                 new UploadAwsS3Convention(
