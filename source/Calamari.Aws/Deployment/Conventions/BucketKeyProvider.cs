@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Calamari.Aws.Integration.S3;
 using Octopus.CoreUtilities.Extensions;
 
@@ -71,23 +72,23 @@ namespace Calamari.Aws.Deployment.Conventions
 
         (string filename, string extension) GetFileNameParts(string fileNameWithExtensions)
         {
-            var fileNameParts = fileNameWithExtensions.Split('.');
-            var fileName = fileNameParts[0];
-            var extension = string.Empty;
-            for (var i = 1; i < fileNameParts.Length; i++)
-            {
-                if (int.TryParse(fileNameParts[i], out _)) 
-                {
-                    // is a version number, should be part of file name string
-                    fileName += $".{fileNameParts[i]}";
-                }
-                else
-                {
-                    extension += $".{fileNameParts[i]}";
-                }
-            }
+            return TryMatchTarExtensions(fileNameWithExtensions, out var fileName, out var extension) 
+                ? (fileName, extension) 
+                : (Path.GetFileNameWithoutExtension(fileNameWithExtensions), Path.GetExtension(fileNameWithExtensions));
+        }
+        
+        bool TryMatchTarExtensions(string fileName, out string strippedFileName, out string extension)
+        {
+            // At the moment we only have one use case for this: files ending in ".tar.xyz" 
+            // As that is the only format of multiple part extensions we currently supported: https://octopus.com/docs/packaging-applications
+            // But if in the future we have more, we can modify this method to accomodate more cases.
+            var knownExtensionPatterns = @"\.tar((\.[a-zA-Z0-9]+)?)";
+            var match = new Regex($"(?<fileName>.*)(?<extension>{knownExtensionPatterns})$").Match(fileName);
 
-            return (fileName, extension);
+            strippedFileName = match.Success ? match.Groups["fileName"].Value : fileName;
+            extension = match.Groups["extension"].Value;
+
+            return match.Success;
         }
     }
 }

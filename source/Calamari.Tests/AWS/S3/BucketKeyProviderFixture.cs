@@ -146,13 +146,31 @@ namespace Calamari.Tests.AWS.S3
 
             result.Should().Be($"test/{fileName}@{packageContentHash}.tar.gz");
         }
-        
+
         [Test]
         public void GetBucketKey_PackageOptions_ShouldAppendContentHash_WhenFileNameHasVersionNumbers()
         {
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "ZipPackages", "TestPackage.zip");
             var packageContentHash = CalculateContentHash(packageFilePath);
             var fileName = "defaultKey.1.0.0";
+            var result = sut.GetBucketKey($"{fileName}.tar.gz",
+                                          new S3PackageOptions
+                                          {
+                                              BucketKeyPrefix = "test/",
+                                              BucketKey = "something",
+                                              BucketKeyBehaviour = BucketKeyBehaviourType.FilenameWithContentHash
+                                          },
+                                          packageFilePath );
+
+            result.Should().Be($"test/{fileName}@{packageContentHash}.tar.gz");
+        }
+        
+        [Test]
+        public void GetBucketKey_PackageOptions_ShouldAppendContentHash_WhenFileNameHasVersionNumbersAndReleaseTag()
+        {
+            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "ZipPackages", "TestPackage.zip");
+            var packageContentHash = CalculateContentHash(packageFilePath);
+            var fileName = "defaultKey.1.0.0-beta";
             var result = sut.GetBucketKey($"{fileName}.tar.gz",
                                           new S3PackageOptions
                                           {
