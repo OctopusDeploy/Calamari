@@ -67,7 +67,11 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             var prefix = Path.GetDirectoryName(bucketKey)?.Replace('\\','/') ?? string.Empty;
             var (fileName, extension) = GetFileNameParts(Path.GetFileName(bucketKey));
-            return $"{prefix}/{Uri.EscapeDataString(fileName)}{extension}";
+            var encodedBucketKey = new StringBuilder();
+            if (!prefix.IsNullOrEmpty()) encodedBucketKey.Append($"{prefix}/");
+            encodedBucketKey.Append(Uri.EscapeDataString(fileName));
+            encodedBucketKey.Append(extension);
+            return encodedBucketKey.ToString();
         }
 
         (string filename, string extension) GetFileNameParts(string fileNameWithExtensions)
