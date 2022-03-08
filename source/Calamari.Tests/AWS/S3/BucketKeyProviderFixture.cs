@@ -94,6 +94,15 @@ namespace Calamari.Tests.AWS.S3
 
             result.Should().Be("dir/subdir/filename.extension");
         }
+        
+        [Test]
+        public void EncodeBucketKeyForUrl_ShouldEncodedFileNameIfThereNoPrefixes()
+        {
+            var bucketKey = "filename@ABC.extension";
+            var result = sut.EncodeBucketKeyForUrl(bucketKey);
+
+            result.Should().Be("filename%40ABC.extension");
+        }
 
         [Test]
         public void GetBucketKey_PackageOptions_ShouldAppendContentHash()
