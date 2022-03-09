@@ -293,6 +293,76 @@ namespace Calamari.Tests.AWS
                 response.TagCount.Should().Be(1);
             });
         }
+        
+        [Test]
+        public async Task SubstituteVariableAndUpload_ZipPackage()
+        {
+            const string packageId = "TestZipPackage";
+            const string packageVersion = "1.0.0";
+            var fileName = $"{packageId}.{packageVersion}.zip";
+            
+            var packageOptions = new List<S3PackageOptions>
+            {
+                new S3PackageOptions
+                {
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    StructuredVariableSubstitutionPatterns = "*.json",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
+                }
+            };
+
+            var variables = new CalamariVariables();
+            variables.Set("Property1:Property2:Value", "InjectedValue");
+            
+            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
+
+            var prefix = UploadEntireCompressedPackage(packageFilePath, packageId, packageVersion, packageOptions, variables);
+
+            await Validate(async client =>
+                           {
+                               var file = await client.GetObjectAsync(bucketName, $"{prefix}{fileName}");
+                               var memoryStream = new MemoryStream();
+                               await file.ResponseStream.CopyToAsync(memoryStream);
+                               var text = await new StreamReader(ZipArchive.Open(memoryStream).Entries.First(entry => entry.Key == "file.json").OpenEntryStream()).ReadToEndAsync();
+                               JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
+                           });
+        }
+        
+        [Test]
+        public async Task SubstituteVariableAndUpload_JarPackage()
+        {
+            const string packageId = "TestJarPackage";
+            const string packageVersion = "0.0.1-beta";
+            var fileName = $"{packageId}.{packageVersion}.jar";
+            
+            var packageOptions = new List<S3PackageOptions>
+            {
+                new S3PackageOptions
+                {
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    StructuredVariableSubstitutionPatterns = "*.json",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
+                }
+            };
+
+            var variables = new CalamariVariables();
+            variables.Set("Property1:Property2:Value", "InjectedValue");
+            
+            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
+
+            var prefix = UploadEntireCompressedPackage(packageFilePath, packageId, packageVersion, packageOptions, variables);
+
+            await Validate(async client =>
+                           {
+                               var file = await client.GetObjectAsync(bucketName, $"{prefix}{fileName}");
+                               var memoryStream = new MemoryStream();
+                               await file.ResponseStream.CopyToAsync(memoryStream);
+                               var text = await new StreamReader(ZipArchive.Open(memoryStream).Entries.First(entry => entry.Key == "file.json").OpenEntryStream()).ReadToEndAsync();
+                               JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
+                           });
+        }
     }
 
     [TestFixture]
@@ -470,6 +540,62 @@ namespace Calamari.Tests.AWS
                     "--variables", $"{variablesFile}",
                     "--bucket", bucketName,
                     "--targetMode", s3TargetMode.ToString()});
+
+                result.Should().Be(0);
+            }
+
+            return bucketKeyPrefix;
+        }
+        
+        protected string UploadEntireCompressedPackage(string packageFilePath, string packageId, string packageVersion, List<S3PackageOptions> propertiesList, VariableDictionary customVariables = null)
+        {
+            var bucketKeyPrefix = $"calamaritest/{Guid.NewGuid():N}/";
+            var variables = new CalamariVariables();
+
+            propertiesList.ForEach(properties =>
+            {
+                properties.BucketKeyPrefix = bucketKeyPrefix;
+                variables.Set(AwsSpecialVariables.S3.PackageOptions, JsonConvert.SerializeObject(properties, GetEnrichedSerializerSettings()));
+                variables.Set(PackageVariables.PackageId, packageId);
+                variables.Set(PackageVariables.PackageVersion, packageVersion);
+            });
+
+            var variablesFile = Path.GetTempFileName();
+
+            variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
+            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
+            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
+            variables.Set("Octopus.Action.Aws.Region", region);
+
+            if (customVariables != null) variables.Merge(customVariables);
+            
+            variables.Save(variablesFile);
+
+            using (new TemporaryFile(variablesFile))
+            {
+                var log = new InMemoryLog();
+                var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+
+                var command = new UploadAwsS3Command(
+                    log,
+                    variables,
+                    fileSystem,
+                    new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
+                    new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
+                    new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
+                    {
+                        new JsonFormatVariableReplacer(fileSystem, log),
+                        new XmlFormatVariableReplacer(fileSystem, log),
+                        new YamlFormatVariableReplacer(fileSystem, log),
+                        new PropertiesFormatVariableReplacer(fileSystem, log),
+                    }, variables, fileSystem, log)
+                );
+
+                var result = command.Execute(new[] {
+                    "--package", $"{packageFilePath}",
+                    "--variables", $"{variablesFile}",
+                    "--bucket", bucketName,
+                    "--targetMode", S3TargetMode.EntirePackage.ToString()});
 
                 result.Should().Be(0);
             }

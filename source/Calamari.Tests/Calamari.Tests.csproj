@@ -181,7 +181,10 @@
     <None Update="AWS\S3\Package1\Extra\JavaScript.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-	<None Update="AWS\S3\ZipPackages\TestPackage.zip">
+	<None Update="AWS\S3\CompressedPackages\TestZipPackage.1.0.0.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="AWS\S3\CompressedPackages\TestJarPackage.0.0.1-beta.jar">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="AWS\S3\Package2\Wild\Ignore\TextFile1.txt">

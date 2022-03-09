@@ -107,7 +107,7 @@ namespace Calamari.Tests.AWS.S3
         [Test]
         public void GetBucketKey_PackageOptions_ShouldAppendContentHash()
         {
-            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "ZipPackages", "TestPackage.zip");
+            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", "TestZipPackage.1.0.0.zip");
             var packageContentHash = CalculateContentHash(packageFilePath);
             var fileName = "defaultKey";
             var result = sut.GetBucketKey($"{fileName}.zip",
@@ -141,7 +141,7 @@ namespace Calamari.Tests.AWS.S3
         [Test]
         public void GetBucketKey_PackageOptions_ShouldAppendContentHash_WhenExtensionHasMultipleParts()
         {
-            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "ZipPackages", "TestPackage.zip");
+            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", "TestZipPackage.1.0.0.zip");
             var packageContentHash = CalculateContentHash(packageFilePath);
             var fileName = "defaultKey";
             var result = sut.GetBucketKey($"{fileName}.tar.gz",
@@ -159,7 +159,7 @@ namespace Calamari.Tests.AWS.S3
         [Test]
         public void GetBucketKey_PackageOptions_ShouldAppendContentHash_WhenFileNameHasVersionNumbers()
         {
-            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "ZipPackages", "TestPackage.zip");
+            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", "TestZipPackage.1.0.0.zip");
             var packageContentHash = CalculateContentHash(packageFilePath);
             var fileName = "defaultKey.1.0.0";
             var result = sut.GetBucketKey($"{fileName}.tar.gz",
@@ -177,7 +177,7 @@ namespace Calamari.Tests.AWS.S3
         [Test]
         public void GetBucketKey_PackageOptions_ShouldAppendContentHash_WhenFileNameHasVersionNumbersAndReleaseTag()
         {
-            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "ZipPackages", "TestPackage.zip");
+            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", "TestZipPackage.1.0.0.zip");
             var packageContentHash = CalculateContentHash(packageFilePath);
             var fileName = "defaultKey.1.0.0-beta";
             var result = sut.GetBucketKey($"{fileName}.tar.gz",
@@ -195,7 +195,7 @@ namespace Calamari.Tests.AWS.S3
         [Test]
         public void GetBucketKey_PackageOptions_ShouldSubstituteContentHashVariable()
         {
-            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "ZipPackages", "TestPackage.zip");
+            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", "TestZipPackage.1.0.0.zip");
             var packageContentHash = CalculateContentHash(packageFilePath);
             var fileName = "defaultKey";
             var result = sut.GetBucketKey($"{fileName}.zip",
