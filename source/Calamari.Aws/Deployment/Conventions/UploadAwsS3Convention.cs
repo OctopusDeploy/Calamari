@@ -339,7 +339,7 @@ namespace Calamari.Aws.Deployment.Conventions
             var supportedZipExtensions = new[] {".nupkg", ".zip"};
             var supportedJavaExtensions = new[] {".jar", ".war", ".ear", ".rar"};
             var supportedTarExtensions = new[] {".tar"};
-            var supportedTarGZipExtensions = new[] { ".tar", ".tgz", ".tar.gz", ".tar.Z"};
+            var supportedTarGZipExtensions = new[] { ".tgz", ".tar.gz", ".tar.Z"};
             var supportedTarBZip2Extensions = new[] { "tar.bz", ".tar.bz2", ".tbz"};
 
             var lowercasedFileName = fileName.ToLower();
@@ -396,7 +396,9 @@ namespace Calamari.Aws.Deployment.Conventions
 
         static string GetPackageExtension(RunningDeployment deployment)
         {
-            return Path.GetExtension(deployment.PackageFilePath);
+            return BucketKeyProvider.TryMatchTarExtensions(Path.GetFileName(deployment.PackageFilePath), out _, out var extension) 
+                ? extension 
+                : Path.GetExtension(deployment.PackageFilePath);
         }
 
         /// <summary>

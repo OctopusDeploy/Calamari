@@ -81,7 +81,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 : (Path.GetFileNameWithoutExtension(fileNameWithExtensions), Path.GetExtension(fileNameWithExtensions));
         }
         
-        bool TryMatchTarExtensions(string fileName, out string strippedFileName, out string extension)
+        public static bool TryMatchTarExtensions(string fileName, out string strippedFileName, out string extension)
         {
             // At the moment we only have one use case for this: files ending in ".tar.xyz" 
             // As that is the only format of multiple part extensions we currently supported: https://octopus.com/docs/packaging-applications

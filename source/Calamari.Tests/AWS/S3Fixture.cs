@@ -295,11 +295,11 @@ namespace Calamari.Tests.AWS
         }
         
         [Test]
-        public async Task SubstituteVariableAndUpload_ZipPackage()
+        [TestCase("TestZipPackage", "1.0.0", "zip")]
+        [TestCase("TestJarPackage", "0.0.1-beta", "jar")]
+        public async Task SubstituteVariablesAndUploadZipArchives(string packageId, string packageVersion, string packageExtension)
         {
-            const string packageId = "TestZipPackage";
-            const string packageVersion = "1.0.0";
-            var fileName = $"{packageId}.{packageVersion}.zip";
+            var fileName = $"{packageId}.{packageVersion}.{packageExtension}";
             
             var packageOptions = new List<S3PackageOptions>
             {
@@ -326,15 +326,17 @@ namespace Calamari.Tests.AWS
                                await file.ResponseStream.CopyToAsync(memoryStream);
                                var text = await new StreamReader(ZipArchive.Open(memoryStream).Entries.First(entry => entry.Key == "file.json").OpenEntryStream()).ReadToEndAsync();
                                JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
+                               memoryStream.Close();
                            });
         }
         
         [Test]
-        public async Task SubstituteVariableAndUpload_JarPackage()
+        public async Task SubstituteVariablesAndUploadTarArchives()
         {
-            const string packageId = "TestJarPackage";
-            const string packageVersion = "0.0.1-beta";
-            var fileName = $"{packageId}.{packageVersion}.jar";
+            const string packageId = "TestTarPackage";
+            const string packageVersion = "0.0.1";
+            const string packageExtension = "tar";
+            var fileName = $"{packageId}.{packageVersion}.{packageExtension}";
             
             var packageOptions = new List<S3PackageOptions>
             {
@@ -357,10 +359,130 @@ namespace Calamari.Tests.AWS
             await Validate(async client =>
                            {
                                var file = await client.GetObjectAsync(bucketName, $"{prefix}{fileName}");
-                               var memoryStream = new MemoryStream();
-                               await file.ResponseStream.CopyToAsync(memoryStream);
-                               var text = await new StreamReader(ZipArchive.Open(memoryStream).Entries.First(entry => entry.Key == "file.json").OpenEntryStream()).ReadToEndAsync();
-                               JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
+                               var tempFileName = Path.GetTempFileName();
+                               var tempDirectoryName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(tempFileName));
+                               try
+                               {
+                                   using (var fs = File.OpenWrite(tempFileName))
+                                   {
+                                       await file.ResponseStream.CopyToAsync(fs);
+                                   }
+
+                                   var log = new InMemoryLog();
+                                   var extractor = new TarPackageExtractor(log);
+                                   extractor.Extract(tempFileName, tempDirectoryName);
+                                   var text = File.ReadAllText(Path.Combine(tempDirectoryName, "file.json"));
+                                   JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
+                               }
+                               finally
+                               {
+                                   File.Delete(tempFileName);
+                                   Directory.Delete(tempDirectoryName, true);
+                               }
+                           });
+        }
+        
+        [Test]
+        public async Task SubstituteVariablesAndUploadTarGzipArchives()
+        {
+            const string packageId = "TestTarGzipPackage";
+            const string packageVersion = "0.0.1";
+            const string packageExtension = "tar.gz";
+            var fileName = $"{packageId}.{packageVersion}.{packageExtension}";
+            
+            var packageOptions = new List<S3PackageOptions>
+            {
+                new S3PackageOptions
+                {
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    StructuredVariableSubstitutionPatterns = "*.json",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
+                }
+            };
+
+            var variables = new CalamariVariables();
+            variables.Set("Property1:Property2:Value", "InjectedValue");
+            
+            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
+
+            var prefix = UploadEntireCompressedPackage(packageFilePath, packageId, packageVersion, packageOptions, variables);
+
+            await Validate(async client =>
+                           {
+                               var file = await client.GetObjectAsync(bucketName, $"{prefix}{fileName}");
+                               var tempFileName = Path.GetTempFileName();
+                               var tempDirectoryName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(tempFileName));
+                               try
+                               {
+                                   using (var fs = File.OpenWrite(tempFileName))
+                                   {
+                                       await file.ResponseStream.CopyToAsync(fs);
+                                   }
+
+                                   var log = new InMemoryLog();
+                                   var extractor = new TarGzipPackageExtractor(log);
+                                   extractor.Extract(tempFileName, tempDirectoryName);
+                                   var text = File.ReadAllText(Path.Combine(tempDirectoryName, "file.json"));
+                                   JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
+                               }
+                               finally
+                               {
+                                   File.Delete(tempFileName);
+                                   Directory.Delete(tempDirectoryName, true);
+                               }
+                           });
+        }
+        
+        [Test]
+        public async Task SubstituteVariablesAndUploadTarBZip2Archives()
+        {
+            const string packageId = "TestTarBzip2Package";
+            const string packageVersion = "0.0.1";
+            const string packageExtension = "tar.bz2";
+            var fileName = $"{packageId}.{packageVersion}.{packageExtension}";
+            
+            var packageOptions = new List<S3PackageOptions>
+            {
+                new S3PackageOptions
+                {
+                    StorageClass = "STANDARD",
+                    CannedAcl = "private",
+                    StructuredVariableSubstitutionPatterns = "*.json",
+                    BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
+                }
+            };
+
+            var variables = new CalamariVariables();
+            variables.Set("Property1:Property2:Value", "InjectedValue");
+            
+            var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
+
+            var prefix = UploadEntireCompressedPackage(packageFilePath, packageId, packageVersion, packageOptions, variables);
+
+            await Validate(async client =>
+                           {
+                               var file = await client.GetObjectAsync(bucketName, $"{prefix}{fileName}");
+                               var tempFileName = Path.GetTempFileName();
+                               var tempDirectoryName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(tempFileName));
+                               try
+                               {
+                                   using (var fs = File.OpenWrite(tempFileName))
+                                   {
+                                       await file.ResponseStream.CopyToAsync(fs);
+                                   }
+
+                                   var log = new InMemoryLog();
+                                   var extractor = new TarBzipPackageExtractor(log);
+                                   extractor.Extract(tempFileName, tempDirectoryName);
+                                   var text = File.ReadAllText(Path.Combine(tempDirectoryName, "file.json"));
+                                   JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
+                               }
+                               finally
+                               {
+                                   File.Delete(tempFileName);
+                                   Directory.Delete(tempDirectoryName, true);
+                               }
                            });
         }
     }
