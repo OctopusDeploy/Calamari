@@ -47,7 +47,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                         },
                                                         async (destinationDirectoryName, tuple) =>
                                                         {
-                                                            var fileName = GetTerraformFileName(tuple.latestVersion);
+                                                            var fileName = GetTerraformFileName(tuple.version);
 
                                                             await DownloadTerraform(fileName, client, tuple.data, destinationDirectoryName);
 
@@ -64,7 +64,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                       },
                                                       async (destinationDirectoryName, tuple) =>
                                                       {
-                                                          var downloadUrl = GetKubectlDownloadLink(tuple.latestVersion);
+                                                          var downloadUrl = GetKubectlDownloadLink(tuple.version);
 
                                                           await Download(Path.Combine(destinationDirectoryName, GetKubectlFileName()), client, downloadUrl);
 
@@ -75,12 +75,13 @@ namespace Calamari.Tests.KubernetesFixtures
                 AwsAuthenticatorExecutable = await DownloadCli("aws-iam-authenticator",
                                                                async () =>
                                                                {
+                                                                   const string requiredVersion = "v0.5.3";
                                                                    client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
-                                                                   var json = await client.GetAsync("https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases/42218511");
+                                                                   var json = await client.GetAsync("https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases/tags/{requiredVersion}");
                                                                    json.EnsureSuccessStatusCode();
                                                                    var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
                                                                    var downloadUrl = jObject["assets"].Children().FirstOrDefault(token => token["name"].Value<string>().EndsWith(GetAWSAuthenticatorFileNameEndsWith()))?["browser_download_url"].Value<string>();
-                                                                   return (jObject["tag_name"].Value<string>(), downloadUrl);
+                                                                   return (requiredVersion, downloadUrl);
                                                                },
                                                                async (destinationDirectoryName, tuple) =>
                                                                {
@@ -94,10 +95,10 @@ namespace Calamari.Tests.KubernetesFixtures
                                                                () => Task.FromResult<(string, string)>(("346.0.0", string.Empty)),
                                                                async (destinationDirectoryName, tuple) =>
                                                                {
-                                                                   var downloadUrl = GetGcloudDownloadLink(tuple.latestVersion);
-                                                                   var fileName = GetGcloudZipFileName(tuple.latestVersion);
+                                                                   var downloadUrl = GetGcloudDownloadLink(tuple.version);
+                                                                   var fileName = GetGcloudZipFileName(tuple.version);
 
-                                                                   await DownloadGcloud(GetGcloudZipFileName(tuple.latestVersion), client, downloadUrl, destinationDirectoryName);
+                                                                   await DownloadGcloud(GetGcloudZipFileName(tuple.version), client, downloadUrl, destinationDirectoryName);
 
                                                                    return GetGcloudExecutablePath(destinationDirectoryName);
                                                                });
@@ -247,10 +248,10 @@ namespace Calamari.Tests.KubernetesFixtures
             TestContext.Progress.WriteLine("Cannot create symbolic link: {0}, Calamari does not currently support the extraction of symbolic links", sourcepath);
         }
 
-        async Task<string> DownloadCli(string toolName, Func<Task<(string latestVersion, string data)>> versionFetcher, Func<string, (string latestVersion, string data), Task<string>> downloader)
+        async Task<string> DownloadCli(string toolName, Func<Task<(string version, string data)>> versionFetcher, Func<string, (string version, string data), Task<string>> downloader)
         {
             var data = await versionFetcher();
-            var destinationDirectoryName = TestEnvironment.GetTestPath("Tools", toolName, data.latestVersion);
+            var destinationDirectoryName = TestEnvironment.GetTestPath("Tools", toolName, data.version);
 
             string ShouldDownload()
             {
