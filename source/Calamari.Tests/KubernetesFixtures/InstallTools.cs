@@ -77,7 +77,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                                {
                                                                    const string requiredVersion = "v0.5.3";
                                                                    client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
-                                                                   var json = await client.GetAsync("https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases/tags/{requiredVersion}");
+                                                                   var json = await client.GetAsync($"https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases/tags/{requiredVersion}");
                                                                    json.EnsureSuccessStatusCode();
                                                                    var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
                                                                    var downloadUrl = jObject["assets"].Children().FirstOrDefault(token => token["name"].Value<string>().EndsWith(GetAWSAuthenticatorFileNameEndsWith()))?["browser_download_url"].Value<string>();
