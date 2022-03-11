@@ -5,7 +5,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
-using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -26,15 +25,12 @@ namespace Calamari.Commands
 
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
-        readonly IManagePackageCache packageJournal;
         readonly ILog log;
 
-        public ApplyDeltaCommand(ILog log, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner,
-                                 IManagePackageCache packageJournal)
+        public ApplyDeltaCommand(ILog log, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner)
         {
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
-            this.packageJournal = packageJournal;
             this.log = log;
             Options.Add("basisFileName=", "The file that the delta was created for.", v => basisFileName = v);
             Options.Add("fileHash=", "", v => fileHash = v);
