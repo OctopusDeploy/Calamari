@@ -13,6 +13,7 @@ using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
@@ -396,7 +397,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
         static string GetPackageExtension(RunningDeployment deployment)
         {
-            return BucketKeyProvider.TryMatchTarExtensions(Path.GetFileName(deployment.PackageFilePath), out _, out var extension) 
+            return PackageName.TryMatchTarExtensions(Path.GetFileName(deployment.PackageFilePath) ?? "", out _, out var extension) 
                 ? extension 
                 : Path.GetExtension(deployment.PackageFilePath);
         }

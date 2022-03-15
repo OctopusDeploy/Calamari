@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Aws.Integration.S3;
+using Calamari.Common.Features.Packages;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
@@ -76,23 +77,9 @@ namespace Calamari.Aws.Deployment.Conventions
 
         (string filename, string extension) GetFileNameParts(string fileNameWithExtensions)
         {
-            return TryMatchTarExtensions(fileNameWithExtensions, out var fileName, out var extension) 
+            return PackageName.TryMatchTarExtensions(fileNameWithExtensions, out var fileName, out var extension) 
                 ? (fileName, extension) 
                 : (Path.GetFileNameWithoutExtension(fileNameWithExtensions), Path.GetExtension(fileNameWithExtensions));
-        }
-        
-        public static bool TryMatchTarExtensions(string fileName, out string strippedFileName, out string extension)
-        {
-            // At the moment we only have one use case for this: files ending in ".tar.xyz" 
-            // As that is the only format of multiple part extensions we currently supported: https://octopus.com/docs/packaging-applications
-            // But if in the future we have more, we can modify this method to accomodate more cases.
-            var knownExtensionPatterns = @"\.tar((\.[a-zA-Z0-9]+)?)";
-            var match = new Regex($"(?<fileName>.*)(?<extension>{knownExtensionPatterns})$").Match(fileName);
-
-            strippedFileName = match.Success ? match.Groups["fileName"].Value : fileName;
-            extension = match.Groups["extension"].Value;
-
-            return match.Success;
         }
     }
 }
