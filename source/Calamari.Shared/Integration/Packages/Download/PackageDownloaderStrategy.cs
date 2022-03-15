@@ -67,6 +67,9 @@ namespace Calamari.Integration.Packages.Download
                 case FeedType.AwsElasticContainerRegistry :
                     downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner, variables);
                     break;
+                case FeedType.S3:
+                    downloader = new S3PackageDownloader(log, fileSystem);
+                    break;
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");
             }
