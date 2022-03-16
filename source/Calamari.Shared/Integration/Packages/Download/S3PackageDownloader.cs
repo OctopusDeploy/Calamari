@@ -91,10 +91,11 @@ namespace Calamari.Integration.Packages.Download
 
 #if NET40
                         var response = s3Client.GetObject(bucketName, fileName);
+                        response.WriteResponseStreamToFile(localDownloadName);
 #else
                         var response = s3Client.GetObjectAsync(bucketName, fileName).GetAwaiter().GetResult();
+                        response.WriteResponseStreamToFileAsync(localDownloadName, false, CancellationToken.None).GetAwaiter().GetResult();
 #endif
-                        response.WriteResponseStreamToFile(localDownloadName);
                         var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
                         return packagePhysicalFileMetadata
                                ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
