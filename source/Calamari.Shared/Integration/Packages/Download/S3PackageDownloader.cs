@@ -1,7 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Alphaleonis.Win32.Filesystem;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -75,7 +75,13 @@ namespace Calamari.Integration.Packages.Download
                         for (int i = 0; i < knownFileExtensions.Length && !fileExists; i++)
                         {
                             fileName = BuildFileName(prefix, version.ToString(), knownFileExtensions[i]);
-                            fileExists = FileExistsInBucket(s3Client, bucketName, fileName, CancellationToken.None).GetAwaiter().GetResult();
+                            fileExists = FileExistsInBucket(s3Client, bucketName, fileName, CancellationToken.None)
+#if NET40
+                                .Result;
+#else
+                                         .GetAwaiter()
+                                         .GetResult();
+#endif
                         }
 
                         if (!fileExists)
@@ -83,7 +89,11 @@ namespace Calamari.Integration.Packages.Download
 
                         var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, "." + Path.GetExtension(fileName)));
 
+#if NET40
                         var response = s3Client.GetObject(bucketName, fileName);
+#else
+                        var response = s3Client.GetObjectAsync(bucketName, fileName).GetAwaiter().GetResult();
+#endif
                         response.WriteResponseStreamToFile(localDownloadName);
                         var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
                         return packagePhysicalFileMetadata
@@ -97,10 +107,10 @@ namespace Calamari.Integration.Packages.Download
                     Thread.Sleep(downloadAttemptBackoff);
                 }
             }
-            
+
             throw new CommandException($"Failed to download package {packageId} {version}");
         }
-        
+
         async Task<bool> FileExistsInBucket(AmazonS3Client client, string bucketName, string prefix, CancellationToken cancellationToken)
         {
             var request = new ListObjectsRequest
@@ -109,8 +119,12 @@ namespace Calamari.Integration.Packages.Download
                 Prefix = prefix
             };
 
+#if NET40
+            var response = client.ListObjects(request);
+#else
             var response = await client.ListObjectsAsync(request, cancellationToken);
+#endif
             return response.S3Objects.Any();
-        }     
+        }
     }
 }
