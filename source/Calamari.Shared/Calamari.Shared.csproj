@@ -23,7 +23,7 @@
     <RootNamespace>Calamari</RootNamespace>
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
-    <TargetFrameworks>net40;net452;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net452;netstandard2.1;net40</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
     <TargetFramework>netstandard2.1</TargetFramework>
