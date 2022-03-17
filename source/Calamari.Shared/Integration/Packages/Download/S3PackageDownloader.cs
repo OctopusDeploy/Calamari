@@ -79,6 +79,8 @@ namespace Calamari.Integration.Packages.Download
             {
                 try
                 {
+                    log.Verbose($"Attempting download of package {packageId} version {version} from S3 bucket {bucketName}. Attempt #{retry + 1}");
+                    
                     using (var s3Client = string.IsNullOrEmpty(feedUsername) ? new AmazonS3Client() : new AmazonS3Client(new BasicAWSCredentials(feedUsername, feedPassword)))
                     {
                         bool fileExists = false;
@@ -114,18 +116,20 @@ namespace Calamari.Integration.Packages.Download
                 }
                 catch (Exception ex)
                 {
+                    log.Verbose($"Download attempt #{retry + 1} failed, with error: {ex.Message}. Retrying in {downloadAttemptBackoff}");
+                    
                     if (retry == maxDownloadAttempts)
                         throw new CommandException($"Unable to download package {packageId} {version}: " + ex.Message);
                     Thread.Sleep(downloadAttemptBackoff);
                 }
             }
 
-            throw new CommandException($"Failed to download package {packageId} {version}. Attempted {retry + 1} times.");
+            throw new CommandException($"Failed to download package {packageId} {version}. Attempted {retry} times.");
         }
         
         PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
-            Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
+            Log.VerboseFormat($"Checking package cache for package {packageId} v{version.ToString()}");
 
             var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, knownFileExtensions));
 
@@ -137,9 +141,9 @@ namespace Calamari.Integration.Packages.Download
 
                 var idMatches = string.Equals(package.PackageId, packageId, StringComparison.OrdinalIgnoreCase);
                 var versionExactMatch = string.Equals(package.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase);
-                var nugetVerMatches = package.Version.Equals(version);
+                var semverMatches = package.Version.Equals(version);
 
-                if (idMatches && (nugetVerMatches || versionExactMatch))
+                if (idMatches && (semverMatches || versionExactMatch))
                     return PackagePhysicalFileMetadata.Build(file, package);
             }
 
