@@ -59,7 +59,7 @@ namespace Calamari.Integration.Packages.Download
             var (bucketName, prefix) = GetBucketAndKey(packageId);
             if (string.IsNullOrWhiteSpace(bucketName) || string.IsNullOrWhiteSpace(prefix))
             {
-                throw new InvalidOperationException("Invalid PackageId for S3 feed. Expecting format `<bucketName>/<packageId>`");
+                throw new InvalidOperationException($"Invalid PackageId for S3 feed. Expecting format `<bucketName>/<packageId>`, but received ${bucketName}/{prefix}");
             }
 
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
