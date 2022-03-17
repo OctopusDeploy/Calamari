@@ -68,7 +68,7 @@ namespace Calamari.Integration.Packages.Download
             {
                 try
                 {
-                    using (var s3Client = new AmazonS3Client(new BasicAWSCredentials(feedUsername, feedPassword)))
+                    using (var s3Client = string.IsNullOrEmpty(feedUsername) ? new AmazonS3Client() : new AmazonS3Client(new BasicAWSCredentials(feedUsername, feedPassword)))
                     {
                         bool fileExists = false;
                         string fileName = "";
