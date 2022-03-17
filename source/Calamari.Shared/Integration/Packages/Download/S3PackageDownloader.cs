@@ -61,10 +61,21 @@ namespace Calamari.Integration.Packages.Download
             {
                 throw new InvalidOperationException($"Invalid PackageId for S3 feed. Expecting format `<bucketName>/<packageId>`, but received ${bucketName}/{prefix}");
             }
-
+            
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
+            
+            if (!forcePackageDownload)
+            {
+                var downloaded = SourceFromCache(packageId, version, cacheDirectory);
+                if (downloaded != null)
+                {
+                    Log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloaded.FullFilePath);
+                    return downloaded;
+                }
+            }
 
-            for (var retry = 0; retry < maxDownloadAttempts; ++retry)
+            int retry = 0;
+            for (; retry < maxDownloadAttempts; ++retry)
             {
                 try
                 {
@@ -109,7 +120,30 @@ namespace Calamari.Integration.Packages.Download
                 }
             }
 
-            throw new CommandException($"Failed to download package {packageId} {version}");
+            throw new CommandException($"Failed to download package {packageId} {version}. Attempted {retry + 1} times.");
+        }
+        
+        PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
+        {
+            Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
+
+            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, knownFileExtensions));
+
+            foreach (var file in files)
+            {
+                var package = PackageName.FromFile(file);
+                if (package == null)
+                    continue;
+
+                var idMatches = string.Equals(package.PackageId, packageId, StringComparison.OrdinalIgnoreCase);
+                var versionExactMatch = string.Equals(package.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase);
+                var nugetVerMatches = package.Version.Equals(version);
+
+                if (idMatches && (nugetVerMatches || versionExactMatch))
+                    return PackagePhysicalFileMetadata.Build(file, package);
+            }
+
+            return null;
         }
 
         async Task<bool> FileExistsInBucket(AmazonS3Client client, string bucketName, string prefix, CancellationToken cancellationToken)
