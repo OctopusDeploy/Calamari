@@ -151,7 +151,7 @@ namespace Calamari.Integration.Packages.Download
                  var region = s3Client.GetBucketLocationAsync(bucketName, CancellationToken.None).GetAwaiter().GetResult();
 #endif
 
-                return region.Location;
+                return region.Location.Value ?? "us-east-1";
             }
         }
 
