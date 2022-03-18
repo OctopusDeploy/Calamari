@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -17,11 +18,11 @@ namespace Calamari.Integration.Packages.Download
     public class S3PackageDownloader : IPackageDownloader
     {
         static string[] knownFileExtensions = { ".zip", ".tar.gz", ".tar.bz2", ".tar.gz", ".tgz", ".tar.bz" };
-        
+
         const char BucketFileSeparator = '/';
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
-        
+
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
 
         public S3PackageDownloader(ILog log, ICalamariFileSystem fileSystem)
@@ -29,20 +30,20 @@ namespace Calamari.Integration.Packages.Download
             this.log = log;
             this.fileSystem = fileSystem;
         }
-        
+
         string BuildFileName(string prefix, string version, string extension)
         {
             return $"{prefix}.{version}{extension}";
         }
-        
+
         (string BucketName, string Filename) GetBucketAndKey(string searchTerm)
         {
-            var splitString = searchTerm.Split(new [] { BucketFileSeparator }, 2);
+            var splitString = searchTerm.Split(new[] { BucketFileSeparator }, 2);
             if (splitString.Length == 0)
                 return ("", "");
             if (splitString.Length == 1)
                 return (splitString[0], "");
-            
+
             return (splitString[0], splitString[1]);
         }
 
@@ -61,9 +62,9 @@ namespace Calamari.Integration.Packages.Download
             {
                 throw new InvalidOperationException($"Invalid PackageId for S3 feed. Expecting format `<bucketName>/<packageId>`, but received ${bucketName}/{prefix}");
             }
-            
+
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
-            
+
             if (!forcePackageDownload)
             {
                 var downloaded = SourceFromCache(packageId, version, cacheDirectory);
@@ -80,8 +81,10 @@ namespace Calamari.Integration.Packages.Download
                 try
                 {
                     log.Verbose($"Attempting download of package {packageId} version {version} from S3 bucket {bucketName}. Attempt #{retry + 1}");
-                    
-                    using (var s3Client = string.IsNullOrEmpty(feedUsername) ? new AmazonS3Client() : new AmazonS3Client(new BasicAWSCredentials(feedUsername, feedPassword)))
+
+                    var region = GetBucketsRegion(feedUsername, feedPassword, bucketName);
+
+                    using (var s3Client = GetS3Client(feedUsername, feedPassword, region))
                     {
                         bool fileExists = false;
                         string fileName = "";
@@ -117,8 +120,8 @@ namespace Calamari.Integration.Packages.Download
                 catch (Exception ex)
                 {
                     log.Verbose($"Download attempt #{retry + 1} failed, with error: {ex.Message}. Retrying in {downloadAttemptBackoff}");
-                    
-                    if (retry == maxDownloadAttempts)
+
+                    if ((retry + 1) == maxDownloadAttempts)
                         throw new CommandException($"Unable to download package {packageId} {version}: " + ex.Message);
                     Thread.Sleep(downloadAttemptBackoff);
                 }
@@ -126,8 +129,33 @@ namespace Calamari.Integration.Packages.Download
 
             throw new CommandException($"Failed to download package {packageId} {version}. Attempted {retry} times.");
         }
-        
-        PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
+
+        static AmazonS3Client GetS3Client(string? feedUsername, string? feedPassword, string endpoint = "us-west-1")
+        {
+            var config = new AmazonS3Config
+            {
+                AllowAutoRedirect = true,
+                RegionEndpoint = RegionEndpoint.GetBySystemName(endpoint)
+            };
+            
+            return string.IsNullOrEmpty(feedUsername) ? new AmazonS3Client(config) : new AmazonS3Client(new BasicAWSCredentials(feedUsername, feedPassword), config);
+        }
+
+        string GetBucketsRegion(string? feedUsername, string? feedPassword, string bucketName)
+        {
+            using (var s3Client = GetS3Client(feedUsername, feedPassword))
+            {
+#if NET40
+                var region = s3Client.GetBucketLocation(bucketName);
+#else
+                 var region = s3Client.GetBucketLocationAsync(bucketName, CancellationToken.None).GetAwaiter().GetResult();
+#endif
+
+                return region.Location;
+            }
+        }
+
+    PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
             Log.VerboseFormat($"Checking package cache for package {packageId} v{version.ToString()}");
 
