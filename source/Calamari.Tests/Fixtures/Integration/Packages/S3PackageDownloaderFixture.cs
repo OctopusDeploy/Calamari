@@ -27,7 +27,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageDownload");
         readonly string region;
         readonly string bucketName;
-
+        
         public S3PackageDownloaderFixture()
         {
             region = RegionRandomiser.GetARegion();
