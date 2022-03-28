@@ -16,6 +16,7 @@ using Nuke.Common.Utilities.Collections;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.NuGet;
 using Nuke.Common.Tools.SignTool;
+using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
@@ -40,7 +41,7 @@ class Build : NukeBuild
         public const string Portable = "portable";
     }
 
-    readonly string[] TimestampUrls = new string[]
+    readonly string[] TimestampUrls =
     {
         "http://timestamp.digicert.com?alg=sha256",
         "http://timestamp.comodoca.com"
@@ -67,7 +68,7 @@ class Build : NukeBuild
     readonly bool PackInParallel;
 
     [Parameter("Build verbosity")] 
-    readonly string BuildVerbosity = "normal";
+    readonly string BuildVerbosity = "Minimal";
 
     [Parameter("Sign Binaries")] 
     readonly bool SignBinaries = false;
@@ -124,122 +125,143 @@ class Build : NukeBuild
     public static int Main() => Execute<Build>(x => x.BuildLocal);
 
     Target CheckForbiddenWords => _ => _.Executes(() =>
-                                                  {
-                                                      Console.WriteLine("Checking codebase for forbidden words.");
+      {
+          Console.WriteLine("Checking codebase for forbidden words.");
 
-                                                      var process = ProcessTasks.StartProcess(GitPath,
-                                                                                              "grep -i -I -n -f ForbiddenWords.txt -- \"./*\" \":(exclude)ForbiddenWords.txt\"")
-                                                                                .AssertWaitForExit();
+          var process = ProcessTasks.StartProcess(GitPath,
+                                                  "grep -i -I -n -f ForbiddenWords.txt -- \"./*\" \":(exclude)ForbiddenWords.txt\"")
+                                    .AssertWaitForExit();
 
-                                                      if (process.ExitCode == 1)
-                                                      {
-                                                          Console.WriteLine("Sanity check passed.");
-                                                          return;
-                                                      }
+          if (process.ExitCode == 1)
+          {
+              Console.WriteLine("Sanity check passed.");
+              return;
+          }
 
-                                                      var filesContainingForbiddenWords = process.Output.Select(o => o.Text).ToArray();
-                                                      if (filesContainingForbiddenWords.Any())
-                                                          throw new Exception("Found forbidden words in the following files, "
-                                                                              + "please clean them up:\r\n"
-                                                                              + string.Join("\r\n", filesContainingForbiddenWords));
-                                                  });
+          var filesContainingForbiddenWords = process.Output.Select(o => o.Text).ToArray();
+          if (filesContainingForbiddenWords.Any())
+              throw new Exception("Found forbidden words in the following files, "
+                                + "please clean them up:\r\n"
+                                + string.Join("\r\n", filesContainingForbiddenWords));
+      });
 
     Target Clean => _ => _.Executes(() =>
-                                    {
-                                        SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(DeleteDirectory);
-                                        EnsureCleanDirectory(ArtifactsDirectory);
-                                        EnsureCleanDirectory(PublishDirectory);
-                                    });
+        {
+            SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(DeleteDirectory);
+            EnsureCleanDirectory(ArtifactsDirectory);
+            EnsureCleanDirectory(PublishDirectory);
+        });
 
     Target Restore => _ => _.DependsOn(Clean)
                             .Executes(() =>
-                                      {
-                                          var localRuntime = WindowsRuntime;
+          {
+              var localRuntime = WindowsRuntime;
 
-                                          if (!OperatingSystem.IsWindows())
-                                          {
-                                              localRuntime = LinuxRuntime;
-                                          }
+              if (!OperatingSystem.IsWindows())
+              {
+                  localRuntime = LinuxRuntime;
+              }
 
-                                          DotNetRestore(
-                                                        s => s.SetProjectFile(Solution)
-                                                              .SetRuntime(localRuntime)
-                                                              .SetProperty("DisableImplicitNuGetFallbackFolder", true));
-                                      });
+              DotNetRestore(s => s.SetProjectFile(Solution)
+                                  .SetRuntime(localRuntime)
+                                  .SetProperty("DisableImplicitNuGetFallbackFolder", true));
+          });
 
     Target Compile => _ => _.DependsOn(CheckForbiddenWords)
                             .DependsOn(Restore)
                             .Executes(() =>
-                                      {
-                                          DotNetBuild(_ => _.SetProjectFile(Solution)
-                                                            .SetConfiguration(Configuration)
-                                                            .EnableNoRestore()
-                                                            .SetVersion(NugetVersion.Value)
-                                                            .SetInformationalVersion(OctoVersionInfo?.InformationalVersion));
-                                      });
+          {
+              DotNetBuild(_ => _.SetProjectFile(Solution)
+                                .SetConfiguration(Configuration)
+                                .EnableNoRestore()
+                                .SetVersion(NugetVersion.Value)
+                                .SetInformationalVersion(OctoVersionInfo?.InformationalVersion));
+          });
 
     Target Publish => _ => _.DependsOn(Compile)
                             .Executes(() =>
-                                      {
-                                          var nugetVersion = NugetVersion.Value;
-                                          if (OperatingSystem.IsWindows())
-                                          {
-                                              DoPublish(RootProjectName, Frameworks.Net40, nugetVersion);
-                                              DoPublish(RootProjectName, Frameworks.Net452, nugetVersion, FixedRuntimes.Cloud);
-                                          }
+          {
+              if(!OperatingSystem.IsWindows())
+                  Log.Warning("Building Calamari on a non-windows machine will result "
+                            + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
+                            + "nuget packages being built as .Net Core 3.1 pacakges "
+                            + "instead of as .Net Framework 4.0 and 4.5.2 respectively. "
+                            + "This can cause compatibility issues when running certain "
+                            + "deployment steps in Octopus Server", 
+                              RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
+              
+              var nugetVersion = NugetVersion.Value;
+              DoPublish(RootProjectName, 
+                        OperatingSystem.IsWindows() ? 
+                            Frameworks.Net40 : 
+                            Frameworks.NetCoreApp31, 
+                        nugetVersion);
+              DoPublish(RootProjectName, 
+                        OperatingSystem.IsWindows() ? 
+                            Frameworks.Net452 : 
+                            Frameworks.NetCoreApp31, 
+                        nugetVersion, 
+                        FixedRuntimes.Cloud);
 
-                                          DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, FixedRuntimes.Portable);
+              DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, FixedRuntimes.Portable);
 
-                                          // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-                                          foreach (var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
-                                          {
-                                              DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid);
-                                          }
-                                      });
+              // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
+              foreach (var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
+              {
+                  DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid);
+              }
+          });
 
     Target PackBinaries => _ => _.DependsOn(Publish)
                                  .Executes(async () =>
-                                           {
-                                               var nugetVersion = NugetVersion.Value;
-                                               var packageActions = new List<Action>();
-                                               if (OperatingSystem.IsWindows())
-                                               {
-                                                   packageActions.Add(() => DoPackage(RootProjectName, Frameworks.Net40, nugetVersion));
-                                                   packageActions.Add(() => DoPackage(RootProjectName, Frameworks.Net452, nugetVersion, FixedRuntimes.Cloud));
-                                               }
+           {
+               var nugetVersion = NugetVersion.Value;
+               var packageActions = new List<Action>
+               {
+                   () => DoPackage(RootProjectName, 
+                                   OperatingSystem.IsWindows() ? 
+                                       Frameworks.Net40 : 
+                                       Frameworks.NetCoreApp31, 
+                                   nugetVersion),
+                   () => DoPackage(RootProjectName, 
+                                   OperatingSystem.IsWindows() ? 
+                                       Frameworks.Net452 : 
+                                       Frameworks.NetCoreApp31, 
+                                   nugetVersion, 
+                                   FixedRuntimes.Cloud),
+                   // Create a portable .NET Core package
+                   () => DoPackage(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, FixedRuntimes.Portable)
+               };
 
-                                               // Create a portable .NET Core package
-                                               packageActions.Add(() => DoPackage(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, FixedRuntimes.Portable));
+               // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
+               foreach(var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
+               {
+                   packageActions.Add(() => DoPackage(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid));
+               }
 
-                                               // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-                                               foreach(var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
-                                               {
-                                                   packageActions.Add(() => DoPackage(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid));
-                                               }
+               var dotNetCorePackSettings = new DotNetPackSettings().SetConfiguration(Configuration)
+                                                                    .SetOutputDirectory(ArtifactsDirectory)
+                                                                    .EnableNoBuild()
+                                                                    .EnableIncludeSource()
+                                                                    .SetVersion(nugetVersion);
 
-                                               var dotNetCorePackSettings = new DotNetPackSettings().SetConfiguration(Configuration)
-                                                                                                    .SetOutputDirectory(ArtifactsDirectory)
-                                                                                                    .EnableNoBuild()
-                                                                                                    .EnableIncludeSource()
-                                                                                                    .SetVersion(nugetVersion);
+               var commonProjects = Directory.GetFiles(SourceDirectory, "*.Common.csproj", new EnumerationOptions{ RecurseSubdirectories = true});
+               foreach(var project in commonProjects)
+               {
+                   packageActions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
+               }
 
-                                               var commonProjects = Directory.GetFiles(SourceDirectory, "*.Common.csproj", new EnumerationOptions{ RecurseSubdirectories = true});
-                                               foreach(var project in commonProjects)
-                                               {
-                                                   packageActions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
-                                               }
-    
-                                               packageActions.Add(() => SignAndPack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings));
+               packageActions.Add(() => SignAndPack("./source/Calamari.CloudAccounts/Calamari.CloudAccounts.csproj", dotNetCorePackSettings));
 
-                                               await RunPackActions(packageActions);
-                                           });
+               await RunPackActions(packageActions);
+           });
 
     Target PackTests => _ => _.DependsOn(Compile)
                               .Executes(() =>
-                                        {
-                                            Console.WriteLine("PackTests");
-                                            //TODO:
-                                        });
+            {
+                Console.WriteLine("PackTests");
+                //TODO:
+            });
 
     Target Pack => _ => _.DependsOn(PackBinaries)
                          .DependsOn(PackTests);
@@ -247,39 +269,39 @@ class Build : NukeBuild
     Target CopyToLocalPackages => _ => _.Requires(() => IsLocalBuild)
                                         .DependsOn(PackBinaries)
                                         .Executes(() =>
-                                                  {
-                                                      Directory.CreateDirectory(LocalPackagesDir);
-                                                      foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg"))
-                                                          File.Copy(file, LocalPackagesDir / Path.GetFileName(file));
-                                                  });
+          {
+              Directory.CreateDirectory(LocalPackagesDir);
+              foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg"))
+                  File.Copy(file, LocalPackagesDir / Path.GetFileName(file));
+          });
 
     Target UpdateCalamariVersionOnOctopusServer => _ => _.Requires(() => SetOctopusServerVersion)
                                                          .Requires(() => IsLocalBuild)
                                                          .DependsOn(CopyToLocalPackages)
                                                          .Executes(() =>
-                                                                   {
-                                                                       var serverProjectFile = Path.GetFullPath("../OctopusDeploy/source/Octopus.Server/Octopus.Server.csproj");
-                                                                       if (File.Exists(serverProjectFile))
-                                                                       {
-                                                                           Console.WriteLine("Setting Calamari version in Octopus Server " + 
-                                                                                             "project {0} to {1}", 
-                                                                                             serverProjectFile, NugetVersion.Value);
-                                                                           
-                                                                           SetOctopusServerCalamariVersion(serverProjectFile);
-                                                                       }
-                                                                       else 
-                                                                       {
-                                                                           Console.WriteLine("Could not set Calamari version in Octopus Server " + 
-                                                                                             "project {0} to {1} as could not find project file", 
-                                                                                             serverProjectFile, NugetVersion.Value);
-                                                                       }
-                                                                   });
+           {
+               var serverProjectFile = Path.GetFullPath("../OctopusDeploy/source/Octopus.Server/Octopus.Server.csproj");
+               if (File.Exists(serverProjectFile))
+               {
+                   Console.WriteLine("Setting Calamari version in Octopus Server " + 
+                                     "project {0} to {1}", 
+                                     serverProjectFile, NugetVersion.Value);
+                   
+                   SetOctopusServerCalamariVersion(serverProjectFile);
+               }
+               else 
+               {
+                   Console.WriteLine("Could not set Calamari version in Octopus Server " + 
+                                     "project {0} to {1} as could not find project file", 
+                                     serverProjectFile, NugetVersion.Value);
+               }
+           });
 
     Target SetTeamCityVersion => _ => _.Executes(() =>
-                                                 {
-                                                     Console.WriteLine("SetTeamCityVersion");
-                                                     //TODO:
-                                                 });
+         {
+             Console.WriteLine("SetTeamCityVersion");
+             //TODO:
+         });
 
     Target BuildLocal => _ => _.DependsOn(PackBinaries)
                                .DependsOn(CopyToLocalPackages)
