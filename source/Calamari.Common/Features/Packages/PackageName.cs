@@ -174,6 +174,20 @@ namespace Calamari.Common.Features.Packages
 
             return new PackageFileNameMetadata(packageId, version, extension);
         }
+        
+        public static bool TryMatchTarExtensions(string fileName, out string strippedFileName, out string extension)
+        {
+            // At the moment we only have one use case for this: files ending in ".tar.xyz" 
+            // As that is the only format of multiple part extensions we currently supported: https://octopus.com/docs/packaging-applications
+            // But if in the future we have more, we can modify this method to accomodate more cases.
+            var knownExtensionPatterns = @"\.tar((\.[a-zA-Z0-9]+)?)";
+            var match = new Regex($"(?<fileName>.*)(?<extension>{knownExtensionPatterns})$").Match(fileName);
+
+            strippedFileName = match.Success ? match.Groups["fileName"].Value : fileName;
+            extension = match.Groups["extension"].Value;
+
+            return match.Success;
+        }
 
         public static bool TryFromFile(string? path, out PackageFileNameMetadata? metadata)
         {

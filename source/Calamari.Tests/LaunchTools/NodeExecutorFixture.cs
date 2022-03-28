@@ -1,4 +1,5 @@
-﻿using Calamari.Common.Features.Processes;
+﻿using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.LaunchTools;
@@ -6,6 +7,8 @@ using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using System;
+using System.IO;
 
 namespace Calamari.Tests.LaunchTools
 {
@@ -13,10 +16,13 @@ namespace Calamari.Tests.LaunchTools
     public class NodeExecutorFixture
     {
         [Test]
-        public void Execute_UsesCorrectCommandLineInvocation_ForExecution()
+        [TestCase("execute")]
+        [TestCase("Execute")]
+        [TestCase("eXeCuTe")]
+        public void Execute_UsesCorrectCommandLineInvocation_ForValidExecutionCommands(string executionCommand)
         {
             // Arrange
-            var instructions = BuildInstructions("Execute");
+            var instructions = BuildInstructions(executionCommand);
             var variables = BuildVariables();
             var options = BuildOptions();
             var commandLineRunner = Substitute.For<ICommandLineRunner>();
@@ -31,8 +37,8 @@ namespace Calamari.Tests.LaunchTools
             // Assert
             var arguments = capturedInvocation.Arguments.Split(' ');
             arguments.Should().HaveCount(8)
-                .And.HaveElementAt(0, "\"expectedBootstrapperPath\\bootstrapper.js\"")
-                .And.HaveElementAt(1, "\"Execute\"")
+                .And.HaveElementAt(0, $"\"{Path.Combine("expectedBootstrapperPath","bootstrapper.js")}\"")
+                .And.HaveElementAt(1, $"\"{executionCommand}\"")
                 .And.HaveElementAt(2, "\"expectedTargetPath\"")
                 .And.HaveElementAt(4, "\"encryptionPassword\"")
                 .And.HaveElementAt(5, "\"Octopuss\"")
@@ -40,11 +46,13 @@ namespace Calamari.Tests.LaunchTools
                 .And.HaveElementAt(7, "\"targetInputsKey\"");
         }
 
-        [Test]
-        public void Execute_UsesCorrectCommandLineInvocation_ForTargetDiscovery()
+        [TestCase("discover")]
+        [TestCase("Discover")]
+        [TestCase("dIsCoVeR")]
+        public void Execute_UsesCorrectCommandLineInvocation_ForValidTargetDiscoveryCommands(string discoveryCommand)
         {
             // Arrange
-            var instructions = BuildInstructions("Discovery");
+            var instructions = BuildInstructions(discoveryCommand);
             var variables = BuildVariables();
             var options = BuildOptions();
             var commandLineRunner = Substitute.For<ICommandLineRunner>();
@@ -59,13 +67,32 @@ namespace Calamari.Tests.LaunchTools
             // Assert
             var arguments = capturedInvocation.Arguments.Split(' ');
             arguments.Should().HaveCount(7)
-                .And.HaveElementAt(0, "\"expectedBootstrapperPath\\bootstrapper.js\"")
-                .And.HaveElementAt(1, "\"Discovery\"")
+                .And.HaveElementAt(0, $"\"{Path.Combine("expectedBootstrapperPath","bootstrapper.js")}\"")
+                .And.HaveElementAt(1, $"\"{discoveryCommand}\"")
                 .And.HaveElementAt(2, "\"expectedTargetPath\"")
                 .And.HaveElementAt(4, "\"encryptionPassword\"")
                 .And.HaveElementAt(5, "\"Octopuss\"")
                 .And.HaveElementAt(6, "\"discoveryContextKey\"");
         }
+
+        [Test]
+        public void Execute_ThrowsCommandException_ForUnknownBootstrapperInvocationCommand()
+        {
+            // Arrange
+            var instructions = BuildInstructions("wrongCommand");
+            var variables = BuildVariables();
+            var options = BuildOptions();
+            var commandLineRunner = Substitute.For<ICommandLineRunner>();
+            var sut = new NodeExecutor(options, variables, commandLineRunner, new InMemoryLog());
+
+            // Act
+            Action action = () => sut.Execute(instructions);
+
+            // Assert
+            action.Should().Throw<CommandException>().WithMessage("Unknown bootstrapper invocation command: 'wrongCommand'");
+        }
+
+
 
         private string BuildInstructions(string command) => $@"{{
     ""nodePathVariable"": ""nodePathKey"",

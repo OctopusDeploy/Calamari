@@ -181,6 +181,21 @@
     <None Update="AWS\S3\Package1\Extra\JavaScript.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+	<None Update="AWS\S3\CompressedPackages\TestZipPackage.1.0.0.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="AWS\S3\CompressedPackages\TestJarPackage.0.0.1-beta.jar">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="AWS\S3\CompressedPackages\TestTarPackage.0.0.1.tar">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="AWS\S3\CompressedPackages\TestTarGzipPackage.0.0.1.tar.gz">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="AWS\S3\CompressedPackages\TestTarBzip2Package.0.0.1.tar.bz2">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="AWS\S3\Package2\Wild\Ignore\TextFile1.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

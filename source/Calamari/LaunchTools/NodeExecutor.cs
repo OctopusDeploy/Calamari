@@ -77,14 +77,18 @@ namespace Calamari.LaunchTools
             parameters.Add(sensitiveVariablesFilePath);
             parameters.Add(options.InputVariables.SensitiveVariablesPassword);
             parameters.Add(AesEncryption.SaltRaw);
-            if (instructions.BootstrapperInvocationCommand == "Execute")
+            if (string.Equals(instructions.BootstrapperInvocationCommand, "Execute", StringComparison.OrdinalIgnoreCase))
             {
                 parameters.Add(instructions.InputsVariable);
                 parameters.Add(instructions.DeploymentTargetInputsVariable);
             }
-            else
+            else if (string.Equals(instructions.BootstrapperInvocationCommand, "Discover", StringComparison.OrdinalIgnoreCase))
             {
                 parameters.Add(instructions.TargetDiscoveryContextVariable);
+            }
+            else
+            {
+                throw new CommandException($"Unknown bootstrapper invocation command: '{instructions.BootstrapperInvocationCommand}'");
             }
 
             return string.Join(" ", parameters.Select(p => $"\"{p}\""));

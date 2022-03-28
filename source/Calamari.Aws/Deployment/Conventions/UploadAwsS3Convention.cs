@@ -13,6 +13,7 @@ using Calamari.Aws.Integration.S3;
 using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
@@ -172,7 +173,7 @@ namespace Calamari.Aws.Deployment.Conventions
             log.SetOutputVariableButDoNotAddToVariables(packageS3UriVariableName, packageS3UriVariableValue);
             
             var packageUriVariableName = index.IsNullOrEmpty() ? "Package.Uri" : $"Package.Uri[{index}]";
-            var packageUriVariableValue = $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{result.BucketName}";
+            var packageUriVariableValue = $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{bucketKeyProvider.EncodeBucketKeyForUrl(result.BucketKey)}";
             log.Info($"Saving object URI to variable \"Octopus.Action[{actionName}].Output.{packageUriVariableName}\"");
             log.SetOutputVariableButDoNotAddToVariables(packageUriVariableName, packageUriVariableValue);
             
@@ -198,7 +199,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Log.Warn(message);
         }
 
-        private async Task<IEnumerable<S3UploadResult>> UploadAll(IEnumerable<S3TargetPropertiesBase> options, Func<AmazonS3Client> clientFactory, RunningDeployment deployment)
+        async Task<IEnumerable<S3UploadResult>> UploadAll(IEnumerable<S3TargetPropertiesBase> options, Func<AmazonS3Client> clientFactory, RunningDeployment deployment)
         {
             var result = new List<S3UploadResult>();
             foreach (var option in options)
@@ -312,7 +313,7 @@ namespace Calamari.Aws.Deployment.Conventions
             var filename = GetNormalizedPackageFilename(deployment);
 
             return CreateRequest(targetArchivePath,
-                    GetBucketKey(filename, options), options)
+                    GetBucketKey(filename, options, targetArchivePath), options)
                 .Tee(x => LogPutObjectRequest("entire package", x))
                 .Map(x => HandleUploadRequest(clientFactory(), x, ThrowInvalidFileUpload));
         }
@@ -331,28 +332,55 @@ namespace Calamari.Aws.Deployment.Conventions
             var structuredSubstitutionPatterns = SplitFilePatternString(options.StructuredVariableSubstitutionPatterns);
             structuredConfigVariablesService.ReplaceVariables(stagingDirectory, structuredSubstitutionPatterns.ToList());
 
-            return Repackage(stagingDirectory, GetPackageExtension(deployment));
+            return Repackage(stagingDirectory, Path.GetFileName(deployment.PackageFilePath));
         }
 
-        string Repackage(string stagingDirectory, string packageExtension)
+        string Repackage(string stagingDirectory, string fileName)
         {
-            using (var targetArchive = fileSystem.CreateTemporaryFile(packageExtension, out var targetArchivePath))
+            var supportedZipExtensions = new[] {".nupkg", ".zip"};
+            var supportedJavaExtensions = new[] {".jar", ".war", ".ear", ".rar"};
+            var supportedTarExtensions = new[] {".tar"};
+            var supportedTarGZipExtensions = new[] { ".tgz", ".tar.gz", ".tar.Z"};
+            var supportedTarBZip2Extensions = new[] { "tar.bz", ".tar.bz2", ".tbz"};
+
+            var lowercasedFileName = fileName.ToLower();
+            using (var targetArchive = fileSystem.CreateTemporaryFile(string.Empty, out var targetArchivePath))
             {
-                if (packageExtension == ".zip")
+                if (supportedZipExtensions.Any(lowercasedFileName.EndsWith) || supportedJavaExtensions.Any(lowercasedFileName.EndsWith))
                 {
                     using (var archive = ZipArchive.Create())
                     {
                         archive.AddAllFromDirectory(stagingDirectory);
                         archive.SaveTo(targetArchive, CompressionType.Deflate);
                     }
+                } 
+                else if (supportedTarExtensions.Any(lowercasedFileName.EndsWith))
+                {
+                    using (var archive = TarArchive.Create())
+                    {
+                        archive.AddAllFromDirectory(stagingDirectory);
+                        archive.SaveTo(targetArchive, CompressionType.None);
+                    }
                 }
-                else
+                else if (supportedTarGZipExtensions.Any(lowercasedFileName.EndsWith))
                 {
                     using (var archive = TarArchive.Create())
                     {
                         archive.AddAllFromDirectory(stagingDirectory);
                         archive.SaveTo(targetArchive, CompressionType.GZip);
                     }
+                } 
+                else if (supportedTarBZip2Extensions.Any(lowercasedFileName.EndsWith))
+                {
+                    using (var archive = TarArchive.Create())
+                    {
+                        archive.AddAllFromDirectory(stagingDirectory);
+                        archive.SaveTo(targetArchive, CompressionType.BZip2);
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException($"Unable to compress file {fileName.ToLower()}, the extension is unsupported.");
                 }
 
                 return targetArchivePath;
@@ -369,7 +397,9 @@ namespace Calamari.Aws.Deployment.Conventions
 
         static string GetPackageExtension(RunningDeployment deployment)
         {
-            return Path.GetExtension(deployment.PackageFilePath);
+            return PackageName.TryMatchTarExtensions(Path.GetFileName(deployment.PackageFilePath) ?? "", out _, out var extension) 
+                ? extension 
+                : Path.GetExtension(deployment.PackageFilePath);
         }
 
         /// <summary>
@@ -399,9 +429,9 @@ namespace Calamari.Aws.Deployment.Conventions
             return md5HashSupported ? request.WithMd5Digest(fileSystem) : request;
         }
 
-        public string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour)
+        string GetBucketKey(string defaultKey, IHaveBucketKeyBehaviour behaviour, string packageFilePath = "")
         {
-            return bucketKeyProvider.GetBucketKey(defaultKey, behaviour);
+            return bucketKeyProvider.GetBucketKey(defaultKey, behaviour, packageFilePath);
         }
 
         /// <summary>
