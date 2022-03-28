@@ -24,7 +24,6 @@
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
     <TargetFrameworks>net452;netstandard2.1;net40</TargetFrameworks>
   </PropertyGroup>
@@ -48,6 +47,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.8.8" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>

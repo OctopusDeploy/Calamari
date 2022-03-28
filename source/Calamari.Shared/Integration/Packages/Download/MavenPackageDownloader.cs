@@ -200,7 +200,7 @@ namespace Calamari.Integration.Packages.Download
                 }
                 catch (Exception ex)
                 {
-                    if (retry == maxDownloadAttempts)
+                    if ((retry + 1) == maxDownloadAttempts)
                         throw new MavenDownloadException("Failed to download the Maven artifact.\r\nLast Exception Message: " + ex.Message);
                     Thread.Sleep(downloadAttemptBackoff);
                 }

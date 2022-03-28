@@ -42,18 +42,19 @@ namespace Calamari.Deployment.PackageRetention.Caching
             var desiredSpaceInBytes = totalNumberOfBytes * (ulong) percentFreeDiskSpaceDesired / 100;
             if (totalNumberOfFreeBytes > desiredSpaceInBytes)
             {
-                log.VerboseFormat("Detected enough space for new packages. ({0}/{1})", totalNumberOfBytes.ToFileSizeString(), totalNumberOfFreeBytes.ToFileSizeString());
+                log.VerboseFormat("Detected enough space for new packages. ({0}/{1})", totalNumberOfFreeBytes.ToFileSizeString(), totalNumberOfBytes.ToFileSizeString());
                 return new PackageIdentity[0];
             }
 
             var spaceToFree = (desiredSpaceInBytes - totalNumberOfFreeBytes) * (100 + FreeSpacePercentBuffer) / 100;
-            log.VerboseFormat("Cleaning up to {0} space from the package cache.", spaceToFree.ToFileSizeString());
+            log.VerboseFormat("Cleaning {0} space from the package cache.", spaceToFree.ToFileSizeString());
             ulong spaceFreed = 0L;
             var orderedJournalEntries = sortJournalEntries.Sort(journalEntries);
             return orderedJournalEntries.TakeWhile(entry =>
                                                    {
+                                                       var moreToClean = spaceFreed < spaceToFree;
                                                        spaceFreed += entry.FileSizeBytes;
-                                                       return spaceFreed < spaceToFree;
+                                                       return moreToClean;
                                                    })
                                         .Select(entry => entry.Package);
         }

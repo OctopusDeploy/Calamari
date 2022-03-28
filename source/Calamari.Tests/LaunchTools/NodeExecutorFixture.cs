@@ -8,6 +8,7 @@ using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.IO;
 
 namespace Calamari.Tests.LaunchTools
 {
@@ -36,7 +37,7 @@ namespace Calamari.Tests.LaunchTools
             // Assert
             var arguments = capturedInvocation.Arguments.Split(' ');
             arguments.Should().HaveCount(8)
-                .And.HaveElementAt(0, "\"expectedBootstrapperPath\\bootstrapper.js\"")
+                .And.HaveElementAt(0, $"\"{Path.Combine("expectedBootstrapperPath","bootstrapper.js")}\"")
                 .And.HaveElementAt(1, $"\"{executionCommand}\"")
                 .And.HaveElementAt(2, "\"expectedTargetPath\"")
                 .And.HaveElementAt(4, "\"encryptionPassword\"")
@@ -66,7 +67,7 @@ namespace Calamari.Tests.LaunchTools
             // Assert
             var arguments = capturedInvocation.Arguments.Split(' ');
             arguments.Should().HaveCount(7)
-                .And.HaveElementAt(0, "\"expectedBootstrapperPath\\bootstrapper.js\"")
+                .And.HaveElementAt(0, $"\"{Path.Combine("expectedBootstrapperPath","bootstrapper.js")}\"")
                 .And.HaveElementAt(1, $"\"{discoveryCommand}\"")
                 .And.HaveElementAt(2, "\"expectedTargetPath\"")
                 .And.HaveElementAt(4, "\"encryptionPassword\"")
