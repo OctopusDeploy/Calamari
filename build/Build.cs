@@ -104,13 +104,14 @@ class Build : NukeBuild
     [OctoVersion(BranchParameter = nameof(BranchName), AutoDetectBranchParameter = nameof(AutoDetectBranch))] 
     readonly OctoVersionInfo? OctoVersionInfo;
 
-    AbsolutePath SourceDirectory => RootDirectory / "source";
-    AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
-    
-    AbsolutePath PublishDirectory = RootDirectory / "publish";
+    static AbsolutePath SourceDirectory => RootDirectory / "source";
+
+    static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
+
+    readonly AbsolutePath PublishDirectory = RootDirectory / "publish";
     AbsolutePath OutputDirectory => RootDirectory / "output";
-    
-    AbsolutePath LocalPackagesDir = RootDirectory / "../LocalPackages";
+
+    readonly AbsolutePath LocalPackagesDir = RootDirectory / "../LocalPackages";
 
     Lazy<string> NugetVersion { get; } 
 
@@ -173,7 +174,7 @@ class Build : NukeBuild
           {
               DotNetBuild(_ => _.SetProjectFile(Solution)
                                 .SetConfiguration(Configuration)
-                                .EnableNoRestore()
+                                .SetNoRestore(true)
                                 .SetVersion(NugetVersion.Value)
                                 .SetInformationalVersion(OctoVersionInfo?.InformationalVersion));
           });
@@ -184,7 +185,7 @@ class Build : NukeBuild
               if(!OperatingSystem.IsWindows())
                   Log.Warning("Building Calamari on a non-windows machine will result "
                             + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
-                            + "nuget packages being built as .Net Core 3.1 pacakges "
+                            + "nuget packages being built as .Net Core 3.1 packages "
                             + "instead of as .Net Framework 4.0 and 4.5.2 respectively. "
                             + "This can cause compatibility issues when running certain "
                             + "deployment steps in Octopus Server", 
@@ -361,7 +362,7 @@ class Build : NukeBuild
             SignAndTimestampBinaries(directory);
         }
 
-        DotNetPack(dotNetCorePackSettings.SetProject(project));
+        DotNetPack(dotNetCorePackSettings.SetProject(project).SetNoRestore(true));
     }
     void DoPackage(string project, string framework, string version, string? runtimeId = null)
     {
