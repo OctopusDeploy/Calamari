@@ -6,8 +6,10 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Nuke.Common;
 using Nuke.Common.IO;
+using Nuke.Common.CI.TeamCity;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.AzureSignTool;
@@ -163,7 +165,7 @@ class Build : NukeBuild
                   localRuntime = LinuxRuntime;
               }
 
-              DotNetRestore(s => s.SetProjectFile(Solution)
+              DotNetRestore(_ => _.SetProjectFile(Solution)
                                   .SetRuntime(localRuntime)
                                   .SetProperty("DisableImplicitNuGetFallbackFolder", true));
           });
@@ -244,7 +246,8 @@ class Build : NukeBuild
                                                                     .SetOutputDirectory(ArtifactsDirectory)
                                                                     .EnableNoBuild()
                                                                     .EnableIncludeSource()
-                                                                    .SetVersion(nugetVersion);
+                                                                    .SetVersion(nugetVersion)
+                                                                    .SetNoRestore(true);
 
                var commonProjects = Directory.GetFiles(SourceDirectory, "*.Common.csproj", new EnumerationOptions{ RecurseSubdirectories = true});
                foreach(var project in commonProjects)
@@ -258,10 +261,42 @@ class Build : NukeBuild
            });
 
     Target PackTests => _ => _.DependsOn(Compile)
-                              .Executes(() =>
+                              .Executes(async () =>
             {
-                Console.WriteLine("PackTests");
-                //TODO:
+                var nugetVersion = NugetVersion.Value;
+                var defaultTarget = OperatingSystem.IsWindows() ? "net461" : "netcoreapp3.1";
+                var binFolder = $"./source/Calamari.Tests/bin/{Configuration}/{defaultTarget}/";
+                Directory.Exists(binFolder);
+                var actions = new List<Action>
+                {
+                    () =>
+                    {
+                        CompressionTasks.Compress(binFolder, ArtifactsDirectory / "Binaries.zip");
+                    }
+                };
+
+                // Create a Zip for each runtime for testing
+                foreach(var rid in Solution?.GetProject(@"Calamari.Tests").GetRuntimeIdentifiers()!)
+                {
+                    actions.Add(() => {
+                                    var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", nugetVersion, rid);
+                                    var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
+                                    CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
+                                });
+                }
+
+                actions.Add(() =>
+                            {
+                                DotNetPack(new DotNetPackSettings().SetConfiguration(Configuration)
+                                                                   .SetProject("./source/Calamari.Testing/Calamari.Testing.csproj")
+                                                                   .SetOutputDirectory(ArtifactsDirectory)
+                                                                   .EnableNoBuild()
+                                                                   .EnableIncludeSource()
+                                                                   .SetVersion(nugetVersion)
+                                                                   .SetNoRestore(true));
+                            });
+
+                await RunPackActions(actions);
             });
 
     Target Pack => _ => _.DependsOn(PackBinaries)
@@ -300,8 +335,7 @@ class Build : NukeBuild
 
     Target SetTeamCityVersion => _ => _.Executes(() =>
          {
-             Console.WriteLine("SetTeamCityVersion");
-             //TODO:
+             TeamCity.Instance?.SetBuildNumber(NugetVersion.Value);
          });
 
     Target BuildLocal => _ => _.DependsOn(PackBinaries)
@@ -309,11 +343,13 @@ class Build : NukeBuild
                                .DependsOn(UpdateCalamariVersionOnOctopusServer);
 
 
-    Target BuildCI => _ => _.DependsOn(SetTeamCityVersion)
+    [UsedImplicitly]
+    Target BuildCi => _ => _.DependsOn(SetTeamCityVersion)
                             .DependsOn(Pack)
                             .DependsOn(CopyToLocalPackages)
                             .DependsOn(UpdateCalamariVersionOnOctopusServer);
-    private async Task RunPackActions(List<Action> actions) 
+
+    async Task RunPackActions(List<Action> actions) 
     {
         if (PackInParallel)
         {
@@ -362,7 +398,7 @@ class Build : NukeBuild
             SignAndTimestampBinaries(directory);
         }
 
-        DotNetPack(dotNetCorePackSettings.SetProject(project).SetNoRestore(true));
+        DotNetPack(dotNetCorePackSettings.SetProject(project));
     }
     void DoPackage(string project, string framework, string version, string? runtimeId = null)
     {

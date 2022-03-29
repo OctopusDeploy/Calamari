@@ -123,7 +123,7 @@
           "items": {
             "type": "string",
             "enum": [
-              "BuildCI",
+              "BuildCi",
               "BuildLocal",
               "CheckForbiddenWords",
               "Clean",
@@ -149,7 +149,7 @@
           "items": {
             "type": "string",
             "enum": [
-              "BuildCI",
+              "BuildCi",
               "BuildLocal",
               "CheckForbiddenWords",
               "Clean",
