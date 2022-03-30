@@ -35,6 +35,7 @@ class Build : NukeBuild
         public const string NetCoreApp31 = "netcoreapp3.1";
         public const string Net40 = "net40";
         public const string Net452 = "net452";
+        public const string Net461 = "net461";
     }
 
     static class FixedRuntimes
@@ -264,7 +265,7 @@ class Build : NukeBuild
                               .Executes(async () =>
             {
                 var nugetVersion = NugetVersion.Value;
-                var defaultTarget = OperatingSystem.IsWindows() ? "net461" : "netcoreapp3.1";
+                var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net461 : Frameworks.NetCoreApp31;
                 var binFolder = $"./source/Calamari.Tests/bin/{Configuration}/{defaultTarget}/";
                 Directory.Exists(binFolder);
                 var actions = new List<Action>
@@ -279,7 +280,7 @@ class Build : NukeBuild
                 foreach(var rid in Solution?.GetProject(@"Calamari.Tests").GetRuntimeIdentifiers()!)
                 {
                     actions.Add(() => {
-                                    var publishedLocation = DoPublish("Calamari.Tests", "netcoreapp3.1", nugetVersion, rid);
+                                    var publishedLocation = DoPublish("Calamari.Tests", Frameworks.NetCoreApp31, nugetVersion, rid);
                                     var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
                                     CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
                                 });
