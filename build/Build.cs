@@ -160,6 +160,8 @@ namespace Calamari.Build
                   .DependsOn(Restore)
                   .Executes(() =>
                   {
+                      Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
+                      
                       DotNetBuild(_ => _.SetProjectFile(Solution)
                                         .SetConfiguration(Configuration)
                                         .SetNoRestore(true)
