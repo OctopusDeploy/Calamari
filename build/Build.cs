@@ -259,7 +259,7 @@ namespace Calamari.Build
                                                    await RunPackActions(packageActions);
                                                });
 
-        Target PackTests => _ => _.DependsOn(Compile)
+        Target PackTests => _ => _.DependsOn(Publish)
                                   .Executes(async () =>
                                             {
                                                 var nugetVersion = NugetVersion.Value;
@@ -275,7 +275,7 @@ namespace Calamari.Build
                                                 };
 
                                                 // Create a Zip for each runtime for testing
-                                                foreach(var rid in Solution?.GetProject(@"Calamari.Tests").GetRuntimeIdentifiers()!)
+                                                foreach(var rid in Solution?.GetProject("Calamari.Tests").GetRuntimeIdentifiers()!)
                                                 {
                                                     actions.Add(() => {
                                                                     var publishedLocation = DoPublish("Calamari.Tests", Frameworks.NetCoreApp31, nugetVersion, rid);
