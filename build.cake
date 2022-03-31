@@ -18,8 +18,7 @@ using System.Security.Cryptography.X509Certificates;
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var signFiles = Argument<bool>("sign_files", false);
-var signingCertificatePath = Argument("signing_certificate_path", "");
-var signingCertificatePassword = Argument("signing_certificate_password", "");
+var signToolPath = MakeAbsolute(File("./certificates/signtool.exe"));
 var keyVaultUrl = Argument("AzureKeyVaultUrl", "");
 var keyVaultAppId = Argument("AzureKeyVaultAppId", "");
 var keyVaultAppSecret = Argument("AzureKeyVaultAppSecret", "");
@@ -30,7 +29,6 @@ var keyVaultCertificateName = Argument("AzureKeyVaultCertificateName", "");
 var publishDir = "./publish";
 var artifactsDir = "./artifacts/";
 var localPackagesDir = "../LocalPackages";
-var signToolPath = MakeAbsolute(File("./certificates/signtool.exe"));
 
 GitVersion gitVersionInfo;
 string nugetVersion;
@@ -200,7 +198,7 @@ Task("PackSashimi")
 });
 
 Task("CopyToLocalPackages")
-    // .IsDependentOn("Test")
+    .IsDependentOn("Test")
     .IsDependentOn("PackSashimi")
     .WithCriteria(BuildSystem.IsLocalBuild)
     .Does(() =>
@@ -224,7 +222,7 @@ void SignAndPack(string project, string binPath, DotNetCorePackSettings dotNetCo
 
 private void SignAndTimestampBinaries(string outputDirectory)
 {
-    // if (BuildSystem.IsLocalBuild && !signFiles) return;
+    if (BuildSystem.IsLocalBuild && !signFiles) return;
 
     Information($"Signing binaries in {outputDirectory}");
 
@@ -236,16 +234,9 @@ private void SignAndTimestampBinaries(string outputDirectory)
         .Where(f => !HasAuthenticodeSignature(f))
         .ToArray();
 
-    if (String.IsNullOrEmpty(keyVaultUrl) && String.IsNullOrEmpty(keyVaultAppId) && String.IsNullOrEmpty(keyVaultAppSecret) && String.IsNullOrEmpty(keyVaultCertificateName))
-    {
-      Information("Signing files using signtool and the self-signed development code signing certificate.");
-      SignFilesWithSignTool(unsignedExecutablesAndLibraries, signingCertificatePath, signingCertificatePassword);
-    }
-    else
-    {
-      Information("Signing files using azuresigntool and the production code signing certificate");
-      SignFilesWithAzureSignTool(unsignedExecutablesAndLibraries, keyVaultUrl, keyVaultAppId, keyVaultAppSecret, keyVaultCertificateName);
-    }
+    Information("Signing files using azuresigntool and the production code signing certificate");
+    SignFilesWithAzureSignTool(unsignedExecutablesAndLibraries, keyVaultUrl, keyVaultAppId, keyVaultAppSecret, keyVaultCertificateName);
+
     TimeStampFiles(unsignedExecutablesAndLibraries);
 }
 
@@ -295,48 +286,6 @@ void SignFilesWithAzureSignTool(IEnumerable<FilePath> files, string vaultUrl, st
         throw new Exception($"AzureSignTool failed with the exit code {exitCode}.");
 
   Information($"Finished signing {files.Count()} files.");
-}
-
-void SignFilesWithSignTool(IEnumerable<FilePath> files, FilePath certificatePath, string certificatePassword, string display = "", string displayUrl = "")
-{
-    if (!FileExists(signToolPath))
-        throw new Exception($"The signing tool was expected to be at the path '{signToolPath}' but wasn't available.");
-
-    if (!FileExists(certificatePath))
-        throw new Exception($"The code-signing certificate was not found at {certificatePath}.");
-
-    Information($"Signing {files.Count()} files using certificate at '{certificatePath}'...");
-
-    var signArguments = new ProcessArgumentBuilder()
-        .Append("sign")
-        .Append("/fd SHA256")
-        .Append("/f").AppendQuoted(certificatePath.FullPath)
-        .Append($"/p").AppendQuotedSecret(certificatePassword);
-
-    if (!string.IsNullOrWhiteSpace(display))
-    {
-        signArguments
-            .Append("/d").AppendQuoted(display)
-            .Append("/du").AppendQuoted(displayUrl);
-    }
-
-    foreach (var file in files)
-    {
-        signArguments.AppendQuoted(file.FullPath);
-    }
-
-    Information($"Executing: {signToolPath} {signArguments.RenderSafe()}");
-    var exitCode = StartProcess(signToolPath, new ProcessSettings
-    {
-        Arguments = signArguments
-    });
-
-    if (exitCode != 0)
-    {
-        throw new Exception($"Signing files failed with the exit code {exitCode}. Look for 'SignTool Error' in the logs.");
-    }
-
-    Information($"Finished signing {files.Count()} files.");
 }
 
 private void TimeStampFiles(IEnumerable<FilePath> files)
