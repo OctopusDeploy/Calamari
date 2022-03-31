@@ -24,6 +24,7 @@
 
     <ItemGroup>
       <PackageDownload Include="AzureSignTool" Version="[2.0.17]" />
+      <PackageDownload Include="Microsoft.Build" Version="[15.1.0.0]" />
       <PackageDownload Include="OctoVersion.Tool" Version="[0.2.1002]" />
     </ItemGroup>
 
