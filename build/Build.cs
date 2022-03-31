@@ -290,8 +290,8 @@ namespace Calamari.Build
                   });
 
         Target Pack =>
-            _ => _.DependsOn(PackBinaries)
-                  .DependsOn(PackTests);
+            _ => _.DependsOn(PackTests)
+                  .DependsOn(PackBinaries);
 
         Target CopyToLocalPackages =>
             _ => _.Requires(() => IsLocalBuild)
