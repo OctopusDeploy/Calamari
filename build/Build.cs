@@ -124,7 +124,7 @@ namespace Calamari.Build
                                                   ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version"));
         }
 
-        public static int Main() => Execute<Build>(x => x.BuildLocal);
+        public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
         Target CheckForbiddenWords => _ => _.Executes(() =>
                                                       {
@@ -341,11 +341,9 @@ namespace Calamari.Build
                                    .DependsOn(CopyToLocalPackages)
                                    .DependsOn(UpdateCalamariVersionOnOctopusServer);
 
-
-        [UsedImplicitly]
+        
         Target BuildCi => _ => _.DependsOn(SetTeamCityVersion)
                                 .DependsOn(Pack)
-                                .DependsOn(CopyToLocalPackages)
                                 .DependsOn(UpdateCalamariVersionOnOctopusServer);
 
         async Task RunPackActions(List<Action> actions) 
