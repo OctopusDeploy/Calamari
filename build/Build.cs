@@ -48,8 +48,8 @@ namespace Calamari.Build
 
         readonly string[] TimestampUrls =
         {
-            "https://timestamp.digicert.com?alg=sha256",
-            "https://timestamp.comodoca.com"
+            "http://timestamp.digicert.com?alg=sha256",
+            "http://timestamp.comodoca.com"
         };
 
         [Parameter("Configuration to build - "
@@ -449,6 +449,12 @@ namespace Calamari.Build
                                                   .Where(f => !HasAuthenticodeSignature(f))
                                                   .ToArray();
 
+            if (unsignedExecutablesAndLibraries.IsEmpty())
+            {
+                Log.Information("No unsigned binaries to sign in {OutputDirectory}", outputDirectory);
+                return;
+            }
+
             if (AzureKeyVaultUrl.IsNullOrEmpty() && 
                 AzureKeyVaultAppId.IsNullOrEmpty() && 
                 AzureKeyVaultAppSecret.IsNullOrEmpty() && 
@@ -550,16 +556,26 @@ namespace Calamari.Build
                 try
                 {
                     var argumentsBuilder = new StringBuilder("timestamp")
+                                           .Append(' ')
                                            .Append("/tr")
+                                           .Append(' ')
                                            .Append($"\"{url}\"")
+                                           .Append(' ')
                                            .Append("/td")
+                                           .Append(' ')
                                            .Append("sha256");
-    
+
                     foreach (var file in files)
-                        argumentsBuilder.Append($"\"{file}\"");
-                
-                    var process = ProcessTasks.StartProcess(SignToolTasks.SignToolPath, argumentsBuilder.ToString())
-                                              .AssertWaitForExit();
+                        argumentsBuilder.Append(' ')
+                                        .Append($"\"{file}\"");
+
+
+
+                    var process = ProcessTasks.StartProcess(SignToolTasks.SignToolPath, argumentsBuilder.ToString());
+                    
+                    Log.Information("TimeStamp process: {FileName} {ProcessArguments}", process.FileName, process.Arguments);
+                    
+                    process.AssertWaitForExit();
                 
                     if (process.ExitCode != 0)
                         throw new Exception($"Timestamping files failed with the exit code {process.ExitCode}. " + 
