@@ -341,10 +341,9 @@ namespace Calamari.Build
                                    .DependsOn(CopyToLocalPackages)
                                    .DependsOn(UpdateCalamariVersionOnOctopusServer);
 
-        
+
         Target BuildCi => _ => _.DependsOn(SetTeamCityVersion)
-                                .DependsOn(Pack)
-                                .DependsOn(UpdateCalamariVersionOnOctopusServer);
+                                .DependsOn(Pack);
 
         async Task RunPackActions(List<Action> actions) 
         {
