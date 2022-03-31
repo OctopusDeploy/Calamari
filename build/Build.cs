@@ -122,6 +122,8 @@ namespace Calamari.Build
                                                 ? $"{OctoVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
                                                 : OctoVersionInfo?.NuGetVersion 
                                                   ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version"));
+
+            ProjectModelTasks.Initialize();
         }
 
         public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
