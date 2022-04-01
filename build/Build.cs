@@ -29,7 +29,7 @@ namespace Calamari.Build
     {
         const string LinuxRuntime = "linux-x64";
         const string WindowsRuntime = "win-x64";
-        const string CiBranchNameEnvVariable = "CALAMARI_CurrentBranch";
+        const string CiBranchNameEnvVariable = "OCTOVERSION_CurrentBranch";
         const string RootProjectName = "Calamari";
 
         readonly string[] TimestampUrls =
