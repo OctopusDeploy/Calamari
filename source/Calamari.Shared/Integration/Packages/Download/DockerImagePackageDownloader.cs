@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
@@ -12,6 +15,7 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
@@ -150,6 +154,45 @@ namespace Calamari.Integration.Packages.Download
             var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"{typeof (DockerImagePackageDownloader).Namespace}.Scripts.{contextFile}");
             fileSystem.OverwriteFile(scriptFile, contextScript);
             return scriptFile;
+        }
+
+        async Task<bool> IsDigestCached(string image)
+        {
+            var fullImageName = "blah";
+            var digest = "";
+            var result = SilentProcessRunner.ExecuteCommand("docker",
+                                                            "image inspect --format=\"{{index .RepoDigests 0}}\" " + fullImageName,
+                                                            ".", environmentVariables,
+                                                            (stdout) => { digest = GetDigest(stdout); }, Log.Error);
+            if (String.IsNullOrEmpty(digest))
+            {
+                return false;
+            }
+
+            var url = $"https://index.docker.io/{image}";
+            using var httpClient = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+            var response = await httpClient.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                dynamic payload = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
+                IList<string> tags = ((IEnumerable<dynamic>)payload.results).Select(result => (string)result.name).ToList();
+                var latestImages = new Dictionary<string, string>();
+            }
+        }
+
+        string GetDigest(string result)
+        {
+            var tokens = result.Split("@");
+            if (tokens.Length > 1)
+            {
+                return tokens[1];
+            }
+
+            return "";
         }
     }
 }
