@@ -34,10 +34,6 @@
           "type": "string",
           "description": "Build verbosity"
         },
-        "CALAMARI_CurrentBranch": {
-          "type": "string",
-          "description": "Branch name for Calamari to use to calculate the version number. Can be set via the environment variable CALAMARI_CurrentBranch"
-        },
         "Configuration": {
           "type": "string",
           "description": "Configuration to build - Default is 'Debug' (local) or 'Release' (server)",
@@ -77,6 +73,10 @@
         "NoLogo": {
           "type": "boolean",
           "description": "Disables displaying the NUKE logo"
+        },
+        "OCTOVERSION_CurrentBranch": {
+          "type": "string",
+          "description": "Branch name for Calamari to use to calculate the version number. Can be set via the environment variable OCTOVERSION_CurrentBranch"
         },
         "PackInParallel": {
           "type": "boolean",
