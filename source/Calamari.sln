@@ -13,14 +13,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.Shared", "Calamari
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build files", "Build files", "{EF945982-24D4-4B53-A61A-77AE1D945037}"
 	ProjectSection(SolutionItems) = preProject
-		..\build.cake = ..\build.cake
 		..\build.cmd = ..\build.cmd
 		..\build.ps1 = ..\build.ps1
-		..\GitVersion.yml = ..\GitVersion.yml
 		..\LICENSE.txt = ..\LICENSE.txt
 		..\NuGet.Config = ..\NuGet.Config
 		..\README.md = ..\README.md
-		..\build-nuke.sh = ..\build-nuke.sh
 		..\build.sh = ..\build.sh
 		..\global.json = ..\global.json
 	EndProjectSection
