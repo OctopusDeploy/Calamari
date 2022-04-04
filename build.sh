@@ -1,29 +1,4 @@
 #!/usr/bin/env bash
-Yellow='\033[1;33m'
-NoColour='\033[0m' # No Color
-
-Message="${Yellow}\
-╬════════════════════════════════════════════════════════╬═
-║ WARNING:                                               ║
-║ Building Calamari on a non-windows machine will result ║
-║ in Calmari and Calamari.Cloud nuget packages being     ║
-║ built against netcoreapp3.1. This means that some      ║
-║ steps may not work as expected because they require a  ║
-║ .Net Framework compatible Calamari Nuget Package.      ║
-╬════════════════════════════════════════════════════════╬═\
-${NoColour}
-"
-
-echo -e "$Message"
-
-read -p "Are you sure you want to continue? (Y,n): " option
-
-if ! [[ -z "$option" ]] && ! [[ "$option" == 'Y' ]] && ! [[ "$option" == 'y' ]]
-then
-    echo "Build Cancelled."
-    exit 0;
-fi
-
 bash --version 2>&1 | head -n 1
 
 set -eo pipefail
