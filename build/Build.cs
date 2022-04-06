@@ -291,7 +291,7 @@ namespace Calamari.Build
                   {
                       Directory.CreateDirectory(LocalPackagesDirectory);
                       foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg"))
-                          File.Copy(file, LocalPackagesDirectory / Path.GetFileName(file));
+                          File.Copy(file, LocalPackagesDirectory / Path.GetFileName(file), overwrite: true);
                   });
 
         Target UpdateCalamariVersionOnOctopusServer =>
@@ -549,17 +549,7 @@ namespace Calamari.Build
                     // command with the SignTool in Nuke so we have to construct
                     // the arguments manually and call StartProcess ourselves.
                     var argumentsBuilder =
-                        new StringBuilder("timestamp")
-                            .Append(' ')
-                            .Append("/tr")
-                            .Append(' ')
-                            .Append('"')
-                            .Append(url)
-                            .Append('"')
-                            .Append(' ')
-                            .Append("/td")
-                            .Append(' ')
-                            .Append("sha256");
+                        new StringBuilder($"timestamp /tr \"{url}\" /td sha256");
 
                     foreach (var file in files)
                         argumentsBuilder.Append(' ')
