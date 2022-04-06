@@ -13,8 +13,8 @@ using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.AzureSignTool;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.NuGet;
-using Nuke.Common.Tools.OctoVersion;
 using Nuke.Common.Tools.SignTool;
 using Nuke.Common.Utilities.Collections;
 using Serilog;
@@ -29,7 +29,6 @@ namespace Calamari.Build
     {
         const string LinuxRuntime = "linux-x64";
         const string WindowsRuntime = "win-x64";
-        const string CiBranchNameEnvVariable = "OCTOVERSION_CurrentBranch";
         const string RootProjectName = "Calamari";
 
         readonly string[] TimestampUrls =
@@ -42,15 +41,9 @@ namespace Calamari.Build
         readonly Configuration Configuration =
             IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-        [Solution] [Required] readonly Solution? Solution;
-
-        [Parameter("Whether to auto-detect the branch name - this is okay for a local build, "
-                   + "but should not be used under CI.")]
-        readonly bool AutoDetectBranch = IsLocalBuild;
-
-        [Parameter("Branch name for Calamari to use to calculate the version number. Can be set "
-                   + "via the environment variable " + CiBranchNameEnvVariable + ".", Name = CiBranchNameEnvVariable)]
-        readonly string? BranchName;
+        [Solution] 
+        [Required] 
+        readonly Solution? Solution;
 
         [Parameter("Run packing step in parallel")] 
         readonly bool PackInParallel;
@@ -88,17 +81,13 @@ namespace Calamari.Build
         readonly string SigningCertificatePassword = "Password01!";
 
         [Required]
-        [OctoVersion(BranchParameter = nameof(BranchName), AutoDetectBranchParameter = nameof(AutoDetectBranch))]
-        readonly OctoVersionInfo? OctoVersionInfo;
+        [GitVersion]
+        readonly GitVersion? GitVersionInfo;
 
         public Build()
         {
-            NugetVersion = new Lazy<string>(() => AppendTimestamp
-                                                ? $"{OctoVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
-                                                : OctoVersionInfo?.NuGetVersion
-                                                  ?? throw new
-                                                      InvalidOperationException("Unable to retrieve valid Nuget Version"));
-
+            NugetVersion = new Lazy<string>(GetNugetVersion); 
+            
             // This initialisation is required to ensure the build script can
             // perform actions such as GetRuntimeIdentifiers() on projects.
             ProjectModelTasks.Initialize();
@@ -168,7 +157,7 @@ namespace Calamari.Build
                                         .SetConfiguration(Configuration)
                                         .SetNoRestore(true)
                                         .SetVersion(NugetVersion.Value)
-                                        .SetInformationalVersion(OctoVersionInfo?.InformationalVersion));
+                                        .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
                   });
 
         Target Publish =>
@@ -613,6 +602,14 @@ namespace Calamari.Build
             text = Regex.Replace(text, @"<CalamariVersion>([\S])+<\/CalamariVersion>",
                                  $"<CalamariVersion>{NugetVersion.Value}</CalamariVersion>");
             File.WriteAllText(projectFile, text);
+        }
+
+        string GetNugetVersion()
+        {
+            return AppendTimestamp
+                ? $"{GitVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
+                : GitVersionInfo?.NuGetVersion
+                  ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
         }
     }
 }
