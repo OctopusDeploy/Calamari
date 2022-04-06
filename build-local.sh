@@ -56,7 +56,7 @@ then
     exit 0;
 fi
 
-./build.sh -BuildVerbosity Minimal -Verbosity Minimal -PackInParallel -Timestamp -SetOctopusServerVersion
+./build.sh -BuildVerbosity Minimal -Verbosity Minimal -PackInParallel -AppendTimestamp -SetOctopusServerVersion
 
 echo -e "$FinishMessage"
 
