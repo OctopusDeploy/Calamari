@@ -73,7 +73,8 @@ namespace Calamari.Build
         [Parameter("AzureKeyVaultAppId")] 
         readonly string? AzureKeyVaultAppId;
 
-        [Parameter("AzureKeyVaultAppSecret")] 
+        [Parameter("AzureKeyVaultAppSecret")]
+        [Secret]
         readonly string? AzureKeyVaultAppSecret;
 
         [Parameter("AzureKeyVaultCertificateName")] 
@@ -83,6 +84,7 @@ namespace Calamari.Build
         readonly string SigningCertificatePath = "./certificates/OctopusDevelopment.pfx";
 
         [Parameter("SigningCertificatePassword")] 
+        [Secret]
         readonly string SigningCertificatePassword = "Password01!";
 
         [Required]

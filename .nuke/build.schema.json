@@ -20,7 +20,8 @@
         },
         "AzureKeyVaultAppSecret": {
           "type": "string",
-          "description": "AzureKeyVaultAppSecret"
+          "description": "AzureKeyVaultAppSecret",
+          "default": "Secrets must be entered via 'nuke :secret [profile]'"
         },
         "AzureKeyVaultCertificateName": {
           "type": "string",
