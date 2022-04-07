@@ -10,10 +10,6 @@
           "type": "boolean",
           "description": "Append Timestamp"
         },
-        "AutoDetectBranch": {
-          "type": "boolean",
-          "description": "Whether to auto-detect the branch name - this is okay for a local build, but should not be used under CI"
-        },
         "AzureKeyVaultAppId": {
           "type": "string",
           "description": "AzureKeyVaultAppId"
@@ -75,10 +71,6 @@
           "type": "boolean",
           "description": "Disables displaying the NUKE logo"
         },
-        "OCTOVERSION_CurrentBranch": {
-          "type": "string",
-          "description": "Branch name for Calamari to use to calculate the version number. Can be set via the environment variable OCTOVERSION_CurrentBranch"
-        },
         "PackInParallel": {
           "type": "boolean",
           "description": "Run packing step in parallel"
@@ -112,7 +104,8 @@
         },
         "SigningCertificatePassword": {
           "type": "string",
-          "description": "SigningCertificatePassword"
+          "description": "SigningCertificatePassword",
+          "default": "Secrets must be entered via 'nuke :secret [profile]'"
         },
         "SigningCertificatePath": {
           "type": "string",
