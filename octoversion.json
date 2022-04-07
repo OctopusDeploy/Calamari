@@ -1,3 +1,0 @@
-{
-  "NonPreReleaseTagsRegex": "refs/heads/(main|master|release/.*)"
-}
