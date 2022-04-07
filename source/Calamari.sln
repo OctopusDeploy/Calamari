@@ -20,6 +20,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build files", "Build files"
 		..\README.md = ..\README.md
 		..\build.sh = ..\build.sh
 		..\global.json = ..\global.json
+		..\build-local.ps1 = ..\build-local.ps1
+		..\build-local.sh = ..\build-local.sh
+		..\GitVersion.yml = ..\GitVersion.yml
+		..\ForbiddenWords.txt = ..\ForbiddenWords.txt
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calamari.CloudAccounts", "Calamari.CloudAccounts\Calamari.CloudAccounts.csproj", "{58955C6D-3FC6-413F-B532-F37FF70EB818}"
