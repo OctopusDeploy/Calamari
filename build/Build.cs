@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Nuke.Common;
@@ -11,31 +9,20 @@ using Nuke.Common.CI.TeamCity;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
-using Nuke.Common.Tools.AzureSignTool;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.NuGet;
-using Nuke.Common.Tools.SignTool;
 using Nuke.Common.Utilities.Collections;
 using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
-using static Nuke.Common.Tools.AzureSignTool.AzureSignToolTasks;
 
 namespace Calamari.Build
 {
     class Build : NukeBuild
     {
-        const string LinuxRuntime = "linux-x64";
-        const string WindowsRuntime = "win-x64";
         const string RootProjectName = "Calamari";
-
-        readonly string[] TimestampUrls =
-        {
-            "http://timestamp.digicert.com?alg=sha256",
-            "http://timestamp.comodoca.com"
-        };
 
         [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
         readonly Configuration Configuration =
@@ -53,6 +40,12 @@ namespace Calamari.Build
 
         [Parameter("Sign Binaries")] 
         readonly bool SignBinaries;
+        
+        // When building locally signing isn't really necessary and it could take
+        // up to 3-4 minutes to sign all the binaries as we build for many, many
+        // different runtimes so disabling it locally means quicker turn around
+        // when doing local development.
+        bool WillSignBinaries => !IsLocalBuild || SignBinaries;
 
         [Parameter("Append Timestamp")] 
         readonly bool AppendTimestamp;
@@ -136,10 +129,10 @@ namespace Calamari.Build
             _ => _.DependsOn(Clean)
                   .Executes(() =>
                   {
-                      var localRuntime = WindowsRuntime;
+                      var localRuntime = FixedRuntimes.Windows;
 
                       if (!OperatingSystem.IsWindows())
-                          localRuntime = LinuxRuntime;
+                          localRuntime = FixedRuntimes.Linux;
 
                       DotNetRestore(_ => _.SetProjectFile(Solution)
                                           .SetRuntime(localRuntime)
@@ -291,7 +284,7 @@ namespace Calamari.Build
                   {
                       Directory.CreateDirectory(LocalPackagesDirectory);
                       foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg"))
-                          File.Copy(file, LocalPackagesDirectory / Path.GetFileName(file), overwrite: true);
+                          CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
                   });
 
         Target UpdateCalamariVersionOnOctopusServer =>
@@ -367,7 +360,10 @@ namespace Calamari.Build
                                 .SetRuntime(runtimeId)
                                 .SetVersion(version));
 
-            SignAndTimestampBinaries(publishedTo);
+            if (WillSignBinaries)
+                Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
+                                                 AzureKeyVaultAppSecret, AzureKeyVaultCertificateName,
+                                                 SigningCertificatePath, SigningCertificatePassword);
 
             return publishedTo;
         }
@@ -376,12 +372,17 @@ namespace Calamari.Build
         {
             Log.Information("SignAndPack project: {Project}", project);
 
-            var binDirectory = $"{Path.GetDirectoryName(project)}/bin/{Configuration}/";
-            var binariesFolders =
-                Directory.GetDirectories(binDirectory, "*", new EnumerationOptions { RecurseSubdirectories = true });
-            foreach (var directory in binariesFolders)
-                SignAndTimestampBinaries(directory);
-
+            if (WillSignBinaries)
+            {
+                var binDirectory = $"{Path.GetDirectoryName(project)}/bin/{Configuration}/";
+                var binariesFolders =
+                    Directory.GetDirectories(binDirectory, "*", new EnumerationOptions { RecurseSubdirectories = true });
+                foreach (var directory in binariesFolders)
+                    Signing.SignAndTimestampBinaries(directory, AzureKeyVaultUrl, AzureKeyVaultAppId,
+                                                     AzureKeyVaultAppSecret, AzureKeyVaultCertificateName,
+                                                     SigningCertificatePath, SigningCertificatePassword);
+            }
+            
             DotNetPack(dotNetCorePackSettings.SetProject(project));
         }
 
@@ -399,7 +400,10 @@ namespace Calamari.Build
                 nugetPackProperties.Add("runtimeId", runtimeId!);
             }
 
-            SignAndTimestampBinaries(publishedTo);
+            if (WillSignBinaries)
+                Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
+                                                 AzureKeyVaultAppSecret, AzureKeyVaultCertificateName,
+                                                 SigningCertificatePath, SigningCertificatePassword);
 
             var nuspec = $"{publishedTo}/{packageId}.nuspec";
             CopyFile($"{projectDir}/{project}.nuspec", nuspec, FileExistsPolicy.Overwrite);
@@ -416,176 +420,7 @@ namespace Calamari.Build
                                        .SetProperties(nugetPackProperties));
         }
 
-        void SignAndTimestampBinaries(string outputDirectory)
-        {
-            // When building locally signing isn't really necessary and it could take
-            // up to 3-4 minutes to sign all the binaries as we build for many, many
-            // different runtimes so disabling it locally means quicker turn around
-            // when doing local development.
-            if (IsLocalBuild && !SignBinaries) return;
-
-            Log.Information("Signing binaries in {OutputDirectory}", outputDirectory);
-
-            // check that any unsigned libraries, that Octopus Deploy authors, get
-            // signed to play nice with security scanning tools
-            // refer: https://octopusdeploy.slack.com/archives/C0K9DNQG5/p1551655877004400
-            // decision re: no signing everything: https://octopusdeploy.slack.com/archives/C0K9DNQG5/p1557938890227100
-            var unsignedExecutablesAndLibraries = GetFilesFromDirectory(outputDirectory,
-                                                                        "Calamari*.exe",
-                                                                        "Calamari*.dll",
-                                                                        "Octo*.exe",
-                                                                        "Octo*.dll")
-                                                  .Where(f => !HasAuthenticodeSignature(f))
-                                                  .ToArray();
-
-            if (unsignedExecutablesAndLibraries.IsEmpty())
-            {
-                Log.Information("No unsigned binaries to sign in {OutputDirectory}", outputDirectory);
-                return;
-            }
-
-            if (AzureKeyVaultUrl.IsNullOrEmpty()
-                && AzureKeyVaultAppId.IsNullOrEmpty()
-                && AzureKeyVaultAppSecret.IsNullOrEmpty()
-                && AzureKeyVaultCertificateName.IsNullOrEmpty())
-            {
-                if (SigningCertificatePath.IsNullOrEmpty() || SigningCertificatePassword.IsNullOrEmpty())
-                    throw new InvalidOperationException("Either Azure Key Vault or Signing "
-                                                        + "Certificate Parameters must be set");
-
-                if (!OperatingSystem.IsWindows())
-                    throw new InvalidOperationException("Non-windows builds must either leave binaries "
-                                                        + "unsigned or sign using the AzureSignTool");
-
-                Log.Information("Signing files using signtool and the "
-                                + "self-signed development code signing certificate");
-                SignFilesWithSignTool(unsignedExecutablesAndLibraries,
-                                      SigningCertificatePath,
-                                      SigningCertificatePassword);
-            }
-            else
-            {
-                Log.Information("Signing files using azuresigntool and the production code signing certificate");
-                SignFilesWithAzureSignTool(unsignedExecutablesAndLibraries,
-                                           AzureKeyVaultUrl!,
-                                           AzureKeyVaultAppId!,
-                                           AzureKeyVaultAppSecret!,
-                                           AzureKeyVaultCertificateName!);
-            }
-
-            TimeStampFiles(unsignedExecutablesAndLibraries);
-        }
-
-        static IEnumerable<string> GetFilesFromDirectory(string directory, params string[] searchPatterns) =>
-            searchPatterns.SelectMany(searchPattern => Directory.GetFiles(directory, searchPattern));
-
-        // note: Doesn't check if existing signatures are valid, only that one exists
-        // source: https://blogs.msdn.microsoft.com/windowsmobile/2006/05/17/programmatically-checking-the-authenticode-signature-on-a-file/
-        static bool HasAuthenticodeSignature(string filePath)
-        {
-            try
-            {
-                X509Certificate.CreateFromSignedFile(filePath);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        static void SignFilesWithAzureSignTool(ICollection<string> files,
-                                               string vaultUrl,
-                                               string vaultAppId,
-                                               string vaultAppSecret,
-                                               string vaultCertificateName,
-                                               string display = "",
-                                               string displayUrl = "")
-        {
-            Log.Information("Finished signing {FilesCount} files", files.Count);
-
-            AzureSignTool(_ => _.SetKeyVaultUrl(vaultUrl)
-                                .SetKeyVaultClientId(vaultAppId)
-                                .SetKeyVaultClientSecret(vaultAppSecret)
-                                .SetKeyVaultCertificateName(vaultCertificateName)
-                                .SetFileDigest("sha256")
-                                .SetDescription(display)
-                                .SetDescriptionUrl(displayUrl)
-                                .SetFiles(files));
-        }
-
-        static void SignFilesWithSignTool(IReadOnlyCollection<string> files,
-                                          string certificatePath,
-                                          string certificatePassword,
-                                          string display = "",
-                                          string displayUrl = "")
-        {
-            if (!File.Exists(certificatePath))
-                throw new Exception($"The code-signing certificate was not found at {certificatePath}");
-
-            Log.Information("Signing {FilesCount} files using certificate at '{CertificatePath}'...",
-                            files.Count,
-                            certificatePath);
-
-            SignToolTasks.SignTool(_ => _.SetFileDigestAlgorithm(SignToolDigestAlgorithm.SHA256)
-                                         .SetFile(certificatePath)
-                                         .SetPassword(certificatePassword)
-                                         .SetDescription(display)
-                                         .SetUrl(displayUrl)
-                                         .AddFiles(files));
-
-            Log.Information("Finished signing {FilesCount} files", files.Count);
-        }
-
-        void TimeStampFiles(ICollection<string> files)
-        {
-            Log.Information("Timestamping {FilesCount} files...", files.Count);
-
-            var timestamped = false;
-            foreach (var url in TimestampUrls)
-                try
-                {
-                    // Unfortunately there is no built in way to use the timestamp
-                    // command with the SignTool in Nuke so we have to construct
-                    // the arguments manually and call StartProcess ourselves.
-                    var argumentsBuilder =
-                        new StringBuilder($"timestamp /tr \"{url}\" /td sha256");
-
-                    foreach (var file in files)
-                        argumentsBuilder.Append(' ')
-                                        .Append('"')
-                                        .Append(file)
-                                        .Append('"');
-
-                    var process = ProcessTasks.StartProcess(SignToolTasks.SignToolPath, argumentsBuilder.ToString());
-
-                    Log.Information("TimeStamp process: {FileName} {ProcessArguments}", process.FileName,
-                                    process.Arguments);
-
-                    process.AssertWaitForExit();
-
-                    if (process.ExitCode != 0)
-                        throw new Exception($"Timestamping files failed with the exit code {process.ExitCode}. "
-                                            + "Look for 'SignTool Error' in the logs");
-
-                    timestamped = true;
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex,
-                              "Failed to timestamp files using {Url}. Maybe we can try another timestamp service...",
-                              url);
-                }
-
-            if (!timestamped)
-                throw new
-                    Exception("Failed to timestamp files even after we tried all of the timestamp services we use");
-
-            Log.Information("Finished timestamping {FileCount} files", files.Count);
-        }
-
-        // Sets the Octopus.Server Calamari version property
+        // Sets the Octopus.Server.csproj <CalamariVersion> property
         void SetOctopusServerCalamariVersion(string projectFile)
         {
             var text = File.ReadAllText(projectFile);

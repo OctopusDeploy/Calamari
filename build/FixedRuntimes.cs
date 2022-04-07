@@ -6,5 +6,7 @@ namespace Calamari.Build
     {
         public const string Cloud = "Cloud";
         public const string Portable = "portable";
+        public const string Linux = "linux-x64";
+        public const string Windows = "win-x64";
     }
 }
