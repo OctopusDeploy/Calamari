@@ -35,10 +35,10 @@ namespace Calamari.Build
         [Parameter("Run packing step in parallel")] 
         readonly bool PackInParallel;
 
-        [Parameter("Build verbosity")] 
-        readonly string BuildVerbosity = "Minimal";
+        [Parameter] 
+        readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.Minimal;
 
-        [Parameter("Sign Binaries")] 
+        [Parameter] 
         readonly bool SignBinaries;
         
         // When building locally signing isn't really necessary and it could take
@@ -47,29 +47,29 @@ namespace Calamari.Build
         // when doing local development.
         bool WillSignBinaries => !IsLocalBuild || SignBinaries;
 
-        [Parameter("Append Timestamp")] 
+        [Parameter] 
         readonly bool AppendTimestamp;
 
         [Parameter("Set Calamari Version on OctopusServer")] 
         readonly bool SetOctopusServerVersion;
 
-        [Parameter("AzureKeyVaultUrl")] 
+        [Parameter] 
         readonly string? AzureKeyVaultUrl;
 
-        [Parameter("AzureKeyVaultAppId")] 
+        [Parameter] 
         readonly string? AzureKeyVaultAppId;
 
-        [Parameter("AzureKeyVaultAppSecret")]
+        [Parameter]
         [Secret]
         readonly string? AzureKeyVaultAppSecret;
 
-        [Parameter("AzureKeyVaultCertificateName")] 
+        [Parameter] 
         readonly string? AzureKeyVaultCertificateName;
 
-        [Parameter("SigningCertificatePath")]
+        [Parameter(Name = "signing_certificate_path")]
         readonly string SigningCertificatePath = "./certificates/OctopusDevelopment.pfx";
 
-        [Parameter("SigningCertificatePassword")] 
+        [Parameter(Name = "signing_certificate_password")] 
         [Secret]
         readonly string SigningCertificatePassword = "Password01!";
 
