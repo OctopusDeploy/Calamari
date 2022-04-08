@@ -7,29 +7,30 @@
       "type": "object",
       "properties": {
         "AppendTimestamp": {
-          "type": "boolean",
-          "description": "Append Timestamp"
+          "type": "boolean"
         },
         "AzureKeyVaultAppId": {
-          "type": "string",
-          "description": "AzureKeyVaultAppId"
+          "type": "string"
         },
         "AzureKeyVaultAppSecret": {
           "type": "string",
-          "description": "AzureKeyVaultAppSecret",
           "default": "Secrets must be entered via 'nuke :secret [profile]'"
         },
         "AzureKeyVaultCertificateName": {
-          "type": "string",
-          "description": "AzureKeyVaultCertificateName"
+          "type": "string"
         },
         "AzureKeyVaultUrl": {
-          "type": "string",
-          "description": "AzureKeyVaultUrl"
+          "type": "string"
         },
         "BuildVerbosity": {
           "type": "string",
-          "description": "Build verbosity"
+          "enum": [
+            "Detailed",
+            "Diagnostic",
+            "Minimal",
+            "Normal",
+            "Quiet"
+          ]
         },
         "Configuration": {
           "type": "string",
@@ -99,17 +100,14 @@
           "description": "Set Calamari Version on OctopusServer"
         },
         "SignBinaries": {
-          "type": "boolean",
-          "description": "Sign Binaries"
+          "type": "boolean"
         },
-        "SigningCertificatePassword": {
+        "signing_certificate_password": {
           "type": "string",
-          "description": "SigningCertificatePassword",
           "default": "Secrets must be entered via 'nuke :secret [profile]'"
         },
-        "SigningCertificatePath": {
-          "type": "string",
-          "description": "SigningCertificatePath"
+        "signing_certificate_path": {
+          "type": "string"
         },
         "Skip": {
           "type": "array",
