@@ -322,7 +322,7 @@ namespace Calamari.Aws.Deployment.Conventions
         {
             Guard.NotNull(deployment.StagingDirectory, "deployment.StagingDirectory must not be null");
 
-            if (!options.VariableSubstitutionPatterns.Any() && !options.StructuredVariableSubstitutionPatterns.Any())
+            if (options.VariableSubstitutionPatterns.IsNullOrEmpty() && options.StructuredVariableSubstitutionPatterns.IsNullOrEmpty())
                 return deployment.PackageFilePath;
 
             var stagingDirectory = deployment.StagingDirectory;
