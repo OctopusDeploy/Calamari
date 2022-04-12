@@ -2,11 +2,27 @@ Calamari is the command-line tool invoked by Tentacle during a deployment. It kn
 
 ## Building
 
-You will need the .NET Core SDK `2.2`, downloadable from https://dotnet.microsoft.com/download
+You will need the .NET SDK `5.0`, downloadable from https://dotnet.microsoft.com/download
 
-Run `Build.cmd` to build the solution
+Run `Build-Local.ps1` or `Build-Local.sh` to build the solution locally.
 
-When the solution is built, a new Calamari package is created in the `artifacts` directory.
+When the solution is built, several new Calamari nuget packages are created in the `artifacts` directory.
+
+> **For Octopus Developers:**
+> 
+>The `Build-Local` scripts will also copy the nuget packages to the LocalPackages folder which can be
+found in the same parent folder as the Calamari repo. If the Octopus Server repo exists in the same 
+parent folder, `Build-Local` will also update the Octopus.Server.csproj to reference the Calamari 
+version produced by the build. This means that you can simply rebuild Server locally to test the new
+version of Calamari.
+>
+>folder structure example:
+>```
+>dev\
+>    Calamari\
+>    LocalPackages\ 
+> OctopusDeploy\
+>```
 
 ## Usage
 
