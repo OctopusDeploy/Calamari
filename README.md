@@ -8,7 +8,8 @@ Run `Build-Local.ps1` or `Build-Local.sh` to build the solution locally.
 
 When the solution is built, several new Calamari nuget packages are created in the `artifacts` directory.
 
->######For Octopus Developers:
+> **For Octopus Developers:**
+> 
 >The `Build-Local` scripts will also copy the nuget packages to the LocalPackages folder which can be
 found in the same parent folder as the Calamari repo. If the Octopus Server repo exists in the same 
 parent folder, `Build-Local` will also update the Octopus.Server.csproj to reference the Calamari 
