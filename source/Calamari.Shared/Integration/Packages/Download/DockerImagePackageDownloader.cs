@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
+using System.Linq;
 using System.Reflection;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.EmbeddedResources;
@@ -12,12 +12,13 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
 {
-    // Note about moving this class: GetFetchScript method uses the namespace of this class as part of the
-    // get Embedded Resource to find the DockerPull scripts. If you move this file, be sure look at that method
+    // Note about moving this class: GetScript method uses the namespace of this class as part of the
+    // get Embedded Resource to find the DockerLogin and DockerPull scripts. If you move this file, be sure look at that method
     // and make sure it can still find the scripts
     public class DockerImagePackageDownloader : IPackageDownloader
     {
@@ -25,6 +26,7 @@ namespace Calamari.Integration.Packages.Download
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
+        readonly ILog log;
         const string DockerHubRegistry = "index.docker.io";
 
         // Ensures that any credential details are only available for the duration of the acquisition
@@ -35,12 +37,13 @@ namespace Calamari.Integration.Packages.Download
             }
         };
 
-        public DockerImagePackageDownloader(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, IVariables variables)
+        public DockerImagePackageDownloader(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, IVariables variables, ILog log)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
+            this.log = log;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
@@ -57,7 +60,16 @@ namespace Calamari.Integration.Packages.Download
             var fullImageName = GetFullImageName(packageId, version, feedUri);
 
             var feedHost = GetFeedHost(feedUri);
-            PerformPull(username, password, fullImageName, feedHost);
+            
+            PerformLogin(username, password, feedHost);
+
+            if (!IsImageCached(fullImageName))
+            {
+                log.Info($"The docker image '{fullImageName}' may not be cached. Please note images that have not been cached may take longer to be acquired than expected. Your deployment will begin as soon as all images have been pulled.");
+            }
+            
+            PerformPull(fullImageName);
+            
             var (hash, size) = GetImageDetails(fullImageName);
             return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, ""), string.Empty, hash, size);
         }
@@ -84,31 +96,66 @@ namespace Calamari.Integration.Packages.Download
             return $"{feedUri.Host}:{feedUri.Port}";
         }
 
-        void PerformPull(string? username, string? password, string fullImageName, string feed)
+        void PerformLogin(string? username, string? password, string feed)
         {
-            var file = GetFetchScript();
+            var result = ExecuteScript("DockerLogin", new Dictionary<string, string?>
+            {
+                ["DockerUsername"] = username,
+                ["DockerPassword"] = password,
+                ["FeedUri"] = feed
+            });
+            if (result == null)
+                throw new CommandException("Null result attempting to log in Docker registry");
+            if (result.ExitCode != 0)
+                throw new CommandException("Unable to log in Docker registry");
+        }
+
+        bool IsImageCached(string fullImageName)
+        {
+            var cachedDigests = GetCachedImageDigests();
+            var selectedDigests = GetImageDigests(fullImageName);
+
+            // If there are errors in the above steps, we treat the image as being cached and do not log image-not-cached
+            if (cachedDigests == null || selectedDigests == null)
+            {
+                return true;
+            }
+
+            return cachedDigests.Intersect(selectedDigests).Any();
+        }
+
+        void PerformPull(string fullImageName)
+        {
+            var result = ExecuteScript("DockerPull", new Dictionary<string, string?>
+            {
+                ["Image"] = fullImageName
+            });
+            if (result == null)
+                throw new CommandException("Null result attempting to pull Docker image");
+            if (result.ExitCode != 0)
+                throw new CommandException("Unable to pull Docker image");
+        }
+
+        CommandResult ExecuteScript(string scriptName, Dictionary<string, string?> envVars)
+        {
+            var file = GetScript(scriptName);
             using (new TemporaryFile(file))
             {
                 var clone = variables.Clone();
-                clone["DockerUsername"] = username;
-                clone["DockerPassword"] = password;
-                clone["Image"] = fullImageName;
-                clone["FeedUri"] = feed;
-
-                var result = scriptEngine.Execute(new Script(file), clone, commandLineRunner, environmentVariables);
-                if (result == null)
-                    throw new CommandException("Null result attempting to pull Docker image");
-                if (result.ExitCode != 0)
-                    throw new CommandException("Unable to pull Docker image");
+                foreach (var keyValuePair in envVars)
+                {
+                    clone[keyValuePair.Key] = keyValuePair.Value;
+                }
+                return scriptEngine.Execute(new Script(file), clone, commandLineRunner, environmentVariables);
             }
         }
-
+        
         (string hash, long size) GetImageDetails(string fullImageName)
         {
             var details = "";
             var result2 = SilentProcessRunner.ExecuteCommand("docker",
                 "inspect --format=\"{{.Id}} {{.Size}}\" " + fullImageName,
-                ".", environmentVariables, (stdout) => { details = stdout; }, Log.Error);
+                ".", environmentVariables, (stdout) => { details = stdout; }, log.Error);
             if (result2.ExitCode != 0)
             {
                 throw new CommandException("Unable to determine acquired docker image hash");
@@ -122,14 +169,60 @@ namespace Calamari.Integration.Packages.Download
             if (!long.TryParse(parts[1], out var size))
             {
                 size = 0;
-                Log.Verbose($"Unable to parse image size. ({parts[0]})");
+                log.Verbose($"Unable to parse image size. ({parts[0]})");
             }
 
 
             return (hash, size);
         }
 
-        string GetFetchScript()
+        IEnumerable<string>? GetCachedImageDigests()
+        {
+            var output = "";
+            var result = SilentProcessRunner.ExecuteCommand("docker",
+                                                            "image ls --format=\"{{.ID}}\" --no-trunc",
+                                                            ".", 
+                                                            environmentVariables, 
+                                                            (stdout) => { output += stdout + " "; },
+                                                            (error) => { });
+            return result.ExitCode == 0 
+                ? output.Split(' ').Select(digest => digest.Trim()) 
+                : null;
+        }
+
+        IEnumerable<string>? GetImageDigests(string fullImageName)
+        {
+            var output = "";
+            var result = SilentProcessRunner.ExecuteCommand("docker",
+                                                            $"manifest inspect --verbose {fullImageName}",
+                                                            ".", 
+                                                            environmentVariables, 
+                                                            (stdout) => { output += stdout; },
+                                                            (error) => { });
+
+            if (result.ExitCode != 0)
+            {
+                return null;
+            }
+
+            if (!output.TrimStart().StartsWith("["))
+            {
+                output = $"[{output}]";
+            }
+
+            try
+            {
+                return JArray.Parse(output.ToLowerInvariant())
+                             .Select(token => (string)token.SelectToken("schemav2manifest.config.digest"))
+                             .ToList();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        string GetScript(string scriptName)
         {
             var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
 
@@ -137,10 +230,10 @@ namespace Calamari.Integration.Packages.Download
             switch (syntax)
             {
                 case ScriptSyntax.Bash:
-                    contextFile = "DockerPull.sh";
+                    contextFile = $"{scriptName}.sh";
                     break;
                 case ScriptSyntax.PowerShell:
-                    contextFile = "DockerPull.ps1";
+                    contextFile = $"{scriptName}.ps1";
                     break;
                 default:
                     throw new InvalidOperationException("No kubernetes context wrapper exists for " + syntax);
