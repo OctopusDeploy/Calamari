@@ -63,9 +63,16 @@ namespace Calamari.Integration.Packages.Download
             
             PerformLogin(username, password, feedHost);
 
+            const string cachedWorkerToolsShortLink = "http://g.octopushq.com/CachedWorkerToolsImages";
+            var imageNotCachedMessage =
+                $"The docker image '{fullImageName}' may not be cached." +
+                " Please note images that have not been cached may take longer to be acquired than expected." +
+                " Your deployment will begin as soon as all images have been pulled." +
+                $" Please see {cachedWorkerToolsShortLink} for more information on cached worker-tools image versions.";
+            
             if (!IsImageCached(fullImageName))
             {
-                log.Info($"The docker image '{fullImageName}' may not be cached. Please note images that have not been cached may take longer to be acquired than expected. Your deployment will begin as soon as all images have been pulled.");
+                log.Info(imageNotCachedMessage);
             }
             
             PerformPull(fullImageName);
