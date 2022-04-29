@@ -573,7 +573,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                         .Execute(func);
         }
 
-        private MediaTypeNames.Application FindWebApplication(string websiteName, string virtualPath)
+        private Application FindWebApplication(string websiteName, string virtualPath)
         {
             return GetWebSite(websiteName).Applications.Single(ap => ap.Path == virtualPath);
         }
