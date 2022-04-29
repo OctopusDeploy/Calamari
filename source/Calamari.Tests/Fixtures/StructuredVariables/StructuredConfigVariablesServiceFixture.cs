@@ -6,6 +6,7 @@ using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;

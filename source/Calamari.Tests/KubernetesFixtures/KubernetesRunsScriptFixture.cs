@@ -17,10 +17,9 @@ using Calamari.Kubernetes;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
-using CalamariResult = Calamari.Tests.Helpers.CalamariResult;
-using CaptureCommandInvocationOutputSink = Calamari.Tests.Helpers.CaptureCommandInvocationOutputSink;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -339,7 +338,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     sb.AppendLine($"[{message.Level}] {text}");
                 }
 
-                this.Assent(sb.ToString().Replace("\r\n", "\n"), testName: testName, filePath: filePath, configuration: Helpers.TestEnvironment.AssentConfiguration);
+                this.Assent(sb.ToString().Replace("\r\n", "\n"), testName: testName, filePath: filePath, configuration: TestEnvironmentExtended.AssentConfiguration);
 
                 return output;
             }

@@ -223,7 +223,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                      string filePath = null)
         {
             // ReSharper disable once ExplicitCallerInfoArgument
-            this.Assent(Replace(vars, file), TestEnvironment.AssentPropertiesConfiguration, testName, filePath);
+            this.Assent(Replace(vars, file), TestEnvironmentExtended.AssentPropertiesConfiguration, testName, filePath);
         }
 
         void RunHexTest(CalamariVariables vars,
@@ -234,7 +234,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                      string filePath = null)
         {
             // ReSharper disable once ExplicitCallerInfoArgument
-            this.Assent(ReplaceToHex(vars, file), TestEnvironment.AssentConfiguration, testName, filePath);
+            this.Assent(ReplaceToHex(vars, file), TestEnvironmentExtended.AssentConfiguration, testName, filePath);
         }
     }
 }

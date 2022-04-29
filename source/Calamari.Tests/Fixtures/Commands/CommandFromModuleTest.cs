@@ -6,6 +6,7 @@ using System.IO;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
+using Calamari.Testing.Helpers;
 
 namespace Calamari.Tests.Fixtures.Commands
 {

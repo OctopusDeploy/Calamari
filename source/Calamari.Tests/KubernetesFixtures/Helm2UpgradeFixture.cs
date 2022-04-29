@@ -1,3 +1,4 @@
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using Calamari.Tests.Fixtures;
 using FluentAssertions;

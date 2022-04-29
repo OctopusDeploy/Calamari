@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.FileSystem;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;

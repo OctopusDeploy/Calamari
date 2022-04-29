@@ -14,8 +14,6 @@ using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using NUnit.Framework;
-using CalamariResult = Calamari.Tests.Helpers.CalamariResult;
-using CaptureCommandInvocationOutputSink = Calamari.Tests.Helpers.CaptureCommandInvocationOutputSink;
 
 namespace Calamari.Tests.KubernetesFixtures
 {

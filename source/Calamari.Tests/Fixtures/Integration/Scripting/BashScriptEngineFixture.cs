@@ -2,6 +2,7 @@ using System.IO;
 using Calamari.Common.Features.Scripting.Bash;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.FileSystem;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 

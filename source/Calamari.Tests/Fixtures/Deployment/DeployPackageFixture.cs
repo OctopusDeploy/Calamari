@@ -6,6 +6,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using Octostache;
 

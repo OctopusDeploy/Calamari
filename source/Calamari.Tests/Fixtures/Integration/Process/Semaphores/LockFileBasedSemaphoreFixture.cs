@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;

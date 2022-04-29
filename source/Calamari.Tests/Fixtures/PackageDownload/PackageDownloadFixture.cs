@@ -5,6 +5,7 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;

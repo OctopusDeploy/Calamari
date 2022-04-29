@@ -2,6 +2,7 @@
 using System;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 

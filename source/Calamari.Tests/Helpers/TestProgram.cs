@@ -6,6 +6,7 @@ using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing.Helpers;
 
 namespace Calamari.Tests.Helpers
 {

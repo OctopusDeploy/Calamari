@@ -1,5 +1,5 @@
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.Proxies;
-using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Bash

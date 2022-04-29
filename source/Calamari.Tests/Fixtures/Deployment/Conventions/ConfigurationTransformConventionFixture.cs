@@ -10,6 +10,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
