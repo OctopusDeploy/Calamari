@@ -22,7 +22,8 @@
     <ItemGroup>
       <PackageReference Include="AWSSDK.Core" Version="3.3.104.14" />
       <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.4.34" />
-      <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+      <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.38.1" />
+      <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     </ItemGroup>
 
 </Project>
