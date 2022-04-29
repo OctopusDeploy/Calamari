@@ -2,6 +2,7 @@
 using System.Net;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Proxies;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;

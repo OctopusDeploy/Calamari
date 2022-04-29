@@ -3,7 +3,7 @@ using System.IO;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
-using Calamari.Tests.Helpers;
+using Calamari.Testing.Helpers;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 

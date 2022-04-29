@@ -30,6 +30,7 @@ using NUnit.Framework;
 using Octopus.CoreUtilities.Extensions;
 using Octostache;
 using Calamari.Testing;
+using Calamari.Testing.Helpers;
 using SharpCompress.Archives.Zip;
 
 namespace Calamari.Tests.AWS

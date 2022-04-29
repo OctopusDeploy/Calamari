@@ -5,15 +5,12 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.NuGet;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Packages.NuGet;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 using SharpCompress.Common;
-using SharpCompress.Readers.Tar;
 using SharpCompress.Writers;
-using SharpCompress.Writers.Tar;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {

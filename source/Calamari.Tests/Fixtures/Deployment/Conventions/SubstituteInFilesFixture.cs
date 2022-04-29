@@ -4,6 +4,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;

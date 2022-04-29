@@ -1,6 +1,7 @@
 using System;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;

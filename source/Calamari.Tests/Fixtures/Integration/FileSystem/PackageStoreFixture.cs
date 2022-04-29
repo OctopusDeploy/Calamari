@@ -9,8 +9,6 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
-using InMemoryLog = Calamari.Tests.Helpers.InMemoryLog;
-using TestEnvironment = Calamari.Tests.Helpers.TestEnvironment;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {

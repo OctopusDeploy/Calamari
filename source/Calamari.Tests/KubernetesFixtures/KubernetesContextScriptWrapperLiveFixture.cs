@@ -10,6 +10,7 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Kubernetes;
 using Calamari.Testing;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;

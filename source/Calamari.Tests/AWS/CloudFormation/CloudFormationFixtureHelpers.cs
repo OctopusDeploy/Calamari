@@ -18,6 +18,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Calamari.Testing;
+using Calamari.Testing.Helpers;
 
 namespace Calamari.Tests.AWS.CloudFormation
 {
