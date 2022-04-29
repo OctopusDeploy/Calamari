@@ -8,8 +8,8 @@ using System.Security.Principal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Iis;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
-using Calamari.Tests.Helpers;
 using Calamari.Tests.Helpers.Certificates;
 using Microsoft.Web.Administration;
 using NUnit.Framework;
@@ -573,7 +573,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                         .Execute(func);
         }
 
-        private Application FindWebApplication(string websiteName, string virtualPath)
+        private MediaTypeNames.Application FindWebApplication(string websiteName, string virtualPath)
         {
             return GetWebSite(websiteName).Applications.Single(ap => ap.Path == virtualPath);
         }
