@@ -1,7 +1,5 @@
 ﻿using System;
 using System.IO;
-using Assent;
-using Assent.Namers;
 
 namespace Calamari.Testing.Helpers
 {
