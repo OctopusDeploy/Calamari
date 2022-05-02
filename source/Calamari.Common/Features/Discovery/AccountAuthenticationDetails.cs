@@ -8,6 +8,7 @@ namespace Calamari.Common.Features.Discovery
     public class AccountAuthenticationDetails<TAccountDetails> : ITargetDiscoveryAuthenticationDetails
 
     {
+        [JsonConstructor]
         public AccountAuthenticationDetails
             (string type, string accountId, TAccountDetails accountDetails)
         {

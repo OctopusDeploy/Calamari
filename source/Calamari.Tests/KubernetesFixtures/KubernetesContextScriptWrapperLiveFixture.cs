@@ -80,7 +80,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [SetUp]
         public void SetExtraVariables()
         {
-            serviceMessageCollectorLog = new ServiceMessageCollectorLog();
+            Log = serviceMessageCollectorLog = new ServiceMessageCollectorLog();
             variables.Set("Octopus.Action.Kubernetes.CustomKubectlExecutable", installTools.KubectlExecutable);
         }
 
@@ -354,6 +354,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result =
                 ExecuteDiscoveryCommand(targetDiscoveryContext,
+                    new[]{"Calamari.Azure"},
                     ("Octopus.Kubernetes.HealthCheckContainer.FeedIdOrName", feedId),
                     ("Octopus.Kubernetes.HealthCheckContainer.Image", healthCheckContainerName)
                 );
@@ -396,6 +397,7 @@ namespace Calamari.Tests.KubernetesFixtures
         
         CalamariResult ExecuteDiscoveryCommand<TAuthenticationDetails>(
             TargetDiscoveryContext<TAuthenticationDetails> discoveryContext,
+            IEnumerable<string> extensions,
             params (string key, string value)[] otherVariables)
             where TAuthenticationDetails : ITargetDiscoveryAuthenticationDetails
         {
@@ -408,7 +410,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
             return InvokeInProcess(Calamari()
                                    .Action(KubernetesDiscoveryCommand.Name)
-                                   .Argument("variables", variablesFile.FilePath));
+                                   .Argument("variables", variablesFile.FilePath)
+                                   .Argument("extensions", string.Join(',', extensions)));
         }
 
         class ServiceMessageCollectorLog : InMemoryLog
