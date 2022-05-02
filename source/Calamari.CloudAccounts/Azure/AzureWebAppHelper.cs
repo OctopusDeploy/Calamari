@@ -1,5 +1,4 @@
-﻿#nullable enable
-using System;
+﻿using System;
 using System.Linq;
 using Calamari.Common.Features.Discovery;
 using Microsoft.Azure.Management.AppService.Fluent;
@@ -39,11 +38,11 @@ namespace Calamari.CloudAccounts.Azure
         public static TargetTags GetOctopusTags(IWebAppBasic webApp)
         {
             var caseInsensitiveTagDictionary = webApp.Tags.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
-            caseInsensitiveTagDictionary.TryGetValue(TargetTags.EnvironmentTagName, out string? environment);
-            caseInsensitiveTagDictionary.TryGetValue(TargetTags.RoleTagName, out string? role);
-            caseInsensitiveTagDictionary.TryGetValue(TargetTags.ProjectTagName, out string? project);
-            caseInsensitiveTagDictionary.TryGetValue(TargetTags.SpaceTagName, out string? space);
-            caseInsensitiveTagDictionary.TryGetValue(TargetTags.TenantTagName, out string? tenant);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.EnvironmentTagName, out var environment);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.RoleTagName, out var role);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.ProjectTagName, out var project);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.SpaceTagName, out var space);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.TenantTagName, out var tenant);
             return new TargetTags(
                 environment: environment,
                 role: role,
