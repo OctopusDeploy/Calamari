@@ -26,7 +26,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 var argsFilePath = Path.Combine(StagingDirectory, PackageName, "1.0.0", "Args.txt");
                 Assert.IsTrue(File.Exists(argsFilePath));
-                this.Assent(File.ReadAllText(argsFilePath), TestEnvironmentExtended.AssentConfiguration);
+                this.Assent(File.ReadAllText(argsFilePath), AssentConfiguration.Default);
             });
         }
 
@@ -38,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 var argsFilePath = Path.Combine(StagingDirectory, PackageName, "1.0.0", "Args.txt");
                 Assert.IsTrue(File.Exists(argsFilePath));
-                this.Assent(File.ReadAllText(argsFilePath), TestEnvironmentExtended.AssentConfiguration);
+                this.Assent(File.ReadAllText(argsFilePath), AssentConfiguration.Default);
             });
         }
     }

@@ -69,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer.SaveConfiguration(tempDirectory);
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
-            this.Assent(File.ReadAllText(nginxConfigFilePath), TestEnvironmentExtended.AssentConfiguration);
+            this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
         }
 
         [Test]
@@ -91,7 +91,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer.SaveConfiguration(tempDirectory);
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
-            this.Assent(File.ReadAllText(nginxConfigFilePath), TestEnvironmentExtended.AssentConfiguration);
+            this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
         }
 
         [Test]
@@ -113,7 +113,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer.SaveConfiguration(tempDirectory);
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
-            this.Assent(File.ReadAllText(nginxConfigFilePath), TestEnvironmentExtended.AssentConfiguration);
+            this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
         }
 
         [Test]
@@ -141,7 +141,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             var rootConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
             this.Assent(
                 File.ReadAllText(rootConfigFilePath), 
-                TestEnvironmentExtended.AssentConfiguration,
+                AssentConfiguration.Default,
                 $"{nameof(SetupStaticContentWithReverseProxySite)}.rootLocation"
             );
 
@@ -154,7 +154,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             
             this.Assent(
                 File.ReadAllText(apiConfigFilePath), 
-                TestEnvironmentExtended.AssentConfiguration,
+                AssentConfiguration.Default,
                 $"{nameof(SetupStaticContentWithReverseProxySite)}.apiLocation"
             );
         }
@@ -180,7 +180,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer.SaveConfiguration(tempDirectory);
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
-            this.Assent(File.ReadAllText(nginxConfigFilePath), TestEnvironmentExtended.AssentConfiguration);
+            this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
         }
 
         [Test]
@@ -206,7 +206,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer.SaveConfiguration(tempDirectory);
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
-            this.Assent(File.ReadAllText(nginxConfigFilePath), TestEnvironmentExtended.AssentConfiguration);
+            this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
         }
 
         [Test]
@@ -242,9 +242,9 @@ namespace Calamari.Tests.Fixtures.Nginx
             var apiConf = Path.Combine(tempConfPath, $"{packageId}.conf.d", "location.1api.conf");
             Assert.IsTrue(File.Exists(apiConf));
             
-            this.Assent(File.ReadAllText(exactRootConf), TestEnvironmentExtended.AssentConfiguration, $"{nameof(ExecuteWorks)}.rootLocation");
-            this.Assent(File.ReadAllText(rootConf), TestEnvironmentExtended.AssentConfiguration, $"{nameof(ExecuteWorks)}.0");
-            this.Assent(File.ReadAllText(apiConf), TestEnvironmentExtended.AssentConfiguration, $"{nameof(ExecuteWorks)}.apiLocation");
+            this.Assent(File.ReadAllText(exactRootConf), AssentConfiguration.Default, $"{nameof(ExecuteWorks)}.rootLocation");
+            this.Assent(File.ReadAllText(rootConf), AssentConfiguration.Default, $"{nameof(ExecuteWorks)}.0");
+            this.Assent(File.ReadAllText(apiConf), AssentConfiguration.Default, $"{nameof(ExecuteWorks)}.apiLocation");
         }
         
         [Test]
