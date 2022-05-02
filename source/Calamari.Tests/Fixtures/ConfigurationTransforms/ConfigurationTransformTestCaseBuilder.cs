@@ -10,6 +10,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NSubstitute.Core;
@@ -245,7 +246,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 }
             }
 
-            testFixture.Assent(results.ToString(), TestEnvironment.AssentConfiguration, testName, filePath);
+            testFixture.Assent(results.ToString(), AssentConfiguration.Default, testName, filePath);
         }
 
     }

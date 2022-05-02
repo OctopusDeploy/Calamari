@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Calamari.Testing.Helpers;
 
 namespace Calamari.Tests.Helpers
 {

@@ -38,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var extractedPackageUpdatedJsonFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileName));
 
-                this.Assent(extractedPackageUpdatedJsonFile, TestEnvironment.AssentJsonConfiguration);
+                this.Assent(extractedPackageUpdatedJsonFile, AssentConfiguration.Json);
             }
         }
 

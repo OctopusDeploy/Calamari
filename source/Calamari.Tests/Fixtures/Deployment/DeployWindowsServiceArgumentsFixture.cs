@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Assent;
 using Assent.Reporters;
 using Assent.Reporters.DiffPrograms;
+using Calamari.Testing.Helpers;
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -25,7 +26,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 var argsFilePath = Path.Combine(StagingDirectory, PackageName, "1.0.0", "Args.txt");
                 Assert.IsTrue(File.Exists(argsFilePath));
-                this.Assent(File.ReadAllText(argsFilePath), TestEnvironment.AssentConfiguration);
+                this.Assent(File.ReadAllText(argsFilePath), AssentConfiguration.Default);
             });
         }
 
@@ -37,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 var argsFilePath = Path.Combine(StagingDirectory, PackageName, "1.0.0", "Args.txt");
                 Assert.IsTrue(File.Exists(argsFilePath));
-                this.Assent(File.ReadAllText(argsFilePath), TestEnvironment.AssentConfiguration);
+                this.Assent(File.ReadAllText(argsFilePath), AssentConfiguration.Default);
             });
         }
     }

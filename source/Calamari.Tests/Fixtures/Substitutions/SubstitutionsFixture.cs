@@ -7,6 +7,7 @@ using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -52,7 +53,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
             };
 
             var textAfterReplacement = PerformTest(GetFixtureResource("Samples", "Filters.txt"), variables).text;
-            this.Assent(textAfterReplacement, TestEnvironment.AssentConfiguration);
+            this.Assent(textAfterReplacement, AssentConfiguration.Default);
         }
 
         [Test]

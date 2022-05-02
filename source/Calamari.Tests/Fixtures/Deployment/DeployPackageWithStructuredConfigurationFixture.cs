@@ -2,6 +2,7 @@
 using Assent;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -80,7 +81,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
 
-                this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
+                this.Assent(extractedPackageUpdatedYamlFile, AssentConfiguration.Yaml);
             }
         }
 
@@ -98,7 +99,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, XmlFileName));
 
-                this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
+                this.Assent(extractedPackageUpdatedXmlFile, AssentConfiguration.Xml);
             }
         }
 
@@ -117,7 +118,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, "duplicate-prefixes.xml"));
 
-                this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
+                this.Assent(extractedPackageUpdatedXmlFile, AssentConfiguration.Xml);
             }
         }
 
@@ -136,7 +137,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var extractedPackageUpdatedXmlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, "values.xml"));
 
-                this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
+                this.Assent(extractedPackageUpdatedXmlFile, AssentConfiguration.Xml);
             }
         }
 
@@ -155,7 +156,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var extractedPackageUpdatedPropertiesFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, PropertiesFileName));
 
-                this.Assent(extractedPackageUpdatedPropertiesFile, TestEnvironment.AssentPropertiesConfiguration);
+                this.Assent(extractedPackageUpdatedPropertiesFile, AssentConfiguration.Properties);
             }
         }
 
@@ -206,8 +207,8 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var extractedPackageUpdatedJsonFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileName));
                 var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
 
-                this.Assent(extractedPackageUpdatedJsonFile, TestEnvironment.AssentJsonConfiguration);
-                this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
+                this.Assent(extractedPackageUpdatedJsonFile, AssentConfiguration.Json);
+                this.Assent(extractedPackageUpdatedYamlFile, AssentConfiguration.Yaml);
             }
         }
 
@@ -227,9 +228,9 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var extractedPackageUpdatedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
                 var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, ConfigFileName));
 
-                this.Assent(extractedPackageUpdatedJsonFile, TestEnvironment.AssentJsonConfiguration);
-                this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
-                this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonConfiguration);
+                this.Assent(extractedPackageUpdatedJsonFile, AssentConfiguration.Json);
+                this.Assent(extractedPackageUpdatedYamlFile, AssentConfiguration.Yaml);
+                this.Assent(extractedPackageUpdatedConfigFile, AssentConfiguration.Json);
             }
         }
 
@@ -280,8 +281,8 @@ namespace Calamari.Tests.Fixtures.Deployment
                 var unchangedJsonFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileName));
                 var unchangedYamlFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, YamlFileName));
 
-                this.Assent(unchangedJsonFile, TestEnvironment.AssentJsonConfiguration);
-                this.Assent(unchangedYamlFile, TestEnvironment.AssentYamlConfiguration);
+                this.Assent(unchangedJsonFile, AssentConfiguration.Json);
+                this.Assent(unchangedYamlFile, AssentConfiguration.Yaml);
             }
         }
 
@@ -314,7 +315,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, ConfigFileName));
 
-                this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonConfiguration);
+                this.Assent(extractedPackageUpdatedConfigFile, AssentConfiguration.Json);
             }
         }
 
@@ -334,7 +335,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 result.AssertOutput("The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed");
                 result.AssertOutput("couldn't be parsed as Json");
-                this.Assent(extractedPackageUpdatedXmlFile, TestEnvironment.AssentXmlConfiguration);
+                this.Assent(extractedPackageUpdatedXmlFile, AssentConfiguration.Xml);
             }
         }
 
@@ -355,7 +356,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutput("The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed");
                 result.AssertOutput("couldn't be parsed as Json");
                 result.AssertOutput("couldn't be parsed as Xml");
-                this.Assent(extractedPackageUpdatedYamlFile, TestEnvironment.AssentYamlConfiguration);
+                this.Assent(extractedPackageUpdatedYamlFile, AssentConfiguration.Yaml);
             }
         }
 
@@ -378,7 +379,7 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutput("couldn't be parsed as Json");
                 result.AssertOutput("couldn't be parsed as Xml");
                 result.AssertOutput("couldn't be parsed as Yaml");
-                this.Assent(extractedPackageUpdatedPropertiesFile, TestEnvironment.AssentPropertiesConfiguration);
+                this.Assent(extractedPackageUpdatedPropertiesFile, AssentConfiguration.Properties);
             }
         }
 
@@ -446,7 +447,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 var extractedPackageUpdatedConfigFile = File.ReadAllText(Path.Combine(StagingDirectory, ServiceName, ServiceVersion, JsonFileNameWithAnXmlExtension));
 
-                this.Assent(extractedPackageUpdatedConfigFile, TestEnvironment.AssentJsonConfiguration);
+                this.Assent(extractedPackageUpdatedConfigFile, AssentConfiguration.Json);
             }
         }
 

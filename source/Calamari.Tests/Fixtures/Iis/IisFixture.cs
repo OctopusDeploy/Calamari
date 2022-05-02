@@ -1,7 +1,7 @@
 ﻿#if IIS_SUPPORT
 using System;
 using Calamari.Integration.Iis;
-using Calamari.Tests.Helpers;
+using Calamari.Testing.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Iis

@@ -6,6 +6,7 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Processes;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
 using NUnit.Framework;

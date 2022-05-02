@@ -4,6 +4,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;

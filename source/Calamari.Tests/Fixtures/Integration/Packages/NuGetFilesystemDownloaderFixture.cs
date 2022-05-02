@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Integration.Packages.NuGet;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using Calamari.Util;

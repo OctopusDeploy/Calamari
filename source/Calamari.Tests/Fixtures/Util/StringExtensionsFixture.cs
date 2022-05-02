@@ -1,5 +1,6 @@
 ﻿using System;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
 using FluentAssertions;

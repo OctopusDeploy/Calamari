@@ -9,9 +9,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Threading;
 using Calamari.Integration.Certificates;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers.Certificates;
 using NUnit.Framework;
-using Calamari.Tests.Helpers;
 
 namespace Calamari.Tests.Fixtures.Certificates
 {

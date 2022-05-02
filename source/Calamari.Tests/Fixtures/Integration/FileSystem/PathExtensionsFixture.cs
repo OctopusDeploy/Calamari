@@ -1,5 +1,6 @@
 ﻿using Calamari.Common.Plumbing.Extensions;
 using Calamari.Integration.FileSystem;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;

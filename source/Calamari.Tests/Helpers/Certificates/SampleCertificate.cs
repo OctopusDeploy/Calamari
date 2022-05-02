@@ -9,6 +9,7 @@ using System.Security.Principal;
 using Calamari.Integration.Certificates;
 using NUnit.Framework;
 using System.Linq;
+using Calamari.Testing.Helpers;
 
 namespace Calamari.Tests.Helpers.Certificates
 {

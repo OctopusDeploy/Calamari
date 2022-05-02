@@ -13,6 +13,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -66,7 +67,7 @@ New-MyFunc2 -mystring 'Hello' -mynumber 1";
                                                      {
                                                          var script = File.ReadAllText(scriptFile.FilePath);
 
-                                                         this.Assent(script, TestEnvironment.AssentConfiguration);
+                                                         this.Assent(script, AssentConfiguration.Default);
                                                      })
                                          .Execute();
             }

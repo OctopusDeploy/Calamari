@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Calamari.Common.Plumbing;
+using Calamari.Testing.Helpers;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Tar;
 using SharpCompress.Common;

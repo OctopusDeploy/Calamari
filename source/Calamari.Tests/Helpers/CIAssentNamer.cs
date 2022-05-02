@@ -1,4 +1,5 @@
-﻿using Assent;
+﻿using System;
+using Assent;
 
 namespace Calamari.Tests.Helpers
 {

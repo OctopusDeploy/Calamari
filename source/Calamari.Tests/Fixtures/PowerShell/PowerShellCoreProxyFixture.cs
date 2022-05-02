@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.Proxies;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;

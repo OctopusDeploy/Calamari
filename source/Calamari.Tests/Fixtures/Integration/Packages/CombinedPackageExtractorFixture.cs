@@ -13,7 +13,6 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
-using InMemoryLog = Calamari.Tests.Helpers.InMemoryLog;
 using TestCommandLineRunner = Calamari.Testing.Helpers.TestCommandLineRunner;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages

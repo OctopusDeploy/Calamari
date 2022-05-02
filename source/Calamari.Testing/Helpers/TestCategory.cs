@@ -23,5 +23,7 @@ namespace Calamari.Testing.Helpers
         }
         
         public const string PlatformAgnostic = "PlatformAgnostic";
+		
+        public const string RunOnceOnWindowsAndLinux = "RunOnceOnWindowsAndLinux";
     }
 }

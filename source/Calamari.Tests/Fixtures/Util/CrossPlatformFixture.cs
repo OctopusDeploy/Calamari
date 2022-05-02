@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
 using NUnit.Framework;

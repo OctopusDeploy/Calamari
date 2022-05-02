@@ -21,7 +21,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         public void DoesNothingIfThereAreNoVariables()
         {
             this.Assent(Replace(new CalamariVariables(), "application.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -45,7 +45,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "environment", "production" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
             
             Log.MessagesVerboseFormatted.Count(m => Regex.IsMatch(m, StructuredConfigMessages.StructureFound(".*"))).Should().Be(5);
             Log.MessagesVerboseFormatted.Should().Contain(StructuredConfigMessages.StructureFound("spring:h2:console:enabled"));
@@ -60,7 +60,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "Spring:h2:Console:enabled", "false" }
                                 },
                                 "application.mixed-case.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "spring:datasource", "none" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -83,7 +83,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "server:ports", "none" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -95,7 +95,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "spring:datasource", "none" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -119,7 +119,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "seq2:0", "Orange" }
                                 },
                                 "types.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -130,7 +130,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "1", "zwei" }
                                 },
                                 "application.top-level-sequence.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -149,7 +149,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "seq2:0", "~" }
                                 },
                                 "types.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -161,7 +161,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "seq1", "[]" }
                                 },
                                 "types.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -174,7 +174,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "seq2", "" }
                                 },
                                 "types.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -190,7 +190,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "Octopus:Section", "Should work" }
                                 },
                                 "application.ignore-octopus.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -202,7 +202,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "Server:Ports:0", "#{Server.Port}" }
                                 },
                                 "application.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -224,7 +224,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "str2bool", "false" }
                                 },
                                 "types-fall-back.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -235,7 +235,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "spring:h2:console:enabled", "false" }
                                 },
                                 "application.colon-in-name.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -248,7 +248,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "spring:h2:console:enabled", "true" }
                                 },
                                 "application.directives.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -259,7 +259,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     { "environment:matrix:2:DVersion", "stable" }
                                 },
                                 "comments.yml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -284,7 +284,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         {
             this.Assent(Replace(new CalamariVariables(),
                                 "flow-and-block-styles.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -299,7 +299,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     }
                                 },
                                 "pets.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -316,7 +316,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                     {"sequence2string", "no longer a sequence"},
                                 },
                                 "structures.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
@@ -324,42 +324,42 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         {
             this.Assent(Replace(new CalamariVariables { { "bbb:this:is", "much more" } },
                                 "indenting.yaml"),
-                        TestEnvironment.AssentYamlConfiguration);
+                AssentConfiguration.Yaml);
         }
 
         [Test]
         public void ShouldPreserveEncodingUtf8DosBom()
         {
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf8-dos-bom.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                AssentConfiguration.Default);
         }
 
         [Test]
         public void ShouldPreserveEncodingUtf8UnixNoBom()
         {
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf8-unix-nobom.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                AssentConfiguration.Default);
         }
 
         [Test]
         public void ShouldPreserveEncodingUtf16DosBom()
         {
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf16-dos-bom.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                AssentConfiguration.Default);
         }
 
         [Test]
         public void ShouldPreserveEncodingWindows1252DosNoBom()
         {
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-windows1252-dos-nobom.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                AssentConfiguration.Default);
         }
 
         [Test]
         public void ShouldUpgradeEncodingIfNecessaryToAccomodateVariables()
         {
             this.Assent(ReplaceToHex(new CalamariVariables{{"dagger", "\uFFE6"}}, "enc-windows1252-dos-nobom.yaml"),
-                        TestEnvironment.AssentConfiguration);
+                AssentConfiguration.Default);
         }
     }
 }

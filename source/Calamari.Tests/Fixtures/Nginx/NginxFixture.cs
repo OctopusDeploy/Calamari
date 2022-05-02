@@ -10,6 +10,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Features;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Nginx;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using Newtonsoft.Json;
 using NSubstitute;
@@ -68,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer.SaveConfiguration(tempDirectory);
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
-            this.Assent(File.ReadAllText(nginxConfigFilePath), TestEnvironment.AssentConfiguration);
+            this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
         }
 
         [Test]
@@ -90,7 +91,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer.SaveConfiguration(tempDirectory);
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
-            this.Assent(File.ReadAllText(nginxConfigFilePath), TestEnvironment.AssentConfiguration);
+            this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
         }
 
         [Test]
@@ -112,7 +113,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer.SaveConfiguration(tempDirectory);
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
-            this.Assent(File.ReadAllText(nginxConfigFilePath), TestEnvironment.AssentConfiguration);
+            this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
         }
 
         [Test]
@@ -140,7 +141,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             var rootConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
             this.Assent(
                 File.ReadAllText(rootConfigFilePath), 
-                TestEnvironment.AssentConfiguration,
+                AssentConfiguration.Default,
                 $"{nameof(SetupStaticContentWithReverseProxySite)}.rootLocation"
             );
 
@@ -153,7 +154,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             
             this.Assent(
                 File.ReadAllText(apiConfigFilePath), 
-                TestEnvironment.AssentConfiguration,
+                AssentConfiguration.Default,
                 $"{nameof(SetupStaticContentWithReverseProxySite)}.apiLocation"
             );
         }
@@ -179,7 +180,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer.SaveConfiguration(tempDirectory);
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
-            this.Assent(File.ReadAllText(nginxConfigFilePath), TestEnvironment.AssentConfiguration);
+            this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
         }
 
         [Test]
@@ -205,7 +206,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer.SaveConfiguration(tempDirectory);
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
-            this.Assent(File.ReadAllText(nginxConfigFilePath), TestEnvironment.AssentConfiguration);
+            this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
         }
 
         [Test]
@@ -241,9 +242,9 @@ namespace Calamari.Tests.Fixtures.Nginx
             var apiConf = Path.Combine(tempConfPath, $"{packageId}.conf.d", "location.1api.conf");
             Assert.IsTrue(File.Exists(apiConf));
             
-            this.Assent(File.ReadAllText(exactRootConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.rootLocation");
-            this.Assent(File.ReadAllText(rootConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.0");
-            this.Assent(File.ReadAllText(apiConf), TestEnvironment.AssentConfiguration, $"{nameof(ExecuteWorks)}.apiLocation");
+            this.Assent(File.ReadAllText(exactRootConf), AssentConfiguration.Default, $"{nameof(ExecuteWorks)}.rootLocation");
+            this.Assent(File.ReadAllText(rootConf), AssentConfiguration.Default, $"{nameof(ExecuteWorks)}.0");
+            this.Assent(File.ReadAllText(apiConf), AssentConfiguration.Default, $"{nameof(ExecuteWorks)}.apiLocation");
         }
         
         [Test]

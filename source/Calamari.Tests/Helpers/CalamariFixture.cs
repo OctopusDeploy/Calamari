@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Commands;
-using Calamari.Integration.Processes;
+using Calamari.Commands; //Required when NETFX is defined
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Integration.Processes;
+using Calamari.Testing.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Helpers
