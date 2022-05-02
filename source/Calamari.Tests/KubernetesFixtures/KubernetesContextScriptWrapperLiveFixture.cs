@@ -5,17 +5,24 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Calamari.CloudAccounts.Azure;
+using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Kubernetes;
+using Calamari.Common.Plumbing.ServiceMessages;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes.Commands;
+using Calamari.Kubernetes.Commands.Discovery;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using SpecialVariables = Calamari.Kubernetes.SpecialVariables;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -49,6 +56,8 @@ namespace Calamari.Tests.KubernetesFixtures
         string awsIamInstanceProfileName;
         string region;
 
+        ServiceMessageCollectorLog serviceMessageCollectorLog;
+
         [OneTimeSetUp]
         public async Task SetupInfrastructure()
         {
@@ -70,6 +79,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [SetUp]
         public void SetExtraVariables()
         {
+            serviceMessageCollectorLog = new ServiceMessageCollectorLog();
             variables.Set("Octopus.Action.Kubernetes.CustomKubectlExecutable", installTools.KubectlExecutable);
         }
 
@@ -307,6 +317,108 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
             var wrapper = CreateWrapper();
             TestScript(wrapper, "Test-Script");
+        }
+        
+        [Test]
+        public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount()
+        {
+            const string feedId = "Feeds-1";
+            const string healthCheckContainerName = "MyHealthCheckContainerImage";
+            
+            var scope = new TargetDiscoveryScope("TestSpace",
+                "Staging",
+                "testProject",
+                null,
+                new[] { "eks-discovery-role" },
+                "WorkerPool-1");
+
+            var account = new ServicePrincipalAccount(
+                ExternalVariables.Get(ExternalVariable.AzureSubscriptionId),
+                ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId),
+                ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId),
+                ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword),
+                null,
+                null,
+                null);
+
+            var authenticationDetails =
+                new AccountAuthenticationDetails<ServicePrincipalAccount>(
+                    AzureKubernetesDiscoverer.AuthenticationContextTypeName,
+                    "Accounts-1",
+                    account);
+
+            var targetDiscoveryContext =
+                new TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(scope,
+                    authenticationDetails);
+
+            var result =
+                ExecuteDiscoveryCommand(targetDiscoveryContext,
+                    ("Octopus.Kubernetes.HealthCheckContainer.FeedIdOrName", feedId),
+                    ("Octopus.Kubernetes.HealthCheckContainer.Image", healthCheckContainerName)
+                );
+            
+            result.AssertSuccess();
+
+            var expectedServiceMessage = new ServiceMessage(
+                KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
+                new Dictionary<string, string>
+                {
+                    { "name", aksClusterName },
+                    { "clusterName", aksClusterName },
+                    { "clusterUrl", "" },
+                    { "clusterResourceGroup", azurermResourceGroup },
+                    { "clusterAdminLogin", "False" },
+                    { "namespace", "" },
+                    { "skipTlsVerification", "" },
+                    { "octopusAccountIdOrName", "Accounts-1" },
+                    { "octopusClientCertificateIdOrName", "" },
+                    { "octopusServerCertificateIdOrName", "" },
+                    { "octopusRoles", "eks-discovery-role" },
+                    { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
+                    { "healthCheckContainerImageFeedIdOrName", feedId},
+                    { "healthCheckContainerImage", healthCheckContainerName},
+                    { "updateIfExisting", "True" },
+                    { "isDynamic", "True" },
+                    { "clusterProject", "" },
+                    { "clusterRegion", "" },
+                    { "clusterZone", "" },
+                    { "clusterImpersonateServiceAccount", "False" },
+                    { "clusterServiceAccountEmails", "" },
+                    { "clusterUseVmServiceAccount", "False" },
+                });
+
+            serviceMessageCollectorLog.ServiceMessages.Should()
+                                      .ContainSingle()
+                                      .Which.Should()
+                                      .BeEquivalentTo(expectedServiceMessage);
+        }
+        
+        CalamariResult ExecuteDiscoveryCommand<TAuthenticationDetails>(
+            TargetDiscoveryContext<TAuthenticationDetails> discoveryContext,
+            params (string key, string value)[] otherVariables)
+            where TAuthenticationDetails : ITargetDiscoveryAuthenticationDetails
+        {
+            using var variablesFile = new TemporaryFile(Path.GetTempFileName());
+            variables.Add(KubernetesDiscoveryCommand.ContextVariableName, JsonConvert.SerializeObject(discoveryContext));
+            foreach (var (key, value) in otherVariables)
+                variables.Add(key, value);
+                
+            variables.Save(variablesFile.FilePath);
+
+            return InvokeInProcess(Calamari()
+                                   .Action(KubernetesDiscoveryCommand.Name)
+                                   .Argument("variables", variablesFile.FilePath));
+        }
+
+        class ServiceMessageCollectorLog : InMemoryLog
+        {
+            public List<ServiceMessage> ServiceMessages { get; } = new List<ServiceMessage>();
+            public override void WriteServiceMessage(ServiceMessage serviceMessage)
+            {
+                ServiceMessages.Add(serviceMessage);
+                
+                base.WriteServiceMessage(serviceMessage);
+            }
         }
     }
 }
