@@ -6,7 +6,7 @@ namespace Calamari.Common.Features.Discovery
 {
     public static class TargetTagsExtensions
     {
-        public static TargetTags ToTargetTags(this IReadOnlyDictionary<string, string> tags)
+        public static TargetTags ToTargetTags(this IEnumerable<KeyValuePair<string, string>> tags)
         {
             var caseInsensitiveTagDictionary = tags.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
             caseInsensitiveTagDictionary.TryGetValue(TargetTags.EnvironmentTagName, out var environment);
