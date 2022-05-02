@@ -52,4 +52,3 @@ namespace Calamari.CloudAccounts.Azure
         }
     }
 }
-#nullable restore
