@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
             var text = PerformTest(GetFixtureResource("Samples", "nlog.config"), GetFixtureResource("Samples", "nlog.Release.config"));
             var document = XDocument.Parse(text);
 
-            this.Assent(document.ToString(), TestEnvironmentExtended.AssentConfiguration);
+            this.Assent(document.ToString(), AssentConfiguration.Default);
         }
 
         [Test]

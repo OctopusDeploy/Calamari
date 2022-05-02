@@ -53,7 +53,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
             };
 
             var textAfterReplacement = PerformTest(GetFixtureResource("Samples", "Filters.txt"), variables).text;
-            this.Assent(textAfterReplacement, TestEnvironmentExtended.AssentConfiguration);
+            this.Assent(textAfterReplacement, AssentConfiguration.Default);
         }
 
         [Test]

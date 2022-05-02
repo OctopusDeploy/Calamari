@@ -246,7 +246,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
                 }
             }
 
-            testFixture.Assent(results.ToString(), TestEnvironmentExtended.AssentConfiguration, testName, filePath);
+            testFixture.Assent(results.ToString(), AssentConfiguration.Default, testName, filePath);
         }
 
     }

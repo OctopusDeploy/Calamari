@@ -285,35 +285,35 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         public void ShouldPreserveEncodingUtf8DosBom()
         {
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf8-dos-bom.xml"),
-                TestEnvironmentExtended.AssentConfiguration);
+                AssentConfiguration.Default);
         }
 
         [Test]
         public void ShouldPreserveEncodingUtf8UnixNoBom()
         {
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf8-unix-nobom.xml"),
-                TestEnvironmentExtended.AssentConfiguration);
+                AssentConfiguration.Default);
         }
 
         [Test]
         public void ShouldPreserveEncodingUtf16DosBom()
         {
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-utf16-dos-bom.xml"),
-                TestEnvironmentExtended.AssentConfiguration);
+                AssentConfiguration.Default);
         }
 
         [Test]
         public void ShouldPreserveEncodingWindows1252DosNoBom()
         {
             this.Assent(ReplaceToHex(new CalamariVariables(), "enc-windows1252-dos-nobom.xml"),
-                TestEnvironmentExtended.AssentConfiguration);
+                AssentConfiguration.Default);
         }
 
         [Test]
         public void ShouldUpgradeEncodingIfNecessaryToAccomodateVariables()
         {
             this.Assent(ReplaceToHex(new CalamariVariables{{"/doc/dagger", "\uFFE6"}}, "enc-windows1252-dos-nobom.xml"),
-                TestEnvironmentExtended.AssentConfiguration);
+                AssentConfiguration.Default);
         }
 
         [Test]
@@ -325,14 +325,14 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                                          { "//name[.='Micha\u0142']", "Micha\u0142+"}
                                      },
                                      "enc-iso88592-unix-nobom.xml"),
-                TestEnvironmentExtended.AssentConfiguration);
+                AssentConfiguration.Default);
         }
 
         [Test]
         public void ShouldAdaptDeclaredEncodingWhenNecessary()
         {
             this.Assent(ReplaceToHex(new CalamariVariables { { "//name[14]", "\u5F20\u4F1F" } }, "enc-iso88592-unix-nobom.xml"),
-                TestEnvironmentExtended.AssentConfiguration);
+                AssentConfiguration.Default);
         }
 
         void RunTest(CalamariVariables vars,
@@ -343,7 +343,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                      string filePath = null)
         {
             // ReSharper disable once ExplicitCallerInfoArgument
-            this.Assent(Replace(vars, file), TestEnvironmentExtended.AssentXmlConfiguration, testName, filePath);
+            this.Assent(Replace(vars, file), AssentConfiguration.Xml, testName, filePath);
         }
     }
 }

@@ -338,7 +338,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     sb.AppendLine($"[{message.Level}] {text}");
                 }
 
-                this.Assent(sb.ToString().Replace("\r\n", "\n"), testName: testName, filePath: filePath, configuration: TestEnvironmentExtended.AssentConfiguration);
+                this.Assent(sb.ToString().Replace("\r\n", "\n"), testName: testName, filePath: filePath, configuration: AssentConfiguration.Default);
 
                 return output;
             }

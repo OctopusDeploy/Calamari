@@ -67,7 +67,7 @@ New-MyFunc2 -mystring 'Hello' -mynumber 1";
                                                      {
                                                          var script = File.ReadAllText(scriptFile.FilePath);
 
-                                                         this.Assent(script, TestEnvironmentExtended.AssentConfiguration);
+                                                         this.Assent(script, AssentConfiguration.Default);
                                                      })
                                          .Execute();
             }
