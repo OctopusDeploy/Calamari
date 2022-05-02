@@ -1,4 +1,6 @@
-﻿namespace Calamari.Common.Features.Discovery
+﻿using Newtonsoft.Json;
+
+namespace Calamari.Common.Features.Discovery
 {
     /// <summary>
     /// For account-based authentication scopes.
@@ -7,11 +9,22 @@
 
     {
         public AccountAuthenticationDetails
-            (string accountId, TAccountDetails accountDetails)
+            (string type, string accountId, TAccountDetails accountDetails)
         {
-            this.AccountId = accountId;
-            this.AccountDetails = accountDetails;
+            Type = type;
+            AccountId = accountId;
+            AccountDetails = accountDetails;
         }
+
+        public AccountAuthenticationDetails(
+            string accountId, TAccountDetails accountDetails)
+        {
+            Type = null;
+            AccountId = accountId;
+            AccountDetails = accountDetails;
+        }
+        
+        public string? Type { get; set; }
 
         public string AccountId { get; set; }
 
