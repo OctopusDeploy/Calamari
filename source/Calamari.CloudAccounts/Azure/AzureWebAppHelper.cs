@@ -7,7 +7,7 @@ namespace Calamari.CloudAccounts.Azure
 {
     public static class AzureWebAppHelper
     {
-        public static TargetSite GetAzureTargetSite(string siteAndMaybeSlotName, string? slotName, string resourceGroupName)
+        public static TargetSite GetAzureTargetSite(string siteAndMaybeSlotName, string slotName, string resourceGroupName)
         {
             var targetSite = new TargetSite {RawSite = siteAndMaybeSlotName};
 
