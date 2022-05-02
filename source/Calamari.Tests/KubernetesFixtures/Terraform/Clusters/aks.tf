@@ -8,6 +8,11 @@ resource "azurerm_kubernetes_cluster" "default" {
   resource_group_name = azurerm_resource_group.default.name
   location            = "Australia East"
   dns_prefix          = "${random_pet.prefix.id}-k8s"
+  
+  tags = {
+    octopus-environment = "Staging"
+    octopus-role = "eks-discovery-role"
+  }
 
   default_node_pool {
     name            = "default"
