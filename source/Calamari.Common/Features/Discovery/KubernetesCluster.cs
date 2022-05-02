@@ -1,11 +1,10 @@
 using System;
-using Calamari.Common.Features.Discovery;
 
-namespace Calamari.Kubernetes.Commands.Discovery
+namespace Calamari.Common.Features.Discovery
 {
-    public class Cluster
+    public class KubernetesCluster
     {
-        public Cluster(string name, string resourceGroupName, string accountId, TargetTags tags)
+        public KubernetesCluster(string name, string resourceGroupName, string accountId, TargetTags tags)
         {
             Name = name;
             ResourceGroupName = resourceGroupName;
@@ -20,7 +19,5 @@ namespace Calamari.Kubernetes.Commands.Discovery
         public string AccountId { get; }
         
         public TargetTags Tags { get; }
-        
-        //TODO:
     }
 }

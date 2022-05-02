@@ -40,6 +40,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuke", ".nuke", "{2901AC62
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_build", "..\build\_build.csproj", "{331CE73F-88CA-4C5E-9921-F6D1C81C6CBE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Azure", "Calamari.Azure\Calamari.Azure.csproj", "{AC3A676B-D720-4AC8-A188-B25DB72969CB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -76,6 +78,10 @@ Global
 		{95A4DBA0-EA92-4FD5-A92E-4DFDB4FC4493}.Release|Any CPU.Build.0 = Release|Any CPU
 		{331CE73F-88CA-4C5E-9921-F6D1C81C6CBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{331CE73F-88CA-4C5E-9921-F6D1C81C6CBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC3A676B-D720-4AC8-A188-B25DB72969CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC3A676B-D720-4AC8-A188-B25DB72969CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC3A676B-D720-4AC8-A188-B25DB72969CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC3A676B-D720-4AC8-A188-B25DB72969CB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,29 +1,24 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Autofac;
+using Calamari.Common.Features.Discovery;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Kubernetes.Commands.Discovery
 {
     public class KubernetesDiscovererFactory: IKubernetesDiscovererFactory
     {
-        readonly Func<AzureKubernetesDiscoverer> azureKubernetesDiscovererFactory;
+        readonly IDictionary<string, IKubernetesDiscoverer> discoverers;
 
-        public KubernetesDiscovererFactory(
-            Func<AzureKubernetesDiscoverer> azureKubernetesDiscovererFactory)
+        public KubernetesDiscovererFactory(IEnumerable<IKubernetesDiscoverer> discoverers)
         {
-            this.azureKubernetesDiscovererFactory = azureKubernetesDiscovererFactory;
+            this.discoverers = discoverers.ToDictionary(x => x.Name, x => x);
         }
         
         public bool TryGetKubernetesDiscoverer(string type, out IKubernetesDiscoverer discoverer)
         {
-            switch (type)
-            {
-                case AzureKubernetesDiscoverer.AuthenticationContextTypeName:
-                    discoverer = azureKubernetesDiscovererFactory();
-                    return true;
-                default:
-                    discoverer = null;
-                    return false;
-                            
-            }
+            return discoverers.TryGetValue(type, out discoverer);
         }
     }
 }

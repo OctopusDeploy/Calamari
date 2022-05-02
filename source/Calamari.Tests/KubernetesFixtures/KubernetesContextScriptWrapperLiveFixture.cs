@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Calamari.Azure.Kubernetes.Discovery;
 using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.Processes;
@@ -343,7 +344,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var authenticationDetails =
                 new AccountAuthenticationDetails<ServicePrincipalAccount>(
-                    AzureKubernetesDiscoverer.AuthenticationContextTypeName,
+                    KubernetesAuthenticationContextTypes.AzureServicePrincipal,
                     "Accounts-1",
                     account);
 

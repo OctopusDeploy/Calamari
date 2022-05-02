@@ -86,7 +86,7 @@ namespace Calamari.Kubernetes.Commands
             return 0;
         }
 
-        void WriteTargetCreationServiceMessage(Cluster cluster, TargetMatchResult matchResult, TargetDiscoveryScope scope)
+        void WriteTargetCreationServiceMessage(KubernetesCluster cluster, TargetMatchResult matchResult, TargetDiscoveryScope scope)
         {
             var healthCheckContainerFeedIdOrName =
                 variables.Get("Octopus.Kubernetes.HealthCheckContainer.FeedIdOrName") ??

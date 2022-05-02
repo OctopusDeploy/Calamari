@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.CloudAccounts.Azure;
@@ -6,13 +7,11 @@ using Calamari.Common.Plumbing.Logging;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 
-namespace Calamari.Kubernetes.Commands.Discovery
+namespace Calamari.Azure.Kubernetes.Discovery
 {
     [UsedImplicitly]
     public class AzureKubernetesDiscoverer : IKubernetesDiscoverer
     {
-        public const string AuthenticationContextTypeName = "AzureServicePrincipal";
-
         readonly ILog log;
 
         public AzureKubernetesDiscoverer(ILog log)
@@ -20,10 +19,12 @@ namespace Calamari.Kubernetes.Commands.Discovery
             this.log = log;
         }
 
-        public IEnumerable<Cluster> DiscoveryClusters(string contextJson)
+        public string Name => KubernetesAuthenticationContextTypes.AzureServicePrincipal;
+
+        public IEnumerable<KubernetesCluster> DiscoveryClusters(string contextJson)
         {
             if (!TryGetAuthenticationDetails(contextJson, out var authenticationDetails))
-                return Enumerable.Empty<Cluster>();
+                return Enumerable.Empty<KubernetesCluster>();
             
             var account = authenticationDetails.AccountDetails;
             log.Verbose("Looking for Kubernetes clusters in Azure using:");
@@ -33,7 +34,7 @@ namespace Calamari.Kubernetes.Commands.Discovery
             var azureClient = account.CreateAzureClient();
 
             return azureClient.KubernetesClusters.List()
-                              .Select(c => new Cluster(c.Name,
+                              .Select(c => new KubernetesCluster(c.Name,
                                   c.ResourceGroupName,
                                   authenticationDetails.AccountId,
                                   c.Tags.ToTargetTags()));
