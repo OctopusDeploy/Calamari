@@ -2,5 +2,6 @@
 {
     public interface ITargetDiscoveryAuthenticationDetails
     {
+        string Type { get; }
     }
 }
