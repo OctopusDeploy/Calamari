@@ -54,7 +54,7 @@ namespace Calamari.Kubernetes.Commands
                 return 0;
             }
 
-            var clusters = discoverer.DiscoveryClusters(json).ToList();
+            var clusters = discoverer.DiscoverClusters(json).ToList();
 
             Log.Verbose($"Found {clusters.Count} candidate clusters.");
             var discoveredTargetCount = 0;

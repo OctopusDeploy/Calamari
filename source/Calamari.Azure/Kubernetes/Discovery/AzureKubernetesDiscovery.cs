@@ -18,7 +18,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
 
         public string Name => KubernetesAuthenticationContextTypes.AzureServicePrincipal;
 
-        public IEnumerable<KubernetesCluster> DiscoveryClusters(string contextJson)
+        public IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
         {
             if (!TryGetAuthenticationDetails(contextJson, out var authenticationDetails))
                 return Enumerable.Empty<KubernetesCluster>();

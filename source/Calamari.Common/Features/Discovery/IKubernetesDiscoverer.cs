@@ -7,6 +7,6 @@ namespace Calamari.Common.Features.Discovery
     {
         string Name { get; }
         
-        IEnumerable<KubernetesCluster> DiscoveryClusters(string contextJson);
+        IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson);
     }
 }
