@@ -35,7 +35,9 @@ namespace Calamari.Kubernetes.Commands
         /// <returns>
         /// The Discovery Command always returns 0 to indicate success
         /// because a failure to discover targets should not cause a
-        /// deployment process to fail.
+        /// deployment process to fail. The one exception is if the
+        /// json is malformed as this can only occur if there is
+        /// a code issue and not from user misconfiguration.
         /// </returns>
         public override int Execute(string[] commandLineArguments)
         {
@@ -46,7 +48,7 @@ namespace Calamari.Kubernetes.Commands
             }
             
             if (!TryGetAuthenticationContextTypeAndDiscoveryContextScope(json, out var type, out var scope))
-                return 0;
+                return -1;
 
             if (!discovererFactory.TryGetKubernetesDiscoverer(type, out var discoverer))
             {
@@ -148,12 +150,12 @@ namespace Calamari.Kubernetes.Commands
                 if (type != null && scope != null)
                     return true;
                 
-                log.Warn($"Could not extract Type or Scope from {ContextVariableName}, the data is in the wrong format.");
+                log.Error($"Could not extract Type or Scope from {ContextVariableName}, the data is in the wrong format.");
                 return false;
             }
             catch (JsonException ex)
             {
-                log.Warn($"Could not extract Type or Scope from {ContextVariableName}, the data is in the wrong format: {ex.Message}");
+                log.Error($"Could not extract Type or Scope from {ContextVariableName}, the data is in the wrong format: {ex.Message}");
                 return false;
             }
         }
