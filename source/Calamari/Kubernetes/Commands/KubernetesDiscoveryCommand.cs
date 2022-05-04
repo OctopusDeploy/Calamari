@@ -87,12 +87,10 @@ namespace Calamari.Kubernetes.Commands
         void WriteTargetCreationServiceMessage(KubernetesCluster cluster, TargetMatchResult matchResult, TargetDiscoveryScope scope)
         {
             var healthCheckContainerFeedIdOrName =
-                variables.Get("Octopus.Kubernetes.HealthCheckContainer.FeedIdOrName") ??
-                variables.Get("Octopus.Action.Container.FeedIdOrName");
-            
-            var healthCheckContainerImage = 
-                variables.Get("Octopus.Kubernetes.HealthCheckContainer.Image") ??
-                variables.Get("Octopus.Action.Container.Image");
+                variables.Get("Octopus.Kubernetes.HealthCheckContainer.FeedIdOrName");
+
+            var healthCheckContainerImage =
+                variables.Get("Octopus.Kubernetes.HealthCheckContainer.Image");
             
             var parameters = new Dictionary<string, string> {
                 { "name", cluster.Name },
