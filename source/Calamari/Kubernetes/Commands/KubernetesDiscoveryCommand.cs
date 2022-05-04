@@ -8,13 +8,11 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Commands.Discovery;
-using JetBrains.Annotations;
 using Newtonsoft.Json;
 
 namespace Calamari.Kubernetes.Commands
 {
     [Command(Name, Description = "Discovery Kubernetes cluster targets")]
-    [UsedImplicitly]
     public class KubernetesDiscoveryCommand : Command
     {
         public const string Name = "kubernetes-target-discovery";
@@ -161,11 +159,9 @@ namespace Calamari.Kubernetes.Commands
                 return false;
             }
         }
-
-        [UsedImplicitly]
+        
         class AuthenticationType : ITargetDiscoveryAuthenticationDetails
         {
-            [UsedImplicitly]
             public string Type { get; set; }
         }
     }
