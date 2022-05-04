@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
-using JetBrains.Annotations;
 using Newtonsoft.Json;
 
 namespace Calamari.Azure.Kubernetes.Discovery
 {
-    [UsedImplicitly]
     public class AzureKubernetesDiscoverer : IKubernetesDiscoverer
     {
         readonly ILog log;
