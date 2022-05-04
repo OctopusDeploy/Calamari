@@ -7,6 +7,8 @@ using Newtonsoft.Json;
 
 namespace Calamari.Azure.Kubernetes.Discovery
 {
+    using AzureTargetDiscoveryContext = TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>;
+    
     public class AzureKubernetesDiscoverer : IKubernetesDiscoverer
     {
         readonly ILog log;
@@ -43,11 +45,9 @@ namespace Calamari.Azure.Kubernetes.Discovery
             authenticationDetails = null;
             try
             {
-                authenticationDetails = JsonConvert
-                                      .DeserializeObject<
-                                          TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>>(
-                                          contextJson)
-                                      ?.Authentication;
+                authenticationDetails = 
+                    JsonConvert.DeserializeObject<AzureTargetDiscoveryContext>(contextJson)
+                               ?.Authentication;
                 return authenticationDetails != null;
             }
             catch (JsonException ex)
