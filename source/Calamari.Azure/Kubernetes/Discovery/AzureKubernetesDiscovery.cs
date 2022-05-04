@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.CloudAccounts.Azure;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using JetBrains.Annotations;
