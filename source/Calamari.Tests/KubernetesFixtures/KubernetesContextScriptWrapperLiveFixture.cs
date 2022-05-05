@@ -54,8 +54,6 @@ namespace Calamari.Tests.KubernetesFixtures
         string awsIamInstanceProfileName;
         string region;
 
-        ServiceMessageCollectorLog serviceMessageCollectorLog;
-
         [OneTimeSetUp]
         public async Task SetupInfrastructure()
         {
@@ -77,7 +75,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [SetUp]
         public void SetExtraVariables()
         {
-            Log = serviceMessageCollectorLog = new ServiceMessageCollectorLog();
             variables.Set("Octopus.Action.Kubernetes.CustomKubectlExecutable", installTools.KubectlExecutable);
         }
 
@@ -320,6 +317,8 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount()
         {
+            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
+            Log = serviceMessageCollectorLog;
             const string feedId = "Feeds-1";
             const string healthCheckContainerName = "MyHealthCheckContainerImage";
             
