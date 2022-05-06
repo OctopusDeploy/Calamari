@@ -62,7 +62,8 @@ namespace Calamari.Tests.KubernetesFixtures
                                                           // var message = await client.GetAsync("https://storage.googleapis.com/kubernetes-release/release/stable.txt");
                                                           // message.EnsureSuccessStatusCode();
                                                           // return (await message.Content.ReadAsStringAsync(), null);
-                                                          return await Task.FromResult(("v1.23.6", ""));
+                                                          const string requiredVersion = "v1.23.6";
+                                                          return await Task.FromResult((requiredVersion, ""));
                                                       },
                                                       async (destinationDirectoryName, tuple) =>
                                                       {
