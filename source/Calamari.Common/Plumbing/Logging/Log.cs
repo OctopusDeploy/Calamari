@@ -174,7 +174,7 @@ namespace Calamari.Common.Plumbing.Logging
             Info($"##octopus[createArtifact path=\"{ConvertServiceMessageValue(fullPath)}\" name=\"{ConvertServiceMessageValue(name)}\" length=\"{ConvertServiceMessageValue(fileLength.ToString())}\"]");
         }
 
-        public void WriteServiceMessage(ServiceMessage serviceMessage)
+        public virtual void WriteServiceMessage(ServiceMessage serviceMessage)
         {
             Info(serviceMessage.ToString());
         }

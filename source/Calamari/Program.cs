@@ -9,17 +9,16 @@ using Autofac.Features.Metadata;
 using Calamari.Commands;
 using Calamari.Common;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.PackageRetention;
-using Calamari.Deployment.PackageRetention.Caching;
-using Calamari.Deployment.PackageRetention.Model;
-using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
+using Calamari.Kubernetes.Commands.Discovery;
 using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
 
@@ -64,6 +63,10 @@ namespace Calamari
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
 
+            builder.RegisterType<KubernetesDiscovererFactory>()
+                   .As<IKubernetesDiscovererFactory>()
+                   .SingleInstance();
+
             builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
 
             builder.RegisterModule<PackageRetentionModule>();
@@ -72,6 +75,10 @@ namespace Calamari
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
+
+            builder.RegisterAssemblyTypes(assembliesToRegister)
+                   .AssignableTo<IKubernetesDiscoverer>()
+                   .As<IKubernetesDiscoverer>();
 
             //Register the non-decorated commands
             builder.RegisterAssemblyTypes(assembliesToRegister)

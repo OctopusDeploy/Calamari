@@ -13,15 +13,15 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
+using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
-    public abstract class KubernetesContextScriptWrapperLiveFixtureBase
+    public abstract class KubernetesContextScriptWrapperLiveFixtureBase : CalamariFixture
     {
         protected const string testNamespace = "calamari-testing";
-
-        InMemoryLog log;
+        
         protected IVariables variables;
         protected string testFolder;
 
@@ -36,14 +36,14 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             variables = new CalamariVariables();
 
-            log = new DoNotDoubleLog();
+            Log = new DoNotDoubleLog();
 
             SetTestClusterVariables();
         }
 
         protected KubernetesContextScriptWrapper CreateWrapper()
         {
-            return new KubernetesContextScriptWrapper(variables, log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, Log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()
@@ -55,9 +55,9 @@ namespace Calamari.Tests.KubernetesFixtures
 
         CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName)
         {
-            var calamariResult = ExecuteScriptInternal(new CommandLineRunner(log, variables), wrapper, scriptName);
+            var calamariResult = ExecuteScriptInternal(new CommandLineRunner(Log, variables), wrapper, scriptName);
 
-            foreach (var message in log.Messages)
+            foreach (var message in Log.Messages)
             {
                 Console.WriteLine($"[{message.Level}] {message.FormattedMessage}");
             }
@@ -70,7 +70,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrappers = new List<IScriptWrapper>(new[] { wrapper });
             if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
             {
-                wrappers.Add(new AwsScriptWrapper(log, variables));
+                wrappers.Add(new AwsScriptWrapper(Log, variables));
             }
 
             var engine = new ScriptEngine(wrappers);

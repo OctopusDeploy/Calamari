@@ -14,12 +14,12 @@ namespace Calamari.Common.Plumbing.Logging
             if (ex is CommandException)
             {
                 log.Error(ex.Message);
-                return 1;
+                return ExitStatus.CommandExceptionError;
             }
 
             if (ex is RecursiveDefinitionException)
                 //dont log these - they have already been logged earlier
-                return 101;
+                return ExitStatus.RecursiveDefinitionExceptionError;
             if (ex is ReflectionTypeLoadException)
             {
                 log.Error(ex.ToString());
@@ -35,11 +35,11 @@ namespace Calamari.Common.Plumbing.Logging
                         log.Error(exFileNotFound.FusionLog);
                 }
 
-                return 43;
+                return ExitStatus.ReflectionTypeLoadExceptionError;
             }
 
             log.Error(ex.PrettyPrint());
-            return 100;
+            return ExitStatus.OtherError;
         }
     }
 }

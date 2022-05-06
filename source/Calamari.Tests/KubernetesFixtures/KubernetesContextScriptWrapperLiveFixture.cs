@@ -5,17 +5,22 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Calamari.Azure;
+using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Kubernetes;
+using Calamari.Common.Plumbing.ServiceMessages;
+using Calamari.Kubernetes.Commands;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using SpecialVariables = Calamari.Kubernetes.SpecialVariables;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -307,6 +312,109 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
             var wrapper = CreateWrapper();
             TestScript(wrapper, "Test-Script");
+        }
+        
+        [Test]
+        public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount()
+        {
+            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
+            Log = serviceMessageCollectorLog;
+
+            var scope = new TargetDiscoveryScope("TestSpace",
+                "Staging",
+                "testProject",
+                null,
+                new[] { "eks-discovery-role" },
+                "WorkerPool-1");
+
+            var account = new ServicePrincipalAccount(
+                ExternalVariables.Get(ExternalVariable.AzureSubscriptionId),
+                ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId),
+                ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId),
+                ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword),
+                null,
+                null,
+                null);
+
+            var authenticationDetails =
+                new AccountAuthenticationDetails<ServicePrincipalAccount>(
+                    KubernetesAuthenticationContextTypes.AzureServicePrincipal,
+                    "Accounts-1",
+                    account);
+
+            var targetDiscoveryContext =
+                new TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(scope,
+                    authenticationDetails);
+
+            var result =
+                ExecuteDiscoveryCommand(targetDiscoveryContext,
+                    new[]{"Calamari.Azure"}
+                );
+            
+            result.AssertSuccess();
+
+            var expectedServiceMessage = new ServiceMessage(
+                KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
+                new Dictionary<string, string>
+                {
+                    { "name", aksClusterName },
+                    { "clusterName", aksClusterName },
+                    { "clusterUrl", "" },
+                    { "clusterResourceGroup", azurermResourceGroup },
+                    { "clusterAdminLogin", "False" },
+                    { "namespace", "" },
+                    { "skipTlsVerification", "" },
+                    { "octopusAccountIdOrName", "Accounts-1" },
+                    { "octopusClientCertificateIdOrName", "" },
+                    { "octopusServerCertificateIdOrName", "" },
+                    { "octopusRoles", "eks-discovery-role" },
+                    { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
+                    { "healthCheckContainerImageFeedIdOrName", ""},
+                    { "healthCheckContainerImage", ""},
+                    { "updateIfExisting", "True" },
+                    { "isDynamic", "True" },
+                    { "clusterProject", "" },
+                    { "clusterRegion", "" },
+                    { "clusterZone", "" },
+                    { "clusterImpersonateServiceAccount", "False" },
+                    { "clusterServiceAccountEmails", "" },
+                    { "clusterUseVmServiceAccount", "False" },
+                });
+
+            serviceMessageCollectorLog.ServiceMessages.Should()
+                                      .ContainSingle(s => s.Properties["name"] == aksClusterName)
+                                      .Which.Should()
+                                      .BeEquivalentTo(expectedServiceMessage);
+        }
+        
+        CalamariResult ExecuteDiscoveryCommand<TAuthenticationDetails>(
+            TargetDiscoveryContext<TAuthenticationDetails> discoveryContext,
+            IEnumerable<string> extensions,
+            params (string key, string value)[] otherVariables)
+            where TAuthenticationDetails : ITargetDiscoveryAuthenticationDetails
+        {
+            using var variablesFile = new TemporaryFile(Path.GetTempFileName());
+            variables.Add(KubernetesDiscoveryCommand.ContextVariableName, JsonConvert.SerializeObject(discoveryContext));
+            foreach (var (key, value) in otherVariables)
+                variables.Add(key, value);
+                
+            variables.Save(variablesFile.FilePath);
+
+            return InvokeInProcess(Calamari()
+                                   .Action(KubernetesDiscoveryCommand.Name)
+                                   .Argument("variables", variablesFile.FilePath)
+                                   .Argument("extensions", string.Join(',', extensions)));
+        }
+
+        class ServiceMessageCollectorLog : InMemoryLog
+        {
+            public List<ServiceMessage> ServiceMessages { get; } = new List<ServiceMessage>();
+            public override void WriteServiceMessage(ServiceMessage serviceMessage)
+            {
+                ServiceMessages.Add(serviceMessage);
+                
+                base.WriteServiceMessage(serviceMessage);
+            }
         }
     }
 }
