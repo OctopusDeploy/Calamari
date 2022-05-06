@@ -319,9 +319,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
             Log = serviceMessageCollectorLog;
-            const string feedId = "Feeds-1";
-            const string healthCheckContainerName = "MyHealthCheckContainerImage";
-            
+
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
                 "testProject",
@@ -350,9 +348,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result =
                 ExecuteDiscoveryCommand(targetDiscoveryContext,
-                    new[]{"Calamari.Azure"},
-                    ("Octopus.Kubernetes.HealthCheckContainer.FeedIdOrName", feedId),
-                    ("Octopus.Kubernetes.HealthCheckContainer.Image", healthCheckContainerName)
+                    new[]{"Calamari.Azure"}
                 );
             
             result.AssertSuccess();
@@ -373,8 +369,8 @@ namespace Calamari.Tests.KubernetesFixtures
                     { "octopusServerCertificateIdOrName", "" },
                     { "octopusRoles", "eks-discovery-role" },
                     { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
-                    { "healthCheckContainerImageFeedIdOrName", feedId},
-                    { "healthCheckContainerImage", healthCheckContainerName},
+                    { "healthCheckContainerImageFeedIdOrName", ""},
+                    { "healthCheckContainerImage", ""},
                     { "updateIfExisting", "True" },
                     { "isDynamic", "True" },
                     { "clusterProject", "" },

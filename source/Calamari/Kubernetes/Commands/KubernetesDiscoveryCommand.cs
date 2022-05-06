@@ -88,12 +88,6 @@ namespace Calamari.Kubernetes.Commands
 
         void WriteTargetCreationServiceMessage(KubernetesCluster cluster, TargetMatchResult matchResult, TargetDiscoveryScope scope)
         {
-            var healthCheckContainerFeedIdOrName =
-                variables.Get("Octopus.Kubernetes.HealthCheckContainer.FeedIdOrName");
-
-            var healthCheckContainerImage =
-                variables.Get("Octopus.Kubernetes.HealthCheckContainer.Image");
-            
             var parameters = new Dictionary<string, string> {
                 { "name", cluster.Name },
                 { "clusterName", cluster.Name },
@@ -107,8 +101,8 @@ namespace Calamari.Kubernetes.Commands
                 { "octopusServerCertificateIdOrName", "" },
                 { "octopusRoles", matchResult.Role },
                 { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
-                { "healthCheckContainerImageFeedIdOrName", healthCheckContainerFeedIdOrName },
-                { "healthCheckContainerImage", healthCheckContainerImage },
+                { "healthCheckContainerImageFeedIdOrName", "" },
+                { "healthCheckContainerImage", "" },
                 { "updateIfExisting", "True" },
                 { "isDynamic", "True" },
                 { "clusterProject", "" },
