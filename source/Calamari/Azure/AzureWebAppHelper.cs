@@ -37,9 +37,9 @@ namespace Calamari.Azure
             return targetSite;
         }
 
-        public static TargetTags GetOctopusTags(IWebAppBasic webApp)
+        public static TargetTags GetOctopusTags(IReadOnlyDictionary<string, string> tags)
         {
-            var caseInsensitiveTagDictionary = webApp.Tags.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
+            var caseInsensitiveTagDictionary = tags.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
             caseInsensitiveTagDictionary.TryGetValue(TargetTags.EnvironmentTagName, out string? environment);
             caseInsensitiveTagDictionary.TryGetValue(TargetTags.RoleTagName, out string? role);
             caseInsensitiveTagDictionary.TryGetValue(TargetTags.ProjectTagName, out string? project);

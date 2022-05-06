@@ -1,14 +1,8 @@
 ﻿using Calamari.Azure;
 using FluentAssertions;
 using FluentAssertions.Execution;
-using Microsoft.Azure.Management.AppService.Fluent;
-using NSubstitute;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -27,11 +21,9 @@ namespace Calamari.AzureAppService.Tests
                 { "oCtoPus-sPacE", "taggedSpace" },
                 { "ocTopUs-teNanT", "taggedTenant" },
             };
-            var webApp = Substitute.For<IWebAppBasic>();
-            webApp.Tags.Returns(tags);
 
             // Act
-            var foundTags = AzureWebAppHelper.GetOctopusTags(webApp);
+            var foundTags = AzureWebAppHelper.GetOctopusTags(tags);
 
             // Assert
             using (new AssertionScope())

@@ -33,7 +33,11 @@ namespace Calamari.AzureAppService.Tests
         private string authToken;
         private ResourceGroupsOperations resourceGroupClient;
         private WebSiteManagementClient webMgmtClient;
-        private string appName = Guid.NewGuid().ToString();
+        private ResourceGroup resourceGroup;
+        private AppServicePlan svcPlan;
+        private static readonly string AccountId = "Accounts-1";
+        private static readonly string Role = "my-azure-app-role";
+        private static readonly string EnvironmentName = "dev";
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -61,7 +65,7 @@ namespace Calamari.AzureAppService.Tests
 
             resourceGroupClient = resourcesClient.ResourceGroups;
 
-            var resourceGroup = new ResourceGroup(resourceGroupLocation);
+            resourceGroup = new ResourceGroup(resourceGroupLocation);
             resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
 
             webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
@@ -70,30 +74,21 @@ namespace Calamari.AzureAppService.Tests
                 HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
             };
 
-            var svcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
+            svcPlan = await webMgmtClient.AppServicePlans.CreateOrUpdateAsync(resourceGroup.Name,
                 resourceGroup.Name,
                 new AppServicePlan(resourceGroup.Location) { Sku = new SkuDescription("S1", "Standard") }
             );
-
-            var tags = new Dictionary<string, string>
-            {
-                { TargetTags.EnvironmentTagName, "dev" },
-                { TargetTags.RoleTagName, "my-azure-app-role" },
-            };
-            await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(
-                resourceGroup.Name,
-                appName,
-                new Site(resourceGroup.Location, tags: tags) { ServerFarmId = svcPlan.Id });
         }
 
         [OneTimeTearDown]
         public async Task Cleanup()
         {
-            await resourceGroupClient.StartDeleteAsync(resourceGroupName);
+            if (resourceGroupClient != null)
+                await resourceGroupClient.StartDeleteAsync(resourceGroupName);
         }
 
         [Test]
-        public async Task Exectute_FindsWebApp_WhenOneExistsWithCorrectTags()
+        public async Task Execute_WebAppWithMatchingTags_CreatesCorrectTargets()
         {
             // Arrange
             var variables = new CalamariVariables();
@@ -102,12 +97,209 @@ namespace Calamari.AzureAppService.Tests
             var log = new InMemoryLog();
             var sut = new TargetDiscoveryBehaviour(log);
 
+            // Set expected tags on our web app
+            var tags = new Dictionary<string, string>
+            {
+                { TargetTags.EnvironmentTagName, EnvironmentName },
+                { TargetTags.RoleTagName, Role },
+            };
+
+            var appName = Guid.NewGuid().ToString();
+
+            await webMgmtClient.WebApps.CreateOrUpdateAsync(
+                resourceGroupName,
+                appName,
+                new Site(resourceGroup.Location, tags: tags) { ServerFarmId = svcPlan.Id });
+
             // Act
             await sut.Execute(context);
 
             // Assert
-            var expectedName = Convert.ToBase64String(Encoding.UTF8.GetBytes(appName));
-            log.StandardOut.Should().Contain(line => line.StartsWith($"##octopus[create-azurewebapptarget name=\"{expectedName}\""));
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null);
+            log.StandardOut.Should().Contain(serviceMessageToCreateWebAppTarget.ToString());
+        }
+
+        [Test]
+        public async Task Execute_WebAppWithNonMatchingTags_CreatesNoTargets()
+        {
+            // Arrange
+            var variables = new CalamariVariables();
+            var context = new RunningDeployment(variables);
+            this.CreateVariables(context);
+            var log = new InMemoryLog();
+            var sut = new TargetDiscoveryBehaviour(log);
+
+            // Set expected tags on our web app
+            var tags = new Dictionary<string, string>
+            {
+                { TargetTags.EnvironmentTagName, EnvironmentName },
+                { TargetTags.RoleTagName, "a-different-role" },
+            };
+
+            var appName = Guid.NewGuid().ToString();
+
+            await webMgmtClient.WebApps.CreateOrUpdateAsync(
+                resourceGroupName,
+                appName,
+                new Site(resourceGroup.Location, tags: tags) { ServerFarmId = svcPlan.Id });
+
+            // Act
+            await sut.Execute(context);
+
+            // Assert
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null);
+            log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "The web app target should not be created as the role tag did not match");
+        }
+
+        [Test]
+        public async Task Execute_MultipleWebAppSlotsWithTags_WebAppHasNoTags_CreatesCorrectTargets()
+        {
+            // Arrange
+            var variables = new CalamariVariables();
+            var context = new RunningDeployment(variables);
+            CreateVariables(context);
+            var log = new InMemoryLog();
+            var sut = new TargetDiscoveryBehaviour(log);
+
+            // Set expected tags on each slot of the web app but not the web app itself
+            var tags = new Dictionary<string, string>
+            {
+                { TargetTags.EnvironmentTagName, EnvironmentName },
+                { TargetTags.RoleTagName, Role },
+            };
+
+            var appName = Guid.NewGuid().ToString();
+
+            await webMgmtClient.WebApps.CreateOrUpdateAsync(
+                resourceGroupName,
+                appName,
+                new Site(resourceGroup.Location) { ServerFarmId = svcPlan.Id });
+
+            var slotNames = new List<string> { "blue", "green" };
+
+            foreach (var slotName in slotNames)
+            {
+                await webMgmtClient.WebApps.CreateOrUpdateSlotAsync(
+                    resourceGroup.Name,
+                    appName,
+                    new Site(resourceGroup.Location, tags: tags) { ServerFarmId = svcPlan.Id },
+                    slotName);
+            }
+
+            // Act
+            await sut.Execute(context);
+
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null);
+            log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "A target should not be created for the web app itself, only for slots within the web app");
+
+            // Assert
+            foreach (var slotName in slotNames)
+            {
+                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppDeploymentSlotTargetCreationServiceMessage(resourceGroupName, appName, slotName, AccountId, Role, null);                
+                log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
+            }
+        }
+
+        [Test]
+        public async Task Execute_MultipleWebAppSlotsWithTags_WebAppWithTags_CreatesCorrectTargets()
+        {
+            // Arrange
+            var variables = new CalamariVariables();
+            var context = new RunningDeployment(variables);
+            CreateVariables(context);
+            var log = new InMemoryLog();
+            var sut = new TargetDiscoveryBehaviour(log);
+
+            // Set expected tags on each slot of the web app AND the web app itself
+            var tags = new Dictionary<string, string>
+            {
+                { TargetTags.EnvironmentTagName, EnvironmentName },
+                { TargetTags.RoleTagName, Role },
+            };
+
+            var appName = Guid.NewGuid().ToString();
+
+            await webMgmtClient.WebApps.CreateOrUpdateAsync(
+                resourceGroupName,
+                appName,
+                new Site(resourceGroup.Location, tags: tags) { ServerFarmId = svcPlan.Id });
+
+            var slotNames = new List<string> { "blue", "green" };
+
+            foreach (var slotName in slotNames)
+            {
+                await webMgmtClient.WebApps.CreateOrUpdateSlotAsync(
+                    resourceGroup.Name,
+                    appName,
+                    new Site(resourceGroup.Location, tags: tags) { ServerFarmId = svcPlan.Id },
+                    slotName);
+            }
+
+            // Act
+            await sut.Execute(context);
+
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null);
+            log.StandardOut.Should().Contain(serviceMessageToCreateWebAppTarget.ToString(), "A target should be created for the web app itself as well as for the slots");
+
+            // Assert
+            foreach (var slotName in slotNames)
+            {
+                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppDeploymentSlotTargetCreationServiceMessage(resourceGroupName, appName, slotName, AccountId, Role, null);
+                log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
+            }
+        }
+
+        [Test]
+        public async Task Execute_MultipleWebAppSlotsWithPartialTags_WebAppWithPartialTags_CreatesNoTargets()
+        {
+            // Arrange
+            var variables = new CalamariVariables();
+            var context = new RunningDeployment(variables);
+            CreateVariables(context);
+            var log = new InMemoryLog();
+            var sut = new TargetDiscoveryBehaviour(log);
+
+            // Set partial tags on each slot of the web app AND the remaining ones on the web app itself
+            var webAppTags = new Dictionary<string, string>
+            {
+                { TargetTags.EnvironmentTagName, EnvironmentName },
+            };
+
+            var slotTags = new Dictionary<string, string>
+            {
+                { TargetTags.RoleTagName, Role },
+            };
+
+            var appName = Guid.NewGuid().ToString();
+
+            await webMgmtClient.WebApps.CreateOrUpdateAsync(
+                resourceGroupName,
+                appName,
+                new Site(resourceGroup.Location, tags: webAppTags) { ServerFarmId = svcPlan.Id });
+
+            var slotNames = new List<string> { "blue", "green" };
+
+            foreach (var slotName in slotNames)
+            {
+                await webMgmtClient.WebApps.CreateOrUpdateSlotAsync(
+                    resourceGroup.Name,
+                    appName,
+                    new Site(resourceGroup.Location, tags: slotTags) { ServerFarmId = svcPlan.Id },
+                    slotName);
+            }
+
+            // Act
+            await sut.Execute(context);
+
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null);
+            log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "A target should not be created for the web app as the tags directly on the web app do not match, even though when combined with the slot tags they do");
+
+            // Assert
+            foreach (var slotName in slotNames)
+            {
+                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppDeploymentSlotTargetCreationServiceMessage(resourceGroupName, appName, slotName, AccountId, Role, null);
+                log.StandardOut.Should().NotContain(serviceMessageToCreateTargetForSlot.ToString(), "A target should not be created for the web app slot as the tags directly on the slot do not match, even though when combined with the web app tags they do");
+            }
         }
 
         private void CreateVariables(RunningDeployment context)
@@ -115,13 +307,13 @@ namespace Calamari.AzureAppService.Tests
             string targetDiscoveryContext = $@"{{
     ""scope"": {{
         ""spaceName"": ""default"",
-        ""environmentName"": ""dev"",
+        ""environmentName"": ""{EnvironmentName}"",
         ""projectName"": ""my-test-project"",
         ""tenantName"": null,
-        ""roles"": [""my-azure-app-role""]
+        ""roles"": [""{Role}""]
     }},
     ""authentication"": {{
-        ""accountId"": ""Accounts-1"",
+        ""accountId"": ""{AccountId}"",
         ""accountDetails"": {{
             ""subscriptionNumber"": ""{subscriptionId}"",
             ""clientId"": ""{clientId}"",

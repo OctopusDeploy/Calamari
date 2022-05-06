@@ -46,18 +46,18 @@ namespace Calamari.AzureAppService.Behaviors
             try
             {
                 var discoveredTargetCount = 0;
-                var webApps = azureClient.WebApps.ListWebAppBasic();
+                var webApps = azureClient.WebApps.List();
                 Log.Verbose($"Found {webApps.Count()} candidate web apps.");
                 foreach (var webApp in webApps)
                 {
-                    var tags = AzureWebAppHelper.GetOctopusTags(webApp);
+                    var tags = AzureWebAppHelper.GetOctopusTags(webApp.Tags);
                     var matchResult = targetDiscoveryContext.Scope.Match(tags);
                     if (matchResult.IsSuccess)
                     {
                         discoveredTargetCount++;
                         Log.Info($"Discovered matching web app: {webApp.Name}");
                         WriteTargetCreationServiceMessage(
-                            webApp, targetDiscoveryContext, matchResult, runningDeployment.Variables);
+                            webApp, targetDiscoveryContext, matchResult);
                     }
                     else
                     {
@@ -65,6 +65,29 @@ namespace Calamari.AzureAppService.Behaviors
                         foreach (var reason in matchResult.FailureReasons)
                         {
                             Log.Verbose($"- {reason}");
+                        }
+                    }
+
+                    var deploymentSlots = webApp.DeploymentSlots.List();
+
+                    foreach (var slot in deploymentSlots)
+                    {
+                        var deploymentSlotTags = AzureWebAppHelper.GetOctopusTags(slot.Tags);
+                        var deploymentSlotMatchResult = targetDiscoveryContext.Scope.Match(deploymentSlotTags);
+                        if (deploymentSlotMatchResult.IsSuccess)
+                        {
+                            discoveredTargetCount++;
+                            Log.Info($"Discovered matching deployment slot {slot.Name} in web app {webApp.Name}");
+                            WriteDeploymentSlotTargetCreationServiceMessage(
+                                webApp, slot, targetDiscoveryContext, deploymentSlotMatchResult);
+                        }
+                        else
+                        {
+                            Log.Verbose($"Deployment slot {slot.Name} in web app {webApp.Name} does not match target requirements:");
+                            foreach (var reason in matchResult.FailureReasons)
+                            {
+                                Log.Verbose($"- {reason}");
+                            }
                         }
                     }
                 }
@@ -87,27 +110,33 @@ namespace Calamari.AzureAppService.Behaviors
         }
 
         private void WriteTargetCreationServiceMessage(
-            IWebAppBasic webApp,
+            IWebApp webApp,
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
-            TargetMatchResult matchResult,
-            IVariables variables)
+            TargetMatchResult matchResult)
         {
-            // TODO: handle web app slots.
-            var parameters = new Dictionary<string, string?> {
-                    { "name", webApp.Name },
-                    { "azureWebApp", webApp.Name },
-                    { "azureResourceGroupName", webApp.ResourceGroupName },
-                    { "octopusAccountIdOrName", context.Authentication.AccountId },
-                    { "octopusRoles", matchResult.Role },
-                    { "updateIfExisting", "True" },
-                    { "octopusDefaultWorkerPoolIdOrName", context.Scope!.WorkerPoolId },
-                    { "isDynamic", "True" }
-                };
+            Log.WriteServiceMessage(
+                TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(
+                    webApp.ResourceGroupName,
+                    webApp.Name,
+                    context.Authentication.AccountId,
+                    matchResult.Role,
+                    context.Scope!.WorkerPoolId));
+        }
 
-            var serviceMessage = new ServiceMessage(
-                "create-azurewebapptarget",
-                parameters.Where(p => p.Value != null).ToDictionary<KeyValuePair<string, string?>, string, string>(p => p.Key, p => p.Value!));
-            Log.WriteServiceMessage(serviceMessage);
+        private void WriteDeploymentSlotTargetCreationServiceMessage(
+            IWebApp webApp,
+            IDeploymentSlot slot,
+            TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
+            TargetMatchResult matchResult)
+        {
+            Log.WriteServiceMessage(
+                TargetDiscoveryHelpers.CreateWebAppDeploymentSlotTargetCreationServiceMessage(
+                    webApp.ResourceGroupName, 
+                    webApp.Name, 
+                    slot.Name, 
+                    context.Authentication.AccountId,
+                    matchResult.Role,
+                    context.Scope!.WorkerPoolId));
         }
 
         private TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>? GetTargetDiscoveryContext(
@@ -137,6 +166,46 @@ namespace Calamari.AzureAppService.Behaviors
                 Log.Warn($"Target discovery context from variable {contextVariableName} is in wrong format: {ex.Message}");
                 return null;
             }
+        }
+    }
+
+    public static class TargetDiscoveryHelpers
+    {
+        public static ServiceMessage CreateWebAppTargetCreationServiceMessage(string resourceGroupName, string webAppName, string accountId, string role, string? workerPoolId)
+        {
+            var parameters = new Dictionary<string, string?> {
+                    { "name", $"{resourceGroupName}/{webAppName}" },
+                    { "azureWebApp", webAppName },
+                    { "azureResourceGroupName", resourceGroupName },
+                    { "octopusAccountIdOrName", accountId },
+                    { "octopusRoles", role },
+                    { "updateIfExisting", "True" },
+                    { "octopusDefaultWorkerPoolIdOrName", workerPoolId },
+                    { "isDynamic", "True" }
+                };
+
+            return new ServiceMessage(
+                "create-azurewebapptarget",
+                parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
+        }
+
+        public static ServiceMessage CreateWebAppDeploymentSlotTargetCreationServiceMessage(string resourceGroupName, string webAppName, string slotName, string accountId, string role, string? workerPoolId)
+        {
+            var parameters = new Dictionary<string, string?> {
+                    { "name", $"{resourceGroupName}/{webAppName}/{slotName}" },
+                    { "azureWebApp", webAppName },
+                    { "azureResourceGroupName", resourceGroupName },
+                    { "azureWebAppSlot", slotName },
+                    { "octopusAccountIdOrName", accountId },
+                    { "octopusRoles", role },
+                    { "updateIfExisting", "True" },
+                    { "octopusDefaultWorkerPoolIdOrName", workerPoolId },
+                    { "isDynamic", "True" }
+                };
+
+            return new ServiceMessage(
+                "create-azurewebapptarget",
+                parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
         }
     }
 }
