@@ -371,7 +371,6 @@ namespace Calamari.AzureAppService.Tests
                             Use32BitWorkerProcess = true,
                             AppSettings = new List<NameValuePair>
                             {
-                                new NameValuePair("WEBSITE_RUN_FROM_PACKAGE", "1"),
                                 new NameValuePair("FUNCTIONS_WORKER_RUNTIME", "dotnet"),
                                 new NameValuePair("FUNCTIONS_EXTENSION_VERSION", "~4"),
                                 new NameValuePair("AzureWebJobsStorage", $"DefaultEndpointsProtocol=https;AccountName={storageAccount.Name};AccountKey={keys.Keys.First().Value};EndpointSuffix=core.windows.net")
@@ -379,7 +378,7 @@ namespace Calamari.AzureAppService.Tests
                         }
                     }
                 );
-
+                
                 linuxServicePlanName = linuxSvcPlan.Name;
                 functionAppSiteName = functionAppSite.Name;
             }
@@ -387,24 +386,17 @@ namespace Calamari.AzureAppService.Tests
             [Test]
             public async Task CanDeployZip_ToLinuxFunctionApp()
             {
-                (string packagePath, string packageName, string packageVersion) packageInfo;
-                var assemblyFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
-                packageInfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "functionapp.1.0.0.zip");
-                packageInfo.packageVersion = "1.0.0";
-                packageInfo.packageName = "functionapp";
-                
-                var result = await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>().WithArrange(context =>
+                // Arrange
+                var packageInfo = PrepareZipPackage();
+
+                // Act
+                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>().WithArrange(context =>
                 {
                     context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
-                    context.Variables.Add(AccountVariables.ClientId, clientId);
-                    context.Variables.Add(AccountVariables.Password, clientSecret);
-                    context.Variables.Add(AccountVariables.TenantId, tenantId);
-                    context.Variables.Add(AccountVariables.SubscriptionId, subscriptionId);
-                    context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", resourceGroupName);
-                    context.Variables.Add("Octopus.Action.Azure.WebAppName", functionAppSiteName);
-                    context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
+                    AddVariables(context);
                 }).Execute();
                 
+                // Assert
                 await DoWithRetries(3, async () =>
                 {
                     await AssertContent($"{functionAppSiteName}.azurewebsites.net", 
@@ -413,6 +405,56 @@ namespace Calamari.AzureAppService.Tests
                 },
                 secondsBetweenRetries: 30);
             }
+
+            [Test]
+            public async Task CanDeployZip_ToLinuxFunctionApp_WithRunFromPackageFlag()
+            {
+                // Arrange
+                var settings = await webMgmtClient.WebApps.ListApplicationSettingsAsync(resourceGroupName, functionAppSiteName);
+                settings.Properties["WEBSITE_RUN_FROM_PACKAGE"] = "1";
+                await webMgmtClient.WebApps.UpdateApplicationSettingsAsync(resourceGroupName, functionAppSiteName, settings);
+                
+                var packageInfo = PrepareZipPackage();
+
+                // Act
+                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>().WithArrange(context =>
+                {
+                    context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
+                    AddVariables(context);
+                }).Execute();
+                
+                // Assert
+                await DoWithRetries(3, async () =>
+                    {
+                        await AssertContent($"{functionAppSiteName}.azurewebsites.net", 
+                            rootPath: $"api/HttpExample?name={greeting}", 
+                            actualText: $"Hello, {greeting}");
+                    },
+                    secondsBetweenRetries: 30);
+            }
+
+            private static (string packagePath, string packageName, string packageVersion) PrepareZipPackage()
+            {
+                (string packagePath, string packageName, string packageVersion) packageInfo;
+                var assemblyFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
+                packageInfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "functionapp.1.0.0.zip");
+                packageInfo.packageVersion = "1.0.0";
+                packageInfo.packageName = "functionapp";
+                
+                return packageInfo;
+            }
+
+            private void AddVariables(CommandTestBuilderContext context)
+            {
+                context.Variables.Add(AccountVariables.ClientId, clientId);
+                context.Variables.Add(AccountVariables.Password, clientSecret);
+                context.Variables.Add(AccountVariables.TenantId, tenantId);
+                context.Variables.Add(AccountVariables.SubscriptionId, subscriptionId);
+                context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", resourceGroupName);
+                context.Variables.Add("Octopus.Action.Azure.WebAppName", functionAppSiteName);
+                context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
+            }
+
 
             private static async Task DoWithRetries(int retries, Func<Task> action, int secondsBetweenRetries)
             {
