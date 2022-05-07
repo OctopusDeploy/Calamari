@@ -150,9 +150,14 @@ namespace Calamari.AzureAppService.Behaviors
             client.Timeout = TimeSpan.FromHours(1);
 
             var response = await client.PostAsync($@"{publishingProfile.PublishUrl}{Archive.UploadUrlPath}",
-                new StreamContent(new FileStream(uploadZipPath, FileMode.Open)));
+                new StreamContent(new FileStream(uploadZipPath, FileMode.Open))
+                {
+                    Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
+                }
+            );
 
-            if (!response.IsSuccessStatusCode) throw new Exception(response.ReasonPhrase);
+            if (!response.IsSuccessStatusCode) 
+                throw new Exception(response.ReasonPhrase);
 
             Log.Verbose("Finished deploying");
         }
