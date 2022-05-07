@@ -6,7 +6,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
@@ -19,90 +18,17 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Shared;
 using Calamari.Tests.Shared.LogParser;
 using FluentAssertions;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.Storage;
-using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.Azure.Management.Storage.Models;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using NUnit.Framework;
-using Action = System.Action;
 using Sku = Microsoft.Azure.Management.Storage.Models.Sku;
 using StorageManagementClient = Microsoft.Azure.Management.Storage.StorageManagementClient;
 
 namespace Calamari.AzureAppService.Tests
 {
-    public abstract class AppServiceIntegrationTest
-    {
-        protected string clientId;
-        protected string clientSecret;
-        protected string tenantId;
-        protected string subscriptionId;
-        protected string resourceGroupName;
-        protected string resourceGroupLocation;
-        protected string greeting = "Calamari";
-        protected string authToken;
-        protected WebSiteManagementClient webMgmtClient;
-        protected Site site;
-
-        private ResourceGroupsOperations resourceGroupClient;
-        private readonly HttpClient client = new HttpClient();
-        
-        [OneTimeSetUp]
-        public async Task Setup()
-        {
-            var resourceManagementEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ??
-                DefaultVariables.ResourceManagementEndpoint;
-            var activeDirectoryEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
-                DefaultVariables.ActiveDirectoryEndpoint;
-
-            resourceGroupName = Guid.NewGuid().ToString();
-
-            clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
-            clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
-            tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
-            subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-            resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
-
-            authToken = await Auth.GetAuthTokenAsync(activeDirectoryEndpointBaseUri, resourceManagementEndpointBaseUri,
-                tenantId, clientId, clientSecret);
-
-            var resourcesClient = new ResourcesManagementClient(subscriptionId,
-                new ClientSecretCredential(tenantId, clientId, clientSecret));
-
-            resourceGroupClient = resourcesClient.ResourceGroups;
-
-            var resourceGroup = new ResourceGroup(resourceGroupLocation);
-            resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
-            
-            webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
-            {
-                SubscriptionId = subscriptionId,
-                HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
-            };
-
-            await ConfigureTestResources(resourceGroup);
-        }
-
-        protected abstract Task ConfigureTestResources(ResourceGroup resourceGroup);
-        
-        [OneTimeTearDown]
-        public async Task Cleanup()
-        {
-            await resourceGroupClient.StartDeleteAsync(resourceGroupName);
-        }
-        
-        protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
-        {
-            var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
-
-            result.Should().Contain(actualText);
-        }
-    }
-    
     public class AppServiceBehaviorFixture
     {
         [TestFixture]
@@ -397,13 +323,13 @@ namespace Calamari.AzureAppService.Tests
                 }).Execute();
                 
                 // Assert
-                await DoWithRetries(3, async () =>
+                await DoWithRetries(10, async () =>
                 {
                     await AssertContent($"{functionAppSiteName}.azurewebsites.net", 
                         rootPath: $"api/HttpExample?name={greeting}", 
                         actualText: $"Hello, {greeting}");
                 },
-                secondsBetweenRetries: 30);
+                secondsBetweenRetries: 10);
             }
 
             [Test]
@@ -424,13 +350,13 @@ namespace Calamari.AzureAppService.Tests
                 }).Execute();
                 
                 // Assert
-                await DoWithRetries(3, async () =>
+                await DoWithRetries(10, async () =>
                     {
                         await AssertContent($"{functionAppSiteName}.azurewebsites.net", 
                             rootPath: $"api/HttpExample?name={greeting}", 
                             actualText: $"Hello, {greeting}");
                     },
-                    secondsBetweenRetries: 30);
+                    secondsBetweenRetries: 10);
             }
 
             private static (string packagePath, string packageName, string packageVersion) PrepareZipPackage()
@@ -455,7 +381,6 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
             }
 
-
             private static async Task DoWithRetries(int retries, Func<Task> action, int secondsBetweenRetries)
             {
                 foreach (var retry in Enumerable.Range(1, retries))
@@ -473,6 +398,76 @@ namespace Calamari.AzureAppService.Tests
                     }
                 }
             }
+        }
+    }
+
+    public abstract class AppServiceIntegrationTest
+    {
+        protected string clientId;
+        protected string clientSecret;
+        protected string tenantId;
+        protected string subscriptionId;
+        protected string resourceGroupName;
+        protected string resourceGroupLocation;
+        protected string greeting = "Calamari";
+        protected string authToken;
+        protected WebSiteManagementClient webMgmtClient;
+        protected Site site;
+
+        private ResourceGroupsOperations resourceGroupClient;
+        private readonly HttpClient client = new HttpClient();
+        
+        [OneTimeSetUp]
+        public async Task Setup()
+        {
+            var resourceManagementEndpointBaseUri =
+                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ??
+                DefaultVariables.ResourceManagementEndpoint;
+            var activeDirectoryEndpointBaseUri =
+                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
+                DefaultVariables.ActiveDirectoryEndpoint;
+
+            resourceGroupName = Guid.NewGuid().ToString();
+
+            clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
+            clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
+            tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
+            subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
+            resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
+
+            authToken = await Auth.GetAuthTokenAsync(activeDirectoryEndpointBaseUri, resourceManagementEndpointBaseUri,
+                tenantId, clientId, clientSecret);
+
+            var resourcesClient = new ResourcesManagementClient(subscriptionId,
+                new ClientSecretCredential(tenantId, clientId, clientSecret));
+
+            resourceGroupClient = resourcesClient.ResourceGroups;
+
+            var resourceGroup = new ResourceGroup(resourceGroupLocation);
+            resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
+            
+            webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
+            {
+                SubscriptionId = subscriptionId,
+                HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
+            };
+
+            await ConfigureTestResources(resourceGroup);
+        }
+
+        protected abstract Task ConfigureTestResources(ResourceGroup resourceGroup);
+        
+        [OneTimeTearDown]
+        public async Task Cleanup()
+        {
+            await resourceGroupClient.StartDeleteAsync(resourceGroupName);
+        }
+        
+        protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
+        {
+            var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
+
+            result.Should().Contain(actualText);
         }
     }
 }
