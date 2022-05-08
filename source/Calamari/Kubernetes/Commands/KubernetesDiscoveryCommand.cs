@@ -44,16 +44,16 @@ namespace Calamari.Kubernetes.Commands
             if (!TryGetDiscoveryContextJson(out var json))
             {
                 log.Warn($"Could not find target discovery context in variable {ContextVariableName}.");
-                return 0;
+                return ExitStatus.Success;
             }
             
             if (!TryGetAuthenticationContextTypeAndDiscoveryContextScope(json, out var type, out var scope))
-                return -1;
+                return ExitStatus.OtherError;
 
             if (!discovererFactory.TryGetKubernetesDiscoverer(type, out var discoverer))
             {
                 log.Warn($"Authentication Context type of {type} is not currently supported for discovery.");
-                return 0;
+                return ExitStatus.Success;
             }
 
             var clusters = discoverer.DiscoverClusters(json).ToList();
@@ -83,17 +83,11 @@ namespace Calamari.Kubernetes.Commands
                 ? $"{discoveredTargetCount} clusters found matching the given scope."
                 : "Could not find any clusters matching the given scope.");
 
-            return 0;
+            return ExitStatus.Success;
         }
 
         void WriteTargetCreationServiceMessage(KubernetesCluster cluster, TargetMatchResult matchResult, TargetDiscoveryScope scope)
         {
-            var healthCheckContainerFeedIdOrName =
-                variables.Get("Octopus.Kubernetes.HealthCheckContainer.FeedIdOrName");
-
-            var healthCheckContainerImage =
-                variables.Get("Octopus.Kubernetes.HealthCheckContainer.Image");
-            
             var parameters = new Dictionary<string, string> {
                 { "name", cluster.Name },
                 { "clusterName", cluster.Name },
@@ -107,8 +101,8 @@ namespace Calamari.Kubernetes.Commands
                 { "octopusServerCertificateIdOrName", "" },
                 { "octopusRoles", matchResult.Role },
                 { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
-                { "healthCheckContainerImageFeedIdOrName", healthCheckContainerFeedIdOrName },
-                { "healthCheckContainerImage", healthCheckContainerImage },
+                { "healthCheckContainerImageFeedIdOrName", "" },
+                { "healthCheckContainerImage", "" },
                 { "updateIfExisting", "True" },
                 { "isDynamic", "True" },
                 { "clusterProject", "" },

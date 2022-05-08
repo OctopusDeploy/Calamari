@@ -54,8 +54,6 @@ namespace Calamari.Tests.KubernetesFixtures
         string awsIamInstanceProfileName;
         string region;
 
-        ServiceMessageCollectorLog serviceMessageCollectorLog;
-
         [OneTimeSetUp]
         public async Task SetupInfrastructure()
         {
@@ -77,7 +75,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [SetUp]
         public void SetExtraVariables()
         {
-            Log = serviceMessageCollectorLog = new ServiceMessageCollectorLog();
             variables.Set("Octopus.Action.Kubernetes.CustomKubectlExecutable", installTools.KubectlExecutable);
         }
 
@@ -277,7 +274,7 @@ namespace Calamari.Tests.KubernetesFixtures
             TestScript(wrapper, "Test-Script");
         }
 
-        [Test]
+        [Test, Ignore("Test currently doesn't assert anything so it's not useful, to be investigated and updated.")]
         public void UsingEc2Instance()
         {
             var terraformWorkingFolder = InitialiseTerraformWorkingFolder("terraform_working_ec2", "KubernetesFixtures/Terraform/EC2");
@@ -320,9 +317,9 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount()
         {
-            const string feedId = "Feeds-1";
-            const string healthCheckContainerName = "MyHealthCheckContainerImage";
-            
+            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
+            Log = serviceMessageCollectorLog;
+
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
                 "testProject",
@@ -351,9 +348,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result =
                 ExecuteDiscoveryCommand(targetDiscoveryContext,
-                    new[]{"Calamari.Azure"},
-                    ("Octopus.Kubernetes.HealthCheckContainer.FeedIdOrName", feedId),
-                    ("Octopus.Kubernetes.HealthCheckContainer.Image", healthCheckContainerName)
+                    new[]{"Calamari.Azure"}
                 );
             
             result.AssertSuccess();
@@ -374,8 +369,8 @@ namespace Calamari.Tests.KubernetesFixtures
                     { "octopusServerCertificateIdOrName", "" },
                     { "octopusRoles", "eks-discovery-role" },
                     { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
-                    { "healthCheckContainerImageFeedIdOrName", feedId},
-                    { "healthCheckContainerImage", healthCheckContainerName},
+                    { "healthCheckContainerImageFeedIdOrName", ""},
+                    { "healthCheckContainerImage", ""},
                     { "updateIfExisting", "True" },
                     { "isDynamic", "True" },
                     { "clusterProject", "" },
