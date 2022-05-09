@@ -117,7 +117,6 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
         }
         update(RelativeId("NetcoreTesting_Ubuntu")) {
             snapshot {
-                reuseBuilds = ReuseBuilds.ANY
                 onDependencyFailure = FailureAction.CANCEL
                 onDependencyCancel = FailureAction.CANCEL
             }
