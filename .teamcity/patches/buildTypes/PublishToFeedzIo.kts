@@ -215,6 +215,7 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
         update(RelativeId("WindowsNetFxTesting_2012")) {
             snapshot {
                 reuseBuilds = ReuseBuilds.ANY
+                onDependencyFailure = FailureAction.CANCEL
             }
         }
 
