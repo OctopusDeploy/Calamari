@@ -56,7 +56,7 @@ namespace Calamari.Kubernetes.Commands
                 return ExitStatus.Success;
             }
 
-            var clusters = discoverer.DiscoverClusters(json).ToList();
+            var clusters = discoverer.DiscoverClusters(json, variables).ToList();
 
             Log.Verbose($"Found {clusters.Count} candidate clusters.");
             var discoveredTargetCount = 0;
@@ -91,16 +91,16 @@ namespace Calamari.Kubernetes.Commands
             var parameters = new Dictionary<string, string> {
                 { "name", cluster.Name },
                 { "clusterName", cluster.Name },
-                { "clusterUrl", "" },
+                { "clusterUrl", cluster.Endpoint },
                 { "clusterResourceGroup", cluster.ResourceGroupName },
-                { "clusterAdminLogin", "False" },
+                { "clusterAdminLogin", bool.FalseString },
                 { "namespace", "" },
-                { "skipTlsVerification", "" },
+                { "skipTlsVerification", bool.TrueString },
+                { "octopusDefaultWorkerPoolIdOrName", cluster.WorkerPool ?? scope.WorkerPoolId },
                 { "octopusAccountIdOrName", cluster.AccountId },
                 { "octopusClientCertificateIdOrName", "" },
                 { "octopusServerCertificateIdOrName", "" },
                 { "octopusRoles", matchResult.Role },
-                { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
                 { "healthCheckContainerImageFeedIdOrName", "" },
                 { "healthCheckContainerImage", "" },
                 { "updateIfExisting", "True" },
@@ -108,9 +108,14 @@ namespace Calamari.Kubernetes.Commands
                 { "clusterProject", "" },
                 { "clusterRegion", "" },
                 { "clusterZone", "" },
-                { "clusterImpersonateServiceAccount", "False" },
+                { "clusterImpersonateServiceAccount", bool.FalseString },
                 { "clusterServiceAccountEmails", "" },
-                { "clusterUseVmServiceAccount", "False" },
+                { "clusterUseVmServiceAccount", bool.FalseString },
+                { "awsAssumeRole", (cluster.AwsAssumeRole != null).ToString() },
+                { "awsAssumeRoleArn", cluster.AwsAssumeRole?.Arn },
+                { "awsAssumeRoleSession", cluster.AwsAssumeRole?.Session },
+                { "AwsAssumeRoleSessionDurationSeconds", cluster.AwsAssumeRole?.SessionDuration?.ToString() },
+                { "AwsAssumeRoleExternalId", cluster.AwsAssumeRole?.ExternalId }
             };
 
             var serviceMessage = new ServiceMessage(

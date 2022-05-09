@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 
 namespace Calamari.Azure.Kubernetes.Discovery
@@ -20,7 +21,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
 
         public string Name => KubernetesAuthenticationContextTypes.AzureServicePrincipal;
 
-        public IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
+        public IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson, IVariables _)
         {
             if (!TryGetAuthenticationDetails(contextJson, out var authenticationDetails))
                 return Enumerable.Empty<KubernetesCluster>();
@@ -33,7 +34,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
             var azureClient = account.CreateAzureClient();
 
             return azureClient.KubernetesClusters.List()
-                              .Select(c => new KubernetesCluster(c.Name,
+                              .Select(c => KubernetesCluster.CreateForAks(c.Name,
                                   c.ResourceGroupName,
                                   authenticationDetails.AccountId,
                                   c.Tags.ToTargetTags()));

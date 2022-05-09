@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Amazon;
+using Amazon.EKS;
+using Amazon.EKS.Model;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Aws;
 using Newtonsoft.Json;
 
@@ -19,23 +23,12 @@ namespace Calamari.Aws.Kubernetes.Discovery
 
         public string Name => "Aws";
         
-        public IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
+        public IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson, IVariables variables)
         {
             if (!TryGetAuthenticationDetails(contextJson, out var authenticationDetails))
                 yield break;
-            
-            // var account = authenticationDetails.AccountDetails;
-            // log.Verbose("Looking for Kubernetes clusters in Azure using:");
-            // log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
-            // log.Verbose($"  Tenant ID: {account.TenantId}");
-            // log.Verbose($"  Client ID: {account.ClientId}");
-            // var azureClient = account.CreateAzureClient();
-            //
-            // return azureClient.KubernetesClusters.List()
-            //                   .Select(c => new KubernetesCluster(c.Name,
-            //                       c.ResourceGroupName,
-            //                       authenticationDetails.AccountId,
-            //                       c.Tags.ToTargetTags()));
+
+            var workerPool = variables.Get("Octopus.Aws.WorkerPool");
             
             foreach (var region in authenticationDetails.Regions)
             {
@@ -49,7 +42,21 @@ namespace Calamari.Aws.Kubernetes.Discovery
                 foreach (var cluster in clusters.Clusters.Select(c =>
                     client.DescribeClusterAsync(new DescribeClusterRequest { Name = c }).GetAwaiter().GetResult().Cluster))
                 {
-                    yield return cluster;
+                    var credentialsRole = authenticationDetails.Role;
+                    var assumedRole = credentialsRole.Type == "assumeRole"
+                        ? new AwsAssumeRole(credentialsRole.Arn,
+                            credentialsRole.SessionName,
+                            credentialsRole.SessionDuration,
+                            credentialsRole.ExternalId)
+                        : null;
+                    
+                    yield return KubernetesCluster.CreateForEks(cluster.Arn,
+                        cluster.Name,
+                        cluster.Endpoint,
+                        authenticationDetails.Credentials.AccountId,
+                        assumedRole,
+                        workerPool,
+                        cluster.Tags.ToTargetTags());
                 }
             }
         }
