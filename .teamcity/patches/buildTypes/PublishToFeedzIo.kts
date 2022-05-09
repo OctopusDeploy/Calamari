@@ -20,6 +20,10 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
     }
     name = "Chain: Build and Test and Publish to Feedz.io"
 
+    vcs {
+        add(AbsoluteId("OctopusDeploy_LIbraries_Sashimi_SharedGitHubVcsRoot"))
+    }
+
     expectSteps {
         nuGetPublish {
             name = "Nuget Publish"
