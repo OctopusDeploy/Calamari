@@ -8,8 +8,8 @@ namespace Calamari.Kubernetes.Aws
     {
         public AWSCredentials ToCredentials()
         {
-            AWSCredentials account = Credentials.Type == "account"
-                ? new BasicAWSCredentials(Credentials.Account.ClientKey, Credentials.Account.ClientSecret)
+            var account = Credentials.Type == "account"
+                ? new BasicAWSCredentials(Credentials.Account.AccessKey, Credentials.Account.SecretKey)
                 : (AWSCredentials)new InstanceProfileAWSCredentials();
 
             if (Role.Type == "assumeRole")
@@ -55,8 +55,8 @@ namespace Calamari.Kubernetes.Aws
 
     public class AwsAccount
     {
-        public string ClientKey { get; set; }
+        public string AccessKey { get; set; }
         
-        public string ClientSecret { get; set; }
+        public string SecretKey { get; set; }
     }
 }
