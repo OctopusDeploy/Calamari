@@ -108,6 +108,7 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
             snapshot {
                 reuseBuilds = ReuseBuilds.ANY
                 onDependencyFailure = FailureAction.CANCEL
+                onDependencyCancel = FailureAction.CANCEL
             }
         }
 
