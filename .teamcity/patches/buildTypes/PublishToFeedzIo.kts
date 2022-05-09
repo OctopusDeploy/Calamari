@@ -145,6 +145,7 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
         update(RelativeId("NetcoreTesting_CentOS")) {
             snapshot {
                 reuseBuilds = ReuseBuilds.ANY
+                onDependencyFailure = FailureAction.CANCEL
             }
         }
 
