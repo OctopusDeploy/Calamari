@@ -60,6 +60,11 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
         }
         trigger1.apply {
             enabled = false
+            branchFilter = """
+                +:<default>
+                +:pull/*
+                +:refs/tags/*
+            """.trimIndent()
 
         }
     }
