@@ -252,6 +252,23 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
             }
         }
 
+        expect(RelativeId("Build")) {
+            artifacts {
+                cleanDestination = true
+                artifactRules = "*.nupkg"
+            }
+        }
+        update(RelativeId("Build")) {
+            snapshot {
+                onDependencyFailure = FailureAction.CANCEL
+            }
+
+            artifacts {
+                cleanDestination = true
+                artifactRules = "*.nupkg"
+            }
+        }
+
     }
 
     requirements {
