@@ -361,9 +361,19 @@ namespace Calamari.AzureAppService.Tests
 
             private static (string packagePath, string packageName, string packageVersion) PrepareZipPackage()
             {
+                // Looks like there's some file locking issues if multiple tests try to copy from the same file when running in parallel.
+                // For each test that needs one, create a temporary copy.
                 (string packagePath, string packageName, string packageVersion) packageInfo;
-                var assemblyFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
-                packageInfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "functionapp.1.0.0.zip");
+                
+                var tempPath = TemporaryDirectory.Create();
+                new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
+                
+                var testAssemblyLocation = new FileInfo(Assembly.GetExecutingAssembly().Location);
+                var sourceZip = Path.Combine(testAssemblyLocation.Directory.FullName, "functionapp.1.0.0.zip");
+                var temporaryZipLocationForTest = $"{tempPath.DirectoryPath}/functionapp.1.0.0.zip";
+                File.Copy(sourceZip, temporaryZipLocationForTest);
+
+                packageInfo.packagePath = temporaryZipLocationForTest;
                 packageInfo.packageVersion = "1.0.0";
                 packageInfo.packageName = "functionapp";
                 
