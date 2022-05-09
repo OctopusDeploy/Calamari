@@ -90,7 +90,7 @@ namespace Calamari.Kubernetes.Commands
         {
             var parameters = new Dictionary<string, string> {
                 { "name", cluster.Name },
-                { "clusterName", cluster.Name },
+                { "clusterName", cluster.ClusterName },
                 { "clusterUrl", cluster.Endpoint },
                 { "clusterResourceGroup", cluster.ResourceGroupName },
                 { "clusterAdminLogin", bool.FalseString },
