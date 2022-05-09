@@ -21,6 +21,7 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
     name = "Chain: Build and Test and Publish to Feedz.io"
 
     vcs {
+        remove(DslContext.settingsRoot.id!!)
         add(AbsoluteId("OctopusDeploy_LIbraries_Sashimi_SharedGitHubVcsRoot"))
     }
 
