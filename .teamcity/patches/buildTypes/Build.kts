@@ -19,6 +19,7 @@ changeBuildType(RelativeId("Build")) {
     artifactRules = "artifacts"
 
     vcs {
+        remove(DslContext.settingsRoot.id!!)
         add(AbsoluteId("OctopusDeploy_LIbraries_Sashimi_SharedGitHubVcsRoot"))
     }
 
