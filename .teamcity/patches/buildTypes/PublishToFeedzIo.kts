@@ -68,37 +68,6 @@ changeBuildType(RelativeId("PublishToFeedzIo")) {
         }
     }
 
-    features {
-        val feature1 = find<CommitStatusPublisher> {
-            commitStatusPublisher {
-                publisher = github {
-                    githubUrl = "https://api.github.com"
-                    authType = personalToken {
-                        token = "%commitStatusPublisher.apiKey%"
-                    }
-                }
-            }
-        }
-        feature1.apply {
-            publisher = github {
-                githubUrl = "https://api.github.com"
-                authType = personalToken {
-                    token = "credentialsJSON:d2d6ff31-56f1-4893-a448-f7a517da6c88"
-                }
-            }
-        }
-        add {
-            pullRequests {
-                provider = github {
-                    authType = token {
-                        token = "credentialsJSON:e3abf97f-cad5-4d88-9a7a-f588c55c53ed"
-                    }
-                    filterAuthorRole = PullRequests.GitHubRoleFilter.MEMBER
-                }
-            }
-        }
-    }
-
     dependencies {
         expect(RelativeId("NetcoreTesting_AmazonLinux")) {
             snapshot {

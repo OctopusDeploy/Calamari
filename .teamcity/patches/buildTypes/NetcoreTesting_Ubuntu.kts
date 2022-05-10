@@ -14,17 +14,4 @@ changeBuildType(RelativeId("NetcoreTesting_Ubuntu")) {
     vcs {
         add(DslContext.settingsRoot.id!!)
     }
-
-    features {
-        val feature1 = find<CommitStatusPublisher> {
-            commitStatusPublisher {
-                publisher = github {
-                    githubUrl = "https://api.github.com"
-                    authType = personalToken {
-                        token = "%commitStatusPublisher.apiKey%"
-                    }
-                }
-            }
-        }
-    }
 }

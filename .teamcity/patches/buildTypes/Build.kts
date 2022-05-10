@@ -18,11 +18,6 @@ changeBuildType(RelativeId("Build")) {
     }
     artifactRules = "artifacts"
 
-    vcs {
-        remove(DslContext.settingsRoot.id!!)
-        add(AbsoluteId("OctopusDeploy_LIbraries_Sashimi_SharedGitHubVcsRoot"))
-    }
-
     expectSteps {
         powerShell {
             name = "Build"
@@ -41,27 +36,6 @@ changeBuildType(RelativeId("Build")) {
             param("org.jfrog.artifactory.selectedDeployableServer.downloadSpecSource", "Job configuration")
             param("org.jfrog.artifactory.selectedDeployableServer.useSpecs", "false")
             param("org.jfrog.artifactory.selectedDeployableServer.uploadSpecSource", "Job configuration")
-        }
-    }
-
-    features {
-        val feature1 = find<CommitStatusPublisher> {
-            commitStatusPublisher {
-                publisher = github {
-                    githubUrl = "https://api.github.com"
-                    authType = personalToken {
-                        token = "%commitStatusPublisher.apiKey%"
-                    }
-                }
-            }
-        }
-        feature1.apply {
-            publisher = github {
-                githubUrl = "https://api.github.com"
-                authType = personalToken {
-                    token = "credentialsJSON:d2d6ff31-56f1-4893-a448-f7a517da6c88"
-                }
-            }
         }
     }
 }

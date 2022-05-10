@@ -14,17 +14,4 @@ changeBuildType(RelativeId("WindowsNetFxTesting_2012r2")) {
     vcs {
         add(DslContext.settingsRoot.id!!)
     }
-
-    features {
-        val feature1 = find<CommitStatusPublisher> {
-            commitStatusPublisher {
-                publisher = github {
-                    githubUrl = "https://api.github.com"
-                    authType = personalToken {
-                        token = "%commitStatusPublisher.apiKey%"
-                    }
-                }
-            }
-        }
-    }
 }
