@@ -9,6 +9,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Aws;
 using Newtonsoft.Json;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Kubernetes.Discovery
 {
@@ -27,8 +28,29 @@ namespace Calamari.Aws.Kubernetes.Discovery
         {
             if (!TryGetAuthenticationDetails(contextJson, out var authenticationDetails))
                 yield break;
-
             var workerPool = variables.Get("Octopus.Aws.WorkerPool");
+            
+            var accessKeyOrWorkerCredentials = authenticationDetails.Credentials.Type == "account"
+                ? authenticationDetails.Credentials.Account.AccessKey
+                : $"Using Worker Credentials on Worker Pool: {workerPool}";
+
+            log.Verbose("Looking for Kubernetes clusters in AWS using:");
+            log.Verbose($"  Regions: [{string.Join(',',authenticationDetails.Regions)}]");
+            log.Verbose($"  Account: {accessKeyOrWorkerCredentials}");
+            if (authenticationDetails.Role.Type == "assumeRole")
+            {
+                log.Verbose($"  Role: {authenticationDetails.Role.Arn}");
+                if (!authenticationDetails.Role.SessionName.IsNullOrEmpty())
+                    log.Verbose($"    Session Name: {authenticationDetails.Role.SessionName}");
+                if (authenticationDetails.Role.SessionDuration is {} sessionDuration) 
+                    log.Verbose($"    Session Duration: {sessionDuration}");
+                if (!authenticationDetails.Role.ExternalId.IsNullOrEmpty())
+                    log.Verbose($"    External Id: {authenticationDetails.Role.ExternalId}");
+            }
+            else
+            {
+                log.Verbose("  Role: No IAM Role provided.");
+            }
             
             foreach (var region in authenticationDetails.Regions)
             {
