@@ -12,8 +12,6 @@ class NetFxTestingProject : Project({
 
     val buildTypesToRegister = sequence {
         val items = listOf(
-                ("Windows 2008" to "2008"),
-                ("Windows 2008 R2" to "2008R2"),
                 ("Windows 2012" to "2012"),
                 ("Windows 2012 R2" to "2012R2"),
                 ("Windows 2016" to "2016"),
@@ -30,11 +28,7 @@ class NetFxTestingProject : Project({
                     equals("system.Octopus.OSVersion", item.second)
                 }
             }
-            if(item.second.startsWith("2008")) {
-                yield(CalamariOnlyTestBuildType(block))
-            } else {
-                yield(DotNetTestBuildType(block))
-            }
+            yield(DotNetTestBuildType(block))
         }
     }
 
