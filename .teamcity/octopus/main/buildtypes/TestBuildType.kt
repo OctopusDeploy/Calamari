@@ -15,7 +15,7 @@ abstract class TestBuildType(block: BuildType.() -> Unit) : BuildType({
     buildNumberPattern = "${Build.depParamRefs.buildNumber}"
     
     vcs {
-        AbsoluteId("SharedGitHubVcsRoot")
+        AbsoluteId("OctopusDeploy_LIbraries_Sashimi_SharedGitHubVcsRoot")
 
         checkoutMode = CheckoutMode.MANUAL
         cleanCheckout = true

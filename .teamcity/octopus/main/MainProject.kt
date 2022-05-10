@@ -15,7 +15,7 @@ object MainProject : Project({
             PublishToFeedzIo
     )
 
-    buildTypesToRegister.forEach { buildType(it.includeVcs().commitStatusPublisher()) }
+    buildTypesToRegister.forEach { buildType(it.includeVcs().commitStatusPublisher().githubPullRequests()) }
     buildTypesOrder = buildTypesToRegister.toList()
 
     sequential {

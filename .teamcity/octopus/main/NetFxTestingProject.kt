@@ -38,7 +38,7 @@ class NetFxTestingProject : Project({
         }
     }
 
-    buildTypesToRegister.forEach { buildType(it.commitStatusPublisher()) }
+    buildTypesToRegister.forEach { buildType(it.commitStatusPublisher().githubPullRequests()) }
     buildTypesOrder = buildTypes.toList()
 
     params {
