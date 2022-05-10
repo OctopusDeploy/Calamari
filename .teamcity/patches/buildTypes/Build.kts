@@ -18,6 +18,10 @@ changeBuildType(RelativeId("Build")) {
     }
     artifactRules = "artifacts"
 
+    vcs {
+        add(AbsoluteId("OctopusDeploy_LIbraries_Sashimi_SharedGitHubVcsRoot"))
+    }
+
     expectSteps {
         powerShell {
             name = "Build"
@@ -47,6 +51,14 @@ changeBuildType(RelativeId("Build")) {
                     authType = personalToken {
                         token = "%commitStatusPublisher.apiKey%"
                     }
+                }
+            }
+        }
+        feature1.apply {
+            publisher = github {
+                githubUrl = "https://api.github.com"
+                authType = personalToken {
+                    token = "credentialsJSON:d2d6ff31-56f1-4893-a448-f7a517da6c88"
                 }
             }
         }
