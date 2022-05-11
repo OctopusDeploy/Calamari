@@ -140,8 +140,8 @@ namespace Calamari.AzureAppService.Behaviors
                                 return TimeSpan.FromSeconds(int.Parse(retryAfter.First()));
                             }
                         }
-                        // Not a specific throttling exception, use exponential backoff
-                        return TimeSpan.FromSeconds(Math.Pow(2, retryAttempt));
+                        // Not a specific throttling exception, use exponential backoff with a maximum wait time of 10 seconds
+                        return TimeSpan.FromSeconds(Math.Min(10, Math.Pow(2, retryAttempt)));
                     },
                     (ex, delay, retryAttempt, context) =>
                     {
