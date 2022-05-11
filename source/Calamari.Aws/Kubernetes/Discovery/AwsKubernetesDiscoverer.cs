@@ -46,8 +46,8 @@ namespace Calamari.Aws.Kubernetes.Discovery
                 log.Verbose($"    ARN: {authenticationDetails.Role.Arn}");
                 if (!authenticationDetails.Role.SessionName.IsNullOrEmpty())
                     log.Verbose($"    Session Name: {authenticationDetails.Role.SessionName}");
-                if (authenticationDetails.Role.SessionDuration is {} sessionDuration) 
-                    log.Verbose($"    Session Duration: {sessionDuration}");
+                if (authenticationDetails.Role.SessionDuration != null) 
+                    log.Verbose($"    Session Duration: {authenticationDetails.Role.SessionDuration}");
                 if (!authenticationDetails.Role.ExternalId.IsNullOrEmpty())
                     log.Verbose($"    External Id: {authenticationDetails.Role.ExternalId}");
             }
