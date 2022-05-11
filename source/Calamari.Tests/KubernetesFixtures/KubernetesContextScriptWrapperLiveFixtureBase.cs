@@ -84,7 +84,7 @@ namespace Calamari.Tests.KubernetesFixtures
             return new Dictionary<string, string>();
         }
 
-        protected void TestScript(IScriptWrapper wrapper, string scriptName)
+        protected void TestScript(IScriptWrapper wrapper, string scriptName, string kubectlExe = "kubectl")
         {
             using (var dir = TemporaryDirectory.Create())
             {
@@ -93,7 +93,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 using (var temp = new TemporaryFile(Path.Combine(folderPath, $"{scriptName}.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
                 {
                     Directory.CreateDirectory(folderPath);
-                    File.WriteAllText(temp.FilePath, "kubectl cluster-info");
+                    File.WriteAllText(temp.FilePath, $"{kubectlExe} cluster-info");
 
                     var output = ExecuteScript(wrapper, temp.FilePath);
                     output.AssertSuccess();
