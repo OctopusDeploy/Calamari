@@ -93,7 +93,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 using (var temp = new TemporaryFile(Path.Combine(folderPath, $"{scriptName}.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
                 {
                     Directory.CreateDirectory(folderPath);
-                    File.WriteAllText(temp.FilePath, $"kubectl --version{Environment.NewLine}kubectl cluster-info");
+                    File.WriteAllText(temp.FilePath, $"kubectl version{Environment.NewLine}kubectl cluster-info");
 
                     var output = ExecuteScript(wrapper, temp.FilePath);
                     output.AssertSuccess();
