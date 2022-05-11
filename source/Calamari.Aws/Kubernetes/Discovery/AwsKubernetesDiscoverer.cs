@@ -31,15 +31,19 @@ namespace Calamari.Aws.Kubernetes.Discovery
             var workerPool = variables.Get("Octopus.Aws.WorkerPool");
             
             var accessKeyOrWorkerCredentials = authenticationDetails.Credentials.Type == "account"
-                ? authenticationDetails.Credentials.Account.AccessKey
+                ? $"Access Key: {authenticationDetails.Credentials.Account.AccessKey}"
                 : $"Using Worker Credentials on Worker Pool: {workerPool}";
 
             log.Verbose("Looking for Kubernetes clusters in AWS using:");
             log.Verbose($"  Regions: [{string.Join(',',authenticationDetails.Regions)}]");
-            log.Verbose($"  Account: {accessKeyOrWorkerCredentials}");
+            
+            log.Verbose("  Account:");
+            log.Verbose($"    {accessKeyOrWorkerCredentials}");
+            
             if (authenticationDetails.Role.Type == "assumeRole")
             {
-                log.Verbose($"  Role: {authenticationDetails.Role.Arn}");
+                log.Verbose("  Role:");
+                log.Verbose($"    ARN: {authenticationDetails.Role.Arn}");
                 if (!authenticationDetails.Role.SessionName.IsNullOrEmpty())
                     log.Verbose($"    Session Name: {authenticationDetails.Role.SessionName}");
                 if (authenticationDetails.Role.SessionDuration is {} sessionDuration) 
