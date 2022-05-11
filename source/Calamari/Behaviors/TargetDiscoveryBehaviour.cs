@@ -12,6 +12,9 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.AppService.Fluent;
+using Microsoft.Azure.Management.AppService.Fluent.Models;
+using Microsoft.Azure.Management.Fluent;
+using Polly;
 
 #nullable enable
 namespace Calamari.AzureAppService.Behaviors
@@ -46,7 +49,7 @@ namespace Calamari.AzureAppService.Behaviors
             try
             {
                 var discoveredTargetCount = 0;
-                var webApps = azureClient.WebApps.List();
+                var webApps = ListWebApps(azureClient);
                 Log.Verbose($"Found {webApps.Count()} candidate web apps.");
                 foreach (var webApp in webApps)
                 {
@@ -68,7 +71,9 @@ namespace Calamari.AzureAppService.Behaviors
                         }
                     }
 
-                    var deploymentSlots = webApp.DeploymentSlots.List();
+                    Log.Verbose($"Looking for deployment slots in web app {webApp.Name}");
+
+                    var deploymentSlots = ListDeploymentSlots(webApp);
 
                     foreach (var slot in deploymentSlots)
                     {
@@ -107,6 +112,51 @@ namespace Calamari.AzureAppService.Behaviors
                 Log.Warn(ex.Message);
                 Log.Warn("Aborting target discovery.");
             }
+        }
+
+        private IEnumerable<IWebApp> ListWebApps(IAzure azureClient)
+        {
+            var policy = CreateAzureQueryRetryPolicy(5, $"listing web apps");
+
+            return policy.Execute(() =>
+            {
+                return azureClient.WebApps.List();
+            });
+        }
+
+        private ISyncPolicy CreateAzureQueryRetryPolicy(int maxRetries, string description)
+        {
+            return Policy
+                .Handle<DefaultErrorResponseException>()
+                .WaitAndRetry(
+                    maxRetries,
+                    (retryAttempt, ex, context) =>
+                    {
+                        if (ex is DefaultErrorResponseException dex)
+                        {
+                            // Need to cast to an int here as net461 doesn't have TooManyRequests in the enum
+                            if ((int)dex.Response.StatusCode == 429 && dex.Response.Headers.TryGetValue("Retry-After", out var retryAfter))
+                            {
+                                return TimeSpan.FromSeconds(int.Parse(retryAfter.First()));
+                            }
+                        }
+                        // Not a specific throttling exception, use exponential backoff
+                        return TimeSpan.FromSeconds(Math.Pow(2, retryAttempt));
+                    },
+                    (ex, delay, retryAttempt, context) =>
+                    {
+                        Log.Verbose($"An error has occurred {description}: {ex.Message}, retrying {retryAttempt} of {maxRetries} after {delay}");
+                    });
+        }
+
+        private IEnumerable<IDeploymentSlot> ListDeploymentSlots(IWebApp webApp)
+        {
+            var policy = CreateAzureQueryRetryPolicy(5, $"listing deployment slots for web app {webApp.Name}");
+
+            return policy.Execute(() =>
+            {
+                return webApp.DeploymentSlots.List();
+            });
         }
 
         private void WriteTargetCreationServiceMessage(
