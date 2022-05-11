@@ -271,7 +271,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
             var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script");
+            TestScript(wrapper, "Test-Script", variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable"));
         }
 
         [Test, Ignore("Test currently doesn't assert anything so it's not useful, to be investigated and updated.")]
