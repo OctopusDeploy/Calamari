@@ -116,9 +116,9 @@ namespace Calamari.AzureAppService.Behaviors
 
         private IEnumerable<IWebApp> ListWebApps(IAzure azureClient)
         {
-            var policy = CreateAzureQueryRetryPolicy(5, $"listing web apps");
+            var retryPolicy = CreateAzureQueryRetryPolicy(5, $"listing web apps");
 
-            return policy.Execute(() =>
+            return retryPolicy.Execute(() =>
             {
                 return azureClient.WebApps.List();
             });
@@ -128,7 +128,7 @@ namespace Calamari.AzureAppService.Behaviors
         {
             // Don't bother retrying for not found errors as we will only ever get the same response
             return Policy
-                .Handle<DefaultErrorResponseException>(ex => ex.Response.StatusCode != System.Net.HttpStatusCode.NotFound)
+                .Handle<DefaultErrorResponseException>()
                 .WaitAndRetry(
                     maxRetries,
                     (retryAttempt, ex, context) =>
@@ -152,7 +152,7 @@ namespace Calamari.AzureAppService.Behaviors
 
         private IEnumerable<IDeploymentSlot> ListDeploymentSlots(IWebApp webApp)
         {
-            var policy = CreateAzureQueryRetryPolicy(5, $"listing deployment slots for web app {webApp.Name}");
+            var retryPolicy = CreateAzureQueryRetryPolicy(5, $"listing deployment slots for web app {webApp.Name}");
 
             // We could get a 404 listing slots if the web app gets deleted 
             // after being found but before we can check it's slots, in this
@@ -164,7 +164,7 @@ namespace Calamari.AzureAppService.Behaviors
                     onFallback: (exception, context) => Log.Verbose($"Could not list deployment slots for web app {webApp.Name} as it could no longer be found")
                 );
 
-            return webAppNotFoundPolicy.Wrap(policy).Execute(() =>
+            return webAppNotFoundPolicy.Wrap(retryPolicy).Execute(() =>
             {
                 return webApp.DeploymentSlots.List();
             });
