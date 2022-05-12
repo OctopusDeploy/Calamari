@@ -154,25 +154,20 @@ namespace Calamari.AzureAppService.Behaviors
         {
             var policy = CreateAzureQueryRetryPolicy(5, $"listing deployment slots for web app {webApp.Name}");
 
-            try
+            // We could get a 404 listing slots if the web app gets deleted 
+            // after being found but before we can check it's slots, in this
+            // case we'll log a message and continue
+            var webAppNotFoundPolicy = Policy<IEnumerable<IDeploymentSlot>>
+                .Handle<DefaultErrorResponseException>(dex => dex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                .Fallback(
+                    fallbackValue: Enumerable.Empty<IDeploymentSlot>(),
+                    onFallback: (exception, context) => Log.Verbose($"Could not list deployment slots for web app {webApp.Name} as it could no longer be found")
+                );
+
+            return webAppNotFoundPolicy.Wrap(policy).Execute(() =>
             {
-                return policy.Execute(() =>
-                {
-                    return webApp.DeploymentSlots.List();
-                });
-            }
-            catch (DefaultErrorResponseException dex)
-            {
-                if (dex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    // We could get a 404 listing slots if the web app gets deleted 
-                    // after being found but before we can check it's slots, in this
-                    // case we'll log a message and continue
-                    Log.Verbose($"Could not list deployment slots for web app {webApp.Name} as it could no longer be found");
-                    return Enumerable.Empty<IDeploymentSlot>();
-                }
-                throw;
-            }
+                return webApp.DeploymentSlots.List();
+            });
         }
 
         private void WriteTargetCreationServiceMessage(
