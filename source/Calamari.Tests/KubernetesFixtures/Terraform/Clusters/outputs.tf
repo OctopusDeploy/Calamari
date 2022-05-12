@@ -22,6 +22,16 @@ output "eks_cluster_name" {
   value       = aws_eks_cluster.default.name
 }
 
+output "eks_cluster_arn" {
+  description = "EKS ARN"
+  value       = aws_eks_cluster.default.arn
+}
+
+output "eks_cluster_url" {
+  description = "EKS Cluster Url"
+  value       = aws_eks_cluster.default.endpoint
+}
+
 output "aws_vpc_id" {
   value = aws_vpc.default.id
 }

@@ -75,6 +75,11 @@ resource "aws_eks_cluster" "default" {
   name     = "${random_pet.prefix.id}-eks"
   role_arn = aws_iam_role.cluster.arn
 
+  tags = {
+    octopus-environment = "Staging"
+    octopus-role = "discovery-role"
+  }
+
   vpc_config {
     endpoint_private_access = true
     public_access_cidrs     = ["0.0.0.0/0"]

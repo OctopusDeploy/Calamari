@@ -55,6 +55,8 @@ namespace Calamari.Tests.KubernetesFixtures
         string awsSubnetID;
         string awsIamInstanceProfileName;
         string region;
+        string eksClusterArn;
+        string eksClusterUrl;
 
         [OneTimeSetUp]
         public async Task SetupInfrastructure()
@@ -106,6 +108,8 @@ namespace Calamari.Tests.KubernetesFixtures
             eksClusterEndpoint = jsonOutput["eks_cluster_endpoint"]["value"].Value<string>();
             eksClusterCaCertificate = jsonOutput["eks_cluster_ca_certificate"]["value"].Value<string>();
             eksClusterName = jsonOutput["eks_cluster_name"]["value"].Value<string>();
+            eksClusterArn = jsonOutput["eks_cluster_arn"]["value"].Value<string>();
+            eksClusterUrl = jsonOutput["eks_cluster_url"]["value"].Value<string>();
             awsVpcID = jsonOutput["aws_vpc_id"]["value"].Value<string>();
             awsSubnetID = jsonOutput["aws_subnet_id"]["value"].Value<string>();
             awsIamInstanceProfileName = jsonOutput["aws_iam_instance_profile_name"]["value"].Value<string>();
@@ -328,14 +332,14 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
             Log = serviceMessageCollectorLog;
-
+        
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
                 "testProject",
                 null,
-                new[] { "eks-discovery-role" },
+                new[] { "discovery-role" },
                 "WorkerPool-1");
-
+        
             var account = new ServicePrincipalAccount(
                 ExternalVariables.Get(ExternalVariable.AzureSubscriptionId),
                 ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId),
@@ -344,15 +348,98 @@ namespace Calamari.Tests.KubernetesFixtures
                 null,
                 null,
                 null);
-
+        
             var authenticationDetails =
                 new AccountAuthenticationDetails<ServicePrincipalAccount>(
                     KubernetesAuthenticationContextTypes.AzureServicePrincipal,
                     "Accounts-1",
                     account);
-
+        
             var targetDiscoveryContext =
                 new TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(scope,
+                    authenticationDetails);
+        
+            var result =
+                ExecuteDiscoveryCommand(targetDiscoveryContext,
+                    new[]{"Calamari.Azure"}
+                );
+            
+            result.AssertSuccess();
+        
+            var expectedServiceMessage = new ServiceMessage(
+                KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
+                new Dictionary<string, string>
+                {
+                    { "name", aksClusterName },
+                    { "clusterName", aksClusterName },
+                    { "clusterUrl", "" },
+                    { "clusterResourceGroup", azurermResourceGroup },
+                    { "clusterAdminLogin", "False" },
+                    { "namespace", "" },
+                    { "skipTlsVerification", bool.TrueString },
+                    { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
+                    { "octopusAccountIdOrName", "Accounts-1" },
+                    { "octopusClientCertificateIdOrName", "" },
+                    { "octopusServerCertificateIdOrName", "" },
+                    { "octopusRoles", "discovery-role" },
+                    { "healthCheckContainerImageFeedIdOrName", ""},
+                    { "healthCheckContainerImage", ""},
+                    { "updateIfExisting", "True" },
+                    { "isDynamic", "True" },
+                    { "clusterProject", "" },
+                    { "clusterRegion", "" },
+                    { "clusterZone", "" },
+                    { "clusterImpersonateServiceAccount", "False" },
+                    { "clusterServiceAccountEmails", "" },
+                    { "clusterUseVmServiceAccount", "False" },
+                    { "awsAssumeRole", bool.FalseString },
+                    { "awsAssumeRoleArn", "" },
+                    { "awsAssumeRoleSession", "" },
+                    { "awsAssumeRoleSessionDurationSeconds", "" },
+                    { "awsAssumeRoleExternalId", "" }
+                });
+        
+            serviceMessageCollectorLog.ServiceMessages.Should()
+                                      .ContainSingle(s => s.Properties["name"] == aksClusterName)
+                                      .Which.Should()
+                                      .BeEquivalentTo(expectedServiceMessage);
+        }
+        
+        [Test]
+        public void DiscoverKubernetesClusterWithAwsCredentials()
+        {
+            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
+            Log = serviceMessageCollectorLog;
+
+            var scope = new TargetDiscoveryScope("TestSpace",
+                "Staging",
+                "testProject",
+                null,
+                new[] { "discovery-role" },
+                "WorkerPool-1");
+
+            var authenticationDetails = new AwsAuthenticationDetails
+            {
+                Type = "Aws",
+                Credentials = new AwsCredentials
+                {
+                    Account = new AwsAccount
+                    {
+                        AccessKey = eksClientID,
+                        SecretKey = eksSecretKey
+                    },
+                    AccountId = "Accounts-1",
+                    Type = "account"
+                },
+                Role = new AwsAssumedRole
+                {
+                    Type = "noAssumedRole"
+                },
+                Regions = new []{region}
+            };
+
+            var targetDiscoveryContext =
+                new TargetDiscoveryContext<AwsAuthenticationDetails>(scope,
                     authenticationDetails);
 
             var result =
@@ -366,32 +453,37 @@ namespace Calamari.Tests.KubernetesFixtures
                 KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
                 new Dictionary<string, string>
                 {
-                    { "name", aksClusterName },
-                    { "clusterName", aksClusterName },
-                    { "clusterUrl", "" },
-                    { "clusterResourceGroup", azurermResourceGroup },
-                    { "clusterAdminLogin", "False" },
+                    { "name", eksClusterArn },
+                    { "clusterName", eksClusterName },
+                    { "clusterUrl", eksClusterUrl },
+                    { "clusterResourceGroup", "" },
+                    { "clusterAdminLogin", bool.FalseString },
                     { "namespace", "" },
-                    { "skipTlsVerification", "" },
+                    { "skipTlsVerification", bool.TrueString },
+                    { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
                     { "octopusAccountIdOrName", "Accounts-1" },
                     { "octopusClientCertificateIdOrName", "" },
                     { "octopusServerCertificateIdOrName", "" },
-                    { "octopusRoles", "eks-discovery-role" },
-                    { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
+                    { "octopusRoles", "discovery-role" },
                     { "healthCheckContainerImageFeedIdOrName", ""},
                     { "healthCheckContainerImage", ""},
-                    { "updateIfExisting", "True" },
-                    { "isDynamic", "True" },
+                    { "updateIfExisting", bool.TrueString },
+                    { "isDynamic", bool.TrueString },
                     { "clusterProject", "" },
                     { "clusterRegion", "" },
                     { "clusterZone", "" },
-                    { "clusterImpersonateServiceAccount", "False" },
+                    { "clusterImpersonateServiceAccount", bool.FalseString },
                     { "clusterServiceAccountEmails", "" },
-                    { "clusterUseVmServiceAccount", "False" },
+                    { "clusterUseVmServiceAccount", bool.FalseString },
+                    { "awsAssumeRole", bool.FalseString },
+                    { "awsAssumeRoleArn", "" },
+                    { "awsAssumeRoleSession", "" },
+                    { "awsAssumeRoleSessionDurationSeconds", "" },
+                    { "awsAssumeRoleExternalId", "" }
                 });
 
             serviceMessageCollectorLog.ServiceMessages.Should()
-                                      .ContainSingle(s => s.Properties["name"] == aksClusterName)
+                                      .ContainSingle(s => s.Properties["name"] == eksClusterArn)
                                       .Which.Should()
                                       .BeEquivalentTo(expectedServiceMessage);
         }
