@@ -126,8 +126,9 @@ namespace Calamari.AzureAppService.Behaviors
 
         private ISyncPolicy CreateAzureQueryRetryPolicy(int maxRetries, string description)
         {
+            // Don't bother retrying for not found errors as we will only ever get the same response
             return Policy
-                .Handle<DefaultErrorResponseException>()
+                .Handle<DefaultErrorResponseException>(ex => ex.Response.StatusCode != System.Net.HttpStatusCode.NotFound)
                 .WaitAndRetry(
                     maxRetries,
                     (retryAttempt, ex, context) =>
@@ -153,10 +154,25 @@ namespace Calamari.AzureAppService.Behaviors
         {
             var policy = CreateAzureQueryRetryPolicy(5, $"listing deployment slots for web app {webApp.Name}");
 
-            return policy.Execute(() =>
+            try
             {
-                return webApp.DeploymentSlots.List();
-            });
+                return policy.Execute(() =>
+                {
+                    return webApp.DeploymentSlots.List();
+                });
+            }
+            catch (DefaultErrorResponseException dex)
+            {
+                if (dex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    // We could get a 404 listing slots if the web app gets deleted 
+                    // after being found but before we can check it's slots, in this
+                    // case we'll log a message and continue
+                    Log.Verbose($"Could not list deployment slots for web app {webApp.Name} as it could no longer be found");
+                    return Enumerable.Empty<IDeploymentSlot>();
+                }
+                throw;
+            }
         }
 
         private void WriteTargetCreationServiceMessage(
