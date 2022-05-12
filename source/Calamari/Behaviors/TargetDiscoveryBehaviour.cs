@@ -163,8 +163,8 @@ namespace Calamari.AzureAppService.Behaviors
                     fallbackValue: Enumerable.Empty<IDeploymentSlot>(),
                     onFallback: (exception, context) => Log.Verbose($"Could not list deployment slots for web app {webApp.Name} as it could no longer be found")
                 );
-
-            return webAppNotFoundPolicy.Wrap(retryPolicy).Execute(() =>
+            
+            return retryPolicy.Wrap(webAppNotFoundPolicy).Execute(() =>
             {
                 return webApp.DeploymentSlots.List();
             });
