@@ -470,7 +470,8 @@ namespace Calamari.AzureAppService.Tests
         [OneTimeTearDown]
         public async Task Cleanup()
         {
-            await resourceGroupClient.StartDeleteAsync(resourceGroupName);
+            if (resourceGroupClient != null)
+                await resourceGroupClient.StartDeleteAsync(resourceGroupName);
         }
         
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
