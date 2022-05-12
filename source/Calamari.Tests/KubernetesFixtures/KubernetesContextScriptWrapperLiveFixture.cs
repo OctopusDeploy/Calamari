@@ -62,6 +62,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public async Task SetupInfrastructure()
         {
             region = RegionRandomiser.GetARegion();
+            Console.WriteLine($"Aws Region chosen: {region}");
             terraformWorkingFolder = InitialiseTerraformWorkingFolder("terraform_working", "KubernetesFixtures/Terraform/Clusters");
 
             installTools = new InstallTools(TestContext.Progress.WriteLine);
@@ -444,7 +445,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var result =
                 ExecuteDiscoveryCommand(targetDiscoveryContext,
-                    new[]{"Calamari.Azure"}
+                    new[]{"Calamari.Aws"}
                 );
             
             result.AssertSuccess();
