@@ -10,12 +10,12 @@ namespace Calamari.Kubernetes.Aws
         {
             var account = Credentials.Type == "account"
                 ? new BasicAWSCredentials(Credentials.Account.AccessKey, Credentials.Account.SecretKey)
-                : (AWSCredentials)new InstanceProfileAWSCredentials();
+                : (AWSCredentials)new EnvironmentVariablesAWSCredentials();
 
             if (Role.Type == "assumeRole")
                 return new AssumeRoleAWSCredentials(account,
                     Role.Arn,
-                    Role.SessionName,
+                    Role.SessionName ?? "OctopusKubernetesClusterDiscovery",
                     new AssumeRoleAWSCredentialsOptions
                         { ExternalId = Role.ExternalId, DurationSeconds = Role.SessionDuration });
 

@@ -7,6 +7,10 @@ output "eks_secret_key" {
   sensitive = true
 }
 
+output "eks_iam_role_arn" {
+  value = aws_iam_role.user.arn
+}
+
 output "eks_cluster_endpoint" {
   description = "Endpoint for EKS control plane."
   value       = aws_eks_cluster.default.endpoint

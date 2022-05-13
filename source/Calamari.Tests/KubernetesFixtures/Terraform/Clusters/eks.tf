@@ -91,7 +91,7 @@ resource "aws_eks_cluster" "default" {
 data "aws_iam_policy_document" "cluster" {
   statement {
     actions = [
-      "sts:AssumeRole",
+      "sts:AssumeRole"
     ]
     principals {
       type        = "Service"
@@ -125,7 +125,7 @@ data "aws_iam_policy_document" "userRole" {
 data "aws_iam_policy_document" "ec2Role" {
   statement {
     actions = [
-      "sts:AssumeRole"
+      "sts:AssumeRole",
     ]
     principals {
       type        = "Service"
@@ -153,14 +153,13 @@ resource "aws_iam_role" "user" {
 data "aws_iam_policy_document" "user" {
   statement {
     actions = [
+      "eks:ListClusters",
       "eks:ListTagsForResource",
       "eks:AccessKubernetesApi",
       "eks:DescribeCluster",
     ]
-
-    resources = [
-      data.aws_eks_cluster.default.arn,
-    ]
+    effect = "Allow"
+    resources = ["*"]
   }
 }
 
