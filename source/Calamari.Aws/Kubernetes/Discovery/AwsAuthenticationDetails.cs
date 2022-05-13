@@ -6,6 +6,7 @@ namespace Calamari.Kubernetes.Aws
 {
     public class AwsAuthenticationDetails : ITargetDiscoveryAuthenticationDetails
     {
+        const string DefaultSessionName = "OctopusKubernetesClusterDiscovery";
         public AWSCredentials ToCredentials()
         {
             var account = Credentials.Type == "account"
@@ -15,7 +16,7 @@ namespace Calamari.Kubernetes.Aws
             if (Role.Type == "assumeRole")
                 return new AssumeRoleAWSCredentials(account,
                     Role.Arn,
-                    Role.SessionName ?? "OctopusKubernetesClusterDiscovery",
+                    Role.SessionName ?? DefaultSessionName,
                     new AssumeRoleAWSCredentialsOptions
                         { ExternalId = Role.ExternalId, DurationSeconds = Role.SessionDuration });
 

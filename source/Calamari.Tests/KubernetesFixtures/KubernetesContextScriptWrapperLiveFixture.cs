@@ -551,7 +551,9 @@ namespace Calamari.Tests.KubernetesFixtures
                 Role = new AwsAssumedRole
                 {
                     Type = "assumeRole",
-                    Arn = eksIamRolArn
+                    Arn = eksIamRolArn,
+                    SessionName = "ThisIsASessionName",
+                    SessionDuration = 300
                 },
                 Regions = new []{region}
             };
@@ -568,7 +570,9 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "updateIfExisting", bool.TrueString },
                 { "isDynamic", bool.TrueString },
                 { "awsAssumeRole", bool.TrueString },
-                { "awsAssumeRoleArn", eksIamRolArn }
+                { "awsAssumeRoleArn", eksIamRolArn },
+                { "awsAssumeRoleSession", "ThisIsASessionName" },
+                { "awsAssumeRoleSessionDuration", "300" }
             };
             
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);
