@@ -35,7 +35,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
                 : $"Using Worker Credentials on Worker Pool: {workerPool}";
 
             log.Verbose("Looking for Kubernetes clusters in AWS using:");
-            log.Verbose($"  Regions: [{string.Join(',',authenticationDetails.Regions)}]");
+            log.Verbose($"  Regions: [{string.Join(",",authenticationDetails.Regions)}]");
             
             log.Verbose("  Account:");
             log.Verbose($"    {accessKeyOrWorkerCredentials}");
