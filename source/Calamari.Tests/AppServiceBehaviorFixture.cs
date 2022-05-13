@@ -24,6 +24,7 @@ using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using NUnit.Framework;
+using FileShare = System.IO.FileShare;
 using Sku = Microsoft.Azure.Management.Storage.Models.Sku;
 using StorageManagementClient = Microsoft.Azure.Management.Storage.StorageManagementClient;
 
@@ -217,6 +218,37 @@ namespace Calamari.AzureAppService.Tests
                 commandResult.Outcome.Should().Be(TestExecutionOutcome.Unsuccessful);
             }
 
+            [Test]
+            public async Task DeployToTwoTargetsInParallel_Succeeds()
+            {
+                // Arrange
+                var packageInfo = PrepareFunctionAppZipPackage();
+                // Without larger changes to Calamari and the Test Framework, it's not possible to run two Calamari
+                // processes in parallel in the same test method. Simulate the file locking behaviour by directly
+                // opening the affected file instead
+                var fileLock = File.Open(packageInfo.packagePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+                try
+                {
+                    // Act
+                    var deployment = await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
+                        .WithArrange(context =>
+                        {
+                            context.WithPackage(packageInfo.packagePath, packageInfo.packageName,
+                                packageInfo.packageVersion);
+                            AddVariables(context);
+                            context.Variables[KnownVariables.Package.EnabledFeatures] = null;
+                        }).Execute();
+
+                    // Assert
+                    deployment.Outcome.Should().Be(TestExecutionOutcome.Successful);
+                }
+                finally
+                {
+                    fileLock.Close();
+                }
+            }
+
             private static (string packagePath, string packageName, string packageVersion) PrepareZipPackage()
             {
                 (string packagePath, string packageName, string packageVersion) packageinfo;
@@ -232,15 +264,29 @@ namespace Calamari.AzureAppService.Tests
                 ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
                 return packageinfo;
             }
+            
+            private static (string packagePath, string packageName, string packageVersion) PrepareFunctionAppZipPackage()
+            {
+                (string packagePath, string packageName, string packageVersion) packageInfo;
+            
+                var testAssemblyLocation = new FileInfo(Assembly.GetExecutingAssembly().Location);
+                var sourceZip = Path.Combine(testAssemblyLocation.Directory.FullName, "functionapp.1.0.0.zip");
+                
+                packageInfo.packagePath = sourceZip;
+                packageInfo.packageVersion = "1.0.0";
+                packageInfo.packageName = "functionapp";
+            
+                return packageInfo;
+            }
 
-            private void AddVariables(CommandTestBuilderContext context)
+            private void AddVariables(CommandTestBuilderContext context, string siteName = null)
             {
                 context.Variables.Add(AccountVariables.ClientId, clientId);
                 context.Variables.Add(AccountVariables.Password, clientSecret);
                 context.Variables.Add(AccountVariables.TenantId, tenantId);
                 context.Variables.Add(AccountVariables.SubscriptionId, subscriptionId);
                 context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", resourceGroupName);
-                context.Variables.Add("Octopus.Action.Azure.WebAppName", site.Name);
+                context.Variables.Add("Octopus.Action.Azure.WebAppName", siteName ?? site.Name);
                 context.Variables.Add("Greeting", greeting);
                 context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
                 context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
@@ -390,24 +436,6 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add("Octopus.Action.Azure.WebAppName", functionAppSiteName);
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
             }
-
-            private static async Task DoWithRetries(int retries, Func<Task> action, int secondsBetweenRetries)
-            {
-                foreach (var retry in Enumerable.Range(1, retries))
-                {
-                    try
-                    {
-                        await action();
-                    }
-                    catch
-                    {
-                        if (retry == retries)
-                            throw;
-                        
-                        await Task.Delay(secondsBetweenRetries * 1000);
-                    }
-                }
-            }
         }
     }
 
@@ -479,6 +507,25 @@ namespace Calamari.AzureAppService.Tests
             var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
 
             result.Should().Contain(actualText);
+        }
+        
+        protected static async Task DoWithRetries(int retries, Func<Task> action, int secondsBetweenRetries)
+        {
+            foreach (var retry in Enumerable.Range(1, retries))
+            {
+                try
+                {
+                    await action();
+                    break;
+                }
+                catch
+                {
+                    if (retry == retries)
+                        throw;
+                        
+                    await Task.Delay(secondsBetweenRetries * 1000);
+                }
+            }
         }
     }
 }
