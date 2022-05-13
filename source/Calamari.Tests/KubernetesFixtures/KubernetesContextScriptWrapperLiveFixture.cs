@@ -207,9 +207,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
             foreach (var file in Directory.EnumerateFiles(Path.Combine(testFolder, filesSource)))
             {
-                if (file.Contains("aks") || file.Contains("gke"))
-                    continue;
-                
                 File.Copy(file, Path.Combine(terraformWorkingFolder, Path.GetFileName(file)), true);
             }
 
