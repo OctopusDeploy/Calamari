@@ -150,7 +150,7 @@ namespace Calamari.AzureAppService.Behaviors
             client.Timeout = TimeSpan.FromHours(1);
 
             var response = await client.PostAsync($@"{publishingProfile.PublishUrl}{Archive.UploadUrlPath}",
-                new StreamContent(new FileStream(uploadZipPath, FileMode.Open))
+                new StreamContent(new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
                 }
