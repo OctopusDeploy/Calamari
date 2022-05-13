@@ -532,6 +532,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void DiscoverKubernetesClusterWithAwsAccountCredentialsAndIamRole()
         {
+            const int sessionDuration = 900;
             var authenticationDetails = new AwsAuthenticationDetails
             {
                 Type = "Aws",
@@ -550,7 +551,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     Type = "assumeRole",
                     Arn = eksIamRolArn,
                     SessionName = "ThisIsASessionName",
-                    SessionDuration = 900
+                    SessionDuration = sessionDuration
                 },
                 Regions = new []{region}
             };
@@ -569,7 +570,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "awsAssumeRole", bool.TrueString },
                 { "awsAssumeRoleArn", eksIamRolArn },
                 { "awsAssumeRoleSession", "ThisIsASessionName" },
-                { "awsAssumeRoleSessionDuration", "300" }
+                { "awsAssumeRoleSessionDurationSeconds", sessionDuration.ToString() }
             };
             
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);

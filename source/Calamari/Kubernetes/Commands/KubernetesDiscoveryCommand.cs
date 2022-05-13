@@ -114,8 +114,8 @@ namespace Calamari.Kubernetes.Commands
                 { "awsAssumeRole", (cluster.AwsAssumeRole != null).ToString() },
                 { "awsAssumeRoleArn", cluster.AwsAssumeRole?.Arn },
                 { "awsAssumeRoleSession", cluster.AwsAssumeRole?.Session },
-                { "AwsAssumeRoleSessionDurationSeconds", cluster.AwsAssumeRole?.SessionDuration?.ToString() },
-                { "AwsAssumeRoleExternalId", cluster.AwsAssumeRole?.ExternalId }
+                { "awsAssumeRoleSessionDurationSeconds", cluster.AwsAssumeRole?.SessionDuration?.ToString() },
+                { "awsAssumeRoleExternalId", cluster.AwsAssumeRole?.ExternalId }
             };
 
             var serviceMessage = new ServiceMessage(
