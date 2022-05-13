@@ -235,7 +235,7 @@ namespace Calamari.AzureAppService.Behaviors
         public static ServiceMessage CreateWebAppTargetCreationServiceMessage(string resourceGroupName, string webAppName, string accountId, string role, string? workerPoolId)
         {
             var parameters = new Dictionary<string, string?> {
-                    { "name", $"{resourceGroupName}/{webAppName}" },
+                    { "name", $"azure-web-app/{resourceGroupName}/{webAppName}" },
                     { "azureWebApp", webAppName },
                     { "azureResourceGroupName", resourceGroupName },
                     { "octopusAccountIdOrName", accountId },
@@ -253,7 +253,7 @@ namespace Calamari.AzureAppService.Behaviors
         public static ServiceMessage CreateWebAppDeploymentSlotTargetCreationServiceMessage(string resourceGroupName, string webAppName, string slotName, string accountId, string role, string? workerPoolId)
         {
             var parameters = new Dictionary<string, string?> {
-                    { "name", $"{resourceGroupName}/{webAppName}/{slotName}" },
+                    { "name", $"azure-web-app/{resourceGroupName}/{webAppName}/{slotName}" },
                     { "azureWebApp", webAppName },
                     { "azureResourceGroupName", resourceGroupName },
                     { "azureWebAppSlot", slotName },
