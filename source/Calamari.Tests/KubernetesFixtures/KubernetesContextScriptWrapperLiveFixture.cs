@@ -550,7 +550,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     Type = "assumeRole",
                     Arn = eksIamRolArn,
                     SessionName = "ThisIsASessionName",
-                    SessionDuration = 300
+                    SessionDuration = 900
                 },
                 Regions = new []{region}
             };
