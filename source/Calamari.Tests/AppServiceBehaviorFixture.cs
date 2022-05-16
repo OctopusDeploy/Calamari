@@ -279,14 +279,14 @@ namespace Calamari.AzureAppService.Tests
                 return packageInfo;
             }
 
-            private void AddVariables(CommandTestBuilderContext context, string siteName = null)
+            private void AddVariables(CommandTestBuilderContext context)
             {
                 context.Variables.Add(AccountVariables.ClientId, clientId);
                 context.Variables.Add(AccountVariables.Password, clientSecret);
                 context.Variables.Add(AccountVariables.TenantId, tenantId);
                 context.Variables.Add(AccountVariables.SubscriptionId, subscriptionId);
                 context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", resourceGroupName);
-                context.Variables.Add("Octopus.Action.Azure.WebAppName", siteName ?? site.Name);
+                context.Variables.Add("Octopus.Action.Azure.WebAppName", site.Name);
                 context.Variables.Add("Greeting", greeting);
                 context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
                 context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
