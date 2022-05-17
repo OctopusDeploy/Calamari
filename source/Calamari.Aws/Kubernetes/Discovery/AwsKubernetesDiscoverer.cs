@@ -24,7 +24,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
 
         public string Name => "Aws";
         
-        public IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson, IVariables variables)
+        public IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
         {
             if (!TryGetDiscoveryContext(contextJson, out var discoveryContext))
                 yield break;

@@ -56,7 +56,7 @@ namespace Calamari.Kubernetes.Commands
                 return ExitStatus.Success;
             }
 
-            var clusters = discoverer.DiscoverClusters(json, variables).ToList();
+            var clusters = discoverer.DiscoverClusters(json).ToList();
 
             Log.Verbose($"Found {clusters.Count} candidate clusters.");
             var discoveredTargetCount = 0;
