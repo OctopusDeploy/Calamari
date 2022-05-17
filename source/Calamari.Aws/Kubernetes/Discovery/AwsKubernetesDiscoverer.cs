@@ -103,7 +103,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
                 if (discoveryContext != null)
                     return true;
                 
-                log.Warn("Target discovery context is in the wrong format: unable to serialise Target Discovery Context");
+                log.Warn("Target discovery context is in the wrong format.");
                 return false;
             }
             catch (Exception ex)
