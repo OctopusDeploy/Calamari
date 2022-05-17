@@ -26,13 +26,19 @@ namespace Calamari.Aws.Kubernetes.Discovery
         
         public IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson, IVariables variables)
         {
-            if (!TryGetAuthenticationDetails(contextJson, out var authenticationDetails))
+            if (!TryGetDiscoveryContext(contextJson, out var discoveryContext))
                 yield break;
-            var workerPool = variables.Get("Octopus.Aws.WorkerPool");
+
+            var authenticationDetails = discoveryContext.Authentication;
+            if (authenticationDetails == null)
+            {
+                Log.Warn("Target Discovery Context is in the wrong format: Unable to serialise authentication details");
+                yield break;
+            }
             
             var accessKeyOrWorkerCredentials = authenticationDetails.Credentials.Type == "account"
                 ? $"Access Key: {authenticationDetails.Credentials.Account.AccessKey}"
-                : $"Using Worker Credentials on Worker Pool: {workerPool}";
+                : $"Using Worker Credentials on Worker Pool: {discoveryContext.Scope.WorkerPoolId}";
 
             log.Verbose("Looking for Kubernetes clusters in AWS using:");
             log.Verbose($"  Regions: [{string.Join(",",authenticationDetails.Regions)}]");
@@ -62,8 +68,6 @@ namespace Calamari.Aws.Kubernetes.Discovery
                     RegionEndpoint.GetBySystemName(region));
 
                 var clusters = client.ListClustersAsync(new ListClustersRequest()).GetAwaiter().GetResult();
-                
-                log.Info("Discovery has discovered");
 
                 foreach (var cluster in clusters.Clusters.Select(c =>
                     client.DescribeClusterAsync(new DescribeClusterRequest { Name = c }).GetAwaiter().GetResult().Cluster))
@@ -81,22 +85,26 @@ namespace Calamari.Aws.Kubernetes.Discovery
                         cluster.Endpoint,
                         authenticationDetails.Credentials.AccountId,
                         assumedRole,
-                        workerPool,
+                        discoveryContext.Scope.WorkerPoolId,
                         cluster.Tags.ToTargetTags());
                 }
             }
         }
         
-        bool TryGetAuthenticationDetails(string json, 
-            out AwsAuthenticationDetails authenticationDetails)
+        bool TryGetDiscoveryContext(string json, 
+            out TargetDiscoveryContext<AwsAuthenticationDetails> discoveryContext)
         {
-            authenticationDetails = null;
+            discoveryContext = null;
             try
             {
-                authenticationDetails =
-                    JsonConvert.DeserializeObject<TargetDiscoveryContext<AwsAuthenticationDetails>>(json)
-                               ?.Authentication;
-                return authenticationDetails != null;
+                discoveryContext =
+                    JsonConvert.DeserializeObject<TargetDiscoveryContext<AwsAuthenticationDetails>>(json);
+                
+                if (discoveryContext != null)
+                    return true;
+                
+                log.Warn("Target discovery context is in the wrong format: unable to serialise Target Discovery Context");
+                return false;
             }
             catch (Exception ex)
             {

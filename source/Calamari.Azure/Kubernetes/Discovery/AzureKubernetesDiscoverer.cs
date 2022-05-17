@@ -49,12 +49,16 @@ namespace Calamari.Azure.Kubernetes.Discovery
                 authenticationDetails = 
                     JsonConvert.DeserializeObject<AzureTargetDiscoveryContext>(contextJson)
                                ?.Authentication;
-                return authenticationDetails != null;
+                
+                if (authenticationDetails != null)
+                    return true;
+                
+                log.Warn("Target discovery context is in the wrong format.");
+                return false;
             }
             catch (JsonException ex)
             {
-                log.Warn(
-                    $"Target discovery context from value is in the wrong format: {ex.Message}");
+                log.Warn($"Target discovery context is in the wrong format: {ex.Message}");
                 return false;
             }
         }
