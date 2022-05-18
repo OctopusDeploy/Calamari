@@ -1,14 +1,8 @@
 package patches.buildTypes
 
 import jetbrains.buildServer.configs.kotlin.v2019_2.*
-import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.CommitStatusPublisher
-import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.PullRequests
-import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.commitStatusPublisher
-import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.pullRequests
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.NuGetPublishStep
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.nuGetPublish
-import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.VcsTrigger
-import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.vcs
 import jetbrains.buildServer.configs.kotlin.v2019_2.ui.*
 
 /*
@@ -17,6 +11,11 @@ To apply the patch, change the buildType with id = 'PublishToFeedzIo'
 accordingly, and delete the patch script.
 */
 changeBuildType(RelativeId("PublishToFeedzIo")) {
+    check(description == "") {
+        "Unexpected description: '$description'"
+    }
+    description = "Build chain for Sashimi.AzureAppService"
+
     expectSteps {
         nuGetPublish {
             name = "Nuget Publish"
