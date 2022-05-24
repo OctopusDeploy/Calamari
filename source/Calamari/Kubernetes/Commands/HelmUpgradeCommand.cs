@@ -64,8 +64,6 @@ namespace Calamari.Kubernetes.Commands
             if (!File.Exists(pathToPackage))
                 throw new CommandException("Could not find package file: " + pathToPackage);
 
-            ValidateRequiredVariables();
-
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
@@ -94,14 +92,6 @@ namespace Calamari.Kubernetes.Commands
             }
 
             return 0;
-        }
-
-        void ValidateRequiredVariables()
-        {
-            if (!variables.IsSet(SpecialVariables.ClusterUrl))
-            {
-                throw new CommandException($"The variable `{SpecialVariables.ClusterUrl}` is not provided.");
-            }
         }
 
         /// <summary>
