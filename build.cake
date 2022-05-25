@@ -186,7 +186,7 @@ Task("PackSashimi")
     .IsDependentOn("PublishCalamariProjects")
     .Does(() =>
 {
-    SignAndTimestampBinaries("./source/Sashimi/obj/Release/net5.0");
+    SignAndTimestampBinaries("./source/Sashimi/bin/Release/net5.0");
     DotNetCorePack("source", new DotNetCorePackSettings
     {
         Configuration = configuration,
