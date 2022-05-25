@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Amazon.Runtime;
 using Calamari.Common.Features.Discovery;
@@ -9,9 +10,25 @@ namespace Calamari.Kubernetes.Aws
         const string DefaultSessionName = "OctopusKubernetesClusterDiscovery";
         public AWSCredentials ToCredentials()
         {
-            var account = Credentials.Type == "account"
-                ? new BasicAWSCredentials(Credentials.Account.AccessKey, Credentials.Account.SecretKey)
-                : (AWSCredentials)new EnvironmentVariablesAWSCredentials();
+            AWSCredentials account;
+            if (Credentials.Type == "account")
+            {
+                account = new BasicAWSCredentials(Credentials.Account.AccessKey, Credentials.Account.SecretKey);
+            }
+            else
+            {
+                try
+                {
+                    // If not currently running on an EC2 instance,
+                    // this will throw an exception.
+                    account = new InstanceProfileAWSCredentials();
+                }
+                catch
+                {
+                    // The last attempt is trying to use Environment Variables.
+                    account = new EnvironmentVariablesAWSCredentials();
+                }
+            }
 
             if (Role.Type == "assumeRole")
                 return new AssumeRoleAWSCredentials(account,
