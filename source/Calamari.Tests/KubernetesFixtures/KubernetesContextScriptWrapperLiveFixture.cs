@@ -298,13 +298,14 @@ namespace Calamari.Tests.KubernetesFixtures
             TestScript(wrapper, "Test-Script", kubectlExecutable);
         }
 
-        [Test, Ignore("Test currently doesn't assert anything so it's not useful, to be investigated and updated.")]
+        [Test]
         public void UsingEc2Instance()
         {
             var terraformWorkingFolder = InitialiseTerraformWorkingFolder("terraform_working_ec2", "KubernetesFixtures/Terraform/EC2");
         
             var env = new Dictionary<string, string>
             {
+                { "TF_VAR_iam_role_arn", eksIamRolArn },
                 { "TF_VAR_cluster_name", eksClusterName },
                 { "TF_VAR_aws_vpc_id", awsVpcID },
                 { "TF_VAR_aws_subnet_id", awsSubnetID },
@@ -315,6 +316,8 @@ namespace Calamari.Tests.KubernetesFixtures
             RunTerraformInternal(terraformWorkingFolder, env, "init");
             try
             {
+                // This actual tests are run via EC2/test.sh which executes the tests in
+                // KubernetesContextScriptWrapperLiveFixtureForAmazon.cs
                 RunTerraformInternal(terraformWorkingFolder, env, "apply", "-auto-approve");
             }
             finally
@@ -400,7 +403,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void DiscoverKubernetesClusterWithAwsWorkerCredentialsAndIamRole()
+        public void DiscoverKubernetesClusterWithEnvironmentVariableCredentialsAndIamRole()
         {
             const string accessKeyEnvVar = "AWS_ACCESS_KEY_ID";
             const string secretKeyEnvVar = "AWS_SECRET_ACCESS_KEY";
@@ -449,7 +452,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void DiscoverKubernetesClusterWithAwsWorkerCredentialsAndNoIamRole()
+        public void DiscoverKubernetesClusterWithEnvironmentVariableCredentialsAndNoIamRole()
         {
             const string accessKeyEnvVar = "AWS_ACCESS_KEY_ID";
             const string secretKeyEnvVar = "AWS_SECRET_ACCESS_KEY";
@@ -574,71 +577,6 @@ namespace Calamari.Tests.KubernetesFixtures
             };
             
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);
-        }
-
-        void DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(
-            AwsAuthenticationDetails authenticationDetails, 
-            Dictionary<string,string> properties)
-        {
-            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
-            Log = serviceMessageCollectorLog;
-        
-            var scope = new TargetDiscoveryScope("TestSpace",
-                "Staging",
-                "testProject",
-                null,
-                new[] { "discovery-role" },
-                "WorkerPools-1");
-
-            var targetDiscoveryContext =
-                new TargetDiscoveryContext<AwsAuthenticationDetails>(scope,
-                    authenticationDetails);
-        
-            var result =
-                ExecuteDiscoveryCommand(targetDiscoveryContext,
-                    new[]{"Calamari.Aws"}
-                );
-            
-            result.AssertSuccess();
-            
-            var expectedServiceMessage = new ServiceMessage(
-                KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
-                properties);
-
-            serviceMessageCollectorLog.ServiceMessages.Should()
-                                      .ContainSingle(s => s.Properties["name"] == properties["name"])
-                                      .Which.Should()
-                                      .BeEquivalentTo(expectedServiceMessage);
-        }
-        
-        CalamariResult ExecuteDiscoveryCommand<TAuthenticationDetails>(
-            TargetDiscoveryContext<TAuthenticationDetails> discoveryContext,
-            IEnumerable<string> extensions,
-            params (string key, string value)[] otherVariables)
-            where TAuthenticationDetails : ITargetDiscoveryAuthenticationDetails
-        {
-            using var variablesFile = new TemporaryFile(Path.GetTempFileName());
-            variables.Add(KubernetesDiscoveryCommand.ContextVariableName, JsonConvert.SerializeObject(discoveryContext));
-            foreach (var (key, value) in otherVariables)
-                variables.Add(key, value);
-                
-            variables.Save(variablesFile.FilePath);
-
-            return InvokeInProcess(Calamari()
-                                   .Action(KubernetesDiscoveryCommand.Name)
-                                   .Argument("variables", variablesFile.FilePath)
-                                   .Argument("extensions", string.Join(',', extensions)));
-        }
-
-        class ServiceMessageCollectorLog : InMemoryLog
-        {
-            public List<ServiceMessage> ServiceMessages { get; } = new List<ServiceMessage>();
-            public override void WriteServiceMessage(ServiceMessage serviceMessage)
-            {
-                ServiceMessages.Add(serviceMessage);
-                
-                base.WriteServiceMessage(serviceMessage);
-            }
         }
     }
 }

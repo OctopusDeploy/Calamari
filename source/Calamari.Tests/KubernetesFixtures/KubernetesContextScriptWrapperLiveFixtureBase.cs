@@ -3,23 +3,30 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Aws.Integration;
+using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
+using Calamari.Kubernetes.Aws;
+using Calamari.Kubernetes.Commands;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
     public abstract class KubernetesContextScriptWrapperLiveFixtureBase : CalamariFixture
     {
+        protected const string awsVariablesJsonFileName = "awsVariables.json";
         protected const string testNamespace = "calamari-testing";
         
         protected IVariables variables;
@@ -98,6 +105,71 @@ namespace Calamari.Tests.KubernetesFixtures
                     var output = ExecuteScript(wrapper, temp.FilePath);
                     output.AssertSuccess();
                 }
+            }
+        }
+        
+        protected void DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(
+            AwsAuthenticationDetails authenticationDetails, 
+            Dictionary<string,string> properties)
+        {
+            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
+            Log = serviceMessageCollectorLog;
+        
+            var scope = new TargetDiscoveryScope("TestSpace",
+                "Staging",
+                "testProject",
+                null,
+                new[] { "discovery-role" },
+                "WorkerPools-1");
+
+            var targetDiscoveryContext =
+                new TargetDiscoveryContext<AwsAuthenticationDetails>(scope,
+                    authenticationDetails);
+        
+            var result =
+                ExecuteDiscoveryCommand(targetDiscoveryContext,
+                    new[]{"Calamari.Aws"}
+                );
+            
+            result.AssertSuccess();
+            
+            var expectedServiceMessage = new ServiceMessage(
+                KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
+                properties);
+
+            serviceMessageCollectorLog.ServiceMessages.Should()
+                                      .ContainSingle(s => s.Properties["name"] == properties["name"])
+                                      .Which.Should()
+                                      .BeEquivalentTo(expectedServiceMessage);
+        }
+        
+        protected CalamariResult ExecuteDiscoveryCommand<TAuthenticationDetails>(
+            TargetDiscoveryContext<TAuthenticationDetails> discoveryContext,
+            IEnumerable<string> extensions,
+            params (string key, string value)[] otherVariables)
+            where TAuthenticationDetails : ITargetDiscoveryAuthenticationDetails
+        {
+            using var variablesFile = new TemporaryFile(Path.GetTempFileName());
+            variables.Add(KubernetesDiscoveryCommand.ContextVariableName, JsonConvert.SerializeObject(discoveryContext));
+            foreach (var (key, value) in otherVariables)
+                variables.Add(key, value);
+                
+            variables.Save(variablesFile.FilePath);
+
+            return InvokeInProcess(Calamari()
+                                   .Action(KubernetesDiscoveryCommand.Name)
+                                   .Argument("variables", variablesFile.FilePath)
+                                   .Argument("extensions", string.Join(',', extensions)));
+        }
+
+        protected class ServiceMessageCollectorLog : InMemoryLog
+        {
+            public List<ServiceMessage> ServiceMessages { get; } = new List<ServiceMessage>();
+            public override void WriteServiceMessage(ServiceMessage serviceMessage)
+            {
+                ServiceMessages.Add(serviceMessage);
+                
+                base.WriteServiceMessage(serviceMessage);
             }
         }
     }

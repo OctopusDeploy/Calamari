@@ -119,6 +119,10 @@ data "aws_iam_policy_document" "userRole" {
       type        = "AWS"
       identifiers = [aws_iam_user.default.arn]
     }
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.ec2.arn]
+    }
   }
 }
 
@@ -153,6 +157,7 @@ resource "aws_iam_role" "user" {
 data "aws_iam_policy_document" "user" {
   statement {
     actions = [
+      "sts:AssumeRole",
       "eks:ListClusters",
       "eks:ListTagsForResource",
       "eks:AccessKubernetesApi",

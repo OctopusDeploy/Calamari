@@ -14,8 +14,6 @@ data "aws_ami" "debian" {
   owners = ["136693071363"]
 }
 
-
-
 data "aws_eks_cluster" "default" {
   name = var.cluster_name
 }
