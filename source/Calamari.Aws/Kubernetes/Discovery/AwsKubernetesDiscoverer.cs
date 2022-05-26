@@ -4,9 +4,9 @@ using System.Linq;
 using Amazon;
 using Amazon.EKS;
 using Amazon.EKS.Model;
+using Amazon.Runtime;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Aws;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
@@ -32,7 +32,8 @@ namespace Calamari.Aws.Kubernetes.Discovery
             var authenticationDetails = discoveryContext.Authentication;
             if (authenticationDetails == null)
             {
-                Log.Warn("Target Discovery Context is in the wrong format: Unable to serialise authentication details");
+                Log.Warn("Target Discovery Context is in the wrong format, please contact Octopus Support.");
+                Log.Verbose("Unable to deserialise authentication details in Target Discovery Context, aborting discovery.");
                 yield break;
             }
             
@@ -61,10 +62,22 @@ namespace Calamari.Aws.Kubernetes.Discovery
             {
                 log.Verbose("  Role: No IAM Role provided.");
             }
+
+            AWSCredentials credentials;
+            try
+            {
+                credentials = authenticationDetails.ToCredentials();
+            }
+            catch (Exception e)
+            {
+                Log.Warn("Unable to authorise credentials, see verbose log for details.");
+                Log.Verbose($"Unable to authorise credentials: {e}");
+                yield break;
+            }
             
             foreach (var region in authenticationDetails.Regions)
             {
-                var client = new AmazonEKSClient(authenticationDetails.ToCredentials(),
+                var client = new AmazonEKSClient(credentials,
                     RegionEndpoint.GetBySystemName(region));
 
                 var clusters = client.ListClustersAsync(new ListClustersRequest()).GetAwaiter().GetResult();

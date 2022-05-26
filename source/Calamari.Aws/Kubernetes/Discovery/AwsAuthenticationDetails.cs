@@ -8,6 +8,11 @@ namespace Calamari.Kubernetes.Aws
     public class AwsAuthenticationDetails : ITargetDiscoveryAuthenticationDetails
     {
         const string DefaultSessionName = "OctopusKubernetesClusterDiscovery";
+        
+        /// <exception cref="AggregateException">
+        /// If both InstanceProfile and EnvironmentVariable Credentials fail.
+        /// Contains AmazonClientExceptions for both InstanceProfile and EnvironmentVariable failures</exception>
+        /// <exception cref="AmazonClientException">If Basic (Account) Credentials fail</exception>
         public AWSCredentials ToCredentials()
         {
             AWSCredentials account;
@@ -23,10 +28,17 @@ namespace Calamari.Kubernetes.Aws
                     // this will throw an exception.
                     account = new InstanceProfileAWSCredentials();
                 }
-                catch
+                catch (Exception instanceProfileException)
                 {
-                    // The last attempt is trying to use Environment Variables.
-                    account = new EnvironmentVariablesAWSCredentials();
+                    try
+                    {
+                        // The last attempt is trying to use Environment Variables.
+                        account = new EnvironmentVariablesAWSCredentials();
+                    }
+                    catch (Exception environmentVariablesException)
+                    {
+                        throw new AggregateException(instanceProfileException, environmentVariablesException);
+                    }
                 }
             }
 
