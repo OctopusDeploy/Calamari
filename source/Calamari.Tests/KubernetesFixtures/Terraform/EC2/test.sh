@@ -30,4 +30,8 @@ mkdir tests
 cd tests || exit
 unzip /tmp/data.zip
 
-dotnet test Calamari.Tests.dll --Tests AuthoriseWithAmazonEC2Role,DiscoverKubernetesClusterWithEc2InstanceCredentialsAndIamRole,DiscoverKubernetesClusterWithEc2InstanceCredentialsAndNoIamRole --logger "console;verbosity=detailed" -- NUnit.NumberOfTestWorkers=1
+dotnet test Calamari.Tests.dll --Tests AuthoriseWithAmazonEC2Role --logger "console;verbosity=detailed"
+
+dotnet test Calamari.Tests.dll --Tests DiscoverKubernetesClusterWithEc2InstanceCredentialsAndIamRole --logger "console;verbosity=detailed"
+
+dotnet test Calamari.Tests.dll --Tests DiscoverKubernetesClusterWithEc2InstanceCredentialsAndNoIamRole --logger "console;verbosity=detailed"
