@@ -604,12 +604,15 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 serviceMessageCollectorLog.ServiceMessages.Should().BeEmpty();
 
-                serviceMessageCollectorLog.MessagesErrorFormatted.Should().BeEmpty();
+                serviceMessageCollectorLog.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Error);
 
                 serviceMessageCollectorLog.StandardError.Should().BeEmpty();
 
-                serviceMessageCollectorLog.MessagesWarnFormatted.Should()
-                                          .Contain("Unable to authorise credentials, see verbose log for details.");
+                serviceMessageCollectorLog.Messages.Should()
+                                          .ContainSingle(m =>
+                                              m.Level == InMemoryLog.Level.Warn &&
+                                              m.FormattedMessage ==
+                                              "Unable to discover clusters due to 'Aws' specific error, see Verbose log for details.");
             }
             finally
             {
