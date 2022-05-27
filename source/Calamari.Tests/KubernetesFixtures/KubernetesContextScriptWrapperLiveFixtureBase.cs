@@ -107,13 +107,8 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
         
-        protected void DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(
-            AwsAuthenticationDetails authenticationDetails, 
-            Dictionary<string,string> properties)
+        protected void DoDiscovery(AwsAuthenticationDetails authenticationDetails)
         {
-            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
-            Log = serviceMessageCollectorLog;
-        
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
                 "testProject",
@@ -131,7 +126,17 @@ namespace Calamari.Tests.KubernetesFixtures
                 );
             
             result.AssertSuccess();
-            
+        }
+        
+        protected void DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(
+            AwsAuthenticationDetails authenticationDetails, 
+            Dictionary<string,string> properties)
+        {
+            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
+            Log = serviceMessageCollectorLog;
+
+            DoDiscovery(authenticationDetails);
+
             var expectedServiceMessage = new ServiceMessage(
                 KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
                 properties);
