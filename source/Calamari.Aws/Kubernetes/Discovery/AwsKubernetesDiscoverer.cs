@@ -4,10 +4,8 @@ using System.Linq;
 using Amazon;
 using Amazon.EKS;
 using Amazon.EKS.Model;
-using Amazon.Runtime;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Kubernetes.Aws;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Kubernetes.Discovery
@@ -51,17 +49,8 @@ namespace Calamari.Aws.Kubernetes.Discovery
                 Log.Verbose("  Role: No IAM Role provided.");
             }
 
-            AWSCredentials credentials;
-            try
-            {
-                credentials = authenticationDetails.ToCredentials();
-            }
-            catch (Exception e)
-            {
-                Log.Warn("Unable to authorise credentials, see verbose log for details.");
-                Log.Verbose($"Unable to authorise credentials: {e}");
+            if (!authenticationDetails.TryGetCredentials(Log, out var credentials))
                 yield break;
-            }
             
             foreach (var region in authenticationDetails.Regions)
             {

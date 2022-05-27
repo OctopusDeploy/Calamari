@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using Amazon.Runtime;
 using Calamari.Common.Features.Discovery;
+using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.Kubernetes.Aws
+namespace Calamari.Aws.Kubernetes.Discovery
 {
     public class AwsAuthenticationDetails : ITargetDiscoveryAuthenticationDetails
     {
@@ -13,12 +14,22 @@ namespace Calamari.Kubernetes.Aws
         /// If both InstanceProfile and EnvironmentVariable Credentials fail.
         /// Contains AmazonClientExceptions for both InstanceProfile and EnvironmentVariable failures</exception>
         /// <exception cref="AmazonClientException">If Basic (Account) Credentials fail</exception>
-        public AWSCredentials ToCredentials()
+        public bool TryGetCredentials(ILog log, out AWSCredentials credentials)
         {
-            AWSCredentials account;
+            credentials = null;
             if (Credentials.Type == "account")
             {
-                account = new BasicAWSCredentials(Credentials.Account.AccessKey, Credentials.Account.SecretKey);
+                try
+                {
+                    credentials = new BasicAWSCredentials(Credentials.Account.AccessKey, Credentials.Account.SecretKey);
+                }
+                // Catching a generic Exception because AWS SDK throws undocumented exceptions.
+                catch (Exception e)
+                {
+                    log.Warn("Unable to authorise credentials, see verbose log for details.");
+                    log.Verbose($"Unable to authorise credentials for Account: {e}");
+                    return false;
+                }
             }
             else
             {
@@ -26,30 +37,37 @@ namespace Calamari.Kubernetes.Aws
                 {
                     // If not currently running on an EC2 instance,
                     // this will throw an exception.
-                    account = new InstanceProfileAWSCredentials();
+                    credentials = new InstanceProfileAWSCredentials();
                 }
+                // Catching a generic Exception because AWS SDK throws undocumented exceptions.
                 catch (Exception instanceProfileException)
                 {
                     try
                     {
                         // The last attempt is trying to use Environment Variables.
-                        account = new EnvironmentVariablesAWSCredentials();
+                        credentials = new EnvironmentVariablesAWSCredentials();
                     }
+                    // Catching a generic Exception because AWS SDK throws undocumented exceptions.
                     catch (Exception environmentVariablesException)
                     {
-                        throw new AggregateException(instanceProfileException, environmentVariablesException);
+                        log.Warn("Unable to authorise credentials, see verbose log for details.");
+                        log.Verbose($"Unable to authorise credentials for Instance Profile: {instanceProfileException}");
+                        log.Verbose($"Unable to authorise credentials for Environment Variables: {environmentVariablesException}");
+                        return false;
                     }
                 }
             }
 
             if (Role.Type == "assumeRole")
-                return new AssumeRoleAWSCredentials(account,
+            {
+                credentials = new AssumeRoleAWSCredentials(credentials,
                     Role.Arn,
                     Role.SessionName ?? DefaultSessionName,
                     new AssumeRoleAWSCredentialsOptions
                         { ExternalId = Role.ExternalId, DurationSeconds = Role.SessionDuration });
-
-            return account;
+            }
+            
+            return true;
         }
         
         public string Type { get; set; }
