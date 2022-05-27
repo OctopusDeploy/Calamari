@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Calamari.Kubernetes.Aws;
+using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.AWS;
@@ -313,8 +313,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
             try
             {
-                Environment.SetEnvironmentVariable(accessKeyEnvVar, "NotValid");
-                Environment.SetEnvironmentVariable(secretKeyEnvVar, "NotValid");
+                Environment.SetEnvironmentVariable(accessKeyEnvVar, null);
+                Environment.SetEnvironmentVariable(secretKeyEnvVar, null);
                 
                 var authenticationDetails = new AwsAuthenticationDetails
                 {
@@ -339,13 +339,51 @@ namespace Calamari.Tests.KubernetesFixtures
                                           .ContainSingle(m =>
                                               m.Level == InMemoryLog.Level.Warn &&
                                               m.FormattedMessage ==
-                                              "Unable to discover clusters due to 'Aws' specific error, see Verbose log for details.");
+                                              "Unable to authorise credentials, see verbose log for details.");
             }
             finally
             {
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, originalAccessKey);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, originalSecretKey);
             }
+        }
+        
+        [Test]
+        public void DiscoverKubernetesClusterWithInvalidAccountCredentials()
+        {
+            var authenticationDetails = new AwsAuthenticationDetails
+            {
+                Type = "Aws",
+                Credentials = new AwsCredentials
+                {
+                    Account = new AwsAccount
+                    {
+                        AccessKey = "abcdefg",
+                        SecretKey = null
+                    },
+                    AccountId = "Accounts-1",
+                    Type = "account"
+                },
+                Role = new AwsAssumedRole { Type = "noAssumedRole" },
+                Regions = new []{region}
+            };
+            
+            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
+            Log = serviceMessageCollectorLog;
+            
+            DoDiscovery(authenticationDetails);
+
+            serviceMessageCollectorLog.ServiceMessages.Should().BeEmpty();
+
+            serviceMessageCollectorLog.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Error);
+
+            serviceMessageCollectorLog.StandardError.Should().BeEmpty();
+
+            serviceMessageCollectorLog.Messages.Should()
+                                      .ContainSingle(m =>
+                                          m.Level == InMemoryLog.Level.Warn &&
+                                          m.FormattedMessage ==
+                                          "Unable to authorise credentials, see verbose log for details."); 
         }
     }
 }
