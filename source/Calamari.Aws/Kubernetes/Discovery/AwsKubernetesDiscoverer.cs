@@ -8,59 +8,47 @@ using Amazon.Runtime;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Aws;
-using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Kubernetes.Discovery
 {
-    public class AwsKubernetesDiscoverer : IKubernetesDiscoverer
+    public class AwsKubernetesDiscoverer : KubernetesDiscovererBase
     {
-        readonly ILog log;
-
-        public AwsKubernetesDiscoverer(ILog log)
+        public AwsKubernetesDiscoverer(ILog log) : base(log)
         {
-            this.log = log;
         }
 
-        public string Name => "Aws";
+        public override string Name => "Aws";
         
-        public IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
+        public override IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
         {
-            if (!TryGetDiscoveryContext(contextJson, out var discoveryContext))
+            if (!TryGetDiscoveryContext<AwsAuthenticationDetails>(contextJson, out var authenticationDetails, out var workerPoolId))
                 yield break;
-
-            var authenticationDetails = discoveryContext.Authentication;
-            if (authenticationDetails == null)
-            {
-                Log.Warn("Target Discovery Context is in the wrong format, please contact Octopus Support.");
-                Log.Verbose("Unable to deserialise authentication details in Target Discovery Context, aborting discovery.");
-                yield break;
-            }
             
             var accessKeyOrWorkerCredentials = authenticationDetails.Credentials.Type == "account"
                 ? $"Access Key: {authenticationDetails.Credentials.Account.AccessKey}"
-                : $"Using Worker Credentials on Worker Pool: {discoveryContext.Scope.WorkerPoolId}";
+                : $"Using Worker Credentials on Worker Pool: {workerPoolId}";
 
-            log.Verbose("Looking for Kubernetes clusters in AWS using:");
-            log.Verbose($"  Regions: [{string.Join(",",authenticationDetails.Regions)}]");
+            Log.Verbose("Looking for Kubernetes clusters in AWS using:");
+            Log.Verbose($"  Regions: [{string.Join(",",authenticationDetails.Regions)}]");
             
-            log.Verbose("  Account:");
-            log.Verbose($"    {accessKeyOrWorkerCredentials}");
+            Log.Verbose("  Account:");
+            Log.Verbose($"    {accessKeyOrWorkerCredentials}");
             
             if (authenticationDetails.Role.Type == "assumeRole")
             {
-                log.Verbose("  Role:");
-                log.Verbose($"    ARN: {authenticationDetails.Role.Arn}");
+                Log.Verbose("  Role:");
+                Log.Verbose($"    ARN: {authenticationDetails.Role.Arn}");
                 if (!authenticationDetails.Role.SessionName.IsNullOrEmpty())
-                    log.Verbose($"    Session Name: {authenticationDetails.Role.SessionName}");
+                    Log.Verbose($"    Session Name: {authenticationDetails.Role.SessionName}");
                 if (authenticationDetails.Role.SessionDuration != null) 
-                    log.Verbose($"    Session Duration: {authenticationDetails.Role.SessionDuration}");
+                    Log.Verbose($"    Session Duration: {authenticationDetails.Role.SessionDuration}");
                 if (!authenticationDetails.Role.ExternalId.IsNullOrEmpty())
-                    log.Verbose($"    External Id: {authenticationDetails.Role.ExternalId}");
+                    Log.Verbose($"    External Id: {authenticationDetails.Role.ExternalId}");
             }
             else
             {
-                log.Verbose("  Role: No IAM Role provided.");
+                Log.Verbose("  Role: No IAM Role provided.");
             }
 
             AWSCredentials credentials;
@@ -98,31 +86,9 @@ namespace Calamari.Aws.Kubernetes.Discovery
                         cluster.Endpoint,
                         authenticationDetails.Credentials.AccountId,
                         assumedRole,
-                        discoveryContext.Scope.WorkerPoolId,
+                        workerPoolId,
                         cluster.Tags.ToTargetTags());
                 }
-            }
-        }
-        
-        bool TryGetDiscoveryContext(string json, 
-            out TargetDiscoveryContext<AwsAuthenticationDetails> discoveryContext)
-        {
-            discoveryContext = null;
-            try
-            {
-                discoveryContext =
-                    JsonConvert.DeserializeObject<TargetDiscoveryContext<AwsAuthenticationDetails>>(json);
-                
-                if (discoveryContext != null)
-                    return true;
-                
-                log.Warn("Target discovery context is in the wrong format.");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                log.Warn($"Target discovery context is in wrong format: {ex.Message}");
-                return false;
             }
         }
     }

@@ -26,8 +26,7 @@ namespace Calamari.Tests.KubernetesFixtures
 {
     public abstract class KubernetesContextScriptWrapperLiveFixtureBase : CalamariFixture
     {
-        protected const string awsVariablesJsonFileName = "awsVariables.json";
-        protected const string testNamespace = "calamari-testing";
+        protected const string TestNamespace = "calamari-testing";
         
         protected IVariables variables;
         protected string testFolder;
@@ -56,7 +55,7 @@ namespace Calamari.Tests.KubernetesFixtures
         void SetTestClusterVariables()
         {
 
-            variables.Set(SpecialVariables.Namespace, testNamespace);
+            variables.Set(SpecialVariables.Namespace, TestNamespace);
             variables.Set(ScriptVariables.Syntax, CalamariEnvironment.IsRunningOnWindows ? ScriptSyntax.PowerShell.ToString() : ScriptSyntax.Bash.ToString());
         }
 
@@ -147,7 +146,7 @@ namespace Calamari.Tests.KubernetesFixtures
             TargetDiscoveryContext<TAuthenticationDetails> discoveryContext,
             IEnumerable<string> extensions,
             params (string key, string value)[] otherVariables)
-            where TAuthenticationDetails : ITargetDiscoveryAuthenticationDetails
+            where TAuthenticationDetails : class, ITargetDiscoveryAuthenticationDetails
         {
             using var variablesFile = new TemporaryFile(Path.GetTempFileName());
             variables.Add(KubernetesDiscoveryCommand.ContextVariableName, JsonConvert.SerializeObject(discoveryContext));

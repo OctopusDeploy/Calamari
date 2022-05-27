@@ -17,16 +17,16 @@ namespace Calamari.Common.Features.Discovery
     /// b) We expect a bunch of stuff in the Sashimi/Calamari space to be refactored back into the OctopusDeploy solution soon.
     /// </summary>
     public class TargetDiscoveryContext<TAuthentication> : ITargetDiscoveryContext
-        where TAuthentication : ITargetDiscoveryAuthenticationDetails
+        where TAuthentication : class,ITargetDiscoveryAuthenticationDetails
     {
-        public TargetDiscoveryContext(TargetDiscoveryScope scope, TAuthentication authentication)
+        public TargetDiscoveryContext(TargetDiscoveryScope? scope, TAuthentication? authentication)
         {
             this.Scope = scope;
             this.Authentication = authentication;
         }
 
-        public TargetDiscoveryScope Scope { get; set; }
+        public TargetDiscoveryScope? Scope { get; set; }
 
-        public TAuthentication Authentication { get; set; }
+        public TAuthentication? Authentication { get; set; }
     }
 }

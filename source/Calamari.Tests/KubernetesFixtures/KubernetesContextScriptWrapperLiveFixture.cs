@@ -174,7 +174,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "TF_VAR_aks_client_id", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId) },
                 { "TF_VAR_aks_client_secret", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword) },
                 { "TF_VAR_tests_source_dir", testFolder },
-                { "TF_VAR_test_namespace", testNamespace },
+                { "TF_VAR_test_namespace", TestNamespace },
                 { "GOOGLE_CLOUD_KEYFILE_JSON", ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile) }
             };
         

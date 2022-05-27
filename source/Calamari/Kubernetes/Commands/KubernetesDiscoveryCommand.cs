@@ -56,7 +56,17 @@ namespace Calamari.Kubernetes.Commands
                 return ExitStatus.Success;
             }
 
-            var clusters = discoverer.DiscoverClusters(json).ToList();
+            List<KubernetesCluster> clusters;
+            try
+            {
+                clusters = discoverer.DiscoverClusters(json).ToList();
+            }
+            catch (Exception e)
+            {
+                Log.Warn($"Unable to discover clusters due to {type} specific error, see Verbose log for details.");
+                Log.Verbose($"Error occured during cluster discovery for {type}: {e}");
+                return ExitStatus.Success;
+            }
 
             Log.Verbose($"Found {clusters.Count} candidate clusters.");
             var discoveredTargetCount = 0;
