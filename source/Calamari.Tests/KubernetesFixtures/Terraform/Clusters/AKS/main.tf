@@ -10,3 +10,5 @@ variable "aks_client_secret" {
   type = string
   sensitive = true
 }
+
+resource "random_pet" "prefix" {}
