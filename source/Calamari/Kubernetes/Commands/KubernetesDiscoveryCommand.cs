@@ -63,12 +63,12 @@ namespace Calamari.Kubernetes.Commands
             }
             catch (Exception e)
             {
-                Log.Warn($"Unable to discover clusters due to {type} specific error, see Verbose log for details.");
-                Log.Verbose($"Error occured during cluster discovery for {type}: {e}");
+                log.Warn($"Unable to discover clusters due to '{type}' specific error, see Verbose log for details.");
+                log.Verbose($"Error occured during cluster discovery for {type}: {e}");
                 return ExitStatus.Success;
             }
 
-            Log.Verbose($"Found {clusters.Count} candidate clusters.");
+            log.Verbose($"Found {clusters.Count} candidate clusters.");
             var discoveredTargetCount = 0;
             foreach (var cluster in clusters)
             {
@@ -76,20 +76,20 @@ namespace Calamari.Kubernetes.Commands
                 if (matchResult.IsSuccess)
                 {
                     discoveredTargetCount++;
-                    Log.Info($"Discovered matching cluster: {cluster.Name}");
+                    log.Info($"Discovered matching cluster: {cluster.Name}");
                     WriteTargetCreationServiceMessage(cluster, matchResult, scope);
                 }
                 else
                 {
-                    Log.Verbose($"Cluster {cluster.Name} does not match target requirements:");
+                    log.Verbose($"Cluster {cluster.Name} does not match target requirements:");
                     foreach (var reason in matchResult.FailureReasons)
                     {
-                        Log.Verbose($"- {reason}");
+                        log.Verbose($"- {reason}");
                     }
                 }
             }
 
-            Log.Info(discoveredTargetCount > 0
+            log.Info(discoveredTargetCount > 0
                 ? $"{discoveredTargetCount} clusters found matching the given scope."
                 : "Could not find any clusters matching the given scope.");
 
