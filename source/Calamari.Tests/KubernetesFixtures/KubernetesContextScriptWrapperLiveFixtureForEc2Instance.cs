@@ -20,7 +20,7 @@ namespace Calamari.Tests.KubernetesFixtures
     /// </remarks>
     [TestFixture]
     [Explicit]
-    public class KubernetesContextScriptWrapperLiveFixtureForAmazon : KubernetesContextScriptWrapperLiveFixtureBase
+    public class KubernetesContextScriptWrapperLiveFixtureForEc2Instance : KubernetesContextScriptWrapperLiveFixtureBase
     {
         string eksIamRolArn;
         string region;
