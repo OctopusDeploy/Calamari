@@ -6,6 +6,7 @@ using Calamari.Kubernetes.Aws;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.AWS;
+using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using SpecialVariables = Calamari.Kubernetes.SpecialVariables;
@@ -300,6 +301,48 @@ namespace Calamari.Tests.KubernetesFixtures
             };
             
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);
+        }
+        
+        [Test]
+        public void DiscoverKubernetesClusterWithNoValidCredentials()
+        {
+            const string accessKeyEnvVar = "AWS_ACCESS_KEY_ID";
+            const string secretKeyEnvVar = "AWS_SECRET_ACCESS_KEY";
+            var originalAccessKey = Environment.GetEnvironmentVariable(accessKeyEnvVar);
+            var originalSecretKey = Environment.GetEnvironmentVariable(secretKeyEnvVar);
+
+            try
+            {
+                Environment.SetEnvironmentVariable(accessKeyEnvVar, "NotValid");
+                Environment.SetEnvironmentVariable(secretKeyEnvVar, "NotValid");
+                
+                var authenticationDetails = new AwsAuthenticationDetails
+                {
+                    Type = "Aws",
+                    Credentials = new AwsCredentials { Type = "worker" },
+                    Role = new AwsAssumedRole { Type = "noAssumedRole" },
+                    Regions = new []{region}
+                };
+                
+                var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
+                Log = serviceMessageCollectorLog;
+                
+                DoDiscovery(authenticationDetails);
+
+                serviceMessageCollectorLog.ServiceMessages.Should().BeEmpty();
+
+                serviceMessageCollectorLog.MessagesErrorFormatted.Should().BeEmpty();
+
+                serviceMessageCollectorLog.StandardError.Should().BeEmpty();
+
+                serviceMessageCollectorLog.MessagesWarnFormatted.Should()
+                                          .Contain("Unable to authorise credentials, see verbose log for details.");
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(accessKeyEnvVar, originalAccessKey);
+                Environment.SetEnvironmentVariable(secretKeyEnvVar, originalSecretKey);
+            }
         }
     }
 }
