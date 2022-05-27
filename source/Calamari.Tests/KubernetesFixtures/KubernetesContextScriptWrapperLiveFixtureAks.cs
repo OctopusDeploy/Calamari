@@ -65,16 +65,17 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             variables.Set(SpecialVariables.ClusterUrl, aksClusterHost);
             
-            using var dir = TemporaryDirectory.Create();
-            using var podServiceAccountToken = new TemporaryFile(Path.Combine(dir.DirectoryPath, "podServiceAccountToken"));
-            using var certificateAuthority = new TemporaryFile(Path.Combine(dir.DirectoryPath, "certificateAuthority"));
-            
-            File.WriteAllText(podServiceAccountToken.FilePath, aksPodServiceAccountToken);
-            File.WriteAllText(certificateAuthority.FilePath, aksClusterCaCertificate);
-            variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
-            variables.Set("Octopus.Action.Kubernetes.CertificateAuthorityPath", certificateAuthority.FilePath);
-            var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script");
+            using (var dir = TemporaryDirectory.Create())
+            using (var podServiceAccountToken = new TemporaryFile(Path.Combine(dir.DirectoryPath, "podServiceAccountToken")))
+            using (var certificateAuthority = new TemporaryFile(Path.Combine(dir.DirectoryPath, "certificateAuthority")))
+            {
+                File.WriteAllText(podServiceAccountToken.FilePath, aksPodServiceAccountToken);
+                File.WriteAllText(certificateAuthority.FilePath, aksClusterCaCertificate);
+                variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
+                variables.Set("Octopus.Action.Kubernetes.CertificateAuthorityPath", certificateAuthority.FilePath);
+                var wrapper = CreateWrapper();
+                TestScript(wrapper, "Test-Script");
+            }
         }
         
         [Test]

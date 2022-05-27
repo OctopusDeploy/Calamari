@@ -33,85 +33,105 @@ namespace Calamari.Tests.KubernetesFixtures
 
         public async Task Install()
         {
-            using var client = new HttpClient();
-            TerraformExecutable = await DownloadCli("Terraform",
-                async () =>
-                {
-                    var json = await client.GetAsync("https://checkpoint-api.hashicorp.com/v1/check/terraform");
-                    json.EnsureSuccessStatusCode();
-                    var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
-                    var downloadBaseUrl = jObject["current_download_url"].Value<string>();
-                    var version = jObject["current_version"].Value<string>();
-                    return (version, downloadBaseUrl);
-                },
-                async (destinationDirectoryName, tuple) =>
-                {
-                    var fileName = GetTerraformFileName(tuple.version);
+            using (var client = new HttpClient())
+            {
+                TerraformExecutable = await DownloadCli("Terraform",
+                    async () =>
+                    {
+                        var json = await client.GetAsync("https://checkpoint-api.hashicorp.com/v1/check/terraform");
+                        json.EnsureSuccessStatusCode();
+                        var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
+                        var downloadBaseUrl = jObject["current_download_url"].Value<string>();
+                        var version = jObject["current_version"].Value<string>();
+                        return (version, downloadBaseUrl);
+                    },
+                    async (destinationDirectoryName, tuple) =>
+                    {
+                        var fileName = GetTerraformFileName(tuple.version);
 
-                    await DownloadTerraform(fileName, client, tuple.data, destinationDirectoryName);
+                        await DownloadTerraform(fileName, client, tuple.data, destinationDirectoryName);
 
-                    var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                    return terraformExecutable;
-                });
+                        var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                        return terraformExecutable;
+                    });
 
-            KubectlExecutable = await DownloadCli("Kubectl",
-                async () =>
-                {
-                    // TODO: Figure out if we want to continue using stable version even if bugs may be introduced.
-                    // var message = await client.GetAsync("https://storage.googleapis.com/kubernetes-release/release/stable.txt");
-                    // message.EnsureSuccessStatusCode();
-                    // return (await message.Content.ReadAsStringAsync(), null);
-                    const string requiredVersion = "v1.23.6";
-                    return await Task.FromResult((requiredVersion, ""));
-                },
-                async (destinationDirectoryName, tuple) =>
-                {
-                    var downloadUrl = GetKubectlDownloadLink(tuple.version);
+                KubectlExecutable = await DownloadCli("Kubectl",
+                    async () =>
+                    {
+                        // TODO: Figure out if we want to continue using stable version even if bugs may be introduced.
+                        // var message = await client.GetAsync("https://storage.googleapis.com/kubernetes-release/release/stable.txt");
+                        // message.EnsureSuccessStatusCode();
+                        // return (await message.Content.ReadAsStringAsync(), null);
+                        const string requiredVersion = "v1.23.6";
+                        return await Task.FromResult((requiredVersion, ""));
+                    },
+                    async (destinationDirectoryName, tuple) =>
+                    {
+                        var downloadUrl = GetKubectlDownloadLink(tuple.version);
 
-                    await Download(Path.Combine(destinationDirectoryName, GetKubectlFileName()), client, downloadUrl);
+                        await Download(Path.Combine(destinationDirectoryName, GetKubectlFileName()),
+                            client,
+                            downloadUrl);
 
-                    var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                    return terraformExecutable;
-                });
+                        var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                        return terraformExecutable;
+                    });
+            }
         }
 
         public async Task InstallAwsAuthenticator()
         {
-            using var client = new HttpClient();
-            AwsAuthenticatorExecutable = await DownloadCli("aws-iam-authenticator",
-                async () =>
-                {
-                    const string requiredVersion = "v0.5.3";
-                    client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
-                    var json = await client.GetAsync($"https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases/tags/{requiredVersion}");
-                    json.EnsureSuccessStatusCode();
-                    var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
-                    var downloadUrl = jObject["assets"].Children().FirstOrDefault(token => token["name"].Value<string>().EndsWith(GetAWSAuthenticatorFileNameEndsWith()))?["browser_download_url"].Value<string>();
-                    return (requiredVersion, downloadUrl);
-                },
-                async (destinationDirectoryName, tuple) =>
-                {
-                    await Download(Path.Combine(destinationDirectoryName, GetAWSAuthenticatorFileName()), client, tuple.data);
+            using (var client = new HttpClient())
+            {
+                AwsAuthenticatorExecutable = await DownloadCli("aws-iam-authenticator",
+                    async () =>
+                    {
+                        const string requiredVersion = "v0.5.3";
+                        client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
+                        var json = await client.GetAsync(
+                            $"https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases/tags/{requiredVersion}");
+                        json.EnsureSuccessStatusCode();
+                        var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
+                        var downloadUrl =
+                            jObject["assets"]
+                                .Children()
+                                .FirstOrDefault(token =>
+                                    token["name"].Value<string>().EndsWith(GetAWSAuthenticatorFileNameEndsWith()))?[
+                                    "browser_download_url"]
+                                .Value<string>();
+                        return (requiredVersion, downloadUrl);
+                    },
+                    async (destinationDirectoryName, tuple) =>
+                    {
+                        await Download(Path.Combine(destinationDirectoryName, GetAWSAuthenticatorFileName()),
+                            client,
+                            tuple.data);
 
-                    var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                    return terraformExecutable;
-                });
+                        var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                        return terraformExecutable;
+                    });
+            }
         }
 
         public async Task InstallGCloud()
         {
-            using var client = new HttpClient();
-            GcloudExecutable = await DownloadCli("gcloud",
-                () => Task.FromResult<(string, string)>(("346.0.0", string.Empty)),
-                async (destinationDirectoryName, tuple) =>
-                {
-                    var downloadUrl = GetGcloudDownloadLink(tuple.version);
-                    var fileName = GetGcloudZipFileName(tuple.version);
+            using (var client = new HttpClient())
+            {
+                GcloudExecutable = await DownloadCli("gcloud",
+                    () => Task.FromResult<(string, string)>(("346.0.0", string.Empty)),
+                    async (destinationDirectoryName, tuple) =>
+                    {
+                        var downloadUrl = GetGcloudDownloadLink(tuple.version);
+                        var fileName = GetGcloudZipFileName(tuple.version);
 
-                    await DownloadGcloud(GetGcloudZipFileName(tuple.version), client, downloadUrl, destinationDirectoryName);
+                        await DownloadGcloud(GetGcloudZipFileName(tuple.version),
+                            client,
+                            downloadUrl,
+                            destinationDirectoryName);
 
-                    return GetGcloudExecutablePath(destinationDirectoryName);
-                });
+                        return GetGcloudExecutablePath(destinationDirectoryName);
+                    });
+            }
         }
 
         static void AddExecutePermission(string exePath)

@@ -148,17 +148,19 @@ namespace Calamari.Tests.KubernetesFixtures
             params (string key, string value)[] otherVariables)
             where TAuthenticationDetails : class, ITargetDiscoveryAuthenticationDetails
         {
-            using var variablesFile = new TemporaryFile(Path.GetTempFileName());
-            variables.Add(KubernetesDiscoveryCommand.ContextVariableName, JsonConvert.SerializeObject(discoveryContext));
-            foreach (var (key, value) in otherVariables)
-                variables.Add(key, value);
+            using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
+            {
+                variables.Add(KubernetesDiscoveryCommand.ContextVariableName, JsonConvert.SerializeObject(discoveryContext));
+                foreach (var (key, value) in otherVariables)
+                    variables.Add(key, value);
                 
-            variables.Save(variablesFile.FilePath);
+                variables.Save(variablesFile.FilePath);
 
-            return InvokeInProcess(Calamari()
-                                   .Action(KubernetesDiscoveryCommand.Name)
-                                   .Argument("variables", variablesFile.FilePath)
-                                   .Argument("extensions", string.Join(',', extensions)));
+                return InvokeInProcess(Calamari()
+                                       .Action(KubernetesDiscoveryCommand.Name)
+                                       .Argument("variables", variablesFile.FilePath)
+                                       .Argument("extensions", string.Join(',', extensions)));
+            }
         }
 
         protected class ServiceMessageCollectorLog : InMemoryLog
