@@ -56,9 +56,19 @@ namespace Calamari.Kubernetes.Commands
                 return ExitStatus.Success;
             }
 
-            var clusters = discoverer.DiscoverClusters(json).ToList();
+            List<KubernetesCluster> clusters;
+            try
+            {
+                clusters = discoverer.DiscoverClusters(json).ToList();
+            }
+            catch (Exception e)
+            {
+                log.Warn($"Unable to discover clusters due to '{type}' specific error, see Verbose log for details.");
+                log.Verbose($"Error occured during cluster discovery for {type}: {e}");
+                return ExitStatus.Success;
+            }
 
-            Log.Verbose($"Found {clusters.Count} candidate clusters.");
+            log.Verbose($"Found {clusters.Count} candidate clusters.");
             var discoveredTargetCount = 0;
             foreach (var cluster in clusters)
             {
@@ -66,20 +76,20 @@ namespace Calamari.Kubernetes.Commands
                 if (matchResult.IsSuccess)
                 {
                     discoveredTargetCount++;
-                    Log.Info($"Discovered matching cluster: {cluster.Name}");
+                    log.Info($"Discovered matching cluster: {cluster.Name}");
                     WriteTargetCreationServiceMessage(cluster, matchResult, scope);
                 }
                 else
                 {
-                    Log.Verbose($"Cluster {cluster.Name} does not match target requirements:");
+                    log.Verbose($"Cluster {cluster.Name} does not match target requirements:");
                     foreach (var reason in matchResult.FailureReasons)
                     {
-                        Log.Verbose($"- {reason}");
+                        log.Verbose($"- {reason}");
                     }
                 }
             }
 
-            Log.Info(discoveredTargetCount > 0
+            log.Info(discoveredTargetCount > 0
                 ? $"{discoveredTargetCount} clusters found matching the given scope."
                 : "Could not find any clusters matching the given scope.");
 
@@ -90,27 +100,32 @@ namespace Calamari.Kubernetes.Commands
         {
             var parameters = new Dictionary<string, string> {
                 { "name", cluster.Name },
-                { "clusterName", cluster.Name },
-                { "clusterUrl", "" },
+                { "clusterName", cluster.ClusterName },
+                { "clusterUrl", cluster.Endpoint },
                 { "clusterResourceGroup", cluster.ResourceGroupName },
-                { "clusterAdminLogin", "False" },
-                { "namespace", "" },
-                { "skipTlsVerification", "" },
+                { "clusterAdminLogin", null },
+                { "namespace", null },
+                { "skipTlsVerification", bool.TrueString },
+                { "octopusDefaultWorkerPoolIdOrName", cluster.WorkerPool ?? scope.WorkerPoolId },
                 { "octopusAccountIdOrName", cluster.AccountId },
-                { "octopusClientCertificateIdOrName", "" },
-                { "octopusServerCertificateIdOrName", "" },
+                { "octopusClientCertificateIdOrName", null },
+                { "octopusServerCertificateIdOrName", null },
                 { "octopusRoles", matchResult.Role },
-                { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
-                { "healthCheckContainerImageFeedIdOrName", "" },
-                { "healthCheckContainerImage", "" },
-                { "updateIfExisting", "True" },
-                { "isDynamic", "True" },
-                { "clusterProject", "" },
-                { "clusterRegion", "" },
-                { "clusterZone", "" },
-                { "clusterImpersonateServiceAccount", "False" },
-                { "clusterServiceAccountEmails", "" },
-                { "clusterUseVmServiceAccount", "False" },
+                { "healthCheckContainerImageFeedIdOrName", null },
+                { "healthCheckContainerImage", null },
+                { "updateIfExisting", bool.TrueString },
+                { "isDynamic", bool.TrueString },
+                { "clusterProject", null },
+                { "clusterRegion", null },
+                { "clusterZone", null },
+                { "clusterImpersonateServiceAccount", null },
+                { "clusterServiceAccountEmails", null },
+                { "clusterUseVmServiceAccount", null },
+                { "awsAssumeRole", (cluster.AwsAssumeRole != null).ToString() },
+                { "awsAssumeRoleArn", cluster.AwsAssumeRole?.Arn },
+                { "awsAssumeRoleSession", cluster.AwsAssumeRole?.Session },
+                { "awsAssumeRoleSessionDurationSeconds", cluster.AwsAssumeRole?.SessionDuration?.ToString() },
+                { "awsAssumeRoleExternalId", cluster.AwsAssumeRole?.ExternalId }
             };
 
             var serviceMessage = new ServiceMessage(

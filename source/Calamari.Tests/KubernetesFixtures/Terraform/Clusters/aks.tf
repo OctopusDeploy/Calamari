@@ -11,7 +11,7 @@ resource "azurerm_kubernetes_cluster" "default" {
   
   tags = {
     octopus-environment = "Staging"
-    octopus-role = "eks-discovery-role"
+    octopus-role = "discovery-role"
   }
 
   default_node_pool {
