@@ -10,6 +10,10 @@ variable "aws_region" {
   type = string
 }
 
+variable "iam_role_arn"{
+  type = string
+}
+
 variable "aws_vpc_id" {
   type = string
 }

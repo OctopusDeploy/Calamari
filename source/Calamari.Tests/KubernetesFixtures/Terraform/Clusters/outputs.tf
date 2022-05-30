@@ -7,6 +7,10 @@ output "eks_secret_key" {
   sensitive = true
 }
 
+output "eks_iam_role_arn" {
+  value = aws_iam_role.user.arn
+}
+
 output "eks_cluster_endpoint" {
   description = "Endpoint for EKS control plane."
   value       = aws_eks_cluster.default.endpoint
@@ -20,6 +24,16 @@ output "eks_cluster_ca_certificate" {
 output "eks_cluster_name" {
   description = "EKS name."
   value       = aws_eks_cluster.default.name
+}
+
+output "eks_cluster_arn" {
+  description = "EKS ARN"
+  value       = aws_eks_cluster.default.arn
+}
+
+output "eks_cluster_url" {
+  description = "EKS Cluster Url"
+  value       = aws_eks_cluster.default.endpoint
 }
 
 output "aws_vpc_id" {

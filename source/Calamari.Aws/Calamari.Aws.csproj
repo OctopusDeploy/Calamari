@@ -27,8 +27,9 @@
     <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="AWSSDK.EKS" Version="3.7.13.24" />
     <PackageReference Include="AWSSDK.CloudFormation" Version="3.7.9.14" />
-    <PackageReference Include="AWSSDK.Core" Version="3.7.8.10" />
+    <PackageReference Include="AWSSDK.Core" Version="3.7.11.1" />
     <PackageReference Include="AWSSDK.IdentityManagement" Version="3.7.2.116" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.8.8" />
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.1.128" />

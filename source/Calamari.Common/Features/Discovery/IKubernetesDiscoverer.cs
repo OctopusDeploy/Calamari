@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Discovery
 {

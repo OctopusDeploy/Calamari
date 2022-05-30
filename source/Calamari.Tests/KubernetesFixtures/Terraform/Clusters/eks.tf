@@ -75,6 +75,11 @@ resource "aws_eks_cluster" "default" {
   name     = "${random_pet.prefix.id}-eks"
   role_arn = aws_iam_role.cluster.arn
 
+  tags = {
+    octopus-environment = "Staging"
+    octopus-role = "discovery-role"
+  }
+
   vpc_config {
     endpoint_private_access = true
     public_access_cidrs     = ["0.0.0.0/0"]
@@ -86,7 +91,7 @@ resource "aws_eks_cluster" "default" {
 data "aws_iam_policy_document" "cluster" {
   statement {
     actions = [
-      "sts:AssumeRole",
+      "sts:AssumeRole"
     ]
     principals {
       type        = "Service"
@@ -114,13 +119,17 @@ data "aws_iam_policy_document" "userRole" {
       type        = "AWS"
       identifiers = [aws_iam_user.default.arn]
     }
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.ec2.arn]
+    }
   }
 }
 
 data "aws_iam_policy_document" "ec2Role" {
   statement {
     actions = [
-      "sts:AssumeRole"
+      "sts:AssumeRole",
     ]
     principals {
       type        = "Service"
@@ -148,14 +157,14 @@ resource "aws_iam_role" "user" {
 data "aws_iam_policy_document" "user" {
   statement {
     actions = [
+      "sts:AssumeRole",
+      "eks:ListClusters",
       "eks:ListTagsForResource",
       "eks:AccessKubernetesApi",
       "eks:DescribeCluster",
     ]
-
-    resources = [
-      data.aws_eks_cluster.default.arn,
-    ]
+    effect = "Allow"
+    resources = ["*"]
   }
 }
 

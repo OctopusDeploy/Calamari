@@ -27,6 +27,8 @@ data "template_file" "script" {
     cluster_name = data.aws_eks_cluster.default.name,
     region       = var.aws_region,
     endpoint     = data.aws_eks_cluster.default.endpoint,
+    iam_role_arn = var.iam_role_arn,
+    cluster_arn = data.aws_eks_cluster.default.arn,
   }
 }
 
