@@ -18,6 +18,7 @@ namespace Calamari.Tests.KubernetesFixtures
     public abstract class KubernetesContextScriptWrapperLiveFixture: KubernetesContextScriptWrapperLiveFixtureBase
     {
         protected const string KubeCtlExecutableVariableName = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
+        protected const string KubeConfigFileName = "kubeconfig.tpl";
         
         InstallTools installTools;
 
@@ -149,6 +150,14 @@ namespace Calamari.Tests.KubernetesFixtures
                 Directory.Delete(workingFolder, true);
             
             Directory.CreateDirectory(workingFolder);
+
+            // If required by the terraform script,
+            // the kube config file will be in the parent folder.
+            var kubeConfigFile = Path.Join(filesSource, "..", KubeConfigFileName);
+            if (File.Exists(kubeConfigFile))
+            {
+                File.Copy(kubeConfigFile, Path.Combine(workingFolder, KubeConfigFileName), true);
+            }
 
             foreach (var file in Directory.EnumerateFiles(Path.Combine(testFolder, filesSource)))
             {
