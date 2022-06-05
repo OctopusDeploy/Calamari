@@ -86,11 +86,11 @@ namespace Calamari.Deployment.PackageRetention.Model
                     {
                         if (string.IsNullOrWhiteSpace(package.Path.Value) || !fileSystem.FileExists(package.Path.Value))
                         {
-                            log.Info($"Package at {package.Path} not found.");
+                            log.Verbose($"Package at {package.Path} not found.");
                         }
                         else
                         {
-                            Log.Info($"Removing package file '{package.Path}'");
+                            Log.Verbose($"Removing package file '{package.Path}'");
                             fileSystem.DeleteFile(package.Path.Value, FailureOptions.IgnoreFailure);
                         }
 
