@@ -14,8 +14,8 @@ namespace Calamari.Deployment.PackageRetention.Caching
     public class PercentFreeDiskSpacePackageCleaner : IRetentionAlgorithm
     {
         const string PackageRetentionPercentFreeDiskSpace = "OctopusPackageRetentionPercentFreeDiskSpace";
-        const int DefaultPercentFreeDiskSpace = 10;
-        const int FreeSpacePercentBuffer = 20;
+        const int DefaultPercentFreeDiskSpace = 20;
+        const int FreeSpacePercentBuffer = 30;
         readonly ISortJournalEntries sortJournalEntries;
         readonly IVariables variables;
         readonly ILog log;

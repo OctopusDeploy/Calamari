@@ -42,7 +42,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenFreeingUpAPackageWorthOfSpace_OnePackageIsMarkedForRemoval()
         {
-            var fileSystem = new FileSystemThatHasSpace(500, 10000);
+            var fileSystem = new FileSystemThatHasSpace(500, 5000);
             var log = new InMemoryLog();
             var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), Substitute.For<IVariables>(), log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
@@ -52,7 +52,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenFreeingUpTwoPackagesWorthOfSpace_TwoPackagesAreMarkedForRemoval()
         {
-            var fileSystem = new FileSystemThatHasSpace(500, 20000);
+            var fileSystem = new FileSystemThatHasSpace(1000, 10000);
             var log = new InMemoryLog();
             var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), Substitute.For<IVariables>(), log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
