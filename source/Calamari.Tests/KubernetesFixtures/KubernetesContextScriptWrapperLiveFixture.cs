@@ -153,15 +153,15 @@ namespace Calamari.Tests.KubernetesFixtures
 
             // If required by the terraform script,
             // the kube config file will be in the parent folder.
-            var kubeConfigFile = Path.Join(filesSource, "..", KubeConfigFileName);
+            var kubeConfigFile = Path.Join(Directory.GetParent(filesSource).FullName, KubeConfigFileName);
             if (File.Exists(kubeConfigFile))
             {
-                File.Copy(kubeConfigFile, Path.Combine(workingFolder, KubeConfigFileName), true);
+                File.Copy(kubeConfigFile, Path.Combine(workingFolder, KubeConfigFileName), overwrite: true);
             }
 
             foreach (var file in Directory.EnumerateFiles(Path.Combine(testFolder, filesSource)))
             {
-                File.Copy(file, Path.Combine(workingFolder, Path.GetFileName(file)), true);
+                File.Copy(file, Path.Combine(workingFolder, Path.GetFileName(file)), overwrite: true);
             }
 
             return workingFolder;
