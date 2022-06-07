@@ -157,12 +157,12 @@ namespace Calamari.Tests.KubernetesFixtures
             if (File.Exists(kubeConfigFile))
             {
                 var destination = Path.Combine(workingFolder, KubeConfigFileName);
-                Console.WriteLine($"Copying {kubeConfigFile} to {destination}");
+                TestContext.Progress.WriteLine($"Copying {kubeConfigFile} to {destination}");
                 File.Copy(kubeConfigFile, destination, overwrite: true);
             }
             else
             {
-                Console.WriteLine($"{kubeConfigFile} not found, so not copying.");
+                TestContext.Progress.WriteLine($"{kubeConfigFile} not found, so not copying.");
             }
 
             foreach (var file in Directory.EnumerateFiles(Path.Combine(testFolder, filesSource)))
