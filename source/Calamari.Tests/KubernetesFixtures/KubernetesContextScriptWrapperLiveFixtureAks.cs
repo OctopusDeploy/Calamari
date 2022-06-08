@@ -160,6 +160,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     { "octopusRoles", "discovery-role" },
                     { "updateIfExisting", bool.TrueString },
                     { "isDynamic", bool.TrueString },
+                    { "awsUseWorkerCredentials", bool.FalseString },
                     { "awsAssumeRole", bool.FalseString },
                 });
         

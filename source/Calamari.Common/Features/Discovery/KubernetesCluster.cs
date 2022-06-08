@@ -19,7 +19,8 @@ namespace Calamari.Common.Features.Discovery
                 accountId,
                 assumeRole,
                 workerPool,
-                tags);
+                tags,
+                accountId == null);
         }
 
         public static KubernetesCluster CreateForAks(string name,
@@ -45,7 +46,8 @@ namespace Calamari.Common.Features.Discovery
             string? accountId, 
             AwsAssumeRole? awsAssumeRole, 
             string? workerPool,
-            TargetTags tags)
+            TargetTags tags,
+            bool awsUseWorkerCredentials = false)
         {
             Name = name;
             ClusterName = clusterName;
@@ -55,6 +57,7 @@ namespace Calamari.Common.Features.Discovery
             AwsAssumeRole = awsAssumeRole;
             WorkerPool = workerPool;
             Tags = tags;
+            AwsUseWorkerCredentials = awsUseWorkerCredentials;
         }
 
         public string? WorkerPool { get; }
@@ -68,6 +71,8 @@ namespace Calamari.Common.Features.Discovery
         public string? Endpoint { get; }
         
         public string? AccountId { get; }
+        
+        public bool AwsUseWorkerCredentials { get; }
         
         public AwsAssumeRole? AwsAssumeRole { get; }
         
