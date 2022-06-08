@@ -33,7 +33,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         {
             if (File.Exists(journalPath))
             {
-                var json = File.ReadAllText(journalPath);
+                var json = fileSystem.ReadFile(journalPath);
 
                 if (TryDeserializeJournal(json, out var journalContents))
                 {
@@ -74,7 +74,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             //save to temp file first
             var tempFilePath = $"{journalPath}.temp.{Guid.NewGuid()}.json";
 
-            fileSystem.WriteAllText(tempFilePath, json, Encoding.Default);
+            fileSystem.WriteAllText(tempFilePath, json, Encoding.UTF8);
             fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
         }
 
