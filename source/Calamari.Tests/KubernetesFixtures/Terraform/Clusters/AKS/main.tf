@@ -1,7 +1,3 @@
-variable "tests_source_dir" {
-  type = string
-}
-
 variable "test_namespace" {
   type = string
 }
