@@ -121,7 +121,7 @@ namespace Calamari.Kubernetes.Commands
                 { "clusterImpersonateServiceAccount", null },
                 { "clusterServiceAccountEmails", null },
                 { "clusterUseVmServiceAccount", null },
-                { "awsUserWorkerCredentials", (cluster.AccountId == null).ToString() },
+                { "awsUseWorkerCredentials", cluster.AwsUseWorkerCredentials.ToString() },
                 { "awsAssumeRole", (cluster.AwsAssumeRole != null).ToString() },
                 { "awsAssumeRoleArn", cluster.AwsAssumeRole?.Arn },
                 { "awsAssumeRoleSession", cluster.AwsAssumeRole?.Session },

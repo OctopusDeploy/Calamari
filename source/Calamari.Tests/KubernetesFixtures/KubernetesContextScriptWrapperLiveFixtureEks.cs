@@ -161,7 +161,7 @@ namespace Calamari.Tests.KubernetesFixtures
                         { "octopusRoles", "discovery-role" },
                         { "updateIfExisting", bool.TrueString },
                         { "isDynamic", bool.TrueString },
-                        { "awsUserWorkerCredentials", bool.TrueString },
+                        { "awsUseWorkerCredentials", bool.TrueString },
                         { "awsAssumeRole", bool.TrueString },
                         { "awsAssumeRoleArn", eksIamRolArn },
                     };
@@ -207,7 +207,7 @@ namespace Calamari.Tests.KubernetesFixtures
                         { "octopusRoles", "discovery-role" },
                         { "updateIfExisting", bool.TrueString },
                         { "isDynamic", bool.TrueString },
-                        { "awsUserWorkerCredentials", bool.TrueString },
+                        { "awsUseWorkerCredentials", bool.TrueString },
                         { "awsAssumeRole", bool.FalseString }
                     };
 
@@ -252,7 +252,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "octopusRoles", "discovery-role" },
                 { "updateIfExisting", bool.TrueString },
                 { "isDynamic", bool.TrueString },
-                { "awsUserWorkerCredentials", bool.FalseString },
+                { "awsUseWorkerCredentials", bool.FalseString },
                 { "awsAssumeRole", bool.FalseString }
             };
             
@@ -297,7 +297,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "octopusRoles", "discovery-role" },
                 { "updateIfExisting", bool.TrueString },
                 { "isDynamic", bool.TrueString },
-                { "awsUserWorkerCredentials", bool.FalseString },
+                { "awsUseWorkerCredentials", bool.FalseString },
                 { "awsAssumeRole", bool.TrueString },
                 { "awsAssumeRoleArn", eksIamRolArn },
                 { "awsAssumeRoleSession", "ThisIsASessionName" },
