@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
-using Newtonsoft.Json;
 
 namespace Calamari.Azure.Kubernetes.Discovery
 {
@@ -30,8 +28,10 @@ namespace Calamari.Azure.Kubernetes.Discovery
             Log.Verbose($"  Client ID: {account.ClientId}");
             var azureClient = account.CreateAzureClient();
 
+            // The Fqdn stands for Fully Qualified Domain Name
             return azureClient.KubernetesClusters.List()
-                              .Select(c => KubernetesCluster.CreateForAks(c.Name,
+                              .Select(c => KubernetesCluster.CreateForAks(c.Fqdn,
+                                  c.Name,
                                   c.ResourceGroupName,
                                   authenticationDetails.AccountId,
                                   c.Tags.ToTargetTags()));

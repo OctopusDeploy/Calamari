@@ -27,6 +27,7 @@ namespace Calamari.Tests.KubernetesFixtures
         string aksClusterName;
         string azurermResourceGroup;
         string aksPodServiceAccountToken;
+        string aksClusterFqdn;
 
         protected override string KubernetesCloudProvider => "AKS";
 
@@ -42,6 +43,7 @@ namespace Calamari.Tests.KubernetesFixtures
             aksClusterClientKey = jsonOutput["aks_cluster_client_key"]["value"].Value<string>();
             aksClusterCaCertificate = jsonOutput["aks_cluster_ca_certificate"]["value"].Value<string>();
             aksClusterName = jsonOutput["aks_cluster_name"]["value"].Value<string>();
+            aksClusterFqdn = jsonOutput["aks_cluster_fqdn"]["value"].Value<string>();
             aksPodServiceAccountToken = jsonOutput["aks_service_account_token"]["value"].Value<string>();
             azurermResourceGroup = jsonOutput["aks_rg_name"]["value"].Value<string>();
         }
@@ -151,7 +153,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
                 new Dictionary<string, string>
                 {
-                    { "name", aksClusterName },
+                    { "name", aksClusterFqdn },
                     { "clusterName", aksClusterName },
                     { "clusterResourceGroup", azurermResourceGroup },
                     { "skipTlsVerification", bool.TrueString },
