@@ -167,7 +167,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 });
         
             serviceMessageCollectorLog.ServiceMessages.Should()
-                                      .ContainSingle(s => s.Properties["name"] == aksClusterName)
+                                      .ContainSingle(s => s.Properties["name"] == aksClusterFqdn)
                                       .Which.Should()
                                       .BeEquivalentTo(expectedServiceMessage);
         }
