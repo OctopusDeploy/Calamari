@@ -27,7 +27,7 @@ namespace Calamari.Tests.KubernetesFixtures
         string aksClusterName;
         string azurermResourceGroup;
         string aksPodServiceAccountToken;
-        string aksClusterFqdn;
+        string azureSubscriptionId;
 
         protected override string KubernetesCloudProvider => "AKS";
 
@@ -43,16 +43,16 @@ namespace Calamari.Tests.KubernetesFixtures
             aksClusterClientKey = jsonOutput["aks_cluster_client_key"]["value"].Value<string>();
             aksClusterCaCertificate = jsonOutput["aks_cluster_ca_certificate"]["value"].Value<string>();
             aksClusterName = jsonOutput["aks_cluster_name"]["value"].Value<string>();
-            aksClusterFqdn = jsonOutput["aks_cluster_fqdn"]["value"].Value<string>();
             aksPodServiceAccountToken = jsonOutput["aks_service_account_token"]["value"].Value<string>();
             azurermResourceGroup = jsonOutput["aks_rg_name"]["value"].Value<string>();
         }
         
         protected override Dictionary<string, string> GetEnvironmentVars()
         {
+            azureSubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             return new Dictionary<string, string>()
             {
-                { "ARM_SUBSCRIPTION_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionId) },
+                { "ARM_SUBSCRIPTION_ID", azureSubscriptionId},
                 { "ARM_CLIENT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId) },
                 { "ARM_CLIENT_SECRET", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword) },
                 { "ARM_TENANT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId) },
@@ -148,12 +148,13 @@ namespace Calamari.Tests.KubernetesFixtures
                 );
             
             result.AssertSuccess();
-        
+
+            var targetName = $"aks/{azureSubscriptionId}/{azurermResourceGroup}/{aksClusterName}";
             var expectedServiceMessage = new ServiceMessage(
                 KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
                 new Dictionary<string, string>
                 {
-                    { "name", aksClusterFqdn },
+                    { "name", targetName },
                     { "clusterName", aksClusterName },
                     { "clusterResourceGroup", azurermResourceGroup },
                     { "skipTlsVerification", bool.TrueString },
@@ -167,7 +168,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 });
         
             serviceMessageCollectorLog.ServiceMessages.Should()
-                                      .ContainSingle(s => s.Properties["name"] == aksClusterFqdn)
+                                      .ContainSingle(s => s.Properties["name"] == targetName)
                                       .Which.Should()
                                       .BeEquivalentTo(expectedServiceMessage);
         }

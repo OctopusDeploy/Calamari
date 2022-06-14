@@ -33,11 +33,6 @@ output "aks_cluster_name" {
   value       = azurerm_kubernetes_cluster.default.name
 }
 
-output "aks_cluster_fqdn" {
-  description = "AKS Fully Qualified Domain Name"
-  value = azurerm_kubernetes_cluster.default.fqdn
-}
-
 output "aks_rg_name" {
   description = "RG name."
   value       = azurerm_resource_group.default.name

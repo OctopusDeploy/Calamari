@@ -30,7 +30,8 @@ namespace Calamari.Azure.Kubernetes.Discovery
 
             // The Fqdn stands for Fully Qualified Domain Name
             return azureClient.KubernetesClusters.List()
-                              .Select(c => KubernetesCluster.CreateForAks(c.Fqdn,
+                              .Select(c => KubernetesCluster.CreateForAks(
+                                  $"aks/{account.SubscriptionNumber}/{c.ResourceGroupName}/{c.Name}",
                                   c.Name,
                                   c.ResourceGroupName,
                                   authenticationDetails.AccountId,
