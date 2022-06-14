@@ -24,12 +24,13 @@ namespace Calamari.Common.Features.Discovery
         }
 
         public static KubernetesCluster CreateForAks(string name,
+            string clusterName,
             string resourceGroupName,
             string accountId,
             TargetTags tags)
         {
             return new KubernetesCluster(name,
-                name,
+                clusterName,
                 resourceGroupName,
                 null,
                 accountId,

@@ -27,6 +27,7 @@ namespace Calamari.Tests.KubernetesFixtures
         string aksClusterName;
         string azurermResourceGroup;
         string aksPodServiceAccountToken;
+        string azureSubscriptionId;
 
         protected override string KubernetesCloudProvider => "AKS";
 
@@ -48,9 +49,10 @@ namespace Calamari.Tests.KubernetesFixtures
         
         protected override Dictionary<string, string> GetEnvironmentVars()
         {
+            azureSubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             return new Dictionary<string, string>()
             {
-                { "ARM_SUBSCRIPTION_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionId) },
+                { "ARM_SUBSCRIPTION_ID", azureSubscriptionId},
                 { "ARM_CLIENT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId) },
                 { "ARM_CLIENT_SECRET", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword) },
                 { "ARM_TENANT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId) },
@@ -146,12 +148,13 @@ namespace Calamari.Tests.KubernetesFixtures
                 );
             
             result.AssertSuccess();
-        
+
+            var targetName = $"aks/{azureSubscriptionId}/{azurermResourceGroup}/{aksClusterName}";
             var expectedServiceMessage = new ServiceMessage(
                 KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
                 new Dictionary<string, string>
                 {
-                    { "name", aksClusterName },
+                    { "name", targetName },
                     { "clusterName", aksClusterName },
                     { "clusterResourceGroup", azurermResourceGroup },
                     { "skipTlsVerification", bool.TrueString },
@@ -165,7 +168,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 });
         
             serviceMessageCollectorLog.ServiceMessages.Should()
-                                      .ContainSingle(s => s.Properties["name"] == aksClusterName)
+                                      .ContainSingle(s => s.Properties["name"] == targetName)
                                       .Which.Should()
                                       .BeEquivalentTo(expectedServiceMessage);
         }

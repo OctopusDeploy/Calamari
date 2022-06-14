@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
-using Newtonsoft.Json;
 
 namespace Calamari.Azure.Kubernetes.Discovery
 {
@@ -29,9 +27,11 @@ namespace Calamari.Azure.Kubernetes.Discovery
             Log.Verbose($"  Tenant ID: {account.TenantId}");
             Log.Verbose($"  Client ID: {account.ClientId}");
             var azureClient = account.CreateAzureClient();
-
+            
             return azureClient.KubernetesClusters.List()
-                              .Select(c => KubernetesCluster.CreateForAks(c.Name,
+                              .Select(c => KubernetesCluster.CreateForAks(
+                                  $"aks/{account.SubscriptionNumber}/{c.ResourceGroupName}/{c.Name}",
+                                  c.Name,
                                   c.ResourceGroupName,
                                   authenticationDetails.AccountId,
                                   c.Tags.ToTargetTags()));
