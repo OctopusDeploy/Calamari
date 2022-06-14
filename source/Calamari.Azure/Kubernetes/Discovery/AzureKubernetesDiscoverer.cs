@@ -27,8 +27,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
             Log.Verbose($"  Tenant ID: {account.TenantId}");
             Log.Verbose($"  Client ID: {account.ClientId}");
             var azureClient = account.CreateAzureClient();
-
-            // The Fqdn stands for Fully Qualified Domain Name
+            
             return azureClient.KubernetesClusters.List()
                               .Select(c => KubernetesCluster.CreateForAks(
                                   $"aks/{account.SubscriptionNumber}/{c.ResourceGroupName}/{c.Name}",
