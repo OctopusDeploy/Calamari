@@ -580,7 +580,7 @@ namespace Calamari.Kubernetes
                                              "namespace",
                                              @namespace))
                 {
-                    ExecuteKubectlCommand("create", "namespace", @namespace);
+                    TryExecuteKubectlCommand("create", "namespace", @namespace);
                 }
             }
 
