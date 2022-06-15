@@ -1,4 +1,5 @@
 ﻿using System;
+using Azure.ResourceManager;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 
 namespace Calamari.Azure
@@ -15,11 +16,11 @@ namespace Calamari.Azure
             if (string.IsNullOrEmpty(environment) || environment == "AzureCloud") // This environment name is defined in Sashimi.Azure.Accounts.AzureEnvironmentsListAction
                 Value = Global.Value;                                             // We interpret it as the normal Azure environment for historical reasons)
 
-            azureEnvironment = AzureEnvironment.FromName(Value) ??
+            azureSdkEnvironment = AzureEnvironment.FromName(Value) ??
                                throw new InvalidOperationException($"Unknown environment name {Value}");
         }
 
-        private readonly AzureEnvironment azureEnvironment;
+        private readonly AzureEnvironment azureSdkEnvironment;
         public string Value { get; }
 
         public static readonly AzureKnownEnvironment Global = new AzureKnownEnvironment("AzureGlobalCloud");
@@ -29,7 +30,18 @@ namespace Calamari.Azure
 
         public AzureEnvironment AsAzureSDKEnvironment()
         {
-            return azureEnvironment;
+            return azureSdkEnvironment;
         }
+
+        public ArmEnvironment AsAzureArmEnvironment() => ToArmEnvironment(Value);
+
+        private static ArmEnvironment ToArmEnvironment(string name) => name switch
+        {
+            "AzureGlobalCloud" => ArmEnvironment.AzurePublicCloud,
+            "AzureChinaCloud" => ArmEnvironment.AzureChina,
+            "AzureGermanCloud" => ArmEnvironment.AzureGermany,
+            "AzureUSGovernment" => ArmEnvironment.AzureGovernment,
+            _ => throw  new InvalidOperationException($"ARM Environment {name} is not a known Azure Environment name.")
+        };
     }
 }
