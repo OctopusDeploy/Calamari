@@ -62,7 +62,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", gkeClusterCaCertificate);
             var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script");
+            TestScriptAndVerifyCluster(wrapper, "Test-Script");
         }
 
         [Test]
@@ -77,6 +77,23 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.GoogleCloud.Project", gkeProject);
             variables.Set("Octopus.Action.GoogleCloud.Zone", gkeLocation);
             var wrapper = CreateWrapper();
+            TestScriptAndVerifyCluster(wrapper, "Test-Script");
+        }
+
+        [Test]
+        public void UnreachableK8Cluster_ShouldExecuteTargetScript()
+        {
+            const string unreachableClusterUrl = "https://example.kubernetes.com";
+            const string certificateAuthority = "myauthority";
+
+            variables.Set(SpecialVariables.ClusterUrl, unreachableClusterUrl);
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
+            variables.Set(Deployment.SpecialVariables.Account.Token, gkeToken);
+            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
+            variables.Set($"{certificateAuthority}.CertificatePem", gkeClusterCaCertificate);
+
+            var wrapper = CreateWrapper();
+
             TestScript(wrapper, "Test-Script");
         }
     }
