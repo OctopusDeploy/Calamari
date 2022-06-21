@@ -208,7 +208,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", gkeClusterCaCertificate);
             var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script");
+            TestScriptAndVerifyCluster(wrapper, "Test-Script");
         }
 
         [Test]
@@ -224,7 +224,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
                 variables.Set("Octopus.Action.Kubernetes.CertificateAuthorityPath", certificateAuthority.FilePath);
                 var wrapper = CreateWrapper();
-                TestScript(wrapper, "Test-Script");
+                TestScriptAndVerifyCluster(wrapper, "Test-Script");
             }
         }
 
@@ -240,7 +240,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
             variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
             var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script");
+            TestScriptAndVerifyCluster(wrapper, "Test-Script");
         }
 
         [Test]
@@ -255,7 +255,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.GoogleCloud.Project", gkeProject);
             variables.Set("Octopus.Action.GoogleCloud.Zone", gkeLocation);
             var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script");
+            TestScriptAndVerifyCluster(wrapper, "Test-Script");
         }
 
         [Test]
@@ -280,7 +280,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var kubectlExecutable = variables.Get(KubeCtlExecutableVariableName) ??
                 throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
             
-            TestScript(wrapper, "Test-Script", kubectlExecutable);
+            TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
         }
 
         [Test, Ignore("Test currently doesn't assert anything so it's not useful, to be investigated and updated.")]
@@ -320,9 +320,30 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{clientCert}.CertificatePem", aksClusterClientCertificate);
             variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
             var wrapper = CreateWrapper();
+            TestScriptAndVerifyCluster(wrapper, "Test-Script");
+        }
+
+        [Test]
+        public void UnreachableK8Cluster_ShouldExecuteTargetScript()
+        {
+            const string account = "eks_account";
+            const string certificateAuthority = "myauthority";
+            const string unreachableClusterUrl = "https://example.kubernetes.com";
+            
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(SpecialVariables.ClusterUrl, unreachableClusterUrl);
+            variables.Set(SpecialVariables.EksClusterName, eksClusterName);
+            variables.Set("Octopus.Action.Aws.Region", region);
+            variables.Set("Octopus.Action.AwsAccount.Variable", account);
+            variables.Set($"{account}.AccessKey", eksClientID);
+            variables.Set($"{account}.SecretKey", eksSecretKey);
+            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
+            variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
+            var wrapper = CreateWrapper();
+
             TestScript(wrapper, "Test-Script");
         }
-        
+
         [Test]
         public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount()
         {

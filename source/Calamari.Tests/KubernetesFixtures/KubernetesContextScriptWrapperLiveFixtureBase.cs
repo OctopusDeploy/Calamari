@@ -84,7 +84,24 @@ namespace Calamari.Tests.KubernetesFixtures
             return new Dictionary<string, string>();
         }
 
-        protected void TestScript(IScriptWrapper wrapper, string scriptName, string kubectlExe = "kubectl")
+        protected void TestScript(IScriptWrapper wrapper, string scriptName)
+        {
+            using (var dir = TemporaryDirectory.Create())
+            {
+                var folderPath = Path.Combine(dir.DirectoryPath, "Folder with spaces");
+        
+                using (var temp = new TemporaryFile(Path.Combine(folderPath, $"{scriptName}.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
+                {
+                    Directory.CreateDirectory(folderPath);
+                    File.WriteAllText(temp.FilePath, $"echo running target script...");
+        
+                    var output = ExecuteScript(wrapper, temp.FilePath);
+                    output.AssertSuccess();
+                }
+            }
+        }
+        
+        protected void TestScriptAndVerifyCluster(IScriptWrapper wrapper, string scriptName, string kubectlExe = "kubectl")
         {
             using (var dir = TemporaryDirectory.Create())
             {

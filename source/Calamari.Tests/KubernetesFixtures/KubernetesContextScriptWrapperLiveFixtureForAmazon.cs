@@ -27,7 +27,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Aws.Region", Environment.GetEnvironmentVariable("AWS_REGION"));
 
             var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script");
+            TestScriptAndVerifyCluster(wrapper, "Test-Script");
         }
     }
 }
