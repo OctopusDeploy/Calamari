@@ -95,7 +95,28 @@ namespace Calamari.Tests.KubernetesFixtures
             var kubectlExecutable = variables.Get(KubeCtlExecutableVariableName) ??
                 throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
             
-            TestScript(wrapper, "Test-Script", kubectlExecutable);
+            TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
+        }
+
+        [Test]
+        public void UnreachableK8Cluster_ShouldExecuteTargetScript()
+        {
+            const string account = "eks_account";
+            const string certificateAuthority = "myauthority";
+            const string unreachableClusterEndpoint = "https://example.kubernetes.com";
+            
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(SpecialVariables.ClusterUrl, unreachableClusterEndpoint);
+            variables.Set(SpecialVariables.EksClusterName, eksClusterName);
+            variables.Set("Octopus.Action.Aws.Region", region);
+            variables.Set("Octopus.Action.AwsAccount.Variable", account);
+            variables.Set($"{account}.AccessKey", eksClientID);
+            variables.Set($"{account}.SecretKey", eksSecretKey);
+            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
+            variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
+            var wrapper = CreateWrapper();
+
+            TestScript(wrapper, "Test-Script");
         }
 
         [Test]
