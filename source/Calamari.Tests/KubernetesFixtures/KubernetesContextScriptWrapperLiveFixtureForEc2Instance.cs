@@ -49,7 +49,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Aws.Region", region);
 
             var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script");
+            TestScriptAndVerifyCluster(wrapper, "Test-Script");
         }
 
         [Test]
