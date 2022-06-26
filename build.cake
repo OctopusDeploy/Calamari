@@ -6,7 +6,7 @@
 #addin "nuget:?package=Cake.FileHelpers&version=4.0.1"
 // see https://www.gep13.co.uk/blog/introducing-cake.dotnettool.module
 #module nuget:?package=Cake.DotNetTool.Module&version=0.1.0
-#tool "dotnet:?package=AzureSignTool&version=2.0.17"
+#tool "dotnet:?package=AzureSignTool&version=3.0.0"
 
 using Path = System.IO.Path;
 using System.Xml;
