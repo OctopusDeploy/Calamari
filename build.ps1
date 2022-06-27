@@ -68,6 +68,7 @@ Param(
     [string]$AzureKeyVaultUrl,
     [string]$AzureKeyVaultAppId,
     [string]$AzureKeyVaultAppSecret,
+    [string]$AzureKeyVaultTenantId,
     [string]$AzureKeyvaultCertificateName,
     [ValidateSet("Quiet", "Minimal", "Normal", "Verbose", "Diagnostic")]
     [string]$BuildVerbosity = "Normal",
@@ -283,5 +284,5 @@ Write-Host "Installing cake modules using the --bootstrap argument"
 
 # Start Cake
 Write-Host "Running build script..."
-Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" -build_verbosity=`"$BuildVerbosity`" -AzureKeyVaultUrl=`"$AzureKeyVaultUrl`" -AzureKeyVaultAppId=`"$AzureKeyVaultAppId`" -AzureKeyVaultAppSecret=`"$AzureKeyVaultAppSecret`" -AzureKeyvaultCertificateName=`"$AzureKeyvaultCertificateName`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild"
+Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -where=`"$Where`" -signing_certificate_path=`"$SigningCertificatePath`" -signing_certificate_password=`"$SigningCertificatePassword`" -build_verbosity=`"$BuildVerbosity`" -AzureKeyVaultUrl=`"$AzureKeyVaultUrl`" -AzureKeyVaultAppId=`"$AzureKeyVaultAppId`" -AzureKeyVaultAppSecret=`"$AzureKeyVaultAppSecret`" -AzureKeyVaultTenantId=`"$AzureKeyVaultTenantId`" -AzureKeyvaultCertificateName=`"$AzureKeyvaultCertificateName`" $UseMono $UseDryRun $UseExperimental $UsePackInParallel $UseTimestamp $UseSetOctopusServerVersion $UseSignFilesOnLocalBuild"
 exit $LASTEXITCODE
