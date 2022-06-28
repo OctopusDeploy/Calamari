@@ -6,7 +6,7 @@
 #addin "nuget:?package=Cake.FileHelpers&version=4.0.1"
 // see https://www.gep13.co.uk/blog/introducing-cake.dotnettool.module
 #module nuget:?package=Cake.DotNetTool.Module&version=0.1.0
-#tool "dotnet:?package=AzureSignTool&version=2.0.17"
+#tool "dotnet:?package=AzureSignTool&version=3.0.0"
 
 using Path = System.IO.Path;
 using System.Xml;
@@ -26,6 +26,7 @@ var signingCertificatePassword = Argument("signing_certificate_password", "");
 // If these arguments are null then the signing defaults to using the local certificate and SignTool
 var keyVaultUrl = Argument("AzureKeyVaultUrl", "");
 var keyVaultAppId = Argument("AzureKeyVaultAppId", "");
+var keyVaultTenantId = Argument("AzureKeyVaultTenantId", "");
 var keyVaultAppSecret = Argument("AzureKeyVaultAppSecret", "");
 var keyVaultCertificateName = Argument("AzureKeyVaultCertificateName", "");
 var buildVerbosity = Argument("build_verbosity", "normal");
@@ -362,7 +363,7 @@ private void SignAndTimestampBinaries(string outputDirectory)
     else
     {
       Information("Signing files using azuresigntool and the production code signing certificate");
-      SignFilesWithAzureSignTool(unsignedExecutablesAndLibraries, keyVaultUrl, keyVaultAppId, keyVaultAppSecret, keyVaultCertificateName);
+      SignFilesWithAzureSignTool(unsignedExecutablesAndLibraries, keyVaultUrl, keyVaultAppId, keyVaultAppSecret, keyVaultTenantId, keyVaultCertificateName);
     }
     TimeStampFiles(unsignedExecutablesAndLibraries);
 }
@@ -381,13 +382,14 @@ private bool HasAuthenticodeSignature(FilePath filePath)
     }
 }
 
-void SignFilesWithAzureSignTool(IEnumerable<FilePath> files, string vaultUrl, string vaultAppId, string vaultAppSecret, string vaultCertificateName, string display = "", string displayUrl = "")
+void SignFilesWithAzureSignTool(IEnumerable<FilePath> files, string vaultUrl, string vaultAppId, string vaultAppSecret, string vaultTenantId, string vaultCertificateName, string display = "", string displayUrl = "")
 {
   var signArguments = new ProcessArgumentBuilder()
     .Append("sign")
     .Append("--azure-key-vault-url").AppendQuoted(vaultUrl)
     .Append("--azure-key-vault-client-id").AppendQuoted(vaultAppId)
     .Append("--azure-key-vault-client-secret").AppendQuotedSecret(vaultAppSecret)
+    .Append("--azure-key-vault-tenant-id").AppendQuotedSecret(vaultTenantId)
     .Append("--azure-key-vault-certificate").AppendQuoted(vaultCertificateName)
     .Append("--file-digest sha256");
 
