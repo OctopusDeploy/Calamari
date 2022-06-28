@@ -276,7 +276,7 @@ namespace Calamari.Tests.KubernetesFixtures
             TestScript(wrapper, "Test-Script", kubectlExecutable);
         }
 
-        [Test]
+        [Test, Ignore("Test currently doesn't assert anything so it's not useful, to be investigated and updated.")]
         public void UsingEc2Instance()
         {
             var terraformWorkingFolder = InitialiseTerraformWorkingFolder("terraform_working_ec2", "KubernetesFixtures/Terraform/EC2");
