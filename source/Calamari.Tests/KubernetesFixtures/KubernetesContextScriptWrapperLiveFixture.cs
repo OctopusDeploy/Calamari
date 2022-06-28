@@ -22,6 +22,8 @@ namespace Calamari.Tests.KubernetesFixtures
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class KubernetesContextScriptWrapperLiveFixture: KubernetesContextScriptWrapperLiveFixtureBase
     {
+        const string KubeCtlExecutableVariableName = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
+
         InstallTools installTools;
 
         string eksClientID;
@@ -69,7 +71,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [SetUp]
         public void SetExtraVariables()
         {
-            variables.Set("Octopus.Action.Kubernetes.CustomKubectlExecutable", installTools.KubectlExecutable);
+            variables.Set(KubeCtlExecutableVariableName, installTools.KubectlExecutable);
         }
 
         protected override Dictionary<string, string> GetEnvironments()
@@ -265,10 +267,16 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
             var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script");
+
+            // When authorising via AWS, We need to make sure we are using the correct version of
+            // kubectl for the test script as newer versions may cause kubectl to fail with an error like:
+            // 'error: exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"'
+            var kubectlExecutable = variables.Get(KubeCtlExecutableVariableName) ??
+                                    throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
+            TestScript(wrapper, "Test-Script", kubectlExecutable);
         }
 
-        [Test]
+        [Test, Ignore("Test currently doesn't assert anything so it's not useful, to be investigated and updated.")]
         public void UsingEc2Instance()
         {
             var terraformWorkingFolder = InitialiseTerraformWorkingFolder("terraform_working_ec2", "KubernetesFixtures/Terraform/EC2");
