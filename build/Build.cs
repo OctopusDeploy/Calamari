@@ -63,6 +63,10 @@ namespace Calamari.Build
         [Secret]
         readonly string? AzureKeyVaultAppSecret;
 
+        [Parameter]
+        [Secret]
+        readonly string? AzureKeyVaultTenantId;
+
         [Parameter] 
         readonly string? AzureKeyVaultCertificateName;
 
@@ -362,7 +366,7 @@ namespace Calamari.Build
 
             if (WillSignBinaries)
                 Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
-                                                 AzureKeyVaultAppSecret, AzureKeyVaultCertificateName,
+                                                 AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
                                                  SigningCertificatePath, SigningCertificatePassword);
 
             return publishedTo;
@@ -379,7 +383,7 @@ namespace Calamari.Build
                     Directory.GetDirectories(binDirectory, "*", new EnumerationOptions { RecurseSubdirectories = true });
                 foreach (var directory in binariesFolders)
                     Signing.SignAndTimestampBinaries(directory, AzureKeyVaultUrl, AzureKeyVaultAppId,
-                                                     AzureKeyVaultAppSecret, AzureKeyVaultCertificateName,
+                                                     AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
                                                      SigningCertificatePath, SigningCertificatePassword);
             }
             
@@ -402,7 +406,7 @@ namespace Calamari.Build
 
             if (WillSignBinaries)
                 Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
-                                                 AzureKeyVaultAppSecret, AzureKeyVaultCertificateName,
+                                                 AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
                                                  SigningCertificatePath, SigningCertificatePassword);
 
             var nuspec = $"{publishedTo}/{packageId}.nuspec";
