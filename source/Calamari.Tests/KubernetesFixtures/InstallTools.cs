@@ -58,9 +58,11 @@ namespace Calamari.Tests.KubernetesFixtures
                 KubectlExecutable = await DownloadCli("Kubectl",
                                                       async () =>
                                                       {
-                                                          var message = await client.GetAsync("https://storage.googleapis.com/kubernetes-release/release/stable.txt");
-                                                          message.EnsureSuccessStatusCode();
-                                                          return (await message.Content.ReadAsStringAsync(), null);
+                                                          // TODO: Figure out if we want to continue using stable version even if bugs may be introduced.
+                                                          // var message = await client.GetAsync("https://storage.googleapis.com/kubernetes-release/release/stable.txt");
+                                                          // message.EnsureSuccessStatusCode();
+                                                          // return (await message.Content.ReadAsStringAsync(), null);
+                                                          return await Task.FromResult(("v1.23.6", ""));
                                                       },
                                                       async (destinationDirectoryName, tuple) =>
                                                       {
