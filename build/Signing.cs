@@ -23,6 +23,7 @@ namespace Calamari.Build
             string? azureKeyVaultUrl,
             string? azureKeyVaultAppId,
             string? azureKeyVaultAppSecret,
+            string? azureKeyVaultTenantId,
             string? azureKeyVaultCertificateName,
             string? signingCertificatePath,
             string? signingCertificatePassword)
@@ -50,6 +51,7 @@ namespace Calamari.Build
             if (azureKeyVaultUrl.IsNullOrEmpty() &&
                 azureKeyVaultAppId.IsNullOrEmpty() &&
                 azureKeyVaultAppSecret.IsNullOrEmpty() &&
+                azureKeyVaultTenantId.IsNullOrEmpty() &&
                 azureKeyVaultCertificateName.IsNullOrEmpty())
             {
                 if (signingCertificatePath.IsNullOrEmpty() ||
@@ -75,6 +77,7 @@ namespace Calamari.Build
                     azureKeyVaultUrl!,
                     azureKeyVaultAppId!,
                     azureKeyVaultAppSecret!,
+                    azureKeyVaultTenantId!,
                     azureKeyVaultCertificateName!);
             }
         }
@@ -102,6 +105,7 @@ namespace Calamari.Build
             string vaultUrl,
             string vaultAppId,
             string vaultAppSecret,
+            string vaultTenantId,
             string vaultCertificateName,
             string display = "",
             string displayUrl = "")
@@ -113,6 +117,7 @@ namespace Calamari.Build
                     _.SetKeyVaultUrl(vaultUrl)
                      .SetKeyVaultClientId(vaultAppId)
                      .SetKeyVaultClientSecret(vaultAppSecret)
+                     .SetKeyVaultTenantId(vaultTenantId)
                      .SetKeyVaultCertificateName(vaultCertificateName)
                      .SetFileDigest("sha256")
                      .SetDescription(display)
