@@ -485,10 +485,40 @@ namespace Calamari.Common.Plumbing.FileSystem
         {
             var backup = originalFile + ".backup" + Guid.NewGuid();
 
-            if (!File.Exists(originalFile))
-                File.Copy(temporaryReplacement, originalFile, true);
-            else
-                System.IO.File.Replace(temporaryReplacement, originalFile, backup);
+            try
+            {
+                if (!File.Exists(originalFile))
+                    File.Copy(temporaryReplacement, originalFile, true);
+                else
+                    System.IO.File.Replace(temporaryReplacement, originalFile, backup);
+            }
+            catch (UnauthorizedAccessException unauthorizedAccessException)
+            {
+                Log.VerboseFormat("Error attempting to copy or replace {0} with {1} Exception: {2}",
+                                  originalFile,
+                                  temporaryReplacement,
+                                  unauthorizedAccessException.StackTrace);
+
+                void LogFileAccess(string filePath)
+                {
+                    try
+                    {
+                        Log.VerboseFormat("Attempting to access with OpenOrCreate file mode, Read/Write Access and No file share {0}", filePath);
+                        using (File.Open(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None));
+                        Log.VerboseFormat("Succeeded accessing {0}", filePath);
+                    }
+                    catch (Exception fileAccessException)
+                    {
+                        Log.VerboseFormat("Failed to access filePath: {0}, Exception: {1}", filePath, fileAccessException.ToString());
+                    }
+                }
+
+                LogFileAccess(originalFile);
+                LogFileAccess(temporaryReplacement);
+                LogFileAccess(backup);
+    
+                throw unauthorizedAccessException;
+            }
 
             File.Delete(temporaryReplacement);
             if (File.Exists(backup))
