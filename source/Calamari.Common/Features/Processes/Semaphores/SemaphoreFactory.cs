@@ -7,8 +7,6 @@ namespace Calamari.Common.Features.Processes.Semaphores
     {
         public static ISemaphoreFactory Get()
         {
-            if (CalamariEnvironment.IsRunningOnMono)
-                return new FileBasedSempahoreManager();
             return new SystemSemaphoreManager();
         }
     }

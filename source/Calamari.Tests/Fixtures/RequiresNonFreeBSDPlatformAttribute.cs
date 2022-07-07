@@ -22,7 +22,7 @@ namespace Calamari.Tests.Fixtures
         
         public void ApplyToTest(Test test)
         {
-            if (ScriptingEnvironment.IsRunningOnMono() && (Environment.GetEnvironmentVariable("TEAMCITY_BUILDCONF_NAME")?.Contains("FreeBSD") ?? false))
+            if (Environment.GetEnvironmentVariable("TEAMCITY_BUILDCONF_NAME")?.Contains("FreeBSD") ?? false)
             {
                 var skipReason = "This test does not run on FreeBSD";
                 if (!string.IsNullOrWhiteSpace(reason))

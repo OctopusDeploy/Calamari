@@ -71,10 +71,10 @@
 
     <ItemGroup>
       <EmbeddedResource Include="Features\Scripting\Bash\Bootstrap.sh" />
+      <EmbeddedResource Include="Features\Scripting\DotnetScript\Bootstrap.csx" />
       <EmbeddedResource Include="Features\Scripting\FSharp\Bootstrap.fsx" />
       <EmbeddedResource Include="Features\Scripting\Python\Configuration.py" />
       <EmbeddedResource Include="Features\Scripting\Python\InstallDependencies.py" />
-      <EmbeddedResource Include="Features\Scripting\ScriptCS\Bootstrap.csx" />
       <EmbeddedResource Include="Features\Scripting\WindowsPowerShell\Bootstrap.ps1" />
       <EmbeddedResource Include="Features\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
     </ItemGroup>

@@ -1,3 +1,4 @@
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.FileSystem;
 using Calamari.Testing.Helpers;
@@ -43,6 +44,9 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void ShouldOnlyRunBashScriptsOnMacOrNix()
         {
+            if (!CalamariEnvironment.IsRunningOnMac && !CalamariEnvironment.IsRunningOnNix)
+                Assert.Inconclusive("This test is designed to run on *Nix or Mac.");
+            
             using (var tarFile = new TemporaryFile(TarGzBuilder.BuildSamplePackage("Acme.PackageBilingual", "1.0.0", false)))
             {
                 var result = DeployPackage(tarFile.FilePath);

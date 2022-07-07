@@ -75,7 +75,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Test]
         [NonParallelizable]
         [RequiresNonFreeBSDPlatform(SkipFreeBsdBecause)]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void TimesOutIfAValidTimeoutIsDefinedInVariables()
         {
             RunNugetV3TimeoutTest("00:00:01", TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(1));
@@ -84,7 +83,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Test]
         [NonParallelizable]
         [RequiresNonFreeBSDPlatform(SkipFreeBsdBecause)]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void IgnoresTheTimeoutIfAnInvalidTimeoutIsDefinedInVariables()
         {
             RunNugetV3TimeoutTest("this is not a valid timespan", TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
@@ -93,7 +91,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [Test]
         [NonParallelizable]
         [RequiresNonFreeBSDPlatform(SkipFreeBsdBecause)]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void DoesNotTimeOutIfTheServerRespondsBeforeTheTimeout()
         {
             RunNugetV3TimeoutTest("00:01:00", TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));

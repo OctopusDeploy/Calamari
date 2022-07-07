@@ -34,7 +34,7 @@ public static class Octopus
         if (Parameters.ContainsKey("Octopus.Action.Script.SuppressEnvironmentLogging") && Parameters["Octopus.Action.Script.SuppressEnvironmentLogging"] == "True")
             return;
 
-        var environmentInformationStamp = $"ScriptCS Environment Information:{Environment.NewLine}" +
+        var environmentInformationStamp = $"Dotnet-Script Environment Information:{Environment.NewLine}" +
             $"  {string.Join($"{Environment.NewLine}  ", SafelyGetEnvironmentInformation())}";
 
         Console.WriteLine("##octopus[stdout-verbose]");
@@ -241,4 +241,16 @@ public static class Octopus
     }
 }
 
-Octopus.Initialize(Env.ScriptArgs[Env.ScriptArgs.Count - 1]);
+public class ScriptArgsEnv {
+
+    public ScriptArgsEnv(IList<string> args)
+    {
+        ScriptArgs = args;
+    }
+    
+    public IList<string> ScriptArgs { get; set; }
+}
+
+var Env = new ScriptArgsEnv(Args);
+
+Octopus.Initialize(Args[Args.Count - 1]);

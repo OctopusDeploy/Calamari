@@ -13,13 +13,14 @@ namespace Calamari.Tests.Fixtures.Commands
     /// A cut down command that runs a script without any journaling, variable substitution or
     /// other optional steps.
     /// </summary>
-    [Command("run-test-script", Description = "Invokes a PowerShell or ScriptCS script")]
+    [Command("run-test-script", Description = "Invokes a PowerShell or dotnet-script script")]
     public class RunTestScriptCommand : Command
     {
         private string scriptFile;
         private readonly IVariables variables;
         private readonly IScriptEngine scriptEngine;
 
+        //TODO: See if this needs a new path set
         public RunTestScriptCommand(
             IVariables variables,
             IScriptEngine scriptEngine)

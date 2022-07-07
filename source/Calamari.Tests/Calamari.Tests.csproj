@@ -136,7 +136,7 @@
     <None Include="Fixtures\Python\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\ScriptCS\Scripts\**">
+    <None Include="Fixtures\DotnetScript\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="KubernetesFixtures\Charts\**">
@@ -247,10 +247,11 @@
   -->
   <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="CopyTools" AfterTargets="Build" DependsOnTargets="RunResolvePackageDependencies">
+    <Exec Command="dotnet tool update dotnet-script --version 1.3.1 --framework netcoreapp3.1 --tool-path $(OutDir)/DotnetScript/" Condition="'$(TargetFramework)' == 'netcoreapp3.1'" />
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
     </CreateItem>
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
+    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'DotnetScript'">
       <Output TaskParameter="Include" ItemName="ScriptCSRef" />
     </CreateItem>
     <CreateItem Include="@(PackageDefinitions)" Condition=" '$(TargetFramework)' == 'net461' And '%(Name)' == 'NuGet.CommandLine'">

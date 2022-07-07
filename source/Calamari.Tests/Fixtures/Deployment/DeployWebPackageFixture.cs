@@ -125,7 +125,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
@@ -141,26 +140,12 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         [Test]
         [Category(TestCategory.ScriptingSupport.FSharp)]
-        [Category(TestCategory.ScriptingSupport.ScriptCS)]
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        [Category(TestCategory.ScriptingSupport.DotnetScript)]
         public void ShouldInvokeDeployFailedOnError()
         {
             Variables.Set("ShouldFail", "yes");
             var result = DeployPackage();
-            if (ScriptingEnvironment.IsRunningOnMono())
-                result.AssertOutput("I have failed! DeployFailed.sh");
-            else
-                result.AssertOutput("I have failed! DeployFailed.ps1");
-            result.AssertNoOutput("I have failed! DeployFailed.fsx");
-            result.AssertNoOutput("I have failed! DeployFailed.csx");
-        }
-
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
-        public void ShouldNotInvokeDeployFailedWhenNoError()
-        {
-            var result = DeployPackage();
-            result.AssertNoOutput("I have failed! DeployFailed.ps1");
-            result.AssertNoOutput("I have failed! DeployFailed.sh");
+            result.AssertOutput("I have failed! DeployFailed.ps1");
             result.AssertNoOutput("I have failed! DeployFailed.fsx");
             result.AssertNoOutput("I have failed! DeployFailed.csx");
         }

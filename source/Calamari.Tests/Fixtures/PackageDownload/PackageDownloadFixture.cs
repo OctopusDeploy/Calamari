@@ -67,8 +67,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void ShouldDownloadPackage()
         {
             var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri);
@@ -84,11 +82,10 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadMavenPackage()
         {
-            if (CalamariEnvironment.IsRunningOnMac && TestEnvironment.IsCI && !CalamariEnvironment.IsRunningOnMono)
+            if (CalamariEnvironment.IsRunningOnMac && TestEnvironment.IsCI)
                 Assert.Inconclusive("As of November 2018, this test is failing under dotnet core on the cloudmac under teamcity - we were getting an error 'SSL connect error' when trying to download from  'https://repo.maven.apache.org/maven2/'. Marking as inconclusive so we can re-enable the build - it had been disabled for months :(");
 
             var result = DownloadPackage(
@@ -113,20 +110,16 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadMavenSnapshotPackage()
         {
-            if (CalamariEnvironment.IsRunningOnMac && TestEnvironment.IsCI && !CalamariEnvironment.IsRunningOnMono)
-                Assert.Inconclusive("As of November 2018, this test is failing under dotnet core on the cloudmac under teamcity - we were getting an error 'SSL connect error' when trying to download from  'https://repo.maven.apache.org/maven2/'. Marking as inconclusive so we can re-enable the build - it had been disabled for months :(");
-
             var result = DownloadPackage(
-                MavenPublicFeed.PackageId,
-                MavenPublicFeed.Version.ToString(),
-                MavenPublicFeed.Id,
-                MavenPublicFeedUri,
-                feedType: FeedType.Maven,
-                versionFormat: VersionFormat.Maven);
+                                         MavenPublicFeed.PackageId,
+                                         MavenPublicFeed.Version.ToString(),
+                                         MavenPublicFeed.Id,
+                                         MavenPublicFeedUri,
+                                         feedType: FeedType.Maven,
+                                         versionFormat: VersionFormat.Maven);
 
             result.AssertSuccess();
 
@@ -142,8 +135,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void ShouldDownloadPackageWithRepositoryMetadata()
         {
             var result = DownloadPackage(NuGetFeed.PackageId, NuGetFeed.Version.ToString(), NuGetFeed.Id, NuGetFeedUri);
@@ -159,8 +150,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void ShouldUsePackageFromCache()
         {
             DownloadPackage(FeedzPackage.PackageId,
@@ -184,19 +173,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenPackageFromCache()
         {
-            if (CalamariEnvironment.IsRunningOnMac && TestEnvironment.IsCI && !CalamariEnvironment.IsRunningOnMono)
-                Assert.Inconclusive("As of November 2018, this test is failing under dotnet core on the cloudmac under teamcity - we were getting an error 'SSL connect error' when trying to download from  'https://repo.maven.apache.org/maven2/'. Marking as inconclusive so we can re-enable the build - it had been disabled for months :(");
-
             DownloadPackage(MavenPublicFeed.PackageId,
-                    MavenPublicFeed.Version.ToString(),
-                    MavenPublicFeed.Id,
-                    MavenPublicFeedUri,
-                    feedType: FeedType.Maven,
-                    versionFormat: VersionFormat.Maven)
+                            MavenPublicFeed.Version.ToString(),
+                            MavenPublicFeed.Id,
+                            MavenPublicFeedUri,
+                            feedType: FeedType.Maven,
+                            versionFormat: VersionFormat.Maven)
                 .AssertSuccess();
 
             var result = DownloadPackage(MavenPublicFeed.PackageId,
@@ -216,19 +201,15 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenSnapshotPackageFromCache()
         {
-            if (CalamariEnvironment.IsRunningOnMac && TestEnvironment.IsCI && !CalamariEnvironment.IsRunningOnMono)
-                Assert.Inconclusive("As of November 2018, this test is failing under dotnet core on the cloudmac under teamcity - we were getting an error 'SSL connect error' when trying to download from  'https://repo.maven.apache.org/maven2/'. Marking as inconclusive so we can re-enable the build - it had been disabled for months :(");
-
             DownloadPackage(MavenPublicFeed.PackageId,
-                    MavenPublicFeed.Version.ToString(),
-                    MavenPublicFeed.Id,
-                    MavenPublicFeedUri,
-                    feedType: FeedType.Maven,
-                    versionFormat: VersionFormat.Maven)
+                            MavenPublicFeed.Version.ToString(),
+                            MavenPublicFeed.Id,
+                            MavenPublicFeedUri,
+                            feedType: FeedType.Maven,
+                            versionFormat: VersionFormat.Maven)
                 .AssertSuccess();
 
             var result = DownloadPackage(MavenPublicFeed.PackageId,
@@ -247,8 +228,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void ShouldByPassCacheAndDownloadPackage()
         {
             DownloadPackage(FeedzPackage.PackageId,
@@ -271,20 +250,16 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadMavenPackage()
         {
-            if (CalamariEnvironment.IsRunningOnMac && TestEnvironment.IsCI && !CalamariEnvironment.IsRunningOnMono)
-                Assert.Inconclusive("As of November 2018, this test is failing under dotnet core on the cloudmac under teamcity - we were getting an error 'SSL connect error' when trying to download from  'https://repo.maven.apache.org/maven2/'. Marking as inconclusive so we can re-enable the build - it had been disabled for months :(");
-
             var firstDownload = DownloadPackage(
-                MavenPublicFeed.PackageId,
-                MavenPublicFeed.Version.ToString(),
-                MavenPublicFeed.Id,
-                MavenPublicFeedUri,
-                versionFormat: VersionFormat.Maven,
-                feedType: FeedType.Maven);
+                                                MavenPublicFeed.PackageId,
+                                                MavenPublicFeed.Version.ToString(),
+                                                MavenPublicFeed.Id,
+                                                MavenPublicFeedUri,
+                                                versionFormat: VersionFormat.Maven,
+                                                feedType: FeedType.Maven);
 
             firstDownload.AssertSuccess();
 
@@ -309,7 +284,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadMavenSnapshotPackage()
         {
@@ -402,7 +376,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [Ignore("Auth Feed Failing On Mono")]
         public void PrivateNuGetFeedShouldFailDownloadPackageWhenInvalidCredentials()
         {
             var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, AuthFeedUri, "fake-feed-username", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
