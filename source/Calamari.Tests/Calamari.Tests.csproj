@@ -252,7 +252,7 @@
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
     </CreateItem>
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'DotnetScript'">
-      <Output TaskParameter="Include" ItemName="ScriptCSRef" />
+      <Output TaskParameter="Include" ItemName="DotnetScriptRef" />
     </CreateItem>
     <CreateItem Include="@(PackageDefinitions)" Condition=" '$(TargetFramework)' == 'net461' And '%(Name)' == 'NuGet.CommandLine'">
       <Output TaskParameter="Include" ItemName="NuGetCommandLineRef" />
@@ -260,23 +260,23 @@
     <PropertyGroup>
       <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
       <FSharpCompilerToolsExe Condition="'$(TargetFramework)' == 'netcoreapp3.1'">@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.exe</FSharpCompilerToolsExe>
-      <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
-      <ScriptCSExe Condition="'$(TargetFramework)' == 'netcoreapp3.1'">@(ScriptCSRef->'%(ResolvedPath)')/tools/*.exe</ScriptCSExe>
+      <DotnetScript>@(DotnetScriptRef->'%(ResolvedPath)')/tools/*.*</DotnetScript>
+      <DotnetScriptExe Condition="'$(TargetFramework)' == 'netcoreapp3.1'">@(DotnetScriptRef->'%(ResolvedPath)')/tools/*.exe</DotnetScriptExe>
       <NuGetCommandLine>@(NuGetCommandLineRef->'%(ResolvedPath)')/tools/*.*</NuGetCommandLine>
     </PropertyGroup>
     <ItemGroup>
       <FSharpFiles Include="$(FSharpCompilerTools)" />
       <FSharpFilesExe Condition="'$(TargetFramework)' == 'netcoreapp3.1'" Include="$(FSharpCompilerToolsExe)" />
-      <ScriptCSFiles Include="$(ScriptCS)" />
-      <ScriptCSFilesExe Condition="'$(TargetFramework)' == 'netcoreapp3.1'" Include="$(ScriptCSExe)" />
+      <DotnetScriptFiles Include="$(DotnetScript)" />
+      <DotnetScriptFilesExe Condition="'$(TargetFramework)' == 'netcoreapp3.1'" Include="$(DotnetScriptExe)" />
       <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net461'" />
     </ItemGroup>
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/DotnetScript/" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutDir)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net461'" />
     <Exec Command="chmod +x %(FSharpFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp3.1'" />
-    <Exec Command="chmod +x %(ScriptCSFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp3.1'" />
+    <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'netcoreapp3.1'" />
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" Condition="'$(PublishDir)' != ''" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" Condition="'$(PublishDir)' != ''" />
+    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/DotnetScript/" Condition="'$(PublishDir)' != ''" />
   </Target>
 </Project>
