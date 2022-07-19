@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Sashimi.AzureAppService</AssemblyName>
     <RootNamespace>Sashimi.AzureAppService</RootNamespace>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <OutputPath>bin\</OutputPath>
