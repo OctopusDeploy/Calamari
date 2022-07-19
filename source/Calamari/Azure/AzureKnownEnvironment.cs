@@ -1,4 +1,5 @@
 ﻿using System;
+using Azure.Identity;
 using Azure.ResourceManager;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 
@@ -42,6 +43,17 @@ namespace Calamari.Azure
             "AzureGermanCloud" => ArmEnvironment.AzureGermany,
             "AzureUSGovernment" => ArmEnvironment.AzureGovernment,
             _ => throw  new InvalidOperationException($"ARM Environment {name} is not a known Azure Environment name.")
+        };
+
+        public Uri GetAzureAuthorityHost() => ToAzureAuthorityHost(Value);
+
+        private static Uri ToAzureAuthorityHost(string name) => name switch
+        {
+            "AzureGlobalCloud" => AzureAuthorityHosts.AzurePublicCloud,
+            "AzureChinaCloud" => AzureAuthorityHosts.AzureChina,
+            "AzureGermanCloud" => AzureAuthorityHosts.AzureGermany,
+            "AzureUSGovernment" => AzureAuthorityHosts.AzureGovernment,
+            _ => throw new InvalidOperationException($"ARM Environment {name} is not a known Azure Environment name.")
         };
     }
 }

@@ -35,15 +35,35 @@ namespace Calamari.Azure
         /// <returns></returns>
         public static ArmClient CreateArmClient(this ServicePrincipalAccount servicePrincipal)
         {
-            var environment = new AzureKnownEnvironment(servicePrincipal.AzureEnvironment).AsAzureArmEnvironment();
+            var (armClientOptions, tokenCredentialOptions) = GetArmClientOptions(servicePrincipal);
+            var credential = new ClientSecretCredential(servicePrincipal.TenantId, servicePrincipal.ClientId, servicePrincipal.Password, tokenCredentialOptions);
+            return new ArmClient(credential, defaultSubscriptionId: servicePrincipal.SubscriptionNumber, armClientOptions);
+        }
 
+        public static (ArmClientOptions, TokenCredentialOptions) GetArmClientOptions(this ServicePrincipalAccount servicePrincipalAccount)
+        {
+            var azureKnownEnvironment = new AzureKnownEnvironment(servicePrincipalAccount.AzureEnvironment);
+
+            // Configure a specific transport that will pick up the proxy settings set by Calamari
             var httpClientTransport = new HttpClientTransport(new HttpClientHandler { Proxy = WebRequest.DefaultWebProxy });
 
-            var tokenCredentialOptions = new TokenCredentialOptions { Transport = httpClientTransport };
-            var credential = new ClientSecretCredential(servicePrincipal.TenantId, servicePrincipal.ClientId, servicePrincipal.Password, tokenCredentialOptions);
+            // Specifically tell the new Azure SDK which authentication endpoint to use
+            var authorityHost = azureKnownEnvironment.GetAzureAuthorityHost();
+            var tokenCredentialOptions = new TokenCredentialOptions
+            {
+                Transport = httpClientTransport,
+                AuthorityHost = authorityHost
+            };
 
-            var armClientOptions = new ArmClientOptions() { Transport = httpClientTransport, Environment = environment };
-            return new ArmClient(credential, defaultSubscriptionId: servicePrincipal.SubscriptionNumber, armClientOptions);
+            // The new Azure SDK uses a different representation of Environments
+            var armEnvironment = azureKnownEnvironment.AsAzureArmEnvironment();
+            var armClientOptions = new ArmClientOptions()
+            {
+                Transport = httpClientTransport,
+                Environment = armEnvironment
+            };
+
+            return (armClientOptions, tokenCredentialOptions);
         }
     }
 }
