@@ -33,7 +33,7 @@ namespace Calamari.AzureAppService.Tests
         [TestCase("AzureChinaCloud", "https://management.chinacloudapi.cn")]
         [TestCase("AzureGermanCloud", "https://management.microsoftazure.de")]
         [TestCase("AzureUSGovernment", "https://management.usgovcloudapi.net")]
-        public void AzureClientOptions_APiCall_UsesCorrectEndpointsForRegions(string azureCloud, string expectedManagementEndpoint)
+        public void AzureClientOptions_ApiCall_UsesCorrectEndpointsForRegions(string azureCloud, string expectedManagementEndpoint)
         {
             // Arrange
             var servicePrincipalAccount = GetAccountFor(azureCloud);
