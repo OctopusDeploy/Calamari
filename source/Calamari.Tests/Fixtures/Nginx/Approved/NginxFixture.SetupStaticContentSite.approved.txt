@@ -1,0 +1,7 @@
+server {
+    listen 80;
+    location / {
+        root #{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot;
+        try_files $uri $uri/ /index.html;
+    }
+}

@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Calamari.CloudAccounts</RootNamespace>
+    </PropertyGroup>
+    <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
+        <TargetFrameworks>net452;netstandard2.1</TargetFrameworks>
+    </PropertyGroup>
+    <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
+        <TargetFramework>netstandard2.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
+        <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
+        <Reference Include="Microsoft.CSharp" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />  
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="AWSSDK.Core" Version="3.3.104.14" />
+      <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.4.34" />
+      <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    </ItemGroup>
+
+</Project>

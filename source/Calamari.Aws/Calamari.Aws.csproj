@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>1.0.0.0</Version>
+    <OutputType>Exe</OutputType>
+    <PlatformTarget>anycpu</PlatformTarget>
+    <AssemblyName>Calamari.Aws</AssemblyName>
+    <OutputType>Library</OutputType>
+    <PackageId>Calamari.Aws</PackageId>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <Authors>Octopus Deploy</Authors>
+    <Copyright>Octopus Deploy Pty Ltd</Copyright>
+    <PackageTags>tool</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/OctopusDeploy/Calamari/</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Description>Contains the command-line Calamari tool, plus additional commands for Aws integration.</Description>
+    <ApplicationManifest>Calamari.Aws.exe.manifest</ApplicationManifest>
+    <ApplicationIcon />
+    <StartupObject />
+  </PropertyGroup>
+  <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
+    <TargetFrameworks>net452;netstandard2.1</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.EKS" Version="3.7.13.24" />
+    <PackageReference Include="AWSSDK.CloudFormation" Version="3.7.9.14" />
+    <PackageReference Include="AWSSDK.Core" Version="3.7.11.1" />
+    <PackageReference Include="AWSSDK.IdentityManagement" Version="3.7.2.116" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.8.8" />
+    <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.1.128" />
+    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
+    <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
+  </ItemGroup>
+</Project>

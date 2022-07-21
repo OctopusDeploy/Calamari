@@ -1,0 +1,11 @@
+EF BB BF 3C 64 6F 63 3E   ???<doc>
+0D 0A 20 20 3C 64 61 67   ^^  <dag
+67 65 72 3E E2 80 A0 3C   ger>???<
+2F 64 61 67 67 65 72 3E   /dagger>
+0D 0A 20 20 3C 73 75 6E   ^^  <sun
+6E 69 65 73 3E F0 9F 98   nies>???
+8E 3C 2F 73 75 6E 6E 69   ?</sunni
+65 73 3E 0D 0A 20 20 3C   es>^^  <
+65 75 72 6F 3E E2 82 AC   euro>???
+3C 2F 65 75 72 6F 3E 0D   </euro>^
+0A 3C 2F 64 6F 63 3E      ^</doc>

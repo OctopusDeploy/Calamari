@@ -1,0 +1,12 @@
+Applying a transform with an absolute path to a target relative to the extraction path
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─subdir
+| └─web.config
+└─web.config
+And the following files exist:
+c:\
+└─transforms
+  └─web.mytransform.config
+Then the transform c:\transforms\web.mytransform.config => .\subdir\web.config will:
+ - Apply the transform c:\transforms\web.mytransform.config to file subdir\web.config

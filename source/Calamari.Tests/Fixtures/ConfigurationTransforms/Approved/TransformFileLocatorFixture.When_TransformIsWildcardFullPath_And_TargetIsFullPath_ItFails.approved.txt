@@ -1,0 +1,10 @@
+﻿Not supported: Using an absolute path wildcard transform against an absolute path target
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+└─web.config
+And the following files exist:
+c:\
+└─transforms
+  ├─connstrings.mytransform.config
+  └─security.mytransform.config
+Then the transform c:\transforms\*.mytransform.config => c:\temp\web.config will do nothing.

@@ -1,0 +1,1 @@
+﻿Get-ChildItem -Path $TempDirectory -Filter *.artifact | New-OctopusArtifact
