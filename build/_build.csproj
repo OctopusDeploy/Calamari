@@ -10,8 +10,8 @@
         <NukeScriptDirectory>..</NukeScriptDirectory>
         <NukeTelemetryVersion>1</NukeTelemetryVersion>
         <PublishDir>..\build\outputs\$(RuntimeIdentifier)\nukebuild</PublishDir>
-        <Nullable>enable</Nullable>
-        <WarningsAsErrors>Nullable</WarningsAsErrors>
+        <Nullable>disable</Nullable>
+<!--        <WarningsAsErrors>Nullable</WarningsAsErrors>-->
     </PropertyGroup>
 
     <ItemGroup>

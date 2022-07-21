@@ -1,0 +1,13 @@
+﻿using System.Collections.Generic;
+using Serilog;
+
+namespace Calamari.Build
+{
+    interface IPackageReference
+    {
+        string Name { get; }
+        string Version { get; }
+        string PackagePath { get; }
+        IReadOnlyList<SourceFile> GetSourceFiles(ILogger log);
+    }
+}

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using NuGet.Packaging;
 using Nuke.Common;
 using Nuke.Common.CI.TeamCity;
 using Nuke.Common.IO;
@@ -226,6 +228,7 @@ namespace Calamari.Build
                       // ReSharper disable once LoopCanBeConvertedToQuery
                       foreach (var project in commonProjects)
                           packageActions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
+                          
 
                       var sourceProjectPath =
                           SourceDirectory / "Calamari.CloudAccounts" / "Calamari.CloudAccounts.csproj";
@@ -291,6 +294,37 @@ namespace Calamari.Build
                           CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
                   });
 
+        Target PackageConsolidatedCalamariZip =>
+            _ => _.DependsOn(PackBinaries)
+                  .Executes(() =>
+                            {
+                                var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg");
+                                var packageReferences = new List<BuildPackageReference>();
+                                foreach (var artifact in artifacts)
+                                {
+                                    using (var zip = ZipFile.OpenRead(artifact))
+                                    {
+                                        var nuspecFileStream = zip.Entries.First(e => e.Name.EndsWith(".nuspec")).Open();
+                                        var nuspecReader = new NuspecReader(nuspecFileStream);
+                                        var metadata = nuspecReader.GetMetadata();
+                                        packageReferences.Add(new BuildPackageReference
+                                        {
+                                            Name = metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(),
+                                            Version = metadata.Where(kvp => kvp.Key == "version").Select(i => i.Value).First(),
+                                            PackagePath = artifact
+                                        });
+                                    }
+                                }
+
+                                var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ArtifactsDirectory, packageReferences);
+                                
+                                if (!result)
+                                {
+                                    throw new Exception("Failed to consolidate calamari Packages");
+                                }
+                                
+                            });
+
         Target UpdateCalamariVersionOnOctopusServer =>
             _ =>
                 _.Requires(() => SetOctopusServerVersion)
@@ -322,12 +356,12 @@ namespace Calamari.Build
             TeamCity.Instance?.SetBuildNumber(NugetVersion.Value);
         });
 
-        Target BuildLocal => _ => _.DependsOn(PackBinaries)
-                                   .DependsOn(CopyToLocalPackages)
+        Target BuildLocal => _ => _.DependsOn(PackageConsolidatedCalamariZip)
                                    .DependsOn(UpdateCalamariVersionOnOctopusServer);
 
         Target BuildCi => _ => _.DependsOn(SetTeamCityVersion)
-                                .DependsOn(Pack);
+                                .DependsOn(Pack)
+                                .DependsOn(PackageConsolidatedCalamariZip);
 
         public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
@@ -440,5 +474,14 @@ namespace Calamari.Build
                 : GitVersionInfo?.NuGetVersion
                   ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
         }
+
+        /*
+         * This is responsible for dealing with (Sashimi) nuget packages.
+         * In our case, this would be Sashimi*. references that have not been fully migrated over to this repository.
+         */
+        // SourceFile[] GetPackageReferences()
+        // {
+        //     
+        // }
     }
 }
