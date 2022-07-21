@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Calamari\Calamari.csproj" />
+    <ProjectReference Include="..\Calamari.AzureAppService\Calamari.AzureAppService.csproj" />
     <PackageReference Include="Azure.Identity" Version="1.2.3" />
     <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-preview.2" />
     <PackageReference Include="Calamari.Tests.Shared" Version="14.2.0" />
