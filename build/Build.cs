@@ -297,11 +297,12 @@ namespace Calamari.Build
                   });
 
         Target CopySashimiPackagesForConsolidation =>
-            _ => _.Executes(() =>
-                            {
-                                foreach (var file in Directory.GetFiles(SashimiPackagesDirectory))
-                                    CopyFile(file, ArtifactsDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
-                            });
+            _ => _.DependsOn(Compile)
+                 .Executes(() =>
+                           {
+                               foreach (var file in Directory.GetFiles(SashimiPackagesDirectory))
+                                   CopyFile(file, ArtifactsDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
+                           });
 
         Target PackageConsolidatedCalamariZip =>
             _ => _.DependsOn(PackBinaries)
