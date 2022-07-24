@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace Calamari.Build
+namespace Calamari.Build.ConsolidateCalamariPackages
 {
     class Consolidate
     {

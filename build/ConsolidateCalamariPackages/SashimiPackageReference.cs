@@ -5,7 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using Serilog;
 
-namespace Calamari.Build
+namespace Calamari.Build.ConsolidateCalamariPackages
 {
     class SashimiPackageReference : IPackageReference
     {
@@ -24,28 +24,6 @@ namespace Calamari.Build
 
         public IReadOnlyList<SourceFile> GetSourceFiles(ILogger log)
         {
-            // var toolZipsDir = Path.Combine(PackagePath, "tools");
-            //
-            // using (var zip = ZipFile.OpenRead(PackagePath))
-            // {
-            //     if (!zip.Entries.Any(e => e.FullName.StartsWith("tools")))
-            //     {
-            //         log.Information($"Skipping {Name} as it does not have any zip files in the tools folder: {toolZipsDir}");
-            //         return Array.Empty<SourceFile>();
-            //     }
-            //
-            //     var sourceFiles = new List<SourceFile>();
-            //     var toolZips = zip.Entries.Where(e => e.FullName.StartsWith("tools/"));
-            //     foreach (var toolZip in toolZips)
-            //     {
-            //         var toolZipPath = Path.Combine(Path.GetDirectoryName(PackagePath), toolZip.Name);
-            //         toolZip.ExtractToFile(toolZipPath);
-            //         
-            //         sourceFiles.AddRange(ReadSashimiPackagedZip(toolZipPath));
-            //     }
-            //
-            //     return sourceFiles;
-            // }
             var extractPath = $"{Path.GetDirectoryName(PackagePath)}/extract/{Name}";
             ZipFile.ExtractToDirectory(PackagePath, extractPath);
             
@@ -69,7 +47,7 @@ namespace Calamari.Build
                            .ToArray();
         }
 
-        private IReadOnlyList<SourceFile> ReadSashimiPackagedZip(string toolZipPath)
+        IReadOnlyList<SourceFile> ReadSashimiPackagedZip(string toolZipPath)
         {
             using (var zip = ZipFile.OpenRead(toolZipPath))
                 return zip.Entries

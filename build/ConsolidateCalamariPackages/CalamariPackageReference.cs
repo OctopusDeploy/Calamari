@@ -5,7 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using Serilog;
 
-namespace Calamari.Build
+namespace Calamari.Build.ConsolidateCalamariPackages
 {
     class CalamariPackageReference : IPackageReference
     {

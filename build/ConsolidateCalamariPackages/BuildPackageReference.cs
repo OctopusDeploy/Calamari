@@ -1,4 +1,6 @@
-﻿namespace Calamari.Build
+﻿using System;
+
+namespace Calamari.Build.ConsolidateCalamariPackages
 {
     public class BuildPackageReference
     {

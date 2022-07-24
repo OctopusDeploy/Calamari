@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Calamari.Build.ConsolidateCalamariPackages;
 using NuGet.Packaging;
 using Nuke.Common;
 using Nuke.Common.CI.TeamCity;
@@ -96,6 +97,8 @@ namespace Calamari.Build
         static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         static AbsolutePath PublishDirectory => RootDirectory / "publish";
         static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
+
+        static AbsolutePath SashimiPackagesDirectory => SourceDirectory / "Calamari.UnmigratedCalamariFlavours" / "artifacts";
 
         Lazy<string> NugetVersion { get; }
 
@@ -228,7 +231,6 @@ namespace Calamari.Build
                       // ReSharper disable once LoopCanBeConvertedToQuery
                       foreach (var project in commonProjects)
                           packageActions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
-                          
 
                       var sourceProjectPath =
                           SourceDirectory / "Calamari.CloudAccounts" / "Calamari.CloudAccounts.csproj";
@@ -294,8 +296,16 @@ namespace Calamari.Build
                           CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
                   });
 
+        Target CopySashimiPackagesForConsolidation =>
+            _ => _.Executes(() =>
+                            {
+                                foreach (var file in Directory.GetFiles(SashimiPackagesDirectory))
+                                    CopyFile(file, ArtifactsDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
+                            });
+
         Target PackageConsolidatedCalamariZip =>
             _ => _.DependsOn(PackBinaries)
+                  .DependsOn(CopySashimiPackagesForConsolidation)
                   .Executes(() =>
                             {
                                 var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg");
@@ -317,12 +327,11 @@ namespace Calamari.Build
                                 }
 
                                 var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ArtifactsDirectory, packageReferences);
-                                
+
                                 if (!result)
-                                {
                                     throw new Exception("Failed to consolidate calamari Packages");
-                                }
-                                
+
+                                Log.Information($"Created consolidated package zip: {packageFilename}");
                             });
 
         Target UpdateCalamariVersionOnOctopusServer =>
@@ -474,14 +483,5 @@ namespace Calamari.Build
                 : GitVersionInfo?.NuGetVersion
                   ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
         }
-
-        /*
-         * This is responsible for dealing with (Sashimi) nuget packages.
-         * In our case, this would be Sashimi*. references that have not been fully migrated over to this repository.
-         */
-        // SourceFile[] GetPackageReferences()
-        // {
-        //     
-        // }
     }
 }

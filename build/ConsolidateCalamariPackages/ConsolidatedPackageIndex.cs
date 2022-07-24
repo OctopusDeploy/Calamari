@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Calamari.Build
+namespace Calamari.Build.ConsolidateCalamariPackages
 {
     public class ConsolidatedPackageIndex
     {

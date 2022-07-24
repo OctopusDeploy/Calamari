@@ -5,7 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Calamari.Build
+namespace Calamari.Build.ConsolidateCalamariPackages
 {
     class Hasher : IDisposable {
 
