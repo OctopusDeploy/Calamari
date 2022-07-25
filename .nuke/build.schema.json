@@ -14,10 +14,14 @@
         },
         "AzureKeyVaultAppSecret": {
           "type": "string",
-          "default": "Secrets must be entered via 'nuke :secret [profile]'"
+          "default": "Secrets must be entered via 'nuke :secrets [profile]'"
         },
         "AzureKeyVaultCertificateName": {
           "type": "string"
+        },
+        "AzureKeyVaultTenantId": {
+          "type": "string",
+          "default": "Secrets must be entered via 'nuke :secrets [profile]'"
         },
         "AzureKeyVaultUrl": {
           "type": "string"
@@ -55,6 +59,7 @@
             "AppVeyor",
             "AzurePipelines",
             "Bamboo",
+            "Bitbucket",
             "Bitrise",
             "GitHubActions",
             "GitLab",
@@ -104,7 +109,7 @@
         },
         "signing_certificate_password": {
           "type": "string",
-          "default": "Secrets must be entered via 'nuke :secret [profile]'"
+          "default": "Secrets must be entered via 'nuke :secrets [profile]'"
         },
         "signing_certificate_path": {
           "type": "string"
@@ -120,8 +125,10 @@
               "CheckForbiddenWords",
               "Clean",
               "Compile",
+              "CopySashimiPackagesForConsolidation",
               "CopyToLocalPackages",
               "Pack",
+              "PackageConsolidatedCalamariZip",
               "PackBinaries",
               "PackTests",
               "Publish",
@@ -146,8 +153,10 @@
               "CheckForbiddenWords",
               "Clean",
               "Compile",
+              "CopySashimiPackagesForConsolidation",
               "CopyToLocalPackages",
               "Pack",
+              "PackageConsolidatedCalamariZip",
               "PackBinaries",
               "PackTests",
               "Publish",
