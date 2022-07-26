@@ -65,6 +65,8 @@ namespace Calamari.Build
         [Parameter(Name = "signing_certificate_password")] [Secret] readonly string SigningCertificatePassword = "Password01!";
 
         [Required] [GitVersion] readonly GitVersion? GitVersionInfo;
+        
+        static List<string> CalamariFlavours = new List<string> { "AzureAppService" };
 
         public Build()
         {

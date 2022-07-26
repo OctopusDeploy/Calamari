@@ -100,10 +100,6 @@
           "type": "string",
           "description": "Root directory during build execution"
         },
-        "SetOctopusServerVersion": {
-          "type": "boolean",
-          "description": "Set Calamari Version on OctopusServer"
-        },
         "SignBinaries": {
           "type": "boolean"
         },
@@ -132,6 +128,7 @@
               "PackBinaries",
               "PackTests",
               "Publish",
+              "PublishCalamariFlavourProjects",
               "Restore",
               "SetTeamCityVersion",
               "UpdateCalamariVersionOnOctopusServer"
@@ -160,6 +157,7 @@
               "PackBinaries",
               "PackTests",
               "Publish",
+              "PublishCalamariFlavourProjects",
               "Restore",
               "SetTeamCityVersion",
               "UpdateCalamariVersionOnOctopusServer"
