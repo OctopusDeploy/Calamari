@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
@@ -30,6 +31,12 @@ namespace Calamari.Build.ConsolidateCalamariPackages
 
         public string Hash(byte[] bytes)
             => BitConverter.ToString(md5.ComputeHash(bytes)).Replace("-", "").ToLower();
+        
+        public string Hash(FileInfo fileInfo)
+        {
+            using (var entryStream = fileInfo.OpenRead())
+                return BitConverter.ToString(md5.ComputeHash(entryStream)).Replace("-", "").ToLower();
+        }
 
         public void Dispose()
             => md5?.Dispose();

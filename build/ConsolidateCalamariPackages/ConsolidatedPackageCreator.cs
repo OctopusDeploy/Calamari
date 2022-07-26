@@ -36,16 +36,32 @@ namespace Calamari.Build.ConsolidateCalamariPackages
 
             foreach (var groupedBySourceArchive in uniqueFiles.GroupBy(f => f.ArchivePath))
             {
-                using (var sourceZip = ZipFile.OpenRead(groupedBySourceArchive.Key))
-                    foreach (var uniqueFile in groupedBySourceArchive)
-                    {
-                        var entryName = Path.Combine(uniqueFile.Hash, uniqueFile.FullNameInDestinationArchive);
-                        var entry = zip.CreateEntry(entryName, CompressionLevel.Fastest);
+                if (!(groupedBySourceArchive.Key.EndsWith(".zip") || groupedBySourceArchive.Key.EndsWith(".nupkg")))
+                {
+                    var files = new DirectoryInfo(groupedBySourceArchive.Key).GetFiles();
+                        foreach (var uniqueFile in groupedBySourceArchive)
+                        {
+                            var entryName = Path.Combine(uniqueFile.Hash, uniqueFile.FullNameInDestinationArchive);
+                            var entry = zip.CreateEntry(entryName, CompressionLevel.Fastest);
 
-                        using (var destStream = entry.Open())
-                        using (var sourceStream = sourceZip.Entries.First(e => e.FullName == uniqueFile.FullNameInSourceArchive).Open())
-                            sourceStream.CopyTo(destStream);
-                    }
+                            using (var destStream = entry.Open())
+                            using (var sourceStream = files.First(e => e.FullName == uniqueFile.FullNameInSourceArchive).OpenRead())
+                                sourceStream.CopyTo(destStream);
+                        }
+                }
+                else
+                {
+                    using (var sourceZip = ZipFile.OpenRead(groupedBySourceArchive.Key))
+                        foreach (var uniqueFile in groupedBySourceArchive)
+                        {
+                            var entryName = Path.Combine(uniqueFile.Hash, uniqueFile.FullNameInDestinationArchive);
+                            var entry = zip.CreateEntry(entryName, CompressionLevel.Fastest);
+
+                            using (var destStream = entry.Open())
+                            using (var sourceStream = sourceZip.Entries.First(e => e.FullName == uniqueFile.FullNameInSourceArchive).Open())
+                                sourceStream.CopyTo(destStream);
+                        }
+                }
             }
         }
 

@@ -66,7 +66,7 @@ namespace Calamari.Build
 
         [Required] [GitVersion] readonly GitVersion? GitVersionInfo;
         
-        static List<string> CalamariFlavours = new List<string> { "AzureAppService" };
+        static List<string> CalamariFlavours = new List<string> { "Calamari.AzureAppService" };
 
         public Build()
         {
@@ -179,7 +179,7 @@ namespace Calamari.Build
                                                           .DependsOn(Compile)
                                                           .Executes(() =>
                                                                     {
-                                                                        var calamariFlavourGroup = CalamariFlavours.Select(flavour => SourceDirectory.GlobFiles($"**/Calamari.{flavour}*.csproj")); //We need Calamari & Calamari.Tests
+                                                                        var calamariFlavourGroup = CalamariFlavours.Select(flavour => SourceDirectory.GlobFiles($"**/{flavour}*.csproj")); //We need Calamari & Calamari.Tests
                                                                         foreach (var calamariFlavourProjects in calamariFlavourGroup)
                                                                         {
                                                                             foreach (var project in calamariFlavourProjects)
@@ -365,6 +365,22 @@ namespace Calamari.Build
                                             PackagePath = artifact
                                         });
                                     }
+                                }
+
+                                foreach (var flavour in CalamariFlavours)
+                                {
+                                    var platforms = Directory.GetDirectories($"{PublishDirectory}\\{flavour}");
+                                    
+                                    foreach (var path in platforms)
+                                    {
+                                        packageReferences.Add(new BuildPackageReference
+                                        {
+                                            Name = flavour,
+                                            Version = NugetVersion.Value,
+                                            PackagePath = path
+                                        });
+                                    }
+
                                 }
 
                                 var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ArtifactsDirectory, packageReferences);
