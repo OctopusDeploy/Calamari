@@ -18,7 +18,7 @@ Write-Host "
 ##################################################################################################
 " -ForegroundColor Cyan
 
-./build.ps1 -BuildVerbosity Minimal -Verbosity Minimal -PackInParallel -AppendTimestamp -SetOctopusServerVersion 
+./build.ps1 -BuildVerbosity Minimal -Verbosity Normal -PackInParallel -AppendTimestamp -SetOctopusServerVersion 
 
 Write-Host "
 ########################################################################################
