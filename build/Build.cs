@@ -67,6 +67,7 @@ namespace Calamari.Build
         [Required] [GitVersion] readonly GitVersion? GitVersionInfo;
         
         static List<string> CalamariFlavours = new List<string> { "Calamari.AzureAppService" };
+        static List<string> CalamariProjectsToSkipConsolidation = new List<string> { "Calamari.CloudAccounts", "Calamari.Common" };
 
         public Build()
         {
@@ -168,7 +169,7 @@ namespace Calamari.Build
                                           nugetVersion,
                                           FixedRuntimes.Cloud);
 
-                                DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, FixedRuntimes.Portable);
+                                // DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, FixedRuntimes.Portable);
 
                                 // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                                 foreach (var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
@@ -245,8 +246,8 @@ namespace Calamari.Build
                                                     nugetVersion,
                                                     FixedRuntimes.Cloud),
                                     // Create a portable .NET Core package
-                                    () => DoPackage(RootProjectName, Frameworks.NetCoreApp31, nugetVersion,
-                                                    FixedRuntimes.Portable)
+                                    // () => DoPackage(RootProjectName, Frameworks.NetCoreApp31, nugetVersion,
+                                    //                 FixedRuntimes.Portable)
                                 };
 
                                 // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
@@ -349,7 +350,8 @@ namespace Calamari.Build
                   .DependsOn(CopySashimiPackagesForConsolidation)
                   .Executes(() =>
                             {
-                                var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg");
+                                var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
+                                                         .Where(a => !CalamariProjectsToSkipConsolidation.Any(cp => a.Contains(cp)));
                                 var packageReferences = new List<BuildPackageReference>();
                                 foreach (var artifact in artifacts)
                                 {
