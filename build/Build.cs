@@ -169,8 +169,6 @@ namespace Calamari.Build
                                           nugetVersion,
                                           FixedRuntimes.Cloud);
 
-                                // DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, FixedRuntimes.Portable);
-
                                 // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                                 foreach (var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
                                     DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid);
@@ -245,9 +243,6 @@ namespace Calamari.Build
                                                     OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.NetCoreApp31,
                                                     nugetVersion,
                                                     FixedRuntimes.Cloud),
-                                    // Create a portable .NET Core package
-                                    // () => DoPackage(RootProjectName, Frameworks.NetCoreApp31, nugetVersion,
-                                    //                 FixedRuntimes.Portable)
                                 };
 
                                 // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
