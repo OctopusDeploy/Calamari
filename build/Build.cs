@@ -327,7 +327,7 @@ namespace Calamari.Build
                                     }
                                 }
 
-                                var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ArtifactsDirectory / "Consolidated", packageReferences);
+                                var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ArtifactsDirectory, packageReferences);
 
                                 if (!result)
                                     throw new Exception("Failed to consolidate calamari Packages");
@@ -339,8 +339,23 @@ namespace Calamari.Build
             _ => _.DependsOn(PackageConsolidatedCalamariZip)
                   .Executes(() =>
                             {
+                                var consolidatedPackageDir = ArtifactsDirectory / "Consolidated";
+                                var contentFilesDir = consolidatedPackageDir / "contentFiles" / "any" / "any";
+                                var nuspec = "Calamari.Consolidated.nuspec";
+                                Directory.CreateDirectory(contentFilesDir);
+
+                                var calamariFile = ArtifactsDirectory.GlobFiles("Calamari.*.zip").First();
+                                
+                                File.Move(calamariFile, contentFilesDir / calamariFile.Name);
+                                
+                                File.Copy(SourceDirectory / nuspec, consolidatedPackageDir / nuspec);
+                                
+                                var text = File.ReadAllText(consolidatedPackageDir / nuspec);
+                                text = text.Replace("$version$", NugetVersion.Value);
+                                File.WriteAllText(consolidatedPackageDir / nuspec, text);
+                                
                                 DotNetPack(s => s
-                                                .SetProject(ArtifactsDirectory / "Consolidated")
+                                                .SetProject(consolidatedPackageDir)
                                                 .SetConfiguration(Configuration)
                                                 .SetOutputDirectory(ArtifactsDirectory)
                                                 .SetVersion(NugetVersion.Value));
