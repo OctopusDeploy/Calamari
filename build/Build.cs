@@ -339,23 +339,8 @@ namespace Calamari.Build
             _ => _.DependsOn(PackageConsolidatedCalamariZip)
                   .Executes(() =>
                             {
-                                var consolidatedPackageDir = ArtifactsDirectory / "Consolidated";
-                                var contentFilesDir = consolidatedPackageDir / "contentFiles" / "any" / "any";
-                                var nuspec = "Calamari.Consolidated.nuspec";
-                                Directory.CreateDirectory(contentFilesDir);
-
-                                var calamariFile = ArtifactsDirectory.GlobFiles("Calamari.*.zip").First();
-                                
-                                File.Move(calamariFile, contentFilesDir / calamariFile.Name);
-                                
-                                File.Copy(SourceDirectory / nuspec, consolidatedPackageDir / nuspec);
-                                
-                                var text = File.ReadAllText(consolidatedPackageDir / nuspec);
-                                text = text.Replace("$version$", NugetVersion.Value);
-                                File.WriteAllText(consolidatedPackageDir / nuspec, text);
-                                
                                 DotNetPack(s => s
-                                                .SetProject(consolidatedPackageDir)
+                                                .SetProject(SourceDirectory / "Calamari.Consolidated")
                                                 .SetConfiguration(Configuration)
                                                 .SetOutputDirectory(ArtifactsDirectory)
                                                 .SetVersion(NugetVersion.Value));
