@@ -20,7 +20,7 @@ namespace Calamari.Build.ConsolidateCalamariPackages
                 using (var destStream = indexEntry.Open())
                     WriteIndexTo(destStream, sourceFiles);
             }
-        } 
+        }
 
         private static void WriteUniqueFilesToZip(IEnumerable<SourceFile> sourceFiles, ZipArchive zip)
         {
@@ -37,15 +37,15 @@ namespace Calamari.Build.ConsolidateCalamariPackages
             foreach (var groupedBySourceArchive in uniqueFiles.GroupBy(f => f.ArchivePath))
             {
                 using (var sourceZip = ZipFile.OpenRead(groupedBySourceArchive.Key))
-                    foreach (var uniqueFile in groupedBySourceArchive)
-                    {
-                        var entryName = Path.Combine(uniqueFile.Hash, uniqueFile.FullNameInDestinationArchive);
-                        var entry = zip.CreateEntry(entryName, CompressionLevel.Fastest);
+                        foreach (var uniqueFile in groupedBySourceArchive)
+                        {
+                            var entryName = Path.Combine(uniqueFile.Hash, uniqueFile.FullNameInDestinationArchive);
+                            var entry = zip.CreateEntry(entryName, CompressionLevel.Fastest);
 
-                        using (var destStream = entry.Open())
-                        using (var sourceStream = sourceZip.Entries.First(e => e.FullName == uniqueFile.FullNameInSourceArchive).Open())
-                            sourceStream.CopyTo(destStream);
-                    }
+                            using (var destStream = entry.Open())
+                            using (var sourceStream = sourceZip.Entries.First(e => e.FullName == uniqueFile.FullNameInSourceArchive).Open())
+                                sourceStream.CopyTo(destStream);
+                        }
             }
         }
 

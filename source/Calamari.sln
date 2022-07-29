@@ -42,6 +42,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_build", "..\build\_build.c
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Azure", "Calamari.Azure\Calamari.Azure.csproj", "{AC3A676B-D720-4AC8-A188-B25DB72969CB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureAppService", "Calamari.AzureAppService\Calamari.AzureAppService.csproj", "{0A1E26DB-E41C-4186-882A-75BA3EC10490}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureAppService.Tests", "Calamari.AzureAppService.Tests\Calamari.AzureAppService.Tests.csproj", "{11AFAB0B-A3EE-4FC1-95A7-FB480B3C938B}"
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.UnmigratedCalamariFlavours", "Calamari.UnmigratedCalamariFlavours\Calamari.UnmigratedCalamariFlavours.csproj", "{B80883B9-E675-4081-9198-74EA4C41AEB3}"
 EndProject
 Global
@@ -84,6 +87,14 @@ Global
 		{AC3A676B-D720-4AC8-A188-B25DB72969CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC3A676B-D720-4AC8-A188-B25DB72969CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC3A676B-D720-4AC8-A188-B25DB72969CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A1E26DB-E41C-4186-882A-75BA3EC10490}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A1E26DB-E41C-4186-882A-75BA3EC10490}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A1E26DB-E41C-4186-882A-75BA3EC10490}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A1E26DB-E41C-4186-882A-75BA3EC10490}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11AFAB0B-A3EE-4FC1-95A7-FB480B3C938B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11AFAB0B-A3EE-4FC1-95A7-FB480B3C938B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11AFAB0B-A3EE-4FC1-95A7-FB480B3C938B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11AFAB0B-A3EE-4FC1-95A7-FB480B3C938B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B80883B9-E675-4081-9198-74EA4C41AEB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B80883B9-E675-4081-9198-74EA4C41AEB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B80883B9-E675-4081-9198-74EA4C41AEB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
