@@ -61,14 +61,19 @@ namespace Calamari.Build.ConsolidateCalamariPackages
         private static IReadOnlyList<IPackageReference> GetPackages(Hasher hasher, IEnumerable<BuildPackageReference> packageReferences)
         {
             var calamariPackages = packageReferences
+                .Where(p => !MigratedCalamariFlavours.Flavours.Contains(p.Name))
                 .Where(p => p.Name.StartsWith("Calamari"))
                 .Select(p => new CalamariPackageReference(hasher, p));
+            
+            var calamariFlavourPackages = packageReferences
+                .Where(p => MigratedCalamariFlavours.Flavours.Contains(p.Name))
+                .Select(p => new CalamariFlavourPackageReference(hasher, p));
 
             var sashimiPackages = packageReferences
                 .Where(p => p.Name.StartsWith("Sashimi."))
                 .Select(p => new SashimiPackageReference(hasher, p));
 
-            return calamariPackages.Concat<IPackageReference>(sashimiPackages).ToArray();
+            return calamariPackages.Concat<IPackageReference>(sashimiPackages).Concat(calamariFlavourPackages).ToArray();
         }
     }
 }

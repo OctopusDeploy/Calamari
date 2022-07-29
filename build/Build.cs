@@ -66,7 +66,6 @@ namespace Calamari.Build
 
         [Required] [GitVersion] readonly GitVersion? GitVersionInfo;
         
-        static List<string> CalamariFlavours = new List<string> { "Calamari.AzureAppService" };
         static List<string> CalamariProjectsToSkipConsolidation = new List<string> { "Calamari.CloudAccounts", "Calamari.Common" };
 
         public Build()
@@ -178,7 +177,7 @@ namespace Calamari.Build
                                                           .DependsOn(Compile)
                                                           .Executes(() =>
                                                                     {
-                                                                        var calamariFlavourGroup = CalamariFlavours.Select(flavour => SourceDirectory.GlobFiles($"**/{flavour}*.csproj")); //We need Calamari & Calamari.Tests
+                                                                        var calamariFlavourGroup = MigratedCalamariFlavours.Flavours.Select(flavour => SourceDirectory.GlobFiles($"**/{flavour}*.csproj")); //We need Calamari & Calamari.Tests
                                                                         foreach (var calamariFlavourProjects in calamariFlavourGroup)
                                                                         {
                                                                             foreach (var project in calamariFlavourProjects)
@@ -364,20 +363,14 @@ namespace Calamari.Build
                                     }
                                 }
 
-                                foreach (var flavour in CalamariFlavours)
+                                foreach (var flavour in MigratedCalamariFlavours.Flavours)
                                 {
-                                    var platforms = Directory.GetDirectories($"{PublishDirectory}\\{flavour}");
-                                    
-                                    foreach (var path in platforms)
+                                    packageReferences.Add(new BuildPackageReference
                                     {
-                                        packageReferences.Add(new BuildPackageReference
-                                        {
-                                            Name = flavour,
-                                            Version = NugetVersion.Value,
-                                            PackagePath = path
-                                        });
-                                    }
-
+                                        Name = flavour,
+                                        Version = NugetVersion.Value,
+                                        PackagePath = $"{ArtifactsDirectory}\\{flavour}.zip"
+                                    });
                                 }
 
                                 var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ArtifactsDirectory, packageReferences);
