@@ -7,11 +7,8 @@
         <authors>Octopus Deploy</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Contains consolidated zip file of all Calamari flavours</description>
-        <contentFiles>
-            <files include="../artifacts/Calamari.*.zip" copyToOutput="true" buildAction="none" />
-        </contentFiles>
     </metadata>
     <files>
-        <file src="../artifacts/Calamari.*.zip" target="content/any/any" />
+        <file src="..\artifacts\Calamari.*.zip" target="content\any\any\" />
     </files>
 </package>
