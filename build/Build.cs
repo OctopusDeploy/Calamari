@@ -191,59 +191,64 @@ namespace Calamari.Build
                           DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid);
                   });
 
-        Target PublishCalamariFlavourProjects => 
+        Target PublishCalamariFlavourProjects =>
             _ => _
                  .DependsOn(Compile)
                  .Executes(() =>
-                           {
-                               MigratedCalamariFlavours.Flavours
-                                    .Select(flavour => SourceDirectory.GlobFiles($"**/{flavour}*.csproj"))
-                                    .ForEach(fg => fg.ForEach(
-                                        projectPath =>
-                                        {
-                                            var project = Solution?.GetProject(projectPath);
-                                            var frameworks = XmlTasks.XmlPeekSingle(projectPath, "Project/PropertyGroup/TargetFrameworks") ?? XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/TargetFramework");
+                 {
+                    // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
+                    // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
+                    bool IsCrossPlatform(string targetFramework) => targetFramework.Contains(".");
 
-                                            foreach (var framework in frameworks.Split(';'))
-                                            {
-                                                void RunPublish(string platform)
-                                                {
-                                                    var runtime = platform == "netfx" ? null : platform;
-                                                    DotNetPublish(s => s
-                                                                       .SetProject(project)
-                                                                       .SetConfiguration(Configuration)
-                                                                       .SetFramework(framework)
-                                                                       .SetRuntime(runtime)
-                                                                       .SetOutput(PublishDirectory / project.Name / platform));
-                                                    File.Copy(RootDirectory / "global.json", PublishDirectory / project.Name / platform / "global.json");
-                                                }
+                    var calamariFlavours = Solution.Projects
+                        .Where(project => MigratedCalamariFlavours.Flavours.Contains(project.Name));
 
-                                                if (framework == "net5.0")
-                                                {
-                                                    var runtimes = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/RuntimeIdentifiers")?.Split(';') ?? new string[0];
-                                                    foreach (var runtime in runtimes)
-                                                    {
-                                                        RunPublish(runtime);
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    if (OperatingSystem.IsWindows())
-                                                    {
-                                                        RunPublish("netfx");
-                                                    }
-                                                    else
-                                                    {
-                                                        Log.Warning($"Skipping building {framework} - can't build netfx on non Windows OS");
-                                                    }
-                                                }
-                                            }
+                    var packagesToBuild = calamariFlavours
+                        .SelectMany(project => project.GetTargetFrameworks(), (p, f) => new
+                        {
+                            Project = p,
+                            Framework = f,
+                            CrossPlatform = IsCrossPlatform(f),
+                        })
+                        .SelectMany(packageToBuild => packageToBuild.Project.GetRuntimeIdentifiers(), (packageToBuild, runtimeIdentifier) => new
+                        {
+                            packageToBuild.Project,
+                            packageToBuild.Framework,
+                            Architecture = packageToBuild.CrossPlatform ? runtimeIdentifier : null,
+                            packageToBuild.CrossPlatform
+                        })
+                        .Distinct(t => new { t.Architecture, t.Framework });
 
-                                            Log.Verbose($"{PublishDirectory}/{project.Name}");
+                    foreach (var packageToBuild in packagesToBuild)
+                    {
+                        if (!OperatingSystem.IsWindows() && !packageToBuild.CrossPlatform)
+                        {
+                            Log.Warning($"Not building {packageToBuild.Framework}: can only build netfx on a Windows OS");
+                            continue;
+                        }
 
-                                            CompressionTasks.CompressZip(PublishDirectory / project.Name, $"{ArtifactsDirectory / project.Name}.zip");
-                                        }));
-                           });
+                        Log.Information($"Building {packageToBuild.Project.Name} for framework '{packageToBuild.Framework}' and arch '{packageToBuild.Architecture}'");
+
+                        var project = packageToBuild.Project;
+                        var outputDirectory = PublishDirectory / project.Name / (packageToBuild.CrossPlatform ? packageToBuild.Architecture : "netfx");
+
+                        DotNetPublish(s => s
+                            .SetConfiguration(Configuration)
+                            .SetProject(project)
+                            .SetFramework(packageToBuild.Framework)
+                            .SetRuntime(packageToBuild.Architecture)
+                            .SetOutput(outputDirectory)
+                        );
+
+                        File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+                    }
+
+                    foreach (var flavour in calamariFlavours)
+                    {
+                        Log.Verbose($"Compressing Calamari flavour {PublishDirectory}/{flavour.Name}");
+                        CompressionTasks.CompressZip(PublishDirectory / flavour.Name, $"{ArtifactsDirectory / flavour.Name}.zip");
+                    }
+                });
 
         Target PackBinaries =>
             _ => _.DependsOn(Publish)
