@@ -20,6 +20,7 @@ using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
+using static Nuke.Common.Tools.NuGet.NuGetTasks;
 
 namespace Calamari.Build
 {
@@ -94,6 +95,7 @@ namespace Calamari.Build
         }
 
         static AbsolutePath SourceDirectory => RootDirectory / "source";
+        static AbsolutePath BuildDirectory => RootDirectory / "build";
         static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         static AbsolutePath PublishDirectory => RootDirectory / "publish";
         static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
@@ -335,6 +337,15 @@ namespace Calamari.Build
                                 Log.Information($"Created consolidated package zip: {packageFilename}");
                             });
 
+        Target PackCalamariConsolidatedNugetPackage =>
+            _ => _.DependsOn(PackageConsolidatedCalamariZip)
+                  .Executes(() =>
+                            {
+                                NuGetPack(s => s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
+                                                .SetVersion(NugetVersion.Value)
+                                                .SetOutputDirectory(ArtifactsDirectory));
+                            });
+        
         Target UpdateCalamariVersionOnOctopusServer =>
             _ =>
                 _.Requires(() => SetOctopusServerVersion)
@@ -366,12 +377,12 @@ namespace Calamari.Build
             TeamCity.Instance?.SetBuildNumber(NugetVersion.Value);
         });
 
-        Target BuildLocal => _ => _.DependsOn(PackageConsolidatedCalamariZip)
+        Target BuildLocal => _ => _.DependsOn(PackCalamariConsolidatedNugetPackage)
                                    .DependsOn(UpdateCalamariVersionOnOctopusServer);
 
         Target BuildCi => _ => _.DependsOn(SetTeamCityVersion)
                                 .DependsOn(Pack)
-                                .DependsOn(PackageConsolidatedCalamariZip);
+                                .DependsOn(PackCalamariConsolidatedNugetPackage);
 
         public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
