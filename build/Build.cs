@@ -83,6 +83,8 @@ namespace Calamari.Build
         [Required]
         [GitVersion]
         readonly GitVersion? GitVersionInfo;
+        
+        static List<string> CalamariProjectsToSkipConsolidation = new List<string> { "Calamari.CloudAccounts", "Calamari.Common" };
 
         public Build()
         {
@@ -184,15 +186,68 @@ namespace Calamari.Build
                                 nugetVersion,
                                 FixedRuntimes.Cloud);
 
-                      DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, FixedRuntimes.Portable);
-
                       // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                       foreach (var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
                           DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid);
                   });
 
+        Target PublishCalamariFlavourProjects => _ => _
+                                                          .DependsOn(Compile)
+                                                          .Executes(() =>
+                                                                    {
+                                                                        var calamariFlavourGroup = MigratedCalamariFlavours.Flavours.Select(flavour => SourceDirectory.GlobFiles($"**/{flavour}*.csproj")); //We need Calamari & Calamari.Tests
+                                                                        foreach (var calamariFlavourProjects in calamariFlavourGroup)
+                                                                        {
+                                                                            foreach (var project in calamariFlavourProjects)
+                                                                            {
+                                                                                var calamariFlavour = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/AssemblyName");
+
+                                                                                var frameworks = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/TargetFrameworks") ?? XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/TargetFramework");
+
+                                                                                foreach (var framework in frameworks.Split(';'))
+                                                                                {
+                                                                                    void RunPublish(string runtime, string platform)
+                                                                                    {
+                                                                                        DotNetPublish(s => s
+                                                                                                           .SetProject(project)
+                                                                                                           .SetConfiguration(Configuration)
+                                                                                                           .SetFramework(framework)
+                                                                                                           .SetRuntime(runtime)
+                                                                                                           .SetOutput(PublishDirectory / calamariFlavour / platform));
+                                                                                        File.Copy(RootDirectory / "global.json", PublishDirectory / calamariFlavour / platform / "global.json");
+                                                                                    }
+
+                                                                                    if (framework == "net5.0")
+                                                                                    {
+                                                                                        var runtimes = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/RuntimeIdentifiers")?.Split(';') ?? new string[0];
+                                                                                        foreach (var runtime in runtimes)
+                                                                                        {
+                                                                                            RunPublish(runtime, runtime);
+                                                                                        }
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        if (OperatingSystem.IsWindows())
+                                                                                        {
+                                                                                            RunPublish("", "netfx");
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            Logger.Warn($"Skipping building {framework} - can't build netfx on non Windows OS");
+                                                                                        }
+                                                                                    }
+                                                                                }
+
+                                                                                Logger.Trace($"{PublishDirectory}/{calamariFlavour}");
+
+                                                                                CompressionTasks.CompressZip(PublishDirectory / calamariFlavour, $"{ArtifactsDirectory / calamariFlavour}.zip");
+                                                                            }
+                                                                        }
+                                                                    });
+
         Target PackBinaries =>
             _ => _.DependsOn(Publish)
+                  .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(async () =>
                   {
                       var nugetVersion = NugetVersion.Value;
@@ -205,9 +260,6 @@ namespace Calamari.Build
                                           OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.NetCoreApp31,
                                           nugetVersion,
                                           FixedRuntimes.Cloud),
-                          // Create a portable .NET Core package
-                          () => DoPackage(RootProjectName, Frameworks.NetCoreApp31, nugetVersion,
-                                          FixedRuntimes.Portable)
                       };
 
                       // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
@@ -242,6 +294,7 @@ namespace Calamari.Build
 
         Target PackTests =>
             _ => _.DependsOn(Publish)
+                  .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(async () =>
                   {
                       var nugetVersion = NugetVersion.Value;
@@ -309,7 +362,8 @@ namespace Calamari.Build
                   .DependsOn(CopySashimiPackagesForConsolidation)
                   .Executes(() =>
                             {
-                                var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg");
+                                var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
+                                                         .Where(a => !CalamariProjectsToSkipConsolidation.Any(cp => a.Contains(cp)));
                                 var packageReferences = new List<BuildPackageReference>();
                                 foreach (var artifact in artifacts)
                                 {
@@ -325,6 +379,16 @@ namespace Calamari.Build
                                             PackagePath = artifact
                                         });
                                     }
+                                }
+
+                                foreach (var flavour in MigratedCalamariFlavours.Flavours)
+                                {
+                                    packageReferences.Add(new BuildPackageReference
+                                    {
+                                        Name = flavour,
+                                        Version = NugetVersion.Value,
+                                        PackagePath = $"{ArtifactsDirectory}\\{flavour}.zip"
+                                    });
                                 }
 
                                 var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ArtifactsDirectory, packageReferences);
@@ -430,7 +494,7 @@ namespace Calamari.Build
                                                      AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
                                                      SigningCertificatePath, SigningCertificatePassword);
             }
-            
+
             DotNetPack(dotNetCorePackSettings.SetProject(project));
         }
 

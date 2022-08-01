@@ -28,29 +28,29 @@ namespace Calamari.Build.ConsolidateCalamariPackages
             var isCloud = Name == "Calamari.Cloud";
             var platform = isNetFx || isCloud
                 ? "netfx"
-                : Name.Split('.')[1]; //this needs to change to account for sashimi's calamari halves later; TODO.
+                : Name.Split('.')[1];
 
             if (!File.Exists(PackagePath))
                 throw new Exception($"Could not find the source NuGet package {PackagePath} does not exist");
 
             using (var zip = ZipFile.OpenRead(PackagePath))
                 return zip.Entries
-                    .Where(e => !string.IsNullOrEmpty(e.Name))
-                    .Where(e => e.FullName != "[Content_Types].xml")
-                    .Where(e => !e.FullName.StartsWith("_rels"))
-                    .Where(e => !e.FullName.StartsWith("package/services"))
-                    .Select(entry => new SourceFile
-                    {
-                        PackageId = isCloud ? "Calamari.Cloud" : "Calamari",
-                        Version = Version,
-                        Platform = platform,
-                        ArchivePath = PackagePath,
-                        IsNupkg = true,
-                        FullNameInDestinationArchive = entry.FullName,
-                        FullNameInSourceArchive = entry.FullName,
-                        Hash = hasher.Hash(entry)
-                    })
-                    .ToArray();
+                          .Where(e => !string.IsNullOrEmpty(e.Name))
+                          .Where(e => e.FullName != "[Content_Types].xml")
+                          .Where(e => !e.FullName.StartsWith("_rels"))
+                          .Where(e => !e.FullName.StartsWith("package/services"))
+                          .Select(entry => new SourceFile
+                          {
+                              PackageId = isCloud ? "Calamari.Cloud" : "Calamari",
+                              Version = Version,
+                              Platform = platform,
+                              ArchivePath = PackagePath,
+                              IsNupkg = true,
+                              FullNameInDestinationArchive = entry.FullName,
+                              FullNameInSourceArchive = entry.FullName,
+                              Hash = hasher.Hash(entry)
+                          })
+                          .ToArray();
         }
     }
 }
