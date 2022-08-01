@@ -134,6 +134,7 @@ namespace Calamari.Build
                 SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(DeleteDirectory);
                 EnsureCleanDirectory(ArtifactsDirectory);
                 EnsureCleanDirectory(PublishDirectory);
+                EnsureCleanDirectory(SashimiPackagesDirectory);
             });
 
         Target Restore =>
