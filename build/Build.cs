@@ -201,8 +201,10 @@ namespace Calamari.Build
                     // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
                     bool IsCrossPlatform(string targetFramework) => targetFramework.Contains(".");
 
+                    var migratedCalamariFlavoursTests = MigratedCalamariFlavours.Flavours.Select(f => $"{f}.Tests");
                     var calamariFlavours = Solution.Projects
-                        .Where(project => MigratedCalamariFlavours.Flavours.Contains(project.Name));
+                                                   .Where(project => MigratedCalamariFlavours.Flavours.Contains(project.Name)
+                                                                     || migratedCalamariFlavoursTests.Contains(project.Name));
 
                     var packagesToBuild = calamariFlavours
                         .SelectMany(project => project.GetTargetFrameworks(), (p, f) => new
@@ -218,7 +220,7 @@ namespace Calamari.Build
                             Architecture = packageToBuild.CrossPlatform ? runtimeIdentifier : null,
                             packageToBuild.CrossPlatform
                         })
-                        .Distinct(t => new { t.Architecture, t.Framework });
+                        .Distinct(t => new { t.Project.Name, t.Architecture, t.Framework });
 
                     foreach (var packageToBuild in packagesToBuild)
                     {
