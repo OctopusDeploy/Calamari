@@ -9,6 +9,6 @@
         <description>Contains consolidated zip file of all Calamari flavours</description>
     </metadata>
     <files>
-        <file src="..\artifacts\Calamari.*.zip" target="content\any\any\" />
+        <file src="..\artifacts\Calamari.*.zip" target="contentFiles\any\any\" />
     </files>
 </package>
