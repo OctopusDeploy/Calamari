@@ -20,6 +20,7 @@ using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
+using static Nuke.Common.Tools.NuGet.NuGetTasks;
 
 namespace Calamari.Build
 {
@@ -94,6 +95,7 @@ namespace Calamari.Build
         }
 
         static AbsolutePath SourceDirectory => RootDirectory / "source";
+        static AbsolutePath BuildDirectory => RootDirectory / "build";
         static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         static AbsolutePath PublishDirectory => RootDirectory / "publish";
         static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
@@ -339,11 +341,9 @@ namespace Calamari.Build
             _ => _.DependsOn(PackageConsolidatedCalamariZip)
                   .Executes(() =>
                             {
-                                DotNetPack(s => s
-                                                .SetProject(SourceDirectory / "Calamari.Consolidated")
-                                                .SetConfiguration(Configuration)
-                                                .SetOutputDirectory(ArtifactsDirectory)
-                                                .SetVersion(NugetVersion.Value));
+                                NuGetPack(s => s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
+                                                .SetVersion(NugetVersion.Value)
+                                                .SetOutputDirectory(ArtifactsDirectory));
                             });
         
         Target UpdateCalamariVersionOnOctopusServer =>
