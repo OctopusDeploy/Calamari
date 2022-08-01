@@ -6,7 +6,10 @@
         <title />
         <authors>Octopus Deploy</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>My package description.</description>
+        <description>Contains consolidated zip file of all Calamari flavours</description>
+        <contentFiles>
+            <files include="../artifacts/Calamari.*.zip" copyToOutput="true" buildAction="none" />
+        </contentFiles>
     </metadata>
     <files>
         <file src="../artifacts/Calamari.*.zip" target="content/any/any" />
