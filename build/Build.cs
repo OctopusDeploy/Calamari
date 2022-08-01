@@ -191,59 +191,59 @@ namespace Calamari.Build
                           DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid);
                   });
 
-        Target PublishCalamariFlavourProjects => _ => _
-                                                          .DependsOn(Compile)
-                                                          .Executes(() =>
-                                                                    {
-                                                                        var calamariFlavourGroup = MigratedCalamariFlavours.Flavours.Select(flavour => SourceDirectory.GlobFiles($"**/{flavour}*.csproj")); //We need Calamari & Calamari.Tests
-                                                                        foreach (var calamariFlavourProjects in calamariFlavourGroup)
-                                                                        {
-                                                                            foreach (var project in calamariFlavourProjects)
-                                                                            {
-                                                                                var calamariFlavour = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/AssemblyName");
+        Target PublishCalamariFlavourProjects => 
+            _ => _
+                 .DependsOn(Compile)
+                 .Executes(() =>
+                           {
+                               MigratedCalamariFlavours.Flavours
+                                    .Select(flavour => SourceDirectory.GlobFiles($"**/{flavour}*.csproj"))
+                                    .ForEach(fg => fg.ForEach(
+                                        projectPath =>
+                                        {
+                                            var project = Solution?.GetProject(projectPath);
+                                            var frameworks = XmlTasks.XmlPeekSingle(projectPath, "Project/PropertyGroup/TargetFrameworks") ?? XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/TargetFramework");
 
-                                                                                var frameworks = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/TargetFrameworks") ?? XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/TargetFramework");
+                                            foreach (var framework in frameworks.Split(';'))
+                                            {
+                                                void RunPublish(string platform)
+                                                {
+                                                    var runtime = platform == "netfx" ? null : platform;
+                                                    DotNetPublish(s => s
+                                                                       .SetProject(project)
+                                                                       .SetConfiguration(Configuration)
+                                                                       .SetFramework(framework)
+                                                                       .SetRuntime(runtime)
+                                                                       .SetOutput(PublishDirectory / project.Name / platform));
+                                                    File.Copy(RootDirectory / "global.json", PublishDirectory / project.Name / platform / "global.json");
+                                                }
 
-                                                                                foreach (var framework in frameworks.Split(';'))
-                                                                                {
-                                                                                    void RunPublish(string runtime, string platform)
-                                                                                    {
-                                                                                        DotNetPublish(s => s
-                                                                                                           .SetProject(project)
-                                                                                                           .SetConfiguration(Configuration)
-                                                                                                           .SetFramework(framework)
-                                                                                                           .SetRuntime(runtime)
-                                                                                                           .SetOutput(PublishDirectory / calamariFlavour / platform));
-                                                                                        File.Copy(RootDirectory / "global.json", PublishDirectory / calamariFlavour / platform / "global.json");
-                                                                                    }
+                                                if (framework == "net5.0")
+                                                {
+                                                    var runtimes = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/RuntimeIdentifiers")?.Split(';') ?? new string[0];
+                                                    foreach (var runtime in runtimes)
+                                                    {
+                                                        RunPublish(runtime);
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (OperatingSystem.IsWindows())
+                                                    {
+                                                        RunPublish("netfx");
+                                                    }
+                                                    else
+                                                    {
+                                                        Log.Warning($"Skipping building {framework} - can't build netfx on non Windows OS");
+                                                    }
+                                                }
+                                            }
 
-                                                                                    if (framework == "net5.0")
-                                                                                    {
-                                                                                        var runtimes = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/RuntimeIdentifiers")?.Split(';') ?? new string[0];
-                                                                                        foreach (var runtime in runtimes)
-                                                                                        {
-                                                                                            RunPublish(runtime, runtime);
-                                                                                        }
-                                                                                    }
-                                                                                    else
-                                                                                    {
-                                                                                        if (OperatingSystem.IsWindows())
-                                                                                        {
-                                                                                            RunPublish("", "netfx");
-                                                                                        }
-                                                                                        else
-                                                                                        {
-                                                                                            Logger.Warn($"Skipping building {framework} - can't build netfx on non Windows OS");
-                                                                                        }
-                                                                                    }
-                                                                                }
+                                            Log.Verbose($"{PublishDirectory}/{project.Name}");
 
-                                                                                Logger.Trace($"{PublishDirectory}/{calamariFlavour}");
-
-                                                                                CompressionTasks.CompressZip(PublishDirectory / calamariFlavour, $"{ArtifactsDirectory / calamariFlavour}.zip");
-                                                                            }
-                                                                        }
-                                                                    });
+                                            CompressionTasks.CompressZip(PublishDirectory / project.Name, $"{ArtifactsDirectory / project.Name}.zip");
+                                        }));
+                           });
 
         Target PackBinaries =>
             _ => _.DependsOn(Publish)
