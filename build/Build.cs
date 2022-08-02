@@ -103,6 +103,7 @@ namespace Calamari.Build
         static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
 
         static AbsolutePath SashimiPackagesDirectory => SourceDirectory / "Calamari.UnmigratedCalamariFlavours" / "artifacts";
+        static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
 
         Lazy<string> NugetVersion { get; }
 
@@ -401,7 +402,8 @@ namespace Calamari.Build
                                     });
                                 }
 
-                                var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ArtifactsDirectory / "consolidated", packageReferences);
+                                Directory.CreateDirectory(ConsolidatedPackageDirectory);
+                                var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ConsolidatedPackageDirectory, packageReferences);
 
                                 if (!result)
                                     throw new Exception("Failed to consolidate calamari Packages");
