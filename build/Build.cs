@@ -84,6 +84,8 @@ namespace Calamari.Build
         [Required]
         [GitVersion]
         readonly GitVersion? GitVersionInfo;
+        
+        static List<string> CalamariProjectsToSkipConsolidation = new List<string> { "Calamari.CloudAccounts", "Calamari.Common" };
 
         public Build()
         {
@@ -134,6 +136,7 @@ namespace Calamari.Build
                 SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(DeleteDirectory);
                 EnsureCleanDirectory(ArtifactsDirectory);
                 EnsureCleanDirectory(PublishDirectory);
+                EnsureCleanDirectory(SashimiPackagesDirectory);
             });
 
         Target Restore =>
@@ -186,15 +189,75 @@ namespace Calamari.Build
                                 nugetVersion,
                                 FixedRuntimes.Cloud);
 
-                      DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, FixedRuntimes.Portable);
-
                       // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                       foreach (var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
                           DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid);
                   });
 
+        Target PublishCalamariFlavourProjects =>
+            _ => _
+                 .DependsOn(Compile)
+                 .Executes(() =>
+                 {
+                    // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
+                    // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
+                    bool IsCrossPlatform(string targetFramework) => targetFramework.Contains(".");
+
+                    var migratedCalamariFlavoursTests = MigratedCalamariFlavours.Flavours.Select(f => $"{f}.Tests");
+                    var calamariFlavours = Solution.Projects
+                                                   .Where(project => MigratedCalamariFlavours.Flavours.Contains(project.Name)
+                                                                     || migratedCalamariFlavoursTests.Contains(project.Name));
+
+                    var packagesToBuild = calamariFlavours
+                        .SelectMany(project => project.GetTargetFrameworks(), (p, f) => new
+                        {
+                            Project = p,
+                            Framework = f,
+                            CrossPlatform = IsCrossPlatform(f),
+                        })
+                        .SelectMany(packageToBuild => packageToBuild.Project.GetRuntimeIdentifiers(), (packageToBuild, runtimeIdentifier) => new
+                        {
+                            packageToBuild.Project,
+                            packageToBuild.Framework,
+                            Architecture = packageToBuild.CrossPlatform ? runtimeIdentifier : null,
+                            packageToBuild.CrossPlatform
+                        })
+                        .Distinct(t => new { t.Project.Name, t.Architecture, t.Framework });
+
+                    foreach (var packageToBuild in packagesToBuild)
+                    {
+                        if (!OperatingSystem.IsWindows() && !packageToBuild.CrossPlatform)
+                        {
+                            Log.Warning($"Not building {packageToBuild.Framework}: can only build netfx on a Windows OS");
+                            continue;
+                        }
+
+                        Log.Information($"Building {packageToBuild.Project.Name} for framework '{packageToBuild.Framework}' and arch '{packageToBuild.Architecture}'");
+
+                        var project = packageToBuild.Project;
+                        var outputDirectory = PublishDirectory / project.Name / (packageToBuild.CrossPlatform ? packageToBuild.Architecture : "netfx");
+
+                        DotNetPublish(s => s
+                            .SetConfiguration(Configuration)
+                            .SetProject(project)
+                            .SetFramework(packageToBuild.Framework)
+                            .SetRuntime(packageToBuild.Architecture)
+                            .SetOutput(outputDirectory)
+                        );
+
+                        File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+                    }
+
+                    foreach (var flavour in calamariFlavours)
+                    {
+                        Log.Verbose($"Compressing Calamari flavour {PublishDirectory}/{flavour.Name}");
+                        CompressionTasks.CompressZip(PublishDirectory / flavour.Name, $"{ArtifactsDirectory / flavour.Name}.zip");
+                    }
+                });
+
         Target PackBinaries =>
             _ => _.DependsOn(Publish)
+                  .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(async () =>
                   {
                       var nugetVersion = NugetVersion.Value;
@@ -207,9 +270,6 @@ namespace Calamari.Build
                                           OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.NetCoreApp31,
                                           nugetVersion,
                                           FixedRuntimes.Cloud),
-                          // Create a portable .NET Core package
-                          () => DoPackage(RootProjectName, Frameworks.NetCoreApp31, nugetVersion,
-                                          FixedRuntimes.Portable)
                       };
 
                       // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
@@ -244,6 +304,7 @@ namespace Calamari.Build
 
         Target PackTests =>
             _ => _.DependsOn(Publish)
+                  .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(async () =>
                   {
                       var nugetVersion = NugetVersion.Value;
@@ -311,7 +372,8 @@ namespace Calamari.Build
                   .DependsOn(CopySashimiPackagesForConsolidation)
                   .Executes(() =>
                             {
-                                var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg");
+                                var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
+                                                         .Where(a => !CalamariProjectsToSkipConsolidation.Any(cp => a.Contains(cp)));
                                 var packageReferences = new List<BuildPackageReference>();
                                 foreach (var artifact in artifacts)
                                 {
@@ -327,6 +389,16 @@ namespace Calamari.Build
                                             PackagePath = artifact
                                         });
                                     }
+                                }
+
+                                foreach (var flavour in MigratedCalamariFlavours.Flavours)
+                                {
+                                    packageReferences.Add(new BuildPackageReference
+                                    {
+                                        Name = flavour,
+                                        Version = NugetVersion.Value,
+                                        PackagePath = $"{ArtifactsDirectory}\\{flavour}.zip"
+                                    });
                                 }
 
                                 var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ArtifactsDirectory, packageReferences);
@@ -441,7 +513,7 @@ namespace Calamari.Build
                                                      AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
                                                      SigningCertificatePath, SigningCertificatePassword);
             }
-            
+
             DotNetPack(dotNetCorePackSettings.SetProject(project));
         }
 

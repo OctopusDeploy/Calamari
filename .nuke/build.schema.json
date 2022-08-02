@@ -132,6 +132,7 @@
               "PackBinaries",
               "PackTests",
               "Publish",
+              "PublishCalamariFlavourProjects",
               "Restore",
               "SetTeamCityVersion",
               "UpdateCalamariVersionOnOctopusServer"
@@ -160,6 +161,7 @@
               "PackBinaries",
               "PackTests",
               "Publish",
+              "PublishCalamariFlavourProjects",
               "Restore",
               "SetTeamCityVersion",
               "UpdateCalamariVersionOnOctopusServer"
