@@ -8,9 +8,6 @@
         <authors>Octopus Deploy</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Contains consolidated zip file of all Calamari flavours</description>
-        <dependencies>
-            <group targetFramework="net6.0" />
-        </dependencies>
         <contentFiles>
             <files include="any/any/Calamari.*.zip" buildAction="None" copyToOutput="true"/>
         </contentFiles>
