@@ -7,9 +7,9 @@ using System.Reflection;
 
 namespace Calamari.Build.ConsolidateCalamariPackages
 {
-    class Consolidate
+    public class Consolidate
     {
-        private readonly Serilog.ILogger log;
+        readonly Serilog.ILogger log;
 
         public Consolidate(Serilog.ILogger log)
         {
@@ -58,7 +58,7 @@ namespace Calamari.Build.ConsolidateCalamariPackages
             }
         }
 
-        private static IReadOnlyList<IPackageReference> GetPackages(Hasher hasher, IEnumerable<BuildPackageReference> packageReferences)
+        static IReadOnlyList<IPackageReference> GetPackages(Hasher hasher, IEnumerable<BuildPackageReference> packageReferences)
         {
             var calamariPackages = packageReferences
                 .Where(p => !MigratedCalamariFlavours.Flavours.Contains(p.Name))
