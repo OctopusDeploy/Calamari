@@ -401,7 +401,7 @@ namespace Calamari.Build
                                     });
                                 }
 
-                                var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ArtifactsDirectory, packageReferences);
+                                var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ArtifactsDirectory / "consolidated", packageReferences);
 
                                 if (!result)
                                     throw new Exception("Failed to consolidate calamari Packages");
