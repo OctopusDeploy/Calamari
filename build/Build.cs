@@ -222,7 +222,7 @@ namespace Calamari.Build
                             packageToBuild.Framework,
                             Architecture = packageToBuild.CrossPlatform ? runtimeIdentifier : null,
                             packageToBuild.CrossPlatform
-                        })  
+                        })    
                         .Distinct(t => new { t.Project.Name, t.Architecture, t.Framework }); 
 
                     foreach (var packageToBuild in packagesToBuild)
