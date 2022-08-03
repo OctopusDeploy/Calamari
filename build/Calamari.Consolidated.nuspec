@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-    <metadata minClientVersion="100.0.0.1">
+    <metadata>
         <id>Calamari.Consolidated</id>
         <version>$version$</version>
         <title />
         <authors>Octopus Deploy</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Contains consolidated zip file of all Calamari flavours</description>
+        <contentFiles>
+            <files include="any/any/Calamari.*.zip" buildAction="None" copyToOutput="true" />
+        </contentFiles>
     </metadata>
     <files>
-        <file src="..\artifacts\Calamari.*.zip" target="contentFiles\any\any\" />
+        <file src="..\artifacts\consolidated\Calamari.*.zip" target="contentFiles\any\any\" />
     </files>
 </package>
