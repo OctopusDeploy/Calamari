@@ -9,6 +9,7 @@
         <PackageReference Include="Assent" Version="1.5.0" />
         <PackageReference Include="FluentAssertions" Version="5.10.3" />
         <PackageReference Include="NSubstitute" Version="4.2.1" />
+        <PackageReference Include="NuGet.Packaging" Version="6.2.1" />
         <PackageReference Include="nunit" Version="3.12.0" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
@@ -24,7 +25,7 @@
         <PackageReference Include="Calamari.win-x64" Version="12.0.2" GeneratePathProperty="true" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\..\build\_build.csproj" />
+      <ProjectReference Include="..\Calamari.ConsolidateCalamariPackages\Calamari.ConsolidateCalamariPackages.csproj" />
     </ItemGroup>
 
     <Target Name="RemoveDirectories" BeforeTargets="CopyPackages">

@@ -26,4 +26,8 @@
       <PackageDownload Include="GitVersion.Tool" Version="[5.9.0]" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\source\Calamari.ConsolidateCalamariPackages\Calamari.ConsolidateCalamariPackages.csproj" />
+    </ItemGroup>
+
 </Project>

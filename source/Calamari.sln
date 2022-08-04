@@ -50,6 +50,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.UnmigratedCalamari
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.ConsolidateCalamariPackages.Tests", "Calamari.ConsolidateCalamariPackages.Tests\Calamari.ConsolidateCalamariPackages.Tests.csproj", "{02FF12AA-8807-4041-A59A-04CBE91AA1E1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.ConsolidateCalamariPackages", "Calamari.ConsolidateCalamariPackages\Calamari.ConsolidateCalamariPackages.csproj", "{5A02308A-139B-417B-8FF7-1E14A3D175B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -106,6 +108,10 @@ Global
 		{02FF12AA-8807-4041-A59A-04CBE91AA1E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02FF12AA-8807-4041-A59A-04CBE91AA1E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02FF12AA-8807-4041-A59A-04CBE91AA1E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A02308A-139B-417B-8FF7-1E14A3D175B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A02308A-139B-417B-8FF7-1E14A3D175B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A02308A-139B-417B-8FF7-1E14A3D175B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A02308A-139B-417B-8FF7-1E14A3D175B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

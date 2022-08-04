@@ -6,7 +6,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Assent;
-using Calamari.Build.ConsolidateCalamariPackages;
 using FluentAssertions;
 using NSubstitute;
 using NuGet.Packaging;

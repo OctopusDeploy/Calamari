@@ -5,7 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Calamari.Build.ConsolidateCalamariPackages;
+using Calamari.ConsolidateCalamariPackages;
 using NuGet.Packaging;
 using Nuke.Common;
 using Nuke.Common.CI.TeamCity;
@@ -85,7 +85,7 @@ namespace Calamari.Build
         [GitVersion]
         readonly GitVersion? GitVersionInfo;
         
-        static List<string> CalamariProjectsToSkipConsolidation = new List<string> { "Calamari.CloudAccounts", "Calamari.Common" };
+        static List<string> CalamariProjectsToSkipConsolidation = new List<string> { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
 
         public Build()
         {
@@ -102,7 +102,7 @@ namespace Calamari.Build
         static AbsolutePath PublishDirectory => RootDirectory / "publish";
         static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
         static AbsolutePath SashimiPackagesDirectory => SourceDirectory / "Calamari.UnmigratedCalamariFlavours" / "artifacts";
-        static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidatedCalamariPackages.Tests" / "Calamari.ConsolidatedCalamariPackages.Tests.csproj";
+        static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
         static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
 
         Lazy<string> NugetVersion { get; }
