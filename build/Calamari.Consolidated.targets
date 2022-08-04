@@ -1,12 +1,18 @@
 <Project>
-  <Target Name="ClearOldConsolidatedCalamariPackages" BeforeTargets="_CopyOutOfDateSourceItemsToOutputDirectory">
+  <Target Name="ClearOldConsolidatedCalamariPackages" AfterTargets="CopyFilesToOutputDirectory">
     <ItemGroup>
-       <FilesToDelete Include="$(OutDir)\Calamari.*.zip"/>
-     </ItemGroup>
-     <Message Text="Clearing Consolidated Calamari packages from $(OutDir)"/>
-     <Delete Files="@(FilesToDelete)">
-       <Output TaskParameter="DeletedFiles" ItemName="FilesDeleted" />
-     </Delete>
-     <Message Text="Removed: @(FilesDeleted)"/>
+      <TargetCalamari
+        Include="@(None);@(Content)"
+        Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', '^Calamari\.([a-zA-Z0-9]*)$')) AND '%(Extension)' == '.zip'" />
+      <OldCalamari Include="$(OutDir)\Calamari.*.zip" />
+      <OldCalamari Remove="@(TargetCalamari)" MatchOnMetadata="Filename" />
+    </ItemGroup>
+    <Message Text="Clearing stale Consolidated Calamari packages from $(OutDir)"/>
+    <Message Text="Current Calamari package to keep is @(TargetCalamari)"/>
+    <Message Text="Stale Calamari packages are @(OldCalamari)"/>
+    <Delete Files="@(OldCalamari)">
+      <Output TaskParameter="DeletedFiles" ItemName="OldCalamariDeleted" />
+    </Delete>
+    <Message Text="Cleared stale Calamari packages: @(OldCalamariDeleted)"/>
   </Target>
 </Project>
