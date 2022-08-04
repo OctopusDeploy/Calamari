@@ -1,0 +1,12 @@
+<Project>
+  <Target Name="ClearOldConsolidatedCalamariPackages" BeforeTargets="_CopyOutOfDateSourceItemsToOutputDirectory">
+    <ItemGroup>
+       <FilesToDelete Include="$(OutDir)\Calamari.*.zip"/>
+     </ItemGroup>
+     <Message Text="Clearing Consolidated Calamari packages from $(OutDir)"/>
+     <Delete Files="@(FilesToDelete)">
+       <Output TaskParameter="DeletedFiles" ItemName="FilesDeleted" />
+     </Delete>
+     <Message Text="Removed: @(FilesDeleted)"/>
+  </Target>
+</Project>
