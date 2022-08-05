@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace Calamari.Build.ConsolidateCalamariPackages
+namespace Calamari.ConsolidateCalamariPackages
 {
     static class ConsolidatedPackageCreator
     {
@@ -73,7 +73,7 @@ namespace Calamari.Build.ConsolidateCalamariPackages
                     )
             );
 
-            var bytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(index, Formatting.Indented));
+            var bytes = Encoding.UTF8.GetBytes((string)JsonConvert.SerializeObject(index, Formatting.Indented));
             stream.Write(bytes, 0, bytes.Length);
         }
     }

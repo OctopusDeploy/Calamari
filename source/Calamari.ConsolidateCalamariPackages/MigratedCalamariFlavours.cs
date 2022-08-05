@@ -1,6 +1,7 @@
+using System;
 using System.Collections.Generic;
 
-namespace Calamari.Build.ConsolidateCalamariPackages
+namespace Calamari.ConsolidateCalamariPackages
 {
     public class MigratedCalamariFlavours
     {
