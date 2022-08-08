@@ -56,7 +56,6 @@ namespace Calamari.AzureResourceGroup
                 log.InfoFormat("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
 
             var activeDirectoryEndPoint = variables.Get(AzureAccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
-            if (activeDirectoryEndPoint != DefaultVariables.ActiveDirectoryEndpoint)
                 log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndPoint);
 
             var resourceGroupName = variables[SpecialVariables.Action.Azure.ResourceGroupName];
@@ -113,29 +112,31 @@ namespace Calamari.AzureResourceGroup
                 log.Verbose($"Parameters:\n{parameters}\n");
             }
 
-            using var armClient = await createArmClient();
-            try
+            using (var armClient = await createArmClient())
             {
-                var createDeploymentResult = await armClient.Deployments.BeginCreateOrUpdateAsync(resourceGroupName,
-                                                                                                  deploymentName,
-                                                                                                  new AzureResourceManagerDeployment
-                                                                                                  {
-                                                                                                      Properties = new DeploymentProperties
+                try
+                {
+                    var createDeploymentResult = await armClient.Deployments.BeginCreateOrUpdateAsync(resourceGroupName,
+                                                                                                      deploymentName,
+                                                                                                      new AzureResourceManagerDeployment
                                                                                                       {
-                                                                                                          Mode = deploymentMode,
-                                                                                                          Template = template,
-                                                                                                          Parameters = parameters
-                                                                                                      }
-                                                                                                  });
+                                                                                                          Properties = new DeploymentProperties
+                                                                                                          {
+                                                                                                              Mode = deploymentMode,
+                                                                                                              Template = template,
+                                                                                                              Parameters = parameters
+                                                                                                          }
+                                                                                                      });
 
-                log.Info($"Deployment created: {createDeploymentResult.Id}");
-            }
-            catch (Microsoft.Rest.Azure.CloudException ex)
-            {
-                log.Error("Error submitting deployment");
-                log.Error(ex.Message);
-                LogCloudError(ex.Body, 0);
-                throw;
+                    log.Info($"Deployment created: {createDeploymentResult.Id}");
+                }
+                catch (Microsoft.Rest.Azure.CloudException ex)
+                {
+                    log.Error("Error submitting deployment");
+                    log.Error(ex.Message);
+                    LogCloudError(ex.Body, 0);
+                    throw;
+                }
             }
         }
 
@@ -154,40 +155,41 @@ namespace Calamari.AzureResourceGroup
                 await Task.Delay(TimeSpan.FromSeconds(Math.Min(currentPollWait, maxWaitSeconds)));
 
                 log.Verbose("Polling for status of deployment...");
-                using var armClient = await createArmClient();
-                var deployment = await armClient.Deployments.GetAsync(resourceGroupName, deploymentName);
-                if (deployment.Properties == null)
+                using (var armClient = await createArmClient())
                 {
-                    log.Verbose("Failed to find deployment.Properties");
-                    return;
-                }
+                    var deployment = await armClient.Deployments.GetAsync(resourceGroupName, deploymentName);
+                    if (deployment.Properties == null)
+                    {
+                        log.Verbose("Failed to find deployment.Properties");
+                        return;
+                    }
 
-                log.Verbose($"Provisioning state: {deployment.Properties.ProvisioningState}");
-                switch (deployment.Properties.ProvisioningState)
-                {
-                    case "Succeeded":
-                        log.Info($"Deployment {deploymentName} complete.");
-                        log.Info(GetOperationResults(armClient, resourceGroupName, deploymentName));
-                        CaptureOutputs(deployment.Properties.Outputs?.ToString(), variables);
-                        continueToPoll = false;
-                        break;
+                    log.Verbose($"Provisioning state: {deployment.Properties.ProvisioningState}");
+                    switch (deployment.Properties.ProvisioningState)
+                    {
+                        case "Succeeded":
+                            log.Info($"Deployment {deploymentName} complete.");
+                            log.Info(GetOperationResults(armClient, resourceGroupName, deploymentName));
+                            CaptureOutputs(deployment.Properties.Outputs?.ToString(), variables);
+                            continueToPoll = false;
+                            break;
 
-                    case "Failed":
-                        throw new CommandException($"Azure Resource Group deployment {deploymentName} failed:\n" +
-                                                   GetOperationResults(armClient, resourceGroupName, deploymentName));
+                        case "Failed":
+                            throw new CommandException($"Azure Resource Group deployment {deploymentName} failed:\n" + GetOperationResults(armClient, resourceGroupName, deploymentName));
 
-                    case "Canceled":
-                        throw new CommandException($"Azure Resource Group deployment {deploymentName} was canceled:\n" +
-                                                   GetOperationResults(armClient, resourceGroupName, deploymentName));
+                        case "Canceled":
+                            throw new CommandException($"Azure Resource Group deployment {deploymentName} was canceled:\n" + GetOperationResults(armClient, resourceGroupName, deploymentName));
 
-                    default:
-                        if (currentPollWait < maxWaitSeconds)
-                        {
-                            var temp = previousPollWait;
-                            previousPollWait = currentPollWait;
-                            currentPollWait = temp + currentPollWait;
-                        }
-                        break;
+                        default:
+                            if (currentPollWait < maxWaitSeconds)
+                            {
+                                var temp = previousPollWait;
+                                previousPollWait = currentPollWait;
+                                currentPollWait = temp + currentPollWait;
+                            }
+
+                            break;
+                    }
                 }
             }
         }
