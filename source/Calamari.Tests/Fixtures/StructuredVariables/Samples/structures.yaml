@@ -1,0 +1,21 @@
+﻿mapping2mapping:
+  this: can
+  be: replaced
+sequence2sequence:
+- sequence
+- can
+- become
+mapping2sequence:
+  this: can
+  be: replaced
+sequence2mapping:
+- sequence
+- can
+- become
+mapping2string:
+  this: can
+  be: replaced
+sequence2string:
+- sequence
+- can
+- become

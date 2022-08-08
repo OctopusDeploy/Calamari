@@ -1,0 +1,32 @@
+function New-MyFunc([string] $mystring, [switch] $myboolean, [int] $mynumber)
+{
+	$parameters = ""
+	$tempParameter = Convert-ToServiceMessageParameter -name "mystring" -value $mystring
+	$parameters = $parameters, $tempParameter -join ' '
+	$tempParameter = Convert-ToServiceMessageParameter -name "myboolean" -value $myboolean
+	$parameters = $parameters, $tempParameter -join ' '
+	$tempParameter = Convert-ToServiceMessageParameter -name "mynumber" -value $mynumber
+	$parameters = $parameters, $tempParameter -join ' '
+	Write-Host "##octopus[create-something $($parameters)]"
+}
+
+function New-MyFunc2([string] $mystring, [switch] $myboolean, [int] $mynumber)
+{
+	$parameters = ""
+	if ($myboolean -eq $true)
+	{
+		$tempParameter = Convert-ToServiceMessageParameter -name "mystring" -value $mystring
+		$parameters = $parameters, $tempParameter -join ' '
+	}
+	$tempParameter = Convert-ToServiceMessageParameter -name "myboolean" -value $myboolean
+	$parameters = $parameters, $tempParameter -join ' '
+	if ($myboolean -eq $true)
+	{
+		$tempParameter = Convert-ToServiceMessageParameter -name "mynumber" -value $mynumber
+		$parameters = $parameters, $tempParameter -join ' '
+	}
+	Write-Host "##octopus[create-something2 $($parameters)]"
+}
+
+Write-Verbose "Invoking target script $OctopusFunctionAppenderTargetScript with $OctopusFunctionAppenderTargetScriptParameters parameters."
+Invoke-Expression ". `"$OctopusFunctionAppenderTargetScript`" $OctopusFunctionAppenderTargetScriptParameters"

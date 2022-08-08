@@ -1,0 +1,12 @@
+{
+  "MyMessage": "Hello world",
+  "EmailSettings": {
+    "SmtpPort": 23,
+    "UseProxy": false,
+    "SmtpHost": "localhost",
+    "DefaultRecipients": [
+      "mike@octopus.com",
+      "henrik@octopus.com"
+    ]
+  }
+}

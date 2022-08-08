@@ -1,0 +1,8 @@
+﻿pets-config:
+  xyz: asdf
+  somelist:
+  - some element
+  - some other element
+  pets:
+  - name: Fido
+    species: Dog

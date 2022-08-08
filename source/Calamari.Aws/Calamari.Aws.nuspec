@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>Calamari.Aws</id>
+    <version>$version$</version>
+    <authors>Octopus Deploy</authors>
+    <owners>Octopus Deploy</owners>
+    <licenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</licenseUrl>
+    <projectUrl>https://github.com/OctopusDeploy/Calamari/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Contains the command-line Calamari tool, plus additional commands for Aws integration.</description>
+    <language>en-US</language>
+    <tags></tags>
+  </metadata>
+</package>

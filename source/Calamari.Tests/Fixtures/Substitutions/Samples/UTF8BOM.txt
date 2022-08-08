@@ -1,0 +1,3 @@
+﻿½ ¼ ¾ ⅓ ⅔ † ‡ µ ¢ £ € « » ♤ ♧ ♥ ♢ ¿ �.
+Math: - × ÷ ± ∞ π 
+LocalCacheFolderName: #{LocalCacheFolderName}
