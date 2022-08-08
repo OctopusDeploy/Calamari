@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Calamari.AzureResourceGroup.Tests</RootNamespace>
+    <AssemblyName>Calamari.AzureResourceGroup.Tests</AssemblyName>
+    <TargetFrameworks>net461;net5.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari\Calamari.csproj" />
+    <PackageReference Include="nunit" Version="3.13.2" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
+    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
+  </ItemGroup>
+</Project>
