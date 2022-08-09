@@ -2,6 +2,7 @@
   <PropertyGroup>
     <RootNamespace>Calamari.AzureResourceGroup</RootNamespace>
     <AssemblyName>Calamari.AzureResourceGroup</AssemblyName>
+    <Nullable>enable</Nullable>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <TargetFrameworks>net452;net5.0</TargetFrameworks>
