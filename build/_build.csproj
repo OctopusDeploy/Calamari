@@ -10,7 +10,7 @@
         <NukeScriptDirectory>..</NukeScriptDirectory>
         <NukeTelemetryVersion>1</NukeTelemetryVersion>
         <PublishDir>..\build\outputs\$(RuntimeIdentifier)\nukebuild</PublishDir>
-        <Nullable>disable</Nullable>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
