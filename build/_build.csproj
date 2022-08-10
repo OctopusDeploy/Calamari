@@ -10,7 +10,7 @@
         <NukeScriptDirectory>..</NukeScriptDirectory>
         <NukeTelemetryVersion>1</NukeTelemetryVersion>
         <PublishDir>..\build\outputs\$(RuntimeIdentifier)\nukebuild</PublishDir>
-        <Nullable>disable</Nullable>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,6 +24,10 @@
     <ItemGroup>
       <PackageDownload Include="AzureSignTool" Version="[3.0.0]" />
       <PackageDownload Include="GitVersion.Tool" Version="[5.9.0]" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\source\Calamari.ConsolidateCalamariPackages\Calamari.ConsolidateCalamariPackages.csproj" />
     </ItemGroup>
 
 </Project>

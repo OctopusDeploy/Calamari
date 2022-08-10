@@ -4,14 +4,15 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Serilog;
 
-namespace Calamari.Build.ConsolidateCalamariPackages
+namespace Calamari.ConsolidateCalamariPackages
 {
-    class Consolidate
+    public class Consolidate
     {
-        private readonly Serilog.ILogger log;
+        readonly ILogger log;
 
-        public Consolidate(Serilog.ILogger log)
+        public Consolidate(ILogger log)
         {
             this.log = log;
         }
@@ -58,7 +59,7 @@ namespace Calamari.Build.ConsolidateCalamariPackages
             }
         }
 
-        private static IReadOnlyList<IPackageReference> GetPackages(Hasher hasher, IEnumerable<BuildPackageReference> packageReferences)
+        static IReadOnlyList<IPackageReference> GetPackages(Hasher hasher, IEnumerable<BuildPackageReference> packageReferences)
         {
             var calamariPackages = packageReferences
                 .Where(p => !MigratedCalamariFlavours.Flavours.Contains(p.Name))

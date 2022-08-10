@@ -12,7 +12,6 @@
         <PackageReference Include="Sashimi.Azure.Common" Version="14.2.0" GeneratePathProperty="true" />
         <PackageReference Include="Sashimi.AzureCloudService" Version="12.1.2" GeneratePathProperty="true" />
         <PackageReference Include="Sashimi.AzureWebApp" Version="13.2.1" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.AzureResourceGroup" Version="11.1.0" GeneratePathProperty="true" />
         <PackageReference Include="Sashimi.GoogleCloud.Accounts" Version="2.1.2" GeneratePathProperty="true" />
         <PackageReference Include="Sashimi.GoogleCloud.Scripting" Version="2.1.2" GeneratePathProperty="true" />
         <PackageReference Include="Sashimi.Terraform" Version="11.1.0" GeneratePathProperty="true" />
@@ -27,7 +26,6 @@
         <Copy SourceFiles="$(PkgSashimi_Aws_Common)\sashimi.aws.common.14.2.0.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
         <Copy SourceFiles="$(PkgSashimi_AzureCloudService)\sashimi.azurecloudservice.12.1.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
         <Copy SourceFiles="$(PkgSashimi_AzureWebApp)\sashimi.azurewebapp.13.2.1.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_AzureResourceGroup)\sashimi.azureresourcegroup.11.1.0.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
         <Copy SourceFiles="$(PkgSashimi_GoogleCloud_Accounts)\sashimi.googlecloud.accounts.2.1.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
         <Copy SourceFiles="$(PkgSashimi_GoogleCloud_Scripting)\sashimi.googlecloud.scripting.2.1.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
         <Copy SourceFiles="$(PkgSashimi_Terraform)\sashimi.terraform.11.1.0.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>

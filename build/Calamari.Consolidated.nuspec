@@ -13,5 +13,6 @@
     </metadata>
     <files>
         <file src="..\artifacts\consolidated\Calamari.*.zip" target="contentFiles\any\any\" />
+        <file src="Calamari.Consolidated.targets" target="build\" />
     </files>
 </package>
