@@ -128,7 +128,13 @@ namespace Calamari.AzureScripting
         {
             try
             {
+#if NET452
                 return certificate2.HasPrivateKey && certificate2.PrivateKey != null;
+#else
+                return certificate2.HasPrivateKey && (
+                    certificate2.GetRSAPrivateKey() != null || 
+                        certificate2.GetDSAPrivateKey() != null);
+#endif
             }
             catch (Exception)
             {
@@ -162,7 +168,7 @@ namespace Calamari.AzureScripting
             var folderPath = Path.GetDirectoryName(privateKeyPath);
             if (folderPath == null)
                 throw new Exception("There was no directory specified in the private key path.");
-
+#pragma warning disable CA1416
             var current = WindowsIdentity.GetCurrent();
             if (current == null || current.User == null)
                 throw new Exception("There is no current windows identity.");
@@ -171,6 +177,7 @@ namespace Calamari.AzureScripting
             var security = directoryInfo.GetAccessControl();
             security.AddAccessRule(new FileSystemAccessRule(current.User, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
             directoryInfo.SetAccessControl(security);
+#pragma warning restore CA1416
         }
 
         #region Nested type: CryptUtils

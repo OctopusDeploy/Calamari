@@ -3,7 +3,7 @@
     <PropertyGroup>
         <AssemblyName>Sashimi.AzureScripting</AssemblyName>
         <RootNamespace>Sashimi.AzureScripting</RootNamespace>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <Nullable>enable</Nullable>
         <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi.AzureScripting</PackageProjectUrl>

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <RootNamespace>Sashimi.AzureScripting.Tests</RootNamespace>
     <AssemblyName>Sashimi.AzureScripting.Tests</AssemblyName>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
