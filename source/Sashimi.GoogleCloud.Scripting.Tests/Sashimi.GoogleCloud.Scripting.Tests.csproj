@@ -10,7 +10,7 @@
         <PackageReference Include="nunit" Version="3.13.2" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
-        <PackageReference Include="SharpCompress" Version="0.28.2" />
+        <PackageReference Include="SharpCompress" Version="0.32.2" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
         <PackageReference Include="Octopus.Server.Tests.Extensibility" Version="14.3.20" />
         <PackageReference Include="Sashimi.Tests.Shared" Version="14.1.3" />

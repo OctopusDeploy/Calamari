@@ -33,7 +33,7 @@ class Build : NukeBuild
     readonly string InternalNugetFeedApiKey;
 
     [Solution] readonly Solution Solution;
-    [GitVersion(Framework = "net6.0")] readonly GitVersion GitVersion;
+    [GitVersion(Framework = "net5.0")] readonly GitVersion GitVersion;
 
     AbsolutePath SourceDirectory => RootDirectory / "source";
     AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
