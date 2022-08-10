@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Sashimi.AzureCloudService</AssemblyName>
     <RootNamespace>Sashimi.AzureCloudService</RootNamespace>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <OutputPath>bin\</OutputPath>
     <Nullable>enable</Nullable>
