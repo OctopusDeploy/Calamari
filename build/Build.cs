@@ -5,7 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Calamari.Build.ConsolidateCalamariPackages;
+using Calamari.ConsolidateCalamariPackages;
 using NuGet.Packaging;
 using Nuke.Common;
 using Nuke.Common.CI.TeamCity;
@@ -85,7 +85,7 @@ namespace Calamari.Build
         [GitVersion]
         readonly GitVersion? GitVersionInfo;
         
-        static List<string> CalamariProjectsToSkipConsolidation = new List<string> { "Calamari.CloudAccounts", "Calamari.Common" };
+        static List<string> CalamariProjectsToSkipConsolidation = new List<string> { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
 
         public Build()
         {
@@ -101,8 +101,8 @@ namespace Calamari.Build
         static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         static AbsolutePath PublishDirectory => RootDirectory / "publish";
         static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
-
         static AbsolutePath SashimiPackagesDirectory => SourceDirectory / "Calamari.UnmigratedCalamariFlavours" / "artifacts";
+        static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
         static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
 
         Lazy<string> NugetVersion { get; }
@@ -167,6 +167,16 @@ namespace Calamari.Build
                                         .SetVersion(NugetVersion.Value)
                                         .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
                   });
+
+        Target CalamariConsolidationTests =>
+            _ => _.DependsOn(Compile)
+                  .Executes(() =>
+                            {
+                                DotNetTest(_ => _
+                                                .SetProjectFile(ConsolidateCalamariPackagesProject)
+                                                .SetConfiguration(Configuration)
+                                                .EnableNoBuild());
+                            });
 
         Target Publish =>
             _ => _.DependsOn(Compile)
@@ -369,7 +379,8 @@ namespace Calamari.Build
                            });
 
         Target PackageConsolidatedCalamariZip =>
-            _ => _.DependsOn(PackBinaries)
+            _ => _.DependsOn(CalamariConsolidationTests)
+                  .DependsOn(PackBinaries)
                   .DependsOn(CopySashimiPackagesForConsolidation)
                   .Executes(() =>
                             {
