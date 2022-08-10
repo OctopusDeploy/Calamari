@@ -3,7 +3,7 @@
   <PropertyGroup>
     <RootNamespace>Sashimi.Terraform.Tests</RootNamespace>
     <AssemblyName>Sashimi.Terraform.Tests</AssemblyName>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Nullable>enable</Nullable>

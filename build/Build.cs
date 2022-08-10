@@ -106,7 +106,7 @@ class Build : NukeBuild
                         File.Copy(RootDirectory / "global.json", PublishDirectory / calamariFlavour / platform / "global.json");
                     }
 
-                    if(framework == "net5.0")
+                    if(framework == "net6.0")
                     {
                         var runtimes = XmlTasks.XmlPeekSingle(project, "Project/PropertyGroup/RuntimeIdentifiers")?.Split(';');
                         foreach (var runtime in runtimes)
