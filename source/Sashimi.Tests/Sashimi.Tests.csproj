@@ -2,13 +2,12 @@
   <PropertyGroup>
 		<RootNamespace>Sashimi.AzureWebApp.Tests</RootNamespace>
 		<AssemblyName>Sashimi.AzureWebApp.Tests</AssemblyName>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Calamari\Calamari.csproj" />
     <ProjectReference Include="..\Sashimi\Sashimi.csproj" />
     <PackageReference Include="Microsoft.Azure.Management.AppService.Fluent" Version="1.37.1" />
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.37.1" />
@@ -21,5 +20,8 @@
     <PackageReference Include="Sashimi.Azure.Common" Version="14.2.0" />
     <PackageReference Include="Sashimi.Tests.Shared" Version="14.2.0" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="DeployAzureWebCommandFixture.cs" />
   </ItemGroup>
 </Project>

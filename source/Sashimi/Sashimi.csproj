@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Sashimi.AzureWebApp</AssemblyName>
 		<RootNamespace>Sashimi.AzureWebApp</RootNamespace>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <OutputPath>bin\</OutputPath>

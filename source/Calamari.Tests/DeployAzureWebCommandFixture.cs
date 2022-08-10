@@ -1,6 +1,10 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using Calamari.Common.Features.Deployment;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Tests.Shared;
 using Calamari.Tests.Shared.Helpers;
@@ -10,8 +14,11 @@ using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
+using NUnit.Framework.Internal;
 using HttpClient = System.Net.Http.HttpClient;
 using OperatingSystem = Microsoft.Azure.Management.AppService.Fluent.OperatingSystem;
+using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 
 namespace Calamari.AzureWebApp.Tests
 {
@@ -25,12 +32,16 @@ namespace Calamari.AzureWebApp.Tests
         string clientSecret;
         string tenantId;
         string subscriptionId;
+        TemporaryDirectory azureConfigPath;
 
         readonly HttpClient client = new HttpClient();
 
         [OneTimeSetUp]
         public async Task Setup()
         {
+            azureConfigPath = TemporaryDirectory.Create();
+            Environment.SetEnvironmentVariable("AZURE_CONFIG_DIR", azureConfigPath.DirectoryPath);
+            
             clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
             clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
@@ -67,6 +78,7 @@ namespace Calamari.AzureWebApp.Tests
             {
                 await azure.ResourceGroups.DeleteByNameAsync(resourceGroup.Name);
             }
+            azureConfigPath.Dispose();
         }
 
         [Test]
@@ -336,6 +348,47 @@ namespace Calamari.AzureWebApp.Tests
             await AssertContent(webApp.DefaultHostName, actualText, rootPath);
         }
 
+        [Test]
+        [RequiresPowerShell5OrAboveAttribute]
+        public async Task Deploy_WebApp_Ensure_Tools_Are_Configured()
+        {
+            var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
+            var webApp = await CreateWebApp(webAppName);
+
+            using var tempPath = TemporaryDirectory.Create();
+            const string actualText = "Hello World";
+
+            File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
+            var psScript = @"
+$ErrorActionPreference = 'Continue'
+az --version
+az group list";
+            File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "PreDeploy.ps1"), psScript);
+            
+            // This should be references from Sashimi.Server.Contracts, since Calamari.AzureWebApp is a net461 project this cannot be included.
+            var AccountType = "Octopus.Account.AccountType";
+
+            await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
+                                    .WithArrange(context =>
+                                                 {
+                                                     context.Variables.Add(AccountType, "AzureServicePrincipal");
+                                                     AddDefaults(context, webAppName);
+                                                     context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
+                                                     context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.Deploy, ScriptSyntax.PowerShell), psScript);
+                                                     context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PreDeploy, ScriptSyntax.CSharp), "Console.WriteLine(\"Hello from C#\");");
+                                                     context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, ScriptSyntax.FSharp), "printfn \"Hello from F#\"");
+                                                     context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                 })
+                                    .WithAssert(result =>
+                                                {
+                                                    result.FullLog.Should().Contain("Hello from C#");
+                                                    result.FullLog.Should().Contain("Hello from F#");
+                                                })
+                                    .Execute();
+
+            await AssertContent(webApp.DefaultHostName, actualText);
+        }
+
         Task<IWebApp> CreateWebApp(string webAppName)
         {
             return azure.WebApps
@@ -365,6 +418,19 @@ namespace Calamari.AzureWebApp.Tests
                 clientSecret);
             context.Variables.Add(SpecialVariables.Action.Azure.WebAppName, webAppName);
             context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroup.Name);
+        }
+        
+        // TODO: when migrating to Calamari repository remove this in favour of Calamari.Tests RequiresPowerShell5OrAboveAttribute attribute
+        private class RequiresPowerShell5OrAboveAttribute : NUnitAttribute, IApplyToTest
+        {
+            public void ApplyToTest(Test test)
+            {
+                if (ScriptingEnvironment.SafelyGetPowerShellVersion().Major < 5)
+                {
+                    test.RunState = RunState.Skipped;
+                    test.Properties.Set(PropertyNames.SkipReason, "This test requires PowerShell 5 or newer.");
+                }
+            }
         }
     }
 }
