@@ -141,7 +141,7 @@ namespace Sashimi.AzureCloudService
             var folderPath = Path.GetDirectoryName(privateKeyPath);
             if (folderPath == null)
                 throw new Exception("There was no directory specified in the private key path.");
-#pragma warning disable PC001
+#pragma warning disable CA1416
             var current = WindowsIdentity.GetCurrent();
             if (current == null || current.User == null)
                 throw new Exception("There is no current windows identity.");
@@ -150,14 +150,16 @@ namespace Sashimi.AzureCloudService
             var security = directory.GetAccessControl();
             security.AddAccessRule(new FileSystemAccessRule(current.User, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
             directory.SetAccessControl(security);
-#pragma warning restore PC001
+#pragma warning restore CA1416
         }
 
         static bool HasPrivateKey(X509Certificate2 certificate2)
         {
             try
             {
-                return certificate2.HasPrivateKey && certificate2.PrivateKey != null;
+                return certificate2.HasPrivateKey
+                       && (certificate2.GetRSAPrivateKey() != null
+                           || certificate2.GetDSAPrivateKey() != null);
             }
             catch (Exception)
             {
@@ -169,9 +171,7 @@ namespace Sashimi.AzureCloudService
         {
             try
             {
-#pragma warning disable PC001
                 var cert = new X509Certificate2(file, (string) null!, flags);
-#pragma warning restore PC001
                 if (!HasPrivateKey(cert) && requirePrivateKey)
                     return null;
 
