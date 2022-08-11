@@ -72,7 +72,6 @@ namespace Sashimi.AzureCloudService.Tests
             var sut = new AzureCertificateRequiresPrivateKey(certificateEncoder);
             var accountResource = new AzureSubscriptionAccountResource();
             accountResource.CertificateBytes = certificateEncoder.ToBase64String(GenerateCertificate());
-
             sut.ValidateResource(accountResource).IsValid.Should().BeTrue();
         }
 

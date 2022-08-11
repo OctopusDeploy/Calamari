@@ -157,7 +157,9 @@ namespace Sashimi.AzureCloudService
         {
             try
             {
-                return certificate2.HasPrivateKey && certificate2.GetRSAPrivateKey() != null;
+                return certificate2.HasPrivateKey
+                       && (certificate2.GetRSAPrivateKey() != null
+                           || certificate2.GetDSAPrivateKey() != null);
             }
             catch (Exception)
             {
@@ -169,9 +171,7 @@ namespace Sashimi.AzureCloudService
         {
             try
             {
-#pragma warning disable CA1416
                 var cert = new X509Certificate2(file, (string) null!, flags);
-#pragma warning restore CA1416
                 if (!HasPrivateKey(cert) && requirePrivateKey)
                     return null;
 
