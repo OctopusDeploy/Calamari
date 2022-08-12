@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Sashimi.Aws.Common</AssemblyName>
     <RootNamespace>Sashimi.Aws.Common</RootNamespace>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>

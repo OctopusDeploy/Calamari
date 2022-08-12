@@ -116,7 +116,7 @@ Task("PublishCalamariProjects")
 		    	    });
                 }
 
-                if(framework.StartsWith("netcoreapp"))
+                if(framework.StartsWith("netcoreapp") || framework.Equals("net6.0"))
                 {
                     var runtimes = XmlPeek(project, "Project/PropertyGroup/RuntimeIdentifiers").Split(';');
                     foreach(var runtime in runtimes)

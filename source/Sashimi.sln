@@ -42,37 +42,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripting", "Scripting", "{
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Scripting.Tests", "Calamari.Scripting.Tests\Calamari.Scripting.Tests.csproj", "{AD9C9ECB-B999-427E-B3D3-C1C28DA7EE61}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{225C56D7-FF8A-4E20-940A-AAABC6C38106}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NewStep", "NewStep", "{FF6F6CB6-8662-4DF5-B4FF-0F259BF6ADE9}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari", "Templates\NewStep\Sashimi.NamingIsHard\source\Calamari\Calamari.csproj", "{4C45BA9B-07AC-4E90-873E-7ADF2771D1E9}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Tests", "Templates\NewStep\Sashimi.NamingIsHard\source\Calamari.Tests\Calamari.Tests.csproj", "{B5685655-1B67-4821-AFCD-CEE7B386C3EF}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi", "Templates\NewStep\Sashimi.NamingIsHard\source\Sashimi\Sashimi.csproj", "{DF9023F9-16F8-4343-BFA3-FD149CC5F3A8}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Tests", "Templates\NewStep\Sashimi.NamingIsHard\source\Sashimi.Tests\Sashimi.Tests.csproj", "{B39F2792-3CA7-4E6A-BFD3-EB4FF0E2A5DB}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{ABEA8114-E8A7-44A4-AFAA-BA0642FE460B}"
-ProjectSection(SolutionItems) = preProject
-	Templates\NewStep\.template.config\template.json = Templates\NewStep\.template.config\template.json
-	Templates\NewStep\Sashimi.NamingIsHard\build.cake = Templates\NewStep\Sashimi.NamingIsHard\build.cake
-	Templates\NewStep\Sashimi.NamingIsHard\readme.md = Templates\NewStep\Sashimi.NamingIsHard\readme.md
-	Templates\NewStep\Sashimi.NamingIsHard\GitVersion.yml = Templates\NewStep\Sashimi.NamingIsHard\GitVersion.yml
-EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Template.Wrangler", "Templates\Sashimi.Template.Wrangler\Sashimi.Template.Wrangler.csproj", "{252CC09F-662E-45DA-A28E-027AFB7CE3FE}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sashimi.Template.Wrangler.Tests", "Templates\Sashimi.Template.Wrangler.Tests\Sashimi.Template.Wrangler.Tests.csproj", "{5A664A6E-5DE1-4A2B-9487-AE612D60350D}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{E6E4F1BE-6E9A-4176-8DA7-38456E52353F}"
-ProjectSection(SolutionItems) = preProject
-	Templates\How to template.md = Templates\How to template.md
-	Templates\NewStep.cake = Templates\NewStep.cake
-	Templates\TeamCitySetup.cake = Templates\TeamCitySetup.cake
-EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,30 +96,6 @@ Global
 		{AD9C9ECB-B999-427E-B3D3-C1C28DA7EE61}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AD9C9ECB-B999-427E-B3D3-C1C28DA7EE61}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AD9C9ECB-B999-427E-B3D3-C1C28DA7EE61}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4C45BA9B-07AC-4E90-873E-7ADF2771D1E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4C45BA9B-07AC-4E90-873E-7ADF2771D1E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4C45BA9B-07AC-4E90-873E-7ADF2771D1E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4C45BA9B-07AC-4E90-873E-7ADF2771D1E9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B5685655-1B67-4821-AFCD-CEE7B386C3EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B5685655-1B67-4821-AFCD-CEE7B386C3EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B5685655-1B67-4821-AFCD-CEE7B386C3EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B5685655-1B67-4821-AFCD-CEE7B386C3EF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DF9023F9-16F8-4343-BFA3-FD149CC5F3A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DF9023F9-16F8-4343-BFA3-FD149CC5F3A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DF9023F9-16F8-4343-BFA3-FD149CC5F3A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DF9023F9-16F8-4343-BFA3-FD149CC5F3A8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B39F2792-3CA7-4E6A-BFD3-EB4FF0E2A5DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B39F2792-3CA7-4E6A-BFD3-EB4FF0E2A5DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B39F2792-3CA7-4E6A-BFD3-EB4FF0E2A5DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B39F2792-3CA7-4E6A-BFD3-EB4FF0E2A5DB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{252CC09F-662E-45DA-A28E-027AFB7CE3FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{252CC09F-662E-45DA-A28E-027AFB7CE3FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{252CC09F-662E-45DA-A28E-027AFB7CE3FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{252CC09F-662E-45DA-A28E-027AFB7CE3FE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5A664A6E-5DE1-4A2B-9487-AE612D60350D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5A664A6E-5DE1-4A2B-9487-AE612D60350D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5A664A6E-5DE1-4A2B-9487-AE612D60350D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5A664A6E-5DE1-4A2B-9487-AE612D60350D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -158,15 +103,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{EE065FFB-3C93-4568-84D2-90B3A28935BC} = {B251E41D-A8AF-4787-B179-4413A6F84CA2}
 		{AD9C9ECB-B999-427E-B3D3-C1C28DA7EE61} = {B251E41D-A8AF-4787-B179-4413A6F84CA2}
-		{FF6F6CB6-8662-4DF5-B4FF-0F259BF6ADE9} = {225C56D7-FF8A-4E20-940A-AAABC6C38106}
-		{4C45BA9B-07AC-4E90-873E-7ADF2771D1E9} = {FF6F6CB6-8662-4DF5-B4FF-0F259BF6ADE9}
-		{B5685655-1B67-4821-AFCD-CEE7B386C3EF} = {FF6F6CB6-8662-4DF5-B4FF-0F259BF6ADE9}
-		{DF9023F9-16F8-4343-BFA3-FD149CC5F3A8} = {FF6F6CB6-8662-4DF5-B4FF-0F259BF6ADE9}
-		{B39F2792-3CA7-4E6A-BFD3-EB4FF0E2A5DB} = {FF6F6CB6-8662-4DF5-B4FF-0F259BF6ADE9}
-		{ABEA8114-E8A7-44A4-AFAA-BA0642FE460B} = {FF6F6CB6-8662-4DF5-B4FF-0F259BF6ADE9}
-		{252CC09F-662E-45DA-A28E-027AFB7CE3FE} = {225C56D7-FF8A-4E20-940A-AAABC6C38106}
-		{5A664A6E-5DE1-4A2B-9487-AE612D60350D} = {225C56D7-FF8A-4E20-940A-AAABC6C38106}
-		{E6E4F1BE-6E9A-4176-8DA7-38456E52353F} = {225C56D7-FF8A-4E20-940A-AAABC6C38106}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F8108764-E787-43A4-A43A-2BB5540615E8}
