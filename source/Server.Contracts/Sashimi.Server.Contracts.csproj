@@ -18,7 +18,7 @@
     <PackageReference Include="Octopus.Server.Extensibility" Version="14.3.2" />
     <PackageReference Include="Octopus.Server.MessageContracts" Version="0.4.57" />
     <PackageReference Include="Octopus.TinyTypes" Version="2.2.26" />
-    <PackageReference Include="Octostache" Version="2.10.0" />
+    <PackageReference Include="Octostache" Version="3.2.1" />
     <PackageReference Include="FluentValidation" Version="8.6.2" />
   </ItemGroup>
 
