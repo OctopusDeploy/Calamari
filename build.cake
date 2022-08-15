@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 #module nuget:?package=Cake.DotNetTool.Module&version=0.4.0
 #tool "dotnet:?package=GitVersion.Tool&version=5.3.5"
-#tool "dotnet:?package=AzureSignTool&version=2.0.17"
+#tool "dotnet:?package=AzureSignTool&version=3.0.0"
 #addin "Cake.FileHelpers&version=3.2.0"
 #addin "nuget:?package=Cake.Incubator&version=5.0.1"
 #addin "nuget:?package=Cake.FileHelpers&version=4.0.1"
@@ -21,6 +21,7 @@ var signFiles = Argument<bool>("sign_files", false);
 var signToolPath = MakeAbsolute(File("./certificates/signtool.exe"));
 var keyVaultUrl = Argument("AzureKeyVaultUrl", "");
 var keyVaultAppId = Argument("AzureKeyVaultAppId", "");
+var keyVaultTenantId = Argument("AzureKeyVaultTenantId", "");
 var keyVaultAppSecret = Argument("AzureKeyVaultAppSecret", "");
 var keyVaultCertificateName = Argument("AzureKeyVaultCertificateName", "");
 ///////////////////////////////////////////////////////////////////////////////
@@ -137,7 +138,7 @@ Task("PublishCalamariProjects")
                     SignAndTimestampBinaries(publishSettings.OutputDirectory.FullPath);
                 }
 
-                if(framework.StartsWith("netcoreapp"))
+                if(framework.Equals("net6.0"))
                 {
                     var runtimes = XmlPeek(project, "Project/PropertyGroup/RuntimeIdentifiers").Split(';');
                     foreach(var runtime in runtimes)
@@ -183,7 +184,7 @@ Task("PackSashimi")
     .IsDependentOn("PublishCalamariProjects")
     .Does(() =>
 {
-    SignAndTimestampBinaries("./source/Sashimi/bin/net5.0");
+    SignAndTimestampBinaries("./source/Sashimi/bin/net6.0");
     DotNetCorePack("source", new DotNetCorePackSettings
     {
         Configuration = configuration,
@@ -235,7 +236,7 @@ private void SignAndTimestampBinaries(string outputDirectory)
         .ToArray();
 
     Information("Signing files using azuresigntool and the production code signing certificate");
-    SignFilesWithAzureSignTool(unsignedExecutablesAndLibraries, keyVaultUrl, keyVaultAppId, keyVaultAppSecret, keyVaultCertificateName);
+    SignFilesWithAzureSignTool(unsignedExecutablesAndLibraries, keyVaultUrl, keyVaultAppId, keyVaultTenantId, keyVaultAppSecret, keyVaultCertificateName);
 
     TimeStampFiles(unsignedExecutablesAndLibraries);
 }
@@ -255,12 +256,13 @@ private bool HasAuthenticodeSignature(FilePath filePath)
     }
 }
 
-void SignFilesWithAzureSignTool(IEnumerable<FilePath> files, string vaultUrl, string vaultAppId, string vaultAppSecret, string vaultCertificateName, string display = "", string displayUrl = "")
+void SignFilesWithAzureSignTool(IEnumerable<FilePath> files, string vaultUrl, string vaultAppId, string vaultTenantId, string vaultAppSecret, string vaultCertificateName, string display = "", string displayUrl = "")
 {
     var signArguments = new ProcessArgumentBuilder()
         .Append("sign")
         .Append("--azure-key-vault-url").AppendQuoted(vaultUrl)
         .Append("--azure-key-vault-client-id").AppendQuoted(vaultAppId)
+        .Append("--azure-key-vault-tenant-id").AppendQuoted(vaultTenantId)
         .Append("--azure-key-vault-client-secret").AppendQuotedSecret(vaultAppSecret)
         .Append("--azure-key-vault-certificate").AppendQuoted(vaultCertificateName)
         .Append("--file-digest sha256");
