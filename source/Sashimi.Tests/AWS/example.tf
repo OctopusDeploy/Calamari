@@ -1,6 +1,6 @@
 provider "aws" {
   assume_role {
-    role_arn     = "arn:aws:iam::968802670493:role/e2e_buckets"
+    role_arn     = "arn:aws:iam::017645897735:role/e2e_buckets"
   }
 }
 
