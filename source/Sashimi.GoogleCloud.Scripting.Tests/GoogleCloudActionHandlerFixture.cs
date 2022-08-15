@@ -116,8 +116,17 @@ namespace Sashimi.GoogleCloud.Scripting.Tests
                         Directory.CreateDirectory(destinationDirectory);
                         await using Stream stream = File.OpenRead(zipFile);
                         using var reader = ReaderFactory.Open(stream);
-                        reader.WriteAllToDirectory(destinationDirectory,
-                            new ExtractionOptions {ExtractFullPath = true});
+                        while (reader.MoveToNextEntry())
+                        {
+                            var filename = reader.Entry.Key;
+                            Console.WriteLine($"Extracting: {filename}");
+                            // if (filename.EndsWith('/') || File.Exists(Path.Combine(destinationDirectory, filename)))
+                            // {
+                            //     Console.WriteLine($"Ignoring {filename}");
+                            //     continue;
+                            // }
+                            reader.WriteEntryToDirectory(destinationDirectory, new ExtractionOptions {ExtractFullPath = true});
+                        }
                     }
                     ExecutableHelper.AddExecutePermission(gcloudExe);
                     yield return gcloudExe;
