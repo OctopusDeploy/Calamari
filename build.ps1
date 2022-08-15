@@ -53,6 +53,7 @@ Param(
     [switch]$SkipToolPackageRestore,
     [string]$AzureKeyVaultUrl,
     [string]$AzureKeyVaultAppId,
+    [string]$AzureKeyVaultTenantId,
     [string]$AzureKeyVaultAppSecret,
     [string]$AzureKeyvaultCertificateName,
     [Parameter(Position=0,Mandatory=$false,ValueFromRemainingArguments=$true)]
@@ -195,5 +196,5 @@ Write-Host "Installing cake modules using the --bootstrap argument"
 
 # Start Cake
 Write-Host "Running build script..."
-Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -AzureKeyVaultUrl=`"$AzureKeyVaultUrl`" -AzureKeyVaultAppId=`"$AzureKeyVaultAppId`" -AzureKeyVaultAppSecret=`"$AzureKeyVaultAppSecret`" -AzureKeyvaultCertificateName=`"$AzureKeyvaultCertificateName`" $UseMono $UseDryRun $UseExperimental $ScriptArgs"
+Invoke-Expression "& `"$CAKE_EXE`" `"$Script`" -target=`"$Target`" -configuration=`"$Configuration`" -verbosity=`"$Verbosity`" -AzureKeyVaultUrl=`"$AzureKeyVaultUrl`" -AzureKeyVaultAppId=`"$AzureKeyVaultAppId`" -AzureKeyVaultTenantId=`"$AzureKeyVaultTenantId`" -AzureKeyVaultAppSecret=`"$AzureKeyVaultAppSecret`" -AzureKeyvaultCertificateName=`"$AzureKeyvaultCertificateName`" $UseMono $UseDryRun $UseExperimental $ScriptArgs"
 exit $LASTEXITCODE
