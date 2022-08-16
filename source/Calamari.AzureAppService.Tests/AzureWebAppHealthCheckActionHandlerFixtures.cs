@@ -177,6 +177,7 @@ namespace Calamari.AzureAppService.Tests
             var generalLinuxDnsError = "Name or service not known (non-existent-proxy.local:3128)";
             var windowsDotNetDnsError = "No such host is known. (non-existent-proxy.local:3128)";
 
+            errorStream.Flush();
             var calamariOutput = result.FullLog + errorStream;
             calamariOutput.Should().ContainAny(windowsDotNetDnsError, ubuntuDnsError, generalLinuxDnsError, windowsNetFxDnsError);
         }
