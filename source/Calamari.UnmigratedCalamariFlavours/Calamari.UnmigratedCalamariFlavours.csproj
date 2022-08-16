@@ -1,35 +1,35 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <Copy>true</Copy>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Sashimi.Aws.Accounts" Version="14.2.0" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.Azure.Accounts" Version="14.2.0" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.Aws.Common" Version="14.2.0" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.Azure.Common" Version="14.2.0" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.AzureCloudService" Version="12.1.2" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.AzureWebApp" Version="13.2.1" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.GoogleCloud.Accounts" Version="2.1.2" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.GoogleCloud.Scripting" Version="2.1.2" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.Terraform" Version="11.1.0" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.AzureServiceFabric" Version="12.1.2" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.AzureScripting" Version="14.2.1" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.Aws.Accounts" Version="24.0.4" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.Azure.Accounts" Version="24.0.4" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.Aws.Common" Version="24.0.4" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.Azure.Common" Version="24.0.4" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.AzureCloudService" Version="12.1.3" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.AzureWebApp" Version="13.2.2" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.GoogleCloud.Accounts" Version="2.1.3" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.GoogleCloud.Scripting" Version="2.1.3" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.Terraform" Version="11.1.2" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.AzureServiceFabric" Version="12.1.3" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.AzureScripting" Version="14.2.2" GeneratePathProperty="true" />
     </ItemGroup>
 
     <!-- Copy over sashimi nuget packages from the packages directory. -->
     <Target Name="CopyPackages" BeforeTargets="PrepareForBuild">
-        <Copy SourceFiles="$(PkgSashimi_Aws_Accounts)\sashimi.aws.accounts.14.2.0.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_Azure_Accounts)\sashimi.azure.accounts.14.2.0.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_Aws_Common)\sashimi.aws.common.14.2.0.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_AzureCloudService)\sashimi.azurecloudservice.12.1.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_AzureWebApp)\sashimi.azurewebapp.13.2.1.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_GoogleCloud_Accounts)\sashimi.googlecloud.accounts.2.1.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_GoogleCloud_Scripting)\sashimi.googlecloud.scripting.2.1.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_Terraform)\sashimi.terraform.11.1.0.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_AzureServiceFabric)\sashimi.azureservicefabric.12.1.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_AzureScripting)\sashimi.azurescripting.14.2.1.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
+        <Copy SourceFiles="$(PkgSashimi_Aws_Accounts)\sashimi.aws.accounts.24.0.4.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
+        <Copy SourceFiles="$(PkgSashimi_Azure_Accounts)\sashimi.azure.accounts.24.0.4.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
+        <Copy SourceFiles="$(PkgSashimi_Aws_Common)\sashimi.aws.common.24.0.4.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
+        <Copy SourceFiles="$(PkgSashimi_AzureCloudService)\sashimi.azurecloudservice.12.1.3.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
+        <Copy SourceFiles="$(PkgSashimi_AzureWebApp)\sashimi.azurewebapp.13.2.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
+        <Copy SourceFiles="$(PkgSashimi_GoogleCloud_Accounts)\sashimi.googlecloud.accounts.2.1.3.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
+        <Copy SourceFiles="$(PkgSashimi_GoogleCloud_Scripting)\sashimi.googlecloud.scripting.2.1.3.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
+        <Copy SourceFiles="$(PkgSashimi_Terraform)\sashimi.terraform.11.1.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
+        <Copy SourceFiles="$(PkgSashimi_AzureServiceFabric)\sashimi.azureservicefabric.12.1.3.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
+        <Copy SourceFiles="$(PkgSashimi_AzureScripting)\sashimi.azurescripting.14.2.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
     </Target>
 </Project>

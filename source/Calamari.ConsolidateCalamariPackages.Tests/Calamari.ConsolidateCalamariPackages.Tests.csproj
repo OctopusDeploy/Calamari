@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
@@ -17,12 +17,12 @@
     </ItemGroup>
     <ItemGroup>
         <!-- These references are imported so that the Integration test has something to work with -->
-        <PackageReference Include="Calamari" Version="12.0.2" GeneratePathProperty="true" />
-        <PackageReference Include="Calamari.Cloud" Version="12.0.2" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.Terraform" Version="0.1.7-enh-packcalamari0002" GeneratePathProperty="true" />
-        <PackageReference Include="Calamari.linux-x64" Version="12.0.2" GeneratePathProperty="true" />
-        <PackageReference Include="Calamari.osx-x64" Version="12.0.2" GeneratePathProperty="true" />
-        <PackageReference Include="Calamari.win-x64" Version="12.0.2" GeneratePathProperty="true" />
+        <PackageReference Include="Calamari" Version="24.0.4" GeneratePathProperty="true" />
+        <PackageReference Include="Calamari.Cloud" Version="24.0.4" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.Terraform" Version="11.1.2" GeneratePathProperty="true" />
+        <PackageReference Include="Calamari.linux-x64" Version="24.0.4" GeneratePathProperty="true" />
+        <PackageReference Include="Calamari.osx-x64" Version="24.0.4" GeneratePathProperty="true" />
+        <PackageReference Include="Calamari.win-x64" Version="24.0.4" GeneratePathProperty="true" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.ConsolidateCalamariPackages\Calamari.ConsolidateCalamariPackages.csproj" />
@@ -33,12 +33,12 @@
     </Target>
 
     <Target Name="CopyPackages" BeforeTargets="PrepareForBuild">
-        <Copy SourceFiles="$(PkgCalamari)\calamari.12.0.2.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
-        <Copy SourceFiles="$(PkgCalamari_Cloud)\calamari.cloud.12.0.2.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_Terraform)\sashimi.terraform.0.1.7-enh-packcalamari0002.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
-        <Copy SourceFiles="$(PkgCalamari_linux-x64)\calamari.linux-x64.12.0.2.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
-        <Copy SourceFiles="$(PkgCalamari_osx-x64)\calamari.osx-x64.12.0.2.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
-        <Copy SourceFiles="$(PkgCalamari_win-x64)\calamari.win-x64.12.0.2.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
+        <Copy SourceFiles="$(PkgCalamari)\calamari.24.0.4.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
+        <Copy SourceFiles="$(PkgCalamari_Cloud)\calamari.cloud.24.0.4.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
+        <Copy SourceFiles="$(PkgSashimi_Terraform)\sashimi.terraform.11.1.2.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
+        <Copy SourceFiles="$(PkgCalamari_linux-x64)\calamari.linux-x64.24.0.4.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
+        <Copy SourceFiles="$(PkgCalamari_osx-x64)\calamari.osx-x64.24.0.4.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
+        <Copy SourceFiles="$(PkgCalamari_win-x64)\calamari.win-x64.24.0.4.nupkg" DestinationFolder="$(ProjectDir)\testPackages"></Copy>
     </Target>
 
 </Project>
