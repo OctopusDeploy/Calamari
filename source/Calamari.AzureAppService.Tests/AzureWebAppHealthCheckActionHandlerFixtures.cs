@@ -50,8 +50,8 @@ namespace Calamari.AzureAppService.Tests
             }
             finally
             {
-                if (resourceGroup != null)
-                    azure?.ResourceGroups.DeleteByNameAsync(resourceGroup.Name).Ignore();
+                if (azure != null && resourceGroup != null)
+                    await azure.ResourceGroups.DeleteByNameAsync(resourceGroup.Name);
             }
         }
 
@@ -143,7 +143,7 @@ namespace Calamari.AzureAppService.Tests
             catch
             {
                 if (resourceGroup != null)
-                    azure.ResourceGroups.DeleteByNameAsync(resourceGroupName).Ignore();
+                    await azure.ResourceGroups.DeleteByNameAsync(resourceGroupName);
                 throw;
             }
         }
