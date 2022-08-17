@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
-using Calamari.Azure;
+using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Behaviors;
 using Calamari.AzureAppService.Json;
 using Calamari.Common.Commands;

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.Resources;
-using Calamari.Azure;
+using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 

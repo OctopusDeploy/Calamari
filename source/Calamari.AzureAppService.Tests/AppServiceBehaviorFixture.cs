@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Azure.ResourceManager.Resources.Models;
-using Calamari.Azure;
+using Calamari.AzureAppService.Azure;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Shared;

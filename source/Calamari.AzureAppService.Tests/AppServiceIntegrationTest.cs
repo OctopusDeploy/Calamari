@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
-using Calamari.Azure;
+using Calamari.AzureAppService.Azure;
 using Calamari.Tests.Shared;
 using FluentAssertions;
 using Microsoft.Azure.Management.WebSites;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Calamari.Azure;
+using Calamari.AzureAppService.Azure;
 ////using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;

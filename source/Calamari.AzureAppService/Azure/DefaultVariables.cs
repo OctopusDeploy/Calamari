@@ -1,5 +1,7 @@
 ﻿
-namespace Calamari.Azure
+using System;
+
+namespace Calamari.AzureAppService.Azure
 {
     static class DefaultVariables
     {

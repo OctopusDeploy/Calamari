@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Common.Features.Discovery;
 
-namespace Calamari.Azure
+namespace Calamari.AzureAppService.Azure
 {
     class ServicePrincipalAccount
     {        
