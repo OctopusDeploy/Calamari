@@ -20,10 +20,9 @@ namespace Calamari.AzureAppService.Tests
     {
         const string NonExistentProxyHostname = "non-existent-proxy.local";
         const int NonExistentProxyPort = 3128;
-
-        IWebProxy? originalProxy;
-        string originalProxyHost;
-        string originalProxyPort;
+        readonly IWebProxy originalProxy = WebRequest.DefaultWebProxy;
+        readonly string originalProxyHost = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost);
+        readonly string originalProxyPort = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort);
         
         [Test]
         public async Task WebAppIsFound_WithAndWithoutProxy()
@@ -65,7 +64,7 @@ namespace Calamari.AzureAppService.Tests
                                     .WithAssert(result => result.WasSuccessful.Should().BeFalse())
                                     .Execute(false);
         }
-        
+
         [TearDown]
         public void TearDown()
         {
@@ -73,19 +72,14 @@ namespace Calamari.AzureAppService.Tests
             RestoreCiEnvironmentProxySettings();
         }
 
-        void SetLocalEnvironmentProxySettings(string hostname, int port)
+        static void SetLocalEnvironmentProxySettings(string hostname, int port)
         {
-            originalProxy = WebRequest.DefaultWebProxy;
-
             var proxySettings = new UseCustomProxySettings(hostname, port, null!, null!).CreateProxy().Value;
             WebRequest.DefaultWebProxy = proxySettings;
         }
 
-        void SetCiEnvironmentProxySettings(string hostname, int port)
+        static void SetCiEnvironmentProxySettings(string hostname, int port)
         {
-            originalProxyHost = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost);
-            originalProxyPort = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort);
-
             Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, hostname);
             Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, $"{port}");
         }
