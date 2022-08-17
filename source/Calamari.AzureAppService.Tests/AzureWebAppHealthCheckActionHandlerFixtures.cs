@@ -1,6 +1,5 @@
 ﻿#nullable disable
 using System;
-using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using Calamari.Azure;
@@ -19,42 +18,6 @@ namespace Calamari.AzureAppService.Tests
     [TestFixture]
     class AzureWebAppHealthCheckActionHandlerFixtures
     {
-        [Test]
-        public async Task WebApp_Is_Found()
-        {
-            IAzure azure = null;
-            IResourceGroup resourceGroup = null;
-            IWebApp webApp;
-            try
-            {
-                (azure, resourceGroup, webApp) = await TestHelper.SetUpAzureWebApp();
-                
-                await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
-                                        .WithArrange(context => TestHelper.SetUpVariables(context, resourceGroup.Name, webApp.Name))
-                                        .WithAssert(result => result.WasSuccessful.Should().BeTrue())
-                                        .Execute();
-            }
-            finally
-            {
-                if (resourceGroup != null)
-                    azure?.ResourceGroups.DeleteByNameAsync(resourceGroup.Name).Ignore();
-            }
-        }
-
-        [Test]
-        public async Task WebApp_Is_Not_Found()
-        {
-            var randomName = SdkContext.RandomResourceName(nameof(AzureWebAppHealthCheckActionHandlerFixtures), 60);
-            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
-                                    .WithArrange(context => TestHelper.SetUpVariables(context, randomName, randomName))
-                                    .WithAssert(result => result.WasSuccessful.Should().BeFalse())
-                                    .Execute(false);
-        }
-    }
-
-    [TestFixture]
-    class AzureWebAppHealthCheckActionHandlerProxyFixture
-    {
         const string NonExistentProxyHostname = "non-existent-proxy.local";
         const int NonExistentProxyPort = 3128;
 
@@ -62,33 +25,27 @@ namespace Calamari.AzureAppService.Tests
         string originalProxyHost;
         string originalProxyPort;
         
-
-        /// <summary>
-        /// Configuring all the infrastructure required for a proper proxy test (with blocking certain addresses, proxy
-        /// server itself etc) is over the top for a test here. We can implicitly test that the proxy settings are being
-        /// picked up properly by setting a non-existent property, and ensuring that we fail with connectivity errors
-        /// *to the non-existent proxy* rather than a successful healthcheck directly to Azure.
-        /// </summary>
         [Test]
-        public async Task ConfiguredProxy_IsUsedForHealthCheck()
+        public async Task WebAppIsFound_WithAndWithoutProxy()
         {
             IAzure azure = null;
             IResourceGroup resourceGroup = null;
             IWebApp webApp;
             try
             {
-                // Set up a web app, and make sure the health check was successful initially
-                (azure, resourceGroup, webApp) = await TestHelper.SetUpAzureWebApp();
+                (azure, resourceGroup, webApp) = await SetUpAzureWebApp();
+                
                 await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
-                                        .WithArrange(context => TestHelper.SetUpVariables(context, resourceGroup.Name, webApp.Name))
+                                        .WithArrange(context => SetUpVariables(context, resourceGroup.Name, webApp.Name))
                                         .WithAssert(result => result.WasSuccessful.Should().BeTrue())
                                         .Execute();
                 
-                // now switch to using a non-existing proxy, the health check to the same web app should fail
+                // Here we verify whether the proxy is correctly picked up
+                // Since the proxy we use here is non-existent, health check to the same Web App should fail due this this proxy setting
                 SetLocalEnvironmentProxySettings(NonExistentProxyHostname, NonExistentProxyPort);
                 SetCiEnvironmentProxySettings(NonExistentProxyHostname, NonExistentProxyPort);
                 await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
-                                        .WithArrange(context => TestHelper.SetUpVariables(context, resourceGroup.Name, webApp.Name))
+                                        .WithArrange(context => SetUpVariables(context, resourceGroup.Name, webApp.Name))
                                         .WithAssert(result => result.WasSuccessful.Should().BeFalse())
                                         .Execute(false);
             }
@@ -99,6 +56,16 @@ namespace Calamari.AzureAppService.Tests
             }
         }
 
+        [Test]
+        public async Task WebAppIsNotFound()
+        {
+            var randomName = SdkContext.RandomResourceName(nameof(AzureWebAppHealthCheckActionHandlerFixtures), 60);
+            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
+                                    .WithArrange(context => SetUpVariables(context, randomName, randomName))
+                                    .WithAssert(result => result.WasSuccessful.Should().BeFalse())
+                                    .Execute(false);
+        }
+        
         [TearDown]
         public void TearDown()
         {
@@ -133,11 +100,8 @@ namespace Calamari.AzureAppService.Tests
             Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, originalProxyHost);
             Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, originalProxyPort);
         }
-    }
-
-    class TestHelper
-    {
-        public static async Task<(IAzure azure, IResourceGroup resourceGroup, IWebApp webApp)> SetUpAzureWebApp()
+        
+        static async Task<(IAzure azure, IResourceGroup resourceGroup, IWebApp webApp)> SetUpAzureWebApp()
         {
             var resourceGroupName = SdkContext.RandomResourceName(nameof(AzureWebAppHealthCheckActionHandlerFixtures), 60);
             var clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
@@ -190,7 +154,7 @@ namespace Calamari.AzureAppService.Tests
             }
         }
 
-        public static void SetUpVariables(CommandTestBuilderContext context, string resourceGroupName, string webAppName)
+        static void SetUpVariables(CommandTestBuilderContext context, string resourceGroupName, string webAppName)
         {
             var clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
             var clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
