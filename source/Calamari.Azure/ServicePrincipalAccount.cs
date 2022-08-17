@@ -3,12 +3,14 @@ using System.Net;
 using System.Net.Http;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Newtonsoft.Json;
 using AzureEnvironmentEnum = Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment;
 
 namespace Calamari.Azure
 {
     public class ServicePrincipalAccount
     {        
+        [JsonConstructor]
         public ServicePrincipalAccount(
             string subscriptionNumber,
             string clientId,

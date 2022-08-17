@@ -4,7 +4,7 @@ using Calamari.Common.Plumbing.Variables;
 namespace Calamari.AzureAppService.Azure
 {
     class ServicePrincipalAccount
-    {        
+    {
         public ServicePrincipalAccount(
             string subscriptionNumber,
             string clientId,
