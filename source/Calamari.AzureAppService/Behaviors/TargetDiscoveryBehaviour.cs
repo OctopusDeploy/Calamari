@@ -39,7 +39,7 @@ namespace Calamari.AzureAppService.Behaviors
                 Log.Warn("Aborting target discovery.");
                 return;
             }
-            var account = targetDiscoveryContext.Authentication.AccountDetails;
+            var account = targetDiscoveryContext.Authentication!.AccountDetails;
             Log.Verbose($"Looking for Azure web apps using:");
             Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
             Log.Verbose($"  Tenant ID: {account.TenantId}");
@@ -54,7 +54,7 @@ namespace Calamari.AzureAppService.Behaviors
                 foreach (var webApp in webApps)
                 {
                     var tags = AzureWebAppHelper.GetOctopusTags(webApp.Tags);
-                    var matchResult = targetDiscoveryContext.Scope.Match(tags);
+                    var matchResult = targetDiscoveryContext.Scope!.Match(tags);
                     if (matchResult.IsSuccess)
                     {
                         discoveredTargetCount++;
@@ -179,7 +179,7 @@ namespace Calamari.AzureAppService.Behaviors
                 TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(
                     webApp.ResourceGroupName,
                     webApp.Name,
-                    context.Authentication.AccountId,
+                    context.Authentication!.AccountId,
                     matchResult.Role,
                     context.Scope!.WorkerPoolId));
         }
@@ -195,7 +195,7 @@ namespace Calamari.AzureAppService.Behaviors
                     webApp.ResourceGroupName, 
                     webApp.Name, 
                     slot.Name, 
-                    context.Authentication.AccountId,
+                    context.Authentication!.AccountId,
                     matchResult.Role,
                     context.Scope!.WorkerPoolId));
         }
