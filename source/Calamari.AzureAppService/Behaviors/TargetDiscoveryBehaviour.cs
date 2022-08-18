@@ -33,7 +33,7 @@ namespace Calamari.AzureAppService.Behaviors
         {
             await Task.CompletedTask;
             var targetDiscoveryContext = GetTargetDiscoveryContext(runningDeployment.Variables);
-            if (targetDiscoveryContext == null)
+            if (targetDiscoveryContext?.Authentication == null || targetDiscoveryContext.Scope == null)
             {
                 Log.Warn("Aborting target discovery.");
                 return;
@@ -174,6 +174,12 @@ namespace Calamari.AzureAppService.Behaviors
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
+            if (context.Authentication?.AccountId == null)
+            {
+                Log.Warn($"The target discovery authentication context accountId is null, a value is required");
+                throw new ArgumentNullException(nameof(context.Authentication.AccountId));
+            }
+            
             Log.WriteServiceMessage(
                 TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(
                     webApp.ResourceGroupName,
@@ -189,6 +195,12 @@ namespace Calamari.AzureAppService.Behaviors
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
+            if (context.Authentication?.AccountId == null)
+            {
+                Log.Warn($"The target discovery authentication context accountId is null, a value is required");
+                throw new ArgumentNullException(nameof(context.Authentication.AccountId));
+            }
+            
             Log.WriteServiceMessage(
                 TargetDiscoveryHelpers.CreateWebAppDeploymentSlotTargetCreationServiceMessage(
                     webApp.ResourceGroupName, 
