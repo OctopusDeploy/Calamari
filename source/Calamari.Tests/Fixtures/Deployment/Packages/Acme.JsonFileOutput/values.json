@@ -1,0 +1,25 @@
+﻿{
+  "departments": [
+    {
+      "name": "Sales",
+      "employees": [
+        {
+          "name": "Mary", 
+          "age": 43
+        },
+        {
+          "name": "Billy",
+          "age": 65
+        }
+      ],
+      "snacks": [
+        {
+          "name": "chocolate",
+          "amount": 10
+        }
+      ]
+    }
+  ],
+  "phone": "0000 000 000",
+  "octopus": false
+}

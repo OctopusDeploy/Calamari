@@ -1,0 +1,16 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Calamari.Tests.Fixtures.PackageDownload.NuGetFeedSupport</id>
+        <version>0.0.0</version>
+        <authors>Octopus Deploy</authors>
+        <owners>octopus-deploy</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Test Package for Calamari NuGet Integration Tests</description>
+        <copyright>Copyright ©2021 Octopus Deploy</copyright>
+        <dependencies />
+    </metadata>
+    <files>
+        <file src="Readme.md" target="" />
+    </files>
+</package>

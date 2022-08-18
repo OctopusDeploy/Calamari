@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>A sample project containing a Windows service.</Description>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Authors>ACME Corporation</Authors>
+    <TargetFramework>netstandard1.0</TargetFramework>
+    <AssemblyName>Acme.Service</AssemblyName>
+    <PackageId>Acme.Service</PackageId>
+    <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <NuspecFile>Acme.Service.nuspec</NuspecFile>
+    <NuspecProperties>Version=$(Version)</NuspecProperties>
+  </PropertyGroup>
+</Project>

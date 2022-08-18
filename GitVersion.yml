@@ -1,6 +1,12 @@
 mode: ContinuousDeployment
-
 branches:
-  master:
-    regex: ^(main|master)$
-    source-branches: ["main"]
+  release:
+    is-release-branch: false
+ignore:
+  sha: [
+    e823e5382ae16d433cbfda913f593f92aaaa462f,
+    50f946ec8b017e7f9e0114436d7a8aa8208dcaa0,
+    4e7b8753fa3ec1934c718dc94cc88973a92d2dcf,
+    e5be8e676416b3229bd2c9d24df59632d4e7ca67,
+    cebffd5ef63e89bca956fd30b829ed4cfa574a0f
+    ]

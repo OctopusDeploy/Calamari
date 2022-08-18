@@ -1,0 +1,10 @@
+﻿Applying multiple relative transforms against a specific target
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─transforms
+| ├─connstrings.mytransform.config
+| └─security.mytransform.config
+└─web.config
+Then the transform transforms\*.mytransform.config => web.config will:
+ - Apply the transform transforms\connstrings.mytransform.config to file web.config
+ - Apply the transform transforms\security.mytransform.config to file web.config
