@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Net.Http;
 using Azure.Core.Pipeline;
@@ -6,7 +7,7 @@ using Azure.ResourceManager;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 
-namespace Calamari.Azure
+namespace Calamari.AzureAppService.Azure
 {
     internal static class AzureClient
     {
