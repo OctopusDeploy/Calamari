@@ -10,7 +10,6 @@
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Calamari.Common" Version="20.4.2" />
     <PackageReference Include="Calamari.AzureScripting" Version="14.1.0" />
     <PackageReference Include="Calamari.Scripting" Version="14.1.3" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.23" />
@@ -20,5 +19,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
   </ItemGroup>
 </Project>

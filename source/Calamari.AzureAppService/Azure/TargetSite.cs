@@ -1,4 +1,6 @@
-﻿﻿namespace Calamari.Azure
+﻿﻿using System;
+
+ namespace Calamari.AzureAppService.Azure
  {
     public class TargetSite
     {

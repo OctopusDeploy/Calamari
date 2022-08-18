@@ -1,11 +1,10 @@
-﻿using Calamari.Common.Features.Discovery;
-using Microsoft.Azure.Management.AppService.Fluent;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Features.Discovery;
 
 #nullable enable
-namespace Calamari.Azure
+namespace Calamari.AzureAppService.Azure
 {
     static class AzureWebAppHelper
     {

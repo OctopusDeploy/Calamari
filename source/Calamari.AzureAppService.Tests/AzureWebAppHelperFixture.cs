@@ -1,8 +1,9 @@
-﻿using Calamari.Azure;
+﻿using Calamari.AzureAppService;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using NUnit.Framework;
 using System.Collections.Generic;
+using Calamari.AzureAppService.Azure;
 
 namespace Calamari.AzureAppService.Tests
 {
