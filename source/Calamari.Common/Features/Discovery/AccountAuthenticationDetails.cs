@@ -6,7 +6,6 @@ namespace Calamari.Common.Features.Discovery
     /// For account-based authentication scopes.
     /// </summary>
     public class AccountAuthenticationDetails<TAccountDetails> : ITargetDiscoveryAuthenticationDetails
-
     {
         [JsonConstructor]
         public AccountAuthenticationDetails
@@ -17,14 +16,6 @@ namespace Calamari.Common.Features.Discovery
             AccountDetails = accountDetails;
         }
 
-        public AccountAuthenticationDetails(
-            string accountId, TAccountDetails accountDetails)
-        {
-            Type = null;
-            AccountId = accountId;
-            AccountDetails = accountDetails;
-        }
-        
         public string? Type { get; set; }
 
         public string AccountId { get; set; }
