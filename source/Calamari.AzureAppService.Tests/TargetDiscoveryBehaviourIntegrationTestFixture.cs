@@ -37,7 +37,7 @@ namespace Calamari.AzureAppService.Tests
         private AppServicePlan svcPlan;
         private string appName = Guid.NewGuid().ToString();
         private List<string> slotNames = new List<string> { "blue", "green" };
-        private static readonly string Type = "AzureServicePrincipal";
+        private static readonly string Type = "Azure";
         private static readonly string AccountId = "Accounts-1";
         private static readonly string Role = "my-azure-app-role";
         private static readonly string EnvironmentName = "dev";
