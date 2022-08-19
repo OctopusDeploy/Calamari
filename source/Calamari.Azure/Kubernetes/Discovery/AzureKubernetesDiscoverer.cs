@@ -14,7 +14,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
         {
         }
 
-        public override string Name => "Azure";
+        public override string Type => "Azure";
 
         public override IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
         {

@@ -16,8 +16,8 @@ namespace Calamari.Aws.Kubernetes.Discovery
         {
         }
 
-        public override string Name => "Aws";
-        
+        public override string Type => "Aws";
+
         public override IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
         {
             if (!TryGetDiscoveryContext<AwsAuthenticationDetails>(contextJson, out var authenticationDetails, out var workerPoolId))
