@@ -16,6 +16,7 @@ using OperatingSystem = Microsoft.Azure.Management.AppService.Fluent.OperatingSy
 namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
+    [NonParallelizable]
     class AzureWebAppHealthCheckActionHandlerFixtures
     {
         const string NonExistentProxyHostname = "non-existent-proxy.local";
@@ -25,6 +26,7 @@ namespace Calamari.AzureAppService.Tests
         readonly string originalProxyPort = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort);
         
         [Test]
+        [NonParallelizable]
         public async Task WebAppIsFound_WithAndWithoutProxy()
         {
             IAzure azure = null;
@@ -53,11 +55,14 @@ namespace Calamari.AzureAppService.Tests
             }
             finally
             {
+                RestoreLocalEnvironmentProxySettings();
+                RestoreCiEnvironmentProxySettings();
                 await CleanResources(azure, resourceGroup);
             }
         }
 
         [Test]
+        [NonParallelizable]
         public async Task WebAppIsNotFound()
         {
             var randomName = SdkContext.RandomResourceName(nameof(AzureWebAppHealthCheckActionHandlerFixtures), 60);
@@ -65,13 +70,6 @@ namespace Calamari.AzureAppService.Tests
                                     .WithArrange(context => SetUpVariables(context, randomName, randomName))
                                     .WithAssert(result => result.WasSuccessful.Should().BeFalse())
                                     .Execute(false);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            RestoreLocalEnvironmentProxySettings();
-            RestoreCiEnvironmentProxySettings();
         }
 
         static void SetLocalEnvironmentProxySettings(string hostname, int port)
