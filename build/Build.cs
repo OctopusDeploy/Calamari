@@ -379,8 +379,7 @@ namespace Calamari.Build
                            });
 
         Target PackageConsolidatedCalamariZip =>
-            _ => _
-                 //.DependsOn(CalamariConsolidationTests)
+            _ => _.DependsOn(CalamariConsolidationTests)
                   .DependsOn(PackBinaries)
                   .DependsOn(CopySashimiPackagesForConsolidation)
                   .Executes(() =>
