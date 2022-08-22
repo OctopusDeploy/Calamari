@@ -153,7 +153,7 @@ namespace Calamari.Tests.KubernetesFixtures
         
             var authenticationDetails =
                 new AccountAuthenticationDetails<ServicePrincipalAccount>(
-                    KubernetesAuthenticationContextTypes.AzureServicePrincipal,
+                    "Azure",
                     "Accounts-1",
                     account);
         
