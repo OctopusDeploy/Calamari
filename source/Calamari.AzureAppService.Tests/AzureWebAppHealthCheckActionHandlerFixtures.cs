@@ -33,6 +33,9 @@ namespace Calamari.AzureAppService.Tests
             try
             {
                 (azure, resourceGroup, webApp) = await SetUpAzureWebApp();
+                azure.Should().NotBeNull();
+                resourceGroup.Should().NotBeNull();
+                webApp.Should().NotBeNull();
                 
                 await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
                                         .WithArrange(context => SetUpVariables(context, resourceGroup.Name, webApp.Name))
@@ -50,8 +53,7 @@ namespace Calamari.AzureAppService.Tests
             }
             finally
             {
-                if (azure != null && resourceGroup != null)
-                    await azure.ResourceGroups.DeleteByNameAsync(resourceGroup.Name);
+                await CleanResources(azure, resourceGroup);
             }
         }
 
@@ -115,6 +117,7 @@ namespace Calamari.AzureAppService.Tests
                                  .WithSubscription(subscriptionId);
 
             IResourceGroup resourceGroup = null;
+            IWebApp webApp = null;
             try
             {
                 resourceGroup = await azure.ResourceGroups
@@ -131,7 +134,7 @@ namespace Calamari.AzureAppService.Tests
                                                 .CreateAsync();
 
                 var webAppName = SdkContext.RandomResourceName(nameof(AzureWebAppHealthCheckActionHandlerFixtures), 60);
-                var webApp = await azure.WebApps
+                webApp = await azure.WebApps
                            .Define(webAppName)
                            .WithExistingWindowsPlan(appServicePlan)
                            .WithExistingResourceGroup(resourceGroup)
@@ -142,9 +145,9 @@ namespace Calamari.AzureAppService.Tests
             }
             catch
             {
-                if (resourceGroup != null)
-                    await azure.ResourceGroups.DeleteByNameAsync(resourceGroupName);
-                throw;
+                // When errors encountered in set up, we return the resources that have been set up so far anyway
+                // We will clean the resources from the caller
+                return (azure, resourceGroup, webApp);
             }
         }
 
@@ -162,6 +165,14 @@ namespace Calamari.AzureAppService.Tests
             context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroupName);
             context.Variables.Add(SpecialVariables.Action.Azure.WebAppName, webAppName);
             context.Variables.Add("Octopus.Account.AccountType", "AzureServicePrincipal");
+        }
+
+        static async Task CleanResources(IAzure azure, IResourceGroup resourceGroup)
+        {
+            if (azure != null && resourceGroup != null)
+            {
+                await azure.ResourceGroups.DeleteByNameAsync(resourceGroup.Name);
+            }
         }
     }
 }
