@@ -16,7 +16,7 @@ namespace Calamari.Common.Features.Discovery
             AccountDetails = accountDetails;
         }
 
-        public string? Type { get; set; }
+        public string Type { get; set; }
 
         public string AccountId { get; set; }
 

@@ -174,7 +174,7 @@ namespace Calamari.AzureAppService.Behaviors
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
-            if (context.Authentication?.AccountId == null)
+            if (context.Authentication == null)
             {
                 Log.Warn($"The target discovery authentication context accountId is null, a value is required");
                 throw new ArgumentNullException(nameof(context.Authentication.AccountId));
@@ -195,7 +195,7 @@ namespace Calamari.AzureAppService.Behaviors
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
-            if (context.Authentication?.AccountId == null)
+            if (context.Authentication == null)
             {
                 Log.Warn($"The target discovery authentication context accountId is null, a value is required");
                 throw new ArgumentNullException(nameof(context.Authentication.AccountId));
