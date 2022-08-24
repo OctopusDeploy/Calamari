@@ -174,17 +174,11 @@ namespace Calamari.AzureAppService.Behaviors
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
-            if (context.Authentication == null)
-            {
-                Log.Warn($"The target discovery authentication context accountId is null, a value is required");
-                throw new ArgumentNullException(nameof(context.Authentication.AccountId));
-            }
-            
             Log.WriteServiceMessage(
                 TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(
                     webApp.ResourceGroupName,
                     webApp.Name,
-                    context.Authentication.AccountId,
+                    context.Authentication!.AccountId,
                     matchResult.Role,
                     context.Scope!.WorkerPoolId));
         }
@@ -195,18 +189,12 @@ namespace Calamari.AzureAppService.Behaviors
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
-            if (context.Authentication == null)
-            {
-                Log.Warn($"The target discovery authentication context accountId is null, a value is required");
-                throw new ArgumentNullException(nameof(context.Authentication.AccountId));
-            }
-            
             Log.WriteServiceMessage(
                 TargetDiscoveryHelpers.CreateWebAppDeploymentSlotTargetCreationServiceMessage(
                     webApp.ResourceGroupName, 
                     webApp.Name, 
                     slot.Name, 
-                    context.Authentication.AccountId,
+                    context.Authentication!.AccountId,
                     matchResult.Role,
                     context.Scope!.WorkerPoolId));
         }
