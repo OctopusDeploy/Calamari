@@ -62,7 +62,7 @@ namespace Calamari.Common.Features.Discovery
                 $"{(exception == null ? "." : $":{exception}")}.");
         }
 
-        public abstract string Name { get; }
+        public abstract string Type { get; }
         public abstract IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson);
     }
 }

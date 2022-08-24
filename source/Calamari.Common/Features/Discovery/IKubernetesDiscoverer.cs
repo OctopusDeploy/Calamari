@@ -6,8 +6,8 @@ namespace Calamari.Common.Features.Discovery
 {
     public interface IKubernetesDiscoverer
     {
-        string Name { get; }
-        
+        string Type { get; }
+
         IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson);
     }
 }

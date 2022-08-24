@@ -13,7 +13,7 @@ namespace Calamari.Kubernetes.Commands.Discovery
 
         public KubernetesDiscovererFactory(IEnumerable<IKubernetesDiscoverer> discoverers)
         {
-            this.discoverers = discoverers.ToDictionary(x => x.Name, x => x);
+            this.discoverers = discoverers.ToDictionary(x => x.Type, x => x);
         }
         
         public bool TryGetKubernetesDiscoverer(string type, out IKubernetesDiscoverer discoverer)
