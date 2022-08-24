@@ -5,6 +5,6 @@ namespace Calamari.ConsolidateCalamariPackages
 {
     public class MigratedCalamariFlavours
     {
-        public static List<string> Flavours = new List<string> { "Calamari.AzureAppService", "Calamari.AzureResourceGroup" };
+        public static List<string> Flavours = new List<string> { "Calamari.AzureAppService", "Calamari.AzureResourceGroup", "Calamari.AzureWebApp" };
     }
 }

@@ -20,11 +20,13 @@
 *.config text
 *.cs text diff=csharp 
 *.css text
+*.less text
 *.cshtml text
 *.htm text
 *.html text
 *.htm text
 *.js text
+*.json text
 *.msbuild text
 *.resx text
 *.ruleset text
@@ -42,6 +44,7 @@
 
 *.sln text eol=crlf merge=union 
 
+*.approved.* binary
 *.approved.* -text
 **/*.Tests/**/Samples/enc-* -text
 **/*.Tests/Fixtures/Substitutions/Samples/* -text

@@ -219,22 +219,39 @@ namespace Calamari.Build
                                                    .Where(project => MigratedCalamariFlavours.Flavours.Contains(project.Name)
                                                                      || migratedCalamariFlavoursTests.Contains(project.Name));
 
-                    var packagesToBuild = calamariFlavours
-                        .SelectMany(project => project.GetTargetFrameworks(), (p, f) => new
+                    var calamariFlavourPackages = calamariFlavours
+                        .SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
                         {
                             Project = p,
                             Framework = f,
-                            CrossPlatform = IsCrossPlatform(f),
-                        })
-                        .SelectMany(packageToBuild => packageToBuild.Project.GetRuntimeIdentifiers(), (packageToBuild, runtimeIdentifier) => new
-                        {
-                            packageToBuild.Project,
-                            packageToBuild.Framework,
-                            Architecture = packageToBuild.CrossPlatform ? runtimeIdentifier : null,
-                            packageToBuild.CrossPlatform
-                        })
-                        .Distinct(t => new { t.Project.Name, t.Architecture, t.Framework });
+                            CrossPlatform = IsCrossPlatform(f)
+                        });
+                    
+                    // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers
+                    var netFxPackages = calamariFlavourPackages
+                      .Where(p => !p.CrossPlatform)
+                      .Select(packageToBuild => new
+                      {
+                          packageToBuild.Project,
+                          packageToBuild.Framework,
+                          Architecture = (string)null!,
+                          packageToBuild.CrossPlatform
+                      });
 
+                    // for cross-platform frameworks, we combine each runtime identifier with each target framework
+                    var crossPlatformPackages = calamariFlavourPackages
+                                                .Where(p => p.CrossPlatform)
+                                                .SelectMany(packageToBuild => packageToBuild.Project.GetRuntimeIdentifiers() ?? Enumerable.Empty<string>(),
+                                                            (packageToBuild, runtimeIdentifier) => new
+                                                            {
+                                                                packageToBuild.Project,
+                                                                packageToBuild.Framework,
+                                                                Architecture = runtimeIdentifier,
+                                                                packageToBuild.CrossPlatform
+                                                            })
+                                                .Distinct(t => new { t.Project.Name, t.Architecture, t.Framework });
+
+                    var packagesToBuild = crossPlatformPackages.Concat(netFxPackages);
                     foreach (var packageToBuild in packagesToBuild)
                     {
                         if (!OperatingSystem.IsWindows() && !packageToBuild.CrossPlatform)
@@ -262,9 +279,15 @@ namespace Calamari.Build
                     foreach (var flavour in calamariFlavours)
                     {
                         Log.Verbose($"Compressing Calamari flavour {PublishDirectory}/{flavour.Name}");
-                        CompressionTasks.CompressZip(PublishDirectory / flavour.Name, $"{ArtifactsDirectory / flavour.Name}.zip");
+                        var compressionSource = PublishDirectory / flavour.Name;
+                        if (!Directory.Exists(compressionSource))
+                        {
+                            Log.Verbose($"Skipping compression for {flavour.Name} since nothing was built");
+                            continue;
+                        }
+                        CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / flavour.Name}.zip");
                     }
-                });
+                 });
 
         Target PackBinaries =>
             _ => _.DependsOn(Publish)
