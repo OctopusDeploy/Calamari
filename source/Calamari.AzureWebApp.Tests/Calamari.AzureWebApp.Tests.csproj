@@ -5,6 +5,7 @@
     <TargetFramework>net461</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <IsPackable>false</IsPackable>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.AzureWebApp\Calamari.AzureWebApp.csproj" />
