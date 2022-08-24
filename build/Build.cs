@@ -219,14 +219,16 @@ namespace Calamari.Build
                                                    .Where(project => MigratedCalamariFlavours.Flavours.Contains(project.Name)
                                                                      || migratedCalamariFlavoursTests.Contains(project.Name));
 
+                    var calamariFlavourPackages = calamariFlavours
+                        .SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
+                        {
+                            Project = p,
+                            Framework = f,
+                            CrossPlatform = IsCrossPlatform(f)
+                        });
+                    
                     // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers
-                    var netFxPackages = calamariFlavours
-                      .SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
-                      {
-                          Project = p,
-                          Framework = f,
-                          CrossPlatform = IsCrossPlatform(f)
-                      })
+                    var netFxPackages = calamariFlavourPackages
                       .Where(p => !p.CrossPlatform)
                       .Select(packageToBuild => new
                       {
@@ -237,23 +239,17 @@ namespace Calamari.Build
                       });
 
                     // for cross-platform frameworks, we combine each runtime identifier with each target framework
-                    var crossPlatformPackages = calamariFlavours
-                                          .SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
-                                          {
-                                              Project = p,
-                                              Framework = f,
-                                              CrossPlatform = IsCrossPlatform(f),
-                                          })
-                                          .Where(p => p.CrossPlatform)
-                                          .SelectMany(packageToBuild => packageToBuild.Project.GetRuntimeIdentifiers() ?? Enumerable.Empty<string>(),
-                                                      (packageToBuild, runtimeIdentifier) => new
-                                                      {
-                                                          packageToBuild.Project,
-                                                          packageToBuild.Framework,
-                                                          Architecture = runtimeIdentifier,
-                                                          packageToBuild.CrossPlatform
-                                                      })
-                                          .Distinct(t => new { t.Project.Name, t.Architecture, t.Framework });
+                    var crossPlatformPackages = calamariFlavourPackages
+                                                .Where(p => p.CrossPlatform)
+                                                .SelectMany(packageToBuild => packageToBuild.Project.GetRuntimeIdentifiers() ?? Enumerable.Empty<string>(),
+                                                            (packageToBuild, runtimeIdentifier) => new
+                                                            {
+                                                                packageToBuild.Project,
+                                                                packageToBuild.Framework,
+                                                                Architecture = runtimeIdentifier,
+                                                                packageToBuild.CrossPlatform
+                                                            })
+                                                .Distinct(t => new { t.Project.Name, t.Architecture, t.Framework });
 
                     var packagesToBuild = crossPlatformPackages.Concat(netFxPackages);
                     foreach (var packageToBuild in packagesToBuild)
