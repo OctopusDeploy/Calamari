@@ -15,10 +15,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Calamari.AzureAppService\Calamari.AzureAppService.csproj" />
     <PackageReference Include="Azure.Identity" Version="1.2.3" />
     <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-preview.2" />
-    <PackageReference Include="Calamari.Tests.Shared" Version="14.2.0" />
     <PackageReference Include="Microsoft.Azure.Management.Storage" Version="24.0.0" />
     <PackageReference Include="Microsoft.Azure.Management.Storage.Fluent" Version="1.38.1" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.9" />
@@ -27,6 +25,11 @@
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0" />
     <PackageReference Include="System.Text.Json" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari.AzureAppService\Calamari.AzureAppService.csproj" />
+    <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

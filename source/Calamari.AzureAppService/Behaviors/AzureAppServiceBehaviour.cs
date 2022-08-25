@@ -6,7 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Calamari.Azure;
+using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
