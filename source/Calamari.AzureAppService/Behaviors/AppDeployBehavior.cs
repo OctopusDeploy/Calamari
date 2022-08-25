@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using Calamari.Azure;
+using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Json;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands;

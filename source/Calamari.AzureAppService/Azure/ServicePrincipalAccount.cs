@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Common.Features.Discovery;
+using Newtonsoft.Json;
 
-namespace Calamari.Azure
+namespace Calamari.AzureAppService.Azure
 {
     class ServicePrincipalAccount
-    {        
+    {
+        [JsonConstructor]
         public ServicePrincipalAccount(
             string subscriptionNumber,
             string clientId,

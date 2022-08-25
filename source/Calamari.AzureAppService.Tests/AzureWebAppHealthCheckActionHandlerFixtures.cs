@@ -2,9 +2,9 @@
 using System;
 using System.Net;
 using System.Threading.Tasks;
-using Calamari.Azure;
+using Calamari.AzureAppService.Azure;
 using Calamari.Common.Plumbing.Proxies;
-using Calamari.Tests.Shared;
+using Calamari.Testing;
 using FluentAssertions;
 using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.Fluent;

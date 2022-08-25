@@ -3,7 +3,7 @@ using Azure.Identity;
 using Azure.ResourceManager;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 
-namespace Calamari.Azure
+namespace Calamari.AzureAppService.Azure
 {
     public sealed class AzureKnownEnvironment
     { 

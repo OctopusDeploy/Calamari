@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Calamari.Azure
+namespace Calamari.AzureAppService.Azure
 {
     public static class AccountVariables
     {

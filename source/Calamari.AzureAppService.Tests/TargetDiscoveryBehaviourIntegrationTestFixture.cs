@@ -1,13 +1,12 @@
 ﻿using Azure.Identity;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
-using Calamari.Azure;
 using Calamari.AzureAppService.Behaviors;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Tests.Shared;
-using Calamari.Tests.Shared.Helpers;
+using Calamari.Testing;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
@@ -19,6 +18,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Calamari.AzureAppService.Azure;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -37,6 +37,7 @@ namespace Calamari.AzureAppService.Tests
         private AppServicePlan svcPlan;
         private string appName = Guid.NewGuid().ToString();
         private List<string> slotNames = new List<string> { "blue", "green" };
+        private static readonly string Type = "Azure";
         private static readonly string AccountId = "Accounts-1";
         private static readonly string Role = "my-azure-app-role";
         private static readonly string EnvironmentName = "dev";
@@ -288,6 +289,7 @@ namespace Calamari.AzureAppService.Tests
         ""roles"": [""{Role}""]
     }},
     ""authentication"": {{
+        ""type"": ""{Type}"",
         ""accountId"": ""{AccountId}"",
         ""accountDetails"": {{
             ""subscriptionNumber"": ""{subscriptionId}"",

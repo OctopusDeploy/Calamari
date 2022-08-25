@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Calamari.Azure;
-////using Calamari.AzureAppService.Azure;
+using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
@@ -34,7 +33,7 @@ namespace Calamari.AzureAppService.Behaviors
         {
             await Task.CompletedTask;
             var targetDiscoveryContext = GetTargetDiscoveryContext(runningDeployment.Variables);
-            if (targetDiscoveryContext == null)
+            if (targetDiscoveryContext?.Authentication == null || targetDiscoveryContext.Scope == null)
             {
                 Log.Warn("Aborting target discovery.");
                 return;
@@ -179,7 +178,7 @@ namespace Calamari.AzureAppService.Behaviors
                 TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(
                     webApp.ResourceGroupName,
                     webApp.Name,
-                    context.Authentication.AccountId,
+                    context.Authentication!.AccountId,
                     matchResult.Role,
                     context.Scope!.WorkerPoolId));
         }
@@ -195,7 +194,7 @@ namespace Calamari.AzureAppService.Behaviors
                     webApp.ResourceGroupName, 
                     webApp.Name, 
                     slot.Name, 
-                    context.Authentication.AccountId,
+                    context.Authentication!.AccountId,
                     matchResult.Role,
                     context.Scope!.WorkerPoolId));
         }

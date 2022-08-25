@@ -1,6 +1,7 @@
 ﻿using System;
 using Azure.ResourceManager;
-using Calamari.Azure;
+using Calamari.AzureAppService;
+using Calamari.AzureAppService.Azure;
 using NUnit.Framework;
 
 namespace Calamari.AzureAppService.Tests

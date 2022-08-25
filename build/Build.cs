@@ -343,7 +343,7 @@ namespace Calamari.Build
                   {
                       var nugetVersion = NugetVersion.Value;
                       var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net461 : Frameworks.NetCoreApp31;
-                      var binFolder = $"./source/Calamari.Tests/bin/{Configuration}/{defaultTarget}/";
+                      AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
                       Directory.Exists(binFolder);
                       var actions = new List<Action>
                       {
@@ -432,7 +432,7 @@ namespace Calamari.Build
                                     {
                                         Name = flavour,
                                         Version = NugetVersion.Value,
-                                        PackagePath = $"{ArtifactsDirectory}\\{flavour}.zip"
+                                        PackagePath = ArtifactsDirectory / $"{flavour}.zip"
                                     });
                                 }
 
@@ -461,9 +461,8 @@ namespace Calamari.Build
                  .DependsOn(CopyToLocalPackages)
                  .Executes(() =>
                  {
-                     var serverProjectFile =
-                         Path.GetFullPath("../OctopusDeploy/source/Octopus.Server/Octopus.Server.csproj");
-                     if (File.Exists(serverProjectFile))
+                    var serverProjectFile = RootDirectory / ".." / "OctopusDeploy" / "source" / "Octopus.Server" / "Octopus.Server.csproj";
+                    if (File.Exists(serverProjectFile))
                      {
                          Log.Information("Setting Calamari version in Octopus Server "
                                          + "project {ServerProjectFile} to {NugetVersion}",
@@ -587,12 +586,12 @@ namespace Calamari.Build
                                        .SetProperties(nugetPackProperties));
         }
 
-        // Sets the Octopus.Server.csproj <CalamariVersion> property
+        // Sets the Octopus.Server.csproj Calamari.Consolidated package version
         void SetOctopusServerCalamariVersion(string projectFile)
         {
             var text = File.ReadAllText(projectFile);
-            text = Regex.Replace(text, @"<CalamariVersion>([\S])+<\/CalamariVersion>",
-                                 $"<CalamariVersion>{NugetVersion.Value}</CalamariVersion>");
+            text = Regex.Replace(text, @"<PackageReference Include=""Calamari.Consolidated"" Version=""([\S])+"" />",
+                                 $"<PackageReference Include=\"Calamari.Consolidated\" Version=\"{NugetVersion.Value}\" />");
             File.WriteAllText(projectFile, text);
         }
 
