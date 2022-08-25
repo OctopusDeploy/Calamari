@@ -1,0 +1,10 @@
+﻿{
+  "Servers": [
+    #{each server in ServerEndpoints}
+      {
+        "Name": "#{server.Name}",
+        "Port": #{server.Port}
+      }#{unless Octopus.Template.Each.Last},#{/unless}
+    #{/each}
+  ]
+}

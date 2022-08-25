@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Test project for Calamari.</Description>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Authors>Octopus Deploy</Authors>
+    <TargetFramework>netstandard1.0</TargetFramework>
+    <AssemblyName>Acme.Web</AssemblyName>
+    <PackageId>Acme.Web</PackageId>
+    <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <NuspecFile>Acme.Web.Nix.nuspec</NuspecFile>
+    <NuspecProperties>Version=$(Version)</NuspecProperties>
+  </PropertyGroup>
+
+  
+</Project>
