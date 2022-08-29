@@ -6,7 +6,15 @@
     <projectFile>Sashimi.Tests/Sashimi.Tests.csproj</projectFile>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7cf6f91c-3dbb-489f-b980-d203a8fac8db" name="Changes" comment="" />
+    <list default="true" id="7cf6f91c-3dbb-489f-b980-d203a8fac8db" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.AzureCloudService/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.AzureCloudService/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Calamari.AzureCloudService.Tests/Calamari.AzureCloudService.Tests.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/Calamari.AzureCloudService.Tests/Calamari.AzureCloudService.Tests.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Calamari.AzureCloudService.Tests/DeployAzureCloudServiceCommandFixture.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Calamari.AzureCloudService.Tests/DeployAzureCloudServiceCommandFixture.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Calamari.AzureCloudService.Tests/HealthCheckCommandFixture.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Calamari.AzureCloudService.Tests/HealthCheckCommandFixture.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Calamari.AzureCloudService/Calamari.AzureCloudService.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/Calamari.AzureCloudService/Calamari.AzureCloudService.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Calamari.AzureCloudService/Properties/InternalsVisibleTo.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Calamari.sln" beforeDir="false" afterPath="$PROJECT_DIR$/Calamari.sln" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -28,36 +36,40 @@
     </file-type-list>
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/69ca26b8335541a792dac0c4d7aa6badde00/15/a9f6b2f7/CommandTestBuilder.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/c36177e5215840d5809e8c7227bb09ea76c88/d5/ba925feb/RSACertificateExtensions.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Calamari.AzureCloudService.Tests/DeployAzureCloudServiceCommandFixture.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/69ca26b8335541a792dac0c4d7aa6badde00/fb/907d1f28/CommandTestBuilder`3.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/69ca26b8335541a792dac0c4d7aa6badde00/15/a9f6b2f7/CommandTestBuilder.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/9540fc2df49217e9916c75fd37d96a846c914d91f83d79cd9a9818ab38d37fe/FileSystemAclExtensions.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f52b9d49264ef126bd48babdd8cc869dc58a767b364e767a9a1590a4916fd3/MethodWrapper.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/63/26df5ffe/Resolver`1.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/9327b11124b94f5a87dce7969b65182d61a88/bb/0c536e62/0200004F.il" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f6f2b0e45dc046c0b50748829661287f1fa00/20/ca921fcc/SensitiveValue.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/4addefb1e79fbe7def610dadfd98060a787c2216743868459b9995d81a829/Reflect.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/36e9def9cb3f4a77a1f88a0799d2512d5800/c0/9f6bdfda/ExecuteScriptBehaviour.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/69ca26b8335541a792dac0c4d7aa6badde00/94/fa88397d/ExternalVariable.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/63/26df5ffe/Resolver`1.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Calamari.AzureCloudService/RePackageCloudServiceBehaviour.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/90/89a97d70/RunningDeployment.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f6fe707a235048ee9c5120de360030bbbeb88/28/6a76b9c0/HostedServiceCreateParameters.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/69ca26b8335541a792dac0c4d7aa6badde00/19/50f6249e/CommandTestBuilderContext.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/6a/726957a3/PreDeployResolver.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/e12154212232bbab3cb9211e3d1cc31ac0e5b9a8b52f78cb7b01a5b668396cf/ProcessExtensions.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/8a6d769ac12e4ff18985b17ca6b596cb61688/e1/26f1f399/PipelineCommand.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/75/46b00f3e/PipelineCommand.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/c5b8a4df152844c7a466e268e87c6bcc8b050/2e/cdf12a73/CertificateRestoreParameters.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/38/f72562de/CalamariVariables.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Calamari.AzureCloudService.Tests/HealthCheckCommandFixture.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/84b0ccc2e6c3b5c23db48b13eaf5352c0eea176/DsaSigner.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/0f/a52be7b9/CalamariFlavourProgramAsync.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/a5d4e046cb34506ffe7cccc9de38e2e7c864f850fdc0b68a5127497a979e6daa/RSACertificateExtensions.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f6fe707a235048ee9c5120de360030bbbeb88/25/e073b05c/HostedServiceOperationsExtensions.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/69ca26b8335541a792dac0c4d7aa6badde00/94/fa88397d/ExternalVariable.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f6f2b0e45dc046c0b50748829661287f1fa00/20/ca921fcc/SensitiveValue.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/36e9def9cb3f4a77a1f88a0799d2512d5800/c0/9f6bdfda/ExecuteScriptBehaviour.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/6a/726957a3/PreDeployResolver.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Calamari.AzureCloudService/AzureAccount.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/69ca26b8335541a792dac0c4d7aa6badde00/19/50f6249e/CommandTestBuilderContext.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/e12154212232bbab3cb9211e3d1cc31ac0e5b9a8b52f78cb7b01a5b668396cf/ProcessExtensions.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/c5b8a4df152844c7a466e268e87c6bcc8b050/2e/cdf12a73/CertificateRestoreParameters.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f6fe707a235048ee9c5120de360030bbbeb88/28/6a76b9c0/HostedServiceCreateParameters.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/38/f72562de/CalamariVariables.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/8a6d769ac12e4ff18985b17ca6b596cb61688/e1/26f1f399/PipelineCommand.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/b9eb3a7300b64f6d8251050b4467b24c36000/70/abc770e3/ConstructorParameterBinding.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/36e9def9cb3f4a77a1f88a0799d2512d5800/b5/68e1485f/02000005.il" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/c36177e5215840d5809e8c7227bb09ea76c88/d5/ba925feb/RSACertificateExtensions.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f6fe707a235048ee9c5120de360030bbbeb88/ab/632052cc/DeploymentOperationsExtensions.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/0f/a52be7b9/CalamariFlavourProgramAsync.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/4f/5b3664d9/IPreDeployBehaviour.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/d1/ea9354aa/ICalamariFileSystem.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f6fe707a235048ee9c5120de360030bbbeb88/ab/632052cc/DeploymentOperationsExtensions.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/36e9def9cb3f4a77a1f88a0799d2512d5800/b5/68e1485f/02000005.il" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/cdefcb7e6863444c8c12e24ba610c70f13d7a8/fd/bf0602c6/Package.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/d1/ea9354aa/ICalamariFileSystem.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9327b11124b94f5a87dce7969b65182d61a88/75/46b00f3e/PipelineCommand.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f6fe707a235048ee9c5120de360030bbbeb88/25/e073b05c/HostedServiceOperationsExtensions.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -160,6 +172,7 @@
       <workItem from="1660094829536" duration="210000" />
       <workItem from="1660095053815" duration="14642000" />
       <workItem from="1660537324064" duration="652000" />
+      <workItem from="1661732658309" duration="1106000" />
     </task>
     <servers />
   </component>
@@ -187,14 +200,14 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/Calamari.Tests/DeployAzureCloudServiceCommandFixture.cs</url>
+          <url>file://$PROJECT_DIR$/Calamari.AzureCloudService.Tests/DeployAzureCloudServiceCommandFixture.cs</url>
           <line>63</line>
           <properties documentPath="C:\Users\isaac\source\repos\Sashimi.AzureCloudService\source\Calamari.Tests\DeployAzureCloudServiceCommandFixture.cs" initialLine="63" containingFunctionPresentation="method 'Deploy_Package_To_Stage'">
             <startOffsets>
-              <option value="2385" />
+              <option value="2375" />
             </startOffsets>
             <endOffsets>
-              <option value="2502" />
+              <option value="2492" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="13" />

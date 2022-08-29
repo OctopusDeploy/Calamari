@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using Calamari.Tests.Shared;
+using Calamari.Testing;
 using FluentAssertions;
 using Microsoft.Azure;
 using Microsoft.WindowsAzure.Management.Compute;
