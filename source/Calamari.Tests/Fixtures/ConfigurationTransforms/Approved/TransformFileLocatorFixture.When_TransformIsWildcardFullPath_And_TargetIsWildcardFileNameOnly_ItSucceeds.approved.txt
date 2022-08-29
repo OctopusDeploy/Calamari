@@ -1,0 +1,18 @@
+﻿Using an absolute path wildcard transform and multiple targets
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─app.config
+├─subdir
+| ├─app.config
+| └─web.config
+└─web.config
+And the following files exist:
+c:\
+└─transforms
+  ├─app.mytransform.config
+  └─web.mytransform.config
+Then the transform c:\transforms\*.mytransform.config => *.config will:
+ - Apply the transform c:\transforms\web.mytransform.config to file web.config
+ - Apply the transform c:\transforms\app.mytransform.config to file app.config
+ - Apply the transform c:\transforms\web.mytransform.config to file subdir\web.config
+ - Apply the transform c:\transforms\app.mytransform.config to file subdir\app.config

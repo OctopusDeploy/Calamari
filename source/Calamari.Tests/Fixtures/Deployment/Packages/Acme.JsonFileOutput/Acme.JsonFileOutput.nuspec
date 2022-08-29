@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Acme.JsonFileOutput</id>
+    <version>1.0.0</version>
+    <authors>ACME Corporation</authors>
+    <owners>ACME Corporation</owners>
+    <licenseUrl>http://tempuri.org/</licenseUrl>
+    <projectUrl>http://tempuri.org/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A sample project containing PowerShell and Bash packaged scripts</description>
+    <language>en-US</language>
+  </metadata>
+   <files>
+    <file src="**/*.*" target="" exclude="*.csproj"/>
+  </files>
+</package>

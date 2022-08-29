@@ -1,0 +1,21 @@
+﻿null1: null
+null2: !!null ~
+bool1: false
+bool2: !!bool true
+int1: 1
+float1: 0.67
+str1: 'false'
+str2: 'null'
+str3: !<tag:yaml.org,2002:str> no
+str4: !!str pets.com
+obj1:
+  key1: one
+  key2: two
+seq1:
+- foo
+- bar
+seq2:
+- &flag Apple
+- Beachball
+- Cartoon
+- *flag

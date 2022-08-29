@@ -1,0 +1,129 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>1.0.0.0</Version>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>Calamari</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>Calamari</PackageId>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari</PackageProjectUrl>
+    <PackageLicense>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicense>
+    <Authors>Octopus Deploy</Authors>
+    <Copyright>Octopus Deploy Pty Ltd</Copyright>
+    <PackageTags>tool</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/OctopusDeploy/Calamari/</RepositoryUrl>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Description>Contains the command-line Calamari tool that is used by Tentacle to perform depoyment actions on machines.</Description>
+    <Product>Calamari</Product>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+    <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
+    <TargetFrameworks>net40;net452;netcoreapp3.1</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
+    <DefineConstants>$(DefineConstants);IIS_SUPPORT;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+    <PlatformTarget>anycpu</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+  </PropertyGroup>
+  <!--
+	The net452 build is the one that pulls in the AWS and Azure extensions. We treat
+	this build as the "Cloud" build.
+  -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+    <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net452" Version="1.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Octodiff" Version="1.1.2" />
+    <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
+    <PackageReference Include="Octopus.Versioning" Version="5.1.155" />
+    <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
+    <PackageReference Include="scriptcs" Version="0.17.1" />
+    <PackageReference Include="SharpCompress" Version="0.24.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.Net" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System" />
+    <Reference Include="System.Security" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1' OR '$(TargetFramework)' == 'net452' ">
+    <PackageReference Include="Autofac" Version="4.8.0" />
+    <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
+    <PackageReference Include="Autofac" Version="3.5.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Kubernetes\Scripts\AzurePowershellContext.ps1" />
+    <EmbeddedResource Include="Scripts\**" />
+    <None Update="Calamari.exe.manifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <!--
+    In netcore 2.1.3, the framework stopped calculating package definitions automatically "for perf"
+    (see https://github.com/dotnet/sdk/issues/2342)
+    So, we need to add a dependency onto `GetToolFiles` to calculate them first.
+    Unfortunately, RunResolvePackageDependencies doesn't exist for the full fat framework, so we
+    define a new empty target if it's not already defined to keep it happy.
+  -->
+  <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
+  <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
+    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
+      <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
+    </CreateItem>
+    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
+      <Output TaskParameter="Include" ItemName="ScriptCSRef" />
+    </CreateItem>
+    <PropertyGroup>
+      <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
+      <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
+    </PropertyGroup>
+    <ItemGroup>
+      <FSharpFiles Include="$(FSharpCompilerTools)" />
+      <ScriptCSFiles Include="$(ScriptCS)" />
+    </ItemGroup>
+  </Target>
+  <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
+    <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
+    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
+  </Target>
+  <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
+    <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
+    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
+  </Target>
+</Project>

@@ -1,0 +1,10 @@
+﻿Not supported: Applying a transform with an absolute path to target in a different directory
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+└─config
+  └─web.config
+And the following files exist:
+c:\
+└─transforms
+  └─web.mytransform.config
+Then the transform c:\transforms\web.mytransform.config => config\web.config will do nothing.
