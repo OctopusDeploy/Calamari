@@ -11,6 +11,7 @@ namespace Calamari.ConsolidateCalamariPackages
             "Calamari.AzureResourceGroup", 
             "Calamari.AzureWebApp",
             "Calamari.AzureServiceFabric",
+            "Calamari.AzureCloudService",
         };
     }
 }
