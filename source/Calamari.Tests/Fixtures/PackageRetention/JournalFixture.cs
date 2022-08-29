@@ -245,27 +245,31 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         public void WhenStaleLocksAreExpired_TheLocksAreRemoved()
         {
             var thePackage = CreatePackageIdentity("Package", "1.0");
+            var anotherPackage = CreatePackageIdentity("Another-Package", "1.0");
 
             var packageLocks = new PackageLocks
             {
-                new UsageDetails(new ServerTaskId("Deployment-1"), new CacheAge(1), new DateTime(2021, 1, 1))
+                new UsageDetails(new ServerTaskId("Deployment-1"), new CacheAge(1), new DateTime(2021, 1, 1)),
+                new UsageDetails(new ServerTaskId("Deployment-2"), new CacheAge(2), new DateTime(2021, 1, 2))
             };
 
             var journalEntry = new JournalEntry(thePackage, 1, packageLocks);
 
             var journalEntries = new Dictionary<PackageIdentity, JournalEntry>()
             {
-                { thePackage, journalEntry }
+                { thePackage, journalEntry },
+                { anotherPackage, new JournalEntry(anotherPackage, 1, new PackageLocks(), new PackageUsages())}
             };
 
-            var testJournal = new PackageJournal(new InMemoryJournalRepository(journalEntries),
+            var testJournalRepository = new InMemoryJournalRepository(journalEntries);
+            var testJournal = new PackageJournal(testJournalRepository,
                                                  Substitute.For<ILog>(),
                                                  Substitute.For<ICalamariFileSystem>(),
                                                  Substitute.For<IRetentionAlgorithm>(),
                                                  Substitute.For<ISemaphoreFactory>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
-            Assert.IsFalse(journalRepository.HasLock(thePackage));
+            Assert.IsFalse(testJournalRepository.HasLock(thePackage));
         }
 
         [Test]
