@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Calamari.ConsolidateCalamariPackages;
@@ -31,10 +32,11 @@ namespace Calamari.Build
         [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
         readonly Configuration Configuration =
             IsLocalBuild ? Configuration.Debug : Configuration.Release;
-
-        [Solution] 
+        
         [Required] 
-        readonly Solution? Solution;
+        readonly Solution? Solution = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) 
+            ? ProjectModelTasks.ParseSolution(SourceDirectory / "Calamari.sln") 
+            : ProjectModelTasks.ParseSolution(SourceDirectory / "Calamari.NonWindows.sln");
 
         [Parameter("Run packing step in parallel")] 
         readonly bool PackInParallel;
@@ -456,7 +458,7 @@ namespace Calamari.Build
         
         Target UpdateCalamariVersionOnOctopusServer =>
             _ =>
-                _.Requires(() => SetOctopusServerVersion)
+                _.OnlyWhenStatic(() => SetOctopusServerVersion)
                  .Requires(() => IsLocalBuild)
                  .DependsOn(CopyToLocalPackages)
                  .Executes(() =>
