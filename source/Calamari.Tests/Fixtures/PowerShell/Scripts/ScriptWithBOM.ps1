@@ -1,0 +1,1 @@
+﻿[system.Text.Encoding]::UTF8.GetBytes("-–")

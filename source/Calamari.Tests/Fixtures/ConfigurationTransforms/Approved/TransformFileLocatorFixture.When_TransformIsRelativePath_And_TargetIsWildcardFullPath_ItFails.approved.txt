@@ -1,0 +1,8 @@
+﻿Not supported: Applying a transform from a relative directory to absolute path targets
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─app.config
+├─transforms
+| └─web.mytransform.config
+└─web.config
+Then the transform transforms\web.mytransform.config => c:\temp\*.config will do nothing.

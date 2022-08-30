@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>Calamari.AzureServiceFabric.Tests</RootNamespace>
+        <AssemblyName>Calamari.AzureServiceFabric.Tests</AssemblyName>
+        <IsPackable>false</IsPackable>
+        <TargetFramework>net452</TargetFramework>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="FluentAssertions" Version="5.10.3" />
+        <PackageReference Include="nunit" Version="3.13.2" />
+        <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
+        <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
+        <PackageReference Include="NSubstitute" Version="4.2.2" />
+        <PackageReference Include="Shouldly" Version="3.0.2" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Calamari.AzureServiceFabric\Calamari.AzureServiceFabric.csproj" />
+    </ItemGroup>
+</Project>
