@@ -115,7 +115,9 @@ namespace Calamari.Deployment.PackageRetention.Model
                     foreach (var entry in journalRepository.GetAllJournalEntries())
                     {
                         var locks = entry.GetLockDetails();
-                        var staleLocks = locks.Where(u => u.DateTime.Add(timeBeforeExpiration) <= DateTime.Now);
+                        var staleLocks = locks
+                            .Where(u => u.DateTime.Add(timeBeforeExpiration) <= DateTime.Now)
+                            .ToList();
 
                         foreach (var staleLock in staleLocks)
                         {
