@@ -9,6 +9,9 @@ namespace Calamari.Testing
     public class CommandTestBuilderContext
     {
         public List<(string? filename, Stream contents)> Files = new List<(string?, Stream)>();
+        
+        public IList<IDeploymentTool> Tools { get; } = (IList<IDeploymentTool>) new List<IDeploymentTool>();
+
         internal bool withStagedPackageArgument;
 
         public VariableDictionary Variables { get; } = new VariableDictionary();
@@ -46,6 +49,12 @@ namespace Calamari.Testing
         public CommandTestBuilderContext WithDataFile(Stream fileContents, string? fileName = null, Action<int>? progress = null)
         {
             Files.Add((fileName, fileContents));
+            return this;
+        }
+        
+        public CommandTestBuilderContext WithTool(IDeploymentTool tool)
+        {
+            Tools.Add(tool);
             return this;
         }
     }
