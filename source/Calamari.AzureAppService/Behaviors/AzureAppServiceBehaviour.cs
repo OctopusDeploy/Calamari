@@ -37,15 +37,50 @@ namespace Calamari.AzureAppService.Behaviors
 
         public async Task Execute(RunningDeployment context)
         {
+            Log.Verbose("Starting Azure App Service deployment.");
+            
             var variables = context.Variables;
             var servicePrincipal = ServicePrincipalAccount.CreateFromKnownVariables(variables);
-            string? webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
-            if (webAppName == null)
-                throw new Exception("Web App Name must be specified");
+            Log.Verbose($"Using Azure Tenant '{servicePrincipal.TenantId}'");
+            Log.Verbose($"Using Azure Subscription '{servicePrincipal.SubscriptionNumber}'");
+            Log.Verbose($"Using Azure ServicePrincipal AppId/ClientId '{servicePrincipal.ClientId}'");
+            Log.Verbose($"Using Azure Cloud '{servicePrincipal.AzureEnvironment}'");
+            
             string? resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             if (resourceGroupName == null)
                 throw new Exception("resource group name must be specified");
+            Log.Verbose($"Using Azure Resource Group '{resourceGroupName}'.");
+            
+            string? webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
+            if (webAppName == null)
+                throw new Exception("Web App Name must be specified");
+            Log.Verbose($"Using App Service Name '{webAppName}'.");
+            
             string? slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
+            Log.Verbose(slotName == null
+                            ? "No Deployment Slot specified"
+                            : $"Using Deployment Slot '{slotName}'");
+            
+            var azureClient = servicePrincipal.CreateAzureClient();
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
+            
+            Log.Verbose($"Checking existence of Resource Group '{resourceGroupName}'.");
+            if (!(await azureClient.ResourceGroups.ContainAsync(resourceGroupName)))
+            {
+                Log.Error($"Resource Group '{resourceGroupName}' could not be found. Either it does not exist, or the Azure Account in use may not have permissions to access it.");
+                throw new Exception("Resource Group not found.");
+            }
+            Log.Verbose($"Resource Group '{resourceGroupName}' found.");
+            
+            Log.Verbose($"Checking existence of App Service '{targetSite.Site}'.");
+            var webApp = await azureClient.WebApps.GetByResourceGroupAsync(resourceGroupName, targetSite.Site);
+            if (webApp == null)
+            {
+                Log.Error($"Azure App Service '{targetSite.Site}' could not be found in resource group '{resourceGroupName}'. Either it does not exist, or the Azure Account in use may not have permissions to access it.");
+                throw new Exception($"App Service not found.");
+            }
+            Log.Verbose($"App Service '{targetSite.Site}' found, with Azure Resource Manager Id '{webApp.Id}'.");
+            
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
 
             switch (packageFileInfo.Extension)
@@ -63,11 +98,7 @@ namespace Calamari.AzureAppService.Behaviors
                     throw new Exception("Unsupported archive type");
             }
 
-            var azureClient = servicePrincipal.CreateAzureClient();
-            var webApp = await azureClient.WebApps.GetByResourceGroupAsync(resourceGroupName, webAppName);
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
-
-            // Lets process our archive while the slot is spun up.  we will await it later before we try to upload to it.
+            // Let's process our archive while the slot is spun up. We will await it later before we try to upload to it.
             var slotCreateTask = new Task(() => { });
             if (targetSite.HasSlot)
                 slotCreateTask = FindOrCreateSlot(webApp, targetSite);
@@ -83,11 +114,9 @@ namespace Calamari.AzureAppService.Behaviors
              * Calamari default behaviors
              * https://github.com/OctopusDeploy/Calamari/tree/master/source/Calamari.Common/Features/Behaviours
              */
-
             var uploadPath = string.Empty;
             if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
-                uploadPath = (await Archive.PackageArchive(context.StagingDirectory, context.CurrentDirectory))
-                    .FullName;
+                uploadPath = (await Archive.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
             else
                 uploadPath = (await Archive.ConvertToAzureSupportedFile(packageFileInfo)).FullName;
 
@@ -98,7 +127,10 @@ namespace Calamari.AzureAppService.Behaviors
             if (targetSite.HasSlot)
                 await slotCreateTask;
 
+            Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
             var publishingProfile = await PublishingProfile.GetPublishingProfile(targetSite, servicePrincipal);
+            Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
+            
             string? credential = await Auth.GetBasicAuthCreds(servicePrincipal, targetSite);
             string token = await Auth.GetAuthTokenAsync(servicePrincipal);
 
@@ -116,7 +148,7 @@ namespace Calamari.AzureAppService.Behaviors
 
         private async Task<IDeploymentSlot> FindOrCreateSlot(IWebApp client, TargetSite site)
         {
-            Log.Verbose($"Checking if slot {site.Slot} exists");
+            Log.Verbose($"Checking if deployment slot '{site.Slot}' exists.");
 
             var slot = await client.DeploymentSlots.GetByNameAsync(site.Slot);
             if (slot != null)
@@ -125,8 +157,8 @@ namespace Calamari.AzureAppService.Behaviors
                 return slot;
             }
 
-            Log.Verbose($"Slot {site.Slot} not found");
-            Log.Info($"Creating slot {site.Slot}");
+            Log.Verbose($"Slot '{site.Slot}' not found.");
+            Log.Info($"Creating slot '{site.Slot}'.");
             return await client.DeploymentSlots
                 .Define(site.Slot)
                 .WithConfigurationFromParent()
@@ -142,14 +174,15 @@ namespace Calamari.AzureAppService.Behaviors
             if (!new FileInfo(uploadZipPath).Exists)
                 throw new FileNotFoundException(uploadZipPath);
 
-            Log.Verbose($@"Publishing {uploadZipPath} to {publishingProfile.PublishUrl}{Archive.UploadUrlPath}");
+            var zipUploadUrl = $"{publishingProfile.PublishUrl}{Archive.UploadUrlPath}";
+            Log.Verbose($@"Publishing {uploadZipPath} to {zipUploadUrl}");
 
             // The HttpClient default timeout is 100 seconds: https://docs.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.timeout?view=net-5.0#remarks
             // This timeouts with even relatively small packages: https://octopus.zendesk.com/agent/tickets/69928
             // We'll set this to an hour for now, but we should probably implement some more advanced retry logic, similar to https://github.com/OctopusDeploy/Sashimi.AzureWebApp/blob/bbea36152b2fb531c2893efedf0330a06ae0cef0/source/Calamari/AzureWebAppBehaviour.cs#L70
             client.Timeout = TimeSpan.FromHours(1);
 
-            var response = await client.PostAsync($@"{publishingProfile.PublishUrl}{Archive.UploadUrlPath}",
+            var response = await client.PostAsync($@"{zipUploadUrl}",
                 new StreamContent(new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
@@ -157,7 +190,7 @@ namespace Calamari.AzureAppService.Behaviors
             );
 
             if (!response.IsSuccessStatusCode) 
-                throw new Exception(response.ReasonPhrase);
+                throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status '{response.StatusCode} {response.ReasonPhrase}'.");
 
             Log.Verbose("Finished deploying");
         }
