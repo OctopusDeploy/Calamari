@@ -12,6 +12,7 @@ namespace Calamari.AzureResourceGroup
 {
     public class Program : CalamariFlavourProgramAsync
     {
+        // Hello world
         public Program(ILog log) : base(log)
         {
         }
