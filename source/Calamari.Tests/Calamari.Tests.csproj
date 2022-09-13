@@ -13,10 +13,10 @@
         <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Calamari.Testing" Version="24.0.4" />
+        <PackageReference Include="Calamari.Testing" Version="24.0.11-pullrequest0912-0001" />
         <PackageReference Include="Calamari.Tests.Shared" Version="14.2.2" />
         <PackageReference Include="FluentAssertions" Version="6.7.0" />
-        <PackageReference Include="nunit" Version="3.13.2" />
+        <PackageReference Include="nunit" Version="3.13.3" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
@@ -25,5 +25,8 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari\Calamari.csproj" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+      <PackageReference Include="Octopus.Server.Extensibility" Version="14.3.2" />
     </ItemGroup>
 </Project>

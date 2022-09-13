@@ -14,6 +14,15 @@ namespace Calamari.AzureScripting.Tests
         string? clientSecret;
         string? tenantId;
         string? subscriptionId;
+        
+        static IDeploymentTool AzureCLI = new InPathDeploymentTool("Octopus.Dependencies.AzureCLI", "AzureCLI\\wbin");
+        static IDeploymentTool AzureCmdlets = new BoostrapperModuleDeploymentTool("Octopus.Dependencies.AzureCmdlets",
+                                                                                         new[]
+                                                                                         {
+                                                                                             "Powershell\\Azure.Storage\\4.6.1",
+                                                                                             "Powershell\\Azure\\5.3.0",
+                                                                                             "Powershell",
+                                                                                         });
 
         [OneTimeSetUp]
         public void Setup()
@@ -35,16 +44,15 @@ az --version
 Get-AzureEnvironment
 az group list";
 
-            CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
-                                    .WithArrange(context =>
-                                                 {
-                                                     AddDefaults(context);
-                                                     // TODO: When migrating to Calamari repo switch back to variables.
-                                                     context.Variables.Add("Octopus.Action.Script.ScriptSource", "Inline");
-                                                     context.Variables.Add(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
-                                                     context.Variables.Add(ScriptVariables.ScriptBody, psScript);
-                                                 })
-                                    .Execute();
+            var calamariCommand = CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
+                              .WithArrange(context =>
+                                           {
+                                               AddDefaults(context);
+                                               // TODO: When migrating to Calamari repo switch back to variables.
+                                               context.Variables.Add("Octopus.Action.Script.ScriptSource", "Inline");
+                                               context.Variables.Add(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+                                               context.Variables.Add(ScriptVariables.ScriptBody, psScript);
+                                           }).Execute();
         }
 
         [Test]
@@ -99,6 +107,8 @@ az group list";
             context.Variables.Add("Octopus.Action.Azure.TenantId", tenantId);
             context.Variables.Add("Octopus.Action.Azure.ClientId", clientId);
             context.Variables.Add("Octopus.Action.Azure.Password", clientSecret);
+            context.WithTool(AzureCLI);
+            context.WithTool(AzureCmdlets);
         }
     }
 }
