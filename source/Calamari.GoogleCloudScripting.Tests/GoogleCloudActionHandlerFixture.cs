@@ -192,7 +192,7 @@ namespace Calamari.GoogleCloudScripting.Tests
                 .WithArrange(context =>
                 {
                     AddDefaults(context);
-                    context.Variables.Add("Octopus.Action.Script.ScriptSource", "Inline"); //To move these into variables in Calamari
+                    context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
                     context.Variables.Add(ScriptVariables.Syntax, OperatingSystem.IsWindows() ? ScriptSyntax.PowerShell.ToString() : ScriptSyntax.Bash.ToString());
                     context.Variables.Add(ScriptVariables.ScriptBody, psScript);
                 })
@@ -208,7 +208,7 @@ namespace Calamari.GoogleCloudScripting.Tests
                 .WithArrange(context =>
                 {
                     AddDefaults(context, "{ \"name\": \"hello\" }");
-                    context.Variables.Add("Octopus.Action.Script.ScriptSource", "Inline"); //To move these into variables in Calamari
+                    context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
                     context.Variables.Add(ScriptVariables.Syntax, OperatingSystem.IsWindows() ? ScriptSyntax.PowerShell.ToString() : ScriptSyntax.Bash.ToString());
                     context.Variables.Add(ScriptVariables.ScriptBody, psScript);
                 })
