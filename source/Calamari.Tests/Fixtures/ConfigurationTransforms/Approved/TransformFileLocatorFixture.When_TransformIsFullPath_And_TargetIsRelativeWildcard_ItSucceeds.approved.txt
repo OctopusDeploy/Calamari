@@ -1,0 +1,13 @@
+﻿Applying a transform with an absolute path against multiple files in a different directory
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+└─config
+  ├─app.config
+  └─web.config
+And the following files exist:
+c:\
+└─transforms
+  └─connstrings.mytransform.config
+Then the transform c:\transforms\connstrings.mytransform.config => config\*.config will:
+ - Apply the transform c:\transforms\connstrings.mytransform.config to file config\web.config
+ - Apply the transform c:\transforms\connstrings.mytransform.config to file config\app.config

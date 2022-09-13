@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>A sample project containing PowerShell and Bash packaged scripts</Description>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <VersionPrefix>1.0.0.0</VersionPrefix>
+    <Authors>ACME Corporation</Authors>
+    <TargetFramework>netstandard1.0</TargetFramework>
+    <AssemblyName>Acme.JsonFileOutput</AssemblyName>
+    <PackageId>Acme.JsonFileOutput</PackageId>
+    <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <NuspecFile>Acme.JsonFileOutput.nuspec</NuspecFile>
+  </PropertyGroup>
+
+</Project>

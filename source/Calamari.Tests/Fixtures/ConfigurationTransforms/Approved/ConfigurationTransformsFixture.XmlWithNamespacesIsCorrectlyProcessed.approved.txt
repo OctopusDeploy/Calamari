@@ -1,0 +1,10 @@
+<nlog autoReload="true" xmlns="http://www.nlog-project.org/schemas/NLog.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <targets>
+    <target name="csv" xsi:type="File" fileName="log.txt" archiveFileName="log.txt">
+      <layout xsi:type="CSVLayout"></layout>
+    </target>
+  </targets>
+  <rules>
+    <logger name="*" minlevel="Info" writeTo="csv" />
+  </rules>
+</nlog>

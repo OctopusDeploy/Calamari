@@ -1,0 +1,11 @@
+﻿Applying transforms from a different directory to multiple targets
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─app.config
+├─transforms
+| ├─app.mytransform.config
+| └─web.mytransform.config
+└─web.config
+Then the transform transforms\*.mytransform.config => *.config will:
+ - Apply the transform transforms\web.mytransform.config to file web.config
+ - Apply the transform transforms\app.mytransform.config to file app.config

@@ -1,0 +1,23 @@
+﻿# block at start
+platform: x64
+# block at top level
+environment: # inline at top level
+  matrix: # inline at nested level
+    - DC: dmd
+      # DVersion: nightly
+      arch: x64
+    - DC: dmd
+      # DVersion: nightly
+      arch: x86
+      # - DC: dmd
+      #   DVersion: beta
+      #   arch: x64  
+    - DC: dmd # inline at value
+      DVersion: stable # inline at replaced value
+      arch: x86
+skip_tags: false
+branches:
+  only:
+  - main
+  # - alt
+  - aux

@@ -1,0 +1,7 @@
+﻿Not supported: Applying multiple transforms against a target with an absolute path
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─connstrings.mytransform.config
+├─security.mytransform.config
+└─web.config
+Then the transform *.mytransform.config => c:\temp\web.config will do nothing.
