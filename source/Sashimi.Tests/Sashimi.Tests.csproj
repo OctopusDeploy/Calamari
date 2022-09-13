@@ -21,6 +21,5 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sashimi\Sashimi.csproj" />
-    <ProjectReference Include="..\Calamari\Calamari.csproj" />
   </ItemGroup>
 </Project>
