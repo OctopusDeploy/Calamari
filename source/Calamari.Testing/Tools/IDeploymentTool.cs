@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Octopus.CoreUtilities;
 
-namespace Calamari.Testing
+namespace Calamari.Testing.Tools
 {
     //TODO: This is pulled in from Sashimi.Server.Contracts as an attempt to run Calamari Commands with Tools. Ideally this wouldn't be duplicated.
     public interface IDeploymentTool

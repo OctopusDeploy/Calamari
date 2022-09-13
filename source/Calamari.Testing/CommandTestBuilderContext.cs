@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Testing.Tools;
 using Octostache;
 
 namespace Calamari.Testing
