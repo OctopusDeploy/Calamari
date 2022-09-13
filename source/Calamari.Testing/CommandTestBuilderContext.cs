@@ -11,7 +11,7 @@ namespace Calamari.Testing
     {
         public List<(string? filename, Stream contents)> Files = new List<(string?, Stream)>();
         
-        public IList<IDeploymentTool> Tools { get; } = (IList<IDeploymentTool>) new List<IDeploymentTool>();
+        public List<IDeploymentTool> Tools { get; } = new();
 
         internal bool withStagedPackageArgument;
 
