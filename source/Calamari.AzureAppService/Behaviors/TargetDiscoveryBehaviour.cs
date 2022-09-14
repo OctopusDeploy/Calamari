@@ -103,11 +103,18 @@ namespace Calamari.AzureAppService.Behaviors
         {
             var resourceName = resource.Name;
             string? slotName = null;
+            // As of version 2022-03-01 of the Resource Details endpoint, the slotName property returned from
+            // Azure is always null, meaning we have to calculate it manually. The slot also does not contain
+            // a property for the WebAppName. Fortunately the name of a slot resource is {webAppName}/{slotName}
+            // so the two required elements can be extracted.
             if (resource.Type.Equals(AzureRestClient.WebAppSlotsType, StringComparison.InvariantCultureIgnoreCase))
             {
                 var indexOfSlash = resourceName.LastIndexOf("/", StringComparison.InvariantCulture);
-                slotName = indexOfSlash < 0 ? null : resourceName[(indexOfSlash + 1)..];
-                resourceName = indexOfSlash < 0 ? resourceName : resourceName[..indexOfSlash];
+                if (indexOfSlash >= 0)
+                {
+                    slotName = resourceName[(indexOfSlash + 1)..];
+                    resourceName = resourceName[..indexOfSlash];
+                }
             }
 
             Log.WriteServiceMessage(
