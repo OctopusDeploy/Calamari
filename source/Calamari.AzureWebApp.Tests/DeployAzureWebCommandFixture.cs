@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Deployment;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -352,6 +354,29 @@ namespace Calamari.AzureWebApp.Tests
         [RequiresPowerShell5OrAboveAttribute]
         public async Task Deploy_WebApp_Ensure_Tools_Are_Configured()
         {
+            foreach (var cmd in new[] { "az cache purge", "az logout" })
+            foreach (var executable in new[] { "powershell.exe", "pwsh.exe" })
+            {
+                var stdOut = new StringBuilder();
+                var stdError = new StringBuilder();
+                try
+                {
+                    var result = SilentProcessRunner.ExecuteCommand(
+                                                                    executable,
+                                                                    $"-command \"{cmd}\"",
+                                                                    Environment.CurrentDirectory,
+                                                                    s => stdOut.AppendLine(s),
+                                                                    s => stdError.AppendLine(s));
+
+                    Console.WriteLine(result.ExitCode);
+                    Console.WriteLine(result.ErrorOutput);
+                }
+                catch
+                {
+                    // ignored
+                }
+            }
+            
             var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
             var webApp = await CreateWebApp(webAppName);
 
