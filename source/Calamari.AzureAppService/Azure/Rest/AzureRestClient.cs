@@ -51,7 +51,7 @@ namespace Calamari.AzureAppService.Azure.Rest
             using var client = clientFactory();
             var response = await client.PostAsync(requestUri, requestBody, cancellationToken);
 
-            response.EnsureSuccessStatusCode();
+            EnsureSuccessResponse(response);
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
             azureAdToken = JsonConvert.DeserializeObject<AzureADToken>(responseContent);
@@ -81,29 +81,28 @@ namespace Calamari.AzureAppService.Azure.Rest
 
             var response = await client.GetAsync(requestUri, cancellationToken);
 
-            response.EnsureSuccessStatusCode();
+            EnsureSuccessResponse(response);
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
             return JsonConvert.DeserializeObject<AzureResourceCollection>(responseContent).Resources;
         }
 
-        public async Task<AzureResource> GetResourceDetails(string id, CancellationToken cancellationToken)
+        public async Task<AzureDetailedResource> GetResourceDetails(AzureResource resource, CancellationToken cancellationToken)
         {
             var parameters = new Dictionary<string, string>
             {
                 { EndpointVersionParameterName, GetResourceDetailsEndpointVersion }
             };
 
-            var requestUri = QueryHelpers.AddQueryString(baseResourceManagementEndpoint + id, parameters);
+            var requestUri = QueryHelpers.AddQueryString(baseResourceManagementEndpoint + resource.Id, parameters);
             using var client = GetAuthorisedHttpClient();
 
             var response = await client.GetAsync(requestUri, cancellationToken);
 
-            response.EnsureSuccessStatusCode();
+            EnsureSuccessResponse(response);
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            var resource = JsonConvert.DeserializeObject<AzureResource>(responseContent);
-            return resource;
+            return JsonConvert.DeserializeObject<AzureDetailedResource>(responseContent);
         }
 
         private HttpClient GetAuthorisedHttpClient()
@@ -115,6 +114,14 @@ namespace Calamari.AzureAppService.Azure.Rest
             client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue(azureAdToken.TokenType, azureAdToken.AccessToken);
             return client;
+        }
+
+        private static void EnsureSuccessResponse(HttpResponseMessage response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new AzureRestClientException(response);
+            }
         }
 
         /// <remarks>

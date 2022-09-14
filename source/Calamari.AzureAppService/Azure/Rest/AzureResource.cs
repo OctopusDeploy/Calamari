@@ -23,7 +23,10 @@ namespace Calamari.AzureAppService.Azure.Rest
 
         [JsonProperty("tags")]
         public Dictionary<string,string> Tags { get; set; }
+    }
 
+    public class AzureDetailedResource : AzureResource
+    {
         [JsonProperty("properties")]
         public AzureResourceProperties Properties { get; set; }
     }

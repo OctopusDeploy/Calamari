@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
@@ -13,6 +14,11 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
+using Microsoft.Azure.Management.AppService.Fluent;
+using Microsoft.Azure.Management.AppService.Fluent.Models;
+using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Polly;
 using JsonException = System.Text.Json.JsonException;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -32,7 +38,6 @@ namespace Calamari.AzureAppService.Behaviors
 
         public async Task Execute(RunningDeployment runningDeployment)
         {
-            await Task.CompletedTask;
             var targetDiscoveryContext = GetTargetDiscoveryContext(runningDeployment.Variables);
             if (targetDiscoveryContext?.Authentication == null || targetDiscoveryContext.Scope == null)
             {
@@ -50,8 +55,7 @@ namespace Calamari.AzureAppService.Behaviors
             try
             {
                 var discoveredTargetCount = 0;
-                var resources = (await restClient.GetResources(CancellationToken.None, AzureRestClient.WebAppType,
-                    AzureRestClient.WebAppSlotsType)).ToList();
+                var resources = (await GetResources(restClient, CancellationToken.None)).ToList();
                 Log.Verbose($"Found {resources.Count} candidate web app resources.");
                 foreach (var resource in resources)
                 {
@@ -62,7 +66,13 @@ namespace Calamari.AzureAppService.Behaviors
                     var matchResult = targetDiscoveryContext.Scope.Match(tags);
                     if (matchResult.IsSuccess)
                     {
-                        var detailedResource = await restClient.GetResourceDetails(resource.Id, CancellationToken.None);
+                        // Not all property values are given for each resource in the initial query. A second call
+                        // is required for each resource to get addition required information such as the ResourceGroup.
+                        var detailedResource = await GetDetailedResource(restClient, resource, CancellationToken.None);
+
+                        // When the resource is removed between getting the list of resources and getting the details
+                        if (detailedResource == null)
+                            continue;
 
                         discoveredTargetCount++;
                         Log.Info($"Discovered matching web app resource: {detailedResource.Name}");
@@ -96,8 +106,66 @@ namespace Calamari.AzureAppService.Behaviors
             }
         }
 
+        private async Task<IEnumerable<AzureResource>> GetResources(AzureRestClient restClient, CancellationToken cancellationToken)
+        {
+            var retryPolicy = CreateAzureQueryRetryPolicy(5, "listing web apps");
+
+            return await retryPolicy.ExecuteAsync(async () =>
+                await restClient.GetResources(cancellationToken,
+                    AzureRestClient.WebAppType,
+                    AzureRestClient.WebAppSlotsType));
+        }
+
+        /// <returns>The AzureDetailedResource or null if the resource can no longer be found.</returns>
+        private async Task<AzureDetailedResource?> GetDetailedResource(AzureRestClient restClient, AzureResource resource, CancellationToken cancellationToken)
+        {
+            var retryPolicy = CreateAzureQueryRetryPolicy(5, $"getting details for resource {resource.Name}");
+
+            // We could get a 404 listing slots if the web app gets deleted
+            // after being found but before we can check it's slots, in this
+            // case we'll log a message and continue
+            var webAppNotFoundPolicy = Policy<AzureDetailedResource?>
+                                       .Handle<AzureRestClientException>(dex => dex.Response.StatusCode == HttpStatusCode.NotFound)
+                                       .FallbackAsync(fallbackValue: null,
+                                           async (exception, context) =>
+                                           {
+                                               await Task.CompletedTask;
+                                               Log.Verbose($"Could not get details for resource {resource.Name} as it could no longer be found");
+                                           });
+
+            return await retryPolicy.WrapAsync(webAppNotFoundPolicy)
+                                    .ExecuteAsync(async () => await restClient.GetResourceDetails(resource, cancellationToken));
+        }
+
+        private IAsyncPolicy CreateAzureQueryRetryPolicy(int maxRetries, string description)
+        {
+            // Don't bother retrying for not found errors as we will only ever get the same response
+            return Policy
+                .Handle<AzureRestClientException>()
+                .WaitAndRetryAsync(
+                    maxRetries,
+                    (retryAttempt, ex, context) =>
+                    {
+                        if (ex is AzureRestClientException arcex)
+                        {
+                            // Need to cast to an int here as net461 doesn't have TooManyRequests in the enum
+                            if ((int)arcex.Response.StatusCode == 429 && arcex.Response.Headers.TryGetValues("Retry-After", out var retryAfter))
+                            {
+                                return TimeSpan.FromSeconds(int.Parse(retryAfter.First()));
+                            }
+                        }
+                        // Not a specific throttling exception, use exponential backoff with a maximum wait time of 10 seconds
+                        return TimeSpan.FromSeconds(Math.Min(10, Math.Pow(2, retryAttempt)));
+                    },
+                    async (ex, delay, retryAttempt, context) =>
+                    {
+                        await Task.CompletedTask;
+                        Log.Verbose($"An error has occurred {description}: {ex.Message}, retrying {retryAttempt} of {maxRetries} after {delay}");
+                    });
+        }
+
         private void WriteTargetCreationServiceMessage(
-            AzureResource resource,
+            AzureDetailedResource resource,
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
