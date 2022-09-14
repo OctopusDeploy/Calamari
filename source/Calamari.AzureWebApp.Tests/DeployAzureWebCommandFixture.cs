@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
@@ -6,8 +7,9 @@ using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Tests.Shared;
-using Calamari.Tests.Shared.Helpers;
+using Calamari.Testing;
+using Calamari.Testing.Helpers;
+using Calamari.Testing.Tools;
 using FluentAssertions;
 using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.Fluent;
@@ -33,6 +35,14 @@ namespace Calamari.AzureWebApp.Tests
         string tenantId;
         string subscriptionId;
         TemporaryDirectory azureConfigPath;
+        
+        public static IDeploymentTool AzureCLI = new InPathDeploymentTool("Octopus.Dependencies.AzureCLI", "AzureCLI\\wbin");
+        public static IDeploymentTool AzureCmdlets = new BoostrapperModuleDeploymentTool("Octopus.Dependencies.AzureCmdlets", new string[3]
+        {
+            "Powershell\\Azure.Storage\\4.6.1",
+            "Powershell\\Azure\\5.3.0",
+            "Powershell"
+        }, Array.Empty<string>());
 
         readonly HttpClient client = new HttpClient();
 
@@ -359,10 +369,11 @@ namespace Calamari.AzureWebApp.Tests
             const string actualText = "Hello World";
 
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
-            var psScript = @"
-$ErrorActionPreference = 'Continue'
-az --version
-az group list";
+            
+            var psScript = @"$ErrorActionPreference = 'Continue'
+                             az --version
+                             Get-AzureEnvironment
+                             az group list";
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "PreDeploy.ps1"), psScript);
             
             // This should be references from Sashimi.Server.Contracts, since Calamari.AzureWebApp is a net461 project this cannot be included.
@@ -373,6 +384,8 @@ az group list";
                                                  {
                                                      context.Variables.Add(AccountType, "AzureServicePrincipal");
                                                      AddDefaults(context, webAppName);
+                                                     context.WithTool(AzureCmdlets);
+                                                     context.WithTool(AzureCLI);
                                                      context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
                                                      context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.Deploy, ScriptSyntax.PowerShell), psScript);
                                                      context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PreDeploy, ScriptSyntax.CSharp), "Console.WriteLine(\"Hello from C#\");");
@@ -408,14 +421,10 @@ az group list";
 
         void AddDefaults(CommandTestBuilderContext context, string webAppName)
         {
-            context.Variables.Add(AzureAccountVariables.SubscriptionId,
-                subscriptionId);
-            context.Variables.Add(AzureAccountVariables.TenantId,
-                tenantId);
-            context.Variables.Add(AzureAccountVariables.ClientId,
-                clientId);
-            context.Variables.Add(AzureAccountVariables.Password,
-                clientSecret);
+            context.Variables.Add(AzureAccountVariables.SubscriptionId, subscriptionId);
+            context.Variables.Add(AzureAccountVariables.TenantId, tenantId);
+            context.Variables.Add(AzureAccountVariables.ClientId, clientId);
+            context.Variables.Add(AzureAccountVariables.Password, clientSecret);
             context.Variables.Add(SpecialVariables.Action.Azure.WebAppName, webAppName);
             context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroup.Name);
         }

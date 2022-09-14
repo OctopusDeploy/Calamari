@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.AzureCloudService
