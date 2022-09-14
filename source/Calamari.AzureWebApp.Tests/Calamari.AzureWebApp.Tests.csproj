@@ -7,6 +7,8 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Calamari.AzureScripting" Version="14.2.0" />
+    <PackageReference Include="Sashimi.AzureScripting" Version="14.2.0" />
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.37.1" />
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.37.1" />
     <PackageReference Include="NUnit" Version="3.13.3" />
