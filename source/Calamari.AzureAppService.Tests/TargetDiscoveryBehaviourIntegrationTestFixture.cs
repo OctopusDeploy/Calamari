@@ -122,7 +122,7 @@ namespace Calamari.AzureAppService.Tests
             await sut.Execute(context);
 
             // Assert
-            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null);
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
             log.StandardOut.Should().Contain(serviceMessageToCreateWebAppTarget.ToString());
         }
 
@@ -149,7 +149,7 @@ namespace Calamari.AzureAppService.Tests
             await sut.Execute(context);
 
             // Assert
-            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null);
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
             log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "The web app target should not be created as the role tag did not match");
         }
 
@@ -175,13 +175,13 @@ namespace Calamari.AzureAppService.Tests
             // Act
             await sut.Execute(context);
 
-            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null);
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
             log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "A target should not be created for the web app itself, only for slots within the web app");
 
             // Assert
             foreach (var slotName in slotNames)
             {
-                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppDeploymentSlotTargetCreationServiceMessage(resourceGroupName, appName, slotName, AccountId, Role, null);                
+                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
                 log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
             }
         }
@@ -209,13 +209,13 @@ namespace Calamari.AzureAppService.Tests
             // Act
             await sut.Execute(context);
 
-            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null);
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
             log.StandardOut.Should().Contain(serviceMessageToCreateWebAppTarget.ToString(), "A target should be created for the web app itself as well as for the slots");
 
             // Assert
             foreach (var slotName in slotNames)
             {
-                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppDeploymentSlotTargetCreationServiceMessage(resourceGroupName, appName, slotName, AccountId, Role, null);
+                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
                 log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
             }
         }
@@ -247,13 +247,13 @@ namespace Calamari.AzureAppService.Tests
             // Act
             await sut.Execute(context);
 
-            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null);
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
             log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "A target should not be created for the web app as the tags directly on the web app do not match, even though when combined with the slot tags they do");
 
             // Assert
             foreach (var slotName in slotNames)
             {
-                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppDeploymentSlotTargetCreationServiceMessage(resourceGroupName, appName, slotName, AccountId, Role, null);
+                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
                 log.StandardOut.Should().NotContain(serviceMessageToCreateTargetForSlot.ToString(), "A target should not be created for the web app slot as the tags directly on the slot do not match, even though when combined with the web app tags they do");
             }
         }
