@@ -4,11 +4,12 @@ using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Scripting;
-using Calamari.Tests.Shared;
-using Calamari.Tests.Shared.Helpers;
+using Calamari.Testing;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
@@ -165,11 +166,11 @@ namespace Calamari.GoogleCloudScripting.Tests
         }
 
         [Test]
-        public void ExecuteAnInlineScript()
+        public async Task ExecuteAnInlineScript()
         {
             var psScript = $"{cliPath} info";
 
-            CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
+            await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                 .WithArrange(context =>
                 {
                     AddDefaults(context);
@@ -181,11 +182,11 @@ namespace Calamari.GoogleCloudScripting.Tests
         }
 
         [Test]
-        public void TryToExecuteAnInlineScriptWithInvalidCredentials()
+        public async Task TryToExecuteAnInlineScriptWithInvalidCredentials()
         {
             var psScript = $"{cliPath} info";
 
-            CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
+            await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                 .WithArrange(context =>
                 {
                     AddDefaults(context, "{ \"name\": \"hello\" }");
