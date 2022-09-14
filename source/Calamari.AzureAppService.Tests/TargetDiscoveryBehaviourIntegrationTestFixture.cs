@@ -14,9 +14,6 @@ using Microsoft.Rest;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 
@@ -181,7 +178,7 @@ namespace Calamari.AzureAppService.Tests
             // Assert
             foreach (var slotName in slotNames)
             {
-                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
+                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, $"{appName}/{slotName}", AccountId, Role, null, slotName);
                 log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
             }
         }
@@ -215,7 +212,7 @@ namespace Calamari.AzureAppService.Tests
             // Assert
             foreach (var slotName in slotNames)
             {
-                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
+                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, $"{appName}/{slotName}", AccountId, Role, null, slotName);
                 log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
             }
         }
@@ -253,7 +250,7 @@ namespace Calamari.AzureAppService.Tests
             // Assert
             foreach (var slotName in slotNames)
             {
-                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
+                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, $"{appName}/{slotName}", AccountId, Role, null, slotName);
                 log.StandardOut.Should().NotContain(serviceMessageToCreateTargetForSlot.ToString(), "A target should not be created for the web app slot as the tags directly on the slot do not match, even though when combined with the web app tags they do");
             }
         }

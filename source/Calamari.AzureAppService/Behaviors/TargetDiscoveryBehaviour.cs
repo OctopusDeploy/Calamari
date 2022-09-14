@@ -147,6 +147,8 @@ namespace Calamari.AzureAppService.Behaviors
         {
             var parameters = new Dictionary<string, string?> {
                     { "azureWebApp", webAppName },
+                    { "name", $"azure-web-app/{resourceGroupName}/{webAppName}" },
+                    { "azureWebAppSlot", slotName },
                     { "azureResourceGroupName", resourceGroupName },
                     { "octopusAccountIdOrName", accountId },
                     { "octopusRoles", role },
@@ -154,16 +156,6 @@ namespace Calamari.AzureAppService.Behaviors
                     { "octopusDefaultWorkerPoolIdOrName", workerPoolId },
                     { "isDynamic", "True" }
                 };
-
-            if (slotName == null)
-            {
-                parameters.Add("name", $"azure-web-app/{resourceGroupName}/{webAppName}");
-            }
-            else
-            {
-                parameters.Add("name", $"azure-web-app/{resourceGroupName}/{webAppName}/{slotName}");
-                parameters.Add("azureWebAppSlot", slotName);
-            }
 
             return new ServiceMessage(
                 "create-azurewebapptarget",
