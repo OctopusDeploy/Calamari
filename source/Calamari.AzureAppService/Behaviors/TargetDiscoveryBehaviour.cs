@@ -101,14 +101,23 @@ namespace Calamari.AzureAppService.Behaviors
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
+            var resourceName = resource.Name;
+            string? slotName = null;
+            if (resource.Type.Equals(AzureRestClient.WebAppSlotsType, StringComparison.InvariantCultureIgnoreCase))
+            {
+                var indexOfSlash = resourceName.LastIndexOf("/", StringComparison.InvariantCulture);
+                slotName = indexOfSlash < 0 ? null : resourceName[(indexOfSlash + 1)..];
+                resourceName = indexOfSlash < 0 ? resourceName : resourceName[..indexOfSlash];
+            }
+
             Log.WriteServiceMessage(
                 TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(
                     resource.Properties.ResourceGroup,
-                    resource.Name,
+                    resourceName,
                     context.Authentication!.AccountId,
                     matchResult.Role,
                     context.Scope!.WorkerPoolId,
-                    resource.SlotName));
+                    slotName));
         }
 
         private TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>? GetTargetDiscoveryContext(
@@ -147,7 +156,7 @@ namespace Calamari.AzureAppService.Behaviors
         {
             var parameters = new Dictionary<string, string?> {
                     { "azureWebApp", webAppName },
-                    { "name", $"azure-web-app/{resourceGroupName}/{webAppName}" },
+                    { "name", $"azure-web-app/{resourceGroupName}/{webAppName}{(slotName == null ? "" : $"/{slotName}")}" },
                     { "azureWebAppSlot", slotName },
                     { "azureResourceGroupName", resourceGroupName },
                     { "octopusAccountIdOrName", accountId },

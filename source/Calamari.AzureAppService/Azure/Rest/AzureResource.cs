@@ -26,20 +26,6 @@ namespace Calamari.AzureAppService.Azure.Rest
 
         [JsonProperty("properties")]
         public AzureResourceProperties Properties { get; set; }
-
-        [JsonIgnore]
-        public string SlotName
-        {
-            get
-            {
-                if (!Type.EndsWith("/slots"))
-                {
-                    return null;
-                }
-                var indexOfSlash = Name.LastIndexOf("/", StringComparison.InvariantCulture);
-                return indexOfSlash < 0 ? null : Name[(indexOfSlash + 1)..];
-            }
-        }
     }
 
     public class AzureResourceProperties
