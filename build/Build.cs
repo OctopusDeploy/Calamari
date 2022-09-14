@@ -430,12 +430,15 @@ namespace Calamari.Build
 
                                 foreach (var flavour in MigratedCalamariFlavours.Flavours)
                                 {
-                                    packageReferences.Add(new BuildPackageReference
+                                    if (Solution?.GetProject(flavour) != null)
                                     {
-                                        Name = flavour,
-                                        Version = NugetVersion.Value,
-                                        PackagePath = ArtifactsDirectory / $"{flavour}.zip"
-                                    });
+                                        packageReferences.Add(new BuildPackageReference
+                                        {
+                                            Name = flavour,
+                                            Version = NugetVersion.Value,
+                                            PackagePath = ArtifactsDirectory / $"{flavour}.zip"
+                                        });
+                                    }
                                 }
 
                                 Directory.CreateDirectory(ConsolidatedPackageDirectory);
