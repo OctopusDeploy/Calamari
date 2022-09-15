@@ -87,7 +87,7 @@ namespace Calamari.Build
         [GitVersion]
         readonly GitVersion? GitVersionInfo;
         
-        static List<string> CalamariProjectsToSkipConsolidation = new List<string> { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
+        static List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
 
         public Build()
         {
@@ -172,6 +172,7 @@ namespace Calamari.Build
 
         Target CalamariConsolidationTests =>
             _ => _.DependsOn(Compile)
+                  .OnlyWhenStatic(() => !IsLocalBuild)
                   .Executes(() =>
                             {
                                 DotNetTest(_ => _
@@ -430,12 +431,15 @@ namespace Calamari.Build
 
                                 foreach (var flavour in MigratedCalamariFlavours.Flavours)
                                 {
-                                    packageReferences.Add(new BuildPackageReference
+                                    if (Solution?.GetProject(flavour) != null)
                                     {
-                                        Name = flavour,
-                                        Version = NugetVersion.Value,
-                                        PackagePath = ArtifactsDirectory / $"{flavour}.zip"
-                                    });
+                                        packageReferences.Add(new BuildPackageReference
+                                        {
+                                            Name = flavour,
+                                            Version = NugetVersion.Value,
+                                            PackagePath = ArtifactsDirectory / $"{flavour}.zip"
+                                        });
+                                    }
                                 }
 
                                 Directory.CreateDirectory(ConsolidatedPackageDirectory);

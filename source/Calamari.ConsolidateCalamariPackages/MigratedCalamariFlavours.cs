@@ -12,6 +12,7 @@ namespace Calamari.ConsolidateCalamariPackages
             "Calamari.AzureWebApp",
             "Calamari.AzureServiceFabric",
             "Calamari.AzureCloudService",
+            "Calamari.GoogleCloudScripting",
         };
     }
 }
