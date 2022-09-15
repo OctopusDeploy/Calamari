@@ -117,8 +117,8 @@ namespace Calamari.AzureAppService.Behaviors
                 var indexOfSlash = resourceName.LastIndexOf("/", StringComparison.InvariantCulture);
                 if (indexOfSlash >= 0)
                 {
-                    slotName = resourceName[(indexOfSlash + 1)..];
-                    resourceName = resourceName[..indexOfSlash];
+                    slotName = resourceName.Substring(indexOfSlash + 1);
+                    resourceName = resourceName.Substring(0, indexOfSlash);
                 }
             }
 
