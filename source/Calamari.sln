@@ -68,6 +68,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureCloudService"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureCloudService.Tests", "Calamari.AzureCloudService.Tests\Calamari.AzureCloudService.Tests.csproj", "{7439161C-526F-426E-A420-25033D76C696}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.GoogleCloudScripting", "Calamari.GoogleCloudScripting\Calamari.GoogleCloudScripting.csproj", "{76C6A72B-0953-4536-9E1A-3E1C4948929C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.GoogleCloudScripting.Tests", "Calamari.GoogleCloudScripting.Tests\Calamari.GoogleCloudScripting.Tests.csproj", "{12E0E726-F657-4D58-A4A6-406D6B3868B7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -164,6 +168,14 @@ Global
 		{7439161C-526F-426E-A420-25033D76C696}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7439161C-526F-426E-A420-25033D76C696}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7439161C-526F-426E-A420-25033D76C696}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76C6A72B-0953-4536-9E1A-3E1C4948929C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76C6A72B-0953-4536-9E1A-3E1C4948929C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76C6A72B-0953-4536-9E1A-3E1C4948929C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76C6A72B-0953-4536-9E1A-3E1C4948929C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12E0E726-F657-4D58-A4A6-406D6B3868B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12E0E726-F657-4D58-A4A6-406D6B3868B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12E0E726-F657-4D58-A4A6-406D6B3868B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12E0E726-F657-4D58-A4A6-406D6B3868B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

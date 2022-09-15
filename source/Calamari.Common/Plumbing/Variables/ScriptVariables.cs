@@ -9,6 +9,13 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string Syntax = "Octopus.Action.Script.Syntax";
         public static readonly string ScriptBody = "Octopus.Action.Script.ScriptBody";
         public static readonly string ScriptFileName = "Octopus.Action.Script.ScriptFileName";
+        public static readonly string ScriptSource = "Octopus.Action.Script.ScriptSource";
+
+        public static class ScriptSourceOptions
+        {
+            public const string Package = "Package";
+            public const string Inline = "Inline";
+        }
 
         public static string GetLibraryScriptModuleName(string variableName)
         {
