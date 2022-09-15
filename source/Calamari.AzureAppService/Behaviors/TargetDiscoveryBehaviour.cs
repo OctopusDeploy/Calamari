@@ -64,8 +64,7 @@ namespace Calamari.AzureAppService.Behaviors
                     var matchResult = targetDiscoveryContext.Scope.Match(tags);
                     if (matchResult.IsSuccess)
                     {
-                        // Not all property values are given for each resource in the initial query. A second call
-                        // is required for each resource to get addition required information such as the ResourceGroup.
+                        // An additional request is required for the resource's properties.
                         var resourceProperties = await resource.GetResourceProperties(CancellationToken.None);
 
                         // resourceProperties will be null if the resource is removed between
@@ -90,7 +89,7 @@ namespace Calamari.AzureAppService.Behaviors
 
                 if (discoveredTargetCount > 0)
                 {
-                    Log.Info($"{discoveredTargetCount} targets found.");
+                    Log.Info($"{discoveredTargetCount} target{(discoveredTargetCount > 1 ? "s" : "")} found.");
                 }
                 else
                 {
