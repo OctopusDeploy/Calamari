@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace Calamari.AzureAppService.Azure
 {
-    public class ServicePrincipalAccount
+    class ServicePrincipalAccount
     {
         [JsonConstructor]
         public ServicePrincipalAccount(
