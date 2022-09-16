@@ -202,7 +202,6 @@ Execute-WithRetry{
                     
                     Write-Host "az login --service-principal $loginArgs"
                     az login --service-principal $loginArgs
-
                     Write-Host "Azure CLI: Setting active subscription to $OctopusAzureSubscriptionId"
                     az account set --subscription $OctopusAzureSubscriptionId
 
