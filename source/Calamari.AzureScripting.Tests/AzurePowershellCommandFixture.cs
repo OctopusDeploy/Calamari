@@ -5,6 +5,8 @@ using Calamari.Scripting;
 using NUnit.Framework;
 using Calamari.Testing;
 using Calamari.Testing.Tools;
+using Calamari.Tests;
+using Calamari.Tests.Fixtures;
 
 namespace Calamari.AzureScripting.Tests
 {
@@ -49,8 +51,7 @@ az group list";
                               .WithArrange(context =>
                                            {
                                                AddDefaults(context);
-                                               // TODO: When migrating to Calamari repo switch back to variables.
-                                               context.Variables.Add("Octopus.Action.Script.ScriptSource", "Inline");
+                                               context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
                                                context.Variables.Add(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
                                                context.Variables.Add(ScriptVariables.ScriptBody, psScript);
                                            }).Execute();
@@ -70,8 +71,8 @@ az group list";
                                     .WithArrange(context =>
                                                  {
                                                      AddDefaults(context);
-                                                     context.Variables.Add(Calamari.Common.Plumbing.Variables.PowerShellVariables.Edition, "Core");
-                                                     context.Variables.Add("Octopus.Action.Script.ScriptSource", "Inline");
+                                                     context.Variables.Add(PowerShellVariables.Edition, ScriptVariables.ScriptSourceOptions.Core);
+                                                     context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
                                                      context.Variables.Add(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
                                                      context.Variables.Add(ScriptVariables.ScriptBody, psScript);
                                                  })
@@ -92,9 +93,9 @@ az group list";
                               .WithArrange(context =>
                                            {
                                                AddDefaults(context);
-                                               context.Variables.Add("Octopus.Action.Azure.Environment", "NotARealAzureEnvironment");
-                                               context.Variables.Add(PowerShellVariables.Edition, "Core");
-                                               context.Variables.Add("Octopus.Action.Script.ScriptSource", "Inline");
+                                               context.Variables.Add(SpecialVariables.Action.Azure.Environment, "NotARealAzureEnvironment");
+                                               context.Variables.Add(PowerShellVariables.Edition, ScriptVariables.ScriptSourceOptions.Core);
+                                               context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
                                                context.Variables.Add(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
                                                context.Variables.Add(ScriptVariables.ScriptBody, psScript);
                                            })
@@ -103,11 +104,11 @@ az group list";
 
         void AddDefaults(CommandTestBuilderContext context)
         {
-            context.Variables.Add("Octopus.Account.AccountType", "AzureServicePrincipal");
-            context.Variables.Add("Octopus.Action.Azure.SubscriptionId", subscriptionId);
-            context.Variables.Add("Octopus.Action.Azure.TenantId", tenantId);
-            context.Variables.Add("Octopus.Action.Azure.ClientId", clientId);
-            context.Variables.Add("Octopus.Action.Azure.Password", clientSecret);
+            context.Variables.Add(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
+            context.Variables.Add(SpecialVariables.Action.Azure.SubscriptionId, subscriptionId);
+            context.Variables.Add(SpecialVariables.Action.Azure.TenantId, tenantId);
+            context.Variables.Add(SpecialVariables.Action.Azure.ClientId, clientId);
+            context.Variables.Add(SpecialVariables.Action.Azure.Password, clientSecret);
             context.WithTool(AzureCLI);
             context.WithTool(AzureCmdlets);
         }

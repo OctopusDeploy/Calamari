@@ -15,6 +15,7 @@ namespace Calamari.Common.Plumbing.Variables
         {
             public const string Package = "Package";
             public const string Inline = "Inline";
+            public const string Core = "Core";
         }
 
         public static string GetLibraryScriptModuleName(string variableName)
