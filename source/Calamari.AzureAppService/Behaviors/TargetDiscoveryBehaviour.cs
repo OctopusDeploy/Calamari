@@ -7,7 +7,9 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
+using Azure.Core;
 using Azure.ResourceManager;
+using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.Models;
 using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
@@ -25,8 +27,8 @@ namespace Calamari.AzureAppService.Behaviors
 {
     public class TargetDiscoveryBehaviour : IDeployBehaviour
     {
-        private const string WebAppSlotsType = "Microsoft.web/sites/slots";
-        private const string WebAppType = "Microsoft.web/sites";
+        private const string WebAppSlotsType = "sites/slots";
+        private const string WebAppType = "sites";
         private const int PageSize = 500;
         private ILog Log { get; }
 
@@ -55,11 +57,12 @@ namespace Calamari.AzureAppService.Behaviors
                 retryOptions.MaxDelay = TimeSpan.FromSeconds(10);
                 retryOptions.MaxRetries = 5;
             });
+            var subscription = await armClient.GetDefaultSubscriptionAsync(CancellationToken.None);
             try
             {
                 var discoveredTargetCount = 0;
-                var webApps = await armClient.GetResources(WebAppType, PageSize, CancellationToken.None);
-                var slots = await armClient.GetResources(WebAppSlotsType, PageSize, CancellationToken.None);
+                var webApps = subscription.GetResources(WebAppType, PageSize, CancellationToken.None);
+                var slots = subscription.GetResources(WebAppSlotsType, PageSize, CancellationToken.None);
                 var resources = await webApps.Concat(slots).ToListAsync();
                 Log.Verbose($"Found {resources.Count} candidate web app resources.");
                 foreach (var resource in resources)
@@ -73,19 +76,10 @@ namespace Calamari.AzureAppService.Behaviors
                     var matchResult = targetDiscoveryContext.Scope.Match(tags);
                     if (matchResult.IsSuccess)
                     {
-                        // An additional request is required for the resource's properties.
-                        var resourceProperties = await resource.GetResourceProperties(CancellationToken.None);
-
-                        if (resourceProperties == null)
-                        {
-                            Log.Warn($"Could not get required information for resource: {resource.Data!.Name}, this may be because it has been removed.");
-                            continue;
-                        }
-
                         discoveredTargetCount++;
                         Log.Info($"Discovered matching web app resource: {resource.Data!.Name}");
                         WriteTargetCreationServiceMessage(
-                            resource.Data!, resourceProperties, targetDiscoveryContext, matchResult);
+                            resource.Id, targetDiscoveryContext, matchResult);
                     }
                     else
                     {
@@ -115,26 +109,21 @@ namespace Calamari.AzureAppService.Behaviors
         }
 
         private void WriteTargetCreationServiceMessage(
-            ResourceData resourceData,
-            GenericResourceProperties resourceProperties,
+            ResourceIdentifier identifier,
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
-            var resourceName = resourceData.Name;
+            var resourceName = identifier.Name;
             string? slotName = null;
-            if (resourceData.ResourceType.Type.Equals("sites/slots", StringComparison.InvariantCultureIgnoreCase))
+            if (identifier.ResourceType.Type == WebAppSlotsType)
             {
-                var indexOfSlash = resourceName.LastIndexOf("/", StringComparison.InvariantCulture);
-                if (indexOfSlash >= 0)
-                {
-                    slotName = resourceName.Substring(indexOfSlash + 1);
-                    resourceName = resourceName.Substring(0, indexOfSlash);
-                }
+                slotName = identifier.Name;
+                resourceName = identifier.Parent!.Name;
             }
 
             Log.WriteServiceMessage(
                 TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(
-                    resourceProperties.ResourceGroup,
+                    identifier.ResourceGroupName,
                     resourceName,
                     context.Authentication!.AccountId,
                     matchResult.Role,
@@ -193,27 +182,11 @@ namespace Calamari.AzureAppService.Behaviors
                 parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
         }
 
-        public static async Task<AsyncPageable<GenericResource>> GetResources(this ArmClient armClient,
+        public static AsyncPageable<GenericResource> GetResources(this SubscriptionResource subscription,
             string resourceType, int pageSize, CancellationToken cancellationToken)
         {
-            var subscription = await armClient.GetDefaultSubscriptionAsync(cancellationToken);
-            return subscription.GetGenericResourcesAsync($"resourceType eq '{resourceType}'",
+            return subscription.GetGenericResourcesAsync($"resourceType eq 'Microsoft.web/{resourceType}'",
                 top: pageSize, cancellationToken: cancellationToken);
         }
-
-        public static async Task<GenericResourceProperties?> GetResourceProperties(this GenericResource resource,
-            CancellationToken cancellationToken)
-        {
-            var detailedResource = await resource.GetAsync(cancellationToken);
-            return detailedResource.GetRawResponse().IsError
-                ? null
-                : detailedResource.Value.Data.Properties.ToObjectFromJson<GenericResourceProperties>();
-        }
     }
-
-    public class GenericResourceProperties
-     {
-         [JsonPropertyName("resourceGroup")]
-         public string? ResourceGroup { get; set; }
-     }
 }
