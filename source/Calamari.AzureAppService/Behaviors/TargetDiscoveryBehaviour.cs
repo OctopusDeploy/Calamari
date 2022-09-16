@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
+using Azure.ResourceManager;
 using Azure.ResourceManager.Models;
+using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
@@ -21,6 +25,8 @@ namespace Calamari.AzureAppService.Behaviors
 {
     public class TargetDiscoveryBehaviour : IDeployBehaviour
     {
+        private const string WebAppSlotsType = "Microsoft.web/sites/slots";
+        private const string WebAppType = "Microsoft.web/sites";
         private const int PageSize = 500;
         private ILog Log { get; }
 
@@ -44,14 +50,17 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
             Log.Verbose($"  Tenant ID: {account.TenantId}");
             Log.Verbose($"  Client ID: {account.ClientId}");
-            var armClient = account.CreateArmClient();
-
+            var armClient = account.CreateArmClient(retryOptions =>
+            {
+                retryOptions.MaxDelay = TimeSpan.FromSeconds(10);
+                retryOptions.MaxRetries = 5;
+            });
             try
             {
                 var discoveredTargetCount = 0;
-                var webApps = await armClient.GetResources(ArmClientExtensions.WebAppType, PageSize, CancellationToken.None);
-                var slots = await armClient.GetResources(ArmClientExtensions.WebAppSlotsType, PageSize, CancellationToken.None);
-                var resources = webApps.Concat(slots).ToList();
+                var webApps = await armClient.GetResources(WebAppType, PageSize, CancellationToken.None);
+                var slots = await armClient.GetResources(WebAppSlotsType, PageSize, CancellationToken.None);
+                var resources = await webApps.Concat(slots).ToListAsync();
                 Log.Verbose($"Found {resources.Count} candidate web app resources.");
                 foreach (var resource in resources)
                 {
@@ -67,10 +76,11 @@ namespace Calamari.AzureAppService.Behaviors
                         // An additional request is required for the resource's properties.
                         var resourceProperties = await resource.GetResourceProperties(CancellationToken.None);
 
-                        // resourceProperties will be null if the resource is removed between
-                        // the initial query and attempting to get the properties.
                         if (resourceProperties == null)
+                        {
+                            Log.Warn($"Could not get required information for resource: {resource.Data!.Name}, this may be because it has been removed.");
                             continue;
+                        }
 
                         discoveredTargetCount++;
                         Log.Info($"Discovered matching web app resource: {resource.Data!.Name}");
@@ -182,5 +192,28 @@ namespace Calamari.AzureAppService.Behaviors
                 "create-azurewebapptarget",
                 parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
         }
+
+        public static async Task<AsyncPageable<GenericResource>> GetResources(this ArmClient armClient,
+            string resourceType, int pageSize, CancellationToken cancellationToken)
+        {
+            var subscription = await armClient.GetDefaultSubscriptionAsync(cancellationToken);
+            return subscription.GetGenericResourcesAsync($"resourceType eq '{resourceType}'",
+                top: pageSize, cancellationToken: cancellationToken);
+        }
+
+        public static async Task<GenericResourceProperties?> GetResourceProperties(this GenericResource resource,
+            CancellationToken cancellationToken)
+        {
+            var detailedResource = await resource.GetAsync(cancellationToken);
+            return detailedResource.GetRawResponse().IsError
+                ? null
+                : detailedResource.Value.Data.Properties.ToObjectFromJson<GenericResourceProperties>();
+        }
     }
+
+    public class GenericResourceProperties
+     {
+         [JsonPropertyName("resourceGroup")]
+         public string? ResourceGroup { get; set; }
+     }
 }
