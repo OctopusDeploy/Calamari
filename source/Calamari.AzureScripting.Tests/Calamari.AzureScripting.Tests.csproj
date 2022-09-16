@@ -3,6 +3,8 @@
     <PropertyGroup>
         <RootNamespace>Calamari.AzureScripting.Tests</RootNamespace>
         <AssemblyName>Calamari.AzureScripting.Tests</AssemblyName>
+        <LangVersion>8</LangVersion>
+        <Nullable>enable</Nullable>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
@@ -13,8 +15,6 @@
         <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Calamari.Testing" Version="24.0.11" />
-        <PackageReference Include="Calamari.Tests.Shared" Version="14.2.2" />
         <PackageReference Include="FluentAssertions" Version="6.7.0" />
         <PackageReference Include="nunit" Version="3.13.3" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
@@ -24,7 +24,8 @@
         <PackageReference Include="Shouldly" Version="2.8.2" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\Calamari\Calamari.csproj" />
+      <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
+      <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
       <PackageReference Include="Octopus.Server.Extensibility" Version="14.3.2" />

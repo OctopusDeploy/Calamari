@@ -11,7 +11,6 @@
         <PackageReference Include="Sashimi.Aws.Common" Version="14.2.2" GeneratePathProperty="true" />
         <PackageReference Include="Sashimi.Azure.Common" Version="14.2.2" GeneratePathProperty="true" />
         <PackageReference Include="Sashimi.Terraform" Version="11.1.2" GeneratePathProperty="true" />
-        <PackageReference Include="Sashimi.AzureScripting" Version="14.2.2" GeneratePathProperty="true" />
     </ItemGroup>
 
     <!-- Copy over sashimi nuget packages from the packages directory. -->
@@ -20,6 +19,5 @@
         <Copy SourceFiles="$(PkgSashimi_Azure_Accounts)\sashimi.azure.accounts.14.2.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
         <Copy SourceFiles="$(PkgSashimi_Aws_Common)\sashimi.aws.common.14.2.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
         <Copy SourceFiles="$(PkgSashimi_Terraform)\sashimi.terraform.11.1.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
-        <Copy SourceFiles="$(PkgSashimi_AzureScripting)\sashimi.azurescripting.14.2.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"></Copy>
     </Target>
 </Project>

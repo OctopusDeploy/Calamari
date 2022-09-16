@@ -2,6 +2,7 @@
     <PropertyGroup>
         <AssemblyName>Calamari.AzureScripting</AssemblyName>
         <RootNamespace>Calamari.AzureScripting</RootNamespace>
+        <LangVersion>8</LangVersion>
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
