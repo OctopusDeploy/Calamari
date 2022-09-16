@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>A sample project containing a Windows Azure cloud service.</Description>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <VersionPrefix>1.0.0.0</VersionPrefix>
+    <Authors>Octopus Deploy</Authors>
+    <TargetFramework>netstandard1.0</TargetFramework>
+    <AssemblyName>Octopus.Sample.AzureCloudService</AssemblyName>
+    <PackageId>Octopus.Sample.AzureCloudService</PackageId>
+    <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="**\*.*">
+      <Pack>true</Pack>
+    </None>
+    <None Update="*.csproj;*.nuspec">
+      <Pack>false</Pack>
+    </None>
+  </ItemGroup>
+
+</Project>

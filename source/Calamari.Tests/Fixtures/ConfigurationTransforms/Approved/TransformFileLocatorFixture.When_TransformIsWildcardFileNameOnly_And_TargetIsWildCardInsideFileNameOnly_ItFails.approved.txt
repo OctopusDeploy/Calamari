@@ -1,0 +1,6 @@
+﻿Not supported: Using wildcard in the middle of target filename
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─web.config
+└─web.mytransform.config
+Then the transform *.mytransform.config => w*.config will do nothing.

@@ -1,0 +1,9 @@
+﻿Transform and multiple targets are in the same directory
+Given a package which has the structure:
+Acme.Core.1.0.0.nupkg
+├─app.config
+├─connstrings.mytransform.config
+└─web.config
+Then the transform connstrings.mytransform.config => *.config will:
+ - Apply the transform connstrings.mytransform.config to file web.config
+ - Apply the transform connstrings.mytransform.config to file app.config

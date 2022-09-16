@@ -1,0 +1,12 @@
+﻿{
+  "null2num": null,
+  "null2str": null,
+  "null2obj": null,
+  "null2arr": null,
+  "bool2null": false,
+  "bool2num": true,
+  "num2null": 1,
+  "num2bool": 2,
+  "num2arr": 3,
+  "str2bool": "kittens"
+}

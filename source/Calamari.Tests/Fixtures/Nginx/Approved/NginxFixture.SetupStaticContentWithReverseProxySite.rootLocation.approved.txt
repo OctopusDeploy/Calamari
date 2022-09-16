@@ -1,0 +1,8 @@
+server {
+    listen 80;
+    include /etc/nginx/conf.d/StaticContent.conf.d/location.*.conf;
+    location = / {
+        root #{Octopus.Action.Package.InstallationDirectoryPath}/wwwroot;
+        try_files $uri $uri/ /index.html;
+    }
+}

@@ -49,3 +49,6 @@
 *.sln text eol=crlf merge=union 
 
 *.approved.* binary
+*.approved.* -text
+**/*.Tests/**/Samples/enc-* -text
+**/*.Tests/Fixtures/Substitutions/Samples/* -text
