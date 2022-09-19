@@ -1,8 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
+using Azure;
+using Azure.Core;
+using Azure.ResourceManager;
+using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.Models;
+using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
@@ -10,16 +19,17 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
-using Microsoft.Azure.Management.AppService.Fluent;
-using Microsoft.Azure.Management.AppService.Fluent.Models;
-using Microsoft.Azure.Management.Fluent;
-using Polly;
+using JsonException = System.Text.Json.JsonException;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 #nullable enable
 namespace Calamari.AzureAppService.Behaviors
 {
     public class TargetDiscoveryBehaviour : IDeployBehaviour
     {
+        private const string WebAppSlotsType = "sites/slots";
+        private const string WebAppType = "sites";
+        private const int PageSize = 500;
         private ILog Log { get; }
 
         public TargetDiscoveryBehaviour(ILog log)
@@ -31,7 +41,6 @@ namespace Calamari.AzureAppService.Behaviors
 
         public async Task Execute(RunningDeployment runningDeployment)
         {
-            await Task.CompletedTask;
             var targetDiscoveryContext = GetTargetDiscoveryContext(runningDeployment.Variables);
             if (targetDiscoveryContext?.Authentication == null || targetDiscoveryContext.Scope == null)
             {
@@ -39,164 +48,87 @@ namespace Calamari.AzureAppService.Behaviors
                 return;
             }
             var account = targetDiscoveryContext.Authentication.AccountDetails;
-            Log.Verbose($"Looking for Azure web apps using:");
+            Log.Verbose("Looking for Azure web apps using:");
             Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
             Log.Verbose($"  Tenant ID: {account.TenantId}");
             Log.Verbose($"  Client ID: {account.ClientId}");
-            var azureClient = account.CreateAzureClient();
-
+            var armClient = account.CreateArmClient(retryOptions =>
+            {
+                retryOptions.MaxDelay = TimeSpan.FromSeconds(10);
+                retryOptions.MaxRetries = 5;
+            });
+            var subscription = await armClient.GetDefaultSubscriptionAsync(CancellationToken.None);
             try
             {
                 var discoveredTargetCount = 0;
-                var webApps = ListWebApps(azureClient);
-                Log.Verbose($"Found {webApps.Count()} candidate web apps.");
-                foreach (var webApp in webApps)
+                var webApps = subscription.GetResources(WebAppType, PageSize, CancellationToken.None);
+                var slots = subscription.GetResources(WebAppSlotsType, PageSize, CancellationToken.None);
+                var resources = await webApps.Concat(slots).ToListAsync();
+                Log.Verbose($"Found {resources.Count} candidate web app resources.");
+                foreach (var resource in resources)
                 {
-                    var tags = AzureWebAppHelper.GetOctopusTags(webApp.Tags);
+                    var tagValues = resource.Data?.Tags;
+
+                    if (tagValues == null)
+                        continue;
+
+                    var tags = AzureWebAppHelper.GetOctopusTags(new ReadOnlyDictionary<string, string>(tagValues));
                     var matchResult = targetDiscoveryContext.Scope.Match(tags);
                     if (matchResult.IsSuccess)
                     {
                         discoveredTargetCount++;
-                        Log.Info($"Discovered matching web app: {webApp.Name}");
+                        Log.Info($"Discovered matching web app resource: {resource.Data!.Name}");
                         WriteTargetCreationServiceMessage(
-                            webApp, targetDiscoveryContext, matchResult);
+                            resource.Id, targetDiscoveryContext, matchResult);
                     }
                     else
                     {
-                        Log.Verbose($"Web app {webApp.Name} does not match target requirements:");
+                        Log.Verbose($"Web app {resource.Data!.Name} does not match target requirements:");
                         foreach (var reason in matchResult.FailureReasons)
                         {
                             Log.Verbose($"- {reason}");
-                        }
-                    }
-
-                    Log.Verbose($"Looking for deployment slots in web app {webApp.Name}");
-
-                    var deploymentSlots = ListDeploymentSlots(webApp);
-
-                    foreach (var slot in deploymentSlots)
-                    {
-                        var deploymentSlotTags = AzureWebAppHelper.GetOctopusTags(slot.Tags);
-                        var deploymentSlotMatchResult = targetDiscoveryContext.Scope.Match(deploymentSlotTags);
-                        if (deploymentSlotMatchResult.IsSuccess)
-                        {
-                            discoveredTargetCount++;
-                            Log.Info($"Discovered matching deployment slot {slot.Name} in web app {webApp.Name}");
-                            WriteDeploymentSlotTargetCreationServiceMessage(
-                                webApp, slot, targetDiscoveryContext, deploymentSlotMatchResult);
-                        }
-                        else
-                        {
-                            Log.Verbose($"Deployment slot {slot.Name} in web app {webApp.Name} does not match target requirements:");
-                            foreach (var reason in matchResult.FailureReasons)
-                            {
-                                Log.Verbose($"- {reason}");
-                            }
                         }
                     }
                 }
 
                 if (discoveredTargetCount > 0)
                 {
-                    Log.Info($"{discoveredTargetCount} targets found.");
+                    Log.Info($"{discoveredTargetCount} target{(discoveredTargetCount > 1 ? "s" : "")} found.");
                 }
                 else
                 {
-                    Log.Warn($"Could not find any Azure web app targets.");
+                    Log.Warn("Could not find any Azure web app targets.");
                 }
             }
             catch (Exception ex)
             {
-                Log.Warn($"Error connecting to Azure to look for web apps:");
+                Log.Warn("Error connecting to Azure to look for web apps:");
                 Log.Warn(ex.Message);
                 Log.Warn("Aborting target discovery.");
             }
         }
 
-        private IEnumerable<IWebApp> ListWebApps(IAzure azureClient)
-        {
-            var retryPolicy = CreateAzureQueryRetryPolicy(5, $"listing web apps");
-
-            return retryPolicy.Execute(() =>
-            {
-                return azureClient.WebApps.List();
-            });
-        }
-
-        private ISyncPolicy CreateAzureQueryRetryPolicy(int maxRetries, string description)
-        {
-            // Don't bother retrying for not found errors as we will only ever get the same response
-            return Policy
-                .Handle<DefaultErrorResponseException>()
-                .WaitAndRetry(
-                    maxRetries,
-                    (retryAttempt, ex, context) =>
-                    {
-                        if (ex is DefaultErrorResponseException dex)
-                        {
-                            // Need to cast to an int here as net461 doesn't have TooManyRequests in the enum
-                            if ((int)dex.Response.StatusCode == 429 && dex.Response.Headers.TryGetValue("Retry-After", out var retryAfter))
-                            {
-                                return TimeSpan.FromSeconds(int.Parse(retryAfter.First()));
-                            }
-                        }
-                        // Not a specific throttling exception, use exponential backoff with a maximum wait time of 10 seconds
-                        return TimeSpan.FromSeconds(Math.Min(10, Math.Pow(2, retryAttempt)));
-                    },
-                    (ex, delay, retryAttempt, context) =>
-                    {
-                        Log.Verbose($"An error has occurred {description}: {ex.Message}, retrying {retryAttempt} of {maxRetries} after {delay}");
-                    });
-        }
-
-        private IEnumerable<IDeploymentSlot> ListDeploymentSlots(IWebApp webApp)
-        {
-            var retryPolicy = CreateAzureQueryRetryPolicy(5, $"listing deployment slots for web app {webApp.Name}");
-
-            // We could get a 404 listing slots if the web app gets deleted 
-            // after being found but before we can check it's slots, in this
-            // case we'll log a message and continue
-            var webAppNotFoundPolicy = Policy<IEnumerable<IDeploymentSlot>>
-                .Handle<DefaultErrorResponseException>(dex => dex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                .Fallback(
-                    fallbackValue: Enumerable.Empty<IDeploymentSlot>(),
-                    onFallback: (exception, context) => Log.Verbose($"Could not list deployment slots for web app {webApp.Name} as it could no longer be found")
-                );
-            
-            return retryPolicy.Wrap(webAppNotFoundPolicy).Execute(() =>
-            {
-                return webApp.DeploymentSlots.List();
-            });
-        }
-
         private void WriteTargetCreationServiceMessage(
-            IWebApp webApp,
+            ResourceIdentifier identifier,
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
+            var resourceName = identifier.Name;
+            string? slotName = null;
+            if (identifier.ResourceType.Type == WebAppSlotsType)
+            {
+                slotName = identifier.Name;
+                resourceName = identifier.Parent!.Name;
+            }
+
             Log.WriteServiceMessage(
                 TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(
-                    webApp.ResourceGroupName,
-                    webApp.Name,
+                    identifier.ResourceGroupName,
+                    resourceName,
                     context.Authentication!.AccountId,
                     matchResult.Role,
-                    context.Scope!.WorkerPoolId));
-        }
-
-        private void WriteDeploymentSlotTargetCreationServiceMessage(
-            IWebApp webApp,
-            IDeploymentSlot slot,
-            TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
-            TargetMatchResult matchResult)
-        {
-            Log.WriteServiceMessage(
-                TargetDiscoveryHelpers.CreateWebAppDeploymentSlotTargetCreationServiceMessage(
-                    webApp.ResourceGroupName, 
-                    webApp.Name, 
-                    slot.Name, 
-                    context.Authentication!.AccountId,
-                    matchResult.Role,
-                    context.Scope!.WorkerPoolId));
+                    context.Scope!.WorkerPoolId,
+                    slotName));
         }
 
         private TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>? GetTargetDiscoveryContext(
@@ -231,11 +163,12 @@ namespace Calamari.AzureAppService.Behaviors
 
     public static class TargetDiscoveryHelpers
     {
-        public static ServiceMessage CreateWebAppTargetCreationServiceMessage(string resourceGroupName, string webAppName, string accountId, string role, string? workerPoolId)
+        public static ServiceMessage CreateWebAppTargetCreationServiceMessage(string? resourceGroupName, string webAppName, string accountId, string role, string? workerPoolId, string? slotName)
         {
             var parameters = new Dictionary<string, string?> {
-                    { "name", $"azure-web-app/{resourceGroupName}/{webAppName}" },
                     { "azureWebApp", webAppName },
+                    { "name", $"azure-web-app/{resourceGroupName}/{webAppName}{(slotName == null ? "" : $"/{slotName}")}" },
+                    { "azureWebAppSlot", slotName },
                     { "azureResourceGroupName", resourceGroupName },
                     { "octopusAccountIdOrName", accountId },
                     { "octopusRoles", role },
@@ -249,23 +182,11 @@ namespace Calamari.AzureAppService.Behaviors
                 parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
         }
 
-        public static ServiceMessage CreateWebAppDeploymentSlotTargetCreationServiceMessage(string resourceGroupName, string webAppName, string slotName, string accountId, string role, string? workerPoolId)
+        public static AsyncPageable<GenericResource> GetResources(this SubscriptionResource subscription,
+            string resourceType, int pageSize, CancellationToken cancellationToken)
         {
-            var parameters = new Dictionary<string, string?> {
-                    { "name", $"azure-web-app/{resourceGroupName}/{webAppName}/{slotName}" },
-                    { "azureWebApp", webAppName },
-                    { "azureResourceGroupName", resourceGroupName },
-                    { "azureWebAppSlot", slotName },
-                    { "octopusAccountIdOrName", accountId },
-                    { "octopusRoles", role },
-                    { "updateIfExisting", "True" },
-                    { "octopusDefaultWorkerPoolIdOrName", workerPoolId },
-                    { "isDynamic", "True" }
-                };
-
-            return new ServiceMessage(
-                "create-azurewebapptarget",
-                parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
+            return subscription.GetGenericResourcesAsync($"resourceType eq 'Microsoft.web/{resourceType}'",
+                top: pageSize, cancellationToken: cancellationToken);
         }
     }
 }

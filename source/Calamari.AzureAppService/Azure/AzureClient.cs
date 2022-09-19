@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Identity;
 using Azure.ResourceManager;
@@ -34,14 +35,14 @@ namespace Calamari.AzureAppService.Azure
         /// </summary>
         /// <param name="servicePrincipal">Service Principal Account to use when connecting to Azure</param>
         /// <returns></returns>
-        public static ArmClient CreateArmClient(this ServicePrincipalAccount servicePrincipal)
+        public static ArmClient CreateArmClient(this ServicePrincipalAccount servicePrincipal, Action<RetryOptions> retryOptionsSetter = null)
         {
-            var (armClientOptions, tokenCredentialOptions) = GetArmClientOptions(servicePrincipal);
+            var (armClientOptions, tokenCredentialOptions) = GetArmClientOptions(servicePrincipal, retryOptionsSetter);
             var credential = new ClientSecretCredential(servicePrincipal.TenantId, servicePrincipal.ClientId, servicePrincipal.Password, tokenCredentialOptions);
             return new ArmClient(credential, defaultSubscriptionId: servicePrincipal.SubscriptionNumber, armClientOptions);
         }
 
-        public static (ArmClientOptions, TokenCredentialOptions) GetArmClientOptions(this ServicePrincipalAccount servicePrincipalAccount)
+        public static (ArmClientOptions, TokenCredentialOptions) GetArmClientOptions(this ServicePrincipalAccount servicePrincipalAccount, Action<RetryOptions> retryOptionsSetter = null)
         {
             var azureKnownEnvironment = new AzureKnownEnvironment(servicePrincipalAccount.AzureEnvironment);
 
@@ -58,11 +59,12 @@ namespace Calamari.AzureAppService.Azure
 
             // The new Azure SDK uses a different representation of Environments
             var armEnvironment = azureKnownEnvironment.AsAzureArmEnvironment();
-            var armClientOptions = new ArmClientOptions()
+            var armClientOptions = new ArmClientOptions
             {
                 Transport = httpClientTransport,
                 Environment = armEnvironment
             };
+            retryOptionsSetter?.Invoke(armClientOptions.Retry);
 
             return (armClientOptions, tokenCredentialOptions);
         }
