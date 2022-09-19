@@ -77,7 +77,7 @@ namespace Calamari.Build
         readonly string? AzureKeyVaultCertificateName;
 
         [Parameter(Name = "signing_certificate_path")]
-        readonly string SigningCertificatePath = "./certificates/OctopusDevelopment.pfx";
+        readonly string SigningCertificatePath = RootDirectory / "certificates" / "OctopusDevelopment.pfx";
 
         [Parameter(Name = "signing_certificate_password")] 
         [Secret]
@@ -269,12 +269,13 @@ namespace Calamari.Build
                         var outputDirectory = PublishDirectory / project.Name / (packageToBuild.CrossPlatform ? packageToBuild.Architecture : "netfx");
 
                         DotNetPublish(s => s
-                            .SetConfiguration(Configuration)
-                            .SetProject(project)
-                            .SetFramework(packageToBuild.Framework)
-                            .SetRuntime(packageToBuild.Architecture)
-                            .SetOutput(outputDirectory)
-                        );
+                                           .SetConfiguration(Configuration)
+                                           .SetProject(project)
+                                           .SetFramework(packageToBuild.Framework)
+                                           .SetRuntime(packageToBuild.Architecture)
+                                           .SetOutput(outputDirectory)
+                                     );
+                        SignDirectory(outputDirectory);
 
                         File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
                     }
@@ -296,48 +297,48 @@ namespace Calamari.Build
             _ => _.DependsOn(Publish)
                   .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(async () =>
-                  {
-                      var nugetVersion = NugetVersion.Value;
-                      var packageActions = new List<Action>
-                      {
-                          () => DoPackage(RootProjectName,
-                                          OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.NetCoreApp31,
-                                          nugetVersion),
-                          () => DoPackage(RootProjectName,
-                                          OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.NetCoreApp31,
-                                          nugetVersion,
-                                          FixedRuntimes.Cloud),
-                      };
+                            {
+                                var nugetVersion = NugetVersion.Value;
+                                var packageActions = new List<Action>
+                                {
+                                    () => DoPackage(RootProjectName,
+                                                    OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.NetCoreApp31,
+                                                    nugetVersion),
+                                    () => DoPackage(RootProjectName,
+                                                    OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.NetCoreApp31,
+                                                    nugetVersion,
+                                                    FixedRuntimes.Cloud),
+                                };
 
-                      // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-                      // ReSharper disable once LoopCanBeConvertedToQuery
-                      foreach (var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
-                          packageActions.Add(() => DoPackage(RootProjectName,
-                                                             Frameworks.NetCoreApp31,
-                                                             nugetVersion,
-                                                             rid));
+                                // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
+                                // ReSharper disable once LoopCanBeConvertedToQuery
+                                foreach (var rid in Solution?.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
+                                    packageActions.Add(() => DoPackage(RootProjectName,
+                                                                       Frameworks.NetCoreApp31,
+                                                                       nugetVersion,
+                                                                       rid));
 
-                      var dotNetCorePackSettings = new DotNetPackSettings().SetConfiguration(Configuration)
-                                                                           .SetOutputDirectory(ArtifactsDirectory)
-                                                                           .EnableNoBuild()
-                                                                           .EnableIncludeSource()
-                                                                           .SetVersion(nugetVersion)
-                                                                           .SetNoRestore(true);
+                                var dotNetCorePackSettings = new DotNetPackSettings().SetConfiguration(Configuration)
+                                                                                     .SetOutputDirectory(ArtifactsDirectory)
+                                                                                     .EnableNoBuild()
+                                                                                     .EnableIncludeSource()
+                                                                                     .SetVersion(nugetVersion)
+                                                                                     .SetNoRestore(true);
 
-                      var commonProjects = Directory.GetFiles(SourceDirectory, "*.Common.csproj",
-                                                              new EnumerationOptions { RecurseSubdirectories = true });
+                                var commonProjects = Directory.GetFiles(SourceDirectory, "*.Common.csproj",
+                                                                        new EnumerationOptions { RecurseSubdirectories = true });
 
-                      // ReSharper disable once LoopCanBeConvertedToQuery
-                      foreach (var project in commonProjects)
-                          packageActions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
+                                // ReSharper disable once LoopCanBeConvertedToQuery
+                                foreach (var project in commonProjects)
+                                    packageActions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
 
-                      var sourceProjectPath =
-                          SourceDirectory / "Calamari.CloudAccounts" / "Calamari.CloudAccounts.csproj";
-                      packageActions.Add(() => SignAndPack(sourceProjectPath,
-                                                           dotNetCorePackSettings));
+                                var sourceProjectPath =
+                                    SourceDirectory / "Calamari.CloudAccounts" / "Calamari.CloudAccounts.csproj";
+                                packageActions.Add(() => SignAndPack(sourceProjectPath,
+                                                                     dotNetCorePackSettings));
 
-                      await RunPackActions(packageActions);
-                  });
+                                await RunPackActions(packageActions);
+                            });
 
         Target PackTests =>
             _ => _.DependsOn(Publish)
@@ -539,22 +540,32 @@ namespace Calamari.Build
 
             return publishedTo;
         }
+        
+        void SignProject(string project)
+        {
+            if (!WillSignBinaries)
+                return;
+            var binDirectory = $"{Path.GetDirectoryName(project)}/bin/{Configuration}/";
+            SignDirectory(binDirectory);
+        }
+
+        void SignDirectory(string directory)
+        {
+            if (!WillSignBinaries)
+                return;
+            Log.Information("Signing directory: {Directory} and sub-directories", directory);
+            var binariesFolders =
+                Directory.GetDirectories(directory, "*", new EnumerationOptions { RecurseSubdirectories = true });
+            foreach (var subDirectory in binariesFolders.Append(directory))
+                Signing.SignAndTimestampBinaries(subDirectory, AzureKeyVaultUrl, AzureKeyVaultAppId,
+                                                 AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
+                                                 SigningCertificatePath, SigningCertificatePassword);
+        }
 
         void SignAndPack(string project, DotNetPackSettings dotNetCorePackSettings)
         {
             Log.Information("SignAndPack project: {Project}", project);
-
-            if (WillSignBinaries)
-            {
-                var binDirectory = $"{Path.GetDirectoryName(project)}/bin/{Configuration}/";
-                var binariesFolders =
-                    Directory.GetDirectories(binDirectory, "*", new EnumerationOptions { RecurseSubdirectories = true });
-                foreach (var directory in binariesFolders)
-                    Signing.SignAndTimestampBinaries(directory, AzureKeyVaultUrl, AzureKeyVaultAppId,
-                                                     AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
-                                                     SigningCertificatePath, SigningCertificatePassword);
-            }
-
+            SignProject(project);
             DotNetPack(dotNetCorePackSettings.SetProject(project));
         }
 
