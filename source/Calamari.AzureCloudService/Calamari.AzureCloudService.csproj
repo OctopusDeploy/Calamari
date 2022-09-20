@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="WindowsBase" />
+    <PackageReference Include="Calamari.Common" Version="21.1.0" />
     <PackageReference Include="Calamari.Scripting" Version="14.2.0" />
     <PackageReference Include="Hyak.Common" Version="1.2.2" />
     <PackageReference Include="Microsoft.Azure.Common" Version="2.2.1" />
@@ -25,7 +26,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
-    <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
