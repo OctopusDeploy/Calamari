@@ -20,7 +20,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
   </ItemGroup>
 </Project>

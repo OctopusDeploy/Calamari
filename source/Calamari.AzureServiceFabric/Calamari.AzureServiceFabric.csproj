@@ -15,7 +15,4 @@
   <ItemGroup>
     <EmbeddedResource Include="Scripts\*" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
-  </ItemGroup>
 </Project>
