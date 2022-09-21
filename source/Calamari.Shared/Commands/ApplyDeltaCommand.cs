@@ -80,7 +80,7 @@ namespace Calamari.Commands
                     throw new CommandLineException("OctoDiff", result.ExitCode, result.Errors);
                 }
 
-                File.Move(tempNewFilePath, newFilePath);
+                fileSystem.MoveFile(tempNewFilePath, newFilePath);
 
                 if (!File.Exists(newFilePath))
                     throw new CommandException($"Failed to apply delta file {deltaFilePath} to {basisFilePath}");
