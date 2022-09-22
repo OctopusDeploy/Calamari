@@ -5,7 +5,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
-    <LangVersion>8</LangVersion>
+    <LangVersion>9</LangVersion>
     <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
   </PropertyGroup>
   <!-- Cake build looks for xpath Project/PropertyGroup/TargetFrameworks with a fallback of Project/PropertyGroup/TargetFramework

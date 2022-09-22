@@ -4,6 +4,7 @@ using System.Net;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Packages.NuGet;
+using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
