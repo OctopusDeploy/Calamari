@@ -1,0 +1,15 @@
+﻿server: local
+spring:
+  h2:
+    console:
+      enabled: "true"
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+  datasource: none
+  flyway:
+    locations: classpath:db/migration/{vendor}
+  loggers:
+  - name: console
+  - name: file
+    pattern: '%n.log'
+environment: development

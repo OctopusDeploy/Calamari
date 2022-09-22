@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<document xmlns:db="http://octopus.com/duplicate1" xmlns:unique="http://octopus.com/unique">
+  <!-- Comment -->
+  <setting id="id-1">value-1</setting>
+  <setting id="id-2">value-2</setting>
+  <setting id="id-3"><![CDATA[value-3]]></setting>
+  <db:connectionString>conn-string</db:connectionString>
+  <node xmlns="http://octopus.com/node">value-new</node>
+  <node xmlns:db="http://octopus.com/duplicate2">value-new</node>
+  <moreSettings>
+    <setting id="id-1">moreSettings/value-1</setting>
+  </moreSettings>
+  <unique:anotherSetting>unique-value</unique:anotherSetting>
+  <?xml-stylesheet type="text/xsl" href="/Content/Glossary/main.xsl"?>
+</document>
