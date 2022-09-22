@@ -5,7 +5,7 @@ using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 
-namespace Calamari.Tests.Fixtures
+namespace Calamari.Testing.Requirements
 {
     public class RequiresBashDotExeIfOnWindowsAttribute : NUnitAttribute, IApplyToTest
     {

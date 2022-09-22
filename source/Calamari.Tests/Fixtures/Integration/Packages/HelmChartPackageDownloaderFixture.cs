@@ -4,6 +4,7 @@ using System.Net;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
+using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;

@@ -1,4 +1,5 @@
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures.Integration.Proxies;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;

@@ -26,7 +26,6 @@
     <ItemGroup>
       <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
       <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
-      <ProjectReference Include="..\Calamari.Tests\Calamari.Tests.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
       <PackageReference Include="Octopus.Server.Extensibility" Version="14.3.2" />

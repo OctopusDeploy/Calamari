@@ -137,7 +137,6 @@
               "PublishCalamariFlavourProjects",
               "Restore",
               "SetTeamCityVersion",
-              "SignCalamariFlavours",
               "UpdateCalamariVersionOnOctopusServer"
             ]
           }
@@ -165,7 +164,6 @@
               "PublishCalamariFlavourProjects",
               "Restore",
               "SetTeamCityVersion",
-              "SignCalamariFlavours",
               "UpdateCalamariVersionOnOctopusServer"
             ]
           }

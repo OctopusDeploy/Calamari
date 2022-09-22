@@ -1,10 +1,9 @@
-using System;
 using System.Security.Principal;
 using Calamari.Common.Plumbing;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
-namespace Calamari.Tests.Fixtures
+namespace Calamari.Testing.Requirements
 {
     public class RequiresAdminAttribute : TestAttribute, ITestAction
     {

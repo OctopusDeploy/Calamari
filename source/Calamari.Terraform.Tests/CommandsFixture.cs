@@ -17,6 +17,7 @@ using Calamari.Common.Plumbing.Retry;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Terraform.Commands;
 using Calamari.Terraform.Tests.CommonTemplates;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Shared;
 using Calamari.Tests.Shared.Helpers;
 using FluentAssertions;
@@ -29,7 +30,7 @@ namespace Calamari.Terraform.Tests
     [TestFixture("0.11.15")]
     [TestFixture("0.13.0")]
     [TestFixture("1.0.0")]
-    [NonWindowsTestAttribute]
+    [NonWindowsTest]
     public class CommandsFixture
     {
         string? customTerraformExecutable;

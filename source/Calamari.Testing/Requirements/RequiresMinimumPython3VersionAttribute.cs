@@ -4,15 +4,12 @@ using System.Text.RegularExpressions;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting.Python;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.Processes;
 using Calamari.Testing.Helpers;
-using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using Octopus.CoreUtilities;
-using Octostache;
 
-namespace Calamari.Tests.Fixtures
+namespace Calamari.Testing.Requirements
 {
     public class RequiresMinimumPython3VersionAttribute : TestAttribute, ITestAction
     {

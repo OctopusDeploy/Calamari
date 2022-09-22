@@ -14,7 +14,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="6.7.0" />
-        <PackageReference Include="nunit" Version="3.13.2" />
+        <PackageReference Include="nunit" Version="3.13.3" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
@@ -26,6 +26,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
+        <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     </ItemGroup>
 
     <ItemGroup>

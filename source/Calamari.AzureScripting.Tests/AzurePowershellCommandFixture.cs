@@ -4,9 +4,8 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Scripting;
 using NUnit.Framework;
 using Calamari.Testing;
+using Calamari.Testing.Requirements;
 using Calamari.Testing.Tools;
-using Calamari.Tests;
-using Calamari.Tests.Fixtures;
 
 namespace Calamari.AzureScripting.Tests
 {

@@ -1,4 +1,4 @@
-﻿namespace Calamari.Tests.Fixtures
+﻿namespace Calamari.Testing.Requirements
 {
     public class RequiresMonoVersion400OrAboveAttribute : RequiresMinimumMonoVersionAttribute
     {

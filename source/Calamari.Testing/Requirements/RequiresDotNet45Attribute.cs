@@ -1,9 +1,8 @@
-﻿using System;
-using Calamari.Common.Plumbing.Extensions;
+﻿using Calamari.Common.Plumbing.Extensions;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
-namespace Calamari.Tests.Fixtures
+namespace Calamari.Testing.Requirements
 {
     public class RequiresDotNet45Attribute : TestAttribute, ITestAction
     {

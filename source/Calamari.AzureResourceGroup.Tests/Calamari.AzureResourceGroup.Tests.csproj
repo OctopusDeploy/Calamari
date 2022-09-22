@@ -22,7 +22,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Calamari.AzureResourceGroup\Calamari.AzureResourceGroup.csproj" />
     <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
-    <ProjectReference Include="..\Calamari.Tests\Calamari.Tests.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Packages\AzureResourceGroup\azure_website_params.json">

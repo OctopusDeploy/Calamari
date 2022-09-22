@@ -5,8 +5,7 @@ using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using OSPlatform = System.Runtime.InteropServices.OSPlatform;
 
-//TODO: When migrating to Calamari Monorepo remove this in favour of RequiresWindowsAttribute.cs in Calamari.Tests, RequiresWindowsAttribute.cs will need to be moved to Calamari.Testing
-namespace Calamari.Terraform.Tests
+namespace Calamari.Testing.Requirements
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class WindowsTestAttribute : NUnitAttribute, IApplyToTest

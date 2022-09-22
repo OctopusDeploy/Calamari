@@ -9,6 +9,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment;
 using Calamari.LaunchTools;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octostache;
@@ -16,7 +17,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Manifest
 {
     [TestFixture]
-    [RequiresDotNetCoreAttribute]
+    [RequiresDotNetCore]
     public class ExecuteManifestCommandFixture : CalamariFixture
     {
         [Test]
