@@ -42,23 +42,6 @@ namespace Calamari.Terraform
             }
         }
 
-        public static class Script
-        {
-            public static readonly string Syntax = "Octopus.Action.Script.Syntax";
-            public static readonly string ScriptBody = "Octopus.Action.Script.ScriptBody";
-            public static readonly string ScriptFileName = "Octopus.Action.Script.ScriptFileName";
-            public static readonly string ScriptParameters = "Octopus.Action.Script.ScriptParameters";
-            public static readonly string ScriptSource = "Octopus.Action.Script.ScriptSource";
-
-            public static string ScriptBodyBySyntax(ScriptSyntax syntax) => "Octopus.Action.Script.ScriptBody[" + syntax.ToString() + "]";
-
-            public static class ScriptSourceOptions
-            {
-                public const string Package = "Package";
-                public const string Inline = "Inline";
-            }
-        }
-
         public static class Calamari
         {
             public static readonly string TerraformCliPath = "Octopus.Calamari.TerraformCliPath";

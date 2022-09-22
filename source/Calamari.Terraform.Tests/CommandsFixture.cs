@@ -193,8 +193,8 @@ namespace Calamari.Terraform.Tests
             ExecuteAndReturnLogOutput("apply-terraform",
                                       _ =>
                                       {
-                                          _.Variables.Add(TerraformSpecialVariables.Script.ScriptSource,
-                                                          TerraformSpecialVariables.Script.ScriptSourceOptions.Package);
+                                          _.Variables.Add(ScriptVariables.ScriptSource,
+                                                          ScriptVariables.ScriptSourceOptions.Package);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
                                                           JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_PLUGIN_CACHE_DIR", "NonSense" } }));
                                       },
@@ -209,8 +209,8 @@ namespace Calamari.Terraform.Tests
             ExecuteAndReturnLogOutput("apply-terraform",
                                       _ =>
                                       {
-                                          _.Variables.Add(TerraformSpecialVariables.Script.ScriptSource,
-                                                          TerraformSpecialVariables.Script.ScriptSourceOptions.Package);
+                                          _.Variables.Add(ScriptVariables.ScriptSource,
+                                              ScriptVariables.ScriptSourceOptions.Package);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables, null);
                                       },
                                       "Simple")
@@ -228,8 +228,8 @@ namespace Calamari.Terraform.Tests
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, "{}");
-                                          _.Variables.Add(TerraformSpecialVariables.Script.ScriptSource,
-                                                          TerraformSpecialVariables.Script.ScriptSourceOptions.Inline);
+                                          _.Variables.Add(ScriptVariables.ScriptSource,
+                                              ScriptVariables.ScriptSourceOptions.Inline);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
                                                           JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_VAR_ami", "new ami value" } }));
                                       },
@@ -646,8 +646,8 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add("RandomNumber", new Random().Next().ToString());
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
-                                          _.Variables.Add(TerraformSpecialVariables.Script.ScriptSource,
-                                                          TerraformSpecialVariables.Script.ScriptSourceOptions.Inline);
+                                          _.Variables.Add(ScriptVariables.ScriptSource,
+                                              ScriptVariables.ScriptSourceOptions.Inline);
                                       },
                                       String.Empty,
                                       _ =>
@@ -671,8 +671,8 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add("RandomNumber", new Random().Next().ToString());
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
-                                          _.Variables.Add(TerraformSpecialVariables.Script.ScriptSource,
-                                                          TerraformSpecialVariables.Script.ScriptSourceOptions.Inline);
+                                          _.Variables.Add(ScriptVariables.ScriptSource,
+                                              ScriptVariables.ScriptSourceOptions.Inline);
                                       },
                                       String.Empty,
                                       _ =>
@@ -712,8 +712,8 @@ output ""config-map-aws-auth"" {{
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, "");
-                                          _.Variables.Add(TerraformSpecialVariables.Script.ScriptSource,
-                                                          TerraformSpecialVariables.Script.ScriptSourceOptions.Inline);
+                                          _.Variables.Add(ScriptVariables.ScriptSource,
+                                              ScriptVariables.ScriptSourceOptions.Inline);
                                       },
                                       String.Empty,
                                       _ =>
@@ -743,8 +743,8 @@ output ""config-map-aws-auth"" {{
                                           _.Variables.Add("RandomNumber", randomNumber);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
-                                          _.Variables.Add(TerraformSpecialVariables.Script.ScriptSource,
-                                                          TerraformSpecialVariables.Script.ScriptSourceOptions.Inline);
+                                          _.Variables.Add(ScriptVariables.ScriptSource,
+                                              ScriptVariables.ScriptSourceOptions.Inline);
                                       },
                                       String.Empty,
                                       _ =>
@@ -781,8 +781,8 @@ output ""config-map-aws-auth"" {{
                                           _.Variables.Add("RandomNumber", randomNumber);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
-                                          _.Variables.Add(TerraformSpecialVariables.Script.ScriptSource,
-                                                          TerraformSpecialVariables.Script.ScriptSourceOptions.Inline);
+                                          _.Variables.Add(ScriptVariables.ScriptSource,
+                                              ScriptVariables.ScriptSourceOptions.Inline);
                                       },
                                       String.Empty,
                                       _ =>
@@ -831,8 +831,8 @@ output ""config-map-aws-auth"" {{
             var result = await CommandTestBuilder.CreateAsync<Program>(command)
                                                  .WithArrange(context =>
                                                               {
-                                                                  context.Variables.Add(TerraformSpecialVariables.Script.ScriptSource,
-                                                                                        TerraformSpecialVariables.Script.ScriptSourceOptions.Package);
+                                                                  context.Variables.Add(ScriptVariables.ScriptSource,
+                                                                      ScriptVariables.ScriptSourceOptions.Package);
                                                                   context.Variables.Add(TerraformSpecialVariables.Packages.PackageId, terraformFiles);
                                                                   context.Variables.Add(TerraformSpecialVariables.Calamari.TerraformCliPath,
                                                                                         Path.GetDirectoryName(customTerraformExecutable));
@@ -841,8 +841,8 @@ output ""config-map-aws-auth"" {{
 
                                                                   populateVariables(context);
 
-                                                                  var isInline = context.Variables.Get(TerraformSpecialVariables.Script.ScriptSource)!
-                                                                                        .Equals(TerraformSpecialVariables.Script.ScriptSourceOptions.Inline, StringComparison.InvariantCultureIgnoreCase);
+                                                                  var isInline = context.Variables.Get(ScriptVariables.ScriptSource)!
+                                                                                        .Equals(ScriptVariables.ScriptSourceOptions.Inline, StringComparison.InvariantCultureIgnoreCase);
                                                                   if (isInline)
                                                                   {
                                                                       var template = context.Variables.Get(TerraformSpecialVariables.Action.Terraform.Template);
