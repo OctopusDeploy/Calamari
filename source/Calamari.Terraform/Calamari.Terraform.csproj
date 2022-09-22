@@ -17,12 +17,14 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.4.34" />
-    <PackageReference Include="Calamari.CloudAccounts" Version="20.4.2" />
-    <PackageReference Include="Calamari.Common" Version="20.4.2" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="NuGet.Versioning" Version="5.9.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
+    <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
   </ItemGroup>
 </Project>
