@@ -1,4 +1,5 @@
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using Calamari.Tests.Fixtures;
 using FluentAssertions;

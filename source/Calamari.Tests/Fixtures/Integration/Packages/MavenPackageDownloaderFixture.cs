@@ -2,6 +2,7 @@
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octopus.Versioning;

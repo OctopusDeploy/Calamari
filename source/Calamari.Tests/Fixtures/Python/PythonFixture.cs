@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 

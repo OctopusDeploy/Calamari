@@ -2,6 +2,7 @@ using System.IO;
 using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 

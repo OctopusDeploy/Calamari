@@ -14,6 +14,7 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using Newtonsoft.Json;
 using NUnit.Framework;

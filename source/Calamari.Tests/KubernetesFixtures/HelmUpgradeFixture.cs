@@ -14,6 +14,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
 using Calamari.Util;

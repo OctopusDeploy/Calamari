@@ -76,6 +76,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureScripting", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureScripting.Tests", "Calamari.AzureScripting.Tests\Calamari.AzureScripting.Tests.csproj", "{860FED1E-268B-4E43-9D8A-EE0A983E8793}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Terraform", "Calamari.Terraform\Calamari.Terraform.csproj", "{F7DE25B6-D00A-47D9-9E75-31C796D7B877}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Terraform.Tests", "Calamari.Terraform.Tests\Calamari.Terraform.Tests.csproj", "{D0898CCB-6B3E-4DFC-9EB8-954EC8F2F0D8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -188,6 +192,14 @@ Global
 		{860FED1E-268B-4E43-9D8A-EE0A983E8793}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{860FED1E-268B-4E43-9D8A-EE0A983E8793}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{860FED1E-268B-4E43-9D8A-EE0A983E8793}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7DE25B6-D00A-47D9-9E75-31C796D7B877}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7DE25B6-D00A-47D9-9E75-31C796D7B877}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7DE25B6-D00A-47D9-9E75-31C796D7B877}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7DE25B6-D00A-47D9-9E75-31C796D7B877}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0898CCB-6B3E-4DFC-9EB8-954EC8F2F0D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0898CCB-6B3E-4DFC-9EB8-954EC8F2F0D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0898CCB-6B3E-4DFC-9EB8-954EC8F2F0D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0898CCB-6B3E-4DFC-9EB8-954EC8F2F0D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

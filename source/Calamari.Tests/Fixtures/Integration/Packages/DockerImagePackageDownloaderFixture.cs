@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;

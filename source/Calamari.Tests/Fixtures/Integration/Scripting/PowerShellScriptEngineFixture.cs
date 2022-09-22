@@ -3,6 +3,7 @@ using System.IO;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Testing.Requirements;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting

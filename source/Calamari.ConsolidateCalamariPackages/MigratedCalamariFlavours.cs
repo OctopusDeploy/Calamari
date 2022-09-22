@@ -14,6 +14,7 @@ namespace Calamari.ConsolidateCalamariPackages
             "Calamari.AzureCloudService",
             "Calamari.GoogleCloudScripting",
             "Calamari.AzureScripting",
+            "Calamari.Terraform"
         };
     }
 }
