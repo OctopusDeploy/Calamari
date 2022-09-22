@@ -7,21 +7,39 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-        <TargetFrameworks>net452;net6.0</TargetFrameworks>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
         <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="FluentAssertions" Version="5.10.3" />
-        <PackageReference Include="nunit" Version="3.13.1" />
+        <PackageReference Include="FluentAssertions" Version="6.7.0" />
+        <PackageReference Include="nunit" Version="3.13.2" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
         <PackageReference Include="NSubstitute" Version="4.2.2" />
         <PackageReference Include="Shouldly" Version="2.8.2" />
+        <PackageReference Include="Octopus.Dependencies.TerraformCLI" Version="1.0.10" />
+        <PackageReference Include="Calamari.Tests.Shared" Version="14.2.2" />
     </ItemGroup>
+
     <ItemGroup>
-      <ProjectReference Include="..\Calamari\Calamari.csproj" />
+        <ProjectReference Include="..\Calamari\Calamari.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="**/*.tf*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="**/*.hcl">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="**/*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="**/*.txt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 </Project>

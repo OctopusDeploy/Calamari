@@ -1,7 +1,7 @@
-﻿using System.IO;
-using Octopus.Data;
+﻿using System;
+using System.IO;
 
-namespace Sashimi.Terraform.Tests.CommonTemplates
+namespace Calamari.Terraform.Tests.CommonTemplates
 {
     public static class TemplateLoader
     {
