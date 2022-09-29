@@ -282,7 +282,7 @@ namespace Calamari.Build
 
                     foreach (var flavour in calamariFlavours)
                     {
-                        Log.Verbose($"Compressing Calamari flavour {PublishDirectory}/{flavour.Name}");
+                        Log.Information($"Compressing Calamari flavour {PublishDirectory}/{flavour.Name}");
                         var compressionSource = PublishDirectory / flavour.Name;
                         if (!Directory.Exists(compressionSource))
                         {
@@ -290,6 +290,7 @@ namespace Calamari.Build
                             continue;
                         }
                         CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / flavour.Name}.zip");
+                        Log.Information($"Completed compressing Calamari flavour {PublishDirectory}/{flavour.Name}");
                     }
                  });
 
