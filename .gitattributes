@@ -48,11 +48,7 @@
 
 *.sln text eol=crlf merge=union 
 
-<<<<<<< HEAD
-*.approved.* binary
-=======
 *.approved.* binary
 *.approved.* -text
 **/*.Tests/**/Samples/enc-* -text
 **/*.Tests/Fixtures/Substitutions/Samples/* -text
->>>>>>> calamari/master
