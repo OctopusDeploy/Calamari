@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <PropertyGroup>
+    <AssemblyName>Calamari.Terraform</AssemblyName>
+    <RootNamespace>Calamari.Terraform</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <LangVersion>9</LangVersion>
+    <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+  <!-- Cake build looks for xpath Project/PropertyGroup/TargetFrameworks with a fallback of Project/PropertyGroup/TargetFramework
+        in PublishCalamariProjects task. If making changes, be sure to look there to make sure it's all alright still -->
+  <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
+    <TargetFrameworks>net452;net6.0</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.4.34" />
+    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="NuGet.Versioning" Version="5.9.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
+    <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+  </ItemGroup>
+</Project>

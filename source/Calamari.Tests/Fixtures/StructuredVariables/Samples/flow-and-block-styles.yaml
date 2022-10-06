@@ -1,0 +1,48 @@
+﻿plain: value
+"quotedkey": value
+doublequoted: "value"
+doublequotedescapes: "line 1\r\n  line 2\r\nline 3"
+singlequoted: 'value'
+singlequotednewlines: 'line 1
+
+  line 2'
+foldedblock: >
+  line 1
+
+    line 2
+
+  line 3
+foldedblockstrip: >-
+  line 1
+
+    line 2
+
+  line 3
+foldedblockkeep: >+
+  line 1
+
+    line 2
+
+  line 3
+
+
+literalblock: |
+  line 1
+    line 2
+  line 3
+literalblockstrip: |-
+  line 1
+    line 2
+  line 3
+literalblockkeep: |+
+  line 1
+    line 2
+  line 3
+
+
+literalmoreindent: |
+    line 1
+literalmoreindentthanindicated: |2
+    line 1
+flowsequence: [one, "two"]
+flowmapping: {one: 1, "two": 2}

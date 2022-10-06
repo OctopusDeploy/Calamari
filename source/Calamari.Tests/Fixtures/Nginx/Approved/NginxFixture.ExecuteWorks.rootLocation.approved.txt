@@ -1,0 +1,9 @@
+server {
+    listen 80;
+    server_name www.nginxsampleweb.app;
+    include /etc/nginx/conf.d/NginxSampleWebApp.conf.d/location.*.conf;
+    location = / {
+        root /var/www/NginxSampleWebApp/wwwroot;
+        try_files $uri $uri/ /index.html;
+    }
+}
