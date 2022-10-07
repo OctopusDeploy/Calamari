@@ -1,1 +1,1 @@
-updateprogress(50, "Half Way")
+updateprogress(50)
