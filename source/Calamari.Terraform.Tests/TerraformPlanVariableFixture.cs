@@ -7,7 +7,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Terraform.Behaviours;
-using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
