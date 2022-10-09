@@ -13,7 +13,8 @@
     <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
         <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
+
     <ItemGroup>
-        <PackageReference Include="Calamari.Scripting" Version="14.2.0" />
+        <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
     </ItemGroup>
 </Project>
