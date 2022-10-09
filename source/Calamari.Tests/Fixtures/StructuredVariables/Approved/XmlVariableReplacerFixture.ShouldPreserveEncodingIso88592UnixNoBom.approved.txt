@@ -1,0 +1,49 @@
+3C 3F 78 6D 6C 20 76 65   <?xml ve
+72 73 69 6F 6E 3D 22 31   rsion="1
+2E 30 22 20 65 6E 63 6F   .0" enco
+64 69 6E 67 3D 22 69 73   ding="is
+6F 2D 38 38 35 39 2D 32   o-8859-2
+22 3F 3E 0A 3C 74 6F 70   "?>^<top
+2D 6E 61 6D 65 73 2D 66   -names-f
+6F 72 2D 62 6F 79 73 3E   or-boys>
+0A 20 20 3C 6E 61 6D 65   ^  <name
+3E 4A 61 6B 75 62 3C 2F   >Jakub</
+6E 61 6D 65 3E 0A 20 20   name>^  
+3C 6E 61 6D 65 3E 53 7A   <name>Sz
+79 6D 6F 6E 3C 2F 6E 61   ymon</na
+6D 65 3E 0A 20 20 3C 6E   me>^  <n
+61 6D 65 3E 4B 61 63 70   ame>Kacp
+65 72 3C 2F 6E 61 6D 65   er</name
+3E 0A 20 20 3C 6E 61 6D   >^  <nam
+65 3E 46 69 6C 69 70 3C   e>Filip<
+2F 6E 61 6D 65 3E 0A 20   /name>^ 
+20 3C 6E 61 6D 65 3E 4D    <name>M
+69 63 68 61 B3 2B 3C 2F   icha?+</
+6E 61 6D 65 3E 0A 20 20   name>^  
+3C 6E 61 6D 65 3E 4D 61   <name>Ma
+74 65 75 73 7A 3C 2F 6E   teusz</n
+61 6D 65 3E 0A 20 20 3C   ame>^  <
+6E 61 6D 65 3E 42 61 72   name>Bar
+74 6F 73 7A 3C 2F 6E 61   tosz</na
+6D 65 3E 0A 20 20 3C 6E   me>^  <n
+61 6D 65 3E 57 6F 6A 63   ame>Wojc
+69 65 63 68 3C 2F 6E 61   iech</na
+6D 65 3E 0A 20 20 3C 6E   me>^  <n
+61 6D 65 3E 41 64 61 6D   ame>Adam
+3C 2F 6E 61 6D 65 3E 0A   </name>^
+20 20 3C 6E 61 6D 65 3E     <name>
+57 69 6B 74 6F 72 3C 2F   Wiktor</
+6E 61 6D 65 3E 0A 20 20   name>^  
+3C 6E 61 6D 65 3E 50 69   <name>Pi
+6F 74 72 3C 2F 6E 61 6D   otr</nam
+65 3E 0A 20 20 3C 6E 61   e>^  <na
+6D 65 3E 4A 61 6E 3C 2F   me>Jan</
+6E 61 6D 65 3E 0A 20 20   name>^  
+3C 6E 61 6D 65 3E 44 61   <name>Da
+77 69 64 3C 2F 6E 61 6D   wid</nam
+65 3E 0A 20 20 3C 6E 61   e>^  <na
+6D 65 3E 4D 69 6B 6F B3   me>Miko?
+61 6A 3C 2F 6E 61 6D 65   aj</name
+3E 0A 3C 2F 74 6F 70 2D   >^</top-
+6E 61 6D 65 73 2D 66 6F   names-fo
+72 2D 62 6F 79 73 3E      r-boys>

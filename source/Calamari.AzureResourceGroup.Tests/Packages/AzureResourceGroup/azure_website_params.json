@@ -1,0 +1,45 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+	    "siteName": {
+	      "value": "#{WebSite}"
+	    },
+        "sku": {
+          "value": "#{SKU}"
+        },
+	    "hostingPlanName": {
+	      "value": "octopus-sample"
+	    },
+	    "siteLocation": {
+	      "value": "#{Location}"
+	    },
+	    "storageAccountPrefix": {
+	      "value": "#{AccountPrefix}"
+	    },
+	    "storageAccountList": {
+          "value": [
+            {
+              "name": "appdev",
+              "location": "Central US",
+              "storageAccountType": "Standard_LRS"
+            },
+            {
+              "name": "dbdev",
+              "location": "Central US",
+              "storageAccountType": "Standard_GRS"
+            },
+            {
+              "name": "webdev",
+              "location": "Central US",
+              "storageAccountType": "Standard_ZRS"
+            },
+            {
+              "name": "archdev",
+              "location": "West US",
+              "storageAccountType": "Premium_LRS"
+            }
+          ]
+        }
+   }
+}

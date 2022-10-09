@@ -1,0 +1,6 @@
+{
+  "commandName": "web",
+  "environmentVariables": {
+    "Hosting:Environment": "Production"
+  }
+}

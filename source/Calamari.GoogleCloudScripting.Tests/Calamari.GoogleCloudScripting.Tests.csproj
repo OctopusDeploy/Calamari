@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <AssemblyName>Calamari.GoogleCloudScripting.Tests</AssemblyName>
+        <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <LangVersion>8</LangVersion>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+    <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
+        <TargetFrameworks>net461;net6.0</TargetFrameworks>
+    </PropertyGroup>
+    <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
+        <TargetFramework>net6.0</TargetFramework>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="nunit" Version="3.13.3" />
+        <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
+        <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
+        <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
+        <PackageReference Include="Google.Cloud.Storage.V1" Version="2.5.0" />
+        <PackageReference Include="SharpZipLib" Version="1.3.3" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+        <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
+        <ProjectReference Include="..\Calamari.GoogleCloudScripting\Calamari.GoogleCloudScripting.csproj" />
+    </ItemGroup>
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Copy>true</Copy>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Sashimi.Aws.Accounts" Version="14.2.2" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.Azure.Accounts" Version="14.2.2" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.Aws.Common" Version="14.2.2" GeneratePathProperty="true" />
+        <PackageReference Include="Sashimi.Azure.Common" Version="14.2.2" GeneratePathProperty="true" />
+    </ItemGroup>
+
+    <!-- Copy over sashimi nuget packages from the packages directory. -->
+    <Target Name="CopyPackages" BeforeTargets="PrepareForBuild">
+        <Copy SourceFiles="$(PkgSashimi_Aws_Accounts)\sashimi.aws.accounts.14.2.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts" />
+        <Copy SourceFiles="$(PkgSashimi_Azure_Accounts)\sashimi.azure.accounts.14.2.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts" />
+        <Copy SourceFiles="$(PkgSashimi_Aws_Common)\sashimi.aws.common.14.2.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts" />
+        <Copy SourceFiles="$(PkgSashimi_Azure_Common)\sashimi.azure.common.14.2.2.nupkg" DestinationFolder="$(ProjectDir)\artifacts"/>
+    </Target>
+</Project>
