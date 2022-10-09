@@ -2,10 +2,10 @@
 using System.IO;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Tests.Shared;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing;
 using FluentAssertions;
 using NUnit.Framework;
-using Sashimi.Server.Contracts;
 using ScriptSyntax = Calamari.Common.Features.Scripts.ScriptSyntax;
 
 namespace Calamari.Scripting.Tests
@@ -20,9 +20,9 @@ namespace Calamari.Scripting.Tests
             return CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                                      .WithArrange(context =>
                                                   {
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Inline);
-                                                      context.Variables.Add(KnownVariables.Action.Script.Syntax, ScriptSyntax.PowerShell.ToString());
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptBody, psScript);
+                                                      context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
+                                                      context.Variables.Add(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+                                                      context.Variables.Add(ScriptVariables.ScriptBody, psScript);
                                                       context.Variables.Add("Name", "World");
                                                       context.Variables.Add("Name2", "Two");
                                                   })
@@ -34,14 +34,15 @@ namespace Calamari.Scripting.Tests
         public Task ExecuteWithPackage()
         {
             using var tempFolder = TemporaryDirectory.Create();
+            var scriptFileName = "myscript.ps1";
             var psScript = "echo \"Hello $Name #{Name2}\"";
-            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, "myscript.ps1"), psScript);
+            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, scriptFileName), psScript);
 
             return CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                                      .WithArrange(context =>
                                                   {
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Package);
-                                                      context.Variables.Add("Octopus.Action.Script.ScriptFileName", "myscript.ps1");
+                                                      context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Package);
+                                                      context.Variables.Add(ScriptVariables.ScriptFileName, scriptFileName);
                                                       context.Variables.Add("Name", "World");
                                                       context.Variables.Add("Name2", "Two");
                                                       context.WithFilesToCopy(tempFolder.DirectoryPath);
@@ -54,17 +55,18 @@ namespace Calamari.Scripting.Tests
         public Task ExecuteWithPackageAndParameters()
         {
             using var tempFolder = TemporaryDirectory.Create();
+            var scriptFileName = "myscript.ps1";
             var psScript = @"
 param ($value)
 echo ""Hello $value"";";
-            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, "myscript.ps1"), psScript);
+            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, scriptFileName), psScript);
 
             return CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                                      .WithArrange(context =>
                                                   {
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Package);
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptFileName, "myscript.ps1");
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptParameters, "-value abc");
+                                                      context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Package);
+                                                      context.Variables.Add(ScriptVariables.ScriptFileName, scriptFileName);
+                                                      context.Variables.Add(ScriptVariables.ScriptParameters, "-value abc");
                                                       context.WithFilesToCopy(tempFolder.DirectoryPath);
                                                   })
                                      .WithAssert(result => result.FullLog.Should().Contain("Hello abc"))
@@ -75,17 +77,18 @@ echo ""Hello $value"";";
         public Task ExecuteWithPackageAndParametersDeployPs1()
         {
             using var tempFolder = TemporaryDirectory.Create();
+            var scriptFileName = "deploy.ps1";
             var psScript = @"
 param ($value)
 echo ""Hello $value"";";
-            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, "deploy.ps1"), psScript);
+            File.WriteAllText(Path.Combine(tempFolder.DirectoryPath, scriptFileName), psScript);
 
             return CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                                      .WithArrange(context =>
                                                   {
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Package);
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptFileName, "deploy.ps1");
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptParameters, "-value abc");
+                                                      context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Package);
+                                                      context.Variables.Add(ScriptVariables.ScriptFileName, scriptFileName);
+                                                      context.Variables.Add(ScriptVariables.ScriptParameters, "-value abc");
                                                       context.WithFilesToCopy(tempFolder.DirectoryPath);
                                                   })
                                      .WithAssert(result => result.FullLog.Should().Contain("Hello abc"))
@@ -102,9 +105,9 @@ echo ""Hello $value"";";
             return CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                                      .WithArrange(context =>
                                                   {
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Inline);
-                                                      context.Variables.Add(KnownVariables.Action.Script.Syntax, ScriptSyntax.PowerShell.ToString());
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptBody, psScript);
+                                                      context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
+                                                      context.Variables.Add(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
+                                                      context.Variables.Add(ScriptVariables.ScriptBody, psScript);
                                                   })
                                      .WithAssert(result => result.WasSuccessful.Should().BeFalse())
                                      .Execute(false);
@@ -120,7 +123,7 @@ echo ""Hello $value"";";
             return CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                                      .WithArrange(context =>
                                                   {
-                                                      context.Variables.Add(KnownVariables.Action.Script.ScriptSource, KnownVariableValues.Action.Script.ScriptSource.Package);
+                                                      context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Package);
                                                       context.Variables.Add("Octopus.Action.Script.ScriptFileName", "myscript.ps1");
                                                       context.WithFilesToCopy(tempFolder.DirectoryPath);
                                                   })
