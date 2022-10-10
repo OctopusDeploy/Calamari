@@ -27,7 +27,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
         public override IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
         {
             if (!TryGetDiscoveryContext<AwsAuthenticationDetails>(contextJson, out var authenticationDetails, out var workerPoolId))
-                yield break;
+                return Enumerable.Empty<KubernetesCluster>();
 
             var accessKeyOrWorkerCredentials = authenticationDetails.Credentials.Type == "account"
                 ? $"Access Key: {authenticationDetails.Credentials.Account.AccessKey}"
@@ -55,36 +55,47 @@ namespace Calamari.Aws.Kubernetes.Discovery
                 Log.Verbose("  Role: No IAM Role provided.");
             }
 
-            if (!authenticationDetails.TryGetCredentials(Log, out var credentials))
-                yield break;
-
-            foreach (var region in authenticationDetails.Regions)
+            var resultClusters = new List<KubernetesCluster>();
+            try
             {
-                var client = new AmazonEKSClient(credentials,
-                    RegionEndpoint.GetBySystemName(region));
+                var credentials = authenticationDetails.GetCredentials();
 
-                var clusters = client.ListClustersAsync(new ListClustersRequest()).GetAwaiter().GetResult();
-
-                foreach (var cluster in clusters.Clusters.Select(c =>
-                    client.DescribeClusterAsync(new DescribeClusterRequest { Name = c }).GetAwaiter().GetResult().Cluster))
+                foreach (var region in authenticationDetails.Regions)
                 {
-                    var credentialsRole = authenticationDetails.Role;
-                    var assumedRole = credentialsRole.Type == "assumeRole"
-                        ? new AwsAssumeRole(credentialsRole.Arn,
-                            credentialsRole.SessionName,
-                            credentialsRole.SessionDuration,
-                            credentialsRole.ExternalId)
-                        : null;
+                    var client = new AmazonEKSClient(credentials,
+                        RegionEndpoint.GetBySystemName(region));
 
-                    yield return KubernetesCluster.CreateForEks(cluster.Arn,
-                        cluster.Name,
-                        cluster.Endpoint,
-                        authenticationDetails.Credentials.AccountId,
-                        assumedRole,
-                        workerPoolId,
-                        cluster.Tags.ToTargetTags());
+                    var clusters = client.ListClustersAsync(new ListClustersRequest()).GetAwaiter().GetResult();
+
+                    foreach (var cluster in clusters.Clusters.Select(c =>
+                        client.DescribeClusterAsync(new DescribeClusterRequest { Name = c }).GetAwaiter().GetResult().Cluster))
+                    {
+                        var credentialsRole = authenticationDetails.Role;
+                        var assumedRole = credentialsRole.Type == "assumeRole"
+                            ? new AwsAssumeRole(credentialsRole.Arn,
+                                credentialsRole.SessionName,
+                                credentialsRole.SessionDuration,
+                                credentialsRole.ExternalId)
+                            : null;
+
+                        resultClusters.Add(KubernetesCluster.CreateForEks(cluster.Arn,
+                            cluster.Name,
+                            cluster.Endpoint,
+                            authenticationDetails.Credentials.AccountId,
+                            assumedRole,
+                            workerPoolId,
+                            cluster.Tags.ToTargetTags()));
+                    }
                 }
             }
+            // Catching a generic Exception because AWS SDK throws undocumented exceptions.
+            catch (Exception exception)
+            {
+                Log.Warn("Unable to authorise credentials, see verbose log for details.");
+                Log.Verbose($"Unable to authorise TODO: {exception}");
+            }
+
+            return resultClusters;
         }
     }
 }
