@@ -13,8 +13,8 @@ provider "kubernetes" {
   token                  = data.aws_eks_cluster_auth.default.token
 }
 
-resource "local_file" "kubeconfig" {
-  sensitive_content = templatefile("${path.module}/kubeconfig.tpl", {
+resource "local_sensitive_file" "kubeconfig" {
+  content = templatefile("${path.module}/kubeconfig.tpl", {
     cluster_name = aws_eks_cluster.default.name,
     cluster_ca    = data.aws_eks_cluster.default.certificate_authority[0].data,
     endpoint     = data.aws_eks_cluster.default.endpoint,
