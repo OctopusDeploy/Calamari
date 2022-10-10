@@ -2,11 +2,6 @@
 
     <PropertyGroup>
         <Nullable>enable</Nullable>
-        <OutputType>Exe</OutputType>
-        <PackageProjectUrl>https://github.com/OctopusDeploy/Sashimi/</PackageProjectUrl>
-        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-        <IsPackable>true</IsPackable>
         <LangVersion>9</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
