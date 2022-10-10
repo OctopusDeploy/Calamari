@@ -13,6 +13,7 @@ namespace Calamari.Commands
     {
         PackageId packageId;
         VersionFormat versionFormat;
+        string rawVersionString;
         IVersion packageVersion;
         PackagePath packagePath;
         ServerTaskId taskId;
@@ -35,7 +36,7 @@ namespace Calamari.Commands
                             }
                             versionFormat = format;
                         });
-            Options.Add("packageVersion=", "Package version of the used package", v => packageVersion = VersionFactory.TryCreateVersion(v, versionFormat));
+            Options.Add("packageVersion=", "Package version of the used package", v => rawVersionString = v);
             Options.Add("packagePath=", "Path to the package", v => packagePath = new PackagePath(v));
             Options.Add("taskId=", "Id of the task that is using the package", v => taskId = new ServerTaskId(v));
         }
@@ -45,6 +46,7 @@ namespace Calamari.Commands
             try
             {
                 Options.Parse(commandLineArguments);
+                packageVersion = VersionFactory.TryCreateVersion(rawVersionString, versionFormat);
                 RegisterPackageUse();
             }
             catch (Exception ex)
