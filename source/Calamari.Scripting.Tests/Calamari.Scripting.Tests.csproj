@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <AssemblyName>Calamari.Scripting.Tests</AssemblyName>
+        <RootNamespace>Calamari.Scripting.Tests</RootNamespace>
         <TargetFramework>net6.0</TargetFramework>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>false</IsPackable>
