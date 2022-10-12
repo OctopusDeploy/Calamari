@@ -100,10 +100,6 @@
           "type": "string",
           "description": "Root directory during build execution"
         },
-        "SetOctopusServerVersion": {
-          "type": "boolean",
-          "description": "Set Calamari Version on OctopusServer"
-        },
         "SignBinaries": {
           "type": "boolean"
         },
@@ -126,7 +122,6 @@
               "CheckForbiddenWords",
               "Clean",
               "Compile",
-              "CopySashimiPackagesForConsolidation",
               "CopyToLocalPackages",
               "Pack",
               "PackageConsolidatedCalamariZip",
@@ -153,7 +148,6 @@
               "CheckForbiddenWords",
               "Clean",
               "Compile",
-              "CopySashimiPackagesForConsolidation",
               "CopyToLocalPackages",
               "Pack",
               "PackageConsolidatedCalamariZip",

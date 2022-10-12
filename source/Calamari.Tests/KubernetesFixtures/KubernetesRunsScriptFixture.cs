@@ -11,11 +11,13 @@ using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -32,6 +34,7 @@ namespace Calamari.Tests.KubernetesFixtures
         IVariables variables;
         InMemoryLog log;
         Dictionary<string, string> redactMap;
+        static InstallTools InstallTools;
 
         [SetUp]
         public void Setup()
@@ -39,7 +42,6 @@ namespace Calamari.Tests.KubernetesFixtures
             variables = new CalamariVariables();
             log = new DoNotDoubleLog();
             redactMap = new Dictionary<string, string>();
-
             SetTestClusterVariables();
         }
 
@@ -216,8 +218,31 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void ExecutionWithEKS()
+        [RequiresNonMono] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
+        public void ExecutionWithEKS_IAMAuthenticator()
         {
+            InstallTools = InstallAwsTools((tools) => InstallAwsIAmAuthenticator(tools));
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(SpecialVariables.EksClusterName, "my-eks-cluster");
+            var account = "eks_account";
+            variables.Set("Octopus.Action.AwsAccount.Variable", account);
+            variables.Set("Octopus.Action.Aws.Region", "eks_region");
+            variables.Set($"{account}.AccessKey", "eksAccessKey");
+            variables.Set($"{account}.SecretKey", "eksSecretKey");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+        
+        [Test]
+        [RequiresNonMono] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
+        public void ExecutionWithEKS_AwsCLIAuthenticator()
+        {
+            InstallTools = InstallAwsTools(InstallAwsCli);
+
+            // Overriding the cluster url with a valid url. This is required to hit the aws eks get-token endpoint.
+            variables.Set(SpecialVariables.ClusterUrl, "https://someHash.gr7.ap-southeast-2.eks.amazonaws.com");
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
@@ -346,7 +371,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         CalamariResult ExecuteScriptInRecordOnlyMode(IScriptWrapper wrapper, string scriptName)
         {
-            return ExecuteScriptInternal(new RecordOnly(), wrapper, scriptName);
+            return ExecuteScriptInternal(new RecordOnly(variables), wrapper, scriptName);
         }
 
         CalamariResult ExecuteScriptInternal(ICommandLineRunner runner, IScriptWrapper wrapper, string scriptName)
@@ -363,12 +388,60 @@ namespace Calamari.Tests.KubernetesFixtures
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
 
+        InstallTools InstallAwsTools(Action<InstallTools> toolsForInstall)
+        {
+            var installTools = new InstallTools(TestContext.Progress.WriteLine);
+            toolsForInstall(installTools);
+            return installTools;
+        }
+
+        void InstallAwsCli(InstallTools tools)
+        {
+            var installAwsCliTask = tools.InstallAwsCli();
+            Task.Run(() => installAwsCliTask);
+            Task.WaitAll(installAwsCliTask);
+        }
+
+        void InstallAwsIAmAuthenticator(InstallTools tools)
+        {
+            var installAwsIAmAuthenticatorTask = tools.InstallAwsAuthenticator();
+            Task.Run(() => installAwsIAmAuthenticatorTask);
+            Task.WaitAll(installAwsIAmAuthenticatorTask);
+        }
+
         class RecordOnly :  ICommandLineRunner
         {
+            IVariables Variables;
+            public RecordOnly(IVariables variables)
+            {
+                Variables = variables;
+            }
+            
             public CommandResult Execute(CommandLineInvocation invocation)
             {
+                // If were running an aws command (we check the version and get the eks token endpoint) or checking it's location i.e. 'where aws' we want to run the actual command result.
+                if (new string[] { "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe" }.Contains(invocation.Executable))
+                {
+                    var captureCommandOutput = new CaptureCommandInvocationOutputSink();
+                    var testAwsInvocation = new CommandLineInvocation(invocation.Executable.Contains("iam") ? InstallTools.AwsAuthenticatorExecutable : InstallTools.AwsCliExecutable, invocation.Arguments)
+                    {
+                        EnvironmentVars = invocation.EnvironmentVars,
+                        WorkingDirectory = invocation.WorkingDirectory,
+                        OutputAsVerbose = false,
+                        OutputToLog = false,
+                        AdditionalInvocationOutputSink = captureCommandOutput
+                    };
+                    
+                    var commandLineRunner = new CommandLineRunner(new SilentLog(), Variables);
+                    commandLineRunner.Execute(testAwsInvocation);
+                    foreach (var message in captureCommandOutput.AllMessages)
+                    {
+                        invocation.AdditionalInvocationOutputSink?.WriteInfo(message);
+                    }
+                }
+                
                 // We only want to output executable string. eg. ExecuteCommandAndReturnOutput("where", "kubectl.exe")
-                if (new string[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd" }.Contains(invocation.Arguments)) 
+                if (new string[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe" }.Contains(invocation.Arguments)) 
                     invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));
                 return new CommandResult(invocation.ToString(), 0);
             }

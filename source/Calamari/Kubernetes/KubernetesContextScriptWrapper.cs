@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
@@ -15,6 +16,9 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Octopus.CoreUtilities;
 
 namespace Calamari.Kubernetes
 {
@@ -114,6 +118,8 @@ namespace Calamari.Kubernetes
             readonly string workingDirectory;
             string kubectl;
             string az;
+            string aws;
+            string awsIAmAuthenticator;
             string gcloud;
             Dictionary<string, string> redactMap = new Dictionary<string, string>();
 
@@ -421,14 +427,127 @@ namespace Calamari.Kubernetes
                 var clusterName = variables.Get(SpecialVariables.EksClusterName);
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
 
+                if (TrySetKubeConfigAuthenticationToAwsCli(clusterName, clusterUrl, user))
+                {
+                    return;
+                }
+
+                log.Verbose("Attempting to authenticate with aws-iam-authenticator");
+                SetKubeConfigAuthenticationToAwsIAm(user, clusterName);
+            }
+
+            bool TrySetKubeConfigAuthenticationToAwsCli(string clusterName, string clusterUrl, string user)
+            {
+                log.Verbose("Attempting to authenticate with aws-cli");
+                if (TrySetAws())
+                {
+                    try
+                    {
+                        var awsCliVersion = GetAwsCliVersion();
+                        var minmumAwsCliVersionForAuth = new Version("1.16.156");
+                        if (awsCliVersion > minmumAwsCliVersionForAuth)
+                        {
+                            var region = GetEksClusterRegion(clusterUrl);
+                            if (!string.IsNullOrWhiteSpace(region))
+                            {
+                                var apiVersion = GetEksClusterApiVersion(clusterName, region);
+                                SetKubeConfigAuthenticationToAwsCli(user, clusterName, region, apiVersion);
+                                return true;
+                            }
+                            
+                            log.Verbose("The EKS cluster Url specified should contain a valid aws region name");
+                        }
+
+                        log.Verbose($"aws cli version: {awsCliVersion} does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
+                    }
+                    catch (Exception e)
+                    {
+                        log.Verbose($"Unable to authenticate to {clusterUrl} using the aws cli. Failed with error message: {e.Message}");
+                    }
+                }
+                else
+                {
+                    log.Verbose("Could not find the aws cli, falling back to the aws-iam-authenticator.");
+                }
+
+                return false;
+            }
+            
+            string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
+
+            Version GetAwsCliVersion()
+            {
+                var awsCliCommandRes = ExecuteCommandAndReturnOutput(aws, "--version").FirstOrDefault();
+                var awsCliVersionString = awsCliCommandRes.Split()
+                                                          .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
+                                                          .Replace("aws-cli/", string.Empty);
+                return new Version(awsCliVersionString);
+            }
+
+            string GetEksClusterApiVersion(string clusterName, string region)
+            {
+                var awsEksTokenCommand = ExecuteCommandAndReturnOutput(aws,
+                                                                       "eks",
+                                                                       "get-token",
+                                                                       $"--cluster-name={clusterName}",
+                                                                       $"--region={region}")
+                    .FirstOrDefault();
+
+                return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion").ToString();
+            }
+
+            void SetKubeConfigAuthenticationToAwsCli(string user, string clusterName, string region, string apiVersion)
+            {
+                ExecuteKubectlCommand("config",
+                                      "set-credentials",
+                                      user,
+                                      "--exec-command=aws",
+                                      "--exec-arg=eks",
+                                      "--exec-arg=get-token",
+                                      $"--exec-arg=--cluster-name={clusterName}",
+                                      $"--exec-arg=--region={region}",
+                                      $"--exec-api-version={apiVersion}");
+            }
+
+            void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
+            {
+                TrySetAwsIAmAuthenticator();
+                var iamAuthenticatorVersion = DetermineAwsIamAuthenticatorVersion();
+                var apiVersion = iamAuthenticatorVersion.None() || iamAuthenticatorVersion.Value <= new Version("0.5.3")
+                    ? "client.authentication.k8s.io/v1alpha1"
+                    : "client.authentication.k8s.io/v1beta1";
+
                 ExecuteKubectlCommand("config",
                                       "set-credentials",
                                       user,
                                       "--exec-command=aws-iam-authenticator",
-                                      "--exec-api-version=client.authentication.k8s.io/v1alpha1",
+                                      $"--exec-api-version={apiVersion}",
                                       "--exec-arg=token",
                                       "--exec-arg=-i",
                                       $"--exec-arg={clusterName}");
+            }
+
+            Maybe<Version> DetermineAwsIamAuthenticatorVersion()
+            {
+                var awsIamVersionOutputCapture = new CaptureCommandOutput();
+                var awsIamVersionCommand = new CommandLineInvocation(awsIAmAuthenticator, "version") { AdditionalInvocationOutputSink = awsIamVersionOutputCapture };
+                var commandResult = ExecuteCommand(awsIamVersionCommand);
+                if (commandResult.HasErrors)
+                    return Maybe<Version>.None;
+
+                var versionOutput = awsIamVersionOutputCapture.Messages.Select(m => m.Text).SingleOrDefault();
+                if (string.IsNullOrWhiteSpace(versionOutput))
+                    return Maybe<Version>.None;
+
+                try
+                {
+                    var versionJson = JsonConvert.DeserializeAnonymousType(versionOutput, new { Version = "1.0.0" });
+                    return Maybe<Version>.Some(new Version(versionJson?.Version ?? string.Empty));
+                }
+                catch
+                {
+                    return Maybe<Version>.None;
+                }
             }
 
             void SetupContextUsingPodServiceAccount(string @namespace,
@@ -559,6 +678,38 @@ namespace Calamari.Kubernetes
                 }
 
                 az = az.Trim();
+
+                return true;
+            }
+            
+            bool TrySetAws()
+            {
+                aws = CalamariEnvironment.IsRunningOnWindows
+                    ? ExecuteCommandAndReturnOutput("where", "aws.exe").FirstOrDefault()
+                    : ExecuteCommandAndReturnOutput("which", "aws").FirstOrDefault();
+
+                if (string.IsNullOrEmpty(aws))
+                {
+                    return false;
+                }
+
+                aws = aws.Trim();
+
+                return true;
+            }
+            
+            bool TrySetAwsIAmAuthenticator()
+            {
+                awsIAmAuthenticator = CalamariEnvironment.IsRunningOnWindows
+                    ? ExecuteCommandAndReturnOutput("where", "aws-iam-authenticator.exe").FirstOrDefault()
+                    : ExecuteCommandAndReturnOutput("which", "aws-iam-authenticator").FirstOrDefault();
+
+                if (string.IsNullOrEmpty(awsIAmAuthenticator))
+                {
+                    return false;
+                }
+
+                awsIAmAuthenticator = awsIAmAuthenticator.Trim();
 
                 return true;
             }

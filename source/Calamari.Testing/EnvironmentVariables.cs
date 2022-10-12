@@ -77,7 +77,10 @@ namespace Calamari.Testing
         MyGetFeedPassword,
 
         [EnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY", "GoogleCloud - OctopusAPITester")]
-        GoogleCloudJsonKeyfile
+        GoogleCloudJsonKeyfile,
+        
+        [EnvironmentVariable("GitHub_RateLimitingPersonalAccessToken", "GitHub test account PAT")]
+        GitHubRateLimitingPersonalAccessToken,
     }
 
     public static class ExternalVariables

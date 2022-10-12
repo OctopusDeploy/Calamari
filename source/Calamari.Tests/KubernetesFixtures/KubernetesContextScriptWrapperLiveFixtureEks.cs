@@ -1,6 +1,7 @@
 #if NETCORE
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Testing;
@@ -40,11 +41,12 @@ namespace Calamari.Tests.KubernetesFixtures
         protected override async Task InstallOptionalTools(InstallTools tools)
         {
             await tools.InstallAwsAuthenticator();
+            await tools.InstallAwsCli();
         }
 
         protected override IEnumerable<string> ToolsToAddToPath(InstallTools tools)
         {
-            yield return tools.AwsAuthenticatorExecutable;
+            return new List<string> { tools.AwsAuthenticatorExecutable, tools.AwsCliExecutable };
         }
 
         protected override void ExtractVariablesFromTerraformOutput(JObject jsonOutput)
