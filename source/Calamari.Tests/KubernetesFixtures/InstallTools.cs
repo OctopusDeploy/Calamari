@@ -9,6 +9,7 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Retry;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -29,6 +30,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public string TerraformExecutable { get; private set; }
         public string KubectlExecutable { get; private set; }
         public string AwsAuthenticatorExecutable { get; private set; }
+        public string AwsCliExecutable { get; private set; }
         public string GcloudExecutable { get; private set; }
 
         public async Task Install()
@@ -58,12 +60,9 @@ namespace Calamari.Tests.KubernetesFixtures
                 KubectlExecutable = await DownloadCli("Kubectl",
                     async () =>
                     {
-                        // TODO: Figure out if we want to continue using stable version even if bugs may be introduced.
-                        // var message = await client.GetAsync("https://storage.googleapis.com/kubernetes-release/release/stable.txt");
-                        // message.EnsureSuccessStatusCode();
-                        // return (await message.Content.ReadAsStringAsync(), null);
-                        const string requiredVersion = "v1.23.6";
-                        return await Task.FromResult((requiredVersion, ""));
+                        var message = await client.GetAsync("https://storage.googleapis.com/kubernetes-release/release/stable.txt");
+                        message.EnsureSuccessStatusCode();
+                        return (await message.Content.ReadAsStringAsync(), null);
                     },
                     async (destinationDirectoryName, tuple) =>
                     {
@@ -86,8 +85,9 @@ namespace Calamari.Tests.KubernetesFixtures
                 AwsAuthenticatorExecutable = await DownloadCli("aws-iam-authenticator",
                     async () =>
                     {
-                        const string requiredVersion = "v0.5.3";
+                        string requiredVersion = "v0.5.7";
                         client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", ExternalVariables.Get(ExternalVariable.GitHubRateLimitingPersonalAccessToken));
                         var json = await client.GetAsync(
                             $"https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases/tags/{requiredVersion}");
                         json.EnsureSuccessStatusCode();
@@ -110,6 +110,75 @@ namespace Calamari.Tests.KubernetesFixtures
                         var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
                         return terraformExecutable;
                     });
+            }
+        }
+
+        public async Task InstallAwsCli()
+        {
+            using (var client = new HttpClient())
+            {
+                AwsCliExecutable = await DownloadCli("aws",
+                                                     async () =>
+                                                     {
+                                                         client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
+                                                         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", ExternalVariables.Get(ExternalVariable.GitHubRateLimitingPersonalAccessToken));
+                                                         var json = await client.GetAsync("https://api.github.com/repos/aws/aws-cli/tags");
+                                                         json.EnsureSuccessStatusCode();
+                                                         var jObject = JArray.Parse(await json.Content.ReadAsStringAsync()).First();
+                                                         var version = jObject["name"].Value<string>();
+                                                         return (version, GetAwsCliDownloadLink());
+                                                     },
+                                                     async (destinationDirectoryName, tuple) =>
+                                                     {
+                                                         await Download(Path.Combine(destinationDirectoryName, GetAWSCliFileName()),
+                                                                        client,
+                                                                        tuple.data);
+
+                                                         var awsInstaller = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                                                         var stdOut = new StringBuilder();
+                                                         var stdError = new StringBuilder();
+                                                         var awsInstallerExitCode = 1;
+
+                                                         if (CalamariEnvironment.IsRunningOnWindows)
+                                                         {
+                                                             awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("msiexec",
+                                                                                                                       $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
+                                                                                                                       destinationDirectoryName,
+                                                                                                                       (Action<string>)(s => stdOut.AppendLine(s)),
+                                                                                                                       (Action<string>)(s => stdError.AppendLine(s)))
+                                                                                                       .ExitCode;
+                                                         }
+                                                         else
+                                                         {
+                                                             var unzipInstallExitCode = SilentProcessRunner.ExecuteCommand("apt-get",
+                                                                                                "install unzip", 
+                                                                                                "",
+                                                                                                (Action<string>)(s => stdOut.AppendLine(s)),
+                                                                                                (Action<string>)(s => stdError.AppendLine(s))).ExitCode;
+
+                                                             if (unzipInstallExitCode != 0)
+                                                             {
+                                                                 throw new Exception($"{stdOut}{stdError}");
+                                                             }
+                                                             
+                                                             stdOut = new StringBuilder();
+                                                             stdError = new StringBuilder();
+                                                             
+                                                             awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("unzip",
+                                                                                                                       $"{GetAWSCliFileName()}",
+                                                                                                                       destinationDirectoryName,
+                                                                                                                       (Action<string>)(s => stdOut.AppendLine(s)),
+                                                                                                                       (Action<string>)(s => stdError.AppendLine(s)))
+                                                                                                       .ExitCode;
+                                                         }
+
+                                                         if (awsInstallerExitCode != 0)
+                                                         {
+                                                             throw new Exception($"{stdOut}{stdError}");
+                                                         }
+                                                         
+                                                         return GetAwsCliExecutablePath(destinationDirectoryName);
+                                                     });
             }
         }
 
@@ -184,6 +253,40 @@ namespace Calamari.Tests.KubernetesFixtures
                 return "aws-iam-authenticator.exe";
 
             return "aws-iam-authenticator";
+        }
+
+        static string GetAWSCliFileName()
+        {
+            if (CalamariEnvironment.IsRunningOnNix)
+                return "awscli-exe-linux-x86_64.zip";
+            if (CalamariEnvironment.IsRunningOnMac)
+                return "AWSCLIV2.pkg";
+
+            return "AWSCLIV2.msi";
+        }
+
+        static string GetAwsCliDownloadLink()
+        {
+            if (CalamariEnvironment.IsRunningOnNix)
+                return "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip";
+            if (CalamariEnvironment.IsRunningOnMac)
+                return "https://awscli.amazonaws.com/AWSCLIV2.pkg";
+
+            return "https://awscli.amazonaws.com/AWSCLIV2.msi";
+        }
+
+        static string GetAwsCliExecutablePath(string extractPath)
+        {
+            if (CalamariEnvironment.IsRunningOnWindows)
+            {
+                return Path.Combine(extractPath,
+                                    "extract",
+                                    "Amazon",
+                                    "AWSCLIV2",
+                                    "aws.exe");
+            }
+            
+            return Path.Combine(extractPath, "aws", "dist", "aws");
         }
 
         static string GetKubectlDownloadLink(string currentVersion)
@@ -293,6 +396,11 @@ namespace Calamari.Tests.KubernetesFixtures
                 if (toolName == "gcloud")
                 {
                     path = GetGcloudExecutablePath(destinationDirectoryName);
+                }
+
+                if (toolName == "aws")
+                {
+                    path = GetAwsCliExecutablePath(destinationDirectoryName);
                 }
                 if (path == null || !File.Exists(path))
                 {
