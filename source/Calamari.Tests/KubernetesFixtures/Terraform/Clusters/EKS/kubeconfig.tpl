@@ -20,9 +20,10 @@ users:
 - name: ${cluster_name}
   user:
     exec:
-      apiVersion: client.authentication.k8s.io/v1alpha1
-      command: aws-iam-authenticator
+      apiVersion: client.authentication.k8s.io/v1beta1
+      command: aws
       args:
-        - token
-        - --cluster-id
-        - ${cluster_name}
+        - eks
+        - get-token
+        - --cluster-name=${cluster_name}
+        - --region=ap-southeast-2

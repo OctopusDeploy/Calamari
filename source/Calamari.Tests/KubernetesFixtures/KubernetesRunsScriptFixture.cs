@@ -26,7 +26,7 @@ namespace Calamari.Tests.KubernetesFixtures
     [TestFixture]
     public class KubernetesContextScriptWrapperFixture
     {
-        const string ServerUrl = "<server>";
+        const string ServerUrl = "https://ThisIsAFakeServerUrlWithTheRegion.gr7.ap-southeast-2.eks.amazonaws.com";
         const string ClusterToken = "mytoken";
 
         IVariables variables;
@@ -216,7 +216,25 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void ExecutionWithEKS()
+        public void ExecutionWithEKS_IAMAuthenticator()
+        {
+            // Overriding the cluster url with an invalid url. This fails the AWS region check and will cause a fall back to aws-iam auth
+            variables.Set(SpecialVariables.ClusterUrl, "<server>");
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(SpecialVariables.EksClusterName, "my-eks-cluster");
+            var account = "eks_account";
+            variables.Set("Octopus.Action.AwsAccount.Variable", account);
+            variables.Set("Octopus.Action.Aws.Region", "eks_region");
+            variables.Set($"{account}.AccessKey", "eksAccessKey");
+            variables.Set($"{account}.SecretKey", "eksSecretKey");
+            var wrapper = CreateWrapper();
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+        
+        [Test]
+        public void ExecutionWithEKS_AwsCLIAuthenticator()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
@@ -346,7 +364,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         CalamariResult ExecuteScriptInRecordOnlyMode(IScriptWrapper wrapper, string scriptName)
         {
-            return ExecuteScriptInternal(new RecordOnly(), wrapper, scriptName);
+            return ExecuteScriptInternal(new RecordOnly(variables), wrapper, scriptName);
         }
 
         CalamariResult ExecuteScriptInternal(ICommandLineRunner runner, IScriptWrapper wrapper, string scriptName)
@@ -365,10 +383,22 @@ namespace Calamari.Tests.KubernetesFixtures
 
         class RecordOnly :  ICommandLineRunner
         {
+            IVariables Variables;
+            public RecordOnly(IVariables variables)
+            {
+                Variables = variables;
+            }
+            
             public CommandResult Execute(CommandLineInvocation invocation)
             {
+                // If were running an aws command (we check the version and get the eks token endpoint) we want to see the actual commands result.
+                if (invocation.Executable.Equals("aws") && (invocation.Arguments.Contains("--version") || invocation.Arguments.Contains("get-token")))
+                {
+                    var commandLineRunner = new CommandLineRunner(new SilentLog(), Variables);
+                    commandLineRunner.Execute(invocation);
+                }
                 // We only want to output executable string. eg. ExecuteCommandAndReturnOutput("where", "kubectl.exe")
-                if (new string[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd" }.Contains(invocation.Arguments)) 
+                if (new string[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe" }.Contains(invocation.Arguments)) 
                     invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));
                 return new CommandResult(invocation.ToString(), 0);
             }

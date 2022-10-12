@@ -13,14 +13,17 @@ export AWS_CLUSTER_ARN=${cluster_arn}
 
 mkdir tools
 cd tools || exit
-# TODO: there is an issue with stable kubectl with the error: exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"
-# so a known working version has been hardcoded below (v1.23.6).
-# curl -L -o kubectl "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-curl -L -o kubectl "https://dl.k8s.io/release/v1.23.6/bin/linux/amd64/kubectl"
+
+curl -L -o kubectl "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 curl -L -o aws-iam-authenticator "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.3/aws-iam-authenticator_0.5.3_linux_amd64"
+curl -L -o aws "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+unzip -u awscliv2.zip
+mv aws awscli
+cp -r awscli/dist/*
 
 chmod u+x aws-iam-authenticator
 chmod u+x kubectl
+chmod u+x aws/dist/aws
 
 export PATH="$PATH:$(pwd)"
 

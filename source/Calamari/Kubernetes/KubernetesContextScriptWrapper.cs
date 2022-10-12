@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
@@ -15,6 +16,8 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json.Linq;
+using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes
 {
@@ -114,6 +117,7 @@ namespace Calamari.Kubernetes
             readonly string workingDirectory;
             string kubectl;
             string az;
+            string aws;
             string gcloud;
             Dictionary<string, string> redactMap = new Dictionary<string, string>();
 
@@ -421,6 +425,59 @@ namespace Calamari.Kubernetes
                 var clusterName = variables.Get(SpecialVariables.EksClusterName);
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
 
+                if (!TrySetAws())
+                {
+                    log.Warn("Could not find the aws cli, falling back to the aws-iam-authenticator.");
+                }
+                else
+                {
+                    try
+                    {
+                        var region = Regex.Match(clusterUrl, @"(us(-gov)?|ap|ca|cn|eu|sa)-(central|(north|south)?(east|west)?)-\d", RegexOptions.IgnoreCase).Value;
+                        if (string.IsNullOrWhiteSpace(region))
+                        {
+                            log.Error("The EKS cluster Url specified should contain a valid aws region name");
+                        }
+                        
+                        var awsCliCommandRes = ExecuteCommandAndReturnOutput(aws, "--version").FirstOrDefault();
+                        var awsCliVersion = Regex.Match(awsCliCommandRes, @"aws-cli\/(\d+\.)?(\d+\.)?(\*|\d+)").Value.Replace("aws-cli/", string.Empty);
+                        var awsCliSemVer = new SemanticVersion(awsCliVersion);
+                        var eksGetTokenVersion = new SemanticVersion("1.16.156");
+                        var validAwsVersion = awsCliSemVer.CompareTo(eksGetTokenVersion) == 1;
+
+                        if (validAwsVersion)
+                        {
+                            var awsEksTokenCommand = ExecuteCommandAndReturnOutput("aws",
+                                                                                   "eks",
+                                                                                   "get-token",
+                                                                                   $"--cluster-name={clusterName}",
+                                                                                   $"--region={region}")
+                                .FirstOrDefault();
+                            var apiVersion = JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion");
+
+                            ExecuteKubectlCommand("config",
+                                                  "set-credentials",
+                                                  user,
+                                                  "--exec-command=aws",
+                                                  "--exec-arg=eks",
+                                                  "--exec-arg=get-token",
+                                                  $"--exec-arg=--cluster-name={clusterName}",
+                                                  $"--exec-arg=--region={region}",
+                                                  $"--exec-api-version={apiVersion}");
+
+                            return;
+                        }
+
+                        log.Info($"aws cli version: {awsCliSemVer.ToString()} does not support the \"aws eks get-token\" command. Falling back to aws-iam-authenticator. Please update to a version later than 1.16.156");
+
+                    }
+                    catch (Exception e)
+                    {
+                        log.Verbose($"Unable to authenticate to {clusterUrl} using the aws cli. Failed with the error: {e}.");
+                        log.Info("Falling back to aws-iam-authenticator.");
+                    }
+                }
+
                 ExecuteKubectlCommand("config",
                                       "set-credentials",
                                       user,
@@ -559,6 +616,22 @@ namespace Calamari.Kubernetes
                 }
 
                 az = az.Trim();
+
+                return true;
+            }
+            
+            bool TrySetAws()
+            {
+                aws = CalamariEnvironment.IsRunningOnWindows
+                    ? ExecuteCommandAndReturnOutput("where", "aws.exe").FirstOrDefault()
+                    : ExecuteCommandAndReturnOutput("which", "aws").FirstOrDefault();
+
+                if (string.IsNullOrEmpty(aws))
+                {
+                    return false;
+                }
+
+                aws = aws.Trim();
 
                 return true;
             }

@@ -1,0 +1,17 @@
+[Verbose] "chmod" u=rw,g=,o= "<path>kubectl-octo.yml"
+[Verbose] Temporary kubectl config set to <path>kubectl-octo.yml
+[Verbose] "kubectl" version --client --short --request-timeout=1m
+[Verbose] "kubectl" config set-cluster octocluster --server=<server> --request-timeout=1m
+[Verbose] "kubectl" config set-context octocontext --user=octouser --cluster=octocluster --namespace=calamari-testing --request-timeout=1m
+[Verbose] "kubectl" config use-context octocontext --request-timeout=1m
+[Verbose] "kubectl" config set-cluster octocluster --insecure-skip-tls-verify=true --request-timeout=1m
+[Info] Creating kubectl context to <server> (namespace calamari-testing) using EKS cluster name my-eks-cluster
+[Error] The EKS cluster Url specified should contain a valid aws region name
+[Verbose] Unable to authenticate to <server> using the aws cli. Failed with the error: System.ArgumentNullException: Value cannot be null. (Parameter 's')
+   at System.IO.StringReader..ctor(String s)
+   at Newtonsoft.Json.Linq.JObject.Parse(String json, JsonLoadSettings settings)
+   at Newtonsoft.Json.Linq.JObject.Parse(String json)
+   at Calamari.Kubernetes.KubernetesContextScriptWrapper.SetupKubectlAuthentication.SetupContextForAmazonServiceAccount(String namespace, String clusterUrl, String user) in C:\Users\isaac\source\repos\Calamari\source\Calamari\Kubernetes\KubernetesContextScriptWrapper.cs:line 456.
+[Info] Falling back to aws-iam-authenticator.
+[Verbose] "kubectl" config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1alpha1 --exec-arg=token --exec-arg=-i --exec-arg=my-eks-cluster --request-timeout=1m
+[Verbose] "kubectl" get namespace calamari-testing --request-timeout=1m
