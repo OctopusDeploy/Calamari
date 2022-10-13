@@ -22,6 +22,5 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
-    <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
   </ItemGroup>
 </Project>
