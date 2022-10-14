@@ -7,11 +7,16 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net452</TargetFramework>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Calamari.Scripting" Version="14.2.0" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="2.28.3" />
     <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
+  </ItemGroup>
+
   <ItemGroup>
     <EmbeddedResource Include="Scripts\*" />
   </ItemGroup>

@@ -213,85 +213,99 @@ namespace Calamari.Build
                  .DependsOn(Compile)
                  .Executes(() =>
                  {
-                    // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
-                    // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
-                    bool IsCrossPlatform(string targetFramework) => targetFramework.Contains(".");
+                     var migratedCalamariFlavoursTests = MigratedCalamariFlavours.Flavours.Select(f => $"{f}.Tests");
+                     var calamariFlavourProjects = Solution.Projects
+                         .Where(project => MigratedCalamariFlavours.Flavours.Contains(project.Name)
+                                           || migratedCalamariFlavoursTests.Contains(project.Name));
 
-                    var migratedCalamariFlavoursTests = MigratedCalamariFlavours.Flavours.Select(f => $"{f}.Tests");
-                    var calamariFlavours = Solution.Projects
-                                                   .Where(project => MigratedCalamariFlavours.Flavours.Contains(project.Name)
-                                                                     || migratedCalamariFlavoursTests.Contains(project.Name));
+                     // Calamari.Scripting is a library that other calamari flavours depend on; not a flavour on its own right.
+                     // Unlike other *Calamari* tests, we would still want to produce Calamari.Scripting.Zip and its tests, like its flavours.
+                     var calamariScripting = "Calamari.Scripting";
+                     var calamariScriptingProjectAndTest = Solution.Projects.Where(project => project.Name == calamariScripting || project.Name == $"{calamariScripting}.Tests");
 
-                    var calamariFlavourPackages = calamariFlavours
-                        .SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
-                        {
-                            Project = p,
-                            Framework = f,
-                            CrossPlatform = IsCrossPlatform(f)
-                        });
-                    
-                    // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers
-                    var netFxPackages = calamariFlavourPackages
-                      .Where(p => !p.CrossPlatform)
-                      .Select(packageToBuild => new
-                      {
-                          packageToBuild.Project,
-                          packageToBuild.Framework,
-                          Architecture = (string)null!,
-                          packageToBuild.CrossPlatform
-                      });
-
-                    // for cross-platform frameworks, we combine each runtime identifier with each target framework
-                    var crossPlatformPackages = calamariFlavourPackages
-                                                .Where(p => p.CrossPlatform)
-                                                .SelectMany(packageToBuild => packageToBuild.Project.GetRuntimeIdentifiers() ?? Enumerable.Empty<string>(),
-                                                            (packageToBuild, runtimeIdentifier) => new
-                                                            {
-                                                                packageToBuild.Project,
-                                                                packageToBuild.Framework,
-                                                                Architecture = runtimeIdentifier,
-                                                                packageToBuild.CrossPlatform
-                                                            })
-                                                .Distinct(t => new { t.Project.Name, t.Architecture, t.Framework });
-
-                    var packagesToBuild = crossPlatformPackages.Concat(netFxPackages);
-                    foreach (var packageToBuild in packagesToBuild)
-                    {
-                        if (!OperatingSystem.IsWindows() && !packageToBuild.CrossPlatform)
-                        {
-                            Log.Warning($"Not building {packageToBuild.Framework}: can only build netfx on a Windows OS");
-                            continue;
-                        }
-
-                        Log.Information($"Building {packageToBuild.Project.Name} for framework '{packageToBuild.Framework}' and arch '{packageToBuild.Architecture}'");
-
-                        var project = packageToBuild.Project;
-                        var outputDirectory = PublishDirectory / project.Name / (packageToBuild.CrossPlatform ? packageToBuild.Architecture : "netfx");
-
-                        DotNetPublish(s => s
-                                           .SetConfiguration(Configuration)
-                                           .SetProject(project)
-                                           .SetFramework(packageToBuild.Framework)
-                                           .SetRuntime(packageToBuild.Architecture)
-                                           .SetOutput(outputDirectory)
-                                     );
-                        SignDirectory(outputDirectory);
-
-                        File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
-                    }
-
-                    foreach (var flavour in calamariFlavours)
-                    {
-                        Log.Verbose($"Compressing Calamari flavour {PublishDirectory}/{flavour.Name}");
-                        var compressionSource = PublishDirectory / flavour.Name;
-                        if (!Directory.Exists(compressionSource))
-                        {
-                            Log.Verbose($"Skipping compression for {flavour.Name} since nothing was built");
-                            continue;
-                        }
-                        CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / flavour.Name}.zip");
-                    }
+                     var calamariProjects = calamariFlavourProjects.Concat(calamariScriptingProjectAndTest);
+                     PublishCalamariProjects(calamariProjects);
                  });
+
+        void PublishCalamariProjects(IEnumerable<Project> projects)
+        {
+            // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
+            // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
+            bool IsCrossPlatform(string targetFramework) => targetFramework.Contains(".");
+
+            var calamariPackages = projects
+                .SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
+                {
+                    Project = p,
+                    Framework = f,
+                    CrossPlatform = IsCrossPlatform(f)
+                });
+
+            // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers
+            var netFxPackages = calamariPackages
+                .Where(p => !p.CrossPlatform)
+                .Select(packageToBuild => new
+                {
+                    packageToBuild.Project,
+                    packageToBuild.Framework,
+                    Architecture = (string) null!,
+                    packageToBuild.CrossPlatform
+                });
+
+            // for cross-platform frameworks, we combine each runtime identifier with each target framework
+            var crossPlatformPackages = calamariPackages
+                .Where(p => p.CrossPlatform)
+                .SelectMany(packageToBuild => packageToBuild.Project.GetRuntimeIdentifiers() ?? Enumerable.Empty<string>(),
+                    (packageToBuild, runtimeIdentifier) => new
+                    {
+                        packageToBuild.Project,
+                        packageToBuild.Framework,
+                        Architecture = runtimeIdentifier,
+                        packageToBuild.CrossPlatform
+                    })
+                .Distinct(t => new {t.Project.Name, t.Architecture, t.Framework});
+
+            var packagesToBuild = crossPlatformPackages.Concat(netFxPackages);
+            foreach (var packageToBuild in packagesToBuild)
+            {
+                if (!OperatingSystem.IsWindows() && !packageToBuild.CrossPlatform)
+                {
+                    Log.Warning($"Not building {packageToBuild.Framework}: can only build netfx on a Windows OS");
+                    continue;
+                }
+
+                Log.Information(
+                    $"Building {packageToBuild.Project.Name} for framework '{packageToBuild.Framework}' and arch '{packageToBuild.Architecture}'");
+
+                var project = packageToBuild.Project;
+                var outputDirectory = PublishDirectory / project.Name /
+                                      (packageToBuild.CrossPlatform ? packageToBuild.Architecture : "netfx");
+
+                DotNetPublish(s => s
+                    .SetConfiguration(Configuration)
+                    .SetProject(project)
+                    .SetFramework(packageToBuild.Framework)
+                    .SetRuntime(packageToBuild.Architecture)
+                    .SetOutput(outputDirectory)
+                );
+                SignDirectory(outputDirectory);
+
+                File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+            }
+
+            foreach (var project in projects)
+            {
+                Log.Verbose($"Compressing Calamari flavour {PublishDirectory}/{project.Name}");
+                var compressionSource = PublishDirectory / project.Name;
+                if (!Directory.Exists(compressionSource))
+                {
+                    Log.Verbose($"Skipping compression for {project.Name} since nothing was built");
+                    continue;
+                }
+
+                CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / project.Name}.zip");
+            }
+        }
 
         Target PackBinaries =>
             _ => _.DependsOn(Publish)
