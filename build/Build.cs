@@ -103,7 +103,6 @@ namespace Calamari.Build
         static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         static AbsolutePath PublishDirectory => RootDirectory / "publish";
         static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
-        static AbsolutePath SashimiPackagesDirectory => SourceDirectory / "Calamari.UnmigratedCalamariFlavours" / "artifacts";
         static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
         static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
 
@@ -139,7 +138,6 @@ namespace Calamari.Build
                 SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(DeleteDirectory);
                 EnsureCleanDirectory(ArtifactsDirectory);
                 EnsureCleanDirectory(PublishDirectory);
-                EnsureCleanDirectory(SashimiPackagesDirectory);
             });
 
         Target Restore =>
@@ -411,18 +409,9 @@ namespace Calamari.Build
                           CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
                   });
 
-        Target CopySashimiPackagesForConsolidation =>
-            _ => _.DependsOn(Compile)
-                 .Executes(() =>
-                           {
-                               foreach (var file in Directory.GetFiles(SashimiPackagesDirectory))
-                                   CopyFile(file, ArtifactsDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
-                           });
-
         Target PackageConsolidatedCalamariZip =>
             _ => _.DependsOn(CalamariConsolidationTests)
                   .DependsOn(PackBinaries)
-                  .DependsOn(CopySashimiPackagesForConsolidation)
                   .Executes(() =>
                             {
                                 var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
@@ -482,20 +471,19 @@ namespace Calamari.Build
                  .DependsOn(CopyToLocalPackages)
                  .Executes(() =>
                  {
-                    var serverProjectFile = RootDirectory / ".." / "OctopusDeploy" / "source" / "Octopus.Server" / "Octopus.Server.csproj";
-                    if (File.Exists(serverProjectFile))
+                     var serverProjectFile = RootDirectory / ".." / "OctopusDeploy" / "source" / "Octopus.Server" / "Octopus.Server.csproj";
+                     if (File.Exists(serverProjectFile))
                      {
-                         Log.Information("Setting Calamari version in Octopus Server "
-                                         + "project {ServerProjectFile} to {NugetVersion}",
+                         Log.Information("Setting Calamari version in Octopus Server " 
+                                         + "project {ServerProjectFile} to {NugetVersion}", 
                                          serverProjectFile, NugetVersion.Value);
-
                          SetOctopusServerCalamariVersion(serverProjectFile);
                      }
                      else
                      {
-                         Log.Warning("Could not set Calamari version in Octopus Server project "
-                                     + "{ServerProjectFile} to {NugetVersion} as could not find "
-                                     + "project file",
+                         Log.Warning("Could not set Calamari version in Octopus Server project " 
+                                     + "{ServerProjectFile} to {NugetVersion} as could not find " 
+                                     + "project file", 
                                      serverProjectFile, NugetVersion.Value);
                      }
                  });

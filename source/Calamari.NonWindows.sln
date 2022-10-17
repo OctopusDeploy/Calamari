@@ -46,8 +46,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureAppService", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureAppService.Tests", "Calamari.AzureAppService.Tests\Calamari.AzureAppService.Tests.csproj", "{11AFAB0B-A3EE-4FC1-95A7-FB480B3C938B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.UnmigratedCalamariFlavours", "Calamari.UnmigratedCalamariFlavours\Calamari.UnmigratedCalamariFlavours.csproj", "{B80883B9-E675-4081-9198-74EA4C41AEB3}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.ConsolidateCalamariPackages.Tests", "Calamari.ConsolidateCalamariPackages.Tests\Calamari.ConsolidateCalamariPackages.Tests.csproj", "{02FF12AA-8807-4041-A59A-04CBE91AA1E1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.ConsolidateCalamariPackages", "Calamari.ConsolidateCalamariPackages\Calamari.ConsolidateCalamariPackages.csproj", "{5A02308A-139B-417B-8FF7-1E14A3D175B5}"
@@ -120,10 +118,6 @@ Global
 		{11AFAB0B-A3EE-4FC1-95A7-FB480B3C938B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11AFAB0B-A3EE-4FC1-95A7-FB480B3C938B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11AFAB0B-A3EE-4FC1-95A7-FB480B3C938B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B80883B9-E675-4081-9198-74EA4C41AEB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B80883B9-E675-4081-9198-74EA4C41AEB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B80883B9-E675-4081-9198-74EA4C41AEB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B80883B9-E675-4081-9198-74EA4C41AEB3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{02FF12AA-8807-4041-A59A-04CBE91AA1E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{02FF12AA-8807-4041-A59A-04CBE91AA1E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02FF12AA-8807-4041-A59A-04CBE91AA1E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
