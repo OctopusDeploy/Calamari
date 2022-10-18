@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Text.RegularExpressions;
 using Calamari.Common;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Deployment;
 using FluentAssertions;
