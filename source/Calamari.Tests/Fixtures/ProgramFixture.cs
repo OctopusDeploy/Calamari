@@ -55,7 +55,7 @@ namespace Calamari.Tests.Fixtures
         {
             RunProgram();
             var regexTimeout = AppDomain.CurrentDomain.GetData("REGEX_DEFAULT_MATCH_TIMEOUT");
-            regexTimeout.Should().Be(CalamariFlavourProgram.DefaultRegexMatchTimeout);
+            regexTimeout.Should().Be(AppDomainConfiguration.DefaultRegexMatchTimeout);
         }
     }
 }
