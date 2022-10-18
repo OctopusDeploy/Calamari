@@ -190,7 +190,7 @@ namespace Calamari.Build
                       if (!OperatingSystem.IsWindows())
                           Log.Warning("Building Calamari on a non-windows machine will result "
                                       + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
-                                      + "nuget packages being built as .Net Core 3.1 packages "
+                                      + "nuget packages being built as .Net Core 6.0 packages "
                                       + "instead of as .Net Framework 4.0 and 4.5.2 respectively. "
                                       + "This can cause compatibility issues when running certain "
                                       + "deployment steps in Octopus Server",
@@ -198,16 +198,16 @@ namespace Calamari.Build
 
                       var nugetVersion = NugetVersion.Value;
                       DoPublish(RootProjectName,
-                                OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.NetCoreApp31,
+                                OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.Net60,
                                 nugetVersion);
                       DoPublish(RootProjectName,
-                                OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.NetCoreApp31,
+                                OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
                                 nugetVersion,
                                 FixedRuntimes.Cloud);
 
                       // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                       foreach (var rid in Solution.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
-                          DoPublish(RootProjectName, Frameworks.NetCoreApp31, nugetVersion, rid);
+                          DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
                   });
 
         Target PublishCalamariFlavourProjects =>
@@ -336,10 +336,10 @@ namespace Calamari.Build
                                 var packageActions = new List<Action>
                                 {
                                     () => DoPackage(RootProjectName,
-                                                    OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.NetCoreApp31,
+                                                    OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.Net60,
                                                     nugetVersion),
                                     () => DoPackage(RootProjectName,
-                                                    OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.NetCoreApp31,
+                                                    OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
                                                     nugetVersion,
                                                     FixedRuntimes.Cloud),
                                 };
@@ -348,7 +348,7 @@ namespace Calamari.Build
                                 // ReSharper disable once LoopCanBeConvertedToQuery
                                 foreach (var rid in Solution.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
                                     packageActions.Add(() => DoPackage(RootProjectName,
-                                                                       Frameworks.NetCoreApp31,
+                                                                       Frameworks.Net60,
                                                                        nugetVersion,
                                                                        rid));
 
@@ -380,7 +380,7 @@ namespace Calamari.Build
                   .Executes(async () =>
                   {
                       var nugetVersion = NugetVersion.Value;
-                      var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net461 : Frameworks.NetCoreApp31;
+                      var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net461 : Frameworks.Net60;
                       AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
                       Directory.Exists(binFolder);
                       var actions = new List<Action>
@@ -397,7 +397,7 @@ namespace Calamari.Build
                           actions.Add(() =>
                           {
                               var publishedLocation =
-                                  DoPublish("Calamari.Tests", Frameworks.NetCoreApp31, nugetVersion, rid);
+                                  DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
                               var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
                               CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
                           });

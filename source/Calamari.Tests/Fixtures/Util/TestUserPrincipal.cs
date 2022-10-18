@@ -144,9 +144,10 @@ namespace Calamari.Tests.Fixtures.Util
         }
         
         public SecurityIdentifier Sid { get; private set; }
-#pragma warning disable PC001 // API not supported on all platforms
+
+#pragma warning disable CA1416 // API not supported on all platforms
         public string NTAccountName => Sid.Translate(typeof(NTAccount)).ToString();
-#pragma warning restore PC001 // API not supported on all platforms
+#pragma warning restore CA1416 // API not supported on all platforms
         public string DomainName => NTAccountName.Split(new[] {'\\'}, 2)[0];
         public string UserName => NTAccountName.Split(new[] {'\\'}, 2)[1];
         public string SamAccountName { get; private set; }
