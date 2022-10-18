@@ -27,6 +27,8 @@ namespace Calamari.Common
 {
     public abstract class CalamariFlavourProgram
     {
+        internal static readonly TimeSpan DefaultRegexMatchTimeout = TimeSpan.FromSeconds(1);
+        
         protected readonly ILog Log;
 
         protected CalamariFlavourProgram(ILog log)
@@ -38,6 +40,10 @@ namespace Calamari.Common
         {
             try
             {
+                // adds default max timout to avoid ReDoS attacks
+                // https://docs.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex.matchtimeout
+                AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", DefaultRegexMatchTimeout);
+                
                 SecurityProtocols.EnableAllSecurityProtocols();
                 var options = CommonOptions.Parse(args);
 
