@@ -1,7 +1,9 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
@@ -45,11 +47,11 @@ namespace Calamari.Tests.KubernetesFixtures
         TemporaryDirectory explicitVersionTempDirectory;
 
         [OneTimeSetUp]
-        public void OneTimeSetUp()
+        public async Task OneTimeSetUp()
         {
             if (ExplicitExeVersion != null)
             {
-                DownloadExplicitHelmExecutable();
+                await DownloadExplicitHelmExecutable();
                 helmVersion = new SemanticVersion(ExplicitExeVersion).Major == 2 ? HelmVersion.V2 : HelmVersion.V3;
             }
             else
@@ -57,13 +59,13 @@ namespace Calamari.Tests.KubernetesFixtures
                 helmVersion = GetVersion();
             }
 
-            void DownloadExplicitHelmExecutable()
+            async Task DownloadExplicitHelmExecutable()
             {
                 explicitVersionTempDirectory = TemporaryDirectory.Create();
                 var fileName = Path.GetFullPath(Path.Combine(explicitVersionTempDirectory.DirectoryPath, $"helm-v{ExplicitExeVersion}-{HelmOsPlatform}.tgz"));
                 using (new TemporaryFile(fileName))
                 {
-                    DownloadHelmPackage(ExplicitExeVersion, fileName);
+                    await DownloadHelmPackage(ExplicitExeVersion, fileName);
 
                     new TarGzipPackageExtractor(ConsoleLog.Instance).Extract(fileName, explicitVersionTempDirectory.DirectoryPath);
                 }
@@ -266,13 +268,13 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual("Hello YAML", result.CapturedOutput.OutputVariables["Message"]);
         }
 
-        protected void TestCustomHelmExeInPackage_RelativePath(string version)
+        protected async Task TestCustomHelmExeInPackage_RelativePath(string version)
         {
             var fileName = Path.Combine(Path.GetTempPath(), $"helm-v{version}-{HelmOsPlatform}.tgz");
 
             using (new TemporaryFile(fileName))
             {
-                DownloadHelmPackage(version, fileName);
+                await DownloadHelmPackage(version, fileName);
 
                 var customHelmExePackageId = Kubernetes.SpecialVariables.Helm.Packages.CustomHelmExePackageKey;
                 Variables.Set(PackageVariables.IndexedOriginalPath(customHelmExePackageId), fileName);
@@ -383,11 +385,15 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        static void DownloadHelmPackage(string version, string fileName)
+        static async Task DownloadHelmPackage(string version, string fileName)
         {
-            using (var myWebClient = new WebClient())
+            using (var client = new HttpClient())
             {
-                myWebClient.DownloadFile($"https://get.helm.sh/helm-v{version}-{HelmOsPlatform}.tar.gz", fileName);
+                using (var fileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var stream = await client.GetStreamAsync($"https://get.helm.sh/helm-v{version}-{HelmOsPlatform}.tar.gz"))
+                {
+                    await stream.CopyToAsync(fileStream);
+                }
             }
         }
 

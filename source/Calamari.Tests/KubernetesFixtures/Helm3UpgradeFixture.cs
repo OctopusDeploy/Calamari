@@ -1,4 +1,5 @@
-﻿using Calamari.Testing.Helpers;
+﻿using System.Threading.Tasks;
+using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
@@ -32,9 +33,9 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNon32BitWindows]
         [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
-        public void CustomHelmExeInPackage_RelativePath()
+        public async Task CustomHelmExeInPackage_RelativePath()
         {
-            TestCustomHelmExeInPackage_RelativePath("3.0.1");
+            await TestCustomHelmExeInPackage_RelativePath("3.0.1");
         }
 
         protected override string ExplicitExeVersion => "3.0.2";
