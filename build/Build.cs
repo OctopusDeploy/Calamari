@@ -88,6 +88,10 @@ namespace Calamari.Build
         readonly GitVersion? GitVersionInfo;
         
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
+        
+        List<Task> SignDirectoriesTasks = new();
+        
+        List<Task> ProjectCompressionTasks = new();
 
         public Build()
         {
@@ -269,7 +273,10 @@ namespace Calamari.Build
             var packagesToPublish = crossPlatformPackages.Concat(netFxPackages);
 
             packagesToPublish.ForEach(PublishPackage);
+            Task.WhenAll(SignDirectoriesTasks);
+            
             projects.ForEach(CompressCalamariProject);
+            Task.WhenAll(ProjectCompressionTasks);
         }
 
         void PublishPackage(CalamariPackageMetadata calamariPackageMetadata)
@@ -294,9 +301,16 @@ namespace Calamari.Build
                 .SetRuntime(calamariPackageMetadata.Architecture)
                 .SetOutput(outputDirectory)
             );
-            SignDirectory(outputDirectory);
+            
+            if (!project.Name.Contains("Tests"))
+            {
+                var signDirectoryTask = new Task(() => SignDirectory(outputDirectory));
+                signDirectoryTask.Start();
+                SignDirectoriesTasks.Add(signDirectoryTask);
+            }
 
             File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+            
         }
 
         void CompressCalamariProject(Project project)
@@ -308,7 +322,9 @@ namespace Calamari.Build
                 Log.Verbose($"Skipping compression for {project.Name} since nothing was built");
                 return;
             }
-            CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / project.Name}.zip");
+            var compressionTask = new Task(() => CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / project.Name}.zip"));
+            compressionTask.Start();
+            ProjectCompressionTasks.Add(compressionTask);
         }
 
         Target PackBinaries =>
