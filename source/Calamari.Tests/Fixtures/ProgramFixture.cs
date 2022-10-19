@@ -1,5 +1,8 @@
 using System;
 using System.Net;
+using System.Text.RegularExpressions;
+using Calamari.Common;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Deployment;
 using FluentAssertions;
@@ -46,6 +49,14 @@ namespace Calamari.Tests.Fixtures
                 WebRequest.DefaultWebProxy = existingProxy;
                 EnvironmentHelper.SetEnvironmentVariable("TentacleProxyHost", null);
             }
+        }
+
+        [Test]
+        public void DefaultRegexMatchTimeoutIsSet()
+        {
+            RunProgram();
+            var regexTimeout = AppDomain.CurrentDomain.GetData("REGEX_DEFAULT_MATCH_TIMEOUT");
+            regexTimeout.Should().Be(AppDomainConfiguration.DefaultRegexMatchTimeout);
         }
     }
 }
