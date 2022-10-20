@@ -430,20 +430,19 @@ namespace Calamari.Kubernetes
                 {
                     try
                     {
-                        var region = GetEksClusterRegion(clusterUrl);
-                        if (string.IsNullOrWhiteSpace(region))
-                        {
-                            log.Verbose("The EKS cluster Url specified should contain a valid aws region name");
-                        }
-                        
                         var awsCliVersion = GetAwsCliVersion();
-                        log.Warn($"aws cli version: {awsCliVersion}"); // Note added for TC testing purposes this line should be removed
-
-                        if (new Version(awsCliVersion).CompareTo(new Version("1.16.156")) > 0)
+                        var minmumAwsCliVersionForAuth = new Version("1.16.156");
+                        if (awsCliVersion > minmumAwsCliVersionForAuth)
                         {
-                            var apiVersion = GetEksClusterApiVersion(clusterName, region);
-                            SetKubeConfigAuthenticationToAwsCli(user, clusterName, region, apiVersion);
-                            return;
+                            var region = GetEksClusterRegion(clusterUrl);
+                            if (!string.IsNullOrWhiteSpace(region))
+                            {
+                                var apiVersion = GetEksClusterApiVersion(clusterName, region);
+                                SetKubeConfigAuthenticationToAwsCli(user, clusterName, region, apiVersion);
+                                return;
+                            }
+                            
+                            log.Verbose("The EKS cluster Url specified should contain a valid aws region name");
                         }
 
                         log.Verbose($"aws cli version: {awsCliVersion} does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
@@ -464,26 +463,23 @@ namespace Calamari.Kubernetes
             
             string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
 
-            string GetAwsCliVersion()
+            Version GetAwsCliVersion()
             {
-                log.Warn($"aws cli path: {aws}"); // Note added for TC testing purposes this line should be removed 
                 var awsCliCommandRes = ExecuteCommandAndReturnOutput(aws, "--version").FirstOrDefault();
-                log.Warn($"aws cli res: {awsCliCommandRes}"); // Note added for TC testing purposes this line should be removed
-                return awsCliCommandRes.Split()
-                                       .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
-                                       .Replace("aws-cli/", string.Empty);
+                var awsCliVersionString = awsCliCommandRes.Split()
+                                                          .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
+                                                          .Replace("aws-cli/", string.Empty);
+                return new Version(awsCliVersionString);
             }
 
             string GetEksClusterApiVersion(string clusterName, string region)
             {
-                var awsEksTokenCommand = ExecuteCommandAndReturnOutput("aws",
+                var awsEksTokenCommand = ExecuteCommandAndReturnOutput(aws,
                                                                        "eks",
                                                                        "get-token",
                                                                        $"--cluster-name={clusterName}",
                                                                        $"--region={region}")
                     .FirstOrDefault();
-                
-                log.Warn($"aws token command: {awsEksTokenCommand}"); // Note added for TC testing purposes this line should be removed
 
                 return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion").ToString();
             }

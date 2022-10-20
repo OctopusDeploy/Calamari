@@ -11,6 +11,7 @@ using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
@@ -32,6 +33,7 @@ namespace Calamari.Tests.KubernetesFixtures
         IVariables variables;
         InMemoryLog log;
         Dictionary<string, string> redactMap;
+        Dictionary<string, string> EnvironmentVariables;
 
         [SetUp]
         public void Setup()
@@ -39,6 +41,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables = new CalamariVariables();
             log = new DoNotDoubleLog();
             redactMap = new Dictionary<string, string>();
+            EnvironmentVariables = GetEnvironments(InstallTools());
 
             SetTestClusterVariables();
         }
@@ -376,9 +379,36 @@ namespace Calamari.Tests.KubernetesFixtures
             }
 
             var engine = new ScriptEngine(wrappers);
-            var result = engine.Execute(new Script(scriptName), variables, runner, new Dictionary<string, string>());
+            var result = engine.Execute(new Script(scriptName), variables, runner, EnvironmentVariables);
 
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
+        }
+
+        InstallTools InstallTools()
+        {
+            var installTools = new InstallTools(TestContext.Progress.WriteLine);
+            var installToolsTask = installTools.InstallAwsCli();
+            Task.Run(() => installToolsTask);
+            Task.WaitAll(installToolsTask);
+            return installTools;
+        }
+
+        Dictionary<string, string> GetEnvironments(InstallTools tools)
+        {
+            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+            var delimiter = CalamariEnvironment.IsRunningOnWindows ? ";" : ":";
+            var toolsToAdd = new List<string> { tools.AwsCliExecutable };
+            
+            foreach (var tool in toolsToAdd)
+            {
+                if (currentPath.Length > 0 && !currentPath.EndsWith(delimiter))
+                {
+                    currentPath += delimiter;
+                }
+                currentPath += Path.GetDirectoryName(tool);
+            }
+
+            return new Dictionary<string, string> { { "PATH", currentPath } };
         }
 
         class RecordOnly :  ICommandLineRunner
