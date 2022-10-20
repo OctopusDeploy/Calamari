@@ -9,7 +9,6 @@
 [Verbose] Attempting to authenticate with aws-cli
 [Verbose] Unable to authenticate to <server> using the aws cli. Failed with error message: Value cannot be null.
 Parameter name: s
-[Verbose] Falling back to aws-iam-authenticator.
 [Verbose] Attempting to authenticate with aws-iam-authenticator
 [Verbose] "kubectl" config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1alpha1 --exec-arg=token --exec-arg=-i --exec-arg=my-eks-cluster --request-timeout=1m
 [Verbose] "kubectl" get namespace calamari-testing --request-timeout=1m
