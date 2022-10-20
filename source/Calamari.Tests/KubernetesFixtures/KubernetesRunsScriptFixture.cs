@@ -26,7 +26,7 @@ namespace Calamari.Tests.KubernetesFixtures
     [TestFixture]
     public class KubernetesContextScriptWrapperFixture
     {
-        const string ServerUrl = "https://ThisIsAFakeServerUrlWithTheRegion.gr7.ap-southeast-2.eks.amazonaws.com";
+        const string ServerUrl = "<server>";
         const string ClusterToken = "mytoken";
 
         IVariables variables;
@@ -218,8 +218,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionWithEKS_IAMAuthenticator()
         {
-            // Overriding the cluster url with an invalid url. This fails the AWS region check and will cause a fall back to aws-iam auth
-            variables.Set(SpecialVariables.ClusterUrl, "<server>");
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
@@ -236,6 +234,8 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void ExecutionWithEKS_AwsCLIAuthenticator()
         {
+            // Overriding the cluster url with a valid url. This is required to hit the aws eks get-token endpoint.
+            variables.Set(SpecialVariables.ClusterUrl, "https://someHash.gr7.ap-southeast-2.eks.amazonaws.com");
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");

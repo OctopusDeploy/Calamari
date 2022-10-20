@@ -26,4 +26,4 @@ users:
         - eks
         - get-token
         - --cluster-name=${cluster_name}
-        - --region=ap-southeast-2
+        - --region=region

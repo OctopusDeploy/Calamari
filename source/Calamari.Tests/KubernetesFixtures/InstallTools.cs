@@ -116,10 +116,14 @@ namespace Calamari.Tests.KubernetesFixtures
             using (var client = new HttpClient())
             {
                 AwsCliExecutable = await DownloadCli("aws",
-                                                     () =>
+                                                     async () =>
                                                      {
-                                                         const string requiredVersion = "2.8.3";
-                                                         return Task.FromResult((requiredVersion, GetAwsCliDownloadLink()));
+                                                         client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
+                                                         var json = await client.GetAsync("https://api.github.com/repos/aws/aws-cli/tags");
+                                                         json.EnsureSuccessStatusCode();
+                                                         var jObject = JArray.Parse(await json.Content.ReadAsStringAsync()).First();
+                                                         var version = jObject["name"].Value<string>();
+                                                         return (version, GetAwsCliDownloadLink());
                                                      },
                                                      async (destinationDirectoryName, tuple) =>
                                                      {
