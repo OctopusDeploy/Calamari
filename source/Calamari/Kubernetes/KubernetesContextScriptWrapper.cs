@@ -437,6 +437,7 @@ namespace Calamari.Kubernetes
                         }
                         
                         var awsCliVersion = GetAwsCliVersion();
+                        log.Warn($"aws cli version: {awsCliVersion}"); // Note added for TC testing purposes this line should be removed
 
                         if (new Version(awsCliVersion).CompareTo(new Version("1.16.156")) > 0)
                         {
@@ -465,7 +466,9 @@ namespace Calamari.Kubernetes
 
             string GetAwsCliVersion()
             {
+                log.Warn($"aws cli path: {aws}"); // Note added for TC testing purposes this line should be removed 
                 var awsCliCommandRes = ExecuteCommandAndReturnOutput(aws, "--version").FirstOrDefault();
+                log.Warn($"aws cli res: {awsCliCommandRes}"); // Note added for TC testing purposes this line should be removed
                 return awsCliCommandRes.Split()
                                        .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
                                        .Replace("aws-cli/", string.Empty);
@@ -473,12 +476,14 @@ namespace Calamari.Kubernetes
 
             string GetEksClusterApiVersion(string clusterName, string region)
             {
-                var awsEksTokenCommand = ExecuteCommandAndReturnOutput(aws,
+                var awsEksTokenCommand = ExecuteCommandAndReturnOutput("aws",
                                                                        "eks",
                                                                        "get-token",
                                                                        $"--cluster-name={clusterName}",
                                                                        $"--region={region}")
                     .FirstOrDefault();
+                
+                log.Warn($"aws token command: {awsEksTokenCommand}"); // Note added for TC testing purposes this line should be removed
 
                 return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion").ToString();
             }
