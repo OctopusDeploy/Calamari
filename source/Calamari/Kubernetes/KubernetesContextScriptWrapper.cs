@@ -425,11 +425,7 @@ namespace Calamari.Kubernetes
                 var clusterName = variables.Get(SpecialVariables.EksClusterName);
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
 
-                if (!TrySetAws())
-                {
-                    log.Warn("Could not find the aws cli, falling back to the aws-iam-authenticator.");
-                }
-                else
+                if (TrySetAws())
                 {
                     try
                     {
@@ -438,12 +434,12 @@ namespace Calamari.Kubernetes
                         {
                             log.Error("The EKS cluster Url specified should contain a valid aws region name");
                         }
-                        
+
                         var awsCliCommandRes = ExecuteCommandAndReturnOutput(aws, "--version").FirstOrDefault();
                         var awsCliVersion = awsCliCommandRes.Split()
                                                             .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
                                                             .Replace("aws-cli/", string.Empty);
-                        
+
                         var validAwsVersion = new Version(awsCliVersion).CompareTo(new Version("1.16.156")) > 0;
 
                         if (validAwsVersion)
@@ -452,8 +448,9 @@ namespace Calamari.Kubernetes
                                                                                    "eks",
                                                                                    "get-token",
                                                                                    $"--cluster-name={clusterName}",
-                                                                                   $"--region={region}").FirstOrDefault();
-                            
+                                                                                   $"--region={region}")
+                                .FirstOrDefault();
+
                             var apiVersion = JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion");
 
                             ExecuteKubectlCommand("config",
@@ -470,13 +467,16 @@ namespace Calamari.Kubernetes
                         }
 
                         log.Info($"aws cli version: {awsCliVersion} does not support the \"aws eks get-token\" command. Falling back to aws-iam-authenticator. Please update to a version later than 1.16.156");
-
                     }
                     catch (Exception)
                     {
                         log.Warn($"Unable to authenticate to {clusterUrl} using the aws cli.");
                         log.Warn("Falling back to aws-iam-authenticator.");
                     }
+                }
+                else
+                {
+                    log.Warn("Could not find the aws cli, falling back to the aws-iam-authenticator.");
                 }
 
                 ExecuteKubectlCommand("config",
