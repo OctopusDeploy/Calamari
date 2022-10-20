@@ -6,5 +6,6 @@
 [Verbose] "kubectl" config use-context octocontext --request-timeout=1m
 [Verbose] "kubectl" config set-cluster octocluster --insecure-skip-tls-verify=true --request-timeout=1m
 [Info] Creating kubectl context to https://someHash.gr7.ap-southeast-2.eks.amazonaws.com (namespace calamari-testing) using EKS cluster name my-eks-cluster
+[Verbose] Attempting to authenticate with aws-cli
 [Verbose] "kubectl" config set-credentials octouser --exec-command=aws --exec-arg=eks --exec-arg=get-token --exec-arg=--cluster-name=my-eks-cluster --exec-arg=--region=ap-southeast-2 --exec-api-version=client.authentication.k8s.io/v1beta1 --request-timeout=1m
 [Verbose] "kubectl" get namespace calamari-testing --request-timeout=1m

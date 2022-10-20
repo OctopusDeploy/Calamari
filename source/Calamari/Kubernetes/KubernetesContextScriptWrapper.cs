@@ -425,60 +425,79 @@ namespace Calamari.Kubernetes
                 var clusterName = variables.Get(SpecialVariables.EksClusterName);
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
 
+                log.Verbose("Attempting to authenticate with aws-cli");
                 if (TrySetAws())
                 {
                     try
                     {
-                        var region = clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
+                        var region = GetEksClusterRegion(clusterUrl);
                         if (string.IsNullOrWhiteSpace(region))
                         {
-                            log.Error("The EKS cluster Url specified should contain a valid aws region name");
+                            log.Verbose("The EKS cluster Url specified should contain a valid aws region name");
                         }
+                        
+                        var awsCliVersion = GetAwsCliVersion();
 
-                        var awsCliCommandRes = ExecuteCommandAndReturnOutput(aws, "--version").FirstOrDefault();
-                        var awsCliVersion = awsCliCommandRes.Split()
-                                                            .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
-                                                            .Replace("aws-cli/", string.Empty);
-
-                        var validAwsVersion = new Version(awsCliVersion).CompareTo(new Version("1.16.156")) > 0;
-
-                        if (validAwsVersion)
+                        if (new Version(awsCliVersion).CompareTo(new Version("1.16.156")) > 0)
                         {
-                            var awsEksTokenCommand = ExecuteCommandAndReturnOutput("aws",
-                                                                                   "eks",
-                                                                                   "get-token",
-                                                                                   $"--cluster-name={clusterName}",
-                                                                                   $"--region={region}")
-                                .FirstOrDefault();
-
-                            var apiVersion = JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion");
-
-                            ExecuteKubectlCommand("config",
-                                                  "set-credentials",
-                                                  user,
-                                                  "--exec-command=aws",
-                                                  "--exec-arg=eks",
-                                                  "--exec-arg=get-token",
-                                                  $"--exec-arg=--cluster-name={clusterName}",
-                                                  $"--exec-arg=--region={region}",
-                                                  $"--exec-api-version={apiVersion}");
-
+                            var apiVersion = GetEksClusterApiVersion(clusterName, region);
+                            SetKubeConfigAuthenticationToAwsCli(user, clusterName, region, apiVersion);
                             return;
                         }
 
-                        log.Info($"aws cli version: {awsCliVersion} does not support the \"aws eks get-token\" command. Falling back to aws-iam-authenticator. Please update to a version later than 1.16.156");
+                        log.Verbose($"aws cli version: {awsCliVersion} does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
-                        log.Warn($"Unable to authenticate to {clusterUrl} using the aws cli.");
-                        log.Warn("Falling back to aws-iam-authenticator.");
+                        log.Verbose($"Unable to authenticate to {clusterUrl} using the aws cli. Failed with error message: {e.Message}");
                     }
                 }
                 else
                 {
-                    log.Warn("Could not find the aws cli, falling back to the aws-iam-authenticator.");
+                    log.Verbose("Could not find the aws cli, falling back to the aws-iam-authenticator.");
                 }
 
+                log.Verbose("Attempting to authenticate with aws-iam-authenticator");
+                SetKubeConfigAuthenticationToAwsIAm(user, clusterName);
+            }
+            
+            string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
+
+            string GetAwsCliVersion()
+            {
+                var awsCliCommandRes = ExecuteCommandAndReturnOutput(aws, "--version").FirstOrDefault();
+                return awsCliCommandRes.Split()
+                                       .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
+                                       .Replace("aws-cli/", string.Empty);
+            }
+
+            string GetEksClusterApiVersion(string clusterName, string region)
+            {
+                var awsEksTokenCommand = ExecuteCommandAndReturnOutput(aws,
+                                                                       "eks",
+                                                                       "get-token",
+                                                                       $"--cluster-name={clusterName}",
+                                                                       $"--region={region}")
+                    .FirstOrDefault();
+
+                return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion").ToString();
+            }
+
+            void SetKubeConfigAuthenticationToAwsCli(string user, string clusterName, string region, string apiVersion)
+            {
+                ExecuteKubectlCommand("config",
+                                      "set-credentials",
+                                      user,
+                                      "--exec-command=aws",
+                                      "--exec-arg=eks",
+                                      "--exec-arg=get-token",
+                                      $"--exec-arg=--cluster-name={clusterName}",
+                                      $"--exec-arg=--region={region}",
+                                      $"--exec-api-version={apiVersion}");
+            }
+
+            void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
+            {
                 ExecuteKubectlCommand("config",
                                       "set-credentials",
                                       user,
