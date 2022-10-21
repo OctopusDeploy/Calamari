@@ -9,6 +9,7 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Retry;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -86,6 +87,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     {
                         const string requiredVersion = "v0.5.3";
                         client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", ExternalVariables.Get(ExternalVariable.GitHubPersonalAccessToken));
                         var json = await client.GetAsync(
                             $"https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases/tags/{requiredVersion}");
                         json.EnsureSuccessStatusCode();
@@ -119,6 +121,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                      async () =>
                                                      {
                                                          client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
+                                                         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", ExternalVariables.Get(ExternalVariable.GitHubPersonalAccessToken));
                                                          var json = await client.GetAsync("https://api.github.com/repos/aws/aws-cli/tags");
                                                          json.EnsureSuccessStatusCode();
                                                          var jObject = JArray.Parse(await json.Content.ReadAsStringAsync()).First();
