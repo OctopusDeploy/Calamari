@@ -65,10 +65,10 @@ namespace Calamari.AzureResourceGroup.Tests
         }
 
         [Test]
-        public void Deploy_with_template_in_package()
+        public async Task Deploy_with_template_in_package()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
-            CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
+            await CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
                                     .WithArrange(context =>
                                                  {
                                                      AddDefaults(context);
@@ -82,13 +82,13 @@ namespace Calamari.AzureResourceGroup.Tests
         }
 
         [Test]
-        public void Deploy_with_template_inline()
+        public async Task Deploy_with_template_inline()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
             var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
             var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
 
-            CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
+            await CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
                               .WithArrange(context =>
                                            {
                                                AddDefaults(context);
@@ -105,7 +105,7 @@ namespace Calamari.AzureResourceGroup.Tests
         [Test]
         [WindowsTest]
         [RequiresPowerShell5OrAbove]
-        public void Deploy_Ensure_Tools_Are_Configured()
+        public async Task Deploy_Ensure_Tools_Are_Configured()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
             var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
@@ -116,7 +116,7 @@ az --version
 Get-AzureEnvironment
 az group list";
 
-            CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
+            await CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
                               .WithArrange(context =>
                                            {
                                                AddDefaults(context);
