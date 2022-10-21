@@ -16,7 +16,9 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Octopus.CoreUtilities;
 using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes
@@ -499,14 +501,42 @@ namespace Calamari.Kubernetes
 
             void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
             {
+                var iamAuthenticatorVersion = DetermineAwsIamAuthenticatorVersion();
+                var apiVersion = iamAuthenticatorVersion.None() || iamAuthenticatorVersion.Value <= new Version("0.5.3")
+                    ? "client.authentication.k8s.io/v1alpha1"
+                    : "client.authentication.k8s.io/v1beta1";
+
                 ExecuteKubectlCommand("config",
                                       "set-credentials",
                                       user,
                                       "--exec-command=aws-iam-authenticator",
-                                      "--exec-api-version=client.authentication.k8s.io/v1alpha1",
+                                      $"--exec-api-version={apiVersion}",
                                       "--exec-arg=token",
                                       "--exec-arg=-i",
                                       $"--exec-arg={clusterName}");
+            }
+
+            Maybe<Version> DetermineAwsIamAuthenticatorVersion()
+            {
+                var awsIamVersionOutputCapture = new CaptureCommandOutput();
+                var awsIamVersionCommand = new CommandLineInvocation("aws-iam-authenticator", "version") { AdditionalInvocationOutputSink = awsIamVersionOutputCapture };
+                var commandResult = ExecuteCommand(awsIamVersionCommand);
+                if (commandResult.HasErrors)
+                    return Maybe<Version>.None;
+
+                var versionOutput = awsIamVersionOutputCapture.Messages.Select(m => m.Text).SingleOrDefault();
+                if (string.IsNullOrWhiteSpace(versionOutput))
+                    return Maybe<Version>.None;
+
+                try
+                {
+                    var versionJson = JsonConvert.DeserializeAnonymousType(versionOutput, new { Version = "1.0.0" });
+                    return Maybe<Version>.Some(new Version(versionJson?.Version ?? string.Empty));
+                }
+                catch
+                {
+                    return Maybe<Version>.None;
+                }
             }
 
             void SetupContextUsingPodServiceAccount(string @namespace,
