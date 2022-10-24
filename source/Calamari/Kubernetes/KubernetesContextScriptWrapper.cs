@@ -847,16 +847,27 @@ namespace Calamari.Kubernetes
 
                 if (TryExecuteKubectlCommand("version", "--client", "--short"))
                 {
-                    var kubectlVersionOutput = ExecuteCommandAndReturnOutput(kubectl, "version", "--client", "--output=json");
-                    var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
-                    var versionJson = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new {  gitVersion = "1.0.0" }});
-                    kubectlVersion = Maybe<Version>.Some(new Version(versionJson?.clientVersion.gitVersion.TrimStart('v')?? string.Empty));
-                    
+                    TrySetKubectlVersion();
                     return true;
                 }
 
                 log.Error($"Could not find kubectl. Make sure {kubectl} is on the PATH. See https://g.octopushq.com/KubernetesTarget for more information.");
                 return false;
+            }
+
+            void TrySetKubectlVersion()
+            {
+                var kubectlVersionOutput = ExecuteCommandAndReturnOutput(kubectl, "version", "--client", "--output=json");
+                var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
+                var clientVersion = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new {  gitVersion = "1.0.0" }});
+                var kubectlVersionString = clientVersion?.clientVersion?.gitVersion?.TrimStart('v');
+                if (string.IsNullOrWhiteSpace(kubectlVersionString))
+                {
+                    kubectlVersion = Maybe<Version>.None;
+                    return;
+                }
+
+                kubectlVersion = Maybe<Version>.Some(new Version(kubectlVersionString));
             }
 
             void ExecuteCommand(string executable, params string[] arguments)

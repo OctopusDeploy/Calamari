@@ -42,6 +42,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables = new CalamariVariables();
             log = new DoNotDoubleLog();
             redactMap = new Dictionary<string, string>();
+            InstallTools(new List<Action<InstallTools>>{ InstallKubectl });
             SetTestClusterVariables();
         }
 
@@ -221,7 +222,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonMac] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
         public void ExecutionWithEKS_IAMAuthenticator()
         {
-            InstallAwsTools(new List<Action<InstallTools>>{ InstallAwsCli, InstallKubectl });
+            InstallTools(new List<Action<InstallTools>>{ InstallAwsCli, InstallKubectl });
             
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
@@ -241,7 +242,7 @@ namespace Calamari.Tests.KubernetesFixtures
                       // as Mac and Linux installation requires Distro specific tooling
         public void ExecutionWithEKS_AwsCLIAuthenticator()
         {
-            InstallAwsTools(new List<Action<InstallTools>>{ InstallKubectl });
+            InstallTools(new List<Action<InstallTools>>{ InstallAwsCli, InstallKubectl });
 
             // Overriding the cluster url with a valid url. This is required to hit the aws eks get-token endpoint.
             variables.Set(SpecialVariables.ClusterUrl, "https://someHash.gr7.ap-southeast-2.eks.amazonaws.com");
@@ -390,7 +391,7 @@ namespace Calamari.Tests.KubernetesFixtures
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
 
-        void InstallAwsTools(List<Action<InstallTools>>toolsInstaller)
+        void InstallTools(List<Action<InstallTools>>toolsInstaller)
         {
             var tools = new InstallTools(TestContext.Progress.WriteLine);
             foreach (var toolInstaller in toolsInstaller)
