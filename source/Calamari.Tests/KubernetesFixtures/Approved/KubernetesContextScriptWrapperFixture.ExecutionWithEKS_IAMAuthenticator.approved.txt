@@ -9,7 +9,5 @@
 [Verbose] Attempting to authenticate with aws-cli
 [Verbose] Unable to authenticate to <server> using the aws cli. Failed with error message: Object reference not set to an instance of an object.
 [Verbose] Attempting to authenticate with aws-iam-authenticator
-[Verbose] "aws-iam-authenticator" version
-[Verbose] {"Version":"0.5.7","Commit":"2a9ee95fecab59fab41a0b646a63227d66113434"}
-[Verbose] "kubectl" config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1alpha1 --exec-arg=token --exec-arg=-i --exec-arg=my-eks-cluster --request-timeout=1m
+[Verbose] "kubectl" config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1beta1 --exec-arg=token --exec-arg=-i --exec-arg=my-eks-cluster --request-timeout=1m
 [Verbose] "kubectl" get namespace calamari-testing --request-timeout=1m
