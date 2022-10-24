@@ -529,13 +529,11 @@ namespace Calamari.Kubernetes
 
             Maybe<Version> DetermineAwsIamAuthenticatorVersion()
             {
-                var awsIamVersionOutputCapture = new CaptureCommandOutput();
-                var awsIamVersionCommand = new CommandLineInvocation(awsIAmAuthenticator, "version") { AdditionalInvocationOutputSink = awsIamVersionOutputCapture };
-                var commandResult = ExecuteCommand(awsIamVersionCommand);
-                if (commandResult.HasErrors)
+                var awsIamVersionCommand = ExecuteCommandAndReturnOutput(awsIAmAuthenticator, "version");
+                if (!awsIamVersionCommand.Any())
                     return Maybe<Version>.None;
 
-                var versionOutput = awsIamVersionOutputCapture.Messages.Select(m => m.Text).SingleOrDefault();
+                var versionOutput = awsIamVersionCommand.FirstOrDefault();
                 if (string.IsNullOrWhiteSpace(versionOutput))
                     return Maybe<Version>.None;
 

@@ -34,7 +34,7 @@ namespace Calamari.Tests.KubernetesFixtures
         IVariables variables;
         InMemoryLog log;
         Dictionary<string, string> redactMap;
-        static InstallTools InstallTools;
+        static InstallTools installTools;
 
         [SetUp]
         public void Setup()
@@ -221,7 +221,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonMac] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
         public void ExecutionWithEKS_IAMAuthenticator()
         {
-            InstallTools = InstallAwsTools((tools) => InstallAwsIAmAuthenticator(tools));
+            installTools = InstallAwsTools(InstallAwsIAmAuthenticator);
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
@@ -239,7 +239,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonMac] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
         public void ExecutionWithEKS_AwsCLIAuthenticator()
         {
-            InstallTools = InstallAwsTools(InstallAwsCli);
+            installTools = InstallAwsTools(InstallAwsCli);
 
             // Overriding the cluster url with a valid url. This is required to hit the aws eks get-token endpoint.
             variables.Set(SpecialVariables.ClusterUrl, "https://someHash.gr7.ap-southeast-2.eks.amazonaws.com");
@@ -423,7 +423,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 if (new string[] { "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe" }.Contains(invocation.Executable))
                 {
                     var captureCommandOutput = new CaptureCommandInvocationOutputSink();
-                    var testAwsInvocation = new CommandLineInvocation(invocation.Executable.Contains("iam") ? InstallTools.AwsAuthenticatorExecutable : InstallTools.AwsCliExecutable, invocation.Arguments)
+                    var testAwsInvocation = new CommandLineInvocation((invocation.Executable.Contains("iam") ? installTools.AwsAuthenticatorExecutable : installTools.AwsCliExecutable ?? "") ?? invocation.Executable, invocation.Arguments)
                     {
                         EnvironmentVars = invocation.EnvironmentVars,
                         WorkingDirectory = invocation.WorkingDirectory,
