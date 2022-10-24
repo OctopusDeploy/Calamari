@@ -146,20 +146,26 @@ namespace Calamari.Tests.KubernetesFixtures
                                                          var stdOut = new StringBuilder();
                                                          var stdError = new StringBuilder();
                                                          var awsInstallerExitCode = 1;
-
-                                                         awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("msiexec",
-                                                                                                                   $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
-                                                                                                                   destinationDirectoryName,
-                                                                                                                   (Action<string>)(s => stdOut.AppendLine(s)),
-                                                                                                                   (Action<string>)(s => stdError.AppendLine(s)))
-                                                                                                   .ExitCode;
-
-                                                         if (awsInstallerExitCode != 0)
+                                                         
+                                                         if (CalamariEnvironment.IsRunningOnWindows)
                                                          {
-                                                             throw new Exception($"{stdOut}{stdError}");
+
+                                                             awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("msiexec",
+                                                                                                                       $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
+                                                                                                                       destinationDirectoryName,
+                                                                                                                       (Action<string>)(s => stdOut.AppendLine(s)),
+                                                                                                                       (Action<string>)(s => stdError.AppendLine(s)))
+                                                                                                       .ExitCode;
+
+                                                             if (awsInstallerExitCode != 0)
+                                                             {
+                                                                 throw new Exception($"{stdOut}{stdError}");
+                                                             }
+
+                                                             return GetAwsCliExecutablePath(destinationDirectoryName);
                                                          }
 
-                                                         return GetAwsCliExecutablePath(destinationDirectoryName);
+                                                         return string.Empty;
                                                      });
             }
         }
