@@ -117,9 +117,9 @@ namespace Calamari.Kubernetes
             readonly Dictionary<string, string> environmentVars;
             readonly string workingDirectory;
             string kubectl;
+            Maybe<Version> kubectlVersion;
             string az;
             string aws;
-            string awsIAmAuthenticator;
             string gcloud;
             Dictionary<string, string> redactMap = new Dictionary<string, string>();
 
@@ -511,9 +511,7 @@ namespace Calamari.Kubernetes
 
             void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
             {
-                TrySetAwsIAmAuthenticator();
-                var iamAuthenticatorVersion = DetermineAwsIamAuthenticatorVersion();
-                var apiVersion = iamAuthenticatorVersion.None() || iamAuthenticatorVersion.Value <= new Version("0.5.3")
+                var apiVersion =  kubectlVersion.Value <= new Version("1.23.6")
                     ? "client.authentication.k8s.io/v1alpha1"
                     : "client.authentication.k8s.io/v1beta1";
 
@@ -525,27 +523,6 @@ namespace Calamari.Kubernetes
                                       "--exec-arg=token",
                                       "--exec-arg=-i",
                                       $"--exec-arg={clusterName}");
-            }
-
-            Maybe<Version> DetermineAwsIamAuthenticatorVersion()
-            {
-                var awsIamVersionCommand = ExecuteCommandAndReturnOutput(awsIAmAuthenticator, "version");
-                if (!awsIamVersionCommand.Any())
-                    return Maybe<Version>.None;
-
-                var versionOutput = awsIamVersionCommand.FirstOrDefault();
-                if (string.IsNullOrWhiteSpace(versionOutput))
-                    return Maybe<Version>.None;
-
-                try
-                {
-                    var versionJson = JsonConvert.DeserializeAnonymousType(versionOutput, new { Version = "1.0.0" });
-                    return Maybe<Version>.Some(new Version(versionJson?.Version ?? string.Empty));
-                }
-                catch
-                {
-                    return Maybe<Version>.None;
-                }
             }
 
             void SetupContextUsingPodServiceAccount(string @namespace,
@@ -692,22 +669,6 @@ namespace Calamari.Kubernetes
                 }
 
                 aws = aws.Trim();
-
-                return true;
-            }
-            
-            bool TrySetAwsIAmAuthenticator()
-            {
-                awsIAmAuthenticator = CalamariEnvironment.IsRunningOnWindows
-                    ? ExecuteCommandAndReturnOutput("where", "aws-iam-authenticator.exe").FirstOrDefault()
-                    : ExecuteCommandAndReturnOutput("which", "aws-iam-authenticator").FirstOrDefault();
-
-                if (string.IsNullOrEmpty(awsIAmAuthenticator))
-                {
-                    return false;
-                }
-
-                awsIAmAuthenticator = awsIAmAuthenticator.Trim();
 
                 return true;
             }
@@ -886,6 +847,11 @@ namespace Calamari.Kubernetes
 
                 if (TryExecuteKubectlCommand("version", "--client", "--short"))
                 {
+                    var kubectlVersionOutput = ExecuteCommandAndReturnOutput(kubectl, "version", "--client", "--output=json");
+                    var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
+                    var versionJson = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new {  gitVersion = "1.0.0" }});
+                    kubectlVersion = Maybe<Version>.Some(new Version(versionJson?.clientVersion.gitVersion.TrimStart('v')?? string.Empty));
+                    
                     return true;
                 }
 

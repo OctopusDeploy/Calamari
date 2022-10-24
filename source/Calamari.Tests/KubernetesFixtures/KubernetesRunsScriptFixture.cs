@@ -221,7 +221,8 @@ namespace Calamari.Tests.KubernetesFixtures
         [RequiresNonMac] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
         public void ExecutionWithEKS_IAMAuthenticator()
         {
-            installTools = InstallAwsTools(InstallAwsIAmAuthenticator);
+            InstallAwsTools(new List<Action<InstallTools>>{ InstallAwsCli, InstallKubectl });
+            
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
@@ -236,10 +237,11 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
-        [RequiresNonMac] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
+        [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
+                      // as Mac and Linux installation requires Distro specific tooling
         public void ExecutionWithEKS_AwsCLIAuthenticator()
         {
-            installTools = InstallAwsTools(InstallAwsCli);
+            InstallAwsTools(new List<Action<InstallTools>>{ InstallKubectl });
 
             // Overriding the cluster url with a valid url. This is required to hit the aws eks get-token endpoint.
             variables.Set(SpecialVariables.ClusterUrl, "https://someHash.gr7.ap-southeast-2.eks.amazonaws.com");
@@ -388,11 +390,15 @@ namespace Calamari.Tests.KubernetesFixtures
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
 
-        InstallTools InstallAwsTools(Action<InstallTools> toolsForInstall)
+        void InstallAwsTools(List<Action<InstallTools>>toolsInstaller)
         {
-            var installTools = new InstallTools(TestContext.Progress.WriteLine);
-            toolsForInstall(installTools);
-            return installTools;
+            var tools = new InstallTools(TestContext.Progress.WriteLine);
+            foreach (var toolInstaller in toolsInstaller)
+            {
+                toolInstaller(tools);
+            }
+
+            installTools = tools;
         }
 
         void InstallAwsCli(InstallTools tools)
@@ -402,11 +408,11 @@ namespace Calamari.Tests.KubernetesFixtures
             Task.WaitAll(installAwsCliTask);
         }
 
-        void InstallAwsIAmAuthenticator(InstallTools tools)
+        void InstallKubectl(InstallTools tools)
         {
-            var installAwsIAmAuthenticatorTask = tools.InstallAwsAuthenticator();
-            Task.Run(() => installAwsIAmAuthenticatorTask);
-            Task.WaitAll(installAwsIAmAuthenticatorTask);
+            var installKubectlTask = tools.InstallKubectl();
+            Task.Run(() => installKubectlTask);
+            Task.WaitAll(installKubectlTask);
         }
 
         class RecordOnly :  ICommandLineRunner
@@ -420,30 +426,40 @@ namespace Calamari.Tests.KubernetesFixtures
             public CommandResult Execute(CommandLineInvocation invocation)
             {
                 // If were running an aws command (we check the version and get the eks token endpoint) or checking it's location i.e. 'where aws' we want to run the actual command result.
-                if (new string[] { "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe" }.Contains(invocation.Executable))
+                if (new[] { "aws", "aws.exe" }.Contains(invocation.Executable))
                 {
-                    var captureCommandOutput = new CaptureCommandInvocationOutputSink();
-                    var testAwsInvocation = new CommandLineInvocation((invocation.Executable.Contains("iam") ? installTools.AwsAuthenticatorExecutable : installTools.AwsCliExecutable ?? "") ?? invocation.Executable, invocation.Arguments)
-                    {
-                        EnvironmentVars = invocation.EnvironmentVars,
-                        WorkingDirectory = invocation.WorkingDirectory,
-                        OutputAsVerbose = false,
-                        OutputToLog = false,
-                        AdditionalInvocationOutputSink = captureCommandOutput
-                    };
-                    
-                    var commandLineRunner = new CommandLineRunner(new SilentLog(), Variables);
-                    commandLineRunner.Execute(testAwsInvocation);
-                    foreach (var message in captureCommandOutput.AllMessages)
-                    {
-                        invocation.AdditionalInvocationOutputSink?.WriteInfo(message);
-                    }
+                    ExecuteInstalledToolExecutable(invocation, installTools.AwsCliExecutable);
+                }
+                
+                if (new[] { "kubectl", "kubectl.exe" }.Contains(invocation.Executable) && invocation.Arguments.Contains("version --client --output=json"))
+                {
+                    ExecuteInstalledToolExecutable(invocation, installTools.KubectlExecutable);
                 }
                 
                 // We only want to output executable string. eg. ExecuteCommandAndReturnOutput("where", "kubectl.exe")
-                if (new string[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe" }.Contains(invocation.Arguments)) 
+                if (new[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe" }.Contains(invocation.Arguments)) 
                     invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));
                 return new CommandResult(invocation.ToString(), 0);
+            }
+
+            void ExecuteInstalledToolExecutable(CommandLineInvocation invocation, string executable)
+            {
+                var captureCommandOutput = new CaptureCommandInvocationOutputSink();
+                var installedToolInvocation = new CommandLineInvocation(executable, invocation.Arguments)
+                {
+                    EnvironmentVars = invocation.EnvironmentVars,
+                    WorkingDirectory = invocation.WorkingDirectory,
+                    OutputAsVerbose = false,
+                    OutputToLog = false,
+                    AdditionalInvocationOutputSink = captureCommandOutput
+                };
+                    
+                var commandLineRunner = new CommandLineRunner(new SilentLog(), Variables);
+                commandLineRunner.Execute(installedToolInvocation);
+                foreach (var message in captureCommandOutput.AllMessages)
+                {
+                    invocation.AdditionalInvocationOutputSink?.WriteInfo(message);
+                }
             }
         }
     }
