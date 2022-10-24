@@ -7,7 +7,7 @@
 [Verbose] "kubectl" config set-cluster octocluster --insecure-skip-tls-verify=true --request-timeout=1m
 [Info] Creating kubectl context to <server> (namespace calamari-testing) using EKS cluster name my-eks-cluster
 [Verbose] Attempting to authenticate with aws-cli
-[Verbose] Unable to authenticate to <server> using the aws cli. Failed with error message: Object reference not set to an instance of an object.
+[Verbose] Unable to authenticate to <server> using the aws cli. Failed with error message: Error reading JObject from JsonReader. Path '', line 0, position 0.
 [Verbose] Attempting to authenticate with aws-iam-authenticator
 [Verbose] "kubectl" config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1beta1 --exec-arg=token --exec-arg=-i --exec-arg=my-eks-cluster --request-timeout=1m
 [Verbose] "kubectl" get namespace calamari-testing --request-timeout=1m

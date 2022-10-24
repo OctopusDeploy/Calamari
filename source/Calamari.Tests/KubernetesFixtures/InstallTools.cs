@@ -35,6 +35,12 @@ namespace Calamari.Tests.KubernetesFixtures
 
         public async Task Install()
         {
+            await InstallTerraform();
+            await InstallKubectl();
+        }
+
+        public async Task InstallTerraform()
+        {
             using (var client = new HttpClient())
             {
                 TerraformExecutable = await DownloadCli("Terraform",
@@ -56,7 +62,13 @@ namespace Calamari.Tests.KubernetesFixtures
                         var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
                         return terraformExecutable;
                     });
+            }
+        }
 
+        public async Task InstallKubectl()
+        {
+            using (var client = new HttpClient())
+            {
                 KubectlExecutable = await DownloadCli("Kubectl",
                     async () =>
                     {
@@ -113,6 +125,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
+        // Note this only installs and extracts for Windows 
         public async Task InstallAwsCli()
         {
             using (var client = new HttpClient())
@@ -134,44 +147,18 @@ namespace Calamari.Tests.KubernetesFixtures
                                                          var stdError = new StringBuilder();
                                                          var awsInstallerExitCode = 1;
 
-                                                         if (CalamariEnvironment.IsRunningOnWindows)
-                                                         {
-                                                             awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("msiexec",
-                                                                                                                       $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
-                                                                                                                       destinationDirectoryName,
-                                                                                                                       (Action<string>)(s => stdOut.AppendLine(s)),
-                                                                                                                       (Action<string>)(s => stdError.AppendLine(s)))
-                                                                                                       .ExitCode;
-                                                         }
-                                                         else
-                                                         {
-                                                             var unzipInstallExitCode = SilentProcessRunner.ExecuteCommand("apt-get",
-                                                                                                "install unzip", 
-                                                                                                "",
-                                                                                                (Action<string>)(s => stdOut.AppendLine(s)),
-                                                                                                (Action<string>)(s => stdError.AppendLine(s))).ExitCode;
-
-                                                             if (unzipInstallExitCode != 0)
-                                                             {
-                                                                 throw new Exception($"{stdOut}{stdError}");
-                                                             }
-                                                             
-                                                             stdOut = new StringBuilder();
-                                                             stdError = new StringBuilder();
-                                                             
-                                                             awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("unzip",
-                                                                                                                       $"{GetAWSCliFileName()}",
-                                                                                                                       destinationDirectoryName,
-                                                                                                                       (Action<string>)(s => stdOut.AppendLine(s)),
-                                                                                                                       (Action<string>)(s => stdError.AppendLine(s)))
-                                                                                                       .ExitCode;
-                                                         }
+                                                         awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("msiexec",
+                                                                                                                   $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
+                                                                                                                   destinationDirectoryName,
+                                                                                                                   (Action<string>)(s => stdOut.AppendLine(s)),
+                                                                                                                   (Action<string>)(s => stdError.AppendLine(s)))
+                                                                                                   .ExitCode;
 
                                                          if (awsInstallerExitCode != 0)
                                                          {
                                                              throw new Exception($"{stdOut}{stdError}");
                                                          }
-                                                         
+
                                                          return GetAwsCliExecutablePath(destinationDirectoryName);
                                                      });
             }
@@ -280,7 +267,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                     "AWSCLIV2",
                                     "aws.exe");
             }
-            
+
             return Path.Combine(extractPath, "aws", "dist", "aws");
         }
 
@@ -293,12 +280,12 @@ namespace Calamari.Tests.KubernetesFixtures
 
             return $"https://dl.k8s.io/release/{currentVersion}/bin/windows/amd64/kubectl.exe";
         }
-        
+
         static string GetGcloudDownloadLink(string currentVersion)
         {
             return $"https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/{GetGcloudZipFileName(currentVersion)}";
         }
-        
+
         static string GetGcloudZipFileName(string currentVersion)
         {
             if (CalamariEnvironment.IsRunningOnNix)
@@ -308,7 +295,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             return $"google-cloud-sdk-{currentVersion}-windows-x86_64-bundled-python.zip";
         }
-        
+
         static string GetGcloudExecutablePath(string extractPath)
         {
             var executableName = string.Empty;
@@ -349,7 +336,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             if (downloadBaseUrl.Last() != '/')
                 downloadBaseUrl += '/';
-            
+
             return $"{downloadBaseUrl}{fileName}";
         }
 
@@ -365,11 +352,11 @@ namespace Calamari.Tests.KubernetesFixtures
                 using (Stream stream = File.OpenRead(zipPath))
                 using (var reader = ReaderFactory.Open(stream))
                 {
-                    reader.WriteAllToDirectory(destination, new ExtractionOptions {ExtractFullPath = true, Overwrite = true, WriteSymbolicLink = WarnThatSymbolicLinksAreNotSupported});
+                    reader.WriteAllToDirectory(destination, new ExtractionOptions { ExtractFullPath = true, Overwrite = true, WriteSymbolicLink = WarnThatSymbolicLinksAreNotSupported });
                 }
             }
         }
-        
+
         static void WarnThatSymbolicLinksAreNotSupported(string sourcepath, string targetpath)
         {
             TestContext.Progress.WriteLine("Cannot create symbolic link: {0}, Calamari does not currently support the extraction of symbolic links", sourcepath);
