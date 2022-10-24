@@ -218,7 +218,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonMono] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
+        [RequiresNonMac] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
         public void ExecutionWithEKS_IAMAuthenticator()
         {
             InstallTools = InstallAwsTools((tools) => InstallAwsIAmAuthenticator(tools));
@@ -236,7 +236,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
-        [RequiresNonMono] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
+        [RequiresNonMac] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
         public void ExecutionWithEKS_AwsCLIAuthenticator()
         {
             InstallTools = InstallAwsTools(InstallAwsCli);
