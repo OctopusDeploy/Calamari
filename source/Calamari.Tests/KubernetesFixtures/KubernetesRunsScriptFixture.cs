@@ -42,7 +42,6 @@ namespace Calamari.Tests.KubernetesFixtures
             variables = new CalamariVariables();
             log = new DoNotDoubleLog();
             redactMap = new Dictionary<string, string>();
-            InstallTools(new List<Action<InstallTools>>{ InstallKubectl });
             SetTestClusterVariables();
         }
 
@@ -219,10 +218,11 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [RequiresNonMac] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
+        [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
+        [RequiresNonMono]
         public void ExecutionWithEKS_IAMAuthenticator()
         {
-            InstallTools(new List<Action<InstallTools>>{ InstallAwsCli, InstallKubectl });
+            InstallTools(InstallAwsCli);
             
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
@@ -239,10 +239,10 @@ namespace Calamari.Tests.KubernetesFixtures
         
         [Test]
         [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
-                      // as Mac and Linux installation requires Distro specific tooling
+        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
         public void ExecutionWithEKS_AwsCLIAuthenticator()
         {
-            InstallTools(new List<Action<InstallTools>>{ InstallAwsCli, InstallKubectl });
+            InstallTools(InstallAwsCli);
 
             // Overriding the cluster url with a valid url. This is required to hit the aws eks get-token endpoint.
             variables.Set(SpecialVariables.ClusterUrl, "https://someHash.gr7.ap-southeast-2.eks.amazonaws.com");
@@ -391,14 +391,10 @@ namespace Calamari.Tests.KubernetesFixtures
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
 
-        void InstallTools(List<Action<InstallTools>>toolsInstaller)
+        void InstallTools(Action<InstallTools> toolInstaller)
         {
             var tools = new InstallTools(TestContext.Progress.WriteLine);
-            foreach (var toolInstaller in toolsInstaller)
-            {
-                toolInstaller(tools);
-            }
-
+            toolInstaller(tools);
             installTools = tools;
         }
 
@@ -407,13 +403,6 @@ namespace Calamari.Tests.KubernetesFixtures
             var installAwsCliTask = tools.InstallAwsCli();
             Task.Run(() => installAwsCliTask);
             Task.WaitAll(installAwsCliTask);
-        }
-
-        void InstallKubectl(InstallTools tools)
-        {
-            var installKubectlTask = tools.InstallKubectl();
-            Task.Run(() => installKubectlTask);
-            Task.WaitAll(installKubectlTask);
         }
 
         class RecordOnly :  ICommandLineRunner
@@ -429,12 +418,12 @@ namespace Calamari.Tests.KubernetesFixtures
                 // If were running an aws command (we check the version and get the eks token endpoint) or checking it's location i.e. 'where aws' we want to run the actual command result.
                 if (new[] { "aws", "aws.exe" }.Contains(invocation.Executable))
                 {
-                    ExecuteInstalledToolExecutable(invocation, installTools.AwsCliExecutable);
+                    ExecuteCommand(invocation, installTools.AwsCliExecutable);
                 }
                 
                 if (new[] { "kubectl", "kubectl.exe" }.Contains(invocation.Executable) && invocation.Arguments.Contains("version --client --output=json"))
                 {
-                    ExecuteInstalledToolExecutable(invocation, installTools.KubectlExecutable);
+                    ExecuteCommand(invocation, invocation.Executable);
                 }
                 
                 // We only want to output executable string. eg. ExecuteCommandAndReturnOutput("where", "kubectl.exe")
@@ -443,7 +432,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 return new CommandResult(invocation.ToString(), 0);
             }
 
-            void ExecuteInstalledToolExecutable(CommandLineInvocation invocation, string executable)
+            void ExecuteCommand(CommandLineInvocation invocation, string executable)
             {
                 var captureCommandOutput = new CaptureCommandInvocationOutputSink();
                 var installedToolInvocation = new CommandLineInvocation(executable, invocation.Arguments)

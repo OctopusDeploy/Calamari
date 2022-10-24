@@ -511,9 +511,9 @@ namespace Calamari.Kubernetes
 
             void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
             {
-                var apiVersion =  kubectlVersion.Value <= new Version("1.23.6")
-                    ? "client.authentication.k8s.io/v1alpha1"
-                    : "client.authentication.k8s.io/v1beta1";
+                var apiVersion = kubectlVersion.Some() && kubectlVersion.Value > new Version("1.23.6")
+                    ? "client.authentication.k8s.io/v1beta1"
+                    : "client.authentication.k8s.io/v1alpha1";
 
                 ExecuteKubectlCommand("config",
                                       "set-credentials",
@@ -859,15 +859,24 @@ namespace Calamari.Kubernetes
             {
                 var kubectlVersionOutput = ExecuteCommandAndReturnOutput(kubectl, "version", "--client", "--output=json");
                 var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
-                var clientVersion = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new {  gitVersion = "1.0.0" }});
-                var kubectlVersionString = clientVersion?.clientVersion?.gitVersion?.TrimStart('v');
-                if (string.IsNullOrWhiteSpace(kubectlVersionString))
+                string kubectlVersionString;
+                try
+                {
+                    var clientVersion = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new { gitVersion = "1.0.0" } });
+                    kubectlVersionString = clientVersion?.clientVersion?.gitVersion?.TrimStart('v');
+                    if (kubectlVersionString != null)
+                    {
+                        kubectlVersion = Maybe<Version>.Some(new Version(kubectlVersionString));
+                        return;
+                    }
+                }
+                catch (Exception)
                 {
                     kubectlVersion = Maybe<Version>.None;
                     return;
                 }
 
-                kubectlVersion = Maybe<Version>.Some(new Version(kubectlVersionString));
+                kubectlVersion = Maybe<Version>.None;
             }
 
             void ExecuteCommand(string executable, params string[] arguments)
