@@ -16,14 +16,14 @@ cd tools || exit
 
 curl -L -o kubectl "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 curl -L -o aws-iam-authenticator "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.3/aws-iam-authenticator_0.5.3_linux_amd64"
-curl -L -o aws "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+curl -L -o awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
 unzip -u awscliv2.zip
 mv aws awscli
-cp -r awscli/dist/*
+cp -r awscli/dist/* .
 
 chmod u+x aws-iam-authenticator
 chmod u+x kubectl
-chmod u+x aws/dist/aws
+chmod u+x aws
 
 export PATH="$PATH:$(pwd)"
 
