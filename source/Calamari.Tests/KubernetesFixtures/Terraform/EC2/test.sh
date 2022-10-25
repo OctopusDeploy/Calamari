@@ -19,7 +19,7 @@ curl -L -o aws-iam-authenticator "https://github.com/kubernetes-sigs/aws-iam-aut
 curl -L -o awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
 unzip -u awscliv2.zip
 mv aws awscli
-cp -r awscli/dist/* .
+cp -a awscli/dist/* .
 
 chmod u+x aws-iam-authenticator
 chmod u+x kubectl

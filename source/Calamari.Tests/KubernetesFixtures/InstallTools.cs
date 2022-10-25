@@ -131,42 +131,68 @@ namespace Calamari.Tests.KubernetesFixtures
             using (var client = new HttpClient())
             {
                 AwsCliExecutable = await DownloadCli("aws",
-                                                     () =>
-                                                     {
-                                                         var version = "2.8.3";
-                                                         return Task.FromResult((version, GetAwsCliDownloadLink()));
-                                                     },
-                                                     async (destinationDirectoryName, tuple) =>
-                                                     {
-                                                         await Download(Path.Combine(destinationDirectoryName, GetAWSCliFileName()),
-                                                                        client,
-                                                                        tuple.data);
+                    () =>
+                    {
+                        var version = "2.8.3";
+                        return Task.FromResult((version, GetAwsCliDownloadLink()));
+                    },
+                    async (destinationDirectoryName, tuple) =>
+                    {
+                        await Download(Path.Combine(destinationDirectoryName, GetAWSCliFileName()),
+                                       client,
+                                       tuple.data);
 
-                                                         var awsInstaller = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                                                         var stdOut = new StringBuilder();
-                                                         var stdError = new StringBuilder();
-                                                         var awsInstallerExitCode = 1;
-                                                         
-                                                         if (CalamariEnvironment.IsRunningOnWindows)
-                                                         {
+                        var awsInstaller = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                        var stdOut = new StringBuilder();
+                        var stdError = new StringBuilder();
+                        var awsInstallerExitCode = 1;
 
-                                                             awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("msiexec",
-                                                                                                                       $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
-                                                                                                                       destinationDirectoryName,
-                                                                                                                       (Action<string>)(s => stdOut.AppendLine(s)),
-                                                                                                                       (Action<string>)(s => stdError.AppendLine(s)))
-                                                                                                       .ExitCode;
+                        if (CalamariEnvironment.IsRunningOnWindows)
+                        {
+                            awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("msiexec",
+                                                                                      $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
+                                                                                      destinationDirectoryName,
+                                                                                      (Action<string>)(s => stdOut.AppendLine(s)),
+                                                                                      (Action<string>)(s => stdError.AppendLine(s)))
+                                                                      .ExitCode;
 
-                                                             if (awsInstallerExitCode != 0)
-                                                             {
-                                                                 throw new Exception($"{stdOut}{stdError}");
-                                                             }
+                            if (awsInstallerExitCode != 0)
+                            {
+                                throw new Exception($"{stdOut}{stdError}");
+                            }
+                        }
+                        else if (CalamariEnvironment.IsRunningOnNix && !CalamariEnvironment.IsRunningOnMono)
+                        {
+                            var unzipInstallExitCode = SilentProcessRunner.ExecuteCommand("sudo",
+                                                                                          "apt-get install unzip",
+                                                                                          destinationDirectoryName,
+                                                                                          (Action<string>)(s => stdOut.AppendLine(s)),
+                                                                                          (Action<string>)(s => stdError.AppendLine(s)))
+                                                                          .ExitCode;
 
-                                                             return GetAwsCliExecutablePath(destinationDirectoryName);
-                                                         }
+                            if (unzipInstallExitCode != 0)
+                            {
+                                throw new Exception($"{stdOut}{stdError}");
+                            }
 
-                                                         return string.Empty;
-                                                     });
+                            stdOut = new StringBuilder();
+                            stdError = new StringBuilder();
+
+                            awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("unzip",
+                                                                                      $"{GetAWSCliFileName()}",
+                                                                                      destinationDirectoryName,
+                                                                                      (Action<string>)(s => stdOut.AppendLine(s)),
+                                                                                      (Action<string>)(s => stdError.AppendLine(s)))
+                                                                      .ExitCode;
+
+                            if (awsInstallerExitCode != 0)
+                            {
+                                throw new Exception($"{stdOut}{stdError}");
+                            }
+                        }
+
+                        return string.IsNullOrWhiteSpace(destinationDirectoryName) ? GetAwsCliExecutablePath(destinationDirectoryName) : string.Empty;
+                    });
             }
         }
 
