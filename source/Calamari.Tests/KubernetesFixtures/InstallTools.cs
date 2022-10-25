@@ -179,7 +179,7 @@ namespace Calamari.Tests.KubernetesFixtures
                             stdError = new StringBuilder();
 
                             awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("unzip",
-                                                                                      $"{GetAWSCliFileName()}",
+                                                                                      $"{Path.Combine(destinationDirectoryName, GetAWSCliFileName())} -d ${destinationDirectoryName}",
                                                                                       destinationDirectoryName,
                                                                                       (Action<string>)(s => stdOut.AppendLine(s)),
                                                                                       (Action<string>)(s => stdError.AppendLine(s)))
