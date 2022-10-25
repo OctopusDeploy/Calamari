@@ -125,7 +125,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        // Note this only installs and extracts for Windows 
+        // Note this only installs and extracts for Windows
         public async Task InstallAwsCli()
         {
             using (var client = new HttpClient())
@@ -179,7 +179,7 @@ namespace Calamari.Tests.KubernetesFixtures
                             stdError = new StringBuilder();
 
                             awsInstallerExitCode = SilentProcessRunner.ExecuteCommand("unzip",
-                                                                                      $"{Path.Combine(destinationDirectoryName, GetAWSCliFileName())} -d ${destinationDirectoryName}",
+                                                                                      $"{Path.Combine(destinationDirectoryName, GetAWSCliFileName())} -d {destinationDirectoryName}",
                                                                                       destinationDirectoryName,
                                                                                       (Action<string>)(s => stdOut.AppendLine(s)),
                                                                                       (Action<string>)(s => stdError.AppendLine(s)))
@@ -191,7 +191,9 @@ namespace Calamari.Tests.KubernetesFixtures
                             }
                         }
 
-                        return string.IsNullOrWhiteSpace(destinationDirectoryName) ? GetAwsCliExecutablePath(destinationDirectoryName) : string.Empty;
+                        return !string.IsNullOrWhiteSpace(destinationDirectoryName) 
+                            ? GetAwsCliExecutablePath(destinationDirectoryName) 
+                            : string.Empty;
                     });
             }
         }
