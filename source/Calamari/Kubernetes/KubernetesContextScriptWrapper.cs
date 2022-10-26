@@ -19,6 +19,7 @@ using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities;
+using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes
 {
@@ -117,7 +118,6 @@ namespace Calamari.Kubernetes
             readonly Dictionary<string, string> environmentVars;
             readonly string workingDirectory;
             string kubectl;
-            Maybe<Version> kubectlVersion;
             string az;
             string aws;
             string gcloud;
@@ -439,35 +439,33 @@ namespace Calamari.Kubernetes
             bool TrySetKubeConfigAuthenticationToAwsCli(string clusterName, string clusterUrl, string user)
             {
                 log.Verbose("Attempting to authenticate with aws-cli");
-                if (TrySetAws())
-                {
-                    try
-                    {
-                        var awsCliVersion = GetAwsCliVersion();
-                        var minmumAwsCliVersionForAuth = new Version("1.16.156");
-                        if (awsCliVersion > minmumAwsCliVersionForAuth)
-                        {
-                            var region = GetEksClusterRegion(clusterUrl);
-                            if (!string.IsNullOrWhiteSpace(region))
-                            {
-                                var apiVersion = GetEksClusterApiVersion(clusterName, region);
-                                SetKubeConfigAuthenticationToAwsCli(user, clusterName, region, apiVersion);
-                                return true;
-                            }
-                            
-                            log.Verbose("The EKS cluster Url specified should contain a valid aws region name");
-                        }
-
-                        log.Verbose($"aws cli version: {awsCliVersion} does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
-                    }
-                    catch (Exception e)
-                    {
-                        log.Verbose($"Unable to authenticate to {clusterUrl} using the aws cli. Failed with error message: {e.Message}");
-                    }
-                }
-                else
+                if (!TrySetAws())
                 {
                     log.Verbose("Could not find the aws cli, falling back to the aws-iam-authenticator.");
+                    return false;
+                }
+                
+                try {
+                    var awsCliVersion = GetAwsCliVersion();
+                    var minimumAwsCliVersionForAuth = new SemanticVersion("1.16.156");
+                    if (awsCliVersion.CompareTo(minimumAwsCliVersionForAuth) > 0)
+                    {
+                        var region = GetEksClusterRegion(clusterUrl);
+                        if (!string.IsNullOrWhiteSpace(region))
+                        {
+                            var apiVersion = GetEksClusterApiVersion(clusterName, region);
+                            SetKubeConfigAuthenticationToAwsCli(user, clusterName, region, apiVersion);
+                            return true;
+                        }
+                        
+                        log.Verbose("The EKS cluster Url specified should contain a valid aws region name");
+                    }
+
+                    log.Verbose($"aws cli version: {awsCliVersion} does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
+                }
+                catch (Exception e)
+                {
+                    log.Verbose($"Unable to authenticate to {clusterUrl} using the aws cli. Failed with error message: {e.Message}");
                 }
 
                 return false;
@@ -475,13 +473,13 @@ namespace Calamari.Kubernetes
             
             string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
 
-            Version GetAwsCliVersion()
+            SemanticVersion GetAwsCliVersion()
             {
                 var awsCliCommandRes = ExecuteCommandAndReturnOutput(aws, "--version").FirstOrDefault();
                 var awsCliVersionString = awsCliCommandRes.Split()
                                                           .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
                                                           .Replace("aws-cli/", string.Empty);
-                return new Version(awsCliVersionString);
+                return new SemanticVersion(awsCliVersionString);
             }
 
             string GetEksClusterApiVersion(string clusterName, string region)
@@ -511,7 +509,8 @@ namespace Calamari.Kubernetes
 
             void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
             {
-                var apiVersion = kubectlVersion.Some() && kubectlVersion.Value > new Version("1.23.6")
+                var kubectlVersion = TrySetKubectlVersion();
+                var apiVersion = kubectlVersion.Some() && kubectlVersion.Value > new SemanticVersion("1.23.6")
                     ? "client.authentication.k8s.io/v1beta1"
                     : "client.authentication.k8s.io/v1alpha1";
 
@@ -847,7 +846,6 @@ namespace Calamari.Kubernetes
 
                 if (TryExecuteKubectlCommand("version", "--client", "--short"))
                 {
-                    TrySetKubectlVersion();
                     return true;
                 }
 
@@ -855,28 +853,25 @@ namespace Calamari.Kubernetes
                 return false;
             }
 
-            void TrySetKubectlVersion()
+            Maybe<SemanticVersion> TrySetKubectlVersion()
             {
                 var kubectlVersionOutput = ExecuteCommandAndReturnOutput(kubectl, "version", "--client", "--output=json");
                 var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
-                string kubectlVersionString;
                 try
                 {
                     var clientVersion = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new { gitVersion = "1.0.0" } });
-                    kubectlVersionString = clientVersion?.clientVersion?.gitVersion?.TrimStart('v');
+                    var kubectlVersionString = clientVersion?.clientVersion?.gitVersion?.TrimStart('v');
                     if (kubectlVersionString != null)
                     {
-                        kubectlVersion = Maybe<Version>.Some(new Version(kubectlVersionString));
-                        return;
+                        return Maybe<SemanticVersion>.Some(new SemanticVersion(kubectlVersionString));
                     }
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    kubectlVersion = Maybe<Version>.None;
-                    return;
+                    log.Verbose($"Unable to determine kubectl version. Failed with error message: {e.Message}");
                 }
 
-                kubectlVersion = Maybe<Version>.None;
+                return Maybe<SemanticVersion>.None;
             }
 
             void ExecuteCommand(string executable, params string[] arguments)
