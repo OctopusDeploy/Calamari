@@ -22,6 +22,8 @@
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
         <PackageReference Include="NSubstitute" Version="4.2.1" />
         <PackageReference Include="Shouldly" Version="2.8.2" />
+        <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.0.50"/>
+        <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.13.1" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
