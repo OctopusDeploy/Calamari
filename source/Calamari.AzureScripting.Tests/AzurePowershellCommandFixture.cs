@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Scripting;
@@ -38,7 +39,7 @@ namespace Calamari.AzureScripting.Tests
         [Test]
         [WindowsTest]
         [RequiresPowerShell5OrAbove]
-        public void ExecuteAnInlineWindowsPowerShellScript()
+        public async Task ExecuteAnInlineWindowsPowerShellScript()
         {
             var psScript = @"
 $ErrorActionPreference = 'Continue'
@@ -46,19 +47,20 @@ az --version
 Get-AzureEnvironment
 az group list";
 
-            var calamariCommand = CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
+            await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                               .WithArrange(context =>
                                            {
                                                AddDefaults(context);
                                                context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
                                                context.Variables.Add(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
                                                context.Variables.Add(ScriptVariables.ScriptBody, psScript);
-                                           }).Execute();
+                                           })
+                              .Execute();
         }
 
         [Test]
         [RequiresPowerShell5OrAbove]
-        public void ExecuteAnInlinePowerShellCoreScript()
+        public async Task ExecuteAnInlinePowerShellCoreScript()
         {
             var psScript = @"
 $ErrorActionPreference = 'Continue'
@@ -66,7 +68,7 @@ az --version
 Get-AzureEnvironment
 az group list";
 
-            CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
+            await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                                     .WithArrange(context =>
                                                  {
                                                      AddDefaults(context);
@@ -80,7 +82,7 @@ az group list";
 
         [Test]
         [RequiresPowerShell5OrAbove]
-        public void ExecuteAnInlinePowerShellCoreScriptAgainstAnInvalidAzureEnvironment()
+        public async Task ExecuteAnInlinePowerShellCoreScriptAgainstAnInvalidAzureEnvironment()
         {
             var psScript = @"
 $ErrorActionPreference = 'Continue'
@@ -88,7 +90,7 @@ az --version
 Get-AzureEnvironment
 az group list";
 
-            CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
+            await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
                               .WithArrange(context =>
                                            {
                                                AddDefaults(context);
