@@ -30,7 +30,7 @@ WarningMessage="${Yellow}\
 ║ WARNING:                                               ║
 ║ Building Calamari on a non-windows machine will result ║
 ║ in Calmari and Calamari.Cloud nuget packages being     ║
-║ built against net6.0. This means that some      ║
+║ built against net6.0. This means that some             ║
 ║ steps may not work as expected because they require a  ║
 ║ .Net Framework compatible Calamari Nuget Package.      ║
 ╬════════════════════════════════════════════════════════╬\
