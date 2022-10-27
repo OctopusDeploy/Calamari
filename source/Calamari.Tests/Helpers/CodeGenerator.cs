@@ -23,12 +23,12 @@ namespace Calamari.Tests.Helpers
             }
 
             var clr = new CommandLineRunner(ConsoleLog.Instance, new CalamariVariables());
-            var result = clr.Execute(CreateCommandLineInvocation("dotnet", "new console -f netcoreapp3.1"));
+            var result = clr.Execute(CreateCommandLineInvocation("dotnet", "new console -f net6.0"));
             result.VerifySuccess();
             File.WriteAllText(Path.Combine(projectPath.FullName, "global.json"),
                               @"{
     ""sdk"": {
-            ""version"": ""3.1.402"",
+            ""version"": ""6.0.10"",
             ""rollForward"": ""latestFeature""
         }
     }");

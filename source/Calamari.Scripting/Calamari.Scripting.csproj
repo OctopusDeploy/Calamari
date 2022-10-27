@@ -10,10 +10,10 @@
         <LangVersion>9</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-        <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
+        <TargetFrameworks>net452;net6.0</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
@@ -29,7 +29,7 @@
     <PropertyGroup Condition="'$(TargetFramework)' == 'net452' ">
         <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
         <DefineConstants>$(DefineConstants);HAS_NULLABLE_REF_TYPES</DefineConstants>
     </PropertyGroup>
 

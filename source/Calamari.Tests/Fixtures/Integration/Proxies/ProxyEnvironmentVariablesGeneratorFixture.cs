@@ -232,7 +232,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         
         void AssertUnauthenticatedSystemProxyUsed(IEnumerable<EnvironmentVariable> output)
         {
-#if !NETCOREAPP
+#if !NETCORE
             AssertUnauthenticatedProxyUsed(output);
 #else
             AssertNoProxyChanges(output);
@@ -241,7 +241,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         
         void AssertAuthenticatedSystemProxyUsed(IEnumerable<EnvironmentVariable> output)
         {
-#if !NETCOREAPP
+#if !NETCORE
             AssertAuthenticatedProxyUsed(output);
 #else
             AssertNoProxyChanges(output);
