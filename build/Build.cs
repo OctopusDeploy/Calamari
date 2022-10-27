@@ -398,7 +398,7 @@ namespace Calamari.Build
                           {
                               var publishedLocation =
                                   DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
-                              var zipName = $"Calamari.Tests.netcoreapp.{rid}.{nugetVersion}.zip";
+                              var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
                               CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
                           });
 
