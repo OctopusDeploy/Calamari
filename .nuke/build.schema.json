@@ -81,6 +81,12 @@
           "type": "boolean",
           "description": "Run packing step in parallel"
         },
+        "PartialBuildFlavours": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "Partition": {
           "type": "string",
           "description": "Partition to use on CI"
@@ -126,7 +132,6 @@
               "CheckForbiddenWords",
               "Clean",
               "Compile",
-              "CopySashimiPackagesForConsolidation",
               "CopyToLocalPackages",
               "Pack",
               "PackageConsolidatedCalamariZip",
@@ -153,7 +158,6 @@
               "CheckForbiddenWords",
               "Clean",
               "Compile",
-              "CopySashimiPackagesForConsolidation",
               "CopyToLocalPackages",
               "Pack",
               "PackageConsolidatedCalamariZip",

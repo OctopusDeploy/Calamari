@@ -46,7 +46,9 @@ namespace Calamari.Build
 
         [Parameter] 
         readonly bool SignBinaries;
-        
+
+        [Parameter] readonly string[] PartialBuildFlavours;
+
         // When building locally signing isn't really necessary and it could take
         // up to 3-4 minutes to sign all the binaries as we build for many, many
         // different runtimes so disabling it locally means quicker turn around
@@ -229,6 +231,9 @@ namespace Calamari.Build
                                             .Concat(calamariScriptingProjectAndTest)
                                             .ToList();
 
+                     if (PartialBuildFlavours.Any())
+                         calamariProjects = calamariProjects.Where(c => PartialBuildFlavours.Contains(c.Name)).ToList();
+
                      PublishCalamariProjects(calamariProjects);
                  });
 
@@ -272,6 +277,9 @@ namespace Calamari.Build
 
             var packagesToPublish = crossPlatformPackages.Concat(netFxPackages);
 
+            if (PartialBuildFlavours.Any())
+                packagesToPublish = packagesToPublish.Where(p => PartialBuildFlavours.Contains(p.Project.Name) || p.Project.Name == "Calamari");
+
             packagesToPublish.ForEach(PublishPackage);
             Task.WhenAll(SignDirectoriesTasks);
             
@@ -309,7 +317,7 @@ namespace Calamari.Build
                 SignDirectoriesTasks.Add(signDirectoryTask);
             }
 
-            File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+            File.Copy(RootDirectory / "global.json", outputDirectory / "global.json", overwrite: true);
             
         }
 
@@ -465,6 +473,9 @@ namespace Calamari.Build
                                         });
                                     }
                                 }
+
+                                if (PartialBuildFlavours.Any())
+                                    packageReferences = packageReferences.Where(p => PartialBuildFlavours.Contains(p.Name) || p.Name == "Calamari").ToList();
 
                                 Directory.CreateDirectory(ConsolidatedPackageDirectory);
                                 var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ConsolidatedPackageDirectory, packageReferences);
