@@ -72,6 +72,21 @@ function Get-RunningInPowershellCore {
     return $PSVersionTable.PSVersion.Major -gt 5
 }
 
+function Get-AzCliVersion {
+    Write-Host "Checking Az CLI Version"
+    $azCli = (Get-Command az -ErrorAction SilentlyContinue)
+    if ($azCli) {
+        if ($azCli.Name -eq "az.ps1") {
+            # Running on Windows, explicitly use cmd version because ps1 version is broken in v2.40
+            $version = (& az.cmd version --output json) | ConvertFrom-Json | Select -ExpandProperty azure-cli
+        } else {
+            $version = (& az version --output json) | ConvertFrom-Json | Select -ExpandProperty azure-cli
+        }
+    }
+
+    return $version
+}
+
 function Initialize-AzureRmContext {
     
     # Authenticate via Service Principal
@@ -185,6 +200,13 @@ Execute-WithRetry{
                     } else { 
                         $env:AZURE_EXTENSION_DIR = "$($HOME)\.azure\cliextensions" 
                     } 
+
+                    # Azure CLI v2.40 has a bug in it which breaks login. Warn customers if affected and fail the step.
+                    $azCliVersion = Get-AzCliVersion
+                    if ($azCliVersion -and ($azCliVersion -eq "2.40.0")) {
+                        Write-Error "AAzure CLI v2.40 contained a bug which prevents Octopus from performing non-interactive login. Please update your deployment target/worker to use a version of Azure CLI other than 2.40. See https://oc.to/AzureCLIv240Bug for further details."
+                        exit 1
+                    }
 
                     $previousErrorAction = $ErrorActionPreference
                     $ErrorActionPreference = "Continue"

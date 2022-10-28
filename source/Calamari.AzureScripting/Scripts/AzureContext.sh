@@ -33,6 +33,15 @@ function setup_context {
             export AZURE_EXTENSION_DIR="$HOME/.azure/cliextensions"
         fi
 
+        # Azure CLI v2.40 has a bug in it which breaks login. Warn customers if affected and fail the step.
+        if grep -q "\"azure-cli\": \"2.40.0\"" <<< "$(az version --output json)";
+        then
+            echo "##octopus[stdout-error]"
+            echo "Azure CLI v2.40 contained a bug which prevents Octopus from performing non-interactive login. Please update your deployment target/worker to use a version of Azure CLI other than 2.40. See https://oc.to/AzureCLIv240Bug for further details."
+
+            exit 1
+        fi
+
         # authenticate with the Azure CLI
         echo "##octopus[stdout-verbose]"
 
