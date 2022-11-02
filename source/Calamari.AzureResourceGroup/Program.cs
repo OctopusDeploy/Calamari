@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Util;
 using Microsoft.Extensions.DependencyInjection;
 using Autofac.Extensions.DependencyInjection;
+using Calamari.Common.Plumbing.FileSystem;
 
 namespace Calamari.AzureResourceGroup
 {
@@ -24,6 +25,7 @@ namespace Calamari.AzureResourceGroup
         {
             base.ConfigureContainer(builder, options);
 
+            builder.RegisterInstance(CalamariPhysicalFileSystem.GetPhysicalFileSystem()).As<ICalamariFileSystem>();
             builder.RegisterType<TemplateService>();
             builder.RegisterType<ResourceGroupTemplateNormalizer>().As<IResourceGroupTemplateNormalizer>();
             builder.RegisterType<TemplateResolver>().As<ITemplateResolver>().SingleInstance();
