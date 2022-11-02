@@ -17,6 +17,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Azure.Bicep.Core" Version="0.11.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0-rc.2.22472.3" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.23" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.9" />
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.9.0-preview" />
