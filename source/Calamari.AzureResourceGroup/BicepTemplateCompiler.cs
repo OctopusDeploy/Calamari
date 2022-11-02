@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Immutable;
 using System.IO;
 using Bicep.Core.Analyzers.Interfaces;
 using Bicep.Core.Analyzers.Linter.ApiVersions;
@@ -10,7 +8,6 @@ using Bicep.Core.FileSystem;
 using Bicep.Core.Registry;
 using Bicep.Core.Semantics;
 using Bicep.Core.Semantics.Namespaces;
-using Bicep.Core.TypeSystem.Az;
 using Bicep.Core.Workspaces;
 
 namespace Calamari.AzureResourceGroup
@@ -27,24 +24,34 @@ namespace Calamari.AzureResourceGroup
         private readonly IConfigurationManager configurationManager;
         private readonly IApiVersionProvider apiVersionProvider;
         private readonly IBicepAnalyzer linterAnalyzer;
+        private readonly IFeatureProvider featureProvider;
+        private readonly INamespaceProvider namespaceProvider;
 
-        public BicepTemplateCompiler(IFileResolver fileResolver, IModuleDispatcher moduleDispatcher, IConfigurationManager configurationManager, IApiVersionProvider apiVersionProvider, IBicepAnalyzer linterAnalyzer)
+        public BicepTemplateCompiler(
+            IFileResolver fileResolver, 
+            IModuleDispatcher moduleDispatcher, 
+            IConfigurationManager configurationManager, 
+            IApiVersionProvider apiVersionProvider, 
+            IBicepAnalyzer linterAnalyzer,
+            IFeatureProvider featureProvider,
+            INamespaceProvider namespaceProvider)
         {
             this.fileResolver = fileResolver;
             this.moduleDispatcher = moduleDispatcher;
             this.configurationManager = configurationManager;
             this.apiVersionProvider = apiVersionProvider;
             this.linterAnalyzer = linterAnalyzer;
+            this.featureProvider = featureProvider;
+            this.namespaceProvider = namespaceProvider;
         }
         
         public string Compile(string inputPath)
         {
             var uri = PathHelper.FilePathToFileUrl(Path.GetFullPath(inputPath));
             var grouping = SourceFileGroupingBuilder.Build(fileResolver, moduleDispatcher, new Workspace(), uri);
-            var features = new FeatureProvider();
             var compilation = new Compilation(
-                features, 
-                new DefaultNamespaceProvider(new AzResourceTypeLoader()), 
+                featureProvider, 
+                namespaceProvider, 
                 grouping, 
                 configurationManager, 
                 apiVersionProvider, 
@@ -53,7 +60,7 @@ namespace Calamari.AzureResourceGroup
             using var writer = new StreamWriter(compiled);
             
             var model = compilation.GetEntrypointSemanticModel();
-            var emitter = new TemplateEmitter(model, new EmitterSettings(features));
+            var emitter = new TemplateEmitter(model, new EmitterSettings(featureProvider));
             emitter.Emit(writer);
             compiled.Flush();
 
