@@ -20,12 +20,14 @@ namespace Calamari.AzureResourceGroup
     {
         readonly TemplateService templateService;
         readonly IResourceGroupTemplateNormalizer parameterNormalizer;
+        readonly IBicepTemplateCompiler bicepTemplateCompiler;
         readonly ILog log;
 
-        public DeployAzureResourceGroupBehaviour(TemplateService templateService, IResourceGroupTemplateNormalizer parameterNormalizer, ILog log)
+        public DeployAzureResourceGroupBehaviour(TemplateService templateService, IResourceGroupTemplateNormalizer parameterNormalizer, IBicepTemplateCompiler bicepTemplateCompiler, ILog log)
         {
             this.templateService = templateService;
             this.parameterNormalizer = parameterNormalizer;
+            this.bicepTemplateCompiler = bicepTemplateCompiler;
             this.log = log;
         }
 
@@ -69,6 +71,11 @@ namespace Calamari.AzureResourceGroup
                 ? parameterNormalizer.Normalize(templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackage, variables))
                 : null;
 
+            if (IsBicep(template))
+            {
+                template = bicepTemplateCompiler.Compile(template);
+            }
+            
             log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
             // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
@@ -219,6 +226,8 @@ namespace Calamari.AzureResourceGroup
             return log.ToString();
         }
 
+        static bool IsBicep(string template) => !template.StartsWith("[") && !template.StartsWith("{");
+        
         void CaptureOutputs(string outputsJson, IVariables variables)
         {
             if (string.IsNullOrWhiteSpace(outputsJson))

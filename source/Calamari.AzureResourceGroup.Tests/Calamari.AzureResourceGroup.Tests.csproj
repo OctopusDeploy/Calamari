@@ -4,11 +4,6 @@
     <AssemblyName>Calamari.AzureResourceGroup.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-  </PropertyGroup>
-  <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>net461;net6.0</TargetFrameworks>
-  </PropertyGroup>
-  <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
@@ -31,6 +26,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Packages\AzureResourceGroup\Default.aspx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Packages\Bicep\container_app_sample.bicep">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Packages\Bicep\container_app_sample.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Packages\Bicep\container_app_sample_params.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
