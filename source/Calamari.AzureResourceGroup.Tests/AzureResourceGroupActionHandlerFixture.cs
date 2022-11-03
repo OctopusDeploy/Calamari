@@ -85,6 +85,7 @@ namespace Calamari.AzureResourceGroup.Tests
         public async Task Deploy_with_template_inline()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
+            var template = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json"));
             var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
             var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
 
@@ -97,6 +98,8 @@ namespace Calamari.AzureResourceGroup.Tests
                                                context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplate, File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json")));
                                                context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters, parameters);
 
+                                               context.WithDataFile(template, "template.json");
+                                               context.WithDataFile(paramsFileContent, "parameters.json");
                                                context.WithFilesToCopy(packagePath);
                                            })
                               .Execute();
@@ -108,6 +111,7 @@ namespace Calamari.AzureResourceGroup.Tests
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
+            var template = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json"));
             var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
             var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
             var psScript = @"
@@ -129,6 +133,8 @@ az group list";
                                                context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PreDeploy, ScriptSyntax.CSharp), "Console.WriteLine(\"Hello from C#\");");
                                                context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, ScriptSyntax.FSharp), "printfn \"Hello from F#\"");
 
+                                               context.WithDataFile(template, "template.json");
+                                               context.WithDataFile(paramsFileContent, "parameters.json");
                                                context.WithFilesToCopy(packagePath);
                                            })
                               .Execute();
