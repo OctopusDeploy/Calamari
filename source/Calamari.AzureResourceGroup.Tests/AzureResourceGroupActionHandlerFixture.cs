@@ -105,6 +105,47 @@ namespace Calamari.AzureResourceGroup.Tests
                               .Execute();
         }
 
+                [Test]
+        public async Task Deploy_with_bicep_in_package()
+        {
+            var packagePath = TestEnvironment.GetTestPath("Packages", "Bicep");
+            await CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode, "Complete");
+                                                     context.Variables.Add("Octopus.Action.Azure.TemplateSource", "Package");
+                                                     context.Variables.Add("Octopus.Action.Azure.ResourceGroupTemplate", "container_app_sample.json");
+                                                     context.Variables.Add("Octopus.Action.Azure.ResourceGroupTemplateParameters", "container_app_sample_params.json");
+                                                     context.WithFilesToCopy(packagePath);
+                                                 })
+                                    .Execute();
+        }
+
+        [Test]
+        public async Task Deploy_with_bicep_inline()
+        {
+            var packagePath = TestEnvironment.GetTestPath("Packages", "Bicep");
+            var template = File.ReadAllText(Path.Combine(packagePath, "container_app_sample.json"));
+            var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "container_app_sample_params.json"));
+            var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
+
+            await CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
+                              .WithArrange(context =>
+                                           {
+                                               AddDefaults(context);
+                                               context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode, "Complete");
+                                               context.Variables.Add("Octopus.Action.Azure.TemplateSource", "Inline");
+                                               context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplate, File.ReadAllText(Path.Combine(packagePath, "container_app_sample.json")));
+                                               context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters, parameters);
+
+                                               context.WithDataFile(template, "template.json");
+                                               context.WithDataFile(paramsFileContent, "parameters.json");
+                                               context.WithFilesToCopy(packagePath);
+                                           })
+                              .Execute();
+        }
+        
         [Test]
         [WindowsTest]
         [RequiresPowerShell5OrAbove]
