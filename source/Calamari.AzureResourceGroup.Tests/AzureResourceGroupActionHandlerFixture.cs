@@ -85,6 +85,7 @@ namespace Calamari.AzureResourceGroup.Tests
         public async Task Deploy_with_template_inline()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
+            var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json"));
             var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
             var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
 
@@ -98,6 +99,7 @@ namespace Calamari.AzureResourceGroup.Tests
                                                context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters, parameters);
 
                                                context.WithFilesToCopy(packagePath);
+                                               AddTemplateFiles(context, templateFileContent, paramsFileContent);
                                            })
                               .Execute();
         }
@@ -108,6 +110,7 @@ namespace Calamari.AzureResourceGroup.Tests
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
+            var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json"));
             var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
             var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
             var psScript = @"
@@ -130,11 +133,12 @@ az group list";
                                                context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, ScriptSyntax.FSharp), "printfn \"Hello from F#\"");
 
                                                context.WithFilesToCopy(packagePath);
+                                               AddTemplateFiles(context, templateFileContent, paramsFileContent);
                                            })
                               .Execute();
         }
 
-        void AddDefaults(CommandTestBuilderContext context)
+        private void AddDefaults(CommandTestBuilderContext context)
         {
             context.Variables.Add("Octopus.Account.AccountType", "AzureServicePrincipal");
             context.Variables.Add(AzureAccountVariables.SubscriptionId, subscriptionId);
@@ -147,6 +151,12 @@ az group list";
             context.Variables.Add("WebSite", SdkContext.RandomResourceName(String.Empty, 12));
             context.Variables.Add("Location", resourceGroup.RegionName);
             context.Variables.Add("AccountPrefix", SdkContext.RandomResourceName(String.Empty, 6));
+        }
+
+        private static void AddTemplateFiles(CommandTestBuilderContext context, string template, string parameters)
+        {
+            context.WithDataFile(template, "template.json");
+            context.WithDataFile(parameters, "parameters.json");
         }
     }
 }
