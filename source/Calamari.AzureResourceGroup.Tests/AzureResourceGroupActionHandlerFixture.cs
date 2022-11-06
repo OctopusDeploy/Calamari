@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Deployment;
@@ -12,6 +11,7 @@ using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+// ReSharper disable MethodHasAsyncOverload - File.ReadAllTextAsync does not exist for .net framework targets
 
 namespace Calamari.AzureResourceGroup.Tests
 {
@@ -82,8 +82,8 @@ namespace Calamari.AzureResourceGroup.Tests
         public async Task Deploy_with_template_inline()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
-            var templateFileContent = await File.ReadAllTextAsync(Path.Combine(packagePath, "azure_website_template.json"));
-            var paramsFileContent = await File.ReadAllTextAsync(Path.Combine(packagePath, "azure_website_params.json"));
+            var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json"));
+            var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
             var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
 
             await CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
@@ -108,8 +108,8 @@ namespace Calamari.AzureResourceGroup.Tests
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
-            var templateFileContent = await File.ReadAllTextAsync(Path.Combine(packagePath, "azure_website_template.json"));
-            var paramsFileContent = await File.ReadAllTextAsync(Path.Combine(packagePath, "azure_website_params.json"));
+            var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json"));
+            var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
             var parameters = JObject.Parse(paramsFileContent)["parameters"].ToString();
             const string psScript = @"
 $ErrorActionPreference = 'Continue'
