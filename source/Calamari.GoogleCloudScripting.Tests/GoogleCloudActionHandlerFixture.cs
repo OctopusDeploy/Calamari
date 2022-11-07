@@ -17,34 +17,23 @@ using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using NUnit.Framework.Internal;
 using NUnit.Framework;
-using Object = Google.Apis.Storage.v1.Data.Object;
+using GoogleStorageObject = Google.Apis.Storage.v1.Data.Object;
 using ZipFile = System.IO.Compression.ZipFile;
 
 namespace Calamari.GoogleCloudScripting.Tests
 {
     [TestFixture]
-    [TestFixtureSource(typeof(DownloadCLI))]
+    [TestFixtureSource(typeof(DownloadCli))]
     class GoogleCloudActionHandlerFixture
     {
         private readonly string cliPath;
 
-        class DownloadCLI: IEnumerable
+        private class DownloadCli: IEnumerable
         {
-            Object RetrieveFileFromGoogleCloudStorage(StorageClient client)
+            private readonly string postfix = "";
+
+            public DownloadCli()
             {
-                var results = client.ListObjects("cloud-sdk-release", "google-cloud-sdk-");
-                var listOfFilesSortedByCreatedDate = new SortedList<DateTime, Object>(Comparer<DateTime>.Create((a, b) => b.CompareTo(a)));
-
-                foreach (var result in results)
-                {
-                    if (result.TimeCreated.HasValue)
-                    {
-                        listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
-                    }
-                }
-
-                string postfix = "";
-
                 if (OperatingSystem.IsLinux())
                 {
                     postfix = "-linux-x86_64.tar.gz";
@@ -53,9 +42,23 @@ namespace Calamari.GoogleCloudScripting.Tests
                 {
                     postfix = "-windows-x86_64-bundled-python.zip";
                 }
-                else if (OperatingSystem.IsMacOS())
+                else if (OperatingSystem.IsMacOs())
                 {
                     postfix = "-darwin-x86_64-bundled-python.tar.gz";
+                }
+            }
+            
+            private GoogleStorageObject RetrieveFileFromGoogleCloudStorage(StorageClient client)
+            {
+                var results = client.ListObjects("cloud-sdk-release", "google-cloud-sdk-");
+                var listOfFilesSortedByCreatedDate = new SortedList<DateTime, GoogleStorageObject>(Comparer<DateTime>.Create((a, b) => b.CompareTo(a)));
+
+                foreach (var result in results)
+                {
+                    if (result.TimeCreated.HasValue)
+                    {
+                        listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
+                    }
                 }
 
                 foreach (var file in listOfFilesSortedByCreatedDate.Where(file => file.Value.Name.EndsWith(postfix)))
@@ -67,7 +70,7 @@ namespace Calamari.GoogleCloudScripting.Tests
                     $"Could not find a suitable executable to download from Google cloud storage for the postfix {postfix}");
             }
 
-            string DownloadFile()
+            private string DownloadFile()
             {
                 GoogleCredential? credential;
                 try
@@ -79,24 +82,26 @@ namespace Calamari.GoogleCloudScripting.Tests
                     throw new Exception("Error reading json key file, please ensure file is correct.");
                 }
             
-                using StorageClient client = StorageClient.Create(credential);
+                using var client = StorageClient.Create(credential);
             
                 var fileToDownload = RetrieveFileFromGoogleCloudStorage(client);
             
-                var rootPath = TestEnvironment.GetTestPath("gcloudCLIPath");
+                var rootPath = TestEnvironment.GetTestPath("gcloud");
                 Directory.CreateDirectory(rootPath);
             
                 var zipFile = Path.Combine(rootPath, fileToDownload.Name);
         
                 if (!File.Exists(zipFile))
                 {
-                    using var fileStream =
-                        new FileStream(zipFile, FileMode.Create, FileAccess.Write, FileShare.None);
+                    using var fileStream = new FileStream(zipFile, FileMode.Create, FileAccess.Write, FileShare.None);
                     client.DownloadObject(fileToDownload, fileStream);
                 }
-        
-                var destinationDirectory = Path.Combine(rootPath, Path.GetFileNameWithoutExtension(fileToDownload.Name));
-                var gcloudExe = Path.Combine(destinationDirectory, "google-cloud-sdk", "bin", $"gcloud{(OperatingSystem.IsWindows() ? ".cmd" : String.Empty)}");
+
+                // postfix is stripped from the path to prevent file paths exceeding length limit on Windows 2012
+                var shortenedName = Path.GetFileName(fileToDownload.Name).Replace(postfix, "");
+                
+                var destinationDirectory = Path.Combine(rootPath, shortenedName);
+                var gcloudExe = Path.Combine(destinationDirectory, "google-cloud-sdk", "bin", $"gcloud{(OperatingSystem.IsWindows() ? ".cmd" : string.Empty)}");
         
                 if (!File.Exists(gcloudExe))
                 {
@@ -110,8 +115,7 @@ namespace Calamari.GoogleCloudScripting.Tests
                     }
                     else
                     {
-                        throw new Exception(
-                            $"{zipFile} cannot be extracted. Supported compressions are .zip and .tar.gz.");
+                        throw new Exception($"{zipFile} cannot be extracted. Supported compressions are .zip and .tar.gz.");
                     }
                 }
 
@@ -119,37 +123,38 @@ namespace Calamari.GoogleCloudScripting.Tests
                 return gcloudExe;
             }
 
-            bool IsZip(string fileName) =>
+            private static bool IsZip(string fileName) =>
                 string.Equals(Path.GetExtension(fileName), ".zip", StringComparison.OrdinalIgnoreCase);
 
-            bool IsGZip(string fileName) =>
+            private static bool IsGZip(string fileName) =>
                 string.Equals(Path.GetExtension(fileName), ".gz", StringComparison.OrdinalIgnoreCase);
 
-            void ExtractGZip(string gzArchiveName, string destinationFolder)
+            private static void ExtractGZip(string gzArchiveName, string destinationFolder)
             {
-                Stream inStream = File.OpenRead(gzArchiveName);
-                Stream gzipStream = new GZipInputStream(inStream);
-
-                TarArchive tarArchive = TarArchive.CreateInputTarArchive(gzipStream, Encoding.UTF8);
+                using var inStream = File.OpenRead(gzArchiveName);
+                using var gzipStream = new GZipInputStream(inStream);
+                using var tarArchive = TarArchive.CreateInputTarArchive(gzipStream, Encoding.UTF8);
                 tarArchive.ExtractContents(destinationFolder);
-                tarArchive.Close();
-
-                gzipStream.Close();
-                inStream.Close();
             }
 
+            private static string PostfixWithoutExtension(string postfix) =>
+                IsZip(postfix) ? postfix.Replace(".zip", "") : postfix.Replace(".tar.gz", "");
+            
             public IEnumerator GetEnumerator()
             {
                 var result = DownloadFile();
                 var startIndex = result.IndexOf("google-cloud-sdk-", StringComparison.Ordinal);
                 var length = result.IndexOf(Path.DirectorySeparatorChar, startIndex + 1) - startIndex;
-                yield return new TestFixtureParameters(new TestFixtureData(result) { TestName = result.Substring(startIndex, length)});
+                yield return new TestFixtureParameters(new TestFixtureData(result)
+                    {
+                        TestName = $"{result.Substring(startIndex, length)}{PostfixWithoutExtension(postfix)}"
+                    });
             }
         }
 
-        const string JsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
+        private const string JsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
 
-        static readonly string? EnvironmentJsonKey = Environment.GetEnvironmentVariable(JsonEnvironmentVariableKey);
+        private static readonly string? EnvironmentJsonKey = Environment.GetEnvironmentVariable(JsonEnvironmentVariableKey);
 
         public GoogleCloudActionHandlerFixture(string cliPath)
         {
@@ -198,7 +203,7 @@ namespace Calamari.GoogleCloudScripting.Tests
                 .Execute(false);
         }
 
-        void AddDefaults(CommandTestBuilderContext context, string? keyFile = null)
+        private void AddDefaults(CommandTestBuilderContext context, string? keyFile = null)
         {
             context.Variables.Add("Octopus.Action.GoogleCloudAccount.Variable", "MyVariable");
             context.Variables.Add("MyVariable.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(keyFile ?? EnvironmentJsonKey!)));
