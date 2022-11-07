@@ -64,7 +64,9 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new HelmChartPackageDownloader(fileSystem);
                     break;
                 case FeedType.Docker:
-                case FeedType.AwsElasticContainerRegistry :
+                case FeedType.AwsElasticContainerRegistry:
+                case FeedType.AzureContainerRegistry:
+                case FeedType.GoogleContainerRegistry:
                     downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner, variables, log);
                     break;
                 case FeedType.S3:
