@@ -30,6 +30,8 @@ namespace Calamari.GoogleCloudScripting.Tests
 
         class DownloadCLI: IEnumerable
         {
+            private string postfix = "";
+            
             Object RetrieveFileFromGoogleCloudStorage(StorageClient client)
             {
                 var results = client.ListObjects("cloud-sdk-release", "google-cloud-sdk-");
@@ -42,8 +44,6 @@ namespace Calamari.GoogleCloudScripting.Tests
                         listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
                     }
                 }
-
-                string postfix = "";
 
                 if (OperatingSystem.IsLinux())
                 {
@@ -95,7 +95,7 @@ namespace Calamari.GoogleCloudScripting.Tests
                     client.DownloadObject(fileToDownload, fileStream);
                 }
         
-                var destinationDirectory = Path.Combine(rootPath, Path.GetFileNameWithoutExtension(fileToDownload.Name));
+                var destinationDirectory = Path.Combine(rootPath, Path.GetFileName(fileToDownload.Name).Replace(postfix, ""));
                 var gcloudExe = Path.Combine(destinationDirectory, "google-cloud-sdk", "bin", $"gcloud{(OperatingSystem.IsWindows() ? ".cmd" : String.Empty)}");
         
                 if (!File.Exists(gcloudExe))
