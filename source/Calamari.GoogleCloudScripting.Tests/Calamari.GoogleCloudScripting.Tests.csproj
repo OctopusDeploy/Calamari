@@ -5,9 +5,10 @@
         <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <LangVersion>8</LangVersion>
         <IsPackable>false</IsPackable>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <TargetFrameworks>net461;net6.0</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
         <TargetFramework>net6.0</TargetFramework>
