@@ -18,7 +18,6 @@ using Calamari.Terraform.Commands;
 using Calamari.Terraform.Tests.CommonTemplates;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
-using Calamari.Testing.Requirements;
 using FluentAssertions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -29,7 +28,6 @@ namespace Calamari.Terraform.Tests
     [TestFixture("0.11.15")]
     [TestFixture("0.13.0")]
     [TestFixture("1.0.0")]
-    [NonWindowsTest]
     public class CommandsFixture
     {
         string? customTerraformExecutable;
