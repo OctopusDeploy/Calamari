@@ -22,19 +22,30 @@
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
         <PackageReference Include="NSubstitute" Version="4.2.1" />
         <PackageReference Include="Shouldly" Version="2.8.2" />
-        <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.0.50"/>
-        <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.13.1" />
+        <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.0.50" GeneratePathProperty="true" />
+        <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.13.1" GeneratePathProperty="true" />
+    </ItemGroup>
+    <ItemGroup>
+        
     </ItemGroup>
     <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
-        <Message Text="Collecting nupkg packages to bundle with Sashimi module binaries" Importance="high" />
         <ItemGroup>
-            <Content Include="@(PackageDefinitions->'%(ResolvedPath)/%(Name).%(Version).nupkg')" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))">
+            <Content Include="$(PkgOctopus_Dependencies_AzureCLI)/*.nupkg">
                 <Visible>false</Visible>
-                <Link>@(PackageDefinitions->'%(Name).nupkg')</Link>
+                <Link>Octopus.Dependencies.AzureCLI.nupkg</Link>
                 <Pack>true</Pack>
                 <PackageCopyToOutput>true</PackageCopyToOutput>
                 <PackageFlatten>true</PackageFlatten>
-                <PackagePath>@(PackageDefinitions->'contentFiles/any/any/%(Name).nupkg')</PackagePath>
+                <PackagePath>contentFiles/any/any/Octopus.Dependencies.AzureCLI.nupkg</PackagePath>
+                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            </Content>
+            <Content Include="$(PkgOctopus_Dependencies_AzureCmdlets)/*.nupkg">
+                <Visible>false</Visible>
+                <Link>Octopus.Dependencies.AzureCmdlets.nupkg</Link>
+                <Pack>true</Pack>
+                <PackageCopyToOutput>true</PackageCopyToOutput>
+                <PackageFlatten>true</PackageFlatten>
+                <PackagePath>contentFiles/any/any/Octopus.Dependencies.AzureCmdlets.nupkg</PackagePath>
                 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             </Content>
         </ItemGroup>
