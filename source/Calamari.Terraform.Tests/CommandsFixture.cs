@@ -51,7 +51,7 @@ namespace Calamari.Terraform.Tests
             ClearTestDirectories();
         }
 
-        static void ClearTestDirectories()
+        private static void ClearTestDirectories()
         {
             static void TryDeleteFile(string path)
             {
