@@ -25,6 +25,20 @@
         <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.0.50"/>
         <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.13.1" />
     </ItemGroup>
+    <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
+        <Message Text="Collecting nupkg packages to bundle with Sashimi module binaries" Importance="high" />
+        <ItemGroup>
+            <Content Include="@(PackageDefinitions->'%(ResolvedPath)/%(Name).%(Version).nupkg')" Condition="$([System.String]::new('%(Name)').ToLower().Contains('octopus.dependencies'))">
+                <Visible>false</Visible>
+                <Link>@(PackageDefinitions->'%(Name).nupkg')</Link>
+                <Pack>true</Pack>
+                <PackageCopyToOutput>true</PackageCopyToOutput>
+                <PackageFlatten>true</PackageFlatten>
+                <PackagePath>@(PackageDefinitions->'contentFiles/any/any/%(Name).nupkg')</PackagePath>
+                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            </Content>
+        </ItemGroup>
+    </Target>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
       <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
