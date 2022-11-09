@@ -201,6 +201,12 @@ namespace Calamari.Terraform.Tests
         }
 
         [Test]
+        public void AShinyNewTestCase()
+        {
+            Assert.IsTrue(true);
+        }
+        
+        [Test]
         public void NotProvidingEnvVariables_DoesNotCrashEverything()
         {
             ExecuteAndReturnLogOutput("apply-terraform",
