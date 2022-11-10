@@ -109,7 +109,6 @@ namespace Calamari.Kubernetes
         class SetupKubectlAuthentication
         {
             readonly IVariables variables;
-            readonly ILog log;
             readonly ScriptSyntax scriptSyntax;
             readonly ICommandLineRunner commandLineRunner;
             readonly Dictionary<string, string> environmentVars;
@@ -117,8 +116,8 @@ namespace Calamari.Kubernetes
             string az;
             string aws;
             string gcloud;
-            Dictionary<string, string> redactMap = new Dictionary<string, string>();
 
+            RedactedValuesLogger log;
             Kubectl kubectlCli;
 
             public SetupKubectlAuthentication(IVariables variables,
@@ -129,7 +128,7 @@ namespace Calamari.Kubernetes
                                               string workingDirectory)
             {
                 this.variables = variables;
-                this.log = log;
+                this.log = new RedactedValuesLogger(log);
                 this.scriptSyntax = scriptSyntax;
                 this.commandLineRunner = commandLineRunner;
                 this.environmentVars = environmentVars;
@@ -148,7 +147,7 @@ namespace Calamari.Kubernetes
                 var kubeConfig = ConfigureCliExecution();
 
                 var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
-                kubectlCli = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars, redactMap);
+                kubectlCli = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars);
                 if (!kubectlCli.TrySetKubectl())
                 {
                     return errorResult;
@@ -313,8 +312,8 @@ namespace Calamari.Kubernetes
 
                             // Don't leak the private key in the logs
                             log.SetOutputVariable($"{clientCert}.PrivateKeyPemBase64", clientCertKeyEncoded, variables, true);
-                            redactMap[clientCertKeyEncoded] = "<data>";
-                            redactMap[clientCertPemEncoded] = "<data>";
+                            log.AddValueToRedact(clientCertKeyEncoded, "<data>");
+                            log.AddValueToRedact(clientCertPemEncoded, "<data>");
                             kubectlCli.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-certificate-data", clientCertPemEncoded);
                             kubectlCli.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-key-data", clientCertKeyEncoded);
                         }
@@ -328,7 +327,7 @@ namespace Calamari.Kubernetes
                             }
 
                             var authorityData = Convert.ToBase64String(Encoding.ASCII.GetBytes(serverCertPem));
-                            redactMap[authorityData] = "<data>";
+                            log.AddValueToRedact(authorityData, "<data>");
                             kubectlCli.ExecuteCommandAndAssertSuccess("config", "set", $"clusters.{cluster}.certificate-authority-data", authorityData);
                         }
                         else
@@ -378,7 +377,7 @@ namespace Calamari.Kubernetes
 
             void SetupContextForToken(string @namespace, string token, string clusterUrl, string user)
             {
-                redactMap[token] = "<token>";
+                log.AddValueToRedact(token, "<token>");
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Token");
                 kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={token}");
             }
@@ -387,7 +386,7 @@ namespace Calamari.Kubernetes
             {
                 var username = variables.Get("Octopus.Account.Username");
                 var password = variables.Get("Octopus.Account.Password");
-                redactMap[password] = "<password>";
+                log.AddValueToRedact(password, "<password>");
                 kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--username={username}", $"--password={password}");
             }
 
@@ -503,7 +502,7 @@ namespace Calamari.Kubernetes
                 kubectlCli.ExecuteCommandAndAssertSuccess("config", "use-context", context);
 
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
-                redactMap[podServiceAccountToken] = "<token>";
+                log.AddValueToRedact(podServiceAccountToken, "<token>");
                 kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
             }
 
@@ -776,7 +775,6 @@ namespace Calamari.Kubernetes
                 invocation.AdditionalInvocationOutputSink = captureCommandOutput;
 
                 var commandString = invocation.ToString();
-                commandString = redactMap.Aggregate(commandString, (current, pair) => current.Replace(pair.Key, pair.Value));
                 log.Verbose(commandString);
                 
                 var result = commandLineRunner.Execute(invocation);
@@ -821,7 +819,6 @@ namespace Calamari.Kubernetes
                 invocation.AdditionalInvocationOutputSink = captureCommandOutput;
 
                 var commandString = invocation.ToString();
-                commandString = redactMap.Aggregate(commandString, (current, pair) => current.Replace(pair.Key, pair.Value));
                 log.Verbose(commandString);
 
                 var result = commandLineRunner.Execute(invocation);

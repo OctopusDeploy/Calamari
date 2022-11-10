@@ -18,8 +18,8 @@ namespace Calamari.Kubernetes.Integration
 
         public string ExecutableLocation { get; private set; }
 
-        public Kubectl(string customKubectlExecutable, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars, Dictionary<string, string> redactMap)
-            : base(log, commandLineRunner, workingDirectory, environmentVars, redactMap)
+        public Kubectl(string customKubectlExecutable, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
+            : base(log, commandLineRunner, workingDirectory, environmentVars)
         {
             this.customKubectlExecutable = customKubectlExecutable;
         }

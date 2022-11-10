@@ -12,16 +12,13 @@ namespace Calamari.Kubernetes.Integration
         protected ICommandLineRunner commandLineRunner;
         protected string workingDirectory;
         protected Dictionary<string, string> environmentVars;
-        // TODO: this should be set per-command-invocation, rather than in this constructor. It's not yet important, but will be for later commands to ensure we don't leak generated secrets in the logs.
-        protected Dictionary<string, string> redactMap;
 
-        public CommandLineTool(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars, Dictionary<string, string> redactMap)
+        public CommandLineTool(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;
             this.workingDirectory = workingDirectory;
             this.environmentVars = environmentVars;
-            this.redactMap = redactMap;
         }
 
         protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
@@ -34,7 +31,7 @@ namespace Calamari.Kubernetes.Integration
             var captureCommandOutput = new CaptureCommandOutput();
             invocation.AdditionalInvocationOutputSink = captureCommandOutput;
 
-            LogRedactedCommandText(invocation);
+            LogCommandText(invocation);
 
             var result = commandLineRunner.Execute(invocation);
 
@@ -43,12 +40,9 @@ namespace Calamari.Kubernetes.Integration
             return result;
         }
 
-        void LogRedactedCommandText(CommandLineInvocation invocation)
+        void LogCommandText(CommandLineInvocation invocation)
         {
-            var rawCommandText = invocation.ToString();
-            var redactedCommandText = redactMap.Aggregate(rawCommandText, (current, pair) => current.Replace(pair.Key, pair.Value));
-
-            log.Verbose(redactedCommandText);
+            log.Verbose(invocation.ToString());
         }
 
         void LogCapturedOutput(CommandResult result, CaptureCommandOutput captureCommandOutput)
