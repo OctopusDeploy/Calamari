@@ -12,14 +12,12 @@ namespace Calamari.Kubernetes.Integration
     class Kubectl : CommandLineTool
     {
         string customKubectlExecutable;
-        readonly IVariables variables;
 
         public string ExecutableLocation { get; private set; }
 
-        public Kubectl(IVariables variables, string customKubectlExecutable, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars, Dictionary<string, string> redactMap)
+        public Kubectl(string customKubectlExecutable, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars, Dictionary<string, string> redactMap)
             : base(log, commandLineRunner, workingDirectory, environmentVars, redactMap)
         {
-            this.variables = variables;
             this.customKubectlExecutable = customKubectlExecutable;
         }
 
