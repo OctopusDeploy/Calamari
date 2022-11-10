@@ -16,6 +16,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes.Integration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities;
@@ -982,37 +983,6 @@ namespace Calamari.Kubernetes
                 return result.ExitCode == 0
                     ? captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray()
                     : Enumerable.Empty<string>();
-            }
-
-            class CaptureCommandOutput : ICommandInvocationOutputSink
-            {
-                public List<Message> Messages { get; } = new List<Message>();
-                public void WriteInfo(string line)
-                {
-                    Messages.Add(new Message(Level.Info, line));
-                }
-
-                public void WriteError(string line)
-                {
-                    Messages.Add(new Message(Level.Error, line));
-                }
-            }
-
-            class Message
-            {
-                public Level Level { get; }
-                public string Text { get; }
-                public Message(Level level, string text)
-                {
-                    Level = level;
-                    Text = text;
-                }
-            }
-
-            enum Level
-            {
-                Info,
-                Error
             }
         }
     }
