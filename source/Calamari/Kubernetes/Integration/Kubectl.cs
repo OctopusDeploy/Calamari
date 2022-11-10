@@ -11,8 +11,8 @@ namespace Calamari.Kubernetes.Integration
 {
     class Kubectl : CommandLineTool
     {
-        readonly IVariables variables;
         string kubectl;
+        readonly IVariables variables;
 
         public string ExecutableLocation => kubectl;
 
@@ -55,28 +55,9 @@ namespace Calamari.Kubernetes.Integration
             return false;
         }
 
-        IEnumerable<string> ExecuteCommandAndReturnOutput(string exe, params string[] arguments)
-        {
-            var captureCommandOutput = new CaptureCommandOutput();
-            var invocation = new CommandLineInvocation(exe, arguments)
-            {
-                EnvironmentVars = environmentVars,
-                WorkingDirectory = workingDirectory,
-                OutputAsVerbose = false,
-                OutputToLog = false,
-                AdditionalInvocationOutputSink = captureCommandOutput
-            };
-
-            var result = commandLineRunner.Execute(invocation);
-
-            return result.ExitCode == 0
-                ? captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray()
-                : Enumerable.Empty<string>();
-        }
-
         bool TryExecuteKubectlCommand(params string[] arguments)
         {
-            return ExecuteCommand(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
+            return ExecuteCommandAndLogOutput(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
         }
     }
 }

@@ -24,7 +24,7 @@ namespace Calamari.Kubernetes.Integration
             this.redactMap = redactMap;
         }
 
-        protected CommandResult ExecuteCommand(CommandLineInvocation invocation)
+        protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
         {
             invocation.EnvironmentVars = environmentVars;
             invocation.WorkingDirectory = workingDirectory;
@@ -71,6 +71,25 @@ namespace Calamari.Kubernetes.Integration
                         break;
                 }
             }
+        }
+
+        protected IEnumerable<string> ExecuteCommandAndReturnOutput(string exe, params string[] arguments)
+        {
+            var captureCommandOutput = new CaptureCommandOutput();
+            var invocation = new CommandLineInvocation(exe, arguments)
+            {
+                EnvironmentVars = environmentVars,
+                WorkingDirectory = workingDirectory,
+                OutputAsVerbose = false,
+                OutputToLog = false,
+                AdditionalInvocationOutputSink = captureCommandOutput
+            };
+
+            var result = commandLineRunner.Execute(invocation);
+
+            return result.ExitCode == 0
+                ? captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray()
+                : Enumerable.Empty<string>();
         }
     }
 }
