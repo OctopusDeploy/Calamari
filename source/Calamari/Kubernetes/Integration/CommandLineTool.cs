@@ -8,12 +8,12 @@ namespace Calamari.Kubernetes.Integration
 {
     class CommandLineTool
     {
-        protected ILog log;
-        protected ICommandLineRunner commandLineRunner;
-        protected string workingDirectory;
-        protected Dictionary<string, string> environmentVars;
+        protected readonly ILog log;
+        readonly ICommandLineRunner commandLineRunner;
+        readonly string workingDirectory;
+        readonly Dictionary<string, string> environmentVars;
 
-        public CommandLineTool(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
+        protected CommandLineTool(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;
