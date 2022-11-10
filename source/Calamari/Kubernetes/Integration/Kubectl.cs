@@ -62,5 +62,18 @@ namespace Calamari.Kubernetes.Integration
         {
             return ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
         }
+
+        public CommandResult ExecuteCommand(params string[] arguments)
+        {
+            var kubectlArguments = arguments.Concat(new[] { "--request-timeout=1m" }).ToArray();
+            var commandInvocation = new CommandLineInvocation(ExecutableLocation, kubectlArguments);
+            return ExecuteCommandAndLogOutput(commandInvocation);
+        }
+        
+        public void ExecuteCommandAndAssertSuccess(params string[] arguments)
+        {
+            var result = ExecuteCommand(arguments);
+            result.VerifySuccess();
+        }
     }
 }

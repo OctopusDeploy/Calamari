@@ -4,14 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
-using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
@@ -124,6 +121,8 @@ namespace Calamari.Kubernetes
             string gcloud;
             Dictionary<string, string> redactMap = new Dictionary<string, string>();
 
+            Kubectl kubectlCli;
+
             public SetupKubectlAuthentication(IVariables variables,
                                               ILog log,
                                               ScriptSyntax scriptSyntax,
@@ -151,7 +150,7 @@ namespace Calamari.Kubernetes
                 var kubeConfig = ConfigureCliExecution();
 
                 var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
-                var kubectlCli = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars, redactMap);
+                kubectlCli = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars, redactMap);
                 if (!kubectlCli.TrySetKubectl())
                 {
                     return errorResult;
@@ -179,7 +178,7 @@ namespace Calamari.Kubernetes
                 var outputKubeConfig = variables.GetFlag(SpecialVariables.OutputKubeConfig);
                 if (outputKubeConfig)
                 {
-                    ExecuteKubectlCommand("config", "view");
+                    kubectlCli.ExecuteCommandAndAssertSuccess("config", "view");
                 }
 
                 return new CommandResult(string.Empty, 0);
@@ -288,21 +287,9 @@ namespace Calamari.Kubernetes
                     }
                     else
                     {
-                        ExecuteKubectlCommand("config",
-                                              "set-cluster",
-                                              cluster,
-                                              $"--server={clusterUrl}");
-
-                        ExecuteKubectlCommand("config",
-                                              "set-context",
-                                              context,
-                                              $"--user={user}",
-                                              $"--cluster={cluster}",
-                                              $"--namespace={@namespace}");
-
-                        ExecuteKubectlCommand("config",
-                                              "use-context",
-                                              context);
+                        kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
+                        kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
+                        kubectlCli.ExecuteCommandAndAssertSuccess("config", "use-context", context);
 
                         var clientCertPem = variables.Get($"{clientCert}.CertificatePem");
                         var clientCertKey = variables.Get($"{clientCert}.PrivateKeyPem");
@@ -332,14 +319,8 @@ namespace Calamari.Kubernetes
                             log.SetOutputVariable($"{clientCert}.PrivateKeyPemBase64", clientCertKeyEncoded, variables, true);
                             redactMap[clientCertKeyEncoded] = "<data>";
                             redactMap[clientCertPemEncoded] = "<data>";
-                            ExecuteKubectlCommand("config",
-                                                  "set",
-                                                  $"users.{user}.client-certificate-data",
-                                                  clientCertPemEncoded);
-                            ExecuteKubectlCommand("config",
-                                                  "set",
-                                                  $"users.{user}.client-key-data",
-                                                  clientCertKeyEncoded);
+                            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-certificate-data", clientCertPemEncoded);
+                            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-key-data", clientCertKeyEncoded);
                         }
 
                         if (!string.IsNullOrEmpty(certificateAuthority))
@@ -352,17 +333,11 @@ namespace Calamari.Kubernetes
 
                             var authorityData = Convert.ToBase64String(Encoding.ASCII.GetBytes(serverCertPem));
                             redactMap[authorityData] = "<data>";
-                            ExecuteKubectlCommand("config",
-                                                  "set",
-                                                  $"clusters.{cluster}.certificate-authority-data",
-                                                  authorityData);
+                            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set", $"clusters.{cluster}.certificate-authority-data", authorityData);
                         }
                         else
                         {
-                            ExecuteKubectlCommand("config",
-                                                  "set-cluster",
-                                                  cluster,
-                                                  $"--insecure-skip-tls-verify={skipTlsVerification}");
+                            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
                         }
 
                         switch (accountType)
@@ -409,10 +384,7 @@ namespace Calamari.Kubernetes
             {
                 redactMap[token] = "<token>";
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Token");
-                ExecuteKubectlCommand("config",
-                                      "set-credentials",
-                                      user,
-                                      $"--token={token}");
+                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={token}");
             }
 
             void SetupContextForUsernamePassword(string user)
@@ -420,11 +392,7 @@ namespace Calamari.Kubernetes
                 var username = variables.Get("Octopus.Account.Username");
                 var password = variables.Get("Octopus.Account.Password");
                 redactMap[password] = "<password>";
-                ExecuteKubectlCommand("config",
-                                      "set-credentials",
-                                      user,
-                                      $"--username={username}",
-                                      $"--password={password}");
+                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--username={username}", $"--password={password}");
             }
 
             void SetupContextForAmazonServiceAccount(string @namespace, string clusterUrl, string user)
@@ -501,15 +469,7 @@ namespace Calamari.Kubernetes
 
             void SetKubeConfigAuthenticationToAwsCli(string user, string clusterName, string region, string apiVersion)
             {
-                ExecuteKubectlCommand("config",
-                                      "set-credentials",
-                                      user,
-                                      "--exec-command=aws",
-                                      "--exec-arg=eks",
-                                      "--exec-arg=get-token",
-                                      $"--exec-arg=--cluster-name={clusterName}",
-                                      $"--exec-arg=--region={region}",
-                                      $"--exec-api-version={apiVersion}");
+                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws", "--exec-arg=eks", "--exec-arg=get-token", $"--exec-arg=--cluster-name={clusterName}", $"--exec-arg=--region={region}", $"--exec-api-version={apiVersion}");
             }
 
             void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
@@ -519,14 +479,7 @@ namespace Calamari.Kubernetes
                     ? "client.authentication.k8s.io/v1beta1"
                     : "client.authentication.k8s.io/v1alpha1";
 
-                ExecuteKubectlCommand("config",
-                                      "set-credentials",
-                                      user,
-                                      "--exec-command=aws-iam-authenticator",
-                                      $"--exec-api-version={apiVersion}",
-                                      "--exec-arg=token",
-                                      "--exec-arg=-i",
-                                      $"--exec-arg={clusterName}");
+                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws-iam-authenticator", $"--exec-api-version={apiVersion}", "--exec-arg=token", "--exec-arg=-i", $"--exec-arg={clusterName}");
             }
 
             void SetupContextUsingPodServiceAccount(string @namespace,
@@ -539,42 +492,23 @@ namespace Calamari.Kubernetes
                                                     string user,
                                                     string podServiceAccountToken)
             {
-                ExecuteKubectlCommand("config",
-                                      "set-cluster",
-                                      cluster,
-                                      $"--server={clusterUrl}");
+                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
 
                 if (string.IsNullOrEmpty(serverCert))
                 {
-                    ExecuteKubectlCommand("config",
-                                          "set-cluster",
-                                          cluster,
-                                          $"--insecure-skip-tls-verify={skipTlsVerification}");
+                    kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
                 }
                 else
                 {
-                    ExecuteKubectlCommand("config",
-                                          "set-cluster",
-                                          cluster,
-                                          $"--certificate-authority={serverCertPath}");
+                    kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
                 }
 
-                ExecuteKubectlCommand("config",
-                                      "set-context",
-                                      context,
-                                      $"--user={user}",
-                                      $"--cluster={cluster}",
-                                      $"--namespace={@namespace}");
-                ExecuteKubectlCommand("config",
-                                      "use-context",
-                                      context);
+                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
+                kubectlCli.ExecuteCommandAndAssertSuccess("config", "use-context", context);
 
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
                 redactMap[podServiceAccountToken] = "<token>";
-                ExecuteKubectlCommand("config",
-                                      "set-credentials",
-                                      user,
-                                      $"--token={podServiceAccountToken}");
+                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
             }
 
             void SetupContextForAzureServicePrincipal(string kubeConfig, string @namespace)
@@ -604,10 +538,7 @@ namespace Calamari.Kubernetes
 
                 ExecuteCommand(az, arguments.ToArray());
 
-                ExecuteKubectlCommand("config",
-                                      "set-context",
-                                      azureCluster,
-                                      $"--namespace={@namespace}");
+                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", azureCluster, $"--namespace={@namespace}");
             }
 
             void SetupContextForGoogleCloudAccount(string @namespace)
@@ -639,10 +570,7 @@ namespace Calamari.Kubernetes
                 }
 
                 ExecuteCommand(gcloud, arguments.ToArray());
-                ExecuteKubectlCommand("config",
-                                      "set-context",
-                                      "--current",
-                                      $"--namespace={@namespace}");
+                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", "--current", $"--namespace={@namespace}");
             }
 
             bool TrySetAz()
@@ -855,16 +783,6 @@ namespace Calamari.Kubernetes
             bool TryExecuteCommand(string executable, params string[] arguments)
             {
                 return ExecuteCommand(new CommandLineInvocation(executable, arguments)).ExitCode == 0;
-            }
-
-            void ExecuteKubectlCommand(params string[] arguments)
-            {
-                ExecuteCommand(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).VerifySuccess();
-            }
-
-            bool TryExecuteKubectlCommand(params string[] arguments)
-            {
-                return ExecuteCommand(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
             }
 
             bool TryExecuteCommandWithVerboseLoggingOnly(params string[] arguments)
