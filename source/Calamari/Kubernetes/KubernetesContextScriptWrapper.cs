@@ -150,10 +150,13 @@ namespace Calamari.Kubernetes
 
                 var kubeConfig = ConfigureCliExecution();
 
-                if (!TrySetKubectl())
+                var kubectlCli = new Kubectl(variables, kubectl, log, commandLineRunner, workingDirectory, environmentVars, redactMap);
+                if (!kubectlCli.TrySetKubectl())
                 {
                     return errorResult;
                 }
+
+                kubectl = kubectlCli.ExecutableLocation;
 
                 var @namespace = variables.Get(SpecialVariables.Namespace);
                 if (string.IsNullOrEmpty(@namespace))
@@ -820,38 +823,6 @@ namespace Calamari.Kubernetes
                 log.Verbose($"Temporary kubectl config set to {kubeConfig}");
 
                 return kubeConfig;
-            }
-
-            bool TrySetKubectl()
-            {
-                kubectl = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
-                if (string.IsNullOrEmpty(kubectl))
-                {
-                    kubectl = CalamariEnvironment.IsRunningOnWindows
-                        ? ExecuteCommandAndReturnOutput("where", "kubectl.exe").FirstOrDefault()
-                        : ExecuteCommandAndReturnOutput("which", "kubectl").FirstOrDefault();
-
-                    if (string.IsNullOrEmpty(kubectl))
-                    {
-                        log.Error("Could not find kubectl. Make sure kubectl is on the PATH. See https://g.octopushq.com/KubernetesTarget for more information.");
-                        return false;
-                    }
-
-                    kubectl = kubectl.Trim();
-                }
-                else if (!File.Exists(kubectl))
-                {
-                    log.Error($"The custom kubectl location of {kubectl} does not exist. See https://g.octopushq.com/KubernetesTarget for more information.");
-                    return false;
-                }
-
-                if (TryExecuteKubectlCommand("version", "--client", "--short"))
-                {
-                    return true;
-                }
-
-                log.Error($"Could not find kubectl. Make sure {kubectl} is on the PATH. See https://g.octopushq.com/KubernetesTarget for more information.");
-                return false;
             }
 
             Maybe<SemanticVersion> TrySetKubectlVersion()
