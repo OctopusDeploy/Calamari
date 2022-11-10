@@ -9,28 +9,18 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Kubernetes.Integration
 {
-    class Kubectl
+    class Kubectl : CommandLineTool
     {
         readonly IVariables variables;
         string kubectl;
-        readonly ILog log;
-        readonly ICommandLineRunner commandLineRunner;
-        readonly string workingDirectory;
-        readonly Dictionary<string, string> environmentVars;
-        Dictionary<string, string> redactMap;
 
         public string ExecutableLocation => kubectl;
 
         public Kubectl(IVariables variables, string kubectl, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars, Dictionary<string, string> redactMap)
+            : base(log, commandLineRunner, workingDirectory, environmentVars, redactMap)
         {
             this.variables = variables;
             this.kubectl = kubectl;
-            this.log = log;
-            this.commandLineRunner = commandLineRunner;
-            this.workingDirectory = workingDirectory;
-            this.environmentVars = environmentVars;
-            // TODO: this should be set per-command-invocation, rather than in this constructor. It's not yet important, but will be for later commands to ensure we don't leak generated secrets in the logs.
-            this.redactMap = redactMap;
         }
 
         public bool TrySetKubectl()
@@ -87,55 +77,6 @@ namespace Calamari.Kubernetes.Integration
         bool TryExecuteKubectlCommand(params string[] arguments)
         {
             return ExecuteCommand(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
-        }
-
-        CommandResult ExecuteCommand(CommandLineInvocation invocation)
-        {
-            invocation.EnvironmentVars = environmentVars;
-            invocation.WorkingDirectory = workingDirectory;
-            invocation.OutputAsVerbose = false;
-            invocation.OutputToLog = false;
-
-            var captureCommandOutput = new CaptureCommandOutput();
-            invocation.AdditionalInvocationOutputSink = captureCommandOutput;
-
-            LogRedactedCommandText(invocation);
-
-            var result = commandLineRunner.Execute(invocation);
-
-            LogCapturedOutput(result, captureCommandOutput);
-
-            return result;
-        }
-
-        void LogRedactedCommandText(CommandLineInvocation invocation)
-        {
-            var rawCommandText = invocation.ToString();
-            var redactedCommandText = redactMap.Aggregate(rawCommandText, (current, pair) => current.Replace(pair.Key, pair.Value));
-
-            log.Verbose(redactedCommandText);
-        }
-
-        void LogCapturedOutput(CommandResult result, CaptureCommandOutput captureCommandOutput)
-        {
-            foreach (var message in captureCommandOutput.Messages)
-            {
-                if (result.ExitCode == 0)
-                {
-                    log.Verbose(message.Text);
-                    continue;
-                }
-
-                switch (message.Level)
-                {
-                    case Level.Info:
-                        log.Verbose(message.Text);
-                        break;
-                    case Level.Error:
-                        log.Error(message.Text);
-                        break;
-                }
-            }
         }
     }
 }
