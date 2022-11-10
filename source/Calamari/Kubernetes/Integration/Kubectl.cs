@@ -99,12 +99,25 @@ namespace Calamari.Kubernetes.Integration
             var captureCommandOutput = new CaptureCommandOutput();
             invocation.AdditionalInvocationOutputSink = captureCommandOutput;
 
-            var commandString = invocation.ToString();
-            commandString = redactMap.Aggregate(commandString, (current, pair) => current.Replace(pair.Key, pair.Value));
-            log.Verbose(commandString);
+            LogRedactedCommandText(invocation);
 
             var result = commandLineRunner.Execute(invocation);
 
+            LogCapturedOutput(result, captureCommandOutput);
+
+            return result;
+        }
+
+        void LogRedactedCommandText(CommandLineInvocation invocation)
+        {
+            var rawCommandText = invocation.ToString();
+            var redactedCommandText = redactMap.Aggregate(rawCommandText, (current, pair) => current.Replace(pair.Key, pair.Value));
+
+            log.Verbose(redactedCommandText);
+        }
+
+        void LogCapturedOutput(CommandResult result, CaptureCommandOutput captureCommandOutput)
+        {
             foreach (var message in captureCommandOutput.Messages)
             {
                 if (result.ExitCode == 0)
@@ -123,8 +136,6 @@ namespace Calamari.Kubernetes.Integration
                         break;
                 }
             }
-
-            return result;
         }
     }
 }
