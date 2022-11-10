@@ -150,7 +150,8 @@ namespace Calamari.Kubernetes
 
                 var kubeConfig = ConfigureCliExecution();
 
-                var kubectlCli = new Kubectl(variables, kubectl, log, commandLineRunner, workingDirectory, environmentVars, redactMap);
+                var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
+                var kubectlCli = new Kubectl(variables, customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars, redactMap);
                 if (!kubectlCli.TrySetKubectl())
                 {
                     return errorResult;
