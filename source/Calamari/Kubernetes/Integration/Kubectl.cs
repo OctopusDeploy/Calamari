@@ -6,6 +6,9 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
+using Octopus.CoreUtilities;
+using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes.Integration
 {
@@ -74,6 +77,27 @@ namespace Calamari.Kubernetes.Integration
         {
             var result = ExecuteCommand(arguments);
             result.VerifySuccess();
+        }
+
+        public Maybe<SemanticVersion> GetVersion()
+        {
+            var kubectlVersionOutput = ExecuteCommandAndReturnOutput(ExecutableLocation, "version", "--client", "--output=json");
+            var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
+            try
+            {
+                var clientVersion = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new { gitVersion = "1.0.0" } });
+                var kubectlVersionString = clientVersion?.clientVersion?.gitVersion?.TrimStart('v');
+                if (kubectlVersionString != null)
+                {
+                    return Maybe<SemanticVersion>.Some(new SemanticVersion(kubectlVersionString));
+                }
+            }
+            catch (Exception e)
+            {
+                log.Verbose($"Unable to determine kubectl version. Failed with error message: {e.Message}");
+            }
+
+            return Maybe<SemanticVersion>.None;
         }
     }
 }

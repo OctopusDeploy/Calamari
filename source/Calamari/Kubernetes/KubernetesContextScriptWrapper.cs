@@ -14,7 +14,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities;
 using Octopus.Versioning.Semver;
@@ -115,7 +114,6 @@ namespace Calamari.Kubernetes
             readonly ICommandLineRunner commandLineRunner;
             readonly Dictionary<string, string> environmentVars;
             readonly string workingDirectory;
-            string kubectl;
             string az;
             string aws;
             string gcloud;
@@ -155,8 +153,6 @@ namespace Calamari.Kubernetes
                 {
                     return errorResult;
                 }
-
-                kubectl = kubectlCli.ExecutableLocation;
 
                 var @namespace = variables.Get(SpecialVariables.Namespace);
                 if (string.IsNullOrEmpty(@namespace))
@@ -474,7 +470,7 @@ namespace Calamari.Kubernetes
 
             void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
             {
-                var kubectlVersion = TrySetKubectlVersion();
+                var kubectlVersion = kubectlCli.GetVersion();
                 var apiVersion = kubectlVersion.Some() && kubectlVersion.Value > new SemanticVersion("1.23.6")
                     ? "client.authentication.k8s.io/v1beta1"
                     : "client.authentication.k8s.io/v1alpha1";
@@ -754,27 +750,6 @@ namespace Calamari.Kubernetes
                 return kubeConfig;
             }
 
-            Maybe<SemanticVersion> TrySetKubectlVersion()
-            {
-                var kubectlVersionOutput = ExecuteCommandAndReturnOutput(kubectl, "version", "--client", "--output=json");
-                var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
-                try
-                {
-                    var clientVersion = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new { gitVersion = "1.0.0" } });
-                    var kubectlVersionString = clientVersion?.clientVersion?.gitVersion?.TrimStart('v');
-                    if (kubectlVersionString != null)
-                    {
-                        return Maybe<SemanticVersion>.Some(new SemanticVersion(kubectlVersionString));
-                    }
-                }
-                catch (Exception e)
-                {
-                    log.Verbose($"Unable to determine kubectl version. Failed with error message: {e.Message}");
-                }
-
-                return Maybe<SemanticVersion>.None;
-            }
-
             void ExecuteCommand(string executable, params string[] arguments)
             {
                 ExecuteCommand(new CommandLineInvocation(executable, arguments)).VerifySuccess();
@@ -787,7 +762,7 @@ namespace Calamari.Kubernetes
 
             bool TryExecuteCommandWithVerboseLoggingOnly(params string[] arguments)
             {
-                return ExecuteCommandWithVerboseLoggingOnly(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
+                return ExecuteCommandWithVerboseLoggingOnly(new CommandLineInvocation(kubectlCli.ExecutableLocation, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
             }
 
             CommandResult ExecuteCommand(CommandLineInvocation invocation)
