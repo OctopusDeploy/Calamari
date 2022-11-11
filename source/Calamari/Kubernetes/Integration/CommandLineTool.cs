@@ -6,7 +6,7 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Kubernetes.Integration
 {
-    class CommandLineTool
+    public class CommandLineTool
     {
         protected readonly ILog log;
         readonly ICommandLineRunner commandLineRunner;
@@ -20,6 +20,8 @@ namespace Calamari.Kubernetes.Integration
             this.workingDirectory = workingDirectory;
             this.environmentVars = environmentVars;
         }
+
+        public string ExecutableLocation { get; protected set; }
 
         protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
         {

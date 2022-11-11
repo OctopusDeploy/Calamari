@@ -245,14 +245,11 @@ namespace Calamari.Kubernetes
 
                 if (isUsingAzureServicePrincipalAuth)
                 {
-                    if (!TrySetAz())
-                    {
-                        log.Error("Could not find az. Make sure az is on the PATH.");
+                    var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
+                    if (!azureCli.TrySetAz())
                         return false;
-                    }
 
                     ConfigureAzAccount();
-
                     SetupContextForAzureServicePrincipal(kubeConfig, @namespace);
                 }
                 else if (isUsingGoogleCloudAuth)
@@ -566,22 +563,6 @@ namespace Calamari.Kubernetes
 
                 ExecuteCommand(gcloud, arguments.ToArray());
                 kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", "--current", $"--namespace={@namespace}");
-            }
-
-            bool TrySetAz()
-            {
-                az = CalamariEnvironment.IsRunningOnWindows
-                    ? ExecuteCommandAndReturnOutput("where", "az.cmd").FirstOrDefault()
-                    : ExecuteCommandAndReturnOutput("which", "az").FirstOrDefault();
-
-                if (string.IsNullOrEmpty(az))
-                {
-                    return false;
-                }
-
-                az = az.Trim();
-
-                return true;
             }
             
             bool TrySetAws()

@@ -14,9 +14,7 @@ namespace Calamari.Kubernetes.Integration
 {
     class Kubectl : CommandLineTool
     {
-        string customKubectlExecutable;
-
-        public string ExecutableLocation { get; private set; }
+        readonly string customKubectlExecutable;
 
         public Kubectl(string customKubectlExecutable, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
             : base(log, commandLineRunner, workingDirectory, environmentVars)
