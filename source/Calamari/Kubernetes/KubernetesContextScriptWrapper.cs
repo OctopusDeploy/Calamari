@@ -109,6 +109,7 @@ namespace Calamari.Kubernetes
         class SetupKubectlAuthentication
         {
             readonly IVariables variables;
+            readonly RedactedValuesLogger log;
             readonly ScriptSyntax scriptSyntax;
             readonly ICommandLineRunner commandLineRunner;
             readonly Dictionary<string, string> environmentVars;
@@ -117,7 +118,6 @@ namespace Calamari.Kubernetes
             string aws;
             string gcloud;
 
-            RedactedValuesLogger log;
             Kubectl kubectlCli;
 
             public SetupKubectlAuthentication(IVariables variables,
@@ -144,7 +144,7 @@ namespace Calamari.Kubernetes
                     environmentVars[proxyVariable.Key] = proxyVariable.Value;
                 }
 
-                var kubeConfig = ConfigureCliExecution();
+                var kubeConfig = CreateKubectlConfig();
 
                 var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
                 kubectlCli = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars);
@@ -730,7 +730,7 @@ namespace Calamari.Kubernetes
 
             }
 
-            string ConfigureCliExecution()
+            string CreateKubectlConfig()
             {
                 var kubeConfig = Path.Combine(workingDirectory, "kubectl-octo.yml");
 
