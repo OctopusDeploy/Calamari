@@ -10,7 +10,7 @@ namespace Calamari.Kubernetes
     public class RedactedValuesLogger : ILog
     {
         readonly ILog log;
-        readonly Dictionary<string, string> redactionMap = new();
+        readonly Dictionary<string, string> redactionMap = new Dictionary<string, string>();
 
         public RedactedValuesLogger(ILog innerLogger)
         {
