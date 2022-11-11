@@ -564,7 +564,7 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public void MoveFile(string sourceFile, string destinationFile)
         {
-            File.Move(sourceFile, destinationFile);
+             RetryTrackerFileAction(() => File.Move(sourceFile, destinationFile), destinationFile, "move");
         }
 
         public void EnsureDirectoryExists(string directoryPath)
