@@ -293,7 +293,8 @@ namespace Calamari.Kubernetes
                     }
                     gcloudCli.ConfigureGcloudAccount(project, region, zone, jsonKey, useVmServiceAccount, impersonationEmails);
                     
-                    SetupContextForGoogleCloudAccount(@namespace);
+                    var gkeClusterName = variables.Get(SpecialVariables.GkeClusterName);
+                    gcloudCli.ConfigureGkeKubeCtlAuthentication(kubectlCli, gkeClusterName, region, zone, @namespace);
                 }
                 else
                 {
@@ -535,38 +536,6 @@ namespace Calamari.Kubernetes
                 kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
             }
 
-            void SetupContextForGoogleCloudAccount(string @namespace)
-            {
-                var gkeClusterName = variables.Get(SpecialVariables.GkeClusterName);
-                log.Info($"Creating kubectl context to GKE Cluster called {gkeClusterName} (namespace {@namespace}) using a Google Cloud Account");
-
-                var arguments = new List<string>(new[]
-                {
-                    "container",
-                    "clusters",
-                    "get-credentials",
-                    gkeClusterName
-                });
-
-                var region = variables.Get("Octopus.Action.GoogleCloud.Region");
-                var zone = variables.Get("Octopus.Action.GoogleCloud.Zone");
-                if (!string.IsNullOrWhiteSpace(zone))
-                {
-                    arguments.Add($"--zone={zone}");
-                } 
-                else if (!string.IsNullOrWhiteSpace(region))
-                {
-                    arguments.Add($"--region={region}");
-                }
-                else
-                {
-                    throw new ArgumentException("Either zone or region must be defined.");
-                }
-
-                ExecuteCommand(gcloud, arguments.ToArray());
-                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", "--current", $"--namespace={@namespace}");
-            }
-            
             bool TrySetAws()
             {
                 aws = CalamariEnvironment.IsRunningOnWindows

@@ -73,5 +73,35 @@ namespace Calamari.Kubernetes.Integration
             if (!string.IsNullOrEmpty(impersonationEmails))
                 environmentVars.Add("CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT", impersonationEmails);
         }
+
+        public void ConfigureGkeKubeCtlAuthentication(Kubectl kubectlCli, string gkeClusterName, string region, string zone, string @namespace)
+        {
+            log.Info($"Creating kubectl context to GKE Cluster called {gkeClusterName} (namespace {@namespace}) using a Google Cloud Account");
+
+            var arguments = new List<string>(new[]
+            {
+                "container",
+                "clusters",
+                "get-credentials",
+                gkeClusterName
+            });
+
+            if (!string.IsNullOrWhiteSpace(zone))
+            {
+                arguments.Add($"--zone={zone}");
+            }
+            else if (!string.IsNullOrWhiteSpace(region))
+            {
+                arguments.Add($"--region={region}");
+            }
+            else
+            {
+                throw new ArgumentException("Either zone or region must be defined.");
+            }
+
+            var result = ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, arguments.ToArray()));
+            result.VerifySuccess();
+            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", "--current", $"--namespace={@namespace}");
+        }
     }
 }
