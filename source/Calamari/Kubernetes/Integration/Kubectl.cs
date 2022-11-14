@@ -12,7 +12,7 @@ using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes.Integration
 {
-    class Kubectl : CommandLineTool
+    public class Kubectl : CommandLineTool
     {
         readonly string customKubectlExecutable;
 

@@ -63,5 +63,33 @@ namespace Calamari.Kubernetes.Integration
 
             log.Info("Successfully authenticated with the Azure CLI");
         }
+
+        public void ConfigureAksKubeCtlAuthentication(Kubectl kubectlCli, string clusterResourceGroup, string clusterName, string clusterNamespace, string kubeConfigPath, bool adminLogin)
+        {
+            log.Info($"Creating kubectl context to AKS Cluster in resource group {clusterResourceGroup} called {clusterName} (namespace {clusterNamespace}) using a AzureServicePrincipal");
+
+            var arguments = new List<string>(new[]
+            {
+                "aks",
+                "get-credentials",
+                "--resource-group",
+                clusterResourceGroup,
+                "--name",
+                clusterName,
+                "--file",
+                $"\"{kubeConfigPath}\"",
+                "--overwrite-existing"
+            });
+            if (adminLogin)
+            {
+                arguments.Add("--admin");
+                clusterName += "-admin";
+            }
+
+            var result = ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, arguments.ToArray()));
+            result.VerifySuccess();
+
+            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", clusterName, $"--namespace={@clusterNamespace}");
+        }
     }
 }

@@ -260,7 +260,10 @@ namespace Calamari.Kubernetes
                         var password = variables.Get("Octopus.Action.Azure.Password");
                         azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, password, azEnvironment);
 
-                        SetupContextForAzureServicePrincipal(kubeConfig, @namespace);
+                        var azureResourceGroup = variables.Get("Octopus.Action.Kubernetes.AksClusterResourceGroup");
+                        var azureCluster = variables.Get(SpecialVariables.AksClusterName);
+                        var azureAdmin = variables.GetFlag("Octopus.Action.Kubernetes.AksAdminLogin");
+                        azureCli.ConfigureAksKubeCtlAuthentication(kubectlCli, azureResourceGroup, azureCluster, @namespace, kubeConfig, azureAdmin);
                     }
                 }
                 else if (isUsingGoogleCloudAuth)
@@ -512,36 +515,6 @@ namespace Calamari.Kubernetes
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
                 log.AddValueToRedact(podServiceAccountToken, "<token>");
                 kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
-            }
-
-            void SetupContextForAzureServicePrincipal(string kubeConfig, string @namespace)
-            {
-                var azureResourceGroup = variables.Get("Octopus.Action.Kubernetes.AksClusterResourceGroup");
-                var azureCluster = variables.Get(SpecialVariables.AksClusterName);
-                var azureAdmin = variables.GetFlag("Octopus.Action.Kubernetes.AksAdminLogin");
-                log.Info($"Creating kubectl context to AKS Cluster in resource group {azureResourceGroup} called {azureCluster} (namespace {@namespace}) using a AzureServicePrincipal");
-
-                var arguments = new List<string>(new[]
-                {
-                    "aks",
-                    "get-credentials",
-                    "--resource-group",
-                    azureResourceGroup,
-                    "--name",
-                    azureCluster,
-                    "--file",
-                    $"\"{kubeConfig}\"",
-                    "--overwrite-existing"
-                });
-                if (azureAdmin)
-                {
-                    arguments.Add("--admin");
-                    azureCluster += "-admin";
-                }
-
-                ExecuteCommand(az, arguments.ToArray());
-
-                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", azureCluster, $"--namespace={@namespace}");
             }
 
             void SetupContextForGoogleCloudAccount(string @namespace)
