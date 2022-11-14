@@ -1,5 +1,6 @@
 [Verbose] Temporary kubectl config set to <path>kubectl-octo.yml
 [Verbose] "kubectl" version --client --short --request-timeout=1m
+[Verbose] Found kubectl and successfully verified it can be executed.
 [Verbose] Authenticating to gcloud with key file
 [Verbose] "gcloud" auth activate-service-account --key-file="<path>gcpJsonKey.json"
 [Verbose] Successfully authenticated with gcloud

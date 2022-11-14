@@ -51,7 +51,7 @@ namespace Calamari.Kubernetes.Integration
 
             if (TryExecuteKubectlCommand("version", "--client", "--short"))
             {
-                log.Verbose($"Found kubectl at {ExecutableLocation} and successfully verified it can be executed.");
+                log.Verbose($"Found kubectl and successfully verified it can be executed.");
                 return true;
             }
 
