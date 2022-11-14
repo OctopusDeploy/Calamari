@@ -268,11 +268,14 @@ namespace Calamari.Kubernetes
                 }
                 else if (isUsingGoogleCloudAuth)
                 {
-                    if (!TrySetGcloud())
+                    var gcloudCli = new GCloud(log, commandLineRunner, workingDirectory, environmentVars);
+                    if (!gcloudCli.TrySetGcloud())
                     {
                         log.Error("Could not find gcloud. Make sure gcloud is on the PATH.");
                         return false;
                     }
+
+                    gcloud = gcloudCli.ExecutableLocation;
 
                     ConfigureGcloudAccount(useVmServiceAccount);
                     SetupContextForGoogleCloudAccount(@namespace);
@@ -562,21 +565,6 @@ namespace Calamari.Kubernetes
 
                 aws = aws.Trim();
 
-                return true;
-            }
-
-            bool TrySetGcloud()
-            {
-                gcloud = CalamariEnvironment.IsRunningOnWindows
-                    ? ExecuteCommandAndReturnOutput("where", "gcloud.cmd").FirstOrDefault()
-                    : ExecuteCommandAndReturnOutput("which", "gcloud").FirstOrDefault();
-
-                if (string.IsNullOrEmpty(gcloud))
-                {
-                    return false;
-                }
-
-                gcloud = gcloud.Trim();
                 return true;
             }
 
