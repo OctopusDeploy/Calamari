@@ -277,7 +277,22 @@ namespace Calamari.Kubernetes
 
                     gcloud = gcloudCli.ExecutableLocation;
 
-                    ConfigureGcloudAccount(useVmServiceAccount);
+                    var project = variables.Get("Octopus.Action.GoogleCloud.Project") ?? string.Empty;
+                    var region = variables.Get("Octopus.Action.GoogleCloud.Region") ?? string.Empty;
+                    var zone = variables.Get("Octopus.Action.GoogleCloud.Zone") ?? string.Empty;
+                    var accountVariable = variables.Get("Octopus.Action.GoogleCloudAccount.Variable");
+                    var jsonKey = variables.Get($"{accountVariable}.JsonKey");
+                    if (string.IsNullOrEmpty(accountVariable) || string.IsNullOrEmpty(jsonKey))
+                    {
+                        jsonKey = variables.Get("Octopus.Action.GoogleCloudAccount.JsonKey");
+                    }
+                    string impersonationEmails = null;
+                    if (variables.GetFlag("Octopus.Action.GoogleCloud.ImpersonateServiceAccount"))
+                    {
+                        impersonationEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
+                    }
+                    gcloudCli.ConfigureGcloudAccount(project, region, zone, jsonKey, useVmServiceAccount, impersonationEmails);
+                    
                     SetupContextForGoogleCloudAccount(@namespace);
                 }
                 else
@@ -574,67 +589,6 @@ namespace Calamari.Kubernetes
                     return true;
 
                 return TryExecuteCommandWithVerboseLoggingOnly("create", "namespace", @namespace);
-            }
-
-            void ConfigureGcloudAccount(bool useVmServiceAccount)
-            {
-                var project = variables.Get("Octopus.Action.GoogleCloud.Project") ?? string.Empty;
-                var region = variables.Get("Octopus.Action.GoogleCloud.Region") ?? string.Empty;
-                var zone = variables.Get("Octopus.Action.GoogleCloud.Zone") ?? string.Empty;
-                if (!string.IsNullOrEmpty(project))
-                {
-                    environmentVars.Add("CLOUDSDK_CORE_PROJECT", project);
-                }
-                if (!string.IsNullOrEmpty(region))
-                {
-                    environmentVars.Add("CLOUDSDK_COMPUTE_REGION", region);
-                }
-                if (!string.IsNullOrEmpty(zone))
-                {
-                    environmentVars.Add("CLOUDSDK_COMPUTE_ZONE", zone);
-                }
-
-                if (!useVmServiceAccount)
-                {
-                    var accountVariable = variables.Get("Octopus.Action.GoogleCloudAccount.Variable");
-                    var jsonKey = variables.Get($"{accountVariable}.JsonKey");
-                    if (string.IsNullOrEmpty(accountVariable) || string.IsNullOrEmpty(jsonKey))
-                    {
-                        jsonKey = variables.Get("Octopus.Action.GoogleCloudAccount.JsonKey");
-                    }
-
-                    if (jsonKey == null)
-                    {
-                        log.Error("Failed to authenticate with gcloud. Key file is empty.");
-                        return;
-                    }
-
-                    log.Verbose("Authenticating to gcloud with key file");
-                    var bytes = Convert.FromBase64String(jsonKey);
-                    using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, "gcpJsonKey.json")))
-                    {
-                        File.WriteAllBytes(keyFile.FilePath, bytes);
-                        ExecuteCommand(gcloud,
-                                       "auth",
-                                       "activate-service-account",
-                                       $"--key-file=\"{keyFile.FilePath}\"");
-
-                    }
-
-                    log.Verbose("Successfully authenticated with gcloud");
-                }
-                else
-                {
-                    log.Verbose("Bypassing authentication with gcloud");
-                }
-
-                if (variables.GetFlag("Octopus.Action.GoogleCloud.ImpersonateServiceAccount"))
-                {
-                    var impersonationEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
-                    if (!string.IsNullOrEmpty(impersonationEmails))
-                        environmentVars.Add("CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT", impersonationEmails);
-                }
-
             }
 
             string CreateKubectlConfig()

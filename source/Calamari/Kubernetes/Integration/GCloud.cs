@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Kubernetes.Integration
@@ -24,6 +27,51 @@ namespace Calamari.Kubernetes.Integration
 
             ExecutableLocation = foundExecutable?.Trim();
             return true;
+        }
+
+        public void ConfigureGcloudAccount(string project, string region, string zone, string jsonKey, bool useVmServiceAccount, string impersonationEmails)
+        {
+            if (!string.IsNullOrEmpty(project))
+            {
+                environmentVars.Add("CLOUDSDK_CORE_PROJECT", project);
+            }
+
+            if (!string.IsNullOrEmpty(region))
+            {
+                environmentVars.Add("CLOUDSDK_COMPUTE_REGION", region);
+            }
+
+            if (!string.IsNullOrEmpty(zone))
+            {
+                environmentVars.Add("CLOUDSDK_COMPUTE_ZONE", zone);
+            }
+
+            if (!useVmServiceAccount)
+            {
+                if (jsonKey == null)
+                {
+                    log.Error("Failed to authenticate with gcloud. Key file is empty.");
+                    return;
+                }
+
+                log.Verbose("Authenticating to gcloud with key file");
+                var bytes = Convert.FromBase64String(jsonKey);
+                using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, "gcpJsonKey.json")))
+                {
+                    File.WriteAllBytes(keyFile.FilePath, bytes);
+                    var result = ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, "auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\""));
+                    result.VerifySuccess();
+                }
+
+                log.Verbose("Successfully authenticated with gcloud");
+            }
+            else
+            {
+                log.Verbose("Bypassing authentication with gcloud");
+            }
+
+            if (!string.IsNullOrEmpty(impersonationEmails))
+                environmentVars.Add("CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT", impersonationEmails);
         }
     }
 }
