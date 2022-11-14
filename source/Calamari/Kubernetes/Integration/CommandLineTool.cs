@@ -9,9 +9,10 @@ namespace Calamari.Kubernetes.Integration
     public class CommandLineTool
     {
         protected readonly ILog log;
+        protected readonly string workingDirectory;
+        protected readonly Dictionary<string, string> environmentVars;
+
         readonly ICommandLineRunner commandLineRunner;
-        readonly string workingDirectory;
-        readonly Dictionary<string, string> environmentVars;
 
         protected CommandLineTool(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
         {
@@ -22,6 +23,12 @@ namespace Calamari.Kubernetes.Integration
         }
 
         public string ExecutableLocation { get; protected set; }
+
+        protected bool TryExecuteCommandAndLogOutput(string exe, params string[] arguments)
+        {
+            var result = ExecuteCommandAndLogOutput(new CommandLineInvocation(exe, arguments));
+            return result.ExitCode == 0;
+        }
 
         protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
         {

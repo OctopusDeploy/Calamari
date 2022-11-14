@@ -248,9 +248,20 @@ namespace Calamari.Kubernetes
                     var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
                     if (!azureCli.TrySetAz())
                         return false;
+                    az = azureCli.ExecutableLocation;
 
-                    ConfigureAzAccount();
-                    SetupContextForAzureServicePrincipal(kubeConfig, @namespace);
+                    var disableAzureCli = variables.GetFlag("OctopusDisableAzureCLI");
+                    if (!disableAzureCli)
+                    {
+                        var azEnvironment = variables.Get("Octopus.Action.Azure.Environment") ?? "AzureCloud";
+                        var subscriptionId = variables.Get("Octopus.Action.Azure.SubscriptionId");
+                        var tenantId = variables.Get("Octopus.Action.Azure.TenantId");
+                        var clientId = variables.Get("Octopus.Action.Azure.ClientId");
+                        var password = variables.Get("Octopus.Action.Azure.Password");
+                        azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, password, azEnvironment);
+
+                        SetupContextForAzureServicePrincipal(kubeConfig, @namespace);
+                    }
                 }
                 else if (isUsingGoogleCloudAuth)
                 {
@@ -602,52 +613,6 @@ namespace Calamari.Kubernetes
                     return true;
 
                 return TryExecuteCommandWithVerboseLoggingOnly("create", "namespace", @namespace);
-            }
-
-            string GetAzEnvironment()
-            {
-                return variables.Get("Octopus.Action.Azure.Environment") ?? "AzureCloud";
-            }
-
-            void ConfigureAzAccount()
-            {
-                var disableAzureCli = variables.GetFlag("OctopusDisableAzureCLI");
-
-                if (disableAzureCli)
-                {
-                    return;
-                }
-
-                environmentVars.Add("AZURE_CONFIG_DIR", Path.Combine(workingDirectory, "azure-cli"));
-                TryExecuteCommand(az,
-                               "cloud",
-                               "set",
-                               "--name",
-                               GetAzEnvironment());
-
-                log.Verbose("Azure CLI: Authenticating with Service Principal");
-
-                var subscriptionId = variables.Get("Octopus.Action.Azure.SubscriptionId");
-                var tenantId = variables.Get("Octopus.Action.Azure.TenantId");
-                var clientId = variables.Get("Octopus.Action.Azure.ClientId");
-                var password = variables.Get("Octopus.Action.Azure.Password");
-
-                ExecuteCommand(az,
-                               "login",
-                               "--service-principal",
-                               // Use the full argument with an '=' because of https://github.com/Azure/azure-cli/issues/12105
-                               $"--username=\"{clientId}\"",
-                               $"--password=\"{password}\"",
-                               $"--tenant=\"{tenantId}\"");
-
-                log.Verbose($"Azure CLI: Setting active subscription to {subscriptionId}");
-                ExecuteCommand(az,
-                               "account",
-                               "set",
-                               "--subscription",
-                               subscriptionId);
-
-                log.Info("Successfully authenticated with the Azure CLI");
             }
 
             void ConfigureGcloudAccount(bool useVmServiceAccount)
