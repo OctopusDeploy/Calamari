@@ -11,6 +11,8 @@ namespace Calamari.Common.Features.Packages
         GitHub,
         Helm,
         AwsElasticContainerRegistry,
-        S3
+        S3,
+        AzureContainerRegistry,
+        GoogleContainerRegistry,
     }
 }
