@@ -23,7 +23,10 @@ namespace Calamari.Kubernetes.Integration
                 : ExecuteCommandAndReturnOutput("which", "gcloud").FirstOrDefault();
 
             if (string.IsNullOrEmpty(foundExecutable))
+            {
+                log.Error("Could not find gcloud. Make sure gcloud is on the PATH.");
                 return false;
+            }
 
             ExecutableLocation = foundExecutable?.Trim();
             return true;

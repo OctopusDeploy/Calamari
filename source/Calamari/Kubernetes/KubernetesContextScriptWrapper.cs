@@ -13,6 +13,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.Integration;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities;
@@ -114,9 +115,7 @@ namespace Calamari.Kubernetes
             readonly ICommandLineRunner commandLineRunner;
             readonly Dictionary<string, string> environmentVars;
             readonly string workingDirectory;
-            string az;
             string aws;
-            string gcloud;
 
             Kubectl kubectlCli;
 
@@ -246,55 +245,18 @@ namespace Calamari.Kubernetes
                 if (isUsingAzureServicePrincipalAuth)
                 {
                     var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
-                    if (!azureCli.TrySetAz())
+                    var azureAuth = new AzureKubernetesServicesAuth(azureCli, kubectlCli, variables);
+
+                    if (!azureAuth.TryConfigure(@namespace, kubeConfig))
                         return false;
-                    az = azureCli.ExecutableLocation;
-
-                    var disableAzureCli = variables.GetFlag("OctopusDisableAzureCLI");
-                    if (!disableAzureCli)
-                    {
-                        var azEnvironment = variables.Get("Octopus.Action.Azure.Environment") ?? "AzureCloud";
-                        var subscriptionId = variables.Get("Octopus.Action.Azure.SubscriptionId");
-                        var tenantId = variables.Get("Octopus.Action.Azure.TenantId");
-                        var clientId = variables.Get("Octopus.Action.Azure.ClientId");
-                        var password = variables.Get("Octopus.Action.Azure.Password");
-                        azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, password, azEnvironment);
-
-                        var azureResourceGroup = variables.Get("Octopus.Action.Kubernetes.AksClusterResourceGroup");
-                        var azureCluster = variables.Get(SpecialVariables.AksClusterName);
-                        var azureAdmin = variables.GetFlag("Octopus.Action.Kubernetes.AksAdminLogin");
-                        azureCli.ConfigureAksKubeCtlAuthentication(kubectlCli, azureResourceGroup, azureCluster, @namespace, kubeConfig, azureAdmin);
-                    }
                 }
                 else if (isUsingGoogleCloudAuth)
                 {
                     var gcloudCli = new GCloud(log, commandLineRunner, workingDirectory, environmentVars);
-                    if (!gcloudCli.TrySetGcloud())
-                    {
-                        log.Error("Could not find gcloud. Make sure gcloud is on the PATH.");
+                    var gcloudAuth = new GoogleKubernetesEngineAuth(gcloudCli, kubectlCli, variables);
+
+                    if (!gcloudAuth.TryConfigure(useVmServiceAccount, @namespace))
                         return false;
-                    }
-
-                    gcloud = gcloudCli.ExecutableLocation;
-
-                    var project = variables.Get("Octopus.Action.GoogleCloud.Project") ?? string.Empty;
-                    var region = variables.Get("Octopus.Action.GoogleCloud.Region") ?? string.Empty;
-                    var zone = variables.Get("Octopus.Action.GoogleCloud.Zone") ?? string.Empty;
-                    var accountVariable = variables.Get("Octopus.Action.GoogleCloudAccount.Variable");
-                    var jsonKey = variables.Get($"{accountVariable}.JsonKey");
-                    if (string.IsNullOrEmpty(accountVariable) || string.IsNullOrEmpty(jsonKey))
-                    {
-                        jsonKey = variables.Get("Octopus.Action.GoogleCloudAccount.JsonKey");
-                    }
-                    string impersonationEmails = null;
-                    if (variables.GetFlag("Octopus.Action.GoogleCloud.ImpersonateServiceAccount"))
-                    {
-                        impersonationEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
-                    }
-                    gcloudCli.ConfigureGcloudAccount(project, region, zone, jsonKey, useVmServiceAccount, impersonationEmails);
-                    
-                    var gkeClusterName = variables.Get(SpecialVariables.GkeClusterName);
-                    gcloudCli.ConfigureGkeKubeCtlAuthentication(kubectlCli, gkeClusterName, region, zone, @namespace);
                 }
                 else
                 {
