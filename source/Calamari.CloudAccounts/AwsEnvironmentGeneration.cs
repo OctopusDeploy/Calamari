@@ -6,11 +6,9 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.CloudAccounts
 {
@@ -54,8 +52,8 @@ namespace Calamari.CloudAccounts
             {
                 if (!await LoginFallback())
                 {
-                    throw new Exception("AWS-LOGIN-ERROR-0006: " 
-                                        + "Failed to login via external credentials assigned to the worker. " 
+                    throw new Exception("AWS-LOGIN-ERROR-0006: "
+                                        + "Failed to login via external credentials assigned to the worker. "
                                         + $"For more information visit {log.FormatLink("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0006")}");
                 }
             }
@@ -206,7 +204,7 @@ namespace Calamari.CloudAccounts
                     // catch the exception and fallback to returning false
                 }
             }
-            
+
             return false;
         }
 
@@ -232,12 +230,12 @@ namespace Calamari.CloudAccounts
 
                     return true;
                 }
-                catch 
+                catch
                 {
                     // catch the exception and fallback to returning false
                 }
             }
-            
+
             return false;
         }
 
