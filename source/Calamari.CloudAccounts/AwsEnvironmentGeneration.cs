@@ -33,7 +33,6 @@ namespace Calamari.CloudAccounts
         readonly string assumeRoleExternalId;
         readonly string assumeRoleSession;
         readonly string assumeRoleDurationSeconds;
-        readonly string assumeWebRole;
 
         public static async Task<AwsEnvironmentGeneration> Create(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null)
         {
