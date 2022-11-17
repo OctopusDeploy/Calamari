@@ -34,9 +34,10 @@ namespace Calamari.Aws.Kubernetes.Discovery
             else
             {
                 // The sequence of fallbacks trying to log in with credentials exposed by the worker.
-                if (!(TryGetInstanceProfileAwsCredentials(log, out credentials)
-                      || TryGetEnvironmentVariablesAwsCredentials(log, out credentials)
-                      || TryGetAssumeRoleWithWebIdentityCredentials(log, out credentials)))
+                // This follows the precidence document at https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence
+                if (!(TryGetEnvironmentVariablesAwsCredentials(log, out credentials)
+                      || TryGetAssumeRoleWithWebIdentityCredentials(log, out credentials)
+                      || TryGetInstanceProfileAwsCredentials(log, out credentials)))
                 {
                     log.Warn("Unable to authorise credentials, see verbose log for details.");
                     return false;

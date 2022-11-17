@@ -67,13 +67,13 @@ namespace Calamari.CloudAccounts
         /// https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence
         /// for a breakdown of the precedence used by the AWS CLI tool.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>true if the login was successful, false otherwise</returns>
         async Task<bool> LoginFallback()
         {
-            // Initial support for inheriting roles was done via the IMDS web endpoint exposed by VMs
-            return await PopulateKeysFromInstanceRole()
-                   // We then added support for inheriting creds from web auth tokens
-                   || await PopulateKeysFromWebRole();
+             // Inherit role from web auth tokens
+            return await PopulateKeysFromWebRole()
+                   // Inherit the role via the IMDS web endpoint exposed by VMs
+                   || await PopulateKeysFromInstanceRole();
         }
 
         public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
