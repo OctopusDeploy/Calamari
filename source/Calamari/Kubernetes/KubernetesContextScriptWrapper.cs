@@ -253,7 +253,8 @@ namespace Calamari.Kubernetes
                 else if (isUsingGoogleCloudAuth)
                 {
                     var gcloudCli = new GCloud(log, commandLineRunner, workingDirectory, environmentVars);
-                    var gcloudAuth = new GoogleKubernetesEngineAuth(gcloudCli, kubectlCli, variables);
+                    var gkeGcloudAuthPlugin = new GkeGcloudAuthPlugin(log, commandLineRunner, workingDirectory, environmentVars);
+                    var gcloudAuth = new GoogleKubernetesEngineAuth(gcloudCli, gkeGcloudAuthPlugin, kubectlCli, variables, log);
 
                     if (!gcloudAuth.TryConfigure(useVmServiceAccount, @namespace))
                         return false;
