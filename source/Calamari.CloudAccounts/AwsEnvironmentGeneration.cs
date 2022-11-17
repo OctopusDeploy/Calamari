@@ -85,11 +85,10 @@ namespace Calamari.CloudAccounts
             var account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
             region = variables.Get("Octopus.Action.Aws.Region")?.Trim();
             // When building the context for an AWS step, there will be a variable expanded with the keys
-            accessKey = variables.Get(account + ".AccessKey")?.Trim()
-                        ??
-                        // When building a context with an account associated with a target, the keys are under Octopus.Action.Amazon.
-                        // The lack of any keys means we rely on an EC2 instance role.
-                        variables.Get("Octopus.Action.Amazon.AccessKey")?.Trim();
+            accessKey = variables.Get(account + ".AccessKey")?.Trim() ??
+                // When building a context with an account associated with a target, the keys are under Octopus.Action.Amazon.
+                // The lack of any keys means we rely on an EC2 instance role.
+                variables.Get("Octopus.Action.Amazon.AccessKey")?.Trim();
             secretKey = variables.Get(account + ".SecretKey")?.Trim() ?? variables.Get("Octopus.Action.Amazon.SecretKey")?.Trim();
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
