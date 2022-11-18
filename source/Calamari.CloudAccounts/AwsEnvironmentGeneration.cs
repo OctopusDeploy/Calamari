@@ -46,9 +46,33 @@ namespace Calamari.CloudAccounts
         async Task Initialise()
         {
             PopulateCommonSettings();
-            await PopulateSuppliedKeys();
-            await PopulateKeysFromInstanceRole();
+
+            if (!await PopulateSuppliedKeys())
+            {
+                if (!await LoginFallback())
+                {
+                    throw new Exception("AWS-LOGIN-ERROR-0006: "
+                                        + "Failed to login via external credentials assigned to the worker. "
+                                        + $"For more information visit {log.FormatLink("https://oc.to/t9nRNg")}");
+                }
+            }
+
             await AssumeRole();
+        }
+
+        /// <summary>
+        /// This method represents the sequence of login fallbacks. AWS has an ever increasing
+        /// assortment of processes for embedding credentials onto VMs and containers, see
+        /// https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence
+        /// for a breakdown of the precedence used by the AWS CLI tool.
+        /// </summary>
+        /// <returns>true if the login was successful, false otherwise</returns>
+        async Task<bool> LoginFallback()
+        {
+            // Inherit role from web auth tokens
+            return await PopulateKeysFromWebRole()
+                   // Inherit the role via the IMDS web endpoint exposed by VMs
+                   || await PopulateKeysFromInstanceRole();
         }
 
         public Dictionary<string, string> EnvironmentVars { get; } = new Dictionary<string, string>();
@@ -60,12 +84,12 @@ namespace Calamari.CloudAccounts
             var account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
             region = variables.Get("Octopus.Action.Aws.Region")?.Trim();
             // When building the context for an AWS step, there will be a variable expanded with the keys
-            accessKey = variables.Get(account + ".AccessKey")?.Trim() ??
+            accessKey = variables.Get(account + ".AccessKey")?.Trim()
+                        ??
                         // When building a context with an account associated with a target, the keys are under Octopus.Action.Amazon.
                         // The lack of any keys means we rely on an EC2 instance role.
                         variables.Get("Octopus.Action.Amazon.AccessKey")?.Trim();
-            secretKey = variables.Get(account + ".SecretKey")?.Trim() ??
-                        variables.Get("Octopus.Action.Amazon.SecretKey")?.Trim();
+            secretKey = variables.Get(account + ".SecretKey")?.Trim() ?? variables.Get("Octopus.Action.Amazon.SecretKey")?.Trim();
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
             assumeRoleExternalId = variables.Get("Octopus.Action.Aws.AssumeRoleExternalId")?.Trim();
@@ -84,14 +108,14 @@ namespace Calamari.CloudAccounts
                 if (EnvironmentVars.ContainsKey("AWS_SESSION_TOKEN"))
                 {
                     return new SessionAWSCredentials(
-                        EnvironmentVars["AWS_ACCESS_KEY_ID"],
-                        EnvironmentVars["AWS_SECRET_ACCESS_KEY"],
-                        EnvironmentVars["AWS_SESSION_TOKEN"]);
+                                                     EnvironmentVars["AWS_ACCESS_KEY_ID"],
+                                                     EnvironmentVars["AWS_SECRET_ACCESS_KEY"],
+                                                     EnvironmentVars["AWS_SESSION_TOKEN"]);
                 }
 
                 return new BasicAWSCredentials(
-                    EnvironmentVars["AWS_ACCESS_KEY_ID"],
-                    EnvironmentVars["AWS_SECRET_ACCESS_KEY"]);
+                                               EnvironmentVars["AWS_ACCESS_KEY_ID"],
+                                               EnvironmentVars["AWS_SECRET_ACCESS_KEY"]);
             }
         }
 
@@ -107,7 +131,6 @@ namespace Calamari.CloudAccounts
             {
                 await new AmazonSecurityTokenServiceClient(AwsCredentials).GetCallerIdentityAsync(new GetCallerIdentityRequest());
                 return true;
-
             }
             catch (AmazonServiceException ex)
             {
@@ -132,7 +155,7 @@ namespace Calamari.CloudAccounts
         /// If the keys were explicitly supplied, use them directly
         /// </summary>
         /// <exception cref="Exception">The supplied keys were not valid</exception>
-        async Task PopulateSuppliedKeys()
+        async Task<bool> PopulateSuppliedKeys()
         {
             if (!String.IsNullOrEmpty(accessKey))
             {
@@ -140,18 +163,21 @@ namespace Calamari.CloudAccounts
                 EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
                 if (!await verifyLogin())
                 {
-                    throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. " +
-                                             "Please check the keys assigned to the Amazon Web Services Account associated with this step. " +
-                                             $"For more information visit {log.FormatLink("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0005")}");
+                    throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. "
+                                        + "Please check the keys assigned to the Amazon Web Services Account associated with this step. "
+                                        + $"For more information visit {log.FormatLink("https://oc.to/U4WA8x")}");
                 }
+
+                return true;
             }
+
+            return false;
         }
 
         /// <summary>
         /// If no keys were supplied, we must be using the instance role
         /// </summary>
-        /// <exception cref="Exception">The instance role information could not be extracted</exception>
-        async Task PopulateKeysFromInstanceRole()
+        async Task<bool> PopulateKeysFromInstanceRole()
         {
             if (String.IsNullOrEmpty(accessKey))
             {
@@ -171,19 +197,47 @@ namespace Calamari.CloudAccounts
                     EnvironmentVars["AWS_ACCESS_KEY_ID"] = instanceRoleKeys.AccessKeyId;
                     EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = instanceRoleKeys.SecretAccessKey;
                     EnvironmentVars["AWS_SESSION_TOKEN"] = instanceRoleKeys.Token;
+
+                    return true;
                 }
-                catch (Exception ex)
+                catch
                 {
-                    // This was either a generic error accessing the metadata URI, or accessing the
-                    // dynamic properties resulted in an error (which means the response was not
-                    // in the expected format).
-                    throw new Exception(
-                        $"AWS-LOGIN-ERROR-0003: Failed to access the role information under {RoleUri}, " +
-                        "or failed to parse the response. This may be because the instance does not have " +
-                        "a role assigned to it. " +
-                        $"For more information visit {log.FormatLink("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0003")}", ex);
+                    // catch the exception and fallback to returning false
                 }
             }
+
+            return false;
+        }
+
+        /// <summary>
+        /// This method reads the AWS_WEB_IDENTITY_TOKEN_FILE environment variable, loads the token
+        /// from the associated file, and then assumes the role. This is used when a tentacle is
+        /// running in an EKS cluster. The docs at https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
+        /// have more details.
+        /// </summary>
+        async Task<bool> PopulateKeysFromWebRole()
+        {
+            if (String.IsNullOrEmpty(accessKey))
+            {
+                try
+                {
+                    var credentials = await AssumeRoleWithWebIdentityCredentials
+                                            .FromEnvironmentVariables()
+                                            .GetCredentialsAsync();
+
+                    EnvironmentVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKey;
+                    EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = credentials.SecretKey;
+                    EnvironmentVars["AWS_SESSION_TOKEN"] = credentials.Token;
+
+                    return true;
+                }
+                catch
+                {
+                    // catch the exception and fallback to returning false
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

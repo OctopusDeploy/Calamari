@@ -33,28 +33,14 @@ namespace Calamari.Aws.Kubernetes.Discovery
             }
             else
             {
-                try
+                // The sequence of fallbacks trying to log in with credentials exposed by the worker.
+                // This follows the precedence document at https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence
+                if (!(TryGetEnvironmentVariablesAwsCredentials(log, out credentials)
+                      || TryGetAssumeRoleWithWebIdentityCredentials(log, out credentials)
+                      || TryGetInstanceProfileAwsCredentials(log, out credentials)))
                 {
-                    // If not currently running on an EC2 instance,
-                    // this will throw an exception.
-                    credentials = new InstanceProfileAWSCredentials();
-                }
-                // Catching a generic Exception because AWS SDK throws undocumented exceptions.
-                catch (Exception instanceProfileException)
-                {
-                    try
-                    {
-                        // The last attempt is trying to use Environment Variables.
-                        credentials = new EnvironmentVariablesAWSCredentials();
-                    }
-                    // Catching a generic Exception because AWS SDK throws undocumented exceptions.
-                    catch (Exception environmentVariablesException)
-                    {
-                        log.Warn("Unable to authorise credentials, see verbose log for details.");
-                        log.Verbose($"Unable to authorise credentials for Instance Profile: {instanceProfileException}");
-                        log.Verbose($"Unable to authorise credentials for Environment Variables: {environmentVariablesException}");
-                        return false;
-                    }
+                    log.Warn("Unable to authorise credentials, see verbose log for details.");
+                    return false;
                 }
             }
 
@@ -68,6 +54,51 @@ namespace Calamari.Aws.Kubernetes.Discovery
             }
             
             return true;
+        }
+
+        bool TryGetAssumeRoleWithWebIdentityCredentials(ILog log, out AWSCredentials credentials)
+        {
+            try
+            {
+                credentials = AssumeRoleWithWebIdentityCredentials.FromEnvironmentVariables();
+                return true;
+            }
+            catch(Exception ex)
+            {
+                log.Verbose($"Unable to authorise credentials for web identity: {ex}");
+                credentials = null;
+                return false;
+            }
+        }
+
+        bool TryGetEnvironmentVariablesAwsCredentials(ILog log, out AWSCredentials credentials)
+        {
+            try
+            {
+                credentials = new EnvironmentVariablesAWSCredentials();
+                return true;
+            }
+            catch(Exception ex)
+            {
+                log.Verbose($"Unable to authorise credentials for Environment Variables: {ex}");
+                credentials = null;
+                return false;
+            }
+        }
+
+        bool TryGetInstanceProfileAwsCredentials(ILog log, out AWSCredentials credentials)
+        {
+            try
+            {
+                credentials = new InstanceProfileAWSCredentials();
+                return true;
+            }
+            catch(Exception ex)
+            {
+                log.Verbose($"Unable to authorise credentials for Instance Profile: {ex}");
+                credentials = null;
+                return false;
+            }
         }
         
         public string Type { get; set; }
