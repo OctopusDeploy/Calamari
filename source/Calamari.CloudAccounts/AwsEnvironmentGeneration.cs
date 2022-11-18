@@ -53,7 +53,7 @@ namespace Calamari.CloudAccounts
                 {
                     throw new Exception("AWS-LOGIN-ERROR-0006: "
                                         + "Failed to login via external credentials assigned to the worker. "
-                                        + $"For more information visit {log.FormatLink("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0006")}");
+                                        + $"For more information visit {log.FormatLink("https://oc.to/t9nRNg")}");
                 }
             }
 
@@ -69,7 +69,7 @@ namespace Calamari.CloudAccounts
         /// <returns>true if the login was successful, false otherwise</returns>
         async Task<bool> LoginFallback()
         {
-             // Inherit role from web auth tokens
+            // Inherit role from web auth tokens
             return await PopulateKeysFromWebRole()
                    // Inherit the role via the IMDS web endpoint exposed by VMs
                    || await PopulateKeysFromInstanceRole();
@@ -84,10 +84,11 @@ namespace Calamari.CloudAccounts
             var account = variables.Get("Octopus.Action.AwsAccount.Variable")?.Trim();
             region = variables.Get("Octopus.Action.Aws.Region")?.Trim();
             // When building the context for an AWS step, there will be a variable expanded with the keys
-            accessKey = variables.Get(account + ".AccessKey")?.Trim() ??
-                // When building a context with an account associated with a target, the keys are under Octopus.Action.Amazon.
-                // The lack of any keys means we rely on an EC2 instance role.
-                variables.Get("Octopus.Action.Amazon.AccessKey")?.Trim();
+            accessKey = variables.Get(account + ".AccessKey")?.Trim()
+                        ??
+                        // When building a context with an account associated with a target, the keys are under Octopus.Action.Amazon.
+                        // The lack of any keys means we rely on an EC2 instance role.
+                        variables.Get("Octopus.Action.Amazon.AccessKey")?.Trim();
             secretKey = variables.Get(account + ".SecretKey")?.Trim() ?? variables.Get("Octopus.Action.Amazon.SecretKey")?.Trim();
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
@@ -162,7 +163,9 @@ namespace Calamari.CloudAccounts
                 EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
                 if (!await verifyLogin())
                 {
-                    throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. " + "Please check the keys assigned to the Amazon Web Services Account associated with this step. " + $"For more information visit {log.FormatLink("https://g.octopushq.com/AwsCloudFormationDeploy#aws-login-error-0005")}");
+                    throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. "
+                                        + "Please check the keys assigned to the Amazon Web Services Account associated with this step. "
+                                        + $"For more information visit {log.FormatLink("https://oc.to/U4WA8x")}");
                 }
 
                 return true;
