@@ -8,7 +8,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Identity.Client;
 
 namespace Calamari.AzureServiceFabric
 {
@@ -138,11 +138,15 @@ namespace Calamari.AzureServiceFabric
 
         static string GetAccessToken(AzureActiveDirectoryMetadata aad, string aadUsername, string aadPassword)
         {
-            var authContext = new AuthenticationContext(aad.Authority);
-            var authResult = authContext.AcquireTokenAsync(
-                                                           aad.ClusterApplication,
-                                                           aad.ClientApplication,
-                                                           new UserCredential(aadUsername, aadPassword)).GetAwaiter().GetResult();
+            var app = PublicClientApplicationBuilder.Create(aad.ClientApplication)
+                                                    .WithAuthority(aad.Authority)
+                                                    .Build();
+
+            var authResult = app.AcquireTokenByUsernamePassword(new[] { ".default" }, aadUsername, aadPassword)
+                                .ExecuteAsync()
+                                .GetAwaiter()
+                                .GetResult();
+ 
             return authResult.AccessToken;
         }
 
