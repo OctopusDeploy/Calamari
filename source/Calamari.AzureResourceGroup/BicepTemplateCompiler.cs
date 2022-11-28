@@ -25,9 +25,9 @@ namespace Calamari.AzureResourceGroup
         private readonly IFileResolver fileResolver;
         private readonly IModuleDispatcher moduleDispatcher;
         private readonly IConfigurationManager configurationManager;
-        private readonly IApiVersionProvider apiVersionProvider;
+        private readonly IApiVersionProviderFactory apiVersionProviderFactory;
         private readonly IBicepAnalyzer linterAnalyzer;
-        private readonly IFeatureProvider featureProvider;
+        private readonly IFeatureProviderFactory featureProviderFactory;
         private readonly INamespaceProvider namespaceProvider;
 
         public BicepTemplateCompiler(
@@ -35,18 +35,18 @@ namespace Calamari.AzureResourceGroup
             IFileResolver fileResolver, 
             IModuleDispatcher moduleDispatcher, 
             IConfigurationManager configurationManager, 
-            IApiVersionProvider apiVersionProvider, 
+            IApiVersionProviderFactory apiVersionProviderFactory, 
             IBicepAnalyzer linterAnalyzer,
-            IFeatureProvider featureProvider,
+            IFeatureProviderFactory featureProviderFactory,
             INamespaceProvider namespaceProvider)
         {
             this.fileSystem = fileSystem;
             this.fileResolver = fileResolver;
             this.moduleDispatcher = moduleDispatcher;
             this.configurationManager = configurationManager;
-            this.apiVersionProvider = apiVersionProvider;
+            this.apiVersionProviderFactory = apiVersionProviderFactory;
             this.linterAnalyzer = linterAnalyzer;
-            this.featureProvider = featureProvider;
+            this.featureProviderFactory = featureProviderFactory;
             this.namespaceProvider = namespaceProvider;
         }
         
@@ -75,20 +75,17 @@ namespace Calamari.AzureResourceGroup
         {
             var grouping = SourceFileGroupingBuilder.Build(fileResolver, moduleDispatcher, new Workspace(), uri);
             var compilation = new Compilation(
-                featureProvider, 
+                featureProviderFactory, 
                 namespaceProvider, 
                 grouping, 
                 configurationManager, 
-                apiVersionProvider, 
+                apiVersionProviderFactory, 
                 linterAnalyzer);
             
             using var compiled = new MemoryStream();
             using var writer = new StreamWriter(compiled);
             
-            new TemplateEmitter(
-                compilation.GetEntrypointSemanticModel(), 
-                new EmitterSettings(featureProvider))
-                .Emit(writer);
+            new TemplateEmitter(compilation.GetEntrypointSemanticModel()).Emit(writer);
             
             compiled.Flush();
             compiled.Position = 0;
