@@ -198,22 +198,11 @@ namespace Calamari.AzureAppService.Tests
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
                 DefaultVariables.ActiveDirectoryEndpoint;
 
-            var authContext = GetContextUri(activeDirectoryEndpointBaseUri, tenantId);
-            var context = new AuthenticationContext(authContext);
-            var result = await context.AcquireTokenAsync(resourceManagementEndpointBaseUri,
-                new ClientCredential(applicationId, password));
-
-            return result.AccessToken;
-        }
-
-        string GetContextUri(string activeDirectoryEndPoint, string tenantId)
-        {
-            if (!activeDirectoryEndPoint.EndsWith("/"))
-            {
-                return $"{activeDirectoryEndPoint}/{tenantId}";
-            }
-
-            return $"{activeDirectoryEndPoint}{tenantId}";
+            return await Auth.GetAuthTokenAsync(tenantId,
+                                                applicationId,
+                                                password,
+                                                resourceManagementEndpointBaseUri,
+                                                activeDirectoryEndpointBaseUri);
         }
     }
 }

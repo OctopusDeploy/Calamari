@@ -1,17 +1,26 @@
 ﻿using System.Threading.Tasks;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-﻿using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Logging;
+using Microsoft.Identity.Client;
 
 namespace Calamari.AzureWebApp
 {
     static class ServicePrincipal
     {
         public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string password, string managementEndPoint, string activeDirectoryEndPoint)
-        {
+        { 
             var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
-            var context = new AuthenticationContext(authContext);
-            var result = await context.AcquireTokenAsync(managementEndPoint, new ClientCredential(applicationId, password));
+
+            var app = ConfidentialClientApplicationBuilder.Create(applicationId)
+                                                          .WithClientSecret(password)
+                                                          .WithAuthority(authContext)
+                                                          .Build();
+
+            var result = await app.AcquireTokenForClient(
+                                                         new [] { $"{managementEndPoint}/.default" })
+                                  .WithTenantId(tenantId)
+                                  .ExecuteAsync()
+                                  .ConfigureAwait(false);
             return result.AccessToken;
         }
 
