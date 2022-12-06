@@ -7,7 +7,7 @@ namespace Calamari.AzureResourceGroup
     static class ServicePrincipal
     {
         public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string password, string managementEndPoint, string activeDirectoryEndPoint)
-        { 
+        {
             var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
 
