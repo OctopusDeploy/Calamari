@@ -21,6 +21,12 @@
 
 $ErrorActionPreference = "Stop"
 
+# From PowerShell 7.3, a breaking change was introduced which changed the behaviour of how quotes were handled
+# in arguments. Quotes added around arguments to native commands are preserved and treated as part of the argument.
+# We set this feature flag to "Legacy" so that the original behaviour is used.
+# https://learn.microsoft.com/en-gb/powershell/scripting/learn/experimental-features?view=powershell-7.3#psnativecommandargumentpassing
+$PSNativeCommandArgumentPassing = "Legacy"
+
 if ($PSVersionTable.PSVersion.Major -lt 5)
 {
     throw "These Azure commands are only supported in PowerShell versions 5 and above. This server is currently running PowerShell version $($PSVersionTable.PSVersion.ToString())."
