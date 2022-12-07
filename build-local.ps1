@@ -1,3 +1,9 @@
+[CmdletBinding()]
+Param(
+    [Parameter()]
+    [string[]]$PartialBuildFlavours
+)
+
 Write-Host "
 ##################################################################################################
 #                                                                                                #
@@ -18,7 +24,13 @@ Write-Host "
 ##################################################################################################
 " -ForegroundColor Cyan
 
-./build.ps1 -BuildVerbosity Minimal -Verbosity Normal -PackInParallel -AppendTimestamp -SetOctopusServerVersion 
+if ($PartialBuildFlavours) {
+    ./build.ps1 -BuildVerbosity Minimal -Verbosity Normal -PackInParallel -AppendTimestamp -SetOctopusServerVersion -PartialBuildFlavours $PartialBuildFlavours
+
+    Write-Warning "You've only built a partial Calamari package. Some steps may not work."
+} else {
+    ./build.ps1 -BuildVerbosity Minimal -Verbosity Normal -PackInParallel -AppendTimestamp -SetOctopusServerVersion
+}
 
 Write-Host "
 ########################################################################################
