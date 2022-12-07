@@ -20,6 +20,7 @@ bld/
 artifacts/
 built-packages/
 .nuke/temp/
+.nuke/build.schema.json
 artifactspublish/
 publish/
 
