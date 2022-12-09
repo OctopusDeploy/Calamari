@@ -1,6 +1,7 @@
 ﻿param([string]$OctopusKey="")
 {{StartOfBootstrapScriptDebugLocation}}
 $ErrorActionPreference = 'Stop'
+$PSNativeCommandArgumentPassing = 'Legacy'
 
 # All PowerShell scripts invoked by Calamari will be bootstrapped using this script. This script:
 #  1. Declares/overrides various functions for scripts to use
