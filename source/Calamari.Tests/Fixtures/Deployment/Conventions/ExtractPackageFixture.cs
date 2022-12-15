@@ -6,7 +6,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
-using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -83,7 +82,6 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Does.EndWith(Path.Combine("Acme.Web", "1.0.0")));
         }
 
-
         [Test]
         public void ShouldAppendToVersionedFolderIfAlreadyExisting()
         {
@@ -97,7 +95,6 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             extractPackage.ExtractToApplicationDirectory(PathToPackage);
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Does.EndWith(Path.Combine("Acme.Web", "1.0.0_3")));
-            
         }
         
 
@@ -135,7 +132,5 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
             Assert.That(variables.Get("OctopusOriginalPackageDirectoryPath"), Does.EndWith(Path.Combine("Production Tokyo","Acme.Web","1.0.0")));
         }
-
-       
     }
 }
