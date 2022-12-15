@@ -29,7 +29,7 @@ namespace Calamari.Common.Features.Packages
                 new ZipPackageExtractor(log),
                 new TarPackageExtractor(log),
                 new JarPackageExtractor(new JarTool(commandLineRunner, log, variables))
-            };
+            }.Select(e => e.WithExtractionLimits(log)).ToArray();
         }
 
         public string[] Extensions => extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray();
