@@ -35,5 +35,22 @@ namespace Calamari.Common.Plumbing.ServiceMessages
             public const string SizeAttribute = "size";
             public const string Error = "error";
         }
+
+        public static class CalamariTimedOperation
+        {
+            public const string Name = "calamari-timed-operation";
+            public const string NameAttribute = "name";
+            public const string OperationIdAttribute = "operationId";
+            public const string DurationMillisecondsAttribute = "durationMilliseconds";
+            public const string OutcomeAttribute = "outcome";
+        }
+
+        public static class CalamariDeploymentMetric
+        {
+            public const string Name = "calamari-deployment-metric";
+            public const string OperationIdAttribute = "operationId";
+            public const string MetricAttribute = "metric";
+            public const string ValueAttribute = "value";
+        }
     }
 }

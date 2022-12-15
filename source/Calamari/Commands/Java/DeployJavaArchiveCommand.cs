@@ -77,7 +77,7 @@ namespace Calamari.Commands.Java
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
             var jarTools = new JarTool(commandLineRunner, log, variables);
-            var packageExtractor = new JarPackageExtractor(jarTools);
+            var packageExtractor = new JarPackageExtractor(jarTools).WithExtractionLimits(log);
             var embeddedResources = new AssemblyEmbeddedResources();
             var javaRunner = new JavaRunner(commandLineRunner, variables);
 
