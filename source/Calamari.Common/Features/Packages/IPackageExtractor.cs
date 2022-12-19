@@ -1,4 +1,5 @@
 ﻿using System;
+using SharpCompress.Archives;
 
 namespace Calamari.Common.Features.Packages
 {
@@ -6,5 +7,10 @@ namespace Calamari.Common.Features.Packages
     {
         string[] Extensions { get; }
         int Extract(string packageFile, string directory);
+    }
+
+    public interface IPackageEntryExtractor : IPackageExtractor
+    {
+        void ExtractEntry(string directory, IArchiveEntry entry);
     }
 }
