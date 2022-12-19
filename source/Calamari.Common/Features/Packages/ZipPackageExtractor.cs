@@ -11,7 +11,7 @@ using Polly;
 
 namespace Calamari.Common.Features.Packages
 {
-    public class ZipPackageExtractor : IPackageExtractor
+    public class ZipPackageExtractor : IPackageEntryExtractor
     {
         readonly ILog log;
 
@@ -38,7 +38,7 @@ namespace Calamari.Common.Features.Packages
             return filesExtracted;
         }
 
-        void ExtractEntry(string directory, ZipArchiveEntry entry)
+        public void ExtractEntry(string directory, IArchiveEntry entry)
         {
 #if NET40
             entry.WriteToDirectory(directory, new PackageExtractionOptions(log));

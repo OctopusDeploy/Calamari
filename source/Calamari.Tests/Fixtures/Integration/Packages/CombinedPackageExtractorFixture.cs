@@ -21,8 +21,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var combinedExtractor = CreateCombinedPackageExtractor();
             var specificExtractor = combinedExtractor.GetExtractor(filename);
-            if (specificExtractor is ExtractionLimitsDecorator decorator)
-                specificExtractor = decorator.ConcreteExtractor;
 
             Assert.AreEqual(expectedType, specificExtractor.GetType());
         }

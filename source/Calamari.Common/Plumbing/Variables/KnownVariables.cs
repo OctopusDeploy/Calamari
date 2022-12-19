@@ -77,6 +77,15 @@ namespace Calamari.Common.Plumbing.Variables
             public static readonly string SkipIfAlreadyInstalled = "Octopus.Action.Package.SkipIfAlreadyInstalled";
             public static readonly string IgnoreVariableReplacementErrors = "Octopus.Action.Package.IgnoreVariableReplacementErrors";
             public static readonly string RunPackageScripts = "Octopus.Action.Package.RunScripts";
+
+            public static class ArchiveLimits
+            {
+                public const string Enabled = "Octopus.Calamari.ArchiveLimits.Enabled";
+                public const string MaximumUncompressedSize = "Octopus.Calamari.ArchiveLimits.MaximumUncompressedSize";
+                public const string MaximumCompressionRatio = "Octopus.Calamari.ArchiveLimits.MaximumCompressionRatio";
+                public const string OverrunPreventionEnabled = "Octopus.Calamari.ArchiveLimits.OverrunPrevention.Enabled";
+                public const string MetricsEnabled = "Octopus.Calamari.ArchiveLimits.Metrics.Enabled";
+            }
         }
     }
 }
