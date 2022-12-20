@@ -479,7 +479,7 @@ namespace Calamari.Build
             _ => _.DependsOn(PackageConsolidatedCalamariZip)
                   .Executes(() =>
                             {
-                                var releaseNotes = IsLocalBuild ? "Local" : File.ReadAllText(RootDirectory / "ReleaseNotes.md");
+                                var releaseNotes = IsLocalBuild ? "Local" : File.ReadAllText(RootDirectory / "releasenotes" / "ReleaseNotes.md");
                                 
                                 var nuspec = BuildDirectory / "Calamari.Consolidated.nuspec";
                                 var text = File.ReadAllText(nuspec);
