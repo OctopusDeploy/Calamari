@@ -484,9 +484,11 @@ namespace Calamari.Build
                                 var nuspec = BuildDirectory / "Calamari.Consolidated.nuspec";
                                 var text = File.ReadAllText(nuspec);
                                 text = text.Replace("$releaseNotes$", releaseNotes);
-                                File.WriteAllText(nuspec, text);
                                 
-                                NuGetPack(s => s.SetTargetPath(nuspec)
+                                var nuspecForPublish = BuildAssemblyDirectory / "Calamari.Consolidated.nuspec";
+                                File.WriteAllText(nuspecForPublish, text);
+                                
+                                NuGetPack(s => s.SetTargetPath(nuspecForPublish)
                                                 .SetVersion(NugetVersion.Value)
                                                 .SetOutputDirectory(ArtifactsDirectory));
                             });
