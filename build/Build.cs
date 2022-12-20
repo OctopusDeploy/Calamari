@@ -479,7 +479,14 @@ namespace Calamari.Build
             _ => _.DependsOn(PackageConsolidatedCalamariZip)
                   .Executes(() =>
                             {
-                                NuGetPack(s => s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
+                                var releaseNotes = IsLocalBuild ? "Local" : File.ReadAllText(ArtifactsDirectory / "ReleaseNotes.md");
+                                
+                                var nuspec = BuildDirectory / "Calamari.Consolidated.nuspec";
+                                var text = File.ReadAllText(nuspec);
+                                text = text.Replace("$releaseNotes$", releaseNotes);
+                                File.WriteAllText(nuspec, text);
+                                
+                                NuGetPack(s => s.SetTargetPath(nuspec)
                                                 .SetVersion(NugetVersion.Value)
                                                 .SetOutputDirectory(ArtifactsDirectory));
                             });

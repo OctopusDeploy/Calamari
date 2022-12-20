@@ -10,6 +10,7 @@
         <contentFiles>
             <files include="any/any/Calamari.*.zip" buildAction="None" copyToOutput="true" />
         </contentFiles>
+        <releaseNotes>$releaseNotes$</releaseNotes>
     </metadata>
     <files>
         <file src="..\artifacts\consolidated\Calamari.*.zip" target="contentFiles\any\any\" />
