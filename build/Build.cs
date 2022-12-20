@@ -479,7 +479,7 @@ namespace Calamari.Build
             _ => _.DependsOn(PackageConsolidatedCalamariZip)
                   .Executes(() =>
                             {
-                                var releaseNotes = IsLocalBuild ? "Local" : File.ReadAllText(ArtifactsDirectory / "ReleaseNotes.md");
+                                var releaseNotes = IsLocalBuild ? "Local" : File.ReadAllText(RootDirectory / "ReleaseNotes.md");
                                 
                                 var nuspec = BuildDirectory / "Calamari.Consolidated.nuspec";
                                 var text = File.ReadAllText(nuspec);
@@ -489,8 +489,9 @@ namespace Calamari.Build
                                 File.WriteAllText(nuspecForPublish, text);
                                 
                                 NuGetPack(s => s.SetTargetPath(nuspecForPublish)
-                                                .SetVersion(NugetVersion.Value)
-                                                .SetOutputDirectory(ArtifactsDirectory));
+                                            .SetBasePath(BuildDirectory)
+                                            .SetVersion(NugetVersion.Value)
+                                            .SetOutputDirectory(ArtifactsDirectory));
                             });
         
         Target UpdateCalamariVersionOnOctopusServer =>
