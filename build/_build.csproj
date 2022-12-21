@@ -30,10 +30,4 @@
       <ProjectReference Include="..\source\Calamari.ConsolidateCalamariPackages\Calamari.ConsolidateCalamariPackages.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <None Update="Calamari.Consolidated.nuspec">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
 </Project>
