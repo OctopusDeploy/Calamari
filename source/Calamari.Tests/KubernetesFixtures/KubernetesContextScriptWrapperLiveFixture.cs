@@ -116,7 +116,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         string RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, bool printOut, params string[] args)
         {
-            var sb = new StringBuilder();
+            var stdOut = new StringBuilder();
             var environmentVars = GetEnvironmentVars();
             environmentVars["TF_IN_AUTOMATION"] = bool.TrueString;
             environmentVars.AddRange(env);
@@ -127,7 +127,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 environmentVars,
                 s =>
                 {
-                    sb.AppendLine(s);
+                    stdOut.AppendLine(s);
                     if (printOut)
                     {
                         TestContext.Progress.WriteLine(s);
@@ -138,9 +138,9 @@ namespace Calamari.Tests.KubernetesFixtures
                     TestContext.Error.WriteLine(e);
                 });
         
-            result.ExitCode.Should().Be(0);
+            result.ExitCode.Should().Be(0, because: $"`terraform {args[0]}` should run without error and exit cleanly during infrastructure setup");
         
-            return sb.ToString().Trim(Environment.NewLine.ToCharArray());
+            return stdOut.ToString().Trim(Environment.NewLine.ToCharArray());
         }
 
         protected string InitialiseTerraformWorkingFolder(string folderName, string filesSource)

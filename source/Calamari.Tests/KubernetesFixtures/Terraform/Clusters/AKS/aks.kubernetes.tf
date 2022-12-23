@@ -21,6 +21,19 @@ resource "kubernetes_service_account" "default" {
   }
 }
 
+resource "kubernetes_secret" "default" {
+  provider = kubernetes.aks
+  metadata {
+    name        = "${kubernetes_service_account.default.metadata.0.name}-secret"
+    namespace   = kubernetes_namespace.default.metadata.0.name
+    annotations = {
+      "kubernetes.io/service-account.name" = kubernetes_service_account.default.metadata.0.name
+    }
+  }
+
+  type = "kubernetes.io/service-account-token"
+}
+
 resource "kubernetes_cluster_role" "default" {
   provider = kubernetes.aks
   metadata {
@@ -48,14 +61,6 @@ resource "kubernetes_cluster_role_binding" "default" {
     api_group = ""
     kind = "ServiceAccount"
     name = kubernetes_service_account.default.metadata.0.name
-    namespace = kubernetes_namespace.default.metadata.0.name
-  }
-}
-
-data "kubernetes_secret" "default" {
-  provider = kubernetes.aks
-  metadata {
-    name = kubernetes_service_account.default.default_secret_name
     namespace = kubernetes_namespace.default.metadata.0.name
   }
 }
