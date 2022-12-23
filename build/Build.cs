@@ -479,9 +479,13 @@ namespace Calamari.Build
             _ => _.DependsOn(PackageConsolidatedCalamariZip)
                   .Executes(() =>
                             {
+                                var releaseNotes = IsLocalBuild ? "Local" : File.ReadAllText(RootDirectory / "releasenotes" / "ReleaseNotes.md");
+                                
                                 NuGetPack(s => s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
-                                                .SetVersion(NugetVersion.Value)
-                                                .SetOutputDirectory(ArtifactsDirectory));
+                                            .SetProperty("releaseNotes", releaseNotes)
+                                            .SetBasePath(BuildDirectory)
+                                            .SetVersion(NugetVersion.Value)
+                                            .SetOutputDirectory(ArtifactsDirectory));
                             });
         
         Target UpdateCalamariVersionOnOctopusServer =>
