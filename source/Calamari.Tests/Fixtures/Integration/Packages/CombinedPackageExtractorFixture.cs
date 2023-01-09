@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using Amazon.IdentityManagement.Model;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.NuGet;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.Packages;
-using Calamari.Integration.Packages.NuGet;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
 using Calamari.Tests.Helpers;
@@ -26,6 +21,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var combinedExtractor = CreateCombinedPackageExtractor();
             var specificExtractor = combinedExtractor.GetExtractor(filename);
+            if (specificExtractor is ExtractionLimitsDecorator decorator)
+                specificExtractor = decorator.ConcreteExtractor;
 
             Assert.AreEqual(expectedType, specificExtractor.GetType());
         }
@@ -72,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             CreateCombinedPackageExtractor().GetExtractor("blah.1.0.0.7z");
         }
-        
+
         static CombinedPackageExtractor CreateCombinedPackageExtractor()
         {
             var log = new InMemoryLog();
