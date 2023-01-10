@@ -28,7 +28,8 @@ namespace Calamari.Integration.Packages.NuGet
                 sourceRepository.PackageSource.Credentials = new PackageSourceCredential("octopus", cred.UserName, cred.Password, true);
             }
 
-            var providers = new SourceRepositoryDependencyProvider(sourceRepository, logger, new SourceCacheContext(){NoCache = true});
+            var sourceCacheContext = new SourceCacheContext() { NoCache = true, };
+            var providers = new SourceRepositoryDependencyProvider(sourceRepository, logger, sourceCacheContext);
             var libraryIdentity = new LibraryIdentity(packageId, version.ToNuGetVersion(), LibraryType.Package);
 
             var targetPath = Directory.GetParent(targetFilePath).FullName;
@@ -46,6 +47,7 @@ namespace Calamari.Integration.Packages.NuGet
             }
 
             File.Move(targetTempNupkg, targetFilePath);
+            sourceCacheContext.Dispose();
         }
 
         public class NugetLogger : ILogger
