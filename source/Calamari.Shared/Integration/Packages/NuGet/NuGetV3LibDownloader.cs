@@ -28,26 +28,32 @@ namespace Calamari.Integration.Packages.NuGet
                 sourceRepository.PackageSource.Credentials = new PackageSourceCredential("octopus", cred.UserName, cred.Password, true);
             }
 
-            var sourceCacheContext = new SourceCacheContext() { NoCache = true };
-            var providers = new SourceRepositoryDependencyProvider(sourceRepository, logger, sourceCacheContext);
-            var libraryIdentity = new LibraryIdentity(packageId, version.ToNuGetVersion(), LibraryType.Package);
-
-            var targetPath = Directory.GetParent(targetFilePath).FullName;
-            if (!Directory.Exists(targetPath))
+            using (var sourceCacheContext = new SourceCacheContext() { NoCache = true })
             {
-                Directory.CreateDirectory(targetPath);
-            }
+                var providers = new SourceRepositoryDependencyProvider(sourceRepository, logger, sourceCacheContext);
+                var libraryIdentity = new LibraryIdentity(packageId, version.ToNuGetVersion(), LibraryType.Package);
 
-            string targetTempNupkg = Path.Combine(targetPath, Path.GetRandomFileName());
-            using (var nupkgStream = new FileStream(targetTempNupkg, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, 4096, true))
-            {
-                providers.CopyToAsync(libraryIdentity, nupkgStream, CancellationToken.None)
-                        .GetAwaiter()
-                        .GetResult();
-            }
+                var targetPath = Directory.GetParent(targetFilePath).FullName;
+                if (!Directory.Exists(targetPath))
+                {
+                    Directory.CreateDirectory(targetPath);
+                }
 
-            File.Move(targetTempNupkg, targetFilePath);
-            sourceCacheContext.Dispose();
+                string targetTempNupkg = Path.Combine(targetPath, Path.GetRandomFileName());
+                using (var nupkgStream = new FileStream(targetTempNupkg,
+                                                        FileMode.Create,
+                                                        FileAccess.ReadWrite,
+                                                        FileShare.ReadWrite | FileShare.Delete,
+                                                        4096,
+                                                        true))
+                {
+                    providers.CopyToAsync(libraryIdentity, nupkgStream, CancellationToken.None)
+                             .GetAwaiter()
+                             .GetResult();
+                }
+
+                File.Move(targetTempNupkg, targetFilePath);
+            }
         }
 
         public class NugetLogger : ILogger
