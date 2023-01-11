@@ -3,7 +3,7 @@
     <PropertyGroup>
         <RootNamespace>Calamari.AzureCloudService.Tests</RootNamespace>
         <AssemblyName>Calamari.AzureCloudService.Tests</AssemblyName>
-        <TargetFramework>net461</TargetFramework>
+        <TargetFramework>net481</TargetFramework>
         <IsPackable>false</IsPackable>
         <LangVersion>8</LangVersion>
     </PropertyGroup>
