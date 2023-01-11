@@ -9,7 +9,7 @@
         {
 #if NETSTANDARD
             return Task.CompletedTask;
-#elif NET452
+#elif NET481
             return Task.FromResult(0);
 #else
             return Net40CompletedTask;
