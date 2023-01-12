@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -203,7 +204,7 @@ namespace Calamari.Tests.KubernetesFixtures
             using (var client = new HttpClient())
             {
                 GcloudExecutable = await DownloadCli("gcloud",
-                    () => Task.FromResult<(string, string)>(("346.0.0", string.Empty)),
+                    () => Task.FromResult<(string, string)>(("412.0.0", string.Empty)),
                     async (destinationDirectoryName, tuple) =>
                     {
                         var downloadUrl = GetGcloudDownloadLink(tuple.version);
@@ -217,6 +218,45 @@ namespace Calamari.Tests.KubernetesFixtures
                         return GetGcloudExecutablePath(destinationDirectoryName);
                     });
             }
+            
+            if (CalamariEnvironment.IsRunningOnWindows)
+            {
+                InstallGkeAuthPlugin();
+            }
+        }
+        
+        void InstallGkeAuthPlugin()
+        {
+            var variables = new Dictionary<string, string>();
+            var pythonCopyPath = ExecuteCommandAndReturnResult(GcloudExecutable, "components copy-bundled-python", ".", variables);
+            variables.Add("CLOUDSDK_PYTHON", pythonCopyPath.commandOutput);
+
+            var gkeComponent = ExecuteCommandAndReturnResult($"\"{GcloudExecutable}\"", "components list --filter=\"Name=gke-gcloud-auth-plugin\" --format=\"json\"", ".", variables);
+            var gkeComponentJObject = JArray.Parse(gkeComponent.commandOutput).First();
+            var installedState = gkeComponentJObject["state"]["name"].Value<string>();
+            if (installedState != "Installed")
+            {
+                ExecuteCommandAndReturnResult(GcloudExecutable, "components install gke-gcloud-auth-plugin --quiet", ".", variables);
+            }
+        }
+
+        (int ExitCode, string commandOutput) ExecuteCommandAndReturnResult(string executable, string arguments, string workingDirectory, Dictionary<string, string> variables)
+        {
+            var stdOut = new StringBuilder();
+            var stdError = new StringBuilder();
+            var commandExitCode = SilentProcessRunner.ExecuteCommand(executable,
+                                                                     arguments,
+                                                                     workingDirectory,
+                                                                     variables,
+                                                                     (Action<string>)(s => stdOut.AppendLine(s)),
+                                                                     (Action<string>)(s => stdError.AppendLine(s))).ExitCode;
+
+            if (commandExitCode != 0)
+            {
+                throw new Exception($"{stdOut}{stdError}");
+            }
+
+            return (commandExitCode, stdOut.ToString().Trim('\r', '\n'));
         }
 
         static void AddExecutePermission(string exePath)

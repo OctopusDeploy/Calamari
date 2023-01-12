@@ -260,8 +260,11 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
+        [WindowsTest]
+        [RequiresNonMono]
         public void ExecutionWithGoogleCloudAccount_WhenZoneIsProvided()
         {
+            InstallTools(InstallGCloud);
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
@@ -275,8 +278,11 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
+        [WindowsTest]
+        [RequiresNonMono]
         public void ExecutionWithGoogleCloudAccount_WhenRegionIsProvided()
         {
+            InstallTools(InstallGCloud);
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
@@ -290,8 +296,11 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
+        [WindowsTest]
+        [RequiresNonMono]
         public void ExecutionWithGoogleCloudAccount_WhenBothZoneAndRegionAreProvided()
         {
+            InstallTools(InstallGCloud);
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
@@ -403,6 +412,13 @@ namespace Calamari.Tests.KubernetesFixtures
             var installAwsCliTask = tools.InstallAwsCli();
             Task.Run(() => installAwsCliTask);
             Task.WaitAll(installAwsCliTask);
+        }
+        
+        void InstallGCloud(InstallTools tools)
+        {
+            var installGCloud = tools.InstallGCloud();
+            Task.Run(() => installGCloud);
+            Task.WaitAll(installGCloud);
         }
 
         class RecordOnly :  ICommandLineRunner
