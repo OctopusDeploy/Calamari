@@ -7,7 +7,7 @@ namespace Calamari.Build
         public const string Net40 = "net40";
         public const string net452 = "net452";
         public const string Net461 = "net461";
-        public const string Net481 = "net481";
+        public const string Net48 = "net48";
         public const string Net60 = "net6.0";
     }
 }
