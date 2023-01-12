@@ -36,7 +36,7 @@ namespace Calamari.Common.Features.Packages.Decorators.ArchiveLimits
                     {
                         var compressedSize = archiveInfo.Length;
                         var uncompressedSize = archive.TotalUncompressSize;
-                        var compressionRatio = uncompressedSize == 0 ? 0 : (double)uncompressedSize / compressedSize;
+                        var compressionRatio = compressedSize == 0 ? 0 : (double)uncompressedSize / compressedSize;
 
                         if (compressionRatio > maximumCompressionRatio)
                         {
