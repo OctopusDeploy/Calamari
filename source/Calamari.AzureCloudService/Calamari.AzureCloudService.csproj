@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Calamari.AzureCloudService</AssemblyName>
     <RootNamespace>Calamari.AzureCloudService</RootNamespace>
-    <TargetFramework>net481</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
