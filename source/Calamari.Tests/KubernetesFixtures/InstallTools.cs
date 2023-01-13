@@ -229,10 +229,10 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var variables = new Dictionary<string, string>();
             var pythonCopyPath = ExecuteCommandAndReturnResult(GcloudExecutable, "components copy-bundled-python", ".", variables);
-            variables.Add("CLOUDSDK_PYTHON", pythonCopyPath.commandOutput);
+            variables.Add("CLOUDSDK_PYTHON", pythonCopyPath);
 
             var gkeComponent = ExecuteCommandAndReturnResult($"\"{GcloudExecutable}\"", "components list --filter=\"Name=gke-gcloud-auth-plugin\" --format=\"json\"", ".", variables);
-            var gkeComponentJObject = JArray.Parse(gkeComponent.commandOutput).First();
+            var gkeComponentJObject = JArray.Parse(gkeComponent).First();
             var installedState = gkeComponentJObject["state"]["name"].Value<string>();
             if (installedState != "Installed")
             {
@@ -240,7 +240,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        (int ExitCode, string commandOutput) ExecuteCommandAndReturnResult(string executable, string arguments, string workingDirectory, Dictionary<string, string> variables)
+        string ExecuteCommandAndReturnResult(string executable, string arguments, string workingDirectory, Dictionary<string, string> variables)
         {
             var stdOut = new StringBuilder();
             var stdError = new StringBuilder();
@@ -253,10 +253,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
             if (commandExitCode != 0)
             {
-                throw new Exception($"{stdOut}{stdError}");
+                throw new Exception($"stdOut: {stdOut}, stdError: {stdError}");
             }
 
-            return (commandExitCode, stdOut.ToString().Trim('\r', '\n'));
+            return stdOut.ToString().Trim('\r', '\n');
         }
 
         static void AddExecutePermission(string exePath)
