@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Archives;
@@ -32,12 +33,15 @@ namespace Calamari.Common.Features.Packages.Decorators.Logging
         {
             try
             {
-                using (var archiveDetails = ArchiveFactory.Open(archivePath))
+                var archiveInfo = new FileInfo(archivePath);
+                using (var archive = ArchiveFactory.Open(archivePath))
                 {
-                    var compressionRatio = archiveDetails.TotalUncompressSize == 0 ? 0 : (double)archiveDetails.TotalSize / archiveDetails.TotalUncompressSize;
+                    var compressedSize = archiveInfo.Length;
+                    var uncompressedSize = archive.TotalUncompressSize;
+                    var compressionRatio = compressedSize == 0 ? 0 : (double)uncompressedSize / compressedSize;
 
-                    log.LogMetric("DeploymentPackageCompressedSize", archiveDetails.TotalSize, operationId);
-                    log.LogMetric("DeploymentPackageUncompressedSize", archiveDetails.TotalUncompressSize, operationId);
+                    log.LogMetric("DeploymentPackageCompressedSize", compressedSize, operationId);
+                    log.LogMetric("DeploymentPackageUncompressedSize", archive.TotalUncompressSize, operationId);
                     log.LogMetric("DeploymentPackageCompressionRatio", compressionRatio, operationId);
                 }
             }
