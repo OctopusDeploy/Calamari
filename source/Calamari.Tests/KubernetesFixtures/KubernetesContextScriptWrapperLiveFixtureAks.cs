@@ -76,7 +76,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
                 variables.Set("Octopus.Action.Kubernetes.CertificateAuthorityPath", certificateAuthority.FilePath);
                 var wrapper = CreateWrapper();
-                TestScript(wrapper, "Test-Script");
+                TestScriptAndVerifyCluster(wrapper, "Test-Script");
             }
         }
         
@@ -92,7 +92,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
             variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
             var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script");
+            TestScriptAndVerifyCluster(wrapper, "Test-Script");
         }
 
         [Test]
@@ -107,9 +107,28 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{clientCert}.CertificatePem", aksClusterClientCertificate);
             variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
             var wrapper = CreateWrapper();
+            TestScriptAndVerifyCluster(wrapper, "Test-Script");
+        }
+
+        [Test]
+        public void UnreachableK8Cluster_ShouldExecuteTargetScript()
+        {
+            const string certificateAuthority = "myauthority";
+            const string unreachableClusterUrl = "https://example.kubernetes.com";
+            const string clientCert = "myclientcert";
+            
+            variables.Set(SpecialVariables.ClusterUrl, unreachableClusterUrl);
+            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
+            variables.Set($"{certificateAuthority}.CertificatePem", aksClusterCaCertificate);
+            variables.Set("Octopus.Action.Kubernetes.ClientCertificate", clientCert);
+            variables.Set($"{clientCert}.CertificatePem", aksClusterClientCertificate);
+            variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
+
+            var wrapper = CreateWrapper();
+
             TestScript(wrapper, "Test-Script");
         }
-        
+
         [Test]
         public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount()
         {

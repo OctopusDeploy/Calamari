@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -159,7 +160,10 @@ namespace Calamari.Kubernetes
                     return errorResult;
                 }
 
-                CreateNamespace(@namespace);
+                if (!CreateNamespace(@namespace))
+                {
+                    log.Verbose("Could not create namespace. Continuing on, as it may not be working directly with the target.");
+                };
 
                 var outputKubeConfig = variables.GetFlag(SpecialVariables.OutputKubeConfig);
                 if (outputKubeConfig)
@@ -574,14 +578,12 @@ namespace Calamari.Kubernetes
                 return true;
             }
 
-            void CreateNamespace(string @namespace)
+            bool CreateNamespace(string @namespace)
             {
-                if (!TryExecuteKubectlCommand("get",
-                                             "namespace",
-                                             @namespace))
-                {
-                    ExecuteKubectlCommand("create", "namespace", @namespace);
-                }
+                if (TryExecuteCommandWithVerboseLoggingOnly("get", "namespace", @namespace))
+                    return true;
+
+                return TryExecuteCommandWithVerboseLoggingOnly("create", "namespace", @namespace);
             }
 
             string GetAzEnvironment()
@@ -762,6 +764,11 @@ namespace Calamari.Kubernetes
                 return ExecuteCommand(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
             }
 
+            bool TryExecuteCommandWithVerboseLoggingOnly(params string[] arguments)
+            {
+                return ExecuteCommandWithVerboseLoggingOnly(new CommandLineInvocation(kubectl, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
+            }
+
             CommandResult ExecuteCommand(CommandLineInvocation invocation)
             {
                 invocation.EnvironmentVars = environmentVars;
@@ -800,6 +807,34 @@ namespace Calamari.Kubernetes
                 return result;
             }
 
+            /// <summary>
+            /// This is a special case for when the invocation results in an error
+            /// 1) but is to be expected as a valid scenario; and
+            /// 2) we don't want to inform this at an error level when this happens.
+            /// </summary>
+            /// <param name="invocation"></param>
+            /// <returns></returns>
+            CommandResult ExecuteCommandWithVerboseLoggingOnly(CommandLineInvocation invocation)
+            {
+                invocation.EnvironmentVars = environmentVars;
+                invocation.WorkingDirectory = workingDirectory;
+                invocation.OutputAsVerbose = true;
+                invocation.OutputToLog = false;
+
+                var captureCommandOutput = new CaptureCommandOutput();
+                invocation.AdditionalInvocationOutputSink = captureCommandOutput;
+
+                var commandString = invocation.ToString();
+                commandString = redactMap.Aggregate(commandString, (current, pair) => current.Replace(pair.Key, pair.Value));
+                log.Verbose(commandString);
+
+                var result = commandLineRunner.Execute(invocation);
+
+                captureCommandOutput.Messages.ForEach(message => log.Verbose(message.Text));
+
+                return result;
+            }
+
             IEnumerable<string> ExecuteCommandAndReturnOutput(string exe, params string[] arguments)
             {
                 var captureCommandOutput = new CaptureCommandOutput();
@@ -821,10 +856,7 @@ namespace Calamari.Kubernetes
 
             class CaptureCommandOutput : ICommandInvocationOutputSink
             {
-                private List<Message> messages = new List<Message>();
-
-                public List<Message> Messages => messages;
-
+                public List<Message> Messages { get; } = new List<Message>();
                 public void WriteInfo(string line)
                 {
                     Messages.Add(new Message(Level.Info, line));
