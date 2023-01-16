@@ -94,6 +94,7 @@ function Initialize-AzureRmContext {
 
     # Force any output generated to be verbose in Octopus logs.
     Write-Host "##octopus[stdout-verbose]"
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
     Write-Host "##octopus[stdout-default]"
 }
