@@ -1,11 +1,13 @@
 output "aks_cluster_host" {
   description = "Endpoint for AKS control plane."
   value       = azurerm_kubernetes_cluster.default.kube_config.0.host
+  sensitive   = true
 }
 
 
 output "aks_cluster_username" {
-  value = azurerm_kubernetes_cluster.default.kube_config.0.username
+  value     = azurerm_kubernetes_cluster.default.kube_config.0.username
+  sensitive = true
 }
 
 output "aks_cluster_password" {
@@ -39,6 +41,6 @@ output "aks_rg_name" {
 }
 
 output "aks_service_account_token" {
-  value     = data.kubernetes_secret.default.data.token
+  value     = kubernetes_secret.default.data.token
   sensitive = true
 }

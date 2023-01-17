@@ -4,13 +4,13 @@
         <RootNamespace>Calamari.CloudAccounts</RootNamespace>
     </PropertyGroup>
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-        <TargetFrameworks>net452;netstandard2.1</TargetFrameworks>
+        <TargetFrameworks>net48;netstandard2.1</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
         <TargetFramework>netstandard2.1</TargetFramework>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
+    <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
         <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
         <Reference Include="Microsoft.CSharp" />
     </ItemGroup>
