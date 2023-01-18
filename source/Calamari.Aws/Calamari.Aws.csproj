@@ -21,7 +21,7 @@
     <StartupObject />
   </PropertyGroup>
   <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>net452;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net48;netstandard2.1</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
     <TargetFramework>netstandard2.1</TargetFramework>
