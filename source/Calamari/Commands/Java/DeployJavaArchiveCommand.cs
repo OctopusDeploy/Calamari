@@ -8,6 +8,7 @@ using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Packages.Decorators;
 using Calamari.Common.Features.Packages.Java;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Processes.Semaphores;
@@ -77,7 +78,7 @@ namespace Calamari.Commands.Java
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
             var jarTools = new JarTool(commandLineRunner, log, variables);
-            var packageExtractor = new JarPackageExtractor(jarTools);
+            var packageExtractor = new JarPackageExtractor(jarTools).WithExtractionLimits(log, variables);
             var embeddedResources = new AssemblyEmbeddedResources();
             var javaRunner = new JavaRunner(commandLineRunner, variables);
 

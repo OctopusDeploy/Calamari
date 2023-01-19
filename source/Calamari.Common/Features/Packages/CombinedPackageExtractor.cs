@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages.Decorators;
 using Calamari.Common.Features.Packages.Java;
 using Calamari.Common.Features.Packages.NuGet;
 using Calamari.Common.Features.Processes;
@@ -29,7 +30,7 @@ namespace Calamari.Common.Features.Packages
                 new ZipPackageExtractor(log),
                 new TarPackageExtractor(log),
                 new JarPackageExtractor(new JarTool(commandLineRunner, log, variables))
-            };
+            }.Select(e => e.WithExtractionLimits(log, variables)).ToArray();
         }
 
         public string[] Extensions => extractors.SelectMany(e => e.Extensions).OrderBy(e => e).ToArray();
