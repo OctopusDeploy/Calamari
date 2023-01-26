@@ -62,7 +62,7 @@
         <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
         <PackageReference Include="Octopus.Versioning" Version="5.1.155" />
         <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
-        <PackageReference Include="Octostache" Version="3.2.1" />
+        <PackageReference Include="Octostache" Version="3.3.0" />
         <PackageReference Include="SharpCompress" Version="0.24.0" />
         <PackageReference Include="XPath2" Version="1.0.12" />
         <PackageReference Include="YamlDotNet" Version="8.1.2" />
