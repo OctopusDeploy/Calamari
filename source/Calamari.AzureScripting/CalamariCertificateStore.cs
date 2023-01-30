@@ -128,7 +128,7 @@ namespace Calamari.AzureScripting
         {
             try
             {
-#if NET48
+#if NET452
                 return certificate2.HasPrivateKey && certificate2.PrivateKey != null;
 #else
                 return certificate2.HasPrivateKey && (
