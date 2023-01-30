@@ -11,7 +11,7 @@
   <!-- Cake build looks for xpath Project/PropertyGroup/TargetFrameworks with a fallback of Project/PropertyGroup/TargetFramework
         in PublishCalamariProjects task. If making changes, be sure to look there to make sure it's all alright still -->
   <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>net48;net6.0</TargetFrameworks>
+    <TargetFrameworks>net481;net6.0</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
     <TargetFramework>net6.0</TargetFramework>

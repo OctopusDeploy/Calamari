@@ -2,7 +2,7 @@
   <PropertyGroup>
     <RootNamespace>Calamari.AzureWebApp.Tests</RootNamespace>
     <AssemblyName>Calamari.AzureWebApp.Tests</AssemblyName>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>net481</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
