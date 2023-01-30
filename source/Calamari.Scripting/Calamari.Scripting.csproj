@@ -10,7 +10,7 @@
         <LangVersion>9</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-        <TargetFrameworks>net481;net6.0</TargetFrameworks>
+        <TargetFrameworks>net452;net6.0</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
         <TargetFramework>net6.0</TargetFramework>
@@ -25,8 +25,8 @@
         <PackageReference Include="scriptcs" Version="0.17.1" />
     </ItemGroup>
 
-    <!-- The following is to stop incorrect nullable reference type warnings for net481 build -->
-    <PropertyGroup Condition="'$(TargetFramework)' == 'net481' ">
+    <!-- The following is to stop incorrect nullable reference type warnings for net452 build -->
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net452' ">
         <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0' ">

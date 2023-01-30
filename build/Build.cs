@@ -201,7 +201,7 @@ namespace Calamari.Build
                                 OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.Net60,
                                 nugetVersion);
                       DoPublish(RootProjectName,
-                                OperatingSystem.IsWindows() ? Frameworks.Net481 : Frameworks.Net60,
+                                OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
                                 nugetVersion,
                                 FixedRuntimes.Cloud);
 
@@ -339,7 +339,7 @@ namespace Calamari.Build
                                                     OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.Net60,
                                                     nugetVersion),
                                     () => DoPackage(RootProjectName,
-                                                    OperatingSystem.IsWindows() ? Frameworks.Net481 : Frameworks.Net60,
+                                                    OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
                                                     nugetVersion,
                                                     FixedRuntimes.Cloud),
                                 };
