@@ -68,8 +68,8 @@ namespace Calamari.Kubernetes.Commands
                 return ExitStatus.Success;
             }
 
-            var containerFeed = additionalVariables.GetValueOrDefault(SpecialVariables.Container.Feed);
-            var containerImage = additionalVariables.GetValueOrDefault(SpecialVariables.Container.Image);
+            var containerFeed = additionalVariables.TryGetValue(SpecialVariables.Container.Feed, out var feed) ? feed : null;
+            var containerImage = additionalVariables.TryGetValue(SpecialVariables.Container.Image, out var image) ? image: null;
 
             log.Verbose($"Found {clusters.Count} candidate clusters.");
             var discoveredTargetCount = 0;
