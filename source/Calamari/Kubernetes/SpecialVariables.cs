@@ -10,6 +10,12 @@
         public const string SkipTlsVerification = "Octopus.Action.Kubernetes.SkipTlsVerification";
         public const string OutputKubeConfig = "Octopus.Action.Kubernetes.OutputKubeConfig";
 
+        public static class Container
+        {
+            public const string Image = "Octopus.Action.Container.Image";
+            public const string Feed = "Octopus.Action.Container.Feed";
+        }
+
         public static class Helm
         {
             public const string ReleaseName = "Octopus.Action.Helm.ReleaseName";

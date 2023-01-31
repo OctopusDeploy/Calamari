@@ -27,7 +27,7 @@ namespace Calamari.Tests.KubernetesFixtures
     public abstract class KubernetesContextScriptWrapperLiveFixtureBase : CalamariFixture
     {
         protected const string TestNamespace = "calamari-testing";
-        
+
         protected IVariables variables;
         protected string testFolder;
 
@@ -106,7 +106,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
             }
         }
-        
+
         protected void TestScriptAndVerifyCluster(IScriptWrapper wrapper, string scriptName, string kubectlExe = "kubectl")
         {
             using (var dir = TemporaryDirectory.Create())
@@ -123,7 +123,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
             }
         }
-        
+
         protected void DoDiscovery(AwsAuthenticationDetails authenticationDetails)
         {
             var scope = new TargetDiscoveryScope("TestSpace",
@@ -135,18 +135,19 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var targetDiscoveryContext =
                 new TargetDiscoveryContext<AwsAuthenticationDetails>(scope,
-                    authenticationDetails);
-        
+                    authenticationDetails,
+                    null);
+
             var result =
                 ExecuteDiscoveryCommand(targetDiscoveryContext,
                     new[]{"Calamari.Aws"}
                 );
-            
+
             result.AssertSuccess();
         }
-        
+
         protected void DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(
-            AwsAuthenticationDetails authenticationDetails, 
+            AwsAuthenticationDetails authenticationDetails,
             Dictionary<string,string> properties)
         {
             var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
@@ -163,7 +164,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                       .Which.Should()
                                       .BeEquivalentTo(expectedServiceMessage);
         }
-        
+
         protected CalamariResult ExecuteDiscoveryCommand<TAuthenticationDetails>(
             TargetDiscoveryContext<TAuthenticationDetails> discoveryContext,
             IEnumerable<string> extensions,
@@ -175,7 +176,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 variables.Add(KubernetesDiscoveryCommand.ContextVariableName, JsonConvert.SerializeObject(discoveryContext));
                 foreach (var (key, value) in otherVariables)
                     variables.Add(key, value);
-                
+
                 variables.Save(variablesFile.FilePath);
 
                 return InvokeInProcess(Calamari()
@@ -191,7 +192,7 @@ namespace Calamari.Tests.KubernetesFixtures
             public override void WriteServiceMessage(ServiceMessage serviceMessage)
             {
                 ServiceMessages.Add(serviceMessage);
-                
+
                 base.WriteServiceMessage(serviceMessage);
             }
         }
