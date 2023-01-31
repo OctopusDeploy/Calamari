@@ -75,7 +75,7 @@ namespace Calamari.Kubernetes.Commands
             var discoveredTargetCount = 0;
             foreach (var cluster in clusters)
             {
-                var matchResult = scope.Match(cluster.TargetTags);
+                var matchResult = scope.Match(cluster.Tags);
                 if (matchResult.IsSuccess)
                 {
                     discoveredTargetCount++;
@@ -150,7 +150,7 @@ namespace Calamari.Kubernetes.Commands
             string contextJson,
             out string type,
             out TargetDiscoveryScope scope,
-            out IReadOnlyDictionary<string,string> additionalVariables)
+            out Dictionary<string,string> additionalVariables)
         {
             type = null;
             scope = null;

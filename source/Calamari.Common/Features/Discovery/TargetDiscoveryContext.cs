@@ -16,7 +16,7 @@ namespace Calamari.Common.Features.Discovery
     public class TargetDiscoveryContext<TAuthentication> : ITargetDiscoveryContext
         where TAuthentication : class,ITargetDiscoveryAuthenticationDetails
     {
-        public TargetDiscoveryContext(TargetDiscoveryScope? scope, TAuthentication? authentication, IReadOnlyDictionary<string, string>? additionalVariables)
+        public TargetDiscoveryContext(TargetDiscoveryScope? scope, TAuthentication? authentication, Dictionary<string, string>? additionalVariables)
         {
             Scope = scope;
             Authentication = authentication;
@@ -27,6 +27,6 @@ namespace Calamari.Common.Features.Discovery
 
         public TAuthentication? Authentication { get; set; }
 
-        public IReadOnlyDictionary<string,string>? AdditionalVariables { get; set; }
+        public Dictionary<string,string>? AdditionalVariables { get; set; }
     }
 }
