@@ -13,12 +13,16 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <NukeExcludeDirectoryBuild>True</NukeExcludeDirectoryBuild>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="NuGet.CommandLine" Version="6.0.0">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Nuke.Common" Version="6.1.1" />
+        <PackageReference Include="Nuke.Common" Version="6.3.0" />
     </ItemGroup>
 
     <ItemGroup>
