@@ -19,7 +19,7 @@
 ##   OctopusFabricAadClientCredentialSecret                  // The client application secret for authentication
 ##   OctopusFabricAadUserCredentialUsername                  // The username for authentication
 ##   OctopusFabricAadUserCredentialPassword                  // The password for authentication
-##   OctopusFabricActiveDirectoryLibraryPath                 // The path to Microsoft.IdentityModel.Clients.ActiveDirectory.dll
+##   OctopusFabricActiveDirectoryLibraryPath                 // The path to Microsoft.Identity.Client.dll
 
 $ErrorActionPreference = "Stop"
 
@@ -87,12 +87,12 @@ function GetAzureADAccessToken() {
     # Ensure we can load the ActiveDirectory lib and add it to our PowerShell session.
     Try
     {
-        $FilePath = Join-Path $OctopusFabricActiveDirectoryLibraryPath "Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
+        $FilePath = Join-Path $OctopusFabricActiveDirectoryLibraryPath "Microsoft.Identity.Client.dll"
         Add-Type -Path $FilePath
     }
     Catch
     {
-        Write-Error "Unable to load the Microsoft.IdentityModel.Clients.ActiveDirectory.dll. Please ensure this library file exists at $($OctopusFabricActiveDirectoryLibraryPath)."
+        Write-Error "Unable to load the Microsoft.Identity.Client.dll. Please ensure this library file exists at $($OctopusFabricActiveDirectoryLibraryPath)."
         Exit
     }
 
@@ -131,13 +131,19 @@ function GetAzureADAccessToken() {
     Write-Verbose "Using AuthorityUrl $($AuthorityUrl)."
 
     if ($OctopusFabricAadCredentialType -eq "ClientCredential") {
-        $UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential $ClientApplicationId, $OctopusFabricAadClientCredentialSecret
-        $AuthenticationContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $AuthorityUrl, $false
-        $AccessToken = $AuthenticationContext.AcquireToken($ClusterApplicationId, $UserCred).AccessToken
+        $Options = New-Object Microsoft.Identity.Client.ConfidentialClientApplicationOptions
+        $Options.ClientId = $ClientApplicationId
+        $Options.ClientSecret = $OctopusFabricAadClientCredentialSecret
+        $ClientApplicationContext = [Microsoft.Identity.Client.ConfidentialClientApplicationBuilder]::CreateWithApplicationOptions($Options).Build()
+        $Scopes = @("$($AuthorityUrl)/.default")
+        $AuthenticationContext = $ClientApplicationContext.AcquireTokenForClient($Scopes).ExecuteAsync().Result
+        $AccessToken = $AuthenticationContext.AccessToken
+    
     } Else { # Fallback to username/password
-        $UserCred = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential -ArgumentList @($OctopusFabricAadUserCredentialUsername, $OctopusFabricAadUserCredentialPassword)
-        $AuthenticationContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext -ArgumentList $AuthorityUrl, $false
-        $AccessToken = $AuthenticationContext.AcquireToken($ClusterApplicationId, $ClientApplicationId, $UserCred).AccessToken
+        $ClientApplicationContext = Microsoft.Identity.Client.PublicClientApplicationBuilder::Create("clientId").Build()
+        $Scopes = @("$($AuthorityUrl)/.default")
+        $AuthContext = $ClientApplicationContext.AcquireTokenByUsernamePassword($Scopes, $OctopusFabricAadUserCredentialUsername, $OctopusFabricAadUserCredentialPassword).ExecuteAsync().GetAwaiter().GetResult()
+        $AccessToken = $AuthContext.AccessToken
     }
 
     return $AccessToken

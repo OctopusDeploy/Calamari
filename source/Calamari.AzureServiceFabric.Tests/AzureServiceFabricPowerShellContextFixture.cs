@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Calamari.AzureServiceFabric.Integration;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Logging;
@@ -25,5 +27,44 @@ namespace Calamari.AzureServiceFabric.Tests
             actual.Should().Be(expected);
 
         }
+        
+        // TODO: This is temporary and should not be checked in
+        [Test]
+        public async Task TokenScratch()
+        {
+            
+            var options = new Microsoft.Identity.Client.ConfidentialClientApplicationOptions()
+            {
+                ClientId = "clientId",
+                ClientSecret = "ClientSecret"
+            };
+            var clientApplicationContext = Microsoft.Identity.Client.ConfidentialClientApplicationBuilder
+                                                    .CreateWithApplicationOptions(options)
+                                                    .Build();
+            // Note: Scopes, need to check this, resourceUriId/.default should default ot the resource scopes.
+            var scopes = new List<string>() { "resourceUriId/.default" };
+            var authContext = await clientApplicationContext.AcquireTokenForClient(scopes).ExecuteAsync();
+            var token = authContext.AccessToken;
+
+        }
+        
+        // TODO: This is temporary and should not be checked in
+        [Test]
+        public async Task TokenScratchUserAndPassword()
+        {
+            var scopes = new List<string>() { "resourceUriId/.default" };
+            
+            var clientApplicationContext = Microsoft.Identity.Client.PublicClientApplicationBuilder
+                                                    .Create("clientId")
+                                                    .Build();
+            // Note: Scopes, need to check this, resourceUriId/.default should default ot the resource scopes.
+            var authContext = await clientApplicationContext.AcquireTokenByUsernamePassword(scopes, "username", "password")
+                                                            .ExecuteAsync();
+            var token = authContext.AccessToken;
+            
+        }
+        
+        
+        
     }
 }
