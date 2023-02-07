@@ -142,7 +142,7 @@ namespace Calamari.AzureServiceFabric
                       .WithAuthority(aad.Authority)
                       .Build();
 
-            var authResult = app.AcquireTokenByUsernamePassword(new[] { $"{aad.ClientApplication}/.default" }, aadUsername, aadPassword)
+            var authResult = app.AcquireTokenByUsernamePassword(new[] { $"{aad.ClusterApplication}/.default" }, aadUsername, aadPassword)
                                 .ExecuteAsync()
                                 .GetAwaiter()
                                 .GetResult();

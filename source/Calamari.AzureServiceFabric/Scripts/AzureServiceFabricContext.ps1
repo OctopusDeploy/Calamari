@@ -131,17 +131,26 @@ function GetAzureADAccessToken() {
     Write-Verbose "Using AuthorityUrl $($AuthorityUrl)."
 
     if ($OctopusFabricAadCredentialType -eq "ClientCredential") {
-        $Options = New-Object Microsoft.Identity.Client.ConfidentialClientApplicationOptions
-        $Options.ClientId = $ClientApplicationId
-        $Options.ClientSecret = $OctopusFabricAadClientCredentialSecret
-        $ClientApplicationContext = [Microsoft.Identity.Client.ConfidentialClientApplicationBuilder]::CreateWithApplicationOptions($Options).Build()
-        $Scopes = @("$($AuthorityUrl)/.default")
-        $AuthenticationContext = $ClientApplicationContext.AcquireTokenForClient($Scopes).ExecuteAsync().Result
+        $AppOptions = New-Object Microsoft.Identity.Client.PublicClientApplicationOptions
+        $AppOptions.ClientId = $ClientApplicationId
+        $AppOptions.ClientSecret = $OctopusFabricAadClientCredentialSecret
+        
+        $ClientApplicationContext = [Microsoft.Identity.Client.ConfidentialClientApplicationBuilder]::CreateWithApplicationOptions($AppOptions).WithAuthority($AuthorityUrl).Build()
+        
+        $Scopes = New-Object System.Collections.Generic.List[string]
+        $Scopes.Add("$($ClusterApplicationId)/.default")
+        
+        $AuthenticationContext = $ClientApplicationContext.AcquireTokenForClient($Scopes).ExecuteAsync().GetAwaiter().GetResult()
         $AccessToken = $AuthenticationContext.AccessToken
-    
     } Else { # Fallback to username/password
-        $ClientApplicationContext = Microsoft.Identity.Client.PublicClientApplicationBuilder::Create("clientId").Build()
-        $Scopes = @("$($AuthorityUrl)/.default")
+        $AppOptions = New-Object Microsoft.Identity.Client.PublicClientApplicationOptions
+        $AppOptions.ClientId = $ClientApplicationId
+
+        $ClientApplicationContext = [Microsoft.Identity.Client.PublicClientApplicationBuilder]::CreateWithApplicationOptions($AppOptions).WithAuthority($AuthorityUrl).Build()
+        
+        $Scopes = New-Object System.Collections.Generic.List[string]
+        $Scopes.Add("$($ClusterApplicationId)/.default")
+        
         $AuthContext = $ClientApplicationContext.AcquireTokenByUsernamePassword($Scopes, $OctopusFabricAadUserCredentialUsername, $OctopusFabricAadUserCredentialPassword).ExecuteAsync().GetAwaiter().GetResult()
         $AccessToken = $AuthContext.AccessToken
     }
