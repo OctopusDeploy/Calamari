@@ -3,8 +3,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Microsoft.Identity.Client;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using ClientCredential = Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential;
 
 namespace Calamari.AzureAppService
 {
@@ -22,12 +20,7 @@ namespace Calamari.AzureAppService
 
         public static async Task<string> GetAuthTokenAsync(ServicePrincipalAccount principalAccount)
         {
-            string authContext =
-                GetContextUri(principalAccount.ActiveDirectoryEndpointBaseUri, principalAccount.TenantId);
-            var context = new AuthenticationContext(authContext);
-            var result = await context.AcquireTokenAsync(principalAccount.ResourceManagementEndpointBaseUri,
-                new ClientCredential(principalAccount.ClientId, principalAccount.Password));
-            return result.AccessToken;
+            return await GetAuthTokenAsync(principalAccount.TenantId, principalAccount.ClientId, principalAccount.Password, principalAccount.ResourceManagementEndpointBaseUri, principalAccount.ActiveDirectoryEndpointBaseUri);
         }
 
         public static async Task<string> GetAuthTokenAsync(string tenantId, string applicationId, string password, string managementEndPoint, string activeDirectoryEndPoint)
