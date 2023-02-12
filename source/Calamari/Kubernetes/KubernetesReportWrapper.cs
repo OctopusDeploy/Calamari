@@ -1,10 +1,7 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Amazon.Runtime;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -45,12 +42,20 @@ public class KubernetesReportWrapper : IScriptWrapper
     public CommandResult ExecuteScript(Script script, ScriptSyntax scriptSyntax, ICommandLineRunner commandLineRunner,
         Dictionary<string, string> environmentVars)
     {
-        var filename = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
-        var content = fileSystem.ReadFile(filename);
-        var resource = GetDefinedResource(content);
-        
         var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
+        
+        var filename = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
+        if (filename == null)
+        {
+            return result;
+        }
 
+        var content = fileSystem.ReadFile(filename);
+
+        var resource = GetDefinedResource(content);
+        log.Info($"Deployed: {resource.Kind}/{resource.Name}");
+
+        log.Info($"Status:");
         var n = 5;
         while (!CheckStatus(resource, commandLineRunner) && --n >= 0)
         {
@@ -69,7 +74,7 @@ public class KubernetesReportWrapper : IScriptWrapper
         {
             log.Info(line);
         }
-        
+         
         log.Info("");
         return false;
     }
@@ -79,7 +84,7 @@ public class KubernetesReportWrapper : IScriptWrapper
         var deserializer = new Deserializer();
         var yamlObject = deserializer.Deserialize(new StringReader(manifests));
         
-        var serializer = new Serializer();
+        var serializer = new SerializerBuilder().JsonCompatible().Build();
         var writer = new StringWriter();
         serializer.Serialize(writer, yamlObject);
 
@@ -104,10 +109,9 @@ public class KubernetesReportWrapper : IScriptWrapper
             AdditionalInvocationOutputSink = captureCommandOutput
         };
 
-        var result = commandLineRunner.Execute(invocation);
+        commandLineRunner.Execute(invocation);
 
-        return result.ExitCode == 0
-            ? captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray()
-            : Enumerable.Empty<string>();
+        return captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray();
+
     }
 }
