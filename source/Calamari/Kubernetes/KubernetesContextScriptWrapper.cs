@@ -36,7 +36,7 @@ namespace Calamari.Kubernetes
             this.embeddedResources = embeddedResources;
         }
 
-        public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority + 2;
+        public int Priority => ScriptWrapperPriorities.KubernetesContextPriority;
 
         /// <summary>
         /// One of these fields must be present for a k8s step

@@ -30,7 +30,7 @@ public class KubernetesReportWrapper : IScriptWrapper
         this.embeddedResources = embeddedResources;
     }
     
-    public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority + 1;
+    public int Priority => ScriptWrapperPriorities.KubernetesStatusCheckPriority;
     public IScriptWrapper NextWrapper { get; set; }
     public bool IsEnabled(ScriptSyntax syntax)
     {
@@ -43,7 +43,7 @@ public class KubernetesReportWrapper : IScriptWrapper
         Dictionary<string, string> environmentVars)
     {
         var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
-        
+        // deployment.yml
         var filename = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
         if (filename == null)
         {
