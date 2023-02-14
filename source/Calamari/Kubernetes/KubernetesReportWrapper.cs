@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -6,6 +7,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json.Linq;
 using YamlDotNet.Serialization;
@@ -56,8 +58,11 @@ public class KubernetesReportWrapper : IScriptWrapper
         {
             log.Info($"Check #{5 - n}:");
             var statuses = statusChecker.GetHierarchyStatuses(resource, commandLineRunner);
-            log.Verbose(new JArray(statuses).ToString());
+
             DisplayStatuses(statuses);
+            
+            SendServiceMessages(statuses);
+            
             Thread.Sleep(2000);
         }
 
@@ -83,7 +88,7 @@ public class KubernetesReportWrapper : IScriptWrapper
         return false;
     }
     
-    private KubernetesResource GetDefinedResource(string manifests)
+    private KubernetesResourceIdentifier GetDefinedResource(string manifests)
     {
         var deserializer = new Deserializer();
         var yamlObject = deserializer.Deserialize(new StringReader(manifests));
@@ -99,7 +104,7 @@ public class KubernetesReportWrapper : IScriptWrapper
         var @namespace = resource.SelectToken("$.metadata.namespace")?.Value<string>()
                          ?? variables.Get(SpecialVariables.Namespace)
                          ?? "default";
-        return new KubernetesResource
+        return new KubernetesResourceIdentifier
         {
             Name = name,
             Kind = kind,
@@ -119,5 +124,38 @@ public class KubernetesReportWrapper : IScriptWrapper
             
             log.Info(statusData);
         }
+    }
+
+    private void SendServiceMessages(IEnumerable<JObject> statuses)
+    {
+        var data = GenerateServiceMessageData(statuses);
+
+        var parameters = new Dictionary<string, string>
+        {
+            {"data", data},
+            {"deploymentId", variables.Get("Octopus.Deployment.Id")},
+            {"actionId", variables.Get("Octopus.Action.Id")}
+        };
+
+        var message = new ServiceMessage("kubernetes-deployment-status-update", parameters);
+        log.WriteServiceMessage(message);
+    }
+
+    // TODO implement this
+    // {
+    //    "Deployment": [
+    //      {"status": "successful", "data": "<raw status json retrieved from cluster>"}
+    //    ],
+    //    "ReplicaSet": [
+    //      {"status": "successful", "data": "..."}
+    //    ],
+    //    "Pod": [
+    //      {"status": "successful", "data": "..."},
+    //      {"status": "successful", "data": "..."}
+    //    ]
+    // }
+    private string GenerateServiceMessageData(IEnumerable<JObject> statuses)
+    {
+        return "";
     }
 }

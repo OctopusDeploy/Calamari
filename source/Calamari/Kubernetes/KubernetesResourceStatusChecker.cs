@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes;
 
-public class KubernetesResource
+public class KubernetesResourceIdentifier
 {
     public string Kind { get; set; }
     public string Name { get; set; }
@@ -19,7 +19,8 @@ public class KubernetesResource
 
 public interface IKubernetesResourceStatusChecker
 {
-    IEnumerable<JObject> GetHierarchyStatuses(KubernetesResource resource, ICommandLineRunner commandLineRunner);
+    // TODO remove JObject from exposed signature and use an encapsulated class instead
+    IEnumerable<JObject> GetHierarchyStatuses(KubernetesResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner);
 }
 
 public class KubernetesResourceStatusChecker : IKubernetesResourceStatusChecker
@@ -31,9 +32,9 @@ public class KubernetesResourceStatusChecker : IKubernetesResourceStatusChecker
         this.kubernetesCluster = kubernetesCluster;
     }
 
-    public IEnumerable<JObject> GetHierarchyStatuses(KubernetesResource resource, ICommandLineRunner commandLineRunner)
+    public IEnumerable<JObject> GetHierarchyStatuses(KubernetesResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
     {
-        var resources = new List<KubernetesResource> { resource };
+        var resources = new List<KubernetesResourceIdentifier> { resourceIdentifier };
         var statuses = new List<JObject>();
         
         var current = 0;
@@ -53,28 +54,28 @@ public class KubernetesResourceStatusChecker : IKubernetesResourceStatusChecker
         return statuses;
     }
 
-    JObject GetStatus(KubernetesResource resource, ICommandLineRunner commandLineRunner)
+    JObject GetStatus(KubernetesResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
     {
-        var result = kubernetesCluster.Get(resource.Kind, resource.Name, resource.Namespace, commandLineRunner);
+        var result = kubernetesCluster.Get(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, commandLineRunner);
         return JObject.Parse(result);
     }
     
-    IEnumerable<JObject> GetChildrenStatuses(KubernetesResource resource, ICommandLineRunner commandLineRunner)
+    IEnumerable<JObject> GetChildrenStatuses(KubernetesResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
     {
-        var childKind = GetChildKind(resource);
+        var childKind = GetChildKind(resourceIdentifier);
         if (string.IsNullOrEmpty(childKind))
         {
             return Enumerable.Empty<JObject>();
         }
-        var result = kubernetesCluster.GetAll(childKind, resource.Namespace, commandLineRunner);
+        var result = kubernetesCluster.GetAll(childKind, resourceIdentifier.Namespace, commandLineRunner);
         var data = JObject.Parse(result);
-        var items = data.SelectTokens($"$.items[?(@.metadata.ownerReferences[0].uid == '{resource.Uid}')]");
+        var items = data.SelectTokens($"$.items[?(@.metadata.ownerReferences[0].uid == '{resourceIdentifier.Uid}')]");
         return items.Cast<JObject>();
     }
 
-    KubernetesResource GetResource(JObject status)
+    KubernetesResourceIdentifier GetResource(JObject status)
     {
-        return new KubernetesResource
+        return new KubernetesResourceIdentifier
         {
             Kind = status.SelectToken("$.kind").Value<string>(),
             Name = status.SelectToken("$.metadata.name").Value<string>(),
@@ -83,9 +84,9 @@ public class KubernetesResourceStatusChecker : IKubernetesResourceStatusChecker
         };
     }
     
-    string GetChildKind(KubernetesResource resource)
+    string GetChildKind(KubernetesResourceIdentifier resourceIdentifier)
     {
-        switch (resource.Kind)
+        switch (resourceIdentifier.Kind)
         {
             case "Deployment":
                 return "ReplicaSet";
