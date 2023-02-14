@@ -164,6 +164,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Remove="Fixtures\StructuredVariables\CalamariFlavourProgramReplacerSelectionFixture.cs" />
+    <None Update="KubernetesFixtures\ResourceStatus\deployment-with-3-replicas.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Remove="TestResults\**" />

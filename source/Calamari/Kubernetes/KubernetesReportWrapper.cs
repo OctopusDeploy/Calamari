@@ -1,15 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
-using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Kubernetes.Integration;
 using Newtonsoft.Json.Linq;
 using YamlDotNet.Serialization;
 
@@ -20,14 +17,14 @@ public class KubernetesReportWrapper : IScriptWrapper
     readonly IVariables variables;
     readonly ILog log;
     readonly ICalamariFileSystem fileSystem;
-    readonly ICalamariEmbeddedResources embeddedResources;
+    private readonly IKubernetesResourceStatusChecker statusChecker;
 
-    public KubernetesReportWrapper(IVariables variables, ILog log, ICalamariEmbeddedResources embeddedResources, ICalamariFileSystem fileSystem)
+    public KubernetesReportWrapper(IVariables variables, ILog log, ICalamariFileSystem fileSystem, IKubernetesResourceStatusChecker statusChecker)
     {
         this.variables = variables;
         this.log = log;
         this.fileSystem = fileSystem;
-        this.embeddedResources = embeddedResources;
+        this.statusChecker = statusChecker;
     }
     
     public int Priority => ScriptWrapperPriorities.KubernetesStatusCheckPriority;
@@ -43,42 +40,49 @@ public class KubernetesReportWrapper : IScriptWrapper
         Dictionary<string, string> environmentVars)
     {
         var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
-        // deployment.yml
-        var filename = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
-        if (filename == null)
+
+        if (!TryReadManifestFile(out var content))
         {
             return result;
         }
-
-        var content = fileSystem.ReadFile(filename);
-
+        
         var resource = GetDefinedResource(content);
+        
         log.Info($"Deployed: {resource.Kind}/{resource.Name}");
-
-        log.Info($"Status:");
+        log.Info("");
+        log.Info($"Status checks:");
         var n = 5;
-        while (!CheckStatus(resource, commandLineRunner) && --n >= 0)
+        while (--n >= 0)
         {
+            log.Info($"Check #{5 - n}:");
+            var statuses = statusChecker.GetHierarchyStatuses(resource, commandLineRunner);
+            log.Verbose(new JArray(statuses).ToString());
+            DisplayStatuses(statuses);
             Thread.Sleep(2000);
         }
 
         return result;
     }
-
-    private bool CheckStatus(KubernetesResource resource, ICommandLineRunner commandLineRunner)
+    
+    private bool TryReadManifestFile(out string content)
     {
-        var result = ExecuteCommandAndReturnOutput("kubectl",
-            new[] {"get", resource.Kind, resource.Name, $"-n {resource.Namespace}"}, commandLineRunner);
-
-        foreach (var line in result)
+        var customResourceFileName = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
+        var knownFileNames = new[]
         {
-            log.Info(line);
+            "secret.yml", customResourceFileName, "deployment.yml", "service.yml", "ingress.yml",
+        };
+        foreach (var file in knownFileNames)
+        {
+            if (fileSystem.FileExists(file))
+            {
+                content = fileSystem.ReadFile(file);
+                return true;
+            }
         }
-         
-        log.Info("");
+        content = null;
         return false;
     }
-
+    
     private KubernetesResource GetDefinedResource(string manifests)
     {
         var deserializer = new Deserializer();
@@ -91,27 +95,24 @@ public class KubernetesReportWrapper : IScriptWrapper
         var json = writer.ToString();
         var resource = JObject.Parse(json);
         var name = resource.SelectToken("$.metadata.name");
-        var @namespace = resource.SelectToken("$.metadata.namespace");
         var kind = resource.SelectToken("$.kind");
         return new KubernetesResource
         {
-            Name = name.ToString(), Kind = kind.ToString(), Namespace = @namespace.ToString()
+            Name = name.Value<string>(), Kind = kind.Value<string>()
         };
-    } 
-    
-    IEnumerable<string> ExecuteCommandAndReturnOutput(string exe, string[] arguments, ICommandLineRunner commandLineRunner)
+    }
+
+    private void DisplayStatuses(IEnumerable<JObject> statuses)
     {
-        var captureCommandOutput = new CaptureCommandOutput();
-        var invocation = new CommandLineInvocation(exe, arguments)
+        foreach (var status in statuses)
         {
-            OutputAsVerbose = false,
-            OutputToLog = false,
-            AdditionalInvocationOutputSink = captureCommandOutput
-        };
+            var kind = status.SelectToken("$.kind").Value<string>();
+            var name = status.SelectToken("$.metadata.name").Value<string>();
+            log.Info($"Status of {kind}/{name}");
 
-        commandLineRunner.Execute(invocation);
-
-        return captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray();
-
+            var statusData = status.SelectToken("$.status").ToString();
+            
+            log.Info(statusData);
+        }
     }
 }
