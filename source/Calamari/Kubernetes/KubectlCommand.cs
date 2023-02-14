@@ -8,22 +8,22 @@ namespace Calamari.Kubernetes;
 
 public interface IKubectlCommand
 {
-    string Get(string kind, string name, ICommandLineRunner commandLineRunner);
-    string GetAll(string kind, ICommandLineRunner commandLineRunner);
+    string Get(string kind, string name, string @namespace, ICommandLineRunner commandLineRunner);
+    string GetAll(string kind, string @namespace, ICommandLineRunner commandLineRunner);
 }
 
 public class KubectlCommand : IKubectlCommand
 {
-    public string Get(string kind, string name, ICommandLineRunner commandLineRunner)
+    public string Get(string kind, string name, string @namespace, ICommandLineRunner commandLineRunner)
     {
         return ExecuteCommandAndReturnOutput("kubectl",
-            new[] {"get", kind, name, "-o json"}, commandLineRunner);
+            new[] {"get", kind, name, "-o json", $"-n {@namespace}"}, commandLineRunner);
     }
 
-    public string GetAll(string kind, ICommandLineRunner commandLineRunner)
+    public string GetAll(string kind, string @namespace, ICommandLineRunner commandLineRunner)
     {
         return ExecuteCommandAndReturnOutput("kubectl",
-            new[] {"get", kind, "-o json"}, commandLineRunner);
+            new[] {"get", kind, "-o json", $"-n {@namespace}"}, commandLineRunner);
     }
 
     private static string ExecuteCommandAndReturnOutput(string exe, string[] arguments, ICommandLineRunner commandLineRunner)

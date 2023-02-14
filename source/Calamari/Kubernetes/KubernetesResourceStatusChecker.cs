@@ -13,6 +13,7 @@ public class KubernetesResource
 {
     public string Kind { get; set; }
     public string Name { get; set; }
+    public string Namespace { get; set; }
     public string Uid { get; set; }
 }
 
@@ -43,7 +44,7 @@ public class KubernetesResourceStatusChecker : IKubernetesResourceStatusChecker
             // Add the UID field before trying to fetch children
             resources[current] = GetResource(status);
 
-            var children = GetChildrenStatuses(resources[current].Uid, GetChildType(resources[current]), commandLineRunner);
+            var children = GetChildrenStatuses(resources[current], commandLineRunner);
             resources.AddRange(children.Select(GetResource));
 
             ++current;
@@ -54,19 +55,20 @@ public class KubernetesResourceStatusChecker : IKubernetesResourceStatusChecker
 
     JObject GetStatus(KubernetesResource resource, ICommandLineRunner commandLineRunner)
     {
-        var result = kubernetesCluster.Get(resource.Kind, resource.Name, commandLineRunner);
+        var result = kubernetesCluster.Get(resource.Kind, resource.Name, resource.Namespace, commandLineRunner);
         return JObject.Parse(result);
     }
     
-    IEnumerable<JObject> GetChildrenStatuses(string ownerUid, string kind, ICommandLineRunner commandLineRunner)
+    IEnumerable<JObject> GetChildrenStatuses(KubernetesResource resource, ICommandLineRunner commandLineRunner)
     {
-        if (string.IsNullOrEmpty(kind))
+        var childKind = GetChildKind(resource);
+        if (string.IsNullOrEmpty(childKind))
         {
             return Enumerable.Empty<JObject>();
         }
-        var result = kubernetesCluster.GetAll(kind, commandLineRunner);
+        var result = kubernetesCluster.GetAll(childKind, resource.Namespace, commandLineRunner);
         var data = JObject.Parse(result);
-        var items = data.SelectTokens($"$.items[?(@.metadata.ownerReferences[0].uid == '{ownerUid}')]");
+        var items = data.SelectTokens($"$.items[?(@.metadata.ownerReferences[0].uid == '{resource.Uid}')]");
         return items.Cast<JObject>();
     }
 
@@ -76,11 +78,12 @@ public class KubernetesResourceStatusChecker : IKubernetesResourceStatusChecker
         {
             Kind = status.SelectToken("$.kind").Value<string>(),
             Name = status.SelectToken("$.metadata.name").Value<string>(),
+            Namespace = status.SelectToken("$.metadata.namespace").Value<string>(),
             Uid = status.SelectToken("$.metadata.uid").Value<string>()
         };
     }
     
-    string GetChildType(KubernetesResource resource)
+    string GetChildKind(KubernetesResource resource)
     {
         switch (resource.Kind)
         {

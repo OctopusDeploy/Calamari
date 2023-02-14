@@ -94,11 +94,16 @@ public class KubernetesReportWrapper : IScriptWrapper
 
         var json = writer.ToString();
         var resource = JObject.Parse(json);
-        var name = resource.SelectToken("$.metadata.name");
-        var kind = resource.SelectToken("$.kind");
+        var name = resource.SelectToken("$.metadata.name").Value<string>();
+        var kind = resource.SelectToken("$.kind").Value<string>();
+        var @namespace = resource.SelectToken("$.metadata.namespace")?.Value<string>()
+                         ?? variables.Get(SpecialVariables.Namespace)
+                         ?? "default";
         return new KubernetesResource
         {
-            Name = name.Value<string>(), Kind = kind.Value<string>()
+            Name = name,
+            Kind = kind,
+            Namespace = @namespace
         };
     }
 

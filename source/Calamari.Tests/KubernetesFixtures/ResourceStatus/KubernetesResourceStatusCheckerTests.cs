@@ -36,7 +36,7 @@ public class MockKubectlCommand : IKubectlCommand
         data = JArray.Parse(json).Cast<JObject>();
     }
 
-    public string Get(string kind, string name, ICommandLineRunner commandLineRunner)
+    public string Get(string kind, string name, string @namespace, ICommandLineRunner commandLineRunner)
     {
         return data
             .FirstOrDefault(item => item.SelectToken("$.kind").Value<string>() == kind &&
@@ -44,7 +44,7 @@ public class MockKubectlCommand : IKubectlCommand
             ?.ToString();
     }
 
-    public string GetAll(string kind, ICommandLineRunner commandLineRunner)
+    public string GetAll(string kind, string @namespace, ICommandLineRunner commandLineRunner)
     {
         var items = new JArray(data.Where(item => item.SelectToken("$.kind").Value<string>() == kind));
         return $"{{items: {items}}}";
