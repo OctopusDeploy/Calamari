@@ -21,7 +21,7 @@ public class ResourceRetrieverTests
         var kubectl = new MockKubectl(System.IO.File.ReadAllText("KubernetesFixtures/ResourceStatus/deployment-with-3-replicas.json"));
         var resourceRetriever = new ResourceRetriever(kubectl);
 
-        var got = resourceRetriever.GetHierarchyStatuses(new ResourceIdentifier { Kind = "Deployment", Name = "nginx" }, null);
+        var got = resourceRetriever.GetAllOwnedResources(new ResourceIdentifier { Kind = "Deployment", Name = "nginx" }, null);
 
         got.Should().HaveCount(5);
     }

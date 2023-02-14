@@ -48,20 +48,20 @@ public class ResourceStatusReportWrapper : IScriptWrapper
             return result;
         }
         
-        var resource = GetDefinedResource(content);
+        var resourceIdentifier = GetDefinedResource(content);
         
-        log.Info($"Deployed: {resource.Kind}/{resource.Name}");
+        log.Info($"Deployed: {resourceIdentifier.Kind}/{resourceIdentifier.Name}");
         log.Info("");
         log.Info($"Status checks:");
         var n = 5;
         while (--n >= 0)
         {
             log.Info($"Check #{5 - n}:");
-            var statuses = retriever.GetHierarchyStatuses(resource, commandLineRunner);
+            var resources = retriever.GetAllOwnedResources(resourceIdentifier, commandLineRunner);
 
-            DisplayStatuses(statuses);
+            DisplayStatuses(resources);
             
-            SendServiceMessages(statuses);
+            SendServiceMessages(resources);
             
             Thread.Sleep(2000);
         }
@@ -113,23 +113,19 @@ public class ResourceStatusReportWrapper : IScriptWrapper
         };
     }
 
-    private void DisplayStatuses(IEnumerable<JObject> statuses)
+    private void DisplayStatuses(IEnumerable<Resource> resources)
     {
-        foreach (var status in statuses)
+        foreach (var resource in resources)
         {
-            var kind = status.SelectToken("$.kind").Value<string>();
-            var name = status.SelectToken("$.metadata.name").Value<string>();
-            log.Info($"Status of {kind}/{name}");
-
-            var statusData = status.SelectToken("$.status").ToString();
-            
-            log.Info(statusData);
+            log.Info($"Status of {resource.Kind}/{resource.Name}:");
+            log.Info(resource.StatusToDisplay);
+            log.Info("");
         }
     }
 
-    private void SendServiceMessages(IEnumerable<JObject> statuses)
+    private void SendServiceMessages(IEnumerable<Resource> resources)
     {
-        var data = GenerateServiceMessageData(statuses);
+        var data = GenerateServiceMessageData(resources);
 
         var parameters = new Dictionary<string, string>
         {
@@ -155,7 +151,7 @@ public class ResourceStatusReportWrapper : IScriptWrapper
     //      {"status": "successful", "data": "..."}
     //    ]
     // }
-    private string GenerateServiceMessageData(IEnumerable<JObject> statuses)
+    private string GenerateServiceMessageData(IEnumerable<Resource> statuses)
     {
         return "";
     }

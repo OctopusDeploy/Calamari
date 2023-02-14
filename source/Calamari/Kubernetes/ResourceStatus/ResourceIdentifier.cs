@@ -1,5 +1,8 @@
 namespace Calamari.ResourceStatus;
 
+/// <summary>
+/// Identifies a unique resource in a kubernetes cluster
+/// </summary>
 public class ResourceIdentifier
 {
     public string Kind { get; set; }
