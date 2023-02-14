@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Kubernetes;
+using Calamari.ResourceStatus;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Microsoft.Azure.Management.BatchAI.Fluent.Models;
@@ -12,26 +13,26 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus;
 
 [TestFixture]
-public class KubernetesResourcesTests
+public class ResourceRetrieverTests
 {
     [Test]
     public void ReturnsCorrectObjectHierarchyForDeployments()
     {
-        var kubectl = new MockKubectlCommand(System.IO.File.ReadAllText("KubernetesFixtures/ResourceStatus/deployment-with-3-replicas.json"));
-        var statusChecker = new KubernetesResourceStatusChecker(kubectl);
+        var kubectl = new MockKubectl(System.IO.File.ReadAllText("KubernetesFixtures/ResourceStatus/deployment-with-3-replicas.json"));
+        var resourceRetriever = new ResourceRetriever(kubectl);
 
-        var got = statusChecker.GetHierarchyStatuses(new KubernetesResourceIdentifier { Kind = "Deployment", Name = "nginx" }, null);
+        var got = resourceRetriever.GetHierarchyStatuses(new ResourceIdentifier { Kind = "Deployment", Name = "nginx" }, null);
 
         got.Should().HaveCount(5);
     }
 
 }
 
-public class MockKubectlCommand : IKubectlCommand
+public class MockKubectl : IKubectl
 {
     private IEnumerable<JObject> data;
 
-    public MockKubectlCommand(string json)
+    public MockKubectl(string json)
     {
         data = JArray.Parse(json).Cast<JObject>();
     }

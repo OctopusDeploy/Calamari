@@ -1,18 +1,17 @@
-using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Kubernetes.Integration;
 
-namespace Calamari.Kubernetes;
+namespace Calamari.ResourceStatus;
 
-public interface IKubectlCommand
+public interface IKubectl
 {
     string Get(string kind, string name, string @namespace, ICommandLineRunner commandLineRunner);
     string GetAll(string kind, string @namespace, ICommandLineRunner commandLineRunner);
 }
 
-public class KubectlCommand : IKubectlCommand
+public class Kubectl : IKubectl
 {
     public string Get(string kind, string name, string @namespace, ICommandLineRunner commandLineRunner)
     {

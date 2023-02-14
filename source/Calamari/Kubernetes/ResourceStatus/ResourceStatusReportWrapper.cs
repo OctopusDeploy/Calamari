@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -9,24 +8,25 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes;
 using Newtonsoft.Json.Linq;
 using YamlDotNet.Serialization;
 
-namespace Calamari.Kubernetes;
+namespace Calamari.ResourceStatus;
 
-public class KubernetesReportWrapper : IScriptWrapper
+public class ResourceStatusReportWrapper : IScriptWrapper
 {
     readonly IVariables variables;
     readonly ILog log;
     readonly ICalamariFileSystem fileSystem;
-    private readonly IKubernetesResourceStatusChecker statusChecker;
+    private readonly IResourceRetriever retriever;
 
-    public KubernetesReportWrapper(IVariables variables, ILog log, ICalamariFileSystem fileSystem, IKubernetesResourceStatusChecker statusChecker)
+    public ResourceStatusReportWrapper(IVariables variables, ILog log, ICalamariFileSystem fileSystem, IResourceRetriever retriever)
     {
         this.variables = variables;
         this.log = log;
         this.fileSystem = fileSystem;
-        this.statusChecker = statusChecker;
+        this.retriever = retriever;
     }
     
     public int Priority => ScriptWrapperPriorities.KubernetesStatusCheckPriority;
@@ -57,7 +57,7 @@ public class KubernetesReportWrapper : IScriptWrapper
         while (--n >= 0)
         {
             log.Info($"Check #{5 - n}:");
-            var statuses = statusChecker.GetHierarchyStatuses(resource, commandLineRunner);
+            var statuses = retriever.GetHierarchyStatuses(resource, commandLineRunner);
 
             DisplayStatuses(statuses);
             
@@ -88,7 +88,8 @@ public class KubernetesReportWrapper : IScriptWrapper
         return false;
     }
     
-    private KubernetesResourceIdentifier GetDefinedResource(string manifests)
+    // TODO: support multiple resources in a single YAML
+    private ResourceIdentifier GetDefinedResource(string manifests)
     {
         var deserializer = new Deserializer();
         var yamlObject = deserializer.Deserialize(new StringReader(manifests));
@@ -104,7 +105,7 @@ public class KubernetesReportWrapper : IScriptWrapper
         var @namespace = resource.SelectToken("$.metadata.namespace")?.Value<string>()
                          ?? variables.Get(SpecialVariables.Namespace)
                          ?? "default";
-        return new KubernetesResourceIdentifier
+        return new ResourceIdentifier
         {
             Name = name,
             Kind = kind,
