@@ -28,24 +28,19 @@ public class ResourceRetriever : IResourceRetriever
     /// <inheritdoc />
     public IEnumerable<Resource> GetAllOwnedResources(ResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
     {
-        var resources = new List<ResourceIdentifier> { resourceIdentifier };
-        var statuses = new List<Resource>();
+        var rootResource = GetStatus(resourceIdentifier, commandLineRunner);
+        var resources = new List<Resource> {rootResource};
         
         var current = 0;
         while (current < resources.Count)
         {
-            var status = GetStatus(resources[current], commandLineRunner);
-            statuses.Add(status);
-            // Add the UID field before trying to fetch children
-            resources[current] = GetResource(status);
-
             var children = GetChildrenStatuses(resources[current], commandLineRunner);
-            resources.AddRange(children.Select(GetResource));
+            resources.AddRange(children);
 
             ++current;
         }
 
-        return statuses;
+        return resources;
     }
 
     Resource GetStatus(ResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
@@ -54,40 +49,15 @@ public class ResourceRetriever : IResourceRetriever
         return new Resource(result);
     }
     
-    IEnumerable<Resource> GetChildrenStatuses(ResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
+    IEnumerable<Resource> GetChildrenStatuses(Resource parentResource, ICommandLineRunner commandLineRunner)
     {
-        var childKind = GetChildKind(resourceIdentifier);
+        var childKind = parentResource.ChildKind;
         if (string.IsNullOrEmpty(childKind))
         {
             return Enumerable.Empty<Resource>();
         }
-        var result = kubectl.GetAll(childKind, resourceIdentifier.Namespace, commandLineRunner);
-        var data = JObject.Parse(result);
-        var items = data.SelectTokens($"$.items[?(@.metadata.ownerReferences[0].uid == '{resourceIdentifier.Uid}')]");
-        return items.Select(item => new Resource((JObject)item));
-    }
-
-    ResourceIdentifier GetResource(Resource resource)
-    {
-        return new ResourceIdentifier
-        {
-            Kind = resource.Kind,
-            Name = resource.Name,
-            Namespace = resource.Namespace,
-            Uid = resource.Uid
-        };
-    }
-    
-    string GetChildKind(ResourceIdentifier resourceIdentifier)
-    {
-        switch (resourceIdentifier.Kind)
-        {
-            case "Deployment":
-                return "ReplicaSet";
-            case "ReplicaSet":
-                return "Pod";
-        }
-
-        return "";
+        var result = kubectl.GetAll(childKind, parentResource.Namespace, commandLineRunner);
+        var items = Resource.FromListResponse(result);
+        return items.Where(item => item.Field<string>($"$.metadata.ownerReferences[0].uid") == parentResource.Uid);
     }
 }

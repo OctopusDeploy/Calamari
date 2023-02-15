@@ -1,3 +1,6 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.ResourceStatus;
@@ -24,8 +27,25 @@ public class Resource
         data = json;
     }
 
+    /// <summary>
+    /// Constructs an IEnumerable of Resources from a kubernetes API response JSON of the "list" action.
+    /// The response JSON contains a top-level "items" field which contains the resources
+    /// </summary>
+    public static IEnumerable<Resource> FromListResponse(string rawJson)
+    {
+        var listResponse = JObject.Parse(rawJson);
+        return listResponse.SelectTokens("$.items[*]").Select(item => new Resource((JObject) item));
+    }
+
     public T Field<T>(string jsonPath) => data.SelectToken(jsonPath).Value<T>();
 
     // TODO remove this once it's not needed
     public string StatusToDisplay => data.SelectToken("$.status").ToString();
+
+    public string ChildKind => Kind switch
+    {
+        "Deployment" => "ReplicaSet",
+        "ReplicaSet" => "Pod",
+        _ => ""
+    };
 }
