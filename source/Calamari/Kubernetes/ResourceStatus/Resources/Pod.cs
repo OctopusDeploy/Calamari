@@ -11,7 +11,7 @@ public class Pod : Resource
     public override (ResourceStatus, string) CheckStatus()
     {
         var phase = Field<string>("$.status.phase");
-        return Field<string>("$.status.phase") switch
+        return phase switch
         {
             "Running" => (ResourceStatus.Successful, "The Pod is running"),
             "Completed" => (ResourceStatus.Successful, "The Pod has completed"),

@@ -6,8 +6,8 @@ namespace Calamari.ResourceStatus.Resources;
 
 public static class ResourceFactory
 {
-    public static Resource FromJson(string json) =>  FromJObject(JObject.Parse(json));
-
+    public static Resource FromJson(string json) => FromJObject(JObject.Parse(json));
+    
     public static IEnumerable<Resource> FromListJson(string json)
     {
         var listResponse = JObject.Parse(json);
