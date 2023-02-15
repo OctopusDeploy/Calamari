@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Processes;
-using Newtonsoft.Json.Linq;
+using Calamari.ResourceStatus.Resources;
 
 namespace Calamari.ResourceStatus;
 
@@ -46,7 +46,7 @@ public class ResourceRetriever : IResourceRetriever
     private Resource GetResource(ResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
     {
         var result = kubectl.Get(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, commandLineRunner);
-        return new Resource(result);
+        return ResourceFactory.FromJson(result);
     }
 
     private IEnumerable<Resource> GetChildrenResources(Resource parentResource, ICommandLineRunner commandLineRunner)
@@ -57,7 +57,7 @@ public class ResourceRetriever : IResourceRetriever
             return Enumerable.Empty<Resource>();
         }
         var result = kubectl.GetAll(childKind, parentResource.Namespace, commandLineRunner);
-        var items = Resource.FromListResponse(result);
+        var items = ResourceFactory.FromListJson(result);
         return items.Where(item => item.Field<string>($"$.metadata.ownerReferences[0].uid") == parentResource.Uid);
     }
 }

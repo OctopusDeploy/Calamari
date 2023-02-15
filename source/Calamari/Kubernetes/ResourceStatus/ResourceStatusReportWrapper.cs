@@ -6,9 +6,9 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
+using Calamari.ResourceStatus.Resources;
 using Newtonsoft.Json.Linq;
 using YamlDotNet.Serialization;
 
@@ -33,6 +33,7 @@ public class ResourceStatusReportWrapper : IScriptWrapper
     public IScriptWrapper NextWrapper { get; set; }
     public bool IsEnabled(ScriptSyntax syntax)
     {
+        // variables.Get("");
         var hasClusterUrl = !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl));
         var hasClusterName = !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.GkeClusterName));
         return hasClusterUrl || hasClusterName;
@@ -61,7 +62,7 @@ public class ResourceStatusReportWrapper : IScriptWrapper
 
             DisplayStatuses(resources);
             
-            SendServiceMessages(resources);
+            ServiceMessages.Send(resources, variables, log);
             
             Thread.Sleep(2000);
         }
@@ -121,38 +122,5 @@ public class ResourceStatusReportWrapper : IScriptWrapper
             log.Info(resource.StatusToDisplay);
             log.Info("");
         }
-    }
-
-    private void SendServiceMessages(IEnumerable<Resource> resources)
-    {
-        var data = GenerateServiceMessageData(resources);
-
-        var parameters = new Dictionary<string, string>
-        {
-            {"data", data},
-            {"deploymentId", variables.Get("Octopus.Deployment.Id")},
-            {"actionId", variables.Get("Octopus.Action.Id")}
-        };
-
-        var message = new ServiceMessage("kubernetes-deployment-status-update", parameters);
-        log.WriteServiceMessage(message);
-    }
-
-    // TODO implement this
-    // {
-    //    "Deployment": [
-    //      {"status": "successful", "data": "<raw status json retrieved from cluster>"}
-    //    ],
-    //    "ReplicaSet": [
-    //      {"status": "successful", "data": "..."}
-    //    ],
-    //    "Pod": [
-    //      {"status": "successful", "data": "..."},
-    //      {"status": "successful", "data": "..."}
-    //    ]
-    // }
-    private string GenerateServiceMessageData(IEnumerable<Resource> statuses)
-    {
-        return "";
     }
 }
