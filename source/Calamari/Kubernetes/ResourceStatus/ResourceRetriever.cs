@@ -28,13 +28,13 @@ public class ResourceRetriever : IResourceRetriever
     /// <inheritdoc />
     public IEnumerable<Resource> GetAllOwnedResources(ResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
     {
-        var rootResource = GetStatus(resourceIdentifier, commandLineRunner);
+        var rootResource = GetResource(resourceIdentifier, commandLineRunner);
         var resources = new List<Resource> {rootResource};
         
         var current = 0;
         while (current < resources.Count)
         {
-            var children = GetChildrenStatuses(resources[current], commandLineRunner);
+            var children = GetChildrenResources(resources[current], commandLineRunner);
             resources.AddRange(children);
 
             ++current;
@@ -43,13 +43,13 @@ public class ResourceRetriever : IResourceRetriever
         return resources;
     }
 
-    Resource GetStatus(ResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
+    private Resource GetResource(ResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
     {
         var result = kubectl.Get(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, commandLineRunner);
         return new Resource(result);
     }
-    
-    IEnumerable<Resource> GetChildrenStatuses(Resource parentResource, ICommandLineRunner commandLineRunner)
+
+    private IEnumerable<Resource> GetChildrenResources(Resource parentResource, ICommandLineRunner commandLineRunner)
     {
         var childKind = parentResource.ChildKind;
         if (string.IsNullOrEmpty(childKind))
