@@ -6,6 +6,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.ResourceStatus.Resources;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 
 namespace Calamari.ResourceStatus;
 
@@ -43,7 +44,7 @@ public static class ServiceMessages
         {
             Status = status,
             Message = message,
-            Data = resource.RawJson
+            Data = resource.Data
         };
     }
 
@@ -52,6 +53,6 @@ public static class ServiceMessages
         [JsonConverter(typeof(StringEnumConverter))]
         public ResourceStatus Status { get; set; }
         public string Message { get; set; }
-        public string Data { get; set; }
+        public JObject Data { get; set; }
     }
 }
