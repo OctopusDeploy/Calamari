@@ -1,3 +1,4 @@
+using System.Text;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.ResourceStatus.Resources;
@@ -10,7 +11,7 @@ public class Pod : Resource
 
     public override (ResourceStatus, string) CheckStatus()
     {
-        var phase = Field<string>("$.status.phase");
+        var phase = Field("$.status.phase");
         return phase switch
         {
             "Running" => (ResourceStatus.Successful, "The Pod is running"),
@@ -19,4 +20,6 @@ public class Pod : Resource
             _ => (ResourceStatus.Failed, $"The Pod has failed with a state of {phase}")
         };
     }
+    
+    public override string StatusToDisplay => $"Status: {Field("$.status.phase")}";
 }

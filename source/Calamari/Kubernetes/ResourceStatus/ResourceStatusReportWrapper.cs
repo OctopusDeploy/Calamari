@@ -54,10 +54,11 @@ public class ResourceStatusReportWrapper : IScriptWrapper
         log.Info($"Deployed: {resourceIdentifier.Kind}/{resourceIdentifier.Name}");
         log.Info("");
         log.Info($"Status checks:");
-        var n = 5;
+        var n = 10;
         while (--n >= 0)
         {
-            log.Info($"Check #{5 - n}:");
+            log.Info($"=====");
+            log.Info($"Check #{10 - n}:");
             var resources = retriever.GetAllOwnedResources(resourceIdentifier, commandLineRunner);
 
             DisplayStatuses(resources);
@@ -118,9 +119,9 @@ public class ResourceStatusReportWrapper : IScriptWrapper
     {
         foreach (var resource in resources)
         {
+            log.Info("-----");
             log.Info($"Status of {resource.Kind}/{resource.Name}:");
             log.Info(resource.StatusToDisplay);
-            log.Info("");
         }
     }
 }

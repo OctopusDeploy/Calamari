@@ -8,19 +8,19 @@ namespace Calamari.ResourceStatus.Resources;
 public class Resource
 {
     public JObject Data { get; }
-    public string Uid => Field<string>("$.metadata.uid");
-    public string Kind => Field<string>("$.kind");
-    public string Name => Field<string>("$.metadata.name");
-    public string Namespace => Field<string>("$.metadata.namespace");
+    public string Uid => Field("$.metadata.uid");
+    public string Kind => Field("$.kind");
+    public string Name => Field("$.metadata.name");
+    public string Namespace => Field("$.metadata.namespace");
 
     public virtual string ChildKind => "";
 
     public Resource(JObject json) => Data = json;
 
-    public T Field<T>(string jsonPath) => Data.SelectToken(jsonPath).Value<T>();
+    public string Field(string jsonPath) => Data.SelectToken(jsonPath)?.Value<string>() ?? "";
 
     public virtual (ResourceStatus, string) CheckStatus() => (ResourceStatus.Successful, "Unsupported resource type is always treated as successful");
 
     // TODO remove this once it's not needed
-    public string StatusToDisplay => Data.SelectToken("$.status")?.ToString();
+    public virtual string StatusToDisplay => Data.SelectToken("$.status")?.ToString();
 }
