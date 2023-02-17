@@ -1,12 +1,9 @@
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
-using Calamari.Kubernetes;
 using Calamari.Kubernetes.ResourceStatus;
-using Calamari.Testing.Helpers;
 using FluentAssertions;
-using Microsoft.Azure.Management.BatchAI.Fluent.Models;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
@@ -18,19 +15,38 @@ public class ResourceRetrieverTests
     [Test]
     public void ReturnsCorrectObjectHierarchyForDeployments()
     {
-        var kubectl = new MockKubectl(System.IO.File.ReadAllText("KubernetesFixtures/ResourceStatus/deployment-with-3-replicas.json"));
+        var kubectl = new MockKubectl(File.ReadAllText("KubernetesFixtures/ResourceStatus/deployment-with-3-replicas.json"));
         var resourceRetriever = new ResourceRetriever(kubectl);
 
-        var got = resourceRetriever.GetAllOwnedResources(new ResourceIdentifier { Kind = "Deployment", Name = "nginx" }, null);
+        var got = resourceRetriever.GetAllOwnedResources(
+            new List<ResourceIdentifier>
+            {
+                new() { Kind = "Deployment", Name = "nginx" }
+            }, null);
 
         got.Should().HaveCount(5);
     }
 
+    [Test]
+    public void ReturnsCorrectObjectHierarchyForMultipleResources()
+    {
+        var kubectl = new MockKubectl(File.ReadAllText("KubernetesFixtures/ResourceStatus/2-deployments-with-3-replicas-each.json"));
+        var resourceRetriever = new ResourceRetriever(kubectl);
+
+        var got = resourceRetriever.GetAllOwnedResources(
+            new List<ResourceIdentifier>
+            {
+                new() { Kind = "Deployment", Name = "nginx" },
+                new() { Kind = "Deployment", Name = "curl" }
+            }, null);
+
+        got.Should().HaveCount(10);
+    }
 }
 
 public class MockKubectl : IKubectl
 {
-    private IEnumerable<JObject> data;
+    private readonly IEnumerable<JObject> data;
 
     public MockKubectl(string json)
     {

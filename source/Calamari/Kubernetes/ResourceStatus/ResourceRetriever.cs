@@ -13,7 +13,7 @@ public interface IResourceRetriever
     /// <summary>
     /// Gets the resource identified by resourceIdentifier, and all its descendants as identified by the first element in the ownerReferences field
     /// </summary>
-    IEnumerable<Resource> GetAllOwnedResources(ResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner);
+    IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifier, ICommandLineRunner commandLineRunner);
 }
 
 public class ResourceRetriever : IResourceRetriever
@@ -26,20 +26,17 @@ public class ResourceRetriever : IResourceRetriever
     }
 
     /// <inheritdoc />
-    public IEnumerable<Resource> GetAllOwnedResources(ResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
+    public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, ICommandLineRunner commandLineRunner)
     {
-        var rootResource = GetResource(resourceIdentifier, commandLineRunner);
-        var resources = new List<Resource> {rootResource};
-        
+        var resources = resourceIdentifiers
+            .Select(identifier => GetResource(identifier, commandLineRunner))
+            .ToList();
         var current = 0;
         while (current < resources.Count)
         {
-            var children = GetChildrenResources(resources[current], commandLineRunner);
-            resources.AddRange(children);
-
+            resources.AddRange(GetChildrenResources(resources[current], commandLineRunner));
             ++current;
         }
-
         return resources;
     }
 
@@ -57,7 +54,7 @@ public class ResourceRetriever : IResourceRetriever
             return Enumerable.Empty<Resource>();
         }
         var result = kubectl.GetAll(childKind, parentResource.Namespace, commandLineRunner);
-        var items = ResourceFactory.FromListJson(result);
-        return items.Where(item => item.Field($"$.metadata.ownerReferences[0].uid") == parentResource.Uid);
+        var resources = ResourceFactory.FromListJson(result);
+        return resources.Where(resource => resource.Field($"$.metadata.ownerReferences[0].uid") == parentResource.Uid);
     }
 }

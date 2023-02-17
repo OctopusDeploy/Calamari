@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
@@ -13,7 +14,7 @@ public class ServiceMessagesTests
     [Test]
     public void ShouldReturnTheCorrectDataShape()
     {
-        var input = System.IO.File.ReadAllText("KubernetesFixtures/ResourceStatus/deployment-with-3-replicas.json");
+        var input = File.ReadAllText("KubernetesFixtures/ResourceStatus/deployment-with-3-replicas.json");
         var resources = JArray.Parse(input).Select(item => ResourceFactory.FromJObject((JObject)item));
         var got = ServiceMessages.GenerateServiceMessageData(resources);
         var parsed = JObject.Parse(got);

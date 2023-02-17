@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -47,18 +48,20 @@ public class ResourceStatusReportWrapper : IScriptWrapper
         {
             return result;
         }
+
+        var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
+        foreach (var resource in definedResources)
+        {
+            log.Info($"Deploying: {resource.Kind} {resource.Name} in namespace {resource.Namespace}");
+        }
         
-        var resourceIdentifier = GetDefinedResource(content);
-        
-        log.Info($"Deployed: {resourceIdentifier.Kind}/{resourceIdentifier.Name}");
-        log.Info("");
         log.Info($"Status checks:");
         var n = 10;
         while (--n >= 0)
         {
             log.Info($"=====");
             log.Info($"Check #{10 - n}:");
-            var resources = retriever.GetAllOwnedResources(resourceIdentifier, commandLineRunner);
+            var resources = retriever.GetAllOwnedResources(definedResources, commandLineRunner).ToList();
 
             DisplayStatuses(resources);
             
@@ -79,41 +82,18 @@ public class ResourceStatusReportWrapper : IScriptWrapper
         };
         foreach (var file in knownFileNames)
         {
-            if (fileSystem.FileExists(file))
+            if (!fileSystem.FileExists(file))
             {
-                content = fileSystem.ReadFile(file);
-                return true;
+                continue;
             }
+            content = fileSystem.ReadFile(file);
+            return true;
         }
         content = null;
         return false;
     }
-    
-    // TODO: support multiple resources in a single YAML
-    private ResourceIdentifier GetDefinedResource(string manifests)
-    {
-        var deserializer = new Deserializer();
-        var yamlObject = deserializer.Deserialize(new StringReader(manifests));
-        
-        var serializer = new SerializerBuilder().JsonCompatible().Build();
-        var writer = new StringWriter();
-        serializer.Serialize(writer, yamlObject);
 
-        var json = writer.ToString();
-        var resource = JObject.Parse(json);
-        var name = resource.SelectToken("$.metadata.name").Value<string>();
-        var kind = resource.SelectToken("$.kind").Value<string>();
-        var @namespace = resource.SelectToken("$.metadata.namespace")?.Value<string>()
-                         ?? variables.Get(SpecialVariables.Namespace)
-                         ?? "default";
-        return new ResourceIdentifier
-        {
-            Name = name,
-            Kind = kind,
-            Namespace = @namespace
-        };
-    }
-
+    // TODO remove this when not needed
     private void DisplayStatuses(IEnumerable<Resource> resources)
     {
         foreach (var resource in resources)

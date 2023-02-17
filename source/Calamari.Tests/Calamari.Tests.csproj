@@ -167,6 +167,12 @@
     <None Update="KubernetesFixtures\ResourceStatus\deployment-with-3-replicas.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="KubernetesFixtures\ResourceStatus\multiple-resources.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="KubernetesFixtures\ResourceStatus\2-deployments-with-3-replicas-each.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Remove="TestResults\**" />

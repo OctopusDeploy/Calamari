@@ -19,9 +19,11 @@ public static class ResourceFactory
         var kind = data.SelectToken("$.kind")?.Value<string>();
         return kind switch
         {
-            "Deployment" => new Kubernetes.ResourceStatus.Resources.Deployment(data),
+            "Deployment" => new Deployment(data),
             "ReplicaSet" => new ReplicaSet(data),
             "Pod" => new Pod(data),
+            "Service" => new Service(data),
+            "EndpointSlice" => new EndpointSlice(data),
             _ => new Resource(data)
         };
     }
