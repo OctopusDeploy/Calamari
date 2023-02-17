@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 
-namespace Calamari.ResourceStatus.Resources;
+namespace Calamari.Kubernetes.ResourceStatus.Resources;
 
 /// <summary>
 /// Represents a kubernetes resource in a cluster, including its status

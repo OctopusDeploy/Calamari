@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Processes;
-using Calamari.ResourceStatus.Resources;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 
-namespace Calamari.ResourceStatus;
+namespace Calamari.Kubernetes.ResourceStatus;
 
 /// <summary>
 /// Retrieves resources information from a kubernetes cluster

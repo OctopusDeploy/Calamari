@@ -1,4 +1,4 @@
-namespace Calamari.ResourceStatus;
+namespace Calamari.Kubernetes.ResourceStatus;
 
 /// <summary>
 /// Identifies a unique resource in a kubernetes cluster

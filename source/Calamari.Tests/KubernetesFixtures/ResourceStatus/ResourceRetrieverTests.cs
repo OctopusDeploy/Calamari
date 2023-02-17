@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Kubernetes;
-using Calamari.ResourceStatus;
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Microsoft.Azure.Management.BatchAI.Fluent.Models;

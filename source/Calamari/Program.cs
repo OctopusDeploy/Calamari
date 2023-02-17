@@ -20,8 +20,8 @@ using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands.Discovery;
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.LaunchTools;
-using Calamari.ResourceStatus;
 using Microsoft.Azure.Management.ContainerRegistry.Fluent.Models;
 using IContainer = Autofac.IContainer;
 

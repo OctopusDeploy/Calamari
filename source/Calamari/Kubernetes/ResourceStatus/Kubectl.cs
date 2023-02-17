@@ -3,7 +3,7 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Kubernetes.Integration;
 
-namespace Calamari.ResourceStatus;
+namespace Calamari.Kubernetes.ResourceStatus;
 
 public interface IKubectl
 {

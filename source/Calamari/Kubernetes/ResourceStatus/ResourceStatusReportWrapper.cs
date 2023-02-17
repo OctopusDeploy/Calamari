@@ -7,12 +7,11 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Kubernetes;
-using Calamari.ResourceStatus.Resources;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using Newtonsoft.Json.Linq;
 using YamlDotNet.Serialization;
 
-namespace Calamari.ResourceStatus;
+namespace Calamari.Kubernetes.ResourceStatus;
 
 public class ResourceStatusReportWrapper : IScriptWrapper
 {

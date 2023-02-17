@@ -1,6 +1,6 @@
 using System.Linq;
-using Calamari.ResourceStatus;
-using Calamari.ResourceStatus.Resources;
+using Calamari.Kubernetes.ResourceStatus;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;

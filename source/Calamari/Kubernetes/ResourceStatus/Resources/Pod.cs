@@ -1,7 +1,6 @@
-using System.Text;
 using Newtonsoft.Json.Linq;
 
-namespace Calamari.ResourceStatus.Resources;
+namespace Calamari.Kubernetes.ResourceStatus.Resources;
 
 public class Pod : Resource
 {

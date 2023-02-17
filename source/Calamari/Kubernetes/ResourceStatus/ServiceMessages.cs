@@ -3,12 +3,12 @@ using System.Linq;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.ResourceStatus.Resources;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 
-namespace Calamari.ResourceStatus;
+namespace Calamari.Kubernetes.ResourceStatus;
 
 public static class ServiceMessages
 {
