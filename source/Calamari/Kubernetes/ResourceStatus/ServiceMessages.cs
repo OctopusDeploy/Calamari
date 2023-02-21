@@ -39,11 +39,11 @@ public static class ServiceMessages
 
     private static MessageEntry CreateEntry(Resource resource)
     {
-        var (status, message) = resource.CheckStatus();
+        var status= resource.Status;
         return new MessageEntry
         {
-            Status = status,
-            Message = message,
+            ResourceStatus = status,
+            Message = "",
             Data = resource.Data
         };
     }
@@ -51,7 +51,7 @@ public static class ServiceMessages
     public class MessageEntry
     {
         [JsonConverter(typeof(StringEnumConverter))]
-        public ResourceStatus Status { get; set; }
+        public ResourceStatus ResourceStatus { get; set; }
         public string Message { get; set; }
         public JObject Data { get; set; }
     }

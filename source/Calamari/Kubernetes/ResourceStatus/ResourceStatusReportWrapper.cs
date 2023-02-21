@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using Calamari.Common.Features.Processes;
@@ -9,8 +8,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.ResourceStatus.Resources;
-using Newtonsoft.Json.Linq;
-using YamlDotNet.Serialization;
 
 namespace Calamari.Kubernetes.ResourceStatus;
 
@@ -20,13 +17,15 @@ public class ResourceStatusReportWrapper : IScriptWrapper
     readonly ILog log;
     readonly ICalamariFileSystem fileSystem;
     private readonly IResourceRetriever retriever;
+    private readonly IResourceStatusChecker statusChecker;
 
-    public ResourceStatusReportWrapper(IVariables variables, ILog log, ICalamariFileSystem fileSystem, IResourceRetriever retriever)
+    public ResourceStatusReportWrapper(IVariables variables, ILog log, ICalamariFileSystem fileSystem, IResourceRetriever retriever, IResourceStatusChecker statusChecker)
     {
         this.variables = variables;
         this.log = log;
         this.fileSystem = fileSystem;
         this.retriever = retriever;
+        this.statusChecker = statusChecker;
     }
     
     public int Priority => ScriptWrapperPriorities.KubernetesStatusCheckPriority;
@@ -50,25 +49,28 @@ public class ResourceStatusReportWrapper : IScriptWrapper
         }
 
         var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
-        foreach (var resource in definedResources)
-        {
-            log.Info($"Deploying: {resource.Kind} {resource.Name} in namespace {resource.Namespace}");
-        }
         
-        log.Info($"Status checks:");
-        var n = 10;
-        while (--n >= 0)
-        {
-            log.Info($"=====");
-            log.Info($"Check #{10 - n}:");
-            var resources = retriever.GetAllOwnedResources(definedResources, commandLineRunner).ToList();
-
-            DisplayStatuses(resources);
-            
-            ServiceMessages.Send(resources, variables, log);
-            
-            Thread.Sleep(2000);
-        }
+        statusChecker.CheckStatusUntilCompletion(definedResources, commandLineRunner, log);
+        
+        // foreach (var resource in definedResources)
+        // {
+        //     log.Info($"Deploying: {resource.Kind} {resource.Name} in namespace {resource.Namespace}");
+        // }
+        //
+        // log.Info($"Status checks:");
+        // var n = 10;
+        // while (--n >= 0)
+        // {
+        //     log.Info($"=====");
+        //     log.Info($"Check #{10 - n}:");
+        //     var resources = retriever.GetAllOwnedResources(definedResources, commandLineRunner).ToList();
+        //
+        //     DisplayStatuses(resources);
+        //     
+        //     ServiceMessages.Send(resources, variables, log);
+        //     
+        //     Thread.Sleep(2000);
+        // }
 
         return result;
     }

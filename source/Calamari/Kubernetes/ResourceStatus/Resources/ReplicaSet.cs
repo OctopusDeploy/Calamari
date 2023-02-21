@@ -6,21 +6,35 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources;
 public class ReplicaSet : Resource
 {
     public override string ChildKind => "Pod";
+    
+    public int Available { get; }
+    public int Ready { get; }
+    public int Replicas { get; }
+
+    public override ResourceStatus Status { get; }
 
     public ReplicaSet(JObject json) : base(json)
     {
+        Replicas = FieldOrDefault("$.status.replicas", 0);
+        Ready = FieldOrDefault("$.status.readyReplicas", 0);
+        Available = FieldOrDefault($".status.availableReplicas", 0);
+
+        Status = ResourceStatus.Successful;
+    }
+    public override bool HasUpdate(Resource lastStatus)
+    {
+        var last = CastOrThrow<ReplicaSet>(lastStatus);
+        return last.Available != Available || last.Ready != Ready || last.Replicas != Replicas;
     }
 
-    public override (ResourceStatus, string) CheckStatus() => (ResourceStatus.Successful, "");
-    
     public override string StatusToDisplay
     {
         get
         {
             var result = new StringBuilder();
-            result.AppendLine($"Replicas: {Field("$.status.replicas")}");
-            result.AppendLine($"Ready: {Field("$.status.readyReplicas")}");
-            result.AppendLine($"Available: {Field("$.status.availableReplicas")}");
+            result.AppendLine($"Replicas: {Replicas}");
+            result.AppendLine($"Ready: {Ready}");
+            result.AppendLine($"Available: {Available}");
             return result.ToString();
         }
     }

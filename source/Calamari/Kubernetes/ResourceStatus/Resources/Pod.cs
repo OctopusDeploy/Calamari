@@ -4,21 +4,21 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources;
 
 public class Pod : Resource
 {
+    public string Phase { get; }
+    public override ResourceStatus Status { get; }
+
     public Pod(JObject json) : base(json)
     {
+        Phase = Field("$.status.phase");
+        
+        Status = ResourceStatus.Successful;
     }
 
-    public override (ResourceStatus, string) CheckStatus()
+    public override bool HasUpdate(Resource lastStatus)
     {
-        var phase = Field("$.status.phase");
-        return phase switch
-        {
-            "Running" => (ResourceStatus.Successful, "The Pod is running"),
-            "Completed" => (ResourceStatus.Successful, "The Pod has completed"),
-            "Pending" => (ResourceStatus.InProgress, "The Pod is in a pending state"),
-            _ => (ResourceStatus.Failed, $"The Pod has failed with a state of {phase}")
-        };
+        var last = CastOrThrow<Pod>(lastStatus);
+        return last.Phase != Phase;
     }
-    
-    public override string StatusToDisplay => $"Status: {Field("$.status.phase")}";
+
+    public override string StatusToDisplay => $"Status: {Phase}";
 }

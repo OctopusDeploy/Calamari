@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 
@@ -5,12 +7,23 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources;
 
 public class EndpointSlice : Resource
 {
+    public IEnumerable<string> Endpoints { get; }
+    public override ResourceStatus Status { get; }
+
     public EndpointSlice(JObject json) : base(json)
     {
+        Endpoints = Data.SelectTokens("$.endpoints[*].addresses[0]").Values<string>();
+        
+        Status = ResourceStatus.Successful;
     }
 
-    public override string StatusToDisplay =>
-        Data.SelectTokens("$.endpoints[*].addresses[0]")
-            .Select(address => $"- {address.Value<string>()}\n")
+    public override bool HasUpdate(Resource lastStatus)
+    {
+        var last = CastOrThrow<EndpointSlice>(lastStatus);
+        return !last.Endpoints.SequenceEqual(Endpoints);
+    }
+
+    public override string StatusToDisplay => Endpoints
+            .Select(address => $"- {address}\n")
             .Aggregate("", (acc, cur) => acc + cur);
 }

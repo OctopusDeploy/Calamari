@@ -67,6 +67,7 @@ namespace Calamari
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
             builder.RegisterType<Kubectl>().As<IKubectl>().SingleInstance();
             builder.RegisterType<ResourceRetriever>().As<IResourceRetriever>().SingleInstance();
+            builder.RegisterType<ResourceStatusChecker>().As<IResourceStatusChecker>().SingleInstance();
 
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()
