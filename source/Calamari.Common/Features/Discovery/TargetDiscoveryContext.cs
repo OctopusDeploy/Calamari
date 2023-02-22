@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Calamari.Common.Features.Discovery
 {
@@ -16,17 +19,14 @@ namespace Calamari.Common.Features.Discovery
     public class TargetDiscoveryContext<TAuthentication> : ITargetDiscoveryContext
         where TAuthentication : class,ITargetDiscoveryAuthenticationDetails
     {
-        public TargetDiscoveryContext(TargetDiscoveryScope? scope, TAuthentication? authentication, Dictionary<string, string>? additionalVariables)
+        public TargetDiscoveryContext(TargetDiscoveryScope? scope, TAuthentication? authentication)
         {
-            Scope = scope;
-            Authentication = authentication;
-            AdditionalVariables = additionalVariables;
+            this.Scope = scope;
+            this.Authentication = authentication;
         }
 
         public TargetDiscoveryScope? Scope { get; set; }
 
         public TAuthentication? Authentication { get; set; }
-
-        public Dictionary<string,string>? AdditionalVariables { get; set; }
     }
 }
