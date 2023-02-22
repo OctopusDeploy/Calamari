@@ -140,7 +140,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 "testProject",
                 null,
                 new[] { "discovery-role" },
-                "WorkerPool-1");
+                "WorkerPool-1",
+                null);
 
             var account = new ServicePrincipalAccount(
                 ExternalVariables.Get(ExternalVariable.AzureSubscriptionId),

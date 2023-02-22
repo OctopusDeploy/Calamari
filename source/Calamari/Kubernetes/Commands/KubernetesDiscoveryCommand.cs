@@ -47,7 +47,7 @@ namespace Calamari.Kubernetes.Commands
                 return ExitStatus.Success;
             }
 
-            if (!TryGetAuthenticationContextTypeDiscoveryContextScopeAndAdditionalVariables(json, out var type, out var scope, out var additionalVariables))
+            if (!TryGetAuthenticationContextTypeAndDiscoveryContextScope(json, out var type, out var scope))
                 return ExitStatus.OtherError;
 
             if (!discovererFactory.TryGetKubernetesDiscoverer(type, out var discoverer))
@@ -68,9 +68,6 @@ namespace Calamari.Kubernetes.Commands
                 return ExitStatus.Success;
             }
 
-            var containerFeed = additionalVariables.TryGetValue(SpecialVariables.Container.Feed, out var feed) ? feed : null;
-            var containerImage = additionalVariables.TryGetValue(SpecialVariables.Container.Image, out var image) ? image: null;
-
             log.Verbose($"Found {clusters.Count} candidate clusters.");
             var discoveredTargetCount = 0;
             foreach (var cluster in clusters)
@@ -80,7 +77,7 @@ namespace Calamari.Kubernetes.Commands
                 {
                     discoveredTargetCount++;
                     log.Info($"Discovered matching cluster: {cluster.Name}");
-                    WriteTargetCreationServiceMessage(cluster, matchResult, scope, containerFeed, containerImage);
+                    WriteTargetCreationServiceMessage(cluster, matchResult, scope);
                 }
                 else
                 {
@@ -99,7 +96,7 @@ namespace Calamari.Kubernetes.Commands
             return ExitStatus.Success;
         }
 
-        void WriteTargetCreationServiceMessage(KubernetesCluster cluster, TargetMatchResult matchResult, TargetDiscoveryScope scope, string healthCheckContainerFeed, string healthCheckContainerImage)
+        void WriteTargetCreationServiceMessage(KubernetesCluster cluster, TargetMatchResult matchResult, TargetDiscoveryScope scope)
         {
             var parameters = new Dictionary<string, string>
             {
@@ -115,8 +112,8 @@ namespace Calamari.Kubernetes.Commands
                 { "octopusClientCertificateIdOrName", null },
                 { "octopusServerCertificateIdOrName", null },
                 { "octopusRoles", matchResult.Role },
-                { "healthCheckContainerImageFeedIdOrName", healthCheckContainerFeed },
-                { "healthCheckContainerImage", healthCheckContainerImage },
+                { "healthCheckContainerImageFeedIdOrName", scope.HealthCheckContainer?.FeedIdOrName },
+                { "healthCheckContainerImage", scope.HealthCheckContainer?.ImageNameAndTag },
                 { "updateIfExisting", bool.TrueString },
                 { "isDynamic", bool.TrueString },
                 { "clusterProject", null },
@@ -146,15 +143,13 @@ namespace Calamari.Kubernetes.Commands
             return (json = variables.Get(ContextVariableName)) != null;
         }
 
-        bool TryGetAuthenticationContextTypeDiscoveryContextScopeAndAdditionalVariables(
+        bool TryGetAuthenticationContextTypeAndDiscoveryContextScope(
             string contextJson,
             out string type,
-            out TargetDiscoveryScope scope,
-            out Dictionary<string,string> additionalVariables)
+            out TargetDiscoveryScope scope)
         {
             type = null;
             scope = null;
-            additionalVariables = null;
             try
             {
                 var discoveryContext = JsonConvert
@@ -162,9 +157,6 @@ namespace Calamari.Kubernetes.Commands
 
                 type = discoveryContext?.Authentication?.Type;
                 scope = discoveryContext?.Scope;
-                additionalVariables = discoveryContext?.AdditionalVariables != null
-                    ? new Dictionary<string, string>(discoveryContext.AdditionalVariables, StringComparer.OrdinalIgnoreCase)
-                    : new Dictionary<string, string>();
 
                 if (type != null && scope != null)
                     return true;

@@ -16,7 +16,7 @@ namespace Calamari.Tests.Fixtures.Discovery
         private const string scopeRole2 = "scope-role-2";
         private static readonly string[] scopeRoles = new string[] { scopeRole1, scopeRole2 };
         private TargetDiscoveryScope sut = new TargetDiscoveryScope(
-            scopeSpace, scopeEnvironment, scopeProject, scopeTenant, scopeRoles, "WorkerPool-1");
+            scopeSpace, scopeEnvironment, scopeProject, scopeTenant, scopeRoles, "WorkerPool-1", null);
 
         [Test]
         public void Match_ShouldFail_IfEnvironmentTagIsMissing()

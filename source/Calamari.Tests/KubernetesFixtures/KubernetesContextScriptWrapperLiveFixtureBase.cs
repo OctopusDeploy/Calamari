@@ -131,7 +131,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 "testProject",
                 null,
                 new[] { "discovery-role" },
-                "WorkerPools-1");
+                "WorkerPools-1",
+                null);
 
             var targetDiscoveryContext =
                 new TargetDiscoveryContext<AwsAuthenticationDetails>(scope,
