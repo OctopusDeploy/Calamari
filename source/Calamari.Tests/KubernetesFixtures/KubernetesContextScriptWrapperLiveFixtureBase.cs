@@ -136,8 +136,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var targetDiscoveryContext =
                 new TargetDiscoveryContext<AwsAuthenticationDetails>(scope,
-                    authenticationDetails,
-                    null);
+                    authenticationDetails);
 
             var result =
                 ExecuteDiscoveryCommand(targetDiscoveryContext,

@@ -162,7 +162,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var targetDiscoveryContext =
                 new TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(scope,
-                    authenticationDetails, null);
+                    authenticationDetails);
 
             var result =
                 ExecuteDiscoveryCommand(targetDiscoveryContext,
