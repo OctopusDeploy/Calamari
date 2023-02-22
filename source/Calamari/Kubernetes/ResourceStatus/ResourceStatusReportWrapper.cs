@@ -1,13 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Kubernetes.ResourceStatus.Resources;
 
 namespace Calamari.Kubernetes.ResourceStatus;
 
@@ -51,26 +49,6 @@ public class ResourceStatusReportWrapper : IScriptWrapper
         var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
         
         statusChecker.CheckStatusUntilCompletion(definedResources, commandLineRunner, log);
-        
-        // foreach (var resource in definedResources)
-        // {
-        //     log.Info($"Deploying: {resource.Kind} {resource.Name} in namespace {resource.Namespace}");
-        // }
-        //
-        // log.Info($"Status checks:");
-        // var n = 10;
-        // while (--n >= 0)
-        // {
-        //     log.Info($"=====");
-        //     log.Info($"Check #{10 - n}:");
-        //     var resources = retriever.GetAllOwnedResources(definedResources, commandLineRunner).ToList();
-        //
-        //     DisplayStatuses(resources);
-        //     
-        //     ServiceMessages.Send(resources, variables, log);
-        //     
-        //     Thread.Sleep(2000);
-        // }
 
         return result;
     }
@@ -93,16 +71,5 @@ public class ResourceStatusReportWrapper : IScriptWrapper
         }
         content = null;
         return false;
-    }
-
-    // TODO remove this when not needed
-    private void DisplayStatuses(IEnumerable<Resource> resources)
-    {
-        foreach (var resource in resources)
-        {
-            log.Info("-----");
-            log.Info($"Status of {resource.Kind}/{resource.Name}:");
-            log.Info(resource.StatusToDisplay);
-        }
     }
 }

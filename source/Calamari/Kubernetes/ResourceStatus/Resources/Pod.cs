@@ -19,6 +19,4 @@ public class Pod : Resource
         var last = CastOrThrow<Pod>(lastStatus);
         return last.Phase != Phase;
     }
-
-    public override string StatusToDisplay => $"Status: {Phase}";
 }

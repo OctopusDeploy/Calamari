@@ -22,8 +22,4 @@ public class EndpointSlice : Resource
         var last = CastOrThrow<EndpointSlice>(lastStatus);
         return !last.Endpoints.SequenceEqual(Endpoints);
     }
-
-    public override string StatusToDisplay => Endpoints
-            .Select(address => $"- {address}\n")
-            .Aggregate("", (acc, cur) => acc + cur);
 }

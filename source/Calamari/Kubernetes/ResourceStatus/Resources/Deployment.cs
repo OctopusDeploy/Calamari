@@ -30,19 +30,7 @@ public class Deployment : Resource
         return last.Replicas != Replicas 
                || last.UpToDate != UpToDate 
                || last.Ready != Ready 
-               ||last.Available != Available;
+               || last.Available != Available;
     }
     
-    public override string StatusToDisplay
-    {
-        get
-        {
-            var result = new StringBuilder();
-            result.AppendLine($"Replicas: {Replicas}");
-            result.AppendLine($"Available: {Available}");
-            result.AppendLine($"Ready: {Ready}");
-            result.AppendLine($"Up-to-date: {UpToDate}");
-            return result.ToString();
-        }
-    }
 }

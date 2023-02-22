@@ -26,16 +26,4 @@ public class ReplicaSet : Resource
         var last = CastOrThrow<ReplicaSet>(lastStatus);
         return last.Available != Available || last.Ready != Ready || last.Replicas != Replicas;
     }
-
-    public override string StatusToDisplay
-    {
-        get
-        {
-            var result = new StringBuilder();
-            result.AppendLine($"Replicas: {Replicas}");
-            result.AppendLine($"Ready: {Ready}");
-            result.AppendLine($"Available: {Available}");
-            return result.ToString();
-        }
-    }
 }

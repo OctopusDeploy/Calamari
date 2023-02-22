@@ -21,6 +21,4 @@ public class Service : Resource
         var last = CastOrThrow<Service>(lastStatus);
         return last.ClusterIp != ClusterIp;
     }
-
-    public override string StatusToDisplay => $"ClusterIP: {ClusterIp}";
 }

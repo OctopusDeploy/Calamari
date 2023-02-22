@@ -43,11 +43,7 @@ public class Resource
 
     // What is a good default?
     public virtual bool HasUpdate(Resource lastStatus) => true;
-    
-    // TODO remove this once it's not needed
-    [JsonIgnore]
-    public virtual string StatusToDisplay => Data.SelectToken("$.status")?.ToString();
-    
+
     protected static T CastOrThrow<T>(Resource resource) where T: Resource
     {
         if (resource is not T subType)
