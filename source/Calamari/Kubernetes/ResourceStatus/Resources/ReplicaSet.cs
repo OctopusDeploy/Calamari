@@ -19,7 +19,14 @@ public class ReplicaSet : Resource
         Ready = FieldOrDefault("$.status.readyReplicas", 0);
         Available = FieldOrDefault($".status.availableReplicas", 0);
 
-        Status = ResourceStatus.Successful;
+        if (Ready == Replicas && Available == Replicas)
+        {
+            Status = ResourceStatus.Successful;
+        }
+        else
+        {
+            Status = ResourceStatus.Successful;
+        }
     }
     public override bool HasUpdate(Resource lastStatus)
     {

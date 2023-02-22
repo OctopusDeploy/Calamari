@@ -1,4 +1,4 @@
-namespace Calamari.Kubernetes.ResourceStatus;
+namespace Calamari.Kubernetes.ResourceStatus.Resources;
 
 public enum ResourceStatus
 {

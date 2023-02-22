@@ -8,13 +8,13 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources;
 public class EndpointSlice : Resource
 {
     public IEnumerable<string> Endpoints { get; }
-    public override ResourceStatus Status { get; }
+    
+    // There isn't really a failed or in-progress state for an EndpointSlice
+    public override ResourceStatus Status => ResourceStatus.Successful;
 
     public EndpointSlice(JObject json) : base(json)
     {
         Endpoints = Data.SelectTokens("$.endpoints[*].addresses[0]").Values<string>();
-        
-        Status = ResourceStatus.Successful;
     }
 
     public override bool HasUpdate(Resource lastStatus)

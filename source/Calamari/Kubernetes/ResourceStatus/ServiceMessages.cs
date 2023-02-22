@@ -51,7 +51,7 @@ public static class ServiceMessages
     public class MessageEntry
     {
         [JsonConverter(typeof(StringEnumConverter))]
-        public ResourceStatus ResourceStatus { get; set; }
+        public Resources.ResourceStatus ResourceStatus { get; set; }
         public string Message { get; set; }
         public JObject Data { get; set; }
     }

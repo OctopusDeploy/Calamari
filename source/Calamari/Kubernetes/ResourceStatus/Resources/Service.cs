@@ -7,13 +7,13 @@ public class Service : Resource
     public override string ChildKind => "EndpointSlice";
     
     public string ClusterIp { get; }
-    public override ResourceStatus Status { get; }
+    
+    // There isn't really failed or in-progress state for a Service
+    public override ResourceStatus Status => ResourceStatus.Successful;
 
     public Service(JObject json) : base(json)
     {
         ClusterIp = Field("$.spec.clusterIP");
-
-        Status = ResourceStatus.Successful;
     }
 
     public override bool HasUpdate(Resource lastStatus)

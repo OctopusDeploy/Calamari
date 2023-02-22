@@ -36,7 +36,14 @@ public class ResourceStatusChecker : IResourceStatusChecker
     {
         var definedResources = resourceIdentifiers.ToList();
 
-        resources = new Dictionary<string, Resource>();
+        resources = resourceRetriever
+            .GetAllOwnedResources(definedResources, commandLineRunner)
+            .ToDictionary(resource => resource.Uid, resource => resource);
+
+        foreach (var (_, resource) in resources)
+        {
+            log.Info($"Found existing: {JsonConvert.SerializeObject(resource)}");
+        }
         
         while (!IsCompleted())
         {
@@ -67,7 +74,7 @@ public class ResourceStatusChecker : IResourceStatusChecker
     private bool IsCompleted()
     {
         return resources.Count > 0 
-               && resources.All(resource => resource.Value.Status == ResourceStatus.Successful)
+               && resources.All(resource => resource.Value.Status == Resources.ResourceStatus.Successful)
             || --count < 0;
     }
 

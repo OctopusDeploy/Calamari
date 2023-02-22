@@ -12,6 +12,7 @@ public class Deployment : Resource
     public int UpToDate { get; }
     public int Ready { get; }
     public int Available { get; }
+    public int Unavailable { get; }
     public override ResourceStatus Status { get; }
     
     public Deployment(JObject json) : base(json)
@@ -20,8 +21,16 @@ public class Deployment : Resource
         Available = FieldOrDefault("$.status.availableReplicas", 0);
         Ready = FieldOrDefault("$.status.readyReplicas", 0);
         UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
-        
-        Status = ResourceStatus.Failed;
+        Unavailable = FieldOrDefault("$.status.unavailableReplicas", 0);
+
+        if (UpToDate == Replicas && Available == Replicas && Ready == Replicas)
+        {
+            Status = ResourceStatus.Successful;
+        }
+        else
+        {
+            Status = ResourceStatus.InProgress;
+        }
     }
 
     public override bool HasUpdate(Resource lastStatus)

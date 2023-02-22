@@ -11,6 +11,7 @@ public class Pod : Resource
     {
         Phase = Field("$.status.phase");
         
+        // TODO implement this
         Status = ResourceStatus.Successful;
     }
 
