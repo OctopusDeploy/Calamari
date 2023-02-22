@@ -130,7 +130,9 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount(bool setHealthCheckContainer)
         {
             var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
             Log = serviceMessageCollectorLog;
@@ -141,7 +143,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 null,
                 new[] { "discovery-role" },
                 "WorkerPool-1",
-                null);
+                setHealthCheckContainer ? new FeedImage("MyImage:with-tag", "Feeds-123") : null);
 
             var account = new ServicePrincipalAccount(
                 ExternalVariables.Get(ExternalVariable.AzureSubscriptionId),
@@ -170,22 +172,30 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
 
             var targetName = $"aks/{azureSubscriptionId}/{azurermResourceGroup}/{aksClusterName}";
+            var serviceMessageProperties = new Dictionary<string, string>
+            {
+                { "name", targetName },
+                { "clusterName", aksClusterName },
+                { "clusterResourceGroup", azurermResourceGroup },
+                { "skipTlsVerification", bool.TrueString },
+                { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
+                { "octopusAccountIdOrName", "Accounts-1" },
+                { "octopusRoles", "discovery-role" },
+                { "updateIfExisting", bool.TrueString },
+                { "isDynamic", bool.TrueString },
+                { "awsUseWorkerCredentials", bool.FalseString },
+                { "awsAssumeRole", bool.FalseString }
+            };
+
+            if (scope.HealthCheckContainer is not null)
+            {
+                serviceMessageProperties.Add("healthCheckContainerImageFeedIdOrName", scope.HealthCheckContainer.FeedIdOrName);
+                serviceMessageProperties.Add("healthCheckContainerImage", scope.HealthCheckContainer.ImageNameAndTag);
+            }
+
             var expectedServiceMessage = new ServiceMessage(
                 KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
-                new Dictionary<string, string>
-                {
-                    { "name", targetName },
-                    { "clusterName", aksClusterName },
-                    { "clusterResourceGroup", azurermResourceGroup },
-                    { "skipTlsVerification", bool.TrueString },
-                    { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
-                    { "octopusAccountIdOrName", "Accounts-1" },
-                    { "octopusRoles", "discovery-role" },
-                    { "updateIfExisting", bool.TrueString },
-                    { "isDynamic", bool.TrueString },
-                    { "awsUseWorkerCredentials", bool.FalseString },
-                    { "awsAssumeRole", bool.FalseString },
-                });
+                serviceMessageProperties);
 
             serviceMessageCollectorLog.ServiceMessages.Should()
                                       .ContainSingle(s => s.Properties["name"] == targetName)
