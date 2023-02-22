@@ -32,5 +32,4 @@ public class Deployment : Resource
                || last.Ready != Ready 
                || last.Available != Available;
     }
-    
 }

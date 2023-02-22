@@ -14,15 +14,13 @@ public class ResourceStatusReportWrapper : IScriptWrapper
     readonly IVariables variables;
     readonly ILog log;
     readonly ICalamariFileSystem fileSystem;
-    private readonly IResourceRetriever retriever;
     private readonly IResourceStatusChecker statusChecker;
 
-    public ResourceStatusReportWrapper(IVariables variables, ILog log, ICalamariFileSystem fileSystem, IResourceRetriever retriever, IResourceStatusChecker statusChecker)
+    public ResourceStatusReportWrapper(IVariables variables, ILog log, ICalamariFileSystem fileSystem, IResourceStatusChecker statusChecker)
     {
         this.variables = variables;
         this.log = log;
         this.fileSystem = fileSystem;
-        this.retriever = retriever;
         this.statusChecker = statusChecker;
     }
     
@@ -55,6 +53,7 @@ public class ResourceStatusReportWrapper : IScriptWrapper
     
     private bool TryReadManifestFile(out string content)
     {
+        // TODO this won't handle configMaps defined together with a Deploy a Container step
         var customResourceFileName = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
         var knownFileNames = new[]
         {

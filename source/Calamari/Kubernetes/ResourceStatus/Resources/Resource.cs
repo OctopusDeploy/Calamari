@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
@@ -12,6 +13,10 @@ public class Resource
 {
     [JsonIgnore]
     public JObject Data { get; }
+    
+    [JsonIgnore]
+    public IEnumerable<string> OwnerUids { get; }
+
     public string Uid { get; }
     public string Kind { get; }
     public string Name { get; }
@@ -27,22 +32,26 @@ public class Resource
     public Resource(JObject json)
     {
         Data = json;
+        OwnerUids = Data.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>();
         Uid = Field("$.metadata.uid");
         Kind = Field("$.kind");
         Name = Field("$.metadata.name");
         Namespace = Field("$.metadata.namespace");
     }
 
-    public string Field(string jsonPath) => FieldOrDefault(jsonPath, "");
+    public virtual bool HasUpdate(Resource lastStatus) => false;
+
+    protected virtual void PopulateData(JObject data)
+    {
+    }
     
-    public T FieldOrDefault<T>(string jsonPath, T defaultValue)
+    protected string Field(string jsonPath) => FieldOrDefault(jsonPath, "");
+    
+    protected T FieldOrDefault<T>(string jsonPath, T defaultValue)
     {
         var result = Data.SelectToken(jsonPath);
         return result == null ? defaultValue : result.Value<T>();
     }
-
-    // What is a good default?
-    public virtual bool HasUpdate(Resource lastStatus) => true;
 
     protected static T CastOrThrow<T>(Resource resource) where T: Resource
     {
