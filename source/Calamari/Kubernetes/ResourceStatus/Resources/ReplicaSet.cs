@@ -12,7 +12,7 @@ public class ReplicaSet : Resource
     public int Replicas { get; }
 
     public override ResourceStatus Status { get; }
-
+    
     public ReplicaSet(JObject json) : base(json)
     {
         Replicas = FieldOrDefault("$.status.replicas", 0);

@@ -29,6 +29,8 @@ public class Resource
     [JsonIgnore]
     public virtual string ChildKind => "";
 
+    public IEnumerable<Resource> Children { get; set; }
+
     public Resource(JObject json)
     {
         Data = json;

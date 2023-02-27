@@ -55,6 +55,8 @@ public class ResourceRetriever : IResourceRetriever
         }
         var result = kubectl.GetAll(childKind, parentResource.Namespace, commandLineRunner);
         var resources = ResourceFactory.FromListJson(result);
-        return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid));
+        var children = resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid)).ToList();
+        parentResource.Children = children;
+        return children;
     }
 }
