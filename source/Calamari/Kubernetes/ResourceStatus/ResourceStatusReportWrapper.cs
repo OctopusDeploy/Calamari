@@ -46,7 +46,7 @@ public class ResourceStatusReportWrapper : IScriptWrapper
 
         var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
         
-        statusChecker.CheckStatusUntilCompletion(definedResources, commandLineRunner, log);
+        statusChecker.CheckStatusUntilCompletion(definedResources, commandLineRunner);
 
         return result;
     }

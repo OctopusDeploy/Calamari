@@ -29,6 +29,7 @@ public class Resource
     [JsonIgnore]
     public virtual string ChildKind => "";
 
+    [JsonIgnore]
     public IEnumerable<Resource> Children { get; set; }
 
     public Resource(JObject json)
@@ -43,10 +44,6 @@ public class Resource
 
     public virtual bool HasUpdate(Resource lastStatus) => false;
 
-    protected virtual void PopulateData(JObject data)
-    {
-    }
-    
     protected string Field(string jsonPath) => FieldOrDefault(jsonPath, "");
     
     protected T FieldOrDefault<T>(string jsonPath, T defaultValue)

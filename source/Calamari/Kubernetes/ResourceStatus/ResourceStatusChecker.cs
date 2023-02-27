@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Newtonsoft.Json;
 
@@ -16,23 +17,27 @@ public enum ResourceAction
 
 public interface IResourceStatusChecker
 {
-    void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, ICommandLineRunner commandLineRunner, ILog log);
+    void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, ICommandLineRunner commandLineRunner);
 }
 
 public class ResourceStatusChecker : IResourceStatusChecker
 {
     private readonly IResourceRetriever resourceRetriever;
+    private readonly IServiceMessages serviceMessage;
+    private readonly ILog log;
     private IDictionary<string, Resource> resources = new Dictionary<string, Resource>();
 
     // TODO remove this
     private int count = 20;
     
-    public ResourceStatusChecker(IResourceRetriever resourceRetriever)
+    public ResourceStatusChecker(IResourceRetriever resourceRetriever, IServiceMessages serviceMessage, ILog log)
     {
         this.resourceRetriever = resourceRetriever;
+        this.serviceMessage = serviceMessage;
+        this.log = log;
     }
     
-    public void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, ICommandLineRunner commandLineRunner, ILog log)
+    public void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, ICommandLineRunner commandLineRunner)
     {
         var definedResources = resourceIdentifiers.ToList();
 
@@ -43,6 +48,7 @@ public class ResourceStatusChecker : IResourceStatusChecker
         foreach (var (_, resource) in resources)
         {
             log.Info($"Found existing: {JsonConvert.SerializeObject(resource)}");
+            serviceMessage.Update(resource);
         }
         
         while (!IsCompleted())
@@ -65,6 +71,15 @@ public class ResourceStatusChecker : IResourceStatusChecker
                 };
 
                 log.Info($"{actionType}{JsonConvert.SerializeObject(resource)}");
+
+                if (action == ResourceAction.Removed)
+                {
+                    serviceMessage.Remove(resource);
+                }
+                else
+                {
+                    serviceMessage.Update(resource);
+                }
             }
             
             Thread.Sleep(2000);

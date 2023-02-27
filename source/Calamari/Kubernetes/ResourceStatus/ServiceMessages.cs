@@ -10,49 +10,38 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.ResourceStatus;
 
-public static class ServiceMessages
+public interface IServiceMessages
 {
-    public static void Send(IEnumerable<Resource> resources, IVariables variables, ILog log)
-    {
-        var data = GenerateServiceMessageData(resources);
+    void Update(Resource resource);
+    void Remove(Resource resource);
+}
 
+public class ServiceMessages : IServiceMessages
+{
+    private readonly IVariables variables;
+    private readonly ILog log;
+    
+    public ServiceMessages(IVariables variables, ILog log)
+    {
+        this.variables = variables;
+        this.log = log;
+    }
+
+    public void Update(Resource resource) => UpdateOrRemove(resource, false);
+
+    public void Remove(Resource resource) => UpdateOrRemove(resource, true);
+
+    private void UpdateOrRemove(Resource resource, bool remove)
+    {
         var parameters = new Dictionary<string, string>
         {
-            {"data", data},
+            {"data", remove ? "{}" : JsonConvert.SerializeObject(resource)},
+            {"uid", resource.Uid},
             {"deploymentId", variables.Get("Octopus.Deployment.Id")},
             {"actionId", variables.Get("Octopus.Action.Id")}
         };
-
-        var message = new ServiceMessage("kubernetes-deployment-status-update", parameters);
+    
+        var message = new Common.Plumbing.ServiceMessages.ServiceMessage("kubernetes-deployment-status-update", parameters);
         log.WriteServiceMessage(message);
-    }
-
-    public static string GenerateServiceMessageData(IEnumerable<Resource> resources)
-    {
-        var result = resources
-            .GroupBy(resource => resource.Kind)
-            .ToDictionary(
-                group => group.Key,
-                group => group.Select(CreateEntry));
-        return JsonConvert.SerializeObject(result);
-    }
-
-    private static MessageEntry CreateEntry(Resource resource)
-    {
-        var status= resource.Status;
-        return new MessageEntry
-        {
-            ResourceStatus = status,
-            Message = "",
-            Data = resource.Data
-        };
-    }
-
-    public class MessageEntry
-    {
-        [JsonConverter(typeof(StringEnumConverter))]
-        public Resources.ResourceStatus ResourceStatus { get; set; }
-        public string Message { get; set; }
-        public JObject Data { get; set; }
     }
 }

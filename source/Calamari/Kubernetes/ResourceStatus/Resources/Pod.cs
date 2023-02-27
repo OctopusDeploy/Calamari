@@ -1,3 +1,4 @@
+using System;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources;
@@ -12,7 +13,12 @@ public class Pod : Resource
         Phase = Field("$.status.phase");
         
         // TODO implement this
-        Status = ResourceStatus.Successful;
+        Status = Phase switch
+        {
+            "Succeeded" or "Running" => ResourceStatus.Successful,
+            "Pending" => ResourceStatus.InProgress,
+            _ => ResourceStatus.Failed
+        };
     }
 
     public override bool HasUpdate(Resource lastStatus)
