@@ -23,17 +23,17 @@ namespace Calamari.Kubernetes.ResourceStatus
     public class ResourceStatusChecker : IResourceStatusChecker
     {
         private readonly IResourceRetriever resourceRetriever;
-        private readonly IServiceMessages serviceMessage;
+        private readonly IServiceMessages serviceMessages;
         private readonly ILog log;
         private IDictionary<string, Resource> resources = new Dictionary<string, Resource>();
     
         // TODO remove this
         private int count = 20;
         
-        public ResourceStatusChecker(IResourceRetriever resourceRetriever, IServiceMessages serviceMessage, ILog log)
+        public ResourceStatusChecker(IResourceRetriever resourceRetriever, IServiceMessages serviceMessages, ILog log)
         {
             this.resourceRetriever = resourceRetriever;
-            this.serviceMessage = serviceMessage;
+            this.serviceMessages = serviceMessages;
             this.log = log;
         }
         
@@ -48,7 +48,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             foreach (var (_, resource) in resources)
             {
                 log.Info($"Found existing: {JsonConvert.SerializeObject(resource)}");
-                serviceMessage.Update(resource);
+                serviceMessages.Update(resource);
             }
             
             while (!IsCompleted())
@@ -66,11 +66,11 @@ namespace Calamari.Kubernetes.ResourceStatus
 
                     if (action == ResourceAction.Removed)
                     {
-                        serviceMessage.Remove(resource);
+                        serviceMessages.Remove(resource);
                     }
                     else
                     {
-                        serviceMessage.Update(resource);
+                        serviceMessages.Update(resource);
                     }
                 }
                 

@@ -21,7 +21,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new() { Kind = "Deployment", Name = "nginx" }
+                    new ResourceIdentifier() { Kind = "Deployment", Name = "nginx" }
                 }, null);
     
             got.Should().HaveCount(5);
@@ -36,8 +36,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new() { Kind = "Deployment", Name = "nginx" },
-                    new() { Kind = "Deployment", Name = "curl" }
+                    new ResourceIdentifier() { Kind = "Deployment", Name = "nginx" },
+                    new ResourceIdentifier() { Kind = "Deployment", Name = "curl" }
                 }, null);
     
             got.Should().HaveCount(10);

@@ -1,12 +1,9 @@
 using System.Collections.Generic;
-using System.Linq;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
@@ -35,13 +32,11 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             var parameters = new Dictionary<string, string>
             {
-                {"data", remove ? "{}" : JsonConvert.SerializeObject(resource)},
-                {"uid", resource.Uid},
-                {"deploymentId", variables.Get("Octopus.Deployment.Id")},
-                {"actionId", variables.Get("Octopus.Action.Id")}
+                {"type", "k8s-status"},
+                {"data", remove ? "{}" : JsonConvert.SerializeObject(resource)}
             };
         
-            var message = new Common.Plumbing.ServiceMessages.ServiceMessage("kubernetes-deployment-status-update", parameters);
+            var message = new ServiceMessage("logData", parameters);
             log.WriteServiceMessage(message);
         }
     }

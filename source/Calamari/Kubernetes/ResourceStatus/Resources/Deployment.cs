@@ -23,14 +23,16 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
             Unavailable = FieldOrDefault("$.status.unavailableReplicas", 0);
     
-            if (UpToDate == Replicas && Available == Replicas && Ready == Replicas)
-            {
-                Status = ResourceStatus.Successful;
-            }
-            else
-            {
-                Status = ResourceStatus.InProgress;
-            }
+            // if (UpToDate == Replicas && Available == Replicas && Ready == Replicas)
+            // {
+            //     Status = ResourceStatus.Successful;
+            // }
+            // else
+            // {
+            //     Status = ResourceStatus.InProgress;
+            // }
+
+            Status = ResourceStatus.Failed;
         }
     
         public override bool HasUpdate(Resource lastStatus)
