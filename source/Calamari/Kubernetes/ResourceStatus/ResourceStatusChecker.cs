@@ -45,10 +45,10 @@ namespace Calamari.Kubernetes.ResourceStatus
                 .GetAllOwnedResources(definedResources, commandLineRunner)
                 .ToDictionary(resource => resource.Uid, resource => resource);
     
-            foreach (var (_, resource) in resources)
+            foreach (var resource in resources)
             {
-                log.Info($"Found existing: {JsonConvert.SerializeObject(resource)}");
-                serviceMessages.Update(resource);
+                log.Info($"Found existing: {JsonConvert.SerializeObject(resource.Value)}");
+                serviceMessages.Update(resource.Value);
             }
             
             while (!IsCompleted())
@@ -88,15 +88,15 @@ namespace Calamari.Kubernetes.ResourceStatus
         private IEnumerable<(ResourceAction, Resource)> GetDiff(IDictionary<string, Resource> newStatus)
         {
             var diff = new List<(ResourceAction, Resource)>();
-            foreach (var (uid, resource) in newStatus)
+            foreach (var status in newStatus)
             {
-                if (!resources.ContainsKey(uid))
+                if (!resources.ContainsKey(status.Key))
                 {
-                    diff.Add((ResourceAction.Created, resource));
+                    diff.Add((ResourceAction.Created, status.Value));
                 }
-                else if (resource.HasUpdate(resources[uid]))
+                else if (status.Value.HasUpdate(resources[status.Key]))
                 {
-                    diff.Add((ResourceAction.Updated, resource));
+                    diff.Add((ResourceAction.Updated, status.Value));
                 }
             }
     
