@@ -5,37 +5,38 @@ using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 
-namespace Calamari.Kubernetes.ResourceStatus;
-
-public static class KubernetesYaml
+namespace Calamari.Kubernetes.ResourceStatus
 {
-    private static readonly IDeserializer Deserializer = new DeserializerBuilder().Build();
-
-    public static IEnumerable<ResourceIdentifier> GetDefinedResources(string manifests)
+    public static class KubernetesYaml
     {
-        var input = new StringReader(manifests);
-
-        var parser = new Parser(input);
-        parser.Consume<StreamStart>();
-
-        var result = new List<ResourceIdentifier>();
-        while (!parser.Accept<StreamEnd>(out _))
+        private static readonly IDeserializer Deserializer = new DeserializerBuilder().Build();
+    
+        public static IEnumerable<ResourceIdentifier> GetDefinedResources(string manifests)
         {
-            result.Add(GetDefinedResource(parser));
+            var input = new StringReader(manifests);
+    
+            var parser = new Parser(input);
+            parser.Consume<StreamStart>();
+    
+            var result = new List<ResourceIdentifier>();
+            while (!parser.Accept<StreamEnd>(out _))
+            {
+                result.Add(GetDefinedResource(parser));
+            }
+    
+            return result;
         }
-
-        return result;
-    }
-
-    private static ResourceIdentifier GetDefinedResource(IParser parser)
-    {
-        var yamlObject = Deserializer.Deserialize<dynamic>(parser);
-        yamlObject["metadata"].TryGetValue("namespace", out object @namespace);
-        return new ResourceIdentifier
+    
+        private static ResourceIdentifier GetDefinedResource(IParser parser)
         {
-            Name = yamlObject["metadata"]["name"],
-            Kind = yamlObject["kind"],
-            Namespace = @namespace == null ? "default" : (string)@namespace
-        };
+            var yamlObject = Deserializer.Deserialize<dynamic>(parser);
+            yamlObject["metadata"].TryGetValue("namespace", out object @namespace);
+            return new ResourceIdentifier
+            {
+                Name = yamlObject["metadata"]["name"],
+                Kind = yamlObject["kind"],
+                Namespace = @namespace == null ? "default" : (string)@namespace
+            };
+        }
     }
 }

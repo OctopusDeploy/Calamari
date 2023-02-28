@@ -3,40 +3,41 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Kubernetes.Integration;
 
-namespace Calamari.Kubernetes.ResourceStatus;
-
-public interface IKubectl
+namespace Calamari.Kubernetes.ResourceStatus
 {
-    string Get(string kind, string name, string @namespace, ICommandLineRunner commandLineRunner);
-    string GetAll(string kind, string @namespace, ICommandLineRunner commandLineRunner);
-}
-
-public class Kubectl : IKubectl
-{
-    public string Get(string kind, string name, string @namespace, ICommandLineRunner commandLineRunner)
+    public interface IKubectl
     {
-        return ExecuteCommandAndReturnOutput("kubectl",
-            new[] {"get", kind, name, "-o json", $"-n {@namespace}"}, commandLineRunner);
+        string Get(string kind, string name, string @namespace, ICommandLineRunner commandLineRunner);
+        string GetAll(string kind, string @namespace, ICommandLineRunner commandLineRunner);
     }
-
-    public string GetAll(string kind, string @namespace, ICommandLineRunner commandLineRunner)
+    
+    public class Kubectl : IKubectl
     {
-        return ExecuteCommandAndReturnOutput("kubectl",
-            new[] {"get", kind, "-o json", $"-n {@namespace}"}, commandLineRunner);
-    }
-
-    private static string ExecuteCommandAndReturnOutput(string exe, string[] arguments, ICommandLineRunner commandLineRunner)
-    {
-        var captureCommandOutput = new CaptureCommandOutput();
-        var invocation = new CommandLineInvocation(exe, arguments)
+        public string Get(string kind, string name, string @namespace, ICommandLineRunner commandLineRunner)
         {
-            OutputAsVerbose = false,
-            OutputToLog = false,
-            AdditionalInvocationOutputSink = captureCommandOutput
-        };
-
-        commandLineRunner.Execute(invocation);
-
-        return captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray().Join("");
+            return ExecuteCommandAndReturnOutput("kubectl",
+                new[] {"get", kind, name, "-o json", $"-n {@namespace}"}, commandLineRunner);
+        }
+    
+        public string GetAll(string kind, string @namespace, ICommandLineRunner commandLineRunner)
+        {
+            return ExecuteCommandAndReturnOutput("kubectl",
+                new[] {"get", kind, "-o json", $"-n {@namespace}"}, commandLineRunner);
+        }
+    
+        private static string ExecuteCommandAndReturnOutput(string exe, string[] arguments, ICommandLineRunner commandLineRunner)
+        {
+            var captureCommandOutput = new CaptureCommandOutput();
+            var invocation = new CommandLineInvocation(exe, arguments)
+            {
+                OutputAsVerbose = false,
+                OutputToLog = false,
+                AdditionalInvocationOutputSink = captureCommandOutput
+            };
+    
+            commandLineRunner.Execute(invocation);
+    
+            return captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray().Join("");
+        }
     }
 }

@@ -8,114 +8,107 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Newtonsoft.Json;
 
-namespace Calamari.Kubernetes.ResourceStatus;
-
-public enum ResourceAction
+namespace Calamari.Kubernetes.ResourceStatus
 {
-    Created, Updated, Removed
-}
-
-public interface IResourceStatusChecker
-{
-    void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, ICommandLineRunner commandLineRunner);
-}
-
-public class ResourceStatusChecker : IResourceStatusChecker
-{
-    private readonly IResourceRetriever resourceRetriever;
-    private readonly IServiceMessages serviceMessage;
-    private readonly ILog log;
-    private IDictionary<string, Resource> resources = new Dictionary<string, Resource>();
-
-    // TODO remove this
-    private int count = 20;
-    
-    public ResourceStatusChecker(IResourceRetriever resourceRetriever, IServiceMessages serviceMessage, ILog log)
+    public enum ResourceAction
     {
-        this.resourceRetriever = resourceRetriever;
-        this.serviceMessage = serviceMessage;
-        this.log = log;
+        Created, Updated, Removed
     }
     
-    public void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, ICommandLineRunner commandLineRunner)
+    public interface IResourceStatusChecker
     {
-        var definedResources = resourceIdentifiers.ToList();
-
-        resources = resourceRetriever
-            .GetAllOwnedResources(definedResources, commandLineRunner)
-            .ToDictionary(resource => resource.Uid, resource => resource);
-
-        foreach (var (_, resource) in resources)
+        void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, ICommandLineRunner commandLineRunner);
+    }
+    
+    public class ResourceStatusChecker : IResourceStatusChecker
+    {
+        private readonly IResourceRetriever resourceRetriever;
+        private readonly IServiceMessages serviceMessage;
+        private readonly ILog log;
+        private IDictionary<string, Resource> resources = new Dictionary<string, Resource>();
+    
+        // TODO remove this
+        private int count = 20;
+        
+        public ResourceStatusChecker(IResourceRetriever resourceRetriever, IServiceMessages serviceMessage, ILog log)
         {
-            log.Info($"Found existing: {JsonConvert.SerializeObject(resource)}");
-            serviceMessage.Update(resource);
+            this.resourceRetriever = resourceRetriever;
+            this.serviceMessage = serviceMessage;
+            this.log = log;
         }
         
-        while (!IsCompleted())
+        public void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, ICommandLineRunner commandLineRunner)
         {
-            var newStatus = resourceRetriever
+            var definedResources = resourceIdentifiers.ToList();
+    
+            resources = resourceRetriever
                 .GetAllOwnedResources(definedResources, commandLineRunner)
                 .ToDictionary(resource => resource.Uid, resource => resource);
-
-            var diff = GetDiff(newStatus);
-            resources = newStatus;
-
-            foreach (var (action, resource) in diff)
+    
+            foreach (var (_, resource) in resources)
             {
-                var actionType = action switch
-                {
-                    ResourceAction.Created => "Created: ",
-                    ResourceAction.Removed => "Removed: ",
-                    ResourceAction.Updated => "Updated: ",
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-
-                log.Info($"{actionType}{JsonConvert.SerializeObject(resource)}");
-
-                if (action == ResourceAction.Removed)
-                {
-                    serviceMessage.Remove(resource);
-                }
-                else
-                {
-                    serviceMessage.Update(resource);
-                }
+                log.Info($"Found existing: {JsonConvert.SerializeObject(resource)}");
+                serviceMessage.Update(resource);
             }
             
-            Thread.Sleep(2000);
+            while (!IsCompleted())
+            {
+                var newStatus = resourceRetriever
+                    .GetAllOwnedResources(definedResources, commandLineRunner)
+                    .ToDictionary(resource => resource.Uid, resource => resource);
+    
+                var diff = GetDiff(newStatus);
+                resources = newStatus;
+    
+                foreach (var (action, resource) in diff)
+                {
+                    log.Info($"{(action == ResourceAction.Removed ? "Removed" : "")}{JsonConvert.SerializeObject(resource)}");
+
+                    if (action == ResourceAction.Removed)
+                    {
+                        serviceMessage.Remove(resource);
+                    }
+                    else
+                    {
+                        serviceMessage.Update(resource);
+                    }
+                }
+                
+                Thread.Sleep(2000);
+            }
         }
-    }
-
-    private bool IsCompleted()
-    {
-        return resources.Count > 0 
-               && resources.All(resource => resource.Value.Status == Resources.ResourceStatus.Successful)
-            || --count < 0;
-    }
-
-    private IEnumerable<(ResourceAction, Resource)> GetDiff(IDictionary<string, Resource> newStatus)
-    {
-        var diff = new List<(ResourceAction, Resource)>();
-        foreach (var (uid, resource) in newStatus)
+    
+        private bool IsCompleted()
         {
-            if (!resources.ContainsKey(uid))
-            {
-                diff.Add((ResourceAction.Created, resource));
-            }
-            else if (resource.HasUpdate(resources[uid]))
-            {
-                diff.Add((ResourceAction.Updated, resource));
-            }
+            return resources.Count > 0 
+                   && resources.All(resource => resource.Value.Status == Resources.ResourceStatus.Successful)
+                || --count < 0;
         }
-
-        foreach (var (id, resource) in resources)
+    
+        private IEnumerable<(ResourceAction, Resource)> GetDiff(IDictionary<string, Resource> newStatus)
         {
-            if (!newStatus.ContainsKey(id))
+            var diff = new List<(ResourceAction, Resource)>();
+            foreach (var (uid, resource) in newStatus)
             {
-                diff.Add((ResourceAction.Removed, resource));
+                if (!resources.ContainsKey(uid))
+                {
+                    diff.Add((ResourceAction.Created, resource));
+                }
+                else if (resource.HasUpdate(resources[uid]))
+                {
+                    diff.Add((ResourceAction.Updated, resource));
+                }
             }
+    
+            foreach (var (id, resource) in resources)
+            {
+                if (!newStatus.ContainsKey(id))
+                {
+                    diff.Add((ResourceAction.Removed, resource));
+                }
+            }
+    
+            return diff;
         }
-
-        return diff;
     }
 }

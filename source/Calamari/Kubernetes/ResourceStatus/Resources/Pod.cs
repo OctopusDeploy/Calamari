@@ -1,29 +1,37 @@
 using System;
 using Newtonsoft.Json.Linq;
 
-namespace Calamari.Kubernetes.ResourceStatus.Resources;
-
-public class Pod : Resource
+namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
-    public string Phase { get; }
-    public override ResourceStatus Status { get; }
-
-    public Pod(JObject json) : base(json)
+    public class Pod : Resource
     {
-        Phase = Field("$.status.phase");
-        
-        // TODO implement this
-        Status = Phase switch
+        public string Phase { get; }
+        public override ResourceStatus Status { get; }
+    
+        public Pod(JObject json) : base(json)
         {
-            "Succeeded" or "Running" => ResourceStatus.Successful,
-            "Pending" => ResourceStatus.InProgress,
-            _ => ResourceStatus.Failed
-        };
-    }
-
-    public override bool HasUpdate(Resource lastStatus)
-    {
-        var last = CastOrThrow<Pod>(lastStatus);
-        return last.Phase != Phase;
+            Phase = Field("$.status.phase");
+            
+            // TODO implement this
+            switch (Phase)
+            {
+                case"Succeeded": 
+                case "Running":
+                    Status = ResourceStatus.Successful;
+                    break;
+                case "Pending":
+                    Status = ResourceStatus.InProgress;
+                    break;
+                default:
+                    Status = ResourceStatus.Failed;
+                    break;
+            }
+        }
+    
+        public override bool HasUpdate(Resource lastStatus)
+        {
+            var last = CastOrThrow<Pod>(lastStatus);
+            return last.Phase != Phase;
+        }
     }
 }

@@ -2,43 +2,44 @@ using System;
 using System.Text;
 using Newtonsoft.Json.Linq;
 
-namespace Calamari.Kubernetes.ResourceStatus.Resources;
-
-public class Deployment : Resource
+namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
-    public override string ChildKind => "ReplicaSet";
-    
-    public int Replicas { get; }
-    public int UpToDate { get; }
-    public int Ready { get; }
-    public int Available { get; }
-    public int Unavailable { get; }
-    public override ResourceStatus Status { get; }
-    
-    public Deployment(JObject json) : base(json)
+    public class Deployment : Resource
     {
-        Replicas = FieldOrDefault("$.status.replicas", 0);
-        Available = FieldOrDefault("$.status.availableReplicas", 0);
-        Ready = FieldOrDefault("$.status.readyReplicas", 0);
-        UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
-        Unavailable = FieldOrDefault("$.status.unavailableReplicas", 0);
-
-        if (UpToDate == Replicas && Available == Replicas && Ready == Replicas)
+        public override string ChildKind => "ReplicaSet";
+        
+        public int Replicas { get; }
+        public int UpToDate { get; }
+        public int Ready { get; }
+        public int Available { get; }
+        public int Unavailable { get; }
+        public override ResourceStatus Status { get; }
+        
+        public Deployment(JObject json) : base(json)
         {
-            Status = ResourceStatus.Successful;
+            Replicas = FieldOrDefault("$.status.replicas", 0);
+            Available = FieldOrDefault("$.status.availableReplicas", 0);
+            Ready = FieldOrDefault("$.status.readyReplicas", 0);
+            UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
+            Unavailable = FieldOrDefault("$.status.unavailableReplicas", 0);
+    
+            if (UpToDate == Replicas && Available == Replicas && Ready == Replicas)
+            {
+                Status = ResourceStatus.Successful;
+            }
+            else
+            {
+                Status = ResourceStatus.InProgress;
+            }
         }
-        else
+    
+        public override bool HasUpdate(Resource lastStatus)
         {
-            Status = ResourceStatus.InProgress;
+            var last = CastOrThrow<Deployment>(lastStatus);
+            return last.Replicas != Replicas 
+                   || last.UpToDate != UpToDate 
+                   || last.Ready != Ready 
+                   || last.Available != Available;
         }
-    }
-
-    public override bool HasUpdate(Resource lastStatus)
-    {
-        var last = CastOrThrow<Deployment>(lastStatus);
-        return last.Replicas != Replicas 
-               || last.UpToDate != UpToDate 
-               || last.Ready != Ready 
-               || last.Available != Available;
     }
 }

@@ -1,6 +1,7 @@
-namespace Calamari.Kubernetes.ResourceStatus.Resources;
-
-public enum ResourceStatus
+namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
-    InProgress, Successful, Failed
+    public enum ResourceStatus
+    {
+        InProgress, Successful, Failed
+    }
 }

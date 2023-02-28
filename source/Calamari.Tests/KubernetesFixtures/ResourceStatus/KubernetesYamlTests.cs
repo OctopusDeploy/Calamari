@@ -3,16 +3,17 @@ using Calamari.Kubernetes.ResourceStatus;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.KubernetesFixtures.ResourceStatus;
-
-[TestFixture]
-public class KubernetesYamlTests
+namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 {
-    [Test]
-    public void ShouldGenerateCorrectIdentifiers()
+    [TestFixture]
+    public class KubernetesYamlTests
     {
-        var input = File.ReadAllText("KubernetesFixtures/ResourceStatus/multiple-resources.yaml");
-        var got = KubernetesYaml.GetDefinedResources(input);
-        got.Should().HaveCount(3);
+        [Test]
+        public void ShouldGenerateCorrectIdentifiers()
+        {
+            var input = File.ReadAllText("KubernetesFixtures/ResourceStatus/multiple-resources.yaml");
+            var got = KubernetesYaml.GetDefinedResources(input);
+            got.Should().HaveCount(3);
+        }
     }
 }
