@@ -60,17 +60,17 @@ namespace Calamari.Kubernetes.ResourceStatus
                 var diff = GetDiff(newStatus);
                 resources = newStatus;
     
-                foreach (var (action, resource) in diff)
+                foreach (var resourceDiff in diff)
                 {
-                    log.Info($"{(action == ResourceAction.Removed ? "Removed" : "")}{JsonConvert.SerializeObject(resource)}");
+                    log.Info($"{(resourceDiff.Item1 == ResourceAction.Removed ? "Removed" : "")}{JsonConvert.SerializeObject(resourceDiff.Item2)}");
 
-                    if (action == ResourceAction.Removed)
+                    if (resourceDiff.Item1 == ResourceAction.Removed)
                     {
-                        serviceMessages.Remove(resource);
+                        serviceMessages.Remove(resourceDiff.Item2);
                     }
                     else
                     {
-                        serviceMessages.Update(resource);
+                        serviceMessages.Update(resourceDiff.Item2);
                     }
                 }
                 
@@ -100,11 +100,11 @@ namespace Calamari.Kubernetes.ResourceStatus
                 }
             }
     
-            foreach (var (id, resource) in resources)
+            foreach (var resourceEntry in resources)
             {
-                if (!newStatus.ContainsKey(id))
+                if (!newStatus.ContainsKey(resourceEntry.Key))
                 {
-                    diff.Add((ResourceAction.Removed, resource));
+                    diff.Add((ResourceAction.Removed, resourceEntry.Value));
                 }
             }
     
