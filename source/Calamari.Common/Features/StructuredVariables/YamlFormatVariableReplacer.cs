@@ -106,8 +106,8 @@ namespace Calamari.Common.Features.StructuredVariables
                                 && structureWeAreReplacing.Value.startEvent.Path == node.Path)
                             {
                                 outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
-                                                                    mappingStart.Event.Anchor.Value,
-                                                                    mappingStart.Event.Tag.Value));
+                                                                    mappingStart.Event.Anchor,
+                                                                    mappingStart.Event.Tag));
                                 structureWeAreReplacing = null;
                             }
                             else if (node is YamlNode<SequenceEnd>
@@ -115,8 +115,8 @@ namespace Calamari.Common.Features.StructuredVariables
                                      && structureWeAreReplacing.Value.startEvent.Path == node.Path)
                             {
                                 outputEvents.AddRange(ParseFragment(structureWeAreReplacing.Value.replacementValue,
-                                                                    sequenceStart.Event.Anchor.Value,
-                                                                    sequenceStart.Event.Tag.Value));
+                                                                    sequenceStart.Event.Anchor,
+                                                                    sequenceStart.Event.Tag));
                                 structureWeAreReplacing = null;
                             }
                             else if ((node is YamlNode<MappingStart> || node is YamlNode<SequenceStart>)
