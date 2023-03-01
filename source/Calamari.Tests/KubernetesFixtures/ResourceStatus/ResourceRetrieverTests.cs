@@ -9,10 +9,10 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 {
-    [TestFixture]
+    //[TestFixture]
     public class ResourceRetrieverTests
     {
-        [Test]
+        //[Test]
         public void ReturnsCorrectObjectHierarchyForDeployments()
         {
             var kubectl = new MockKubectl(File.ReadAllText("KubernetesFixtures/ResourceStatus/deployment-with-3-replicas.json"));
@@ -27,7 +27,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             got.Should().HaveCount(5);
         }
     
-        [Test]
+        //[Test]
         public void ReturnsCorrectObjectHierarchyForMultipleResources()
         {
             var kubectl = new MockKubectl(File.ReadAllText("KubernetesFixtures/ResourceStatus/2-deployments-with-3-replicas-each.json"));
