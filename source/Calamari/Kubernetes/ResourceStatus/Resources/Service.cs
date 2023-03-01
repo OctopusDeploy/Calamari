@@ -7,10 +7,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public override string ChildKind => "EndpointSlice";
         
         public string ClusterIp { get; }
-        
-        // There isn't really failed or in-progress state for a Service
-        public override ResourceStatus Status => ResourceStatus.Successful;
-    
+
         public Service(JObject json) : base(json)
         {
             ClusterIp = Field("$.spec.clusterIP");

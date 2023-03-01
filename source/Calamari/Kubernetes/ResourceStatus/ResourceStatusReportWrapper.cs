@@ -30,7 +30,14 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         public bool IsEnabled(ScriptSyntax syntax)
         {
-            // variables.Get("");
+            var resourceStatusEnabled = variables.GetFlag("Octopus.Action.KubernetesContainers.ResourceStatusCheck");
+            var isBlueGreen = variables.Get("Octopus.Action.KubernetesContainers.DeploymentStyle") == "bluegreen";
+            var isWaitDeployment = variables.Get("Octopus.Action.KubernetesContainers.DeploymentWait") == "wait";
+            if (!resourceStatusEnabled || isBlueGreen || isWaitDeployment)
+            {
+                return false;
+            }
+
             var hasClusterUrl = !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl));
             var hasClusterName = !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) ||
                                  !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName)) ||

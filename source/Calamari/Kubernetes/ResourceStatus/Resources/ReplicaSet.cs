@@ -25,7 +25,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             }
             else
             {
-                Status = ResourceStatus.Successful;
+                Status = ResourceStatus.InProgress;
             }
         }
         public override bool HasUpdate(Resource lastStatus)

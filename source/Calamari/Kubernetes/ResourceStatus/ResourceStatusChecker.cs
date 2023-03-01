@@ -80,9 +80,8 @@ namespace Calamari.Kubernetes.ResourceStatus
     
         private bool IsCompleted()
         {
-            return resources.Count > 0 
-                   && resources.All(resource => resource.Value.Status == Resources.ResourceStatus.Successful)
-                || --count < 0;
+            return --count < 0 ||
+                   (resources.Count > 0 && resources.All(resource => resource.Value.Status == Resources.ResourceStatus.Successful));
         }
     
         private IEnumerable<(ResourceAction, Resource)> GetDiff(IDictionary<string, Resource> newStatus)
