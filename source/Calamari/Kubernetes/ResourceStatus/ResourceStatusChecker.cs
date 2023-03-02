@@ -27,9 +27,9 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly ILog log;
         private IDictionary<string, Resource> resources = new Dictionary<string, Resource>();
     
-        // TODO remove this
+        // TODO change this to timeout
         private int count = 20;
-        
+
         public ResourceStatusChecker(IResourceRetriever resourceRetriever, IServiceMessages serviceMessages, ILog log)
         {
             this.resourceRetriever = resourceRetriever;
@@ -63,15 +63,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 foreach (var resourceDiff in diff)
                 {
                     log.Info($"{(resourceDiff.Item1 == ResourceAction.Removed ? "Removed" : "")}{JsonConvert.SerializeObject(resourceDiff.Item2)}");
-
-                    if (resourceDiff.Item1 == ResourceAction.Removed)
-                    {
-                        serviceMessages.Remove(resourceDiff.Item2);
-                    }
-                    else
-                    {
-                        serviceMessages.Update(resourceDiff.Item2);
-                    }
+                    serviceMessages.Update(resourceDiff.Item2);
                 }
                 
                 Thread.Sleep(2000);
@@ -103,6 +95,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 if (!newStatus.ContainsKey(resourceEntry.Key))
                 {
+                    resourceEntry.Value.Removed = true;
                     diff.Add((ResourceAction.Removed, resourceEntry.Value));
                 }
             }

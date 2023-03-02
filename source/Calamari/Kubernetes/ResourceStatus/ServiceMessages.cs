@@ -10,7 +10,6 @@ namespace Calamari.Kubernetes.ResourceStatus
     public interface IServiceMessages
     {
         void Update(Resource resource);
-        void Remove(Resource resource);
     }
     
     public class ServiceMessages : IServiceMessages
@@ -23,17 +22,13 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.variables = variables;
             this.log = log;
         }
-    
-        public void Update(Resource resource) => UpdateOrRemove(resource, false);
-    
-        public void Remove(Resource resource) => UpdateOrRemove(resource, true);
-    
-        private void UpdateOrRemove(Resource resource, bool remove)
+
+        public void Update(Resource resource)
         {
             var parameters = new Dictionary<string, string>
             {
                 {"type", "k8s-status"},
-                {"data", remove ? "{}" : JsonConvert.SerializeObject(resource)}
+                {"data", JsonConvert.SerializeObject(resource)}
             };
         
             var message = new ServiceMessage("logData", parameters);
