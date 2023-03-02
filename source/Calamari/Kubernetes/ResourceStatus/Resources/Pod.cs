@@ -8,7 +8,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public string Phase { get; }
         public override ResourceStatus Status { get; }
     
-        public Pod(JObject json) : base(json)
+        public Pod(JObject json, string cluster) : base(json, cluster)
         {
             Phase = Field("$.status.phase");
             

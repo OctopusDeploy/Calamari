@@ -8,9 +8,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     {
         public IEnumerable<string> Endpoints { get; }
 
-        public EndpointSlice(JObject json) : base(json)
+        public EndpointSlice(JObject json, string cluster) : base(json, cluster)
         {
-            Endpoints = Data.SelectTokens("$.endpoints[*].addresses[0]").Values<string>();
+            Endpoints = data.SelectTokens("$.endpoints[*].addresses[0]").Values<string>();
         }
     
         public override bool HasUpdate(Resource lastStatus)

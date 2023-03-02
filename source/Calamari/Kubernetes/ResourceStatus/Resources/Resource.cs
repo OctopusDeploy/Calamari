@@ -11,8 +11,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     /// </summary>
     public class Resource
     {
-        [JsonIgnore]
-        public JObject Data { get; }
+        [JsonIgnore] protected JObject data;
         
         [JsonIgnore]
         public IEnumerable<string> OwnerUids { get; }
@@ -20,6 +19,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? Removed { get; set; }
         
+        public string Cluster { get; }
         public string Uid { get; }
         public string Kind { get; }
         public string Name { get; }
@@ -35,10 +35,11 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonIgnore]
         public IEnumerable<Resource> Children { get; set; }
     
-        public Resource(JObject json)
+        public Resource(JObject json, string cluster)
         {
-            Data = json;
-            OwnerUids = Data.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>();
+            Cluster = cluster;
+            data = json;
+            OwnerUids = data.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>();
             Uid = Field("$.metadata.uid");
             Kind = Field("$.kind");
             Name = Field("$.metadata.name");
@@ -51,7 +52,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         
         protected T FieldOrDefault<T>(string jsonPath, T defaultValue)
         {
-            var result = Data.SelectToken(jsonPath);
+            var result = data.SelectToken(jsonPath);
             return result == null ? defaultValue : result.Value<T>();
         }
     

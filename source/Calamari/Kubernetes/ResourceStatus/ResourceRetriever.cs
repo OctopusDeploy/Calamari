@@ -13,7 +13,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// <summary>
         /// Gets the resources identified by the resourceIdentifiers, and all their descendants as identified by the first element in the ownerReferences field
         /// </summary>
-        IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, ICommandLineRunner commandLineRunner);
+        IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, string cluster, ICommandLineRunner commandLineRunner);
     }
     
     public class ResourceRetriever : IResourceRetriever
@@ -26,27 +26,27 @@ namespace Calamari.Kubernetes.ResourceStatus
         }
     
         /// <inheritdoc />
-        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, ICommandLineRunner commandLineRunner)
+        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, string cluster, ICommandLineRunner commandLineRunner)
         {
             var resources = resourceIdentifiers
-                .Select(identifier => GetResource(identifier, commandLineRunner))
+                .Select(identifier => GetResource(identifier, cluster, commandLineRunner))
                 .ToList();
             var current = 0;
             while (current < resources.Count)
             {
-                resources.AddRange(GetChildrenResources(resources[current], commandLineRunner));
+                resources.AddRange(GetChildrenResources(resources[current], cluster, commandLineRunner));
                 ++current;
             }
             return resources;
         }
     
-        private Resource GetResource(ResourceIdentifier resourceIdentifier, ICommandLineRunner commandLineRunner)
+        private Resource GetResource(ResourceIdentifier resourceIdentifier, string cluster, ICommandLineRunner commandLineRunner)
         {
             var result = kubectl.Get(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, commandLineRunner);
-            return ResourceFactory.FromJson(result);
+            return ResourceFactory.FromJson(result, cluster);
         }
     
-        private IEnumerable<Resource> GetChildrenResources(Resource parentResource, ICommandLineRunner commandLineRunner)
+        private IEnumerable<Resource> GetChildrenResources(Resource parentResource, string cluster, ICommandLineRunner commandLineRunner)
         {
             var childKind = parentResource.ChildKind;
             if (string.IsNullOrEmpty(childKind))
@@ -54,7 +54,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return Enumerable.Empty<Resource>();
             }
             var result = kubectl.GetAll(childKind, parentResource.Namespace, commandLineRunner);
-            var resources = ResourceFactory.FromListJson(result);
+            var resources = ResourceFactory.FromListJson(result, cluster);
             var children = resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid)).ToList();
             parentResource.Children = children;
             return children;

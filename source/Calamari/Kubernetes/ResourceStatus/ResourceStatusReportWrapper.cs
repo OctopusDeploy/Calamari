@@ -56,9 +56,17 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return result;
             }
 
+            var cluster = new List<string>
+            {
+                variables.Get(SpecialVariables.ClusterUrl),
+                variables.Get(SpecialVariables.AksClusterName),
+                variables.Get(SpecialVariables.EksClusterName),
+                variables.Get(SpecialVariables.GkeClusterName)
+            }.FirstOrDefault(name => !string.IsNullOrEmpty(name));
+            
             var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
 
-            statusChecker.CheckStatusUntilCompletion(definedResources, commandLineRunner);
+            statusChecker.CheckStatusUntilCompletion(definedResources, cluster, commandLineRunner);
 
             return result;
         }
