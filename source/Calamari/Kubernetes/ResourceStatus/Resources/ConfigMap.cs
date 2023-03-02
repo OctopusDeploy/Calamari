@@ -7,7 +7,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     {
         public int Data { get; set; }
         
-        public ConfigMap(JObject json, string cluster) : base(json, cluster)
+        public ConfigMap(JObject json, string cluster, string actionId) : base(json, cluster, actionId)
         {
             Data = data.SelectTokens("$.data").Count();
         }

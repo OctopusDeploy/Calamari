@@ -22,7 +22,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new List<ResourceIdentifier>
                 {
                     new ResourceIdentifier() { Kind = "Deployment", Name = "nginx" }
-                }, "local", null);
+                }, "local", "Action-1", null);
     
             got.Should().HaveCount(5);
         }
@@ -38,7 +38,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 {
                     new ResourceIdentifier() { Kind = "Deployment", Name = "nginx" },
                     new ResourceIdentifier() { Kind = "Deployment", Name = "curl" }
-                }, "local", null);
+                }, "local", "Action-1", null);
     
             got.Should().HaveCount(10);
         }

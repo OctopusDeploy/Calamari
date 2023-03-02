@@ -63,10 +63,12 @@ namespace Calamari.Kubernetes.ResourceStatus
                 variables.Get(SpecialVariables.EksClusterName),
                 variables.Get(SpecialVariables.GkeClusterName)
             }.FirstOrDefault(name => !string.IsNullOrEmpty(name));
+
+            var actionId = variables.Get("Octopus.Action.Id");
             
             var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
 
-            statusChecker.CheckStatusUntilCompletion(definedResources, cluster, commandLineRunner);
+            statusChecker.CheckStatusUntilCompletion(definedResources, cluster, actionId, commandLineRunner);
 
             return result;
         }

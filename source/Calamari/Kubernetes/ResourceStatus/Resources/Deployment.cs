@@ -15,7 +15,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public int Unavailable { get; }
         public override ResourceStatus Status { get; }
 
-        public Deployment(JObject json, string cluster) : base(json, cluster)
+        public Deployment(JObject json, string cluster, string actionId) : base(json, cluster, actionId)
         {
             Replicas = FieldOrDefault("$.status.replicas", 0);
             Available = FieldOrDefault("$.status.availableReplicas", 0);
