@@ -14,15 +14,14 @@ namespace Calamari.Kubernetes.ResourceStatus
     
     public class ServiceMessages : IServiceMessages
     {
-        private readonly IVariables variables;
         private readonly ILog log;
         
-        public ServiceMessages(IVariables variables, ILog log)
+        public ServiceMessages(ILog log)
         {
-            this.variables = variables;
             this.log = log;
         }
 
+        // TODO: This needs to be changed when adopting the database solution
         public void Update(Resource resource)
         {
             var parameters = new Dictionary<string, string>

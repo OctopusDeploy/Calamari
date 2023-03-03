@@ -4,23 +4,20 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.FeatureToggles;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
     public class ResourceStatusReportWrapper : IScriptWrapper
     {
-        readonly IVariables variables;
-        readonly ILog log;
-        readonly ICalamariFileSystem fileSystem;
+        private readonly IVariables variables;
+        private readonly ICalamariFileSystem fileSystem;
         private readonly IResourceStatusChecker statusChecker;
 
-        public ResourceStatusReportWrapper(IVariables variables, ILog log, ICalamariFileSystem fileSystem,
-            IResourceStatusChecker statusChecker)
+        public ResourceStatusReportWrapper(IVariables variables, ICalamariFileSystem fileSystem, IResourceStatusChecker statusChecker)
         {
             this.variables = variables;
-            this.log = log;
             this.fileSystem = fileSystem;
             this.statusChecker = statusChecker;
         }
@@ -30,9 +27,14 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         public bool IsEnabled(ScriptSyntax syntax)
         {
-            var resourceStatusEnabled = variables.GetFlag("Octopus.Action.KubernetesContainers.ResourceStatusCheck");
-            var isBlueGreen = variables.Get("Octopus.Action.KubernetesContainers.DeploymentStyle") == "bluegreen";
-            var isWaitDeployment = variables.Get("Octopus.Action.KubernetesContainers.DeploymentWait") == "wait";
+            if (!FeatureToggle.KubernetesDeploymentStatusFeatureToggle.IsEnabled(variables))
+            {
+                return false;
+            }
+            
+            var resourceStatusEnabled = variables.GetFlag(SpecialVariables.ResourceStatusCheck);
+            var isBlueGreen = variables.Get(SpecialVariables.DeploymentStyle) == "bluegreen";
+            var isWaitDeployment = variables.Get(SpecialVariables.DeploymentWait) == "wait";
             if (!resourceStatusEnabled || isBlueGreen || isWaitDeployment)
             {
                 return false;
@@ -68,7 +70,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             
             var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
 
-            statusChecker.CheckStatusUntilCompletion(definedResources, cluster, actionId, commandLineRunner);
+            statusChecker.CheckStatusUntilCompletion(definedResources, cluster, actionId);
 
             return result;
         }

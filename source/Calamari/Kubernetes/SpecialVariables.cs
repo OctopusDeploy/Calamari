@@ -9,6 +9,10 @@
         public const string Namespace = "Octopus.Action.Kubernetes.Namespace";
         public const string SkipTlsVerification = "Octopus.Action.Kubernetes.SkipTlsVerification";
         public const string OutputKubeConfig = "Octopus.Action.Kubernetes.OutputKubeConfig";
+        public const string CustomKubectlExecutable = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
+        public const string ResourceStatusCheck = "Octopus.Action.KubernetesContainers.ResourceStatusCheck";
+        public const string DeploymentStyle = "Octopus.Action.KubernetesContainers.DeploymentStyle";
+        public const string DeploymentWait = "Octopus.Action.KubernetesContainers.DeploymentWait";
 
         public static class Helm
         {

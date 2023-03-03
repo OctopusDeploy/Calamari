@@ -11,7 +11,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     /// </summary>
     public class Resource
     {
-        [JsonIgnore] protected JObject data;
+        [JsonIgnore] 
+        protected JObject data;
         
         [JsonIgnore]
         public IEnumerable<string> OwnerUids { get; }
@@ -26,7 +27,6 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public string Name { get; }
         public string Namespace { get; }
         
-        // TODO what's a good default?
         [JsonConverter(typeof(StringEnumConverter))]
         public virtual ResourceStatus Status => ResourceStatus.Successful;
     

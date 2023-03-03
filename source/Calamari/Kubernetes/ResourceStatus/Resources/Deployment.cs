@@ -1,5 +1,3 @@
-using System;
-using System.Text;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources

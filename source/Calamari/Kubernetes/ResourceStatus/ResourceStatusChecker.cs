@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Newtonsoft.Json;
@@ -15,7 +14,7 @@ namespace Calamari.Kubernetes.ResourceStatus
     
     public interface IResourceStatusChecker
     {
-        void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, string cluster, string actionId, ICommandLineRunner commandLineRunner);
+        void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, string cluster, string actionId);
     }
     
     public class ResourceStatusChecker : IResourceStatusChecker
@@ -35,12 +34,12 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
         }
         
-        public void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, string cluster, string actionId, ICommandLineRunner commandLineRunner)
+        public void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, string cluster, string actionId)
         {
             var definedResources = resourceIdentifiers.ToList();
     
             resources = resourceRetriever
-                .GetAllOwnedResources(definedResources, cluster, actionId, commandLineRunner)
+                .GetAllOwnedResources(definedResources, cluster, actionId)
                 .ToDictionary(resource => resource.Uid, resource => resource);
     
             foreach (var resource in resources)
@@ -52,7 +51,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             while (!IsCompleted())
             {
                 var newStatus = resourceRetriever
-                    .GetAllOwnedResources(definedResources, cluster, actionId, commandLineRunner)
+                    .GetAllOwnedResources(definedResources, cluster, actionId)
                     .ToDictionary(resource => resource.Uid, resource => resource);
     
                 var diff = GetDiff(newStatus);

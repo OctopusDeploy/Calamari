@@ -11,6 +11,9 @@ namespace Calamari.Kubernetes.ResourceStatus
     {
         private static readonly IDeserializer Deserializer = new DeserializerBuilder().Build();
     
+        /// <summary>
+        /// Gets resource identifiers which are defined in a YAML file
+        /// </summary>
         public static IEnumerable<ResourceIdentifier> GetDefinedResources(string manifests)
         {
             var input = new StringReader(manifests);

@@ -53,7 +53,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             data = JArray.Parse(json).Cast<JObject>();
         }
     
-        public string Get(string kind, string name, string @namespace, ICommandLineRunner commandLineRunner)
+        public string Get(string kind, string name, string @namespace)
         {
             return data
                 .FirstOrDefault(item => item.SelectToken("$.kind").Value<string>() == kind &&
@@ -61,7 +61,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 ?.ToString();
         }
     
-        public string GetAll(string kind, string @namespace, ICommandLineRunner commandLineRunner)
+        public string GetAll(string kind, string @namespace)
         {
             var items = new JArray(data.Where(item => item.SelectToken("$.kind").Value<string>() == kind));
             return $"{{items: {items}}}";
