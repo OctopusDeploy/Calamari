@@ -7,11 +7,6 @@ using Newtonsoft.Json;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
-    public enum ResourceAction
-    {
-        Created, Updated, Removed
-    }
-    
     public interface IResourceStatusChecker
     {
         void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context);
@@ -37,30 +32,26 @@ namespace Calamari.Kubernetes.ResourceStatus
         public void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context)
         {
             var definedResources = resourceIdentifiers.ToList();
-    
-            resources = resourceRetriever
-                .GetAllOwnedResources(definedResources, context)
-                .ToDictionary(resource => resource.Uid, resource => resource);
-    
-            foreach (var resource in resources)
-            {
-                log.Info($"Found existing: {JsonConvert.SerializeObject(resource.Value)}");
-                serviceMessages.Update(resource.Value);
-            }
-            
             while (!IsCompleted())
             {
-                var newStatus = resourceRetriever
+                var newResourceStatuses = resourceRetriever
                     .GetAllOwnedResources(definedResources, context)
                     .ToDictionary(resource => resource.Uid, resource => resource);
     
-                var diff = GetDiff(newStatus);
-                resources = newStatus;
+                var createdOrUpdatedResources = GetCreatedOrUpdatedResources(newResourceStatuses);
+                var removedResources = GetRemovedResources(newResourceStatuses);
+                resources = newResourceStatuses;
     
-                foreach (var resourceDiff in diff)
+                foreach (var resource in createdOrUpdatedResources)
                 {
-                    log.Info($"{(resourceDiff.Item1 == ResourceAction.Removed ? "Removed" : "")}{JsonConvert.SerializeObject(resourceDiff.Item2)}");
-                    serviceMessages.Update(resourceDiff.Item2);
+                    log.Verbose($"{JsonConvert.SerializeObject(resource)}");
+                    serviceMessages.Update(resource);
+                }
+
+                foreach (var resource in removedResources)
+                {
+                    log.Verbose($"Removed: {JsonConvert.SerializeObject(resource)}");
+                    serviceMessages.Update(resource);
                 }
                 
                 Thread.Sleep(2000);
@@ -73,31 +64,31 @@ namespace Calamari.Kubernetes.ResourceStatus
                    (resources.Count > 0 && resources.All(resource => resource.Value.Status == Resources.ResourceStatus.Successful));
         }
     
-        private IEnumerable<(ResourceAction, Resource)> GetDiff(IDictionary<string, Resource> newStatus)
+        private IEnumerable<Resource> GetCreatedOrUpdatedResources(IDictionary<string, Resource> newResourceStatuses)
         {
-            var diff = new List<(ResourceAction, Resource)>();
-            foreach (var status in newStatus)
+            var createdOrUpdated = new List<Resource>();
+            foreach (var status in newResourceStatuses)
             {
-                if (!resources.ContainsKey(status.Key))
+                if (!resources.ContainsKey(status.Key) || status.Value.HasUpdate(resources[status.Key]))
                 {
-                    diff.Add((ResourceAction.Created, status.Value));
-                }
-                else if (status.Value.HasUpdate(resources[status.Key]))
-                {
-                    diff.Add((ResourceAction.Updated, status.Value));
+                    createdOrUpdated.Add(status.Value);
                 }
             }
-    
+            return createdOrUpdated;
+        }
+
+        private IEnumerable<Resource> GetRemovedResources(IDictionary<string, Resource> newResourceStatuses)
+        {
+            var removed = new List<Resource>();
             foreach (var resourceEntry in resources)
             {
-                if (!newStatus.ContainsKey(resourceEntry.Key))
+                if (!newResourceStatuses.ContainsKey(resourceEntry.Key))
                 {
                     resourceEntry.Value.Removed = true;
-                    diff.Add((ResourceAction.Removed, resourceEntry.Value));
+                    removed.Add(resourceEntry.Value);
                 }
             }
-    
-            return diff;
+            return removed;
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Calamari.Kubernetes.ResourceStatus
     public interface IResourceRetriever
     {
         /// <summary>
-        /// Gets the resources identified by the resourceIdentifiers, and all their descendants as identified by the first element in the ownerReferences field
+        /// Gets the resources identified by the resourceIdentifiers and all their owned resources
         /// </summary>
         IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context);
     }
