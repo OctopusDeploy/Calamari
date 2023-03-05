@@ -12,7 +12,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// <summary>
         /// Gets the resources identified by the resourceIdentifiers, and all their descendants as identified by the first element in the ownerReferences field
         /// </summary>
-        IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, string cluster, string actionId);
+        IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context);
     }
     
     public class ResourceRetriever : IResourceRetriever
@@ -25,27 +25,27 @@ namespace Calamari.Kubernetes.ResourceStatus
         }
     
         /// <inheritdoc />
-        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, string cluster, string actionId)
+        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context)
         {
             var resources = resourceIdentifiers
-                .Select(identifier => GetResource(identifier, cluster, actionId))
+                .Select(identifier => GetResource(identifier, context))
                 .ToList();
             var current = 0;
             while (current < resources.Count)
             {
-                resources.AddRange(GetChildrenResources(resources[current], cluster, actionId));
+                resources.AddRange(GetChildrenResources(resources[current], context));
                 ++current;
             }
             return resources;
         }
     
-        private Resource GetResource(ResourceIdentifier resourceIdentifier, string cluster, string actionId)
+        private Resource GetResource(ResourceIdentifier resourceIdentifier, DeploymentContext context)
         {
             var result = kubectl.Get(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace);
-            return ResourceFactory.FromJson(result, cluster, actionId);
+            return ResourceFactory.FromJson(result, context);
         }
     
-        private IEnumerable<Resource> GetChildrenResources(Resource parentResource, string cluster, string actionId)
+        private IEnumerable<Resource> GetChildrenResources(Resource parentResource, DeploymentContext context)
         {
             var childKind = parentResource.ChildKind;
             if (string.IsNullOrEmpty(childKind))
@@ -53,7 +53,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return Enumerable.Empty<Resource>();
             }
             var result = kubectl.GetAll(childKind, parentResource.Namespace);
-            var resources = ResourceFactory.FromListJson(result, cluster, actionId);
+            var resources = ResourceFactory.FromListJson(result, context);
             var children = resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid)).ToList();
             parentResource.Children = children;
             return children;

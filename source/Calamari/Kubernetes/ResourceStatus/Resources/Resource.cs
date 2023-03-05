@@ -36,10 +36,10 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonIgnore]
         public IEnumerable<Resource> Children { get; set; }
     
-        public Resource(JObject json, string cluster, string actionId)
+        public Resource(JObject json, DeploymentContext context)
         {
-            Cluster = cluster;
-            ActionId = actionId;
+            Cluster = context.Cluster;
+            ActionId = context.ActionId;
             data = json;
             OwnerUids = data.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>();
             Uid = Field("$.metadata.uid");

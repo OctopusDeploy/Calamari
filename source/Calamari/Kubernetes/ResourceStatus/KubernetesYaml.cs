@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json.Linq;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;

@@ -70,7 +70,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             
             var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
 
-            statusChecker.CheckStatusUntilCompletion(definedResources, cluster, actionId);
+            statusChecker.CheckStatusUntilCompletion(definedResources, new DeploymentContext {Cluster = cluster, ActionId = actionId});
 
             return result;
         }

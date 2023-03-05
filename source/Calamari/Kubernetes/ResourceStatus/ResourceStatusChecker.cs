@@ -14,7 +14,7 @@ namespace Calamari.Kubernetes.ResourceStatus
     
     public interface IResourceStatusChecker
     {
-        void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, string cluster, string actionId);
+        void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context);
     }
     
     public class ResourceStatusChecker : IResourceStatusChecker
@@ -34,12 +34,12 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
         }
         
-        public void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, string cluster, string actionId)
+        public void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context)
         {
             var definedResources = resourceIdentifiers.ToList();
     
             resources = resourceRetriever
-                .GetAllOwnedResources(definedResources, cluster, actionId)
+                .GetAllOwnedResources(definedResources, context)
                 .ToDictionary(resource => resource.Uid, resource => resource);
     
             foreach (var resource in resources)
@@ -51,7 +51,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             while (!IsCompleted())
             {
                 var newStatus = resourceRetriever
-                    .GetAllOwnedResources(definedResources, cluster, actionId)
+                    .GetAllOwnedResources(definedResources, context)
                     .ToDictionary(resource => resource.Uid, resource => resource);
     
                 var diff = GetDiff(newStatus);
