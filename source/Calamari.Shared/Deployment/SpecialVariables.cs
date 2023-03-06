@@ -39,6 +39,8 @@ namespace Calamari.Deployment
         public static readonly string RetentionPolicyDaysToKeep = "OctopusRetentionPolicyDaysToKeep";
 
         public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
+        
+        public static readonly string EnabledFeatureToggles = "OctopusEnabledFeatureToggles";
 
         public static class Bootstrapper
         {
