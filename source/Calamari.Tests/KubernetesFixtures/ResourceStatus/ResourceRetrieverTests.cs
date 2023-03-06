@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Kubernetes.ResourceStatus;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;

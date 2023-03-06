@@ -63,10 +63,8 @@ namespace Calamari
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
-            builder.RegisterType<Kubectl>().As<IKubectl>().SingleInstance();
             builder.RegisterType<ResourceRetriever>().As<IResourceRetriever>().SingleInstance();
             builder.RegisterType<ResourceStatusChecker>().As<IResourceStatusChecker>().SingleInstance();
-            builder.RegisterType<ServiceMessages>().As<IServiceMessages>().SingleInstance();
 
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()

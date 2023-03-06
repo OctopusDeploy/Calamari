@@ -5,7 +5,6 @@ using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities;
 using Octopus.Versioning.Semver;
@@ -77,6 +76,9 @@ namespace Calamari.Kubernetes.Integration
             result.VerifySuccess();
         }
 
+        public IEnumerable<string> ExecuteCommandAndReturnOutput(params string[] arguments) =>
+            base.ExecuteCommandAndReturnOutput(customKubectlExecutable, arguments);
+        
         public Maybe<SemanticVersion> GetVersion()
         {
             var kubectlVersionOutput = ExecuteCommandAndReturnOutput(ExecutableLocation, "version", "--client", "--output=json");

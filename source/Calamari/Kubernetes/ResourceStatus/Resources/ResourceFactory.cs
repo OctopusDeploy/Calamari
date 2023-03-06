@@ -19,20 +19,20 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             var kind = data.SelectToken("$.kind")?.Value<string>();
             switch (kind)
             {
-                    case "Deployment":
-                        return new Deployment(data, context);
-                    case "ReplicaSet": 
-                        return new ReplicaSet(data, context);
-                    case "Pod": 
-                        return new Pod(data, context);
-                    case "Service": 
-                        return new Service(data, context);
-                    case "EndpointSlice": 
-                        return new EndpointSlice(data, context); 
-                    case "ConfigMap":
-                        return new ConfigMap(data, context);
-                    default:
-                        return new Resource(data, context);
+                case "Deployment":
+                    return new Deployment(data, context);
+                case "ReplicaSet": 
+                    return new ReplicaSet(data, context);
+                case "Pod": 
+                    return new Pod(data, context);
+                case "Service": 
+                    return new Service(data, context);
+                case "EndpointSlice": 
+                    return new EndpointSlice(data, context); 
+                case "ConfigMap":
+                    return new ConfigMap(data, context);
+                default:
+                    return new Resource(data, context);
             }
         }
     }

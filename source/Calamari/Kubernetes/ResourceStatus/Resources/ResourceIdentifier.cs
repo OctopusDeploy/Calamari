@@ -1,4 +1,4 @@
-namespace Calamari.Kubernetes.ResourceStatus
+namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
    /// <summary>
    /// Identifies a unique resource in a kubernetes cluster
@@ -12,6 +12,5 @@ namespace Calamari.Kubernetes.ResourceStatus
        public string Kind { get; set; }
        public string Name { get; set; }
        public string Namespace { get; set; }
-       public string Uid { get; set; }
    } 
 }

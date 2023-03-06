@@ -1,23 +1,30 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.FeatureToggles;
+using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
     public class ResourceStatusReportWrapper : IScriptWrapper
     {
         private readonly IVariables variables;
+        private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly IResourceStatusChecker statusChecker;
 
-        public ResourceStatusReportWrapper(IVariables variables, ICalamariFileSystem fileSystem, IResourceStatusChecker statusChecker)
+        public ResourceStatusReportWrapper(IVariables variables, ILog log, ICalamariFileSystem fileSystem, IResourceStatusChecker statusChecker)
         {
             this.variables = variables;
+            this.log = log;
             this.fileSystem = fileSystem;
             this.statusChecker = statusChecker;
         }
@@ -68,9 +75,24 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var actionId = variables.Get("Octopus.Action.Id");
             
+            var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
+
+            var workingDirectory = Path.GetDirectoryName(script.File);
+            
             var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
 
-            statusChecker.CheckStatusUntilCompletion(definedResources, new DeploymentContext {Cluster = cluster, ActionId = actionId});
+            foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
+            {
+                environmentVars[proxyVariable.Key] = proxyVariable.Value;
+            }
+            
+            var kubectl = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars);
+            if (!kubectl.TrySetKubectl())
+            {
+                return new CommandResult(string.Empty, 1);
+            }
+
+            statusChecker.CheckStatusUntilCompletion(definedResources, new DeploymentContext {Cluster = cluster, ActionId = actionId}, kubectl);
 
             return result;
         }
