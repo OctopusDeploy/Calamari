@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
@@ -18,7 +19,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new MockResourceRetriever();
             var log = new InMemoryLog();
-            var resourceStatusChecker = new ResourceStatusChecker(retriever, log);
+            var resourceStatusChecker = new ResourceStatusChecker(retriever, new CalamariVariables(), log);
 
             var resources = ResourceFactory.FromListJson(ResourceLoader.Load("two-deployments.json"));
             retriever.SetOutput(resources);
@@ -50,7 +51,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new MockResourceRetriever();
             var log = new InMemoryLog();
-            var resourceStatusChecker = new ResourceStatusChecker(retriever, log);
+            var resourceStatusChecker = new ResourceStatusChecker(retriever, new CalamariVariables(), log);
 
             var oldResources = ResourceFactory.FromListJson(ResourceLoader.Load("two-deployments.json"));
             retriever.SetOutput(oldResources);
@@ -88,7 +89,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new MockResourceRetriever();
             var log = new InMemoryLog();
-            var resourceStatusChecker = new ResourceStatusChecker(retriever, log);
+            var resourceStatusChecker = new ResourceStatusChecker(retriever, new CalamariVariables(), log);
 
             var oldResources = ResourceFactory.FromListJson(ResourceLoader.Load("two-deployments.json"));
             retriever.SetOutput(oldResources);

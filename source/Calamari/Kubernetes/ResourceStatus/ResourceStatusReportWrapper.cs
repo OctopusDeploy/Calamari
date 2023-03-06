@@ -64,16 +64,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 return result;
             }
-
-            var cluster = new List<string>
-            {
-                variables.Get(SpecialVariables.ClusterUrl),
-                variables.Get(SpecialVariables.AksClusterName),
-                variables.Get(SpecialVariables.EksClusterName),
-                variables.Get(SpecialVariables.GkeClusterName)
-            }.FirstOrDefault(name => !string.IsNullOrEmpty(name));
-
-            var actionId = variables.Get(SpecialVariables.ActionId);
+            
             var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
             var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 180;
             var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 60;

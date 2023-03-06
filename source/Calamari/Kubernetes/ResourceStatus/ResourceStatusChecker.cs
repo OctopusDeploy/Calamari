@@ -147,7 +147,6 @@ namespace Calamari.Kubernetes.ResourceStatus
         
         private void SendServiceMessage(Resource resource)
         {
-            // TODO: update this for database
             var parameters = new Dictionary<string, string>
             {
                 {"type", "k8s-status"},
