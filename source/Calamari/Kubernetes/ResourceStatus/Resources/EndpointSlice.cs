@@ -8,7 +8,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     {
         public IEnumerable<string> Endpoints { get; }
 
-        public EndpointSlice(JObject json, DeploymentContext context) : base(json, context)
+        public EndpointSlice(JObject json) : base(json)
         {
             Endpoints = data.SelectTokens("$.endpoints[*].addresses[0]").Values<string>();
         }

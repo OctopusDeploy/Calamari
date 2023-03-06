@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -65,16 +64,6 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return result;
             }
 
-            var cluster = new List<string>
-            {
-                variables.Get(SpecialVariables.ClusterUrl),
-                variables.Get(SpecialVariables.AksClusterName),
-                variables.Get(SpecialVariables.EksClusterName),
-                variables.Get(SpecialVariables.GkeClusterName)
-            }.FirstOrDefault(name => !string.IsNullOrEmpty(name));
-
-            var actionId = variables.Get("Octopus.Action.Id");
-            
             var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
 
             var workingDirectory = Path.GetDirectoryName(script.File);
@@ -92,7 +81,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return new CommandResult(string.Empty, 1);
             }
 
-            statusChecker.CheckStatusUntilCompletion(definedResources, new DeploymentContext {Cluster = cluster, ActionId = actionId}, kubectl);
+            statusChecker.CheckStatusUntilCompletion(definedResources, kubectl);
 
             return result;
         }

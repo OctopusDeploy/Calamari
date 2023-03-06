@@ -8,7 +8,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         
         public string ClusterIp { get; }
 
-        public Service(JObject json, DeploymentContext context) : base(json, context)
+        public Service(JObject json) : base(json)
         {
             ClusterIp = Field("$.spec.clusterIP");
         }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources
@@ -20,14 +19,16 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? Removed { get; set; }
         
-        public string ActionId { get; }
-        public string Cluster { get; }
+        [JsonIgnore] 
         public string Uid { get; }
+        [JsonIgnore] 
         public string Kind { get; }
+        [JsonIgnore] 
         public string Name { get; }
+        [JsonIgnore] 
         public string Namespace { get; }
         
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonIgnore] 
         public virtual ResourceStatus Status => ResourceStatus.Successful;
     
         [JsonIgnore]
@@ -36,10 +37,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonIgnore]
         public IEnumerable<Resource> Children { get; set; }
     
-        public Resource(JObject json, DeploymentContext context)
+        public Resource(JObject json)
         {
-            Cluster = context.Cluster;
-            ActionId = context.ActionId;
             data = json;
             OwnerUids = data.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>();
             Uid = Field("$.metadata.uid");
