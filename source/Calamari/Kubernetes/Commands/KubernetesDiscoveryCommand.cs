@@ -161,12 +161,12 @@ namespace Calamari.Kubernetes.Commands
                 if (type != null && scope != null)
                     return true;
 
-                log.Error($"Could not extract Type or Scope from {ContextVariableName}, the data is in the wrong format.");
+                log.Error($"Could not extract Authentication Type or Scope from {ContextVariableName}, the data is in the wrong format.");
                 return false;
             }
             catch (JsonException ex)
             {
-                log.Error($"Could not extract Type or Scope from {ContextVariableName}, the data is in the wrong format: {ex.Message}");
+                log.Error($"Could not extract Authentication Type or Scope from {ContextVariableName}, the data is in the wrong format: {ex.Message}");
                 return false;
             }
         }
