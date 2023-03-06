@@ -13,7 +13,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IResourceStatusChecker
     {
-        bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context, IKubectl kubectl);
+        bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, TimeSpan deploymentTimeout, TimeSpan stabilizationTimeout, IKubectl kubectl);
     }
 
     public enum DeploymentStatus
@@ -39,28 +39,26 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
         }
         
-        public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context, IKubectl kubectl)
+        public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, TimeSpan deploymentTimeout, TimeSpan stabilizationTimeout, IKubectl kubectl)
         {
             var definedResources = resourceIdentifiers.ToList();
-            var deploymentTimeout = TimeSpan.FromSeconds(context.DeploymentTimeoutSeconds);
-            var stabilizationTimeout = TimeSpan.FromSeconds(context.StabilizationTimeoutSeconds);
-            
+
             var deploymentTimer = new Stopwatch();
             deploymentTimer.Start();
             
             while (deploymentTimer.Elapsed <= deploymentTimeout && ShouldContinue(stabilizationTimeout))
             {
-                UpdateResourceStatuses(definedResources, context, kubectl);
+                UpdateResourceStatuses(definedResources, kubectl);
                 Thread.Sleep(PollingIntervalSeconds * 1000);
             }
 
             return stabilizing == false && status == DeploymentStatus.Succeeded;
         }
 
-        public void UpdateResourceStatuses(IEnumerable<ResourceIdentifier> definedResources, DeploymentContext context, IKubectl kubectl)
+        public void UpdateResourceStatuses(IEnumerable<ResourceIdentifier> definedResources, IKubectl kubectl)
         {
             var newResourceStatuses = resourceRetriever
-                .GetAllOwnedResources(definedResources, context, kubectl)
+                .GetAllOwnedResources(definedResources, kubectl)
                 .ToDictionary(resource => resource.Uid, resource => resource);
     
             var createdOrUpdatedResources = GetCreatedOrUpdatedResources(newResourceStatuses);

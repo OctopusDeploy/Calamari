@@ -20,7 +20,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var log = new InMemoryLog();
             var resourceStatusChecker = new ResourceStatusChecker(retriever, log);
 
-            var resources = ResourceFactory.FromListJson(ResourceLoader.Load("two-deployments.json"), new DeploymentContext());
+            var resources = ResourceFactory.FromListJson(ResourceLoader.Load("two-deployments.json"));
             retriever.SetOutput(resources);
 
             var identifiers = new[]
@@ -39,7 +39,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 },
             };
             
-            resourceStatusChecker.UpdateResourceStatuses(identifiers, new DeploymentContext(), null);
+            resourceStatusChecker.UpdateResourceStatuses(identifiers, null);
 
             log.Messages.Where(m => m.FormattedMessage.Contains(SpecialVariables.KubernetesResourceStatusServiceMessageName))
                 .Should().HaveCount(2);
@@ -50,10 +50,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new MockResourceRetriever();
             var log = new InMemoryLog();
-            var context = new DeploymentContext();
             var resourceStatusChecker = new ResourceStatusChecker(retriever, log);
 
-            var oldResources = ResourceFactory.FromListJson(ResourceLoader.Load("two-deployments.json"), context);
+            var oldResources = ResourceFactory.FromListJson(ResourceLoader.Load("two-deployments.json"));
             retriever.SetOutput(oldResources);
 
             var identifiers = new[]
@@ -72,12 +71,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 },
             };
             
-            resourceStatusChecker.UpdateResourceStatuses(identifiers, context, null);
+            resourceStatusChecker.UpdateResourceStatuses(identifiers, null);
             log.Messages.Clear();
             
-            var newResources = ResourceFactory.FromListJson(ResourceLoader.Load("one-old-deployment-and-one-new-deployment.json"), context);
+            var newResources = ResourceFactory.FromListJson(ResourceLoader.Load("one-old-deployment-and-one-new-deployment.json"));
             retriever.SetOutput(newResources);
-            resourceStatusChecker.UpdateResourceStatuses(identifiers, context, null);
+            resourceStatusChecker.UpdateResourceStatuses(identifiers, null);
             
             log.Messages
                 .Where(m => m.FormattedMessage.Contains(SpecialVariables.KubernetesResourceStatusServiceMessageName))
@@ -89,10 +88,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new MockResourceRetriever();
             var log = new InMemoryLog();
-            var context = new DeploymentContext();
             var resourceStatusChecker = new ResourceStatusChecker(retriever, log);
 
-            var oldResources = ResourceFactory.FromListJson(ResourceLoader.Load("two-deployments.json"), context);
+            var oldResources = ResourceFactory.FromListJson(ResourceLoader.Load("two-deployments.json"));
             retriever.SetOutput(oldResources);
 
             var identifiers = new[]
@@ -111,12 +109,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 },
             };
             
-            resourceStatusChecker.UpdateResourceStatuses(identifiers, context, null);
+            resourceStatusChecker.UpdateResourceStatuses(identifiers, null);
             log.Messages.Clear();
             
-            var newResources = ResourceFactory.FromListJson(ResourceLoader.Load("one-deployment.json"), context);
+            var newResources = ResourceFactory.FromListJson(ResourceLoader.Load("one-deployment.json"));
             retriever.SetOutput(newResources);
-            resourceStatusChecker.UpdateResourceStatuses(identifiers, context, null);
+            resourceStatusChecker.UpdateResourceStatuses(identifiers, null);
             
             log.Messages
                 .Where(m => m.FormattedMessage.Contains(SpecialVariables.KubernetesResourceStatusServiceMessageName))
@@ -136,7 +134,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             this.resources = resources.ToList();
         }
         
-        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context, IKubectl kubectl)
+        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, IKubectl kubectl)
         {
             return resources.ToList();
         }

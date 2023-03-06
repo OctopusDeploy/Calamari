@@ -25,12 +25,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new List<ResourceIdentifier>
                 {
                     new ResourceIdentifier{ Kind = "Deployment", Name = "nginx" }
-                }, 
-                new DeploymentContext
-                {
-                    ActionId = "Action-1",
-                    Cluster = "local"
-                }, 
+                },
                 kubectl);
     
             got.Should().HaveCount(5);
@@ -52,12 +47,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 {
                     new ResourceIdentifier { Kind = "Deployment", Name = "nginx" },
                     new ResourceIdentifier { Kind = "Deployment", Name = "curl" }
-                }, 
-                new DeploymentContext
-                {
-                    ActionId = "Action-1",
-                    Cluster = "local"
-                }, 
+                },
                 kubectl);
     
             got.Should().HaveCount(10);

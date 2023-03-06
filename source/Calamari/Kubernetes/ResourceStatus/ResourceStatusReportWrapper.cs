@@ -98,13 +98,9 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(
                 definedResources, 
-                new DeploymentContext
-                {
-                    Cluster = cluster, 
-                    ActionId = actionId,
-                    DeploymentTimeoutSeconds = deploymentTimeoutSeconds,
-                    StabilizationTimeoutSeconds = stabilizationTimeoutSeconds
-                }, kubectl);
+                TimeSpan.FromSeconds(deploymentTimeoutSeconds), 
+                TimeSpan.FromSeconds(stabilizationTimeoutSeconds), 
+                kubectl);
 
             // TODO: what is a better way to signal failure?
             if (!completedSuccessfully)

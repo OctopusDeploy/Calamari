@@ -12,7 +12,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     
         public override ResourceStatus Status { get; }
         
-        public ReplicaSet(JObject json, DeploymentContext context) : base(json, context)
+        public ReplicaSet(JObject json) : base(json)
         {
             Replicas = FieldOrDefault("$.status.replicas", 0);
             Ready = FieldOrDefault("$.status.readyReplicas", 0);

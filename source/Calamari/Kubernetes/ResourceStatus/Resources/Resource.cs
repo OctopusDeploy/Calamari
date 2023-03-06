@@ -20,8 +20,6 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? Removed { get; set; }
         
-        public string ActionId { get; }
-        public string Cluster { get; }
         public string Uid { get; }
         public string Kind { get; }
         public string Name { get; }
@@ -36,10 +34,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonIgnore]
         public IEnumerable<Resource> Children { get; set; }
     
-        public Resource(JObject json, DeploymentContext context)
+        public Resource(JObject json)
         {
-            Cluster = context.Cluster;
-            ActionId = context.ActionId;
             data = json;
             OwnerUids = data.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>();
             Uid = Field("$.metadata.uid");
