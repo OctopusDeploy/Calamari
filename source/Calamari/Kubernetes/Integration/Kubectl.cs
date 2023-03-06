@@ -11,7 +11,16 @@ using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes.Integration
 {
-    public class Kubectl : CommandLineTool
+    public interface IKubectl
+    {
+        bool TrySetKubectl();
+        CommandResult ExecuteCommand(params string[] arguments);
+        void ExecuteCommandAndAssertSuccess(params string[] arguments);
+        IEnumerable<string> ExecuteCommandAndReturnOutput(params string[] arguments);
+        Maybe<SemanticVersion> GetVersion();
+    }
+    
+    public class Kubectl : CommandLineTool, IKubectl
     {
         readonly string customKubectlExecutable;
 

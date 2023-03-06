@@ -13,7 +13,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IResourceStatusChecker
     {
-        bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context, Kubectl kubectl);
+        bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context, IKubectl kubectl);
     }
 
     public enum DeploymentStatus
@@ -39,7 +39,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
         }
         
-        public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context, Kubectl kubectl)
+        public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context, IKubectl kubectl)
         {
             var definedResources = resourceIdentifiers.ToList();
             var deploymentTimeout = TimeSpan.FromSeconds(context.DeploymentTimeoutSeconds);
@@ -57,7 +57,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             return stabilizing == false && status == DeploymentStatus.Succeeded;
         }
 
-        public void UpdateResourceStatuses(IEnumerable<ResourceIdentifier> definedResources, DeploymentContext context, Kubectl kubectl)
+        public void UpdateResourceStatuses(IEnumerable<ResourceIdentifier> definedResources, DeploymentContext context, IKubectl kubectl)
         {
             var newResourceStatuses = resourceRetriever
                 .GetAllOwnedResources(definedResources, context, kubectl)
