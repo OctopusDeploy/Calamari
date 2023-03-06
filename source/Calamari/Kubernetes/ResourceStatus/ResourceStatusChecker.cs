@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -12,19 +13,25 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IResourceStatusChecker
     {
-        void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context, Kubectl kubectl);
+        bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context, Kubectl kubectl);
+    }
+
+    public enum DeploymentStatus
+    {
+        InProgress, Succeeded, Failed
     }
     
     public class ResourceStatusChecker : IResourceStatusChecker
     {
         private const int PollingIntervalSeconds = 2;
 
+        private IDictionary<string, Resource> resources = new Dictionary<string, Resource>();
+        private readonly Stopwatch stabilizationTimer = new Stopwatch();
+        private bool stabilizing;
+        private DeploymentStatus status = DeploymentStatus.InProgress;
+
         private readonly IResourceRetriever resourceRetriever;
         private readonly ILog log;
-        private IDictionary<string, Resource> resources = new Dictionary<string, Resource>();
-    
-        // TODO change this to timeout
-        private int count = 20;
 
         public ResourceStatusChecker(IResourceRetriever resourceRetriever, ILog log)
         {
@@ -32,17 +39,25 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
         }
         
-        public void CheckStatusUntilCompletion(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context, Kubectl kubectl)
+        public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, DeploymentContext context, Kubectl kubectl)
         {
             var definedResources = resourceIdentifiers.ToList();
-            while (!IsCompleted())
+            var deploymentTimeout = TimeSpan.FromSeconds(context.DeploymentTimeoutSeconds);
+            var stabilizationTimeout = TimeSpan.FromSeconds(context.StabilizationTimeoutSeconds);
+            
+            var deploymentTimer = new Stopwatch();
+            deploymentTimer.Start();
+            
+            while (deploymentTimer.Elapsed <= deploymentTimeout && ShouldContinue(stabilizationTimeout))
             {
-                CheckStatus(definedResources, context, kubectl);
+                UpdateResourceStatuses(definedResources, context, kubectl);
                 Thread.Sleep(PollingIntervalSeconds * 1000);
             }
+
+            return stabilizing == false && status == DeploymentStatus.Succeeded;
         }
 
-        public void CheckStatus(IEnumerable<ResourceIdentifier> definedResources, DeploymentContext context, Kubectl kubectl)
+        public void UpdateResourceStatuses(IEnumerable<ResourceIdentifier> definedResources, DeploymentContext context, Kubectl kubectl)
         {
             var newResourceStatuses = resourceRetriever
                 .GetAllOwnedResources(definedResources, context, kubectl)
@@ -51,7 +66,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             var createdOrUpdatedResources = GetCreatedOrUpdatedResources(newResourceStatuses);
             var removedResources = GetRemovedResources(newResourceStatuses);
             resources = newResourceStatuses;
-    
+
             foreach (var resource in createdOrUpdatedResources.Concat(removedResources))
             {
                 log.Verbose($"Resource updated: {JsonConvert.SerializeObject(resource)}");
@@ -59,20 +74,42 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
         }
 
-        private bool IsCompleted()
+        private bool ShouldContinue(TimeSpan stabilizationTimeout)
         {
-            return --count < 0 ||
-                   (resources.Count > 0 && resources.All(resource => resource.Value.Status == Resources.ResourceStatus.Successful));
+            var newStatus = GetStatus(resources.Values.ToList());
+            if (stabilizing)
+            {
+                if (stabilizationTimer.Elapsed > stabilizationTimeout)
+                {
+                    stabilizing = false;
+                    return false;
+                }
+
+                if (newStatus != status)
+                {
+                    status = newStatus;
+                    stabilizing = false;
+                    stabilizationTimer.Reset();
+                }
+            }
+            else if (newStatus != DeploymentStatus.InProgress)
+            {
+                status = newStatus;
+                stabilizing = true;
+                stabilizationTimer.Start();
+            }
+
+            return true;
         }
 
         private IEnumerable<Resource> GetCreatedOrUpdatedResources(IDictionary<string, Resource> newResourceStatuses)
         {
             var createdOrUpdated = new List<Resource>();
-            foreach (var status in newResourceStatuses)
+            foreach (var resource in newResourceStatuses)
             {
-                if (!resources.ContainsKey(status.Key) || status.Value.HasUpdate(resources[status.Key]))
+                if (!resources.ContainsKey(resource.Key) || resource.Value.HasUpdate(resources[resource.Key]))
                 {
-                    createdOrUpdated.Add(status.Value);
+                    createdOrUpdated.Add(resource.Value);
                 }
             }
             return createdOrUpdated;
@@ -92,6 +129,21 @@ namespace Calamari.Kubernetes.ResourceStatus
             return removed;
         }
 
+        private DeploymentStatus GetStatus(List<Resource> resources)
+        {
+            if (resources.All(resource => resource.Status == Resources.ResourceStatus.Successful))
+            {
+                return DeploymentStatus.Succeeded;
+            }
+
+            if (resources.Count(resource => resource.Status == Resources.ResourceStatus.Failed) > 0)
+            {
+                return DeploymentStatus.Failed;
+            }
+
+            return DeploymentStatus.InProgress;
+        }
+        
         private void SendServiceMessage(Resource resource)
         {
             // TODO: update this for database

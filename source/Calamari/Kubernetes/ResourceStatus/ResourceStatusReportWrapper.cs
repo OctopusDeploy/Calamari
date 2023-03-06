@@ -73,13 +73,17 @@ namespace Calamari.Kubernetes.ResourceStatus
                 variables.Get(SpecialVariables.GkeClusterName)
             }.FirstOrDefault(name => !string.IsNullOrEmpty(name));
 
-            var actionId = variables.Get("Octopus.Action.Id");
-            
-            var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
-
+            var actionId = variables.Get(SpecialVariables.ActionId);
+            var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
+            var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 180;
+            var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 60;
             var workingDirectory = Path.GetDirectoryName(script.File);
-            
             var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
+
+            if (definedResources.Count == 0)
+            {
+                return result;
+            }
 
             foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
             {
@@ -92,8 +96,22 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return new CommandResult(string.Empty, 1);
             }
 
-            statusChecker.CheckStatusUntilCompletion(definedResources, new DeploymentContext {Cluster = cluster, ActionId = actionId}, kubectl);
+            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(
+                definedResources, 
+                new DeploymentContext
+                {
+                    Cluster = cluster, 
+                    ActionId = actionId,
+                    DeploymentTimeoutSeconds = deploymentTimeoutSeconds,
+                    StabilizationTimeoutSeconds = stabilizationTimeoutSeconds
+                }, kubectl);
 
+            // TODO: what is a better way to signal failure?
+            if (!completedSuccessfully)
+            {
+                return new CommandResult("", 1, "Not all resources are deployed successfully during timeout");
+            }
+            
             return result;
         }
 

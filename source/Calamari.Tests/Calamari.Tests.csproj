@@ -165,13 +165,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Remove="Fixtures\StructuredVariables\CalamariFlavourProgramReplacerSelectionFixture.cs" />
-    <None Update="KubernetesFixtures\ResourceStatus\deployment-with-3-replicas.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="KubernetesFixtures\ResourceStatus\multiple-resources.yaml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="KubernetesFixtures\ResourceStatus\2-deployments-with-3-replicas-each.json">
+    <None Update="KubernetesFixtures\ResourceStatus\Resources\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
