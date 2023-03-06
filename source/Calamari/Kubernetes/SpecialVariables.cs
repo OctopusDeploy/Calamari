@@ -17,7 +17,7 @@
         public const string DeploymentTimeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string StabilizationTimeout = "Octopus.Action.Kubernetes.StabilizationTimeout";
 
-        public const string KubernetesResourceStatusServiceMessageName = "logData";
+        public const string KubernetesResourceStatusServiceMessageName = "k8s-status";
         
         public static class Helm
         {

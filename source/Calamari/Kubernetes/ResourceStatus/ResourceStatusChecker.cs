@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Newtonsoft.Json;
@@ -31,11 +32,13 @@ namespace Calamari.Kubernetes.ResourceStatus
         private DeploymentStatus status = DeploymentStatus.InProgress;
 
         private readonly IResourceRetriever resourceRetriever;
+        private readonly IVariables variables;
         private readonly ILog log;
 
-        public ResourceStatusChecker(IResourceRetriever resourceRetriever, ILog log)
+        public ResourceStatusChecker(IResourceRetriever resourceRetriever, IVariables variables, ILog log)
         {
             this.resourceRetriever = resourceRetriever;
+            this.variables = variables;
             this.log = log;
         }
         
@@ -148,6 +151,18 @@ namespace Calamari.Kubernetes.ResourceStatus
             var parameters = new Dictionary<string, string>
             {
                 {"type", "k8s-status"},
+                {"actionId", variables.Get("Octopus.Action.Id")},
+                {"taskId", variables.Get(KnownVariables.ServerTask.Id)},
+                {"targetId", variables.Get("Octopus.Machine.Id")},
+                {"environmentId", variables.Get(DeploymentEnvironment.Id)},
+                {"spaceId", variables.Get("Octopus.Space.Id")},
+                {"tenantId", variables.Get(DeploymentVariables.Tenant.Id)},
+                {"projectId", variables.Get(ProjectVariables.Id)},
+                {"uuid", resource.Uid},         
+                {"kind", resource.Kind},
+                {"name", resource.Name},
+                {"namespace", resource.Namespace},
+                {"status", resource.Status.ToString()},
                 {"data", JsonConvert.SerializeObject(resource)}
             };
     
