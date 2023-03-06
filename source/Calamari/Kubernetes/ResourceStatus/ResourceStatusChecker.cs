@@ -153,7 +153,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {"data", JsonConvert.SerializeObject(resource)}
             };
     
-            var message = new ServiceMessage("logData", parameters);
+            var message = new ServiceMessage(SpecialVariables.KubernetesResourceStatusServiceMessageName, parameters);
             log.WriteServiceMessage(message);
         }
     }
