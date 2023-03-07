@@ -12,8 +12,8 @@ namespace Calamari.Kubernetes.ResourceStatus
     public interface IResourceStatusChecker
     {
         /// <summary>
-        /// Polling the resource status in a cluster and sends the update to the server,
-        /// unitl the deployment timeout is met, or the deployment has succeeded or failed after stably.
+        /// Polls the resource status in a cluster and sends the update to the server
+        /// until the deployment timeout is met, or the deployment has succeeded or failed stably.
         /// </summary>
         /// <returns>true if all resources have been deployed successfully, otherwise false</returns>
         bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
@@ -22,11 +22,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             IKubectl kubectl);
     }
 
-    public enum DeploymentStatus
-    {
-        InProgress, Succeeded, Failed
-    }
-    
     /// <summary>
     /// <inheritdoc />
     /// </summary>

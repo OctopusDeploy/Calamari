@@ -80,31 +80,28 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             
             if (arguments.Length < 2 || arguments[0] != "get")
             {
-                return Enumerable.Empty<string>();
+                yield break;
             }
 
             var kind = arguments[1];
             var nameProvided = arguments.Length >= 3 && !arguments[2].StartsWith("-");
             
-            string output;
             if (!nameProvided)
             {
                 // when resource name is not provided, return all resources of that kind in a List response
                 var items = new JArray(data.Where(item => item.SelectToken("$.kind").Value<string>() == kind));
-                output = $"{{items: {items}}}" ;
+                yield return $"{{items: {items}}}" ;
             }
             else
             {
                 // when resource name is provided, return that resource
                 var name = arguments[2];
-                output = data
+                yield return data
                     .FirstOrDefault(item => 
                         item.SelectToken("$.kind").Value<string>() == kind 
                         && item.SelectToken("$.metadata.name").Value<string>() == name)
                     ?.ToString();
             }
-            
-            return new string[] { output };
         }
 
         public CommandResult ExecuteCommand(params string[] arguments) => new CommandResult("kubectl", 0);

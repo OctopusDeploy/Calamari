@@ -39,7 +39,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             var result = kubectl.ExecuteCommandAndReturnOutput(new[]
             {
                 "get", resourceIdentifier.Kind, resourceIdentifier.Name, "-o json", $"-n {resourceIdentifier.Namespace}"
-            }).Join("");
+            }).Join(string.Empty);
             return ResourceFactory.FromJson(result);
         }
     
@@ -54,7 +54,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             var result = kubectl.ExecuteCommandAndReturnOutput(new[]
             {
                 "get", childKind, "-o json", $"-n {parentResource.Namespace}"
-            }).Join("");
+            }).Join(string.Empty);
             
             var resources = ResourceFactory.FromListJson(result);
             var children = resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid)).ToList();

@@ -1,5 +1,6 @@
 using System.Linq;
 using Calamari.Kubernetes.ResourceStatus;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -17,7 +18,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var identifier = got.First();
             identifier.Kind.Should().Be("Deployment");
             identifier.Name.Should().Be("nginx");
-            identifier.Namespace.Should().Be("default");
+            identifier.Namespace.Should().Be("test");
         }
 
         [Test]
@@ -26,6 +27,28 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var input = TestFileLoader.Load("multiple-resources.yaml");
             var got = KubernetesYaml.GetDefinedResources(input);
             got.Should().HaveCount(3);
+            
+            got.FirstOrDefault(id => id.Kind == "Deployment")
+                .Should().BeEquivalentTo(new ResourceIdentifier()
+                {
+                    Kind = "Deployment",
+                    Name = "nginx",
+                    Namespace = "default"
+                });
+            got.FirstOrDefault(id => id.Kind == "ConfigMap")
+                .Should().BeEquivalentTo(new ResourceIdentifier()
+                {
+                    Kind = "ConfigMap",
+                    Name = "config",
+                    Namespace = "default"
+                });
+            got.FirstOrDefault(id => id.Kind == "Pod")
+                .Should().BeEquivalentTo(new ResourceIdentifier()
+                {
+                    Kind = "Pod",
+                    Name = "curl",
+                    Namespace = "default"
+                });
         }
     }
 }
