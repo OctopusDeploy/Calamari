@@ -91,6 +91,11 @@ namespace Calamari.Kubernetes.ResourceStatus
                     status = newStatus;
                     stabilizing = false;
                     stabilizationTimer.Reset();
+                    if (newStatus != DeploymentStatus.InProgress)
+                    {
+                        stabilizing = true;
+                        stabilizationTimer.Start();
+                    }
                 }
             }
             else if (newStatus != DeploymentStatus.InProgress)

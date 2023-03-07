@@ -67,7 +67,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             
             var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
             var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 180;
-            var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 60;
+            var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 30;
             var workingDirectory = Path.GetDirectoryName(script.File);
             var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
 
@@ -92,11 +92,10 @@ namespace Calamari.Kubernetes.ResourceStatus
                 TimeSpan.FromSeconds(deploymentTimeoutSeconds), 
                 TimeSpan.FromSeconds(stabilizationTimeoutSeconds), 
                 kubectl);
-
-            // TODO: what is a better way to signal failure?
+            
             if (!completedSuccessfully)
             {
-                return new CommandResult("", 1, "Not all resources are deployed successfully during timeout");
+                return new CommandResult(string.Empty, 1, "Not all resources are deployed successfully within timeout");
             }
             
             return result;
