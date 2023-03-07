@@ -181,7 +181,6 @@ namespace Calamari.Kubernetes
             bool TrySetupContext(string kubeConfig, string @namespace, string accountType)
             {
                 var clusterUrl = variables.Get(SpecialVariables.ClusterUrl);
-                Console.WriteLine($"TrySetupContext(): Cluster Url retrieved: {clusterUrl}");
                 var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
                 var eksUseInstanceRole = variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole");
                 var podServiceAccountTokenPath = variables.Get("Octopus.Action.Kubernetes.PodServiceAccountTokenPath");
@@ -388,7 +387,6 @@ namespace Calamari.Kubernetes
             {
                 var clusterName = variables.Get(SpecialVariables.EksClusterName);
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
-                Console.WriteLine($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
 
                 if (TrySetKubeConfigAuthenticationToAwsCli(clusterName, clusterUrl, user))
                 {
@@ -414,8 +412,6 @@ namespace Calamari.Kubernetes
                     if (awsCliVersion.CompareTo(minimumAwsCliVersionForAuth) > 0)
                     {
                         var region = GetEksClusterRegion(clusterUrl);
-                        Console.WriteLine(
-                            $"TrySetKubeConfigAuthenticationToAwsCli(): clusterUrl: {clusterUrl} region: {region}");
                         if (!string.IsNullOrWhiteSpace(region))
                         {
                             var apiVersion = GetEksClusterApiVersion(clusterName, region);
@@ -454,17 +450,7 @@ namespace Calamari.Kubernetes
                     "get-token",
                     $"--cluster-name={clusterName}",
                     $"--region={region}");
-                Console.WriteLine($"ClusterName: {clusterName}");
-                Console.WriteLine($"Region: {region}");
-                Console.WriteLine("All log lines:");
-                foreach (var logLine in logLines)
-                {
-                    Console.WriteLine($"'{logLine}'");
-                }
                 var awsEksTokenCommand = string.Join("\n", logLines);
-
-                Console.WriteLine("Token command:");
-                Console.WriteLine(awsEksTokenCommand);
                 return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion").ToString();
             }
 
