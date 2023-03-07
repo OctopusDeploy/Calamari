@@ -133,7 +133,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 AwsCliExecutable = await DownloadCli("aws",
                     () =>
                     {
-                        var version = "2.8.3";
+                        var version = "2.11.0";
                         return Task.FromResult((version, GetAwsCliDownloadLink(version)));
                     },
                     async (destinationDirectoryName, tuple) =>
