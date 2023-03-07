@@ -6,8 +6,16 @@ using Calamari.Kubernetes.ResourceStatus.Resources;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
+    /// <summary>
+    /// Checks the statuses of resources in a cluster and reports any updates to the server.
+    /// </summary>
     public interface IResourceStatusChecker
     {
+        /// <summary>
+        /// Polling the resource status in a cluster and sends the update to the server,
+        /// unitl the deployment timeout is met, or the deployment has succeeded or failed after stably.
+        /// </summary>
+        /// <returns>true if all resources have been deployed successfully, otherwise false</returns>
         bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
             ICountdownTimer deploymentTimer, 
             ICountdownTimer stabilizationTimer, 
@@ -19,6 +27,9 @@ namespace Calamari.Kubernetes.ResourceStatus
         InProgress, Succeeded, Failed
     }
     
+    /// <summary>
+    /// <inheritdoc />
+    /// </summary>
     public class ResourceStatusChecker : IResourceStatusChecker
     {
         private const int PollingIntervalSeconds = 2;

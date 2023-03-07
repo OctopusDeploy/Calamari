@@ -3,6 +3,9 @@ using System.Diagnostics;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
+    /// <summary>
+    /// Represents a timer that completes the countdown after a predefined period of time once started.
+    /// </summary>
     public interface ICountdownTimer
     {
         void Start();
@@ -11,6 +14,9 @@ namespace Calamari.Kubernetes.ResourceStatus
         bool HasCompleted();
     }
     
+    /// <summary>
+    /// <inheritdoc />
+    /// </summary>
     public class CountdownTimer : ICountdownTimer
     {
         private readonly TimeSpan duration;

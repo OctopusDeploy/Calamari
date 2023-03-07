@@ -11,9 +11,15 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IResourceUpdateReporter
     {
+        /// <summary>
+        /// Reports the difference of the originalStatuses and newStatuses to server.
+        /// </summary>
         void ReportUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses);
     }
     
+    /// <summary>
+    /// <inheritdoc />
+    /// </summary>
     public class ResourceUpdateReporter : IResourceUpdateReporter
     {
         private readonly IVariables variables;
