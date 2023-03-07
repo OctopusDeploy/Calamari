@@ -181,6 +181,7 @@ namespace Calamari.Kubernetes
             bool TrySetupContext(string kubeConfig, string @namespace, string accountType)
             {
                 var clusterUrl = variables.Get(SpecialVariables.ClusterUrl);
+                Console.WriteLine($"TrySetupContext(): Cluster Url retrieved: {clusterUrl}");
                 var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
                 var eksUseInstanceRole = variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole");
                 var podServiceAccountTokenPath = variables.Get("Octopus.Action.Kubernetes.PodServiceAccountTokenPath");
@@ -387,6 +388,7 @@ namespace Calamari.Kubernetes
             {
                 var clusterName = variables.Get(SpecialVariables.EksClusterName);
                 log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
+                Console.WriteLine($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
 
                 if (TrySetKubeConfigAuthenticationToAwsCli(clusterName, clusterUrl, user))
                 {

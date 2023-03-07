@@ -255,6 +255,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Aws.Region", "eks_region");
             variables.Set($"{account}.AccessKey", "eksAccessKey");
             variables.Set($"{account}.SecretKey", "eksSecretKey");
+            Console.WriteLine($"CLUSTER URL VALUE: {variables.Get(SpecialVariables.ClusterUrl)}");
             var wrapper = CreateWrapper();
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
         }
