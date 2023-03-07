@@ -405,7 +405,7 @@ namespace Calamari.Kubernetes
                     log.Verbose("Could not find the aws cli, falling back to the aws-iam-authenticator.");
                     return false;
                 }
-                
+
                 try {
                     var awsCliVersion = GetAwsCliVersion();
                     var minimumAwsCliVersionForAuth = new SemanticVersion("1.16.156");
@@ -418,7 +418,7 @@ namespace Calamari.Kubernetes
                             SetKubeConfigAuthenticationToAwsCli(user, clusterName, region, apiVersion);
                             return true;
                         }
-                        
+
                         log.Verbose("The EKS cluster Url specified should contain a valid aws region name");
                     }
 
@@ -431,7 +431,7 @@ namespace Calamari.Kubernetes
 
                 return false;
             }
-            
+
             string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
 
             SemanticVersion GetAwsCliVersion()
@@ -445,12 +445,20 @@ namespace Calamari.Kubernetes
 
             string GetEksClusterApiVersion(string clusterName, string region)
             {
-                var awsEksTokenCommand = string.Join("\n", ExecuteCommandAndReturnOutput(aws,
+                var logLines = ExecuteCommandAndReturnOutput(aws,
                     "eks",
                     "get-token",
                     $"--cluster-name={clusterName}",
-                    $"--region={region}"));
+                    $"--region={region}");
+                log.Warn("All log lines:");
+                foreach (var logLine in logLines)
+                {
+                    log.Warn($"'{logLine}'");
+                }
+                var awsEksTokenCommand = string.Join("\n", logLines);
 
+                log.Warn("Token command:");
+                log.Warn(awsEksTokenCommand);
                 return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion").ToString();
             }
 
@@ -568,7 +576,7 @@ namespace Calamari.Kubernetes
 
                 var commandString = invocation.ToString();
                 log.Verbose(commandString);
-                
+
                 var result = commandLineRunner.Execute(invocation);
 
                 foreach (var message in captureCommandOutput.Messages)
