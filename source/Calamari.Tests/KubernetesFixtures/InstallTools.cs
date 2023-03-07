@@ -134,7 +134,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     () =>
                     {
                         var version = "2.8.3";
-                        return Task.FromResult((version, GetAwsCliDownloadLink()));
+                        return Task.FromResult((version, GetAwsCliDownloadLink(version)));
                     },
                     async (destinationDirectoryName, tuple) =>
                     {
@@ -281,14 +281,14 @@ namespace Calamari.Tests.KubernetesFixtures
             return "AWSCLIV2.msi";
         }
 
-        static string GetAwsCliDownloadLink()
+        static string GetAwsCliDownloadLink(string version)
         {
             if (CalamariEnvironment.IsRunningOnNix)
-                return "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip";
+                return $"https://awscli.amazonaws.com/awscli-exe-linux-x86_64-{version}.zip";
             if (CalamariEnvironment.IsRunningOnMac)
-                return "https://awscli.amazonaws.com/AWSCLIV2.pkg";
+                return $"https://awscli.amazonaws.com/AWSCLIV2-{version}.pkg";
 
-            return "https://awscli.amazonaws.com/AWSCLIV2.msi";
+            return $"https://awscli.amazonaws.com/AWSCLIV2-{version}.msi";
         }
 
         static string GetAwsCliExecutablePath(string extractPath)
