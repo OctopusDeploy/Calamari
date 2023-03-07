@@ -17,17 +17,18 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonIgnore]
         public IEnumerable<string> OwnerUids { get; }
     
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        [JsonIgnore]
         public bool? Removed { get; set; }
-        
+        [JsonIgnore]
         public string Uid { get; }
+        [JsonIgnore]
         public string Kind { get; }
+        [JsonIgnore]
         public string Name { get; }
+        [JsonIgnore]
         public string Namespace { get; }
-        
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonIgnore]
         public virtual ResourceStatus Status => ResourceStatus.Successful;
-    
         [JsonIgnore]
         public virtual string ChildKind => "";
     

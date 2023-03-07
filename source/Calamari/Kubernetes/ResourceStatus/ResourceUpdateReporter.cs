@@ -80,7 +80,8 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {"name", resource.Name},
                 {"namespace", resource.Namespace},
                 {"status", resource.Status.ToString()},
-                {"data", JsonConvert.SerializeObject(resource)}
+                {"data", JsonConvert.SerializeObject(resource)},
+                {"removed", resource.Removed.ToString()}
             };
     
             var message = new ServiceMessage(SpecialVariables.KubernetesResourceStatusServiceMessageName, parameters);
