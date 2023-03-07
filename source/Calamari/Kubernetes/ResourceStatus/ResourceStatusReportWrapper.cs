@@ -89,8 +89,8 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(
                 definedResources, 
-                TimeSpan.FromSeconds(deploymentTimeoutSeconds), 
-                TimeSpan.FromSeconds(stabilizationTimeoutSeconds), 
+                new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds)), 
+                new CountdownTimer(TimeSpan.FromSeconds(stabilizationTimeoutSeconds)), 
                 kubectl);
             
             if (!completedSuccessfully)

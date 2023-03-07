@@ -1,10 +1,6 @@
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 
@@ -12,7 +8,10 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IResourceStatusChecker
     {
-        bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, TimeSpan deploymentTimeout, TimeSpan stabilizationTimeout, IKubectl kubectl);
+        bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
+            ICountdownTimer deploymentTimer, 
+            ICountdownTimer stabilizationTimer, 
+            IKubectl kubectl);
     }
 
     public enum DeploymentStatus
@@ -25,9 +24,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         private const int PollingIntervalSeconds = 2;
 
         private IDictionary<string, Resource> statuses = new Dictionary<string, Resource>();
-        private readonly Stopwatch stabilizationTimer = new Stopwatch();
-        private bool stabilizing;
-        private DeploymentStatus status = DeploymentStatus.InProgress;
+        private DeploymentStatus deploymentStatus = DeploymentStatus.InProgress;
 
         private readonly IResourceRetriever resourceRetriever;
         private readonly IResourceUpdateReporter reporter;
@@ -38,20 +35,23 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.reporter = reporter;
         }
         
-        public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, TimeSpan deploymentTimeout, TimeSpan stabilizationTimeout, IKubectl kubectl)
+        public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
+            ICountdownTimer deploymentTimer, 
+            ICountdownTimer stabilizationTimer, 
+            IKubectl kubectl)
         {
             var definedResources = resourceIdentifiers.ToList();
 
-            var deploymentTimer = new Stopwatch();
             deploymentTimer.Start();
             
-            while (deploymentTimer.Elapsed <= deploymentTimeout && ShouldContinue(stabilizationTimeout))
+            while (ShouldContinue(deploymentTimer, stabilizationTimer))
             {
                 UpdateResourceStatuses(definedResources, kubectl);
                 Thread.Sleep(PollingIntervalSeconds * 1000);
             }
 
-            return stabilizing == false && status == DeploymentStatus.Succeeded;
+            return deploymentStatus == DeploymentStatus.Succeeded &&
+                   (!stabilizationTimer.HasStarted() || stabilizationTimer.HasCompleted());
         }
 
         public void UpdateResourceStatuses(IEnumerable<ResourceIdentifier> definedResources, IKubectl kubectl)
@@ -64,33 +64,39 @@ namespace Calamari.Kubernetes.ResourceStatus
             statuses = newResourceStatuses;
         }
 
-        private bool ShouldContinue(TimeSpan stabilizationTimeout)
+        private bool ShouldContinue(ICountdownTimer deploymentTimer, ICountdownTimer stabilizationTimer)
         {
-            var newStatus = GetStatus(statuses.Values.ToList());
-            if (stabilizing)
+            if (statuses.Count == 0)
             {
-                if (stabilizationTimer.Elapsed > stabilizationTimeout)
-                {
-                    stabilizing = false;
-                    return false;
-                }
+                return true;
+            }
+            var newStatus = GetStatus(statuses.Values.ToList());
+            var result = ShouldContinue(deploymentTimer, stabilizationTimer, deploymentStatus, newStatus);
+            deploymentStatus = newStatus;
+            return result;
+        }
+        
+        internal bool ShouldContinue(ICountdownTimer deploymentTimer, ICountdownTimer stabilizationTimer, DeploymentStatus oldStatus, DeploymentStatus newStatus)
+        {
+            if (deploymentTimer.HasCompleted() || stabilizationTimer.HasCompleted())
+            {
+                return false;
+            }
 
-                if (newStatus != status)
+            if (stabilizationTimer.HasStarted())
+            {
+                if (newStatus != oldStatus)
                 {
-                    status = newStatus;
-                    stabilizing = false;
                     stabilizationTimer.Reset();
+
                     if (newStatus != DeploymentStatus.InProgress)
                     {
-                        stabilizing = true;
                         stabilizationTimer.Start();
                     }
                 }
             }
             else if (newStatus != DeploymentStatus.InProgress)
             {
-                status = newStatus;
-                stabilizing = true;
                 stabilizationTimer.Start();
             }
 
