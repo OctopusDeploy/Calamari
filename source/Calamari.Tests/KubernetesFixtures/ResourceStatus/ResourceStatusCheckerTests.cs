@@ -7,8 +7,6 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     [TestFixture]
     public class ResourceStatusCheckerTests
     {
-        private readonly ResourceStatusChecker checker = new ResourceStatusChecker(null, null);
-        
         [TestCase(true, DeploymentStatus.Failed, DeploymentStatus.InProgress)]
         [TestCase(true, DeploymentStatus.Failed, DeploymentStatus.Failed)]
         [TestCase(true, DeploymentStatus.Failed, DeploymentStatus.Succeeded)]
@@ -29,7 +27,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 stabilizationTimer.Start();
             }
             
-            var shouldContinue = checker.ShouldContinue(
+            var shouldContinue = ResourceStatusChecker.ShouldContinue(
                 deploymentTimer, 
                 stabilizationTimer, 
                 oldStatus,
@@ -48,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             stabilizationTimer.Start();
             stabilizationTimer.Complete();
             
-            var shouldContinue = checker.ShouldContinue(
+            var shouldContinue = ResourceStatusChecker.ShouldContinue(
                 deploymentTimer, 
                 stabilizationTimer, 
                 status,
@@ -69,7 +67,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             
             stabilizationTimer.Start();
 
-            var shouldContinue = checker.ShouldContinue(
+            var shouldContinue = ResourceStatusChecker.ShouldContinue(
                 deploymentTimer, 
                 stabilizationTimer, 
                 oldStatus,
@@ -88,7 +86,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
 
-            var shouldContinue = checker.ShouldContinue(
+            var shouldContinue = ResourceStatusChecker.ShouldContinue(
                 deploymentTimer, 
                 stabilizationTimer, 
                 DeploymentStatus.InProgress,

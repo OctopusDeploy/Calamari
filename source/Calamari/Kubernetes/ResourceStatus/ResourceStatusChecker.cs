@@ -76,7 +76,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             return result;
         }
         
-        internal bool ShouldContinue(ICountdownTimer deploymentTimer, ICountdownTimer stabilizationTimer, DeploymentStatus oldStatus, DeploymentStatus newStatus)
+        internal static bool ShouldContinue(ICountdownTimer deploymentTimer, ICountdownTimer stabilizationTimer, DeploymentStatus oldStatus, DeploymentStatus newStatus)
         {
             if (deploymentTimer.HasCompleted() || stabilizationTimer.HasCompleted())
             {

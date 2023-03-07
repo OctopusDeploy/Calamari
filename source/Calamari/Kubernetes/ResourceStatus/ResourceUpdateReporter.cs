@@ -36,7 +36,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
         }
         
-        private IEnumerable<Resource> GetCreatedOrUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses)
+        private static IEnumerable<Resource> GetCreatedOrUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses)
         {
             var createdOrUpdated = new List<Resource>();
             foreach (var resource in newStatuses)
@@ -49,7 +49,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             return createdOrUpdated;
         }
 
-        private IEnumerable<Resource> GetRemovedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses)
+        private static IEnumerable<Resource> GetRemovedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses)
         {
             var removed = new List<Resource>();
             foreach (var resource in originalStatuses)

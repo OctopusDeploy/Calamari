@@ -11,7 +11,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         [Test]
         public void ShouldGenerateCorrectIdentifiers()
         {
-            var input = ResourceLoader.Load("single-deployment.yaml");
+            var input = TestFileLoader.Load("single-deployment.yaml");
             var got = KubernetesYaml.GetDefinedResources(input);
             got.Should().HaveCount(1);
             var identifier = got.First();
@@ -23,7 +23,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         [Test]
         public void ShouldHandleMultipleResourcesDefinedInTheSameFile()
         {
-            var input = ResourceLoader.Load("multiple-resources.yaml");
+            var input = TestFileLoader.Load("multiple-resources.yaml");
             var got = KubernetesYaml.GetDefinedResources(input);
             got.Should().HaveCount(3);
         }

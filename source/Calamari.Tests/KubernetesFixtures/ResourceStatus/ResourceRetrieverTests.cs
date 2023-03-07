@@ -18,7 +18,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         [Test]
         public void ReturnsCorrectObjectHierarchyForDeployments()
         {
-            var kubectl = new MockKubectl(ResourceLoader.Load("deployment-with-3-replicas.json"));
+            var kubectl = new MockKubectl(TestFileLoader.Load("deployment-with-3-replicas.json"));
             var resourceRetriever = new ResourceRetriever();
 
             var got = resourceRetriever.GetAllOwnedResources(
@@ -39,7 +39,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         [Test]
         public void ReturnsCorrectObjectHierarchyForMultipleResources()
         {
-            var kubectl = new MockKubectl(ResourceLoader.Load("2-deployments-with-3-replicas-each.json"));
+            var kubectl = new MockKubectl(TestFileLoader.Load("2-deployments-with-3-replicas-each.json"));
             var resourceRetriever = new ResourceRetriever();
     
             var got = resourceRetriever.GetAllOwnedResources(
