@@ -412,6 +412,8 @@ namespace Calamari.Kubernetes
                     if (awsCliVersion.CompareTo(minimumAwsCliVersionForAuth) > 0)
                     {
                         var region = GetEksClusterRegion(clusterUrl);
+                        Console.WriteLine(
+                            $"TrySetKubeConfigAuthenticationToAwsCli(): clusterUrl: {clusterUrl} region: {region}");
                         if (!string.IsNullOrWhiteSpace(region))
                         {
                             var apiVersion = GetEksClusterApiVersion(clusterName, region);
@@ -450,6 +452,8 @@ namespace Calamari.Kubernetes
                     "get-token",
                     $"--cluster-name={clusterName}",
                     $"--region={region}");
+                Console.WriteLine($"ClusterName: {clusterName}");
+                Console.WriteLine($"Region: {region}");
                 Console.WriteLine("All log lines:");
                 foreach (var logLine in logLines)
                 {
