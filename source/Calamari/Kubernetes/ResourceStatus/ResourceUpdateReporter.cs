@@ -37,7 +37,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             var removedResources = GetRemovedResources(originalStatuses, newStatuses);
             foreach (var resource in createdOrUpdatedResources.Concat(removedResources))
             {
-                log.Verbose($"Resource updated: {JsonConvert.SerializeObject(resource)}");
                 SendServiceMessage(resource);
             }
         }
