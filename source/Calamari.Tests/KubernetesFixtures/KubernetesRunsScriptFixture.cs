@@ -238,6 +238,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
+        [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
         [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
         public void ExecutionWithEKS_AwsCLIAuthenticator()
         {
