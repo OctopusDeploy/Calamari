@@ -302,6 +302,12 @@ namespace Calamari.Tests.KubernetesFixtures
                                     "aws.exe");
             }
 
+            // For developers on a Mac - ensure aws cli is installed manually and on your PATH.
+            if (CalamariEnvironment.IsRunningOnMac)
+            {
+                return "aws";
+            }
+
             return Path.Combine(extractPath, "aws", "dist", "aws");
         }
 

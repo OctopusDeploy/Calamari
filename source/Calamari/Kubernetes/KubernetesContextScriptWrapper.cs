@@ -445,12 +445,11 @@ namespace Calamari.Kubernetes
 
             string GetEksClusterApiVersion(string clusterName, string region)
             {
-                var awsEksTokenCommand = ExecuteCommandAndReturnOutput(aws,
-                                                                       "eks",
-                                                                       "get-token",
-                                                                       $"--cluster-name={clusterName}",
-                                                                       $"--region={region}")
-                    .FirstOrDefault();
+                var awsEksTokenCommand = string.Join("\n", ExecuteCommandAndReturnOutput(aws,
+                    "eks",
+                    "get-token",
+                    $"--cluster-name={clusterName}",
+                    $"--region={region}"));
 
                 return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion").ToString();
             }
