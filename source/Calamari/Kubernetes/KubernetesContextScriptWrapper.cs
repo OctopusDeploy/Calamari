@@ -450,15 +450,15 @@ namespace Calamari.Kubernetes
                     "get-token",
                     $"--cluster-name={clusterName}",
                     $"--region={region}");
-                log.Warn("All log lines:");
+                Console.WriteLine("All log lines:");
                 foreach (var logLine in logLines)
                 {
-                    log.Warn($"'{logLine}'");
+                    Console.WriteLine($"'{logLine}'");
                 }
                 var awsEksTokenCommand = string.Join("\n", logLines);
 
-                log.Warn("Token command:");
-                log.Warn(awsEksTokenCommand);
+                Console.WriteLine("Token command:");
+                Console.WriteLine(awsEksTokenCommand);
                 return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion").ToString();
             }
 
