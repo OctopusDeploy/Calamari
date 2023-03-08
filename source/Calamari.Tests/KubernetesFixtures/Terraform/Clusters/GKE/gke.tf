@@ -2,6 +2,7 @@
 resource "google_compute_network" "vpc" {
   name                    = "${random_pet.prefix.id}-vpc"
   auto_create_subnetworks = "false"
+  project                 = "octopus-api-tester"
 }
 
 # Subnet
@@ -10,6 +11,7 @@ resource "google_compute_subnetwork" "subnet" {
   region        = local.region
   network       = google_compute_network.vpc.name
   ip_cidr_range = "10.10.0.0/24"
+  project       = "octopus-api-tester"
 }
 
 resource "google_container_cluster" "default" {
