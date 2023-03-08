@@ -209,7 +209,7 @@ namespace Calamari.Tests.KubernetesFixtures
                         var downloadUrl = GetGcloudDownloadLink(tuple.version);
                         var fileName = GetGcloudZipFileName(tuple.version);
 
-                        await DownloadGcloud(GetGcloudZipFileName(tuple.version),
+                        await DownloadGcloud(fileName,
                             client,
                             downloadUrl,
                             destinationDirectoryName);
