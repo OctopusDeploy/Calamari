@@ -25,6 +25,9 @@ resource "google_container_cluster" "default" {
       issue_client_certificate = true
     }
   }
+
+  network    = google_compute_network.vpc.name
+  subnetwork = google_compute_subnetwork.subnet.name
 }
 
 data "google_client_config" "default" {
