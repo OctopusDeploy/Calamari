@@ -17,7 +17,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public IEnumerable<string> OwnerUids { get; }
     
         [JsonIgnore]
-        public bool? Removed { get; set; }
+        public bool Removed { get; set; }
         [JsonIgnore]
         public string Uid { get; }
         [JsonIgnore]

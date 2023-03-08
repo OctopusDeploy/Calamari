@@ -132,8 +132,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount()
         {
-            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
-            Log = serviceMessageCollectorLog;
+            Log = new InMemoryLog();
         
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
@@ -186,10 +185,10 @@ namespace Calamari.Tests.KubernetesFixtures
                     { "awsAssumeRole", bool.FalseString },
                 });
         
-            serviceMessageCollectorLog.ServiceMessages.Should()
-                                      .ContainSingle(s => s.Properties["name"] == targetName)
-                                      .Which.Should()
-                                      .BeEquivalentTo(expectedServiceMessage);
+            Log.ServiceMessages.Should()
+                .ContainSingle(s => s.Properties["name"] == targetName)
+                .Which.Should()
+                .BeEquivalentTo(expectedServiceMessage);
         }
     }
 }

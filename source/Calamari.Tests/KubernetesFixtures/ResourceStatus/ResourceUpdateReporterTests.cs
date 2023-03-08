@@ -14,7 +14,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     public class ResourceUpdateReporterTests
     {
         [Test]
-        public void CalculatesCreatedResourcesCorrectly()
+        public void ReportsCreatedResourcesCorrectly()
         {
             var variables = new CalamariVariables();
             var log = new InMemoryLog();
@@ -22,53 +22,75 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var reporter = new ResourceUpdateReporter(variables, log);
             
             var originalStatuses = new Dictionary<string, Resource>();
-            var newStatuses = ResourceFactory.FromListJson(TestFileLoader.Load("two-deployments.json"))
+            var newStatuses = ResourceFactory
+                .FromListJson(TestFileLoader.Load("two-deployments.json")) 
                 .ToDictionary(resource => resource.Uid, resource => resource);
             
             reporter.ReportUpdatedResources(originalStatuses, newStatuses);
 
-            log.Messages.Where(m => m.FormattedMessage.Contains(SpecialVariables.KubernetesResourceStatusServiceMessageName))
-                .Should().HaveCount(2);
+            var serviceMessages = log.ServiceMessages
+                .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
+                .ToList();
+
+            serviceMessages.Should().HaveCount(2);
+            foreach (var message in serviceMessages)
+            {
+                message.Properties["removed"].Should().Be(false.ToString());
+            }
         }
         
         [Test]
-        public void CalculatesUpdatedResourcesCorrectly()
+        public void ReportsUpdatedResourcesCorrectly()
         {
             var variables = new CalamariVariables();
             var log = new InMemoryLog();
             
             var reporter = new ResourceUpdateReporter(variables, log);
             
-            var originalStatuses = ResourceFactory.FromListJson(TestFileLoader.Load("two-deployments.json"))
+            var originalStatuses = ResourceFactory
+                .FromListJson(TestFileLoader.Load("two-deployments.json"))
                 .ToDictionary(resource => resource.Uid, resource => resource);
-            var newStatuses = ResourceFactory.FromListJson(TestFileLoader.Load("one-old-deployment-and-one-new-deployment.json"))
+            var newStatuses = ResourceFactory
+                .FromListJson(TestFileLoader.Load("one-old-deployment-and-one-new-deployment.json"))
                 .ToDictionary(resource => resource.Uid, resource => resource);
             
             reporter.ReportUpdatedResources(originalStatuses, newStatuses);
             
-            log.Messages
-                .Where(m => m.FormattedMessage.Contains(SpecialVariables.KubernetesResourceStatusServiceMessageName))
-                .Should().HaveCount(1);
+            var serviceMessages = log.ServiceMessages
+                .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
+                .ToList();
+
+            serviceMessages.Should().HaveCount(1);
+            var updated = serviceMessages.First();
+            updated.Properties["removed"].Should().Be(false.ToString());
+            updated.Properties["name"].Should().Be("nginx");
         }
         
         [Test]
-        public void CalculatesRemovedResourcesCorrectly()
+        public void ReportsRemovedResourcesCorrectly()
         {
             var variables = new CalamariVariables();
             var log = new InMemoryLog();
             
             var reporter = new ResourceUpdateReporter(variables, log);
             
-            var originalStatuses = ResourceFactory.FromListJson(TestFileLoader.Load("two-deployments.json"))
+            var originalStatuses = ResourceFactory
+                .FromListJson(TestFileLoader.Load("two-deployments.json"))
                 .ToDictionary(resource => resource.Uid, resource => resource);
-            var newStatuses = ResourceFactory.FromListJson(TestFileLoader.Load("one-deployment.json"))
+            var newStatuses = ResourceFactory
+                .FromListJson(TestFileLoader.Load("one-deployment.json"))
                 .ToDictionary(resource => resource.Uid, resource => resource);
             
             reporter.ReportUpdatedResources(originalStatuses, newStatuses);
             
-            log.Messages
-                .Where(m => m.FormattedMessage.Contains(SpecialVariables.KubernetesResourceStatusServiceMessageName))
-                .Should().HaveCount(1);
+            var serviceMessages = log.ServiceMessages
+                .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
+                .ToList();
+
+            serviceMessages.Should().HaveCount(1);
+            var removed = serviceMessages.First();
+            removed.Properties["removed"].Should().Be(true.ToString());
+            removed.Properties["name"].Should().Be("redis");
         }
     }
 }
