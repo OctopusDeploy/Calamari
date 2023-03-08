@@ -1,4 +1,5 @@
 using System.IO;
+using Calamari.Testing.Helpers;
 
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 {
@@ -6,7 +7,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     {
         public static string Load(string filename)
         {
-            return File.ReadAllText(Path.Combine("KubernetesFixtures", "ResourceStatus", "assets", filename));
+            var filePath = TestEnvironment.GetTestPath("KubernetesFixtures", "ResourceStatus", "assets", filename);
+            return File.ReadAllText(filePath);
         }
     }
 }
