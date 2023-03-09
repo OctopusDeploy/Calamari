@@ -133,7 +133,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 AwsCliExecutable = await DownloadCli("aws",
                     () =>
                     {
-                        var version = "latest";
+                        var version = "2.8.3";
                         return Task.FromResult((version, GetAwsCliDownloadLink(version)));
                     },
                     async (destinationDirectoryName, tuple) =>
@@ -191,8 +191,8 @@ namespace Calamari.Tests.KubernetesFixtures
                             }
                         }
 
-                        return !string.IsNullOrWhiteSpace(destinationDirectoryName) 
-                            ? GetAwsCliExecutablePath(destinationDirectoryName) 
+                        return !string.IsNullOrWhiteSpace(destinationDirectoryName)
+                            ? GetAwsCliExecutablePath(destinationDirectoryName)
                             : string.Empty;
                     });
             }
