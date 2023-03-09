@@ -12,7 +12,8 @@ namespace Calamari.Common.Features.Discovery
             string projectName,
             string? tenantName,
             string[] roles,
-            string? workerPoolId)
+            string? workerPoolId,
+            FeedImage? healthCheckContainer)
         {
             SpaceName = spaceName;
             EnvironmentName = environmentName;
@@ -20,6 +21,7 @@ namespace Calamari.Common.Features.Discovery
             TenantName = tenantName;
             Roles = roles;
             WorkerPoolId = workerPoolId;
+            HealthCheckContainer = healthCheckContainer;
         }
 
         public string SpaceName { get; private set; }
@@ -28,6 +30,7 @@ namespace Calamari.Common.Features.Discovery
         public string? TenantName { get; private set; }
         public string[] Roles { get; private set; }
         public string? WorkerPoolId { get; private set; }
+        public FeedImage? HealthCheckContainer { get; private set; }
 
         public TargetMatchResult Match(TargetTags tags)
         {
@@ -76,5 +79,16 @@ namespace Calamari.Common.Features.Discovery
                 ? TargetMatchResult.Failure(failureReasons)
                 : TargetMatchResult.Success(this.Roles.First(r => r.Equals(tags.Role, StringComparison.OrdinalIgnoreCase)));
         }
+    }
+
+    public class FeedImage{
+        public FeedImage(string imageNameAndTag, string feedIdOrName)
+        {
+            ImageNameAndTag = imageNameAndTag;
+            FeedIdOrName = feedIdOrName;
+        }
+
+        public string ImageNameAndTag { get; private set; }
+        public string FeedIdOrName { get; private set; }
     }
 }

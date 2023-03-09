@@ -18,7 +18,7 @@ namespace Calamari.Kubernetes.Commands
         public const string Name = "kubernetes-target-discovery";
         public const string CreateKubernetesTargetServiceMessageName = "create-kubernetestarget";
         public const string ContextVariableName = "Octopus.TargetDiscovery.Context";
-        
+
         readonly ILog log;
         readonly IVariables variables;
         readonly IKubernetesDiscovererFactory discovererFactory;
@@ -46,7 +46,7 @@ namespace Calamari.Kubernetes.Commands
                 log.Warn($"Could not find target discovery context in variable {ContextVariableName}.");
                 return ExitStatus.Success;
             }
-            
+
             if (!TryGetAuthenticationContextTypeAndDiscoveryContextScope(json, out var type, out var scope))
                 return ExitStatus.OtherError;
 
@@ -98,7 +98,8 @@ namespace Calamari.Kubernetes.Commands
 
         void WriteTargetCreationServiceMessage(KubernetesCluster cluster, TargetMatchResult matchResult, TargetDiscoveryScope scope)
         {
-            var parameters = new Dictionary<string, string> {
+            var parameters = new Dictionary<string, string>
+            {
                 { "name", cluster.Name },
                 { "clusterName", cluster.ClusterName },
                 { "clusterUrl", cluster.Endpoint },
@@ -111,8 +112,8 @@ namespace Calamari.Kubernetes.Commands
                 { "octopusClientCertificateIdOrName", null },
                 { "octopusServerCertificateIdOrName", null },
                 { "octopusRoles", matchResult.Role },
-                { "healthCheckContainerImageFeedIdOrName", null },
-                { "healthCheckContainerImage", null },
+                { "healthCheckContainerImageFeedIdOrName", scope.HealthCheckContainer?.FeedIdOrName },
+                { "healthCheckContainerImage", scope.HealthCheckContainer?.ImageNameAndTag },
                 { "updateIfExisting", bool.TrueString },
                 { "isDynamic", bool.TrueString },
                 { "clusterProject", null },
@@ -133,7 +134,7 @@ namespace Calamari.Kubernetes.Commands
                 CreateKubernetesTargetServiceMessageName,
                 parameters.Where(p => p.Value != null)
                           .ToDictionary(p => p.Key, p => p.Value));
-            
+
             log.WriteServiceMessage(serviceMessage);
         }
 
@@ -143,8 +144,8 @@ namespace Calamari.Kubernetes.Commands
         }
 
         bool TryGetAuthenticationContextTypeAndDiscoveryContextScope(
-            string contextJson, 
-            out string type, 
+            string contextJson,
+            out string type,
             out TargetDiscoveryScope scope)
         {
             type = null;
@@ -153,23 +154,23 @@ namespace Calamari.Kubernetes.Commands
             {
                 var discoveryContext = JsonConvert
                     .DeserializeObject<TargetDiscoveryContext<AuthenticationType>>(contextJson);
-                
+
                 type = discoveryContext?.Authentication?.Type;
                 scope = discoveryContext?.Scope;
-                
+
                 if (type != null && scope != null)
                     return true;
-                
-                log.Error($"Could not extract Type or Scope from {ContextVariableName}, the data is in the wrong format.");
+
+                log.Error($"Could not extract Authentication Type or Scope from {ContextVariableName}, the data is in the wrong format.");
                 return false;
             }
             catch (JsonException ex)
             {
-                log.Error($"Could not extract Type or Scope from {ContextVariableName}, the data is in the wrong format: {ex.Message}");
+                log.Error($"Could not extract Authentication Type or Scope from {ContextVariableName}, the data is in the wrong format: {ex.Message}");
                 return false;
             }
         }
-        
+
         class AuthenticationType : ITargetDiscoveryAuthenticationDetails
         {
             public string Type { get; set; }
