@@ -12,7 +12,11 @@ terraform {
   required_version = ">= 0.15"
 }
 
+locals {
+  region = "australia-southeast1"
+}
+
 provider "google" {
-  region      = "australia-southeast1"
+  region      = local.region
   zone        = "australia-southeast1-c"
 }
