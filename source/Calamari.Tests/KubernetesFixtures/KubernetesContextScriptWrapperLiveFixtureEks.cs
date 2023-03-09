@@ -351,22 +351,19 @@ namespace Calamari.Tests.KubernetesFixtures
                     Regions = new []{region}
                 };
                 
-                var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
-                Log = serviceMessageCollectorLog;
-                
                 DoDiscovery(authenticationDetails);
 
-                serviceMessageCollectorLog.ServiceMessages.Should().BeEmpty();
+                Log.ServiceMessages.Should().BeEmpty();
 
-                serviceMessageCollectorLog.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Error);
+                Log.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Error);
 
-                serviceMessageCollectorLog.StandardError.Should().BeEmpty();
+                Log.StandardError.Should().BeEmpty();
 
-                serviceMessageCollectorLog.Messages.Should()
-                                          .ContainSingle(m =>
-                                              m.Level == InMemoryLog.Level.Warn &&
-                                              m.FormattedMessage ==
-                                              "Unable to authorise credentials, see verbose log for details.");
+                Log.Messages.Should()
+                    .ContainSingle(m =>
+                        m.Level == InMemoryLog.Level.Warn &&
+                        m.FormattedMessage ==
+                        "Unable to authorise credentials, see verbose log for details.");
             }
             finally
             {
@@ -394,23 +391,20 @@ namespace Calamari.Tests.KubernetesFixtures
                 Role = new AwsAssumedRole { Type = "noAssumedRole" },
                 Regions = new []{region}
             };
-            
-            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
-            Log = serviceMessageCollectorLog;
-            
+
             DoDiscovery(authenticationDetails);
 
-            serviceMessageCollectorLog.ServiceMessages.Should().BeEmpty();
+            Log.ServiceMessages.Should().BeEmpty();
 
-            serviceMessageCollectorLog.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Error);
+            Log.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Error);
 
-            serviceMessageCollectorLog.StandardError.Should().BeEmpty();
+            Log.StandardError.Should().BeEmpty();
 
-            serviceMessageCollectorLog.Messages.Should()
-                                      .ContainSingle(m =>
-                                          m.Level == InMemoryLog.Level.Warn &&
-                                          m.FormattedMessage ==
-                                          "Unable to authorise credentials, see verbose log for details."); 
+            Log.Messages.Should()
+                .ContainSingle(m =>
+                    m.Level == InMemoryLog.Level.Warn &&
+                    m.FormattedMessage ==
+                    "Unable to authorise credentials, see verbose log for details."); 
         }
     }
 }
