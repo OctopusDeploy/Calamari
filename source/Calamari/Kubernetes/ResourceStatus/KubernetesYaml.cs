@@ -21,14 +21,11 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var parser = new Parser(input);
             parser.Consume<StreamStart>();
-
-            var result = new List<ResourceIdentifier>();
+            
             while (!parser.Accept<StreamEnd>(out _))
             {
-                result.Add(GetDefinedResource(parser));
+                yield return GetDefinedResource(parser);
             }
-
-            return result;
         }
 
         private static ResourceIdentifier GetDefinedResource(IParser parser)
