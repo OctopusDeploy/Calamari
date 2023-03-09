@@ -46,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures
             aksPodServiceAccountToken = jsonOutput["aks_service_account_token"]["value"].Value<string>();
             azurermResourceGroup = jsonOutput["aks_rg_name"]["value"].Value<string>();
         }
-        
+
         protected override Dictionary<string, string> GetEnvironmentVars()
         {
             azureSubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
@@ -66,7 +66,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public void AuthorisingWithPodServiceAccountToken()
         {
             variables.Set(SpecialVariables.ClusterUrl, aksClusterHost);
-            
+
             using (var dir = TemporaryDirectory.Create())
             using (var podServiceAccountToken = new TemporaryFile(Path.Combine(dir.DirectoryPath, "podServiceAccountToken")))
             using (var certificateAuthority = new TemporaryFile(Path.Combine(dir.DirectoryPath, "certificateAuthority")))
@@ -79,7 +79,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 TestScriptAndVerifyCluster(wrapper, "Test-Script");
             }
         }
-        
+
         [Test]
         public void AuthorisingWithAzureServicePrincipal()
         {
@@ -116,7 +116,7 @@ namespace Calamari.Tests.KubernetesFixtures
             const string certificateAuthority = "myauthority";
             const string unreachableClusterUrl = "https://example.kubernetes.com";
             const string clientCert = "myclientcert";
-            
+
             variables.Set(SpecialVariables.ClusterUrl, unreachableClusterUrl);
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", aksClusterCaCertificate);
@@ -130,17 +130,21 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount(bool setHealthCheckContainer)
         {
-            Log = new InMemoryLog();
-        
+            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
+            Log = serviceMessageCollectorLog;
+
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
                 "testProject",
                 null,
                 new[] { "discovery-role" },
-                "WorkerPool-1");
-        
+                "WorkerPool-1",
+                setHealthCheckContainer ? new FeedImage("MyImage:with-tag", "Feeds-123") : null);
+
             var account = new ServicePrincipalAccount(
                 ExternalVariables.Get(ExternalVariable.AzureSubscriptionId),
                 ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId),
@@ -149,46 +153,54 @@ namespace Calamari.Tests.KubernetesFixtures
                 null,
                 null,
                 null);
-        
+
             var authenticationDetails =
                 new AccountAuthenticationDetails<ServicePrincipalAccount>(
                     "Azure",
                     "Accounts-1",
                     account);
-        
+
             var targetDiscoveryContext =
                 new TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(scope,
                     authenticationDetails);
-        
+
             var result =
                 ExecuteDiscoveryCommand(targetDiscoveryContext,
                     new[]{"Calamari.Azure"}
                 );
-            
+
             result.AssertSuccess();
 
             var targetName = $"aks/{azureSubscriptionId}/{azurermResourceGroup}/{aksClusterName}";
+            var serviceMessageProperties = new Dictionary<string, string>
+            {
+                { "name", targetName },
+                { "clusterName", aksClusterName },
+                { "clusterResourceGroup", azurermResourceGroup },
+                { "skipTlsVerification", bool.TrueString },
+                { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
+                { "octopusAccountIdOrName", "Accounts-1" },
+                { "octopusRoles", "discovery-role" },
+                { "updateIfExisting", bool.TrueString },
+                { "isDynamic", bool.TrueString },
+                { "awsUseWorkerCredentials", bool.FalseString },
+                { "awsAssumeRole", bool.FalseString }
+            };
+
+            if (scope.HealthCheckContainer is not null)
+            {
+                serviceMessageProperties.Add("healthCheckContainerImageFeedIdOrName", scope.HealthCheckContainer.FeedIdOrName);
+                serviceMessageProperties.Add("healthCheckContainerImage", scope.HealthCheckContainer.ImageNameAndTag);
+            }
+
             var expectedServiceMessage = new ServiceMessage(
                 KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
-                new Dictionary<string, string>
-                {
-                    { "name", targetName },
-                    { "clusterName", aksClusterName },
-                    { "clusterResourceGroup", azurermResourceGroup },
-                    { "skipTlsVerification", bool.TrueString },
-                    { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
-                    { "octopusAccountIdOrName", "Accounts-1" },
-                    { "octopusRoles", "discovery-role" },
-                    { "updateIfExisting", bool.TrueString },
-                    { "isDynamic", bool.TrueString },
-                    { "awsUseWorkerCredentials", bool.FalseString },
-                    { "awsAssumeRole", bool.FalseString },
-                });
-        
-            Log.ServiceMessages.Should()
-                .ContainSingle(s => s.Properties["name"] == targetName)
-                .Which.Should()
-                .BeEquivalentTo(expectedServiceMessage);
+                serviceMessageProperties);
+
+            serviceMessageCollectorLog.ServiceMessages.Should()
+                                      .ContainSingle(s => s.Properties["name"] == targetName)
+                                      .Which.Should()
+                                      .BeEquivalentTo(expectedServiceMessage);
         }
     }
 }

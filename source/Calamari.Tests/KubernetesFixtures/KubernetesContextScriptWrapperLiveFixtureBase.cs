@@ -27,7 +27,7 @@ namespace Calamari.Tests.KubernetesFixtures
     public abstract class KubernetesContextScriptWrapperLiveFixtureBase : CalamariFixture
     {
         protected const string TestNamespace = "calamari-testing";
-        
+
         protected IVariables variables;
         protected string testFolder;
 
@@ -106,7 +106,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
             }
         }
-        
+
         protected void TestScriptAndVerifyCluster(IScriptWrapper wrapper, string scriptName, string kubectlExe = "kubectl")
         {
             using (var dir = TemporaryDirectory.Create())
@@ -123,7 +123,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
             }
         }
-        
+
         protected void DoDiscovery(AwsAuthenticationDetails authenticationDetails)
         {
             var scope = new TargetDiscoveryScope("TestSpace",
@@ -131,25 +131,27 @@ namespace Calamari.Tests.KubernetesFixtures
                 "testProject",
                 null,
                 new[] { "discovery-role" },
-                "WorkerPools-1");
+                "WorkerPools-1",
+                null);
 
             var targetDiscoveryContext =
                 new TargetDiscoveryContext<AwsAuthenticationDetails>(scope,
                     authenticationDetails);
-        
+
             var result =
                 ExecuteDiscoveryCommand(targetDiscoveryContext,
                     new[]{"Calamari.Aws"}
                 );
-            
+
             result.AssertSuccess();
         }
-        
+
         protected void DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(
-            AwsAuthenticationDetails authenticationDetails, 
+            AwsAuthenticationDetails authenticationDetails,
             Dictionary<string,string> properties)
         {
-            Log = new InMemoryLog();
+            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
+            Log = serviceMessageCollectorLog;
 
             DoDiscovery(authenticationDetails);
 
@@ -157,12 +159,12 @@ namespace Calamari.Tests.KubernetesFixtures
                 KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
                 properties);
 
-            Log.ServiceMessages.Should()
-                .ContainSingle(s => s.Properties["name"] == properties["name"])
-                .Which.Should()
-                .BeEquivalentTo(expectedServiceMessage);
+            serviceMessageCollectorLog.ServiceMessages.Should()
+                                      .ContainSingle(s => s.Properties["name"] == properties["name"])
+                                      .Which.Should()
+                                      .BeEquivalentTo(expectedServiceMessage);
         }
-        
+
         protected CalamariResult ExecuteDiscoveryCommand<TAuthenticationDetails>(
             TargetDiscoveryContext<TAuthenticationDetails> discoveryContext,
             IEnumerable<string> extensions,
@@ -174,13 +176,24 @@ namespace Calamari.Tests.KubernetesFixtures
                 variables.Add(KubernetesDiscoveryCommand.ContextVariableName, JsonConvert.SerializeObject(discoveryContext));
                 foreach (var (key, value) in otherVariables)
                     variables.Add(key, value);
-                
+
                 variables.Save(variablesFile.FilePath);
 
                 return InvokeInProcess(Calamari()
                                        .Action(KubernetesDiscoveryCommand.Name)
                                        .Argument("variables", variablesFile.FilePath)
                                        .Argument("extensions", string.Join(',', extensions)));
+            }
+        }
+
+        protected class ServiceMessageCollectorLog : InMemoryLog
+        {
+            public List<ServiceMessage> ServiceMessages { get; } = new List<ServiceMessage>();
+            public override void WriteServiceMessage(ServiceMessage serviceMessage)
+            {
+                ServiceMessages.Add(serviceMessage);
+
+                base.WriteServiceMessage(serviceMessage);
             }
         }
     }
