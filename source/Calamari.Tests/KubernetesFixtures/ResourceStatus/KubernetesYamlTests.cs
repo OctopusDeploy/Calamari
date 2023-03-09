@@ -29,26 +29,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             got.Should().HaveCount(3);
             
             got.FirstOrDefault(id => id.Kind == "Deployment")
-                .Should().BeEquivalentTo(new ResourceIdentifier()
-                {
-                    Kind = "Deployment",
-                    Name = "nginx",
-                    Namespace = "default"
-                });
+                .Should().BeEquivalentTo(new ResourceIdentifier("Deployment", "nginx", "default"));
             got.FirstOrDefault(id => id.Kind == "ConfigMap")
-                .Should().BeEquivalentTo(new ResourceIdentifier()
-                {
-                    Kind = "ConfigMap",
-                    Name = "config",
-                    Namespace = "default"
-                });
+                .Should().BeEquivalentTo(new ResourceIdentifier("ConfigMap", "config", "default"));
             got.FirstOrDefault(id => id.Kind == "Pod")
-                .Should().BeEquivalentTo(new ResourceIdentifier()
-                {
-                    Kind = "Pod",
-                    Name = "curl",
-                    Namespace = "default"
-                });
+                .Should().BeEquivalentTo(new ResourceIdentifier("Pod", "curl", "default"));
         }
     }
 }

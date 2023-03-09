@@ -150,8 +150,7 @@ namespace Calamari.Tests.KubernetesFixtures
             AwsAuthenticationDetails authenticationDetails,
             Dictionary<string,string> properties)
         {
-            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
-            Log = serviceMessageCollectorLog;
+            Log = new InMemoryLog();
 
             DoDiscovery(authenticationDetails);
 
@@ -159,10 +158,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
                 properties);
 
-            serviceMessageCollectorLog.ServiceMessages.Should()
-                                      .ContainSingle(s => s.Properties["name"] == properties["name"])
-                                      .Which.Should()
-                                      .BeEquivalentTo(expectedServiceMessage);
+            Log.ServiceMessages.Should()
+                .ContainSingle(s => s.Properties["name"] == properties["name"])
+                .Which.Should()
+                .BeEquivalentTo(expectedServiceMessage);
         }
 
         protected CalamariResult ExecuteDiscoveryCommand<TAuthenticationDetails>(
@@ -183,17 +182,6 @@ namespace Calamari.Tests.KubernetesFixtures
                                        .Action(KubernetesDiscoveryCommand.Name)
                                        .Argument("variables", variablesFile.FilePath)
                                        .Argument("extensions", string.Join(',', extensions)));
-            }
-        }
-
-        protected class ServiceMessageCollectorLog : InMemoryLog
-        {
-            public List<ServiceMessage> ServiceMessages { get; } = new List<ServiceMessage>();
-            public override void WriteServiceMessage(ServiceMessage serviceMessage)
-            {
-                ServiceMessages.Add(serviceMessage);
-
-                base.WriteServiceMessage(serviceMessage);
             }
         }
     }

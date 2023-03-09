@@ -9,8 +9,15 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
        // since the resource name must be unique across all api versions.
        // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
    
-       public string Kind { get; set; }
-       public string Name { get; set; }
-       public string Namespace { get; set; }
+       public string Kind { get; }
+       public string Name { get; }
+       public string Namespace { get; }
+
+       public ResourceIdentifier(string kind, string name, string @namespace)
+       {
+           Kind = kind;
+           Name = name;
+           Namespace = @namespace;
+       }
    } 
 }

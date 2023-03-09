@@ -134,8 +134,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [TestCase(true)]
         public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount(bool setHealthCheckContainer)
         {
-            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
-            Log = serviceMessageCollectorLog;
+            Log = new InMemoryLog();
 
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
@@ -197,10 +196,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
                 serviceMessageProperties);
 
-            serviceMessageCollectorLog.ServiceMessages.Should()
-                                      .ContainSingle(s => s.Properties["name"] == targetName)
-                                      .Which.Should()
-                                      .BeEquivalentTo(expectedServiceMessage);
+            Log.ServiceMessages.Should()
+                .ContainSingle(s => s.Properties["name"] == targetName)
+                .Which.Should()
+                .BeEquivalentTo(expectedServiceMessage);
         }
     }
 }
