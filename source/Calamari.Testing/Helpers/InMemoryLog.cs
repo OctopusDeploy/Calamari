@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
 
 namespace Calamari.Testing.Helpers
 {
@@ -10,6 +11,7 @@ namespace Calamari.Testing.Helpers
         public List<Message> Messages { get; } = new List<Message>();
         public List<string> StandardOut { get; } = new List<string>();
         public List<string> StandardError  { get; }= new List<string>();
+        public List<ServiceMessage> ServiceMessages { get; } = new List<ServiceMessage>();
 
         public IEnumerable<string> MessagesVerboseFormatted => Messages.Where(m => m.Level == Level.Verbose).Select(m => m.FormattedMessage);
         public IEnumerable<string> MessagesInfoFormatted => Messages.Where(m => m.Level == Level.Info).Select(m => m.FormattedMessage);
@@ -76,6 +78,12 @@ namespace Calamari.Testing.Helpers
             base.ErrorFormat(messageFormat, args);
         }
 
+        public override void WriteServiceMessage(ServiceMessage serviceMessage)
+        {
+            ServiceMessages.Add(serviceMessage);
+            base.WriteServiceMessage(serviceMessage);
+        }
+        
         public class Message
         {
             public Level Level { get; }
