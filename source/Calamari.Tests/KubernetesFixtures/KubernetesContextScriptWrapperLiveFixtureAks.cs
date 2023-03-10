@@ -134,8 +134,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [TestCase(true)]
         public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount(bool setHealthCheckContainer)
         {
-            Log = new InMemoryLog();
-
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
                 "testProject",

@@ -150,8 +150,6 @@ namespace Calamari.Tests.KubernetesFixtures
             AwsAuthenticationDetails authenticationDetails,
             Dictionary<string,string> properties)
         {
-            Log = new InMemoryLog();
-
             DoDiscovery(authenticationDetails);
 
             var expectedServiceMessage = new ServiceMessage(

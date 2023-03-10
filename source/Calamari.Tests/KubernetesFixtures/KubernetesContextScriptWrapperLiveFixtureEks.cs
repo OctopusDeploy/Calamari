@@ -351,8 +351,6 @@ namespace Calamari.Tests.KubernetesFixtures
                     Regions = new []{region}
                 };
                 
-                Log = new InMemoryLog();
-                
                 DoDiscovery(authenticationDetails);
 
                 Log.ServiceMessages.Should().BeEmpty();
@@ -364,7 +362,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 Log.Messages.Should()
                     .ContainSingle(m =>
                         m.Level == InMemoryLog.Level.Warn &&
-                        m.FormattedMessage == "Unable to authorise credentials, see verbose log for details.");
+                        m.FormattedMessage ==
+                        "Unable to authorise credentials, see verbose log for details.");
             }
             finally
             {
@@ -392,9 +391,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 Role = new AwsAssumedRole { Type = "noAssumedRole" },
                 Regions = new []{region}
             };
-            
-            Log = new InMemoryLog();
-            
+
             DoDiscovery(authenticationDetails);
 
             Log.ServiceMessages.Should().BeEmpty();
@@ -406,7 +403,8 @@ namespace Calamari.Tests.KubernetesFixtures
             Log.Messages.Should()
                 .ContainSingle(m =>
                     m.Level == InMemoryLog.Level.Warn &&
-                    m.FormattedMessage == "Unable to authorise credentials, see verbose log for details."); 
+                    m.FormattedMessage ==
+                    "Unable to authorise credentials, see verbose log for details."); 
         }
     }
 }

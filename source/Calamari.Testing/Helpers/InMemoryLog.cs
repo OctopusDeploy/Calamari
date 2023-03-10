@@ -10,7 +10,7 @@ namespace Calamari.Testing.Helpers
     {
         public List<Message> Messages { get; } = new List<Message>();
         public List<string> StandardOut { get; } = new List<string>();
-        public List<string> StandardError  { get; } = new List<string>();
+        public List<string> StandardError  { get; }= new List<string>();
         public List<ServiceMessage> ServiceMessages { get; } = new List<ServiceMessage>();
 
         public IEnumerable<string> MessagesVerboseFormatted => Messages.Where(m => m.Level == Level.Verbose).Select(m => m.FormattedMessage);
