@@ -19,7 +19,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
             ICountdownTimer deploymentTimer, 
             ICountdownTimer stabilizationTimer, 
-            IKubectl kubectl);
+            Kubectl kubectl);
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
             ICountdownTimer deploymentTimer, 
             ICountdownTimer stabilizationTimer, 
-            IKubectl kubectl)
+            Kubectl kubectl)
         {
             var definedResources = resourceIdentifiers.ToList();
 
@@ -60,7 +60,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                    (!stabilizationTimer.HasStarted() || stabilizationTimer.HasCompleted());
         }
 
-        public void UpdateResourceStatuses(IEnumerable<ResourceIdentifier> definedResources, IKubectl kubectl)
+        public void UpdateResourceStatuses(IEnumerable<ResourceIdentifier> definedResources, Kubectl kubectl)
         {
             var newResourceStatuses = resourceRetriever
                 .GetAllOwnedResources(definedResources, kubectl)

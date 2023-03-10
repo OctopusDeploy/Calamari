@@ -11,16 +11,7 @@ using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes.Integration
 {
-    public interface IKubectl
-    {
-        bool TrySetKubectl();
-        CommandResult ExecuteCommand(params string[] arguments);
-        void ExecuteCommandAndAssertSuccess(params string[] arguments);
-        IEnumerable<string> ExecuteCommandAndReturnOutput(params string[] arguments);
-        Maybe<SemanticVersion> GetVersion();
-    }
-    
-    public class Kubectl : CommandLineTool, IKubectl
+    public class Kubectl : CommandLineTool
     {
         readonly string customKubectlExecutable;
 
@@ -35,8 +26,8 @@ namespace Calamari.Kubernetes.Integration
             if (string.IsNullOrEmpty(customKubectlExecutable))
             {
                 var foundExecutable = CalamariEnvironment.IsRunningOnWindows
-                    ? ExecuteCommandAndReturnOutput("where", "kubectl.exe").FirstOrDefault()
-                    : ExecuteCommandAndReturnOutput("which", "kubectl").FirstOrDefault();
+                    ? base.ExecuteCommandAndReturnOutput("where", "kubectl.exe").FirstOrDefault()
+                    : base.ExecuteCommandAndReturnOutput("which", "kubectl").FirstOrDefault();
 
                 if (string.IsNullOrEmpty(foundExecutable))
                 {

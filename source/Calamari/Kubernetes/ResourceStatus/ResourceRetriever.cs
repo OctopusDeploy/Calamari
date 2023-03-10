@@ -14,13 +14,20 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// <summary>
         /// Gets the resources identified by the resourceIdentifiers and all their owned resources
         /// </summary>
-        IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, IKubectl kubectl);
+        IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, Kubectl kubectl);
     }
     
     public class ResourceRetriever : IResourceRetriever
     {
+        private readonly IKubectlGet kubectlGet;
+
+        public ResourceRetriever(IKubectlGet kubectlGet)
+        {
+            this.kubectlGet = kubectlGet;
+        }
+        
         /// <inheritdoc />
-        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, IKubectl kubectl)
+        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, Kubectl kubectl)
         {
             var resources = resourceIdentifiers
                 .Select(identifier => GetResource(identifier, kubectl))
@@ -34,27 +41,21 @@ namespace Calamari.Kubernetes.ResourceStatus
             return resources;
         }
     
-        private Resource GetResource(ResourceIdentifier resourceIdentifier, IKubectl kubectl)
+        private Resource GetResource(ResourceIdentifier resourceIdentifier, Kubectl kubectl)
         {
-            var result = kubectl.ExecuteCommandAndReturnOutput(new[]
-            {
-                "get", resourceIdentifier.Kind, resourceIdentifier.Name, "-o json", $"-n {resourceIdentifier.Namespace}"
-            }).Join(string.Empty);
+            var result = kubectlGet.Resource(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, kubectl);
             return ResourceFactory.FromJson(result);
         }
     
-        private IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl)
+        private IEnumerable<Resource> GetChildrenResources(Resource parentResource, Kubectl kubectl)
         {
             var childKind = parentResource.ChildKind;
             if (string.IsNullOrEmpty(childKind))
             {
                 return Enumerable.Empty<Resource>();
             }
-            
-            var result = kubectl.ExecuteCommandAndReturnOutput(new[]
-            {
-                "get", childKind, "-o json", $"-n {parentResource.Namespace}"
-            }).Join(string.Empty);
+
+            var result = kubectlGet.AllResources(childKind, parentResource.Namespace, kubectl);
             
             var resources = ResourceFactory.FromListJson(result);
             var children = resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid)).ToList();
