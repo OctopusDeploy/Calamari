@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 
@@ -31,20 +30,31 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             var resources = resourceIdentifiers
                 .Select(identifier => GetResource(identifier, kubectl))
+                .Where(resource => resource != null)
                 .ToList();
-            var current = 0;
-            while (current < resources.Count)
+
+            foreach (var resource in resources)
             {
-                resources.AddRange(GetChildrenResources(resources[current], kubectl));
-                ++current;
+                EnrichWithChildren(resource, kubectl);
             }
-            return resources;
+
+            return resources.SelectMany(IterateResourceTree);
+        }
+
+        private void EnrichWithChildren(Resource resource, Kubectl kubectl)
+        {
+            var children = GetChildrenResources(resource, kubectl).ToList();
+            foreach (var child in children)
+            {
+                EnrichWithChildren(child, kubectl);
+            }
+            resource.Children = children;
         }
     
         private Resource GetResource(ResourceIdentifier resourceIdentifier, Kubectl kubectl)
         {
             var result = kubectlGet.Resource(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, kubectl);
-            return ResourceFactory.FromJson(result);
+            return string.IsNullOrEmpty(result) ? null : ResourceFactory.FromJson(result);
         }
     
         private IEnumerable<Resource> GetChildrenResources(Resource parentResource, Kubectl kubectl)
@@ -56,11 +66,20 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             var result = kubectlGet.AllResources(childKind, parentResource.Namespace, kubectl);
-            
             var resources = ResourceFactory.FromListJson(result);
-            var children = resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid)).ToList();
-            parentResource.Children = children;
-            return children;
+            return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid)).ToList();
+        }
+
+        private static IEnumerable<Resource> IterateResourceTree(Resource root)
+        {
+            foreach (var resource in root.Children ?? Enumerable.Empty<Resource>())
+            {
+                foreach (var child in IterateResourceTree(resource))
+                {
+                    yield return child;
+                }
+            }
+            yield return root;
         }
     }
 }
