@@ -116,7 +116,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return DeploymentStatus.Succeeded;
             }
 
-            if (resources.Count(resource => resource.Status == Resources.ResourceStatus.Failed) > 0)
+            if (resources.Any(resource => resource.Status == Resources.ResourceStatus.Failed))
             {
                 return DeploymentStatus.Failed;
             }

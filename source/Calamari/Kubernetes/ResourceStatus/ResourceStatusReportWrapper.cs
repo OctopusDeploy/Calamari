@@ -58,6 +58,11 @@ namespace Calamari.Kubernetes.ResourceStatus
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
+            var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
+            var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 100;
+            var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 10;
+            var workingDirectory = Path.GetDirectoryName(script.File);
+            
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
 
             if (!TryReadManifestFile(out var content))
@@ -65,10 +70,6 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return result;
             }
             
-            var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
-            var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 100;
-            var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 10;
-            var workingDirectory = Path.GetDirectoryName(script.File);
             var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
 
             if (definedResources.Count == 0)
@@ -95,7 +96,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             
             if (!completedSuccessfully)
             {
-                return new CommandResult(string.Empty, 1, "Not all resources are deployed successfully within timeout");
+                return new CommandResult(string.Empty, 1, "Not all resources have deployed successfully within timeout");
             }
             
             return result;

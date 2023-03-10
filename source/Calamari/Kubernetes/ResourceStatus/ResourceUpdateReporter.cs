@@ -43,15 +43,10 @@ namespace Calamari.Kubernetes.ResourceStatus
         
         private static IEnumerable<Resource> GetCreatedOrUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses)
         {
-            var createdOrUpdated = new List<Resource>();
-            foreach (var resource in newStatuses)
-            {
-                if (!originalStatuses.ContainsKey(resource.Key) || resource.Value.HasUpdate(originalStatuses[resource.Key]))
-                {
-                    createdOrUpdated.Add(resource.Value);
-                }
-            }
-            return createdOrUpdated;
+            return newStatuses.Where(resource =>
+                    !originalStatuses.ContainsKey(resource.Key) ||
+                    resource.Value.HasUpdate(originalStatuses[resource.Key]))
+                .Select(resource => resource.Value);
         }
 
         private static IEnumerable<Resource> GetRemovedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses)
