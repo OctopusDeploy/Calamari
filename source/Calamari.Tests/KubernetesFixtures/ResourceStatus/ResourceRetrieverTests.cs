@@ -24,7 +24,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                     new ResourceIdentifier("Deployment", "nginx", "octopus")
                 },
                 null);
-            
+
             got.Should().BeEquivalentTo(new object[]
             {
                 new
@@ -45,34 +45,21 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                             }
                         }
                     }
-                },
-                new
-                {
-                    Kind = "ReplicaSet",
-                    Children = new object[]
-                    {
-                        new {Kind = "Pod"},
-                        new {Kind = "Pod"},
-                        new {Kind = "Pod"}
-                    }
-                },
-                new {Kind = "Pod"},
-                new {Kind = "Pod"},
-                new {Kind = "Pod"}
+                }
             });
         }
-    
+
         [Test]
         public void ReturnsCorrectObjectHierarchyForMultipleResources()
         {
             var kubectlGet = new MockKubectlGet(TestFileLoader.Load("2-deployments-with-3-replicas-each.json"));
             var resourceRetriever = new ResourceRetriever(kubectlGet);
-    
+
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
                     new ResourceIdentifier("Deployment", "nginx", "default"),
-                    new ResourceIdentifier("Deployment", "curl" , "default"),
+                    new ResourceIdentifier("Deployment", "curl", "default"),
                 },
                 null);
 
@@ -82,26 +69,40 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 {
                     Kind = "Deployment",
                     Name = "nginx",
+                    Namespace = "default",
+                    Children = new object[]
+                    {
+                        new
+                        {
+                            Kind = "ReplicaSet",
+                            Children = new object[]
+                            {
+                                new {Kind = "Pod"},
+                                new {Kind = "Pod"},
+                                new {Kind = "Pod"},
+                            }
+                        },
+                    }
                 },
-                new
-                {
-                    Kind = "ReplicaSet",
-                },
-                new {Kind = "Pod"},
-                new {Kind = "Pod"},
-                new {Kind = "Pod"},
                 new
                 {
                     Kind = "Deployment",
                     Name = "curl",
+                    Namespace = "default",
+                    Children = new object[]
+                    {
+                        new
+                        {
+                            Kind = "ReplicaSet",
+                            Children = new object[]
+                            {
+                                new {Kind = "Pod"},
+                                new {Kind = "Pod"},
+                                new {Kind = "Pod"},
+                            }
+                        },
+                    }
                 },
-                new
-                {
-                    Kind = "ReplicaSet",
-                },
-                new {Kind = "Pod"},
-                new {Kind = "Pod"},
-                new {Kind = "Pod"}
             });
         }
     }
@@ -114,22 +115,22 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             data = JArray.Parse(json).Cast<JObject>();
         }
-        
+
         public string Resource(string kind, string name, string @namespace, Kubectl kubectl)
         {
             var result = data
                 .FirstOrDefault(item =>
-                    item.SelectToken("$.kind")!.Value<string>() == kind
-                    && item.SelectToken("$.metadata.name")!.Value<string>() == name
-                    && item.SelectToken($".metadata.namespace")!.Value<string>() == @namespace);
+                    item.SelectToken("$.kind").Value<string>() == kind
+                    && item.SelectToken("$.metadata.name").Value<string>() == name
+                    && item.SelectToken($".metadata.namespace").Value<string>() == @namespace);
             return result == null ? string.Empty : result.ToString();
         }
 
         public string AllResources(string kind, string @namespace, Kubectl kubectl)
         {
             var items = new JArray(data.Where(item =>
-                item.SelectToken("$.kind")!.Value<string>() == kind &&
-                item.SelectToken($".metadata.namespace")!.Value<string>() == @namespace));
+                item.SelectToken("$.kind").Value<string>() == kind &&
+                item.SelectToken($".metadata.namespace").Value<string>() == @namespace));
             return $"{{items: {items}}}";
         }
     }

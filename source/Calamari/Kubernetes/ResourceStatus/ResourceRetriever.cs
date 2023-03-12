@@ -38,7 +38,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 EnrichWithChildren(resource, kubectl);
             }
 
-            return resources.SelectMany(IterateResourceTree);
+            return resources;
         }
 
         private void EnrichWithChildren(Resource resource, Kubectl kubectl)
@@ -68,18 +68,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             var result = kubectlGet.AllResources(childKind, parentResource.Namespace, kubectl);
             var resources = ResourceFactory.FromListJson(result);
             return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid)).ToList();
-        }
-
-        private static IEnumerable<Resource> IterateResourceTree(Resource root)
-        {
-            foreach (var resource in root.Children ?? Enumerable.Empty<Resource>())
-            {
-                foreach (var child in IterateResourceTree(resource))
-                {
-                    yield return child;
-                }
-            }
-            yield return root;
         }
     }
 }

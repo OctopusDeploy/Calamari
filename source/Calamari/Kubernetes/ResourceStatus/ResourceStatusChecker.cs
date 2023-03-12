@@ -64,6 +64,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             var newResourceStatuses = resourceRetriever
                 .GetAllOwnedResources(definedResources, kubectl)
+                .SelectMany(IterateResourceTree)
                 .ToDictionary(resource => resource.Uid, resource => resource);
     
             reporter.ReportUpdatedResources(statuses, newResourceStatuses);
@@ -122,6 +123,18 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             return DeploymentStatus.InProgress;
+        }
+
+        private static IEnumerable<Resource> IterateResourceTree(Resource root)
+        {
+            foreach (var resource in root.Children ?? Enumerable.Empty<Resource>())
+            {
+                foreach (var child in IterateResourceTree(resource))
+                {
+                    yield return child;
+                }
+            }
+            yield return root;
         }
     }
 }
