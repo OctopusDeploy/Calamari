@@ -33,15 +33,14 @@ namespace Calamari.Kubernetes.ResourceStatus
         
         public void ReportUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses)
         {
-            var createdOrUpdatedResources = GetCreatedOrUpdatedResources(originalStatuses, newStatuses).ToList();
-            var removedResources = GetRemovedResources(originalStatuses, newStatuses).ToList();
-            foreach (var resource in removedResources)
+            foreach (var resource in GetCreatedOrUpdatedResources(originalStatuses, newStatuses))
             {
-                resource.Removed = true;
+                SendServiceMessage(resource, false);
             }
-            foreach (var resource in createdOrUpdatedResources.Concat(removedResources))
+            
+            foreach (var resource in GetRemovedResources(originalStatuses, newStatuses))
             {
-                SendServiceMessage(resource);
+                SendServiceMessage(resource, true);
             }
         }
         
@@ -60,7 +59,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 .Select(resource => resource.Value);
         }
         
-        private void SendServiceMessage(Resource resource)
+        private void SendServiceMessage(Resource resource, bool removed)
         {
             var parameters = new Dictionary<string, string>
             {
@@ -78,7 +77,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {"namespace", resource.Namespace},
                 {"status", resource.Status.ToString()},
                 {"data", JsonConvert.SerializeObject(resource)},
-                {"removed", resource.Removed.ToString()}
+                {"removed", removed.ToString()}
             };
     
             var message = new ServiceMessage(SpecialVariables.KubernetesResourceStatusServiceMessageName, parameters);
