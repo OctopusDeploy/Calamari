@@ -64,6 +64,10 @@ namespace Calamari.Kubernetes.ResourceStatus
             var workingDirectory = Path.GetDirectoryName(script.File);
             
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
+            if (result.ExitCode != 0)
+            {
+                return result;
+            }
 
             if (!TryReadManifestFile(out var content))
             {

@@ -24,18 +24,29 @@ namespace Calamari.Kubernetes.ResourceStatus
             
             while (!parser.Accept<StreamEnd>(out _))
             {
-                yield return GetDefinedResource(parser);
+                var definedResource = GetDefinedResource(parser);
+                if (definedResource != null)
+                {
+                    yield return definedResource;
+                }
             }
         }
 
         private static ResourceIdentifier GetDefinedResource(IParser parser)
         {
-            var yamlObject = Deserializer.Deserialize<dynamic>(parser);
-            yamlObject["metadata"].TryGetValue("namespace", out object @namespace);
-            return new ResourceIdentifier(
-                yamlObject["kind"],
-                yamlObject["metadata"]["name"],
-                @namespace == null ? "default" : (string) @namespace);
+            try
+            {
+                var yamlObject = Deserializer.Deserialize<dynamic>(parser);
+                yamlObject["metadata"].TryGetValue("namespace", out object @namespace);
+                return new ResourceIdentifier(
+                    yamlObject["kind"],
+                    yamlObject["metadata"]["name"],
+                    @namespace == null ? "default" : (string) @namespace);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

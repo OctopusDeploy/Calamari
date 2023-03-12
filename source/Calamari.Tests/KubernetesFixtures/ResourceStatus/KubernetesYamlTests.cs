@@ -27,6 +27,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         }
 
         [Test]
+        public void ShouldOmitDefinitionIfTheMetadataSectionIsNotSet()
+        {
+            var input = TestFileLoader.Load("invalid.yaml");
+            var got = KubernetesYaml.GetDefinedResources(input);
+            got.Should().BeEmpty();
+        }
+        
+        [Test]
         public void ShouldHandleMultipleResourcesDefinedInTheSameFile()
         {
             var input = TestFileLoader.Load("multiple-resources.yaml");
