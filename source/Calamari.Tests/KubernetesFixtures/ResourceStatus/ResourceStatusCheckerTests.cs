@@ -7,26 +7,39 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     [TestFixture]
     public class ResourceStatusCheckerTests
     {
-        [TestCase(true, DeploymentStatus.Failed, DeploymentStatus.InProgress)]
-        [TestCase(true, DeploymentStatus.Failed, DeploymentStatus.Failed)]
-        [TestCase(true, DeploymentStatus.Failed, DeploymentStatus.Succeeded)]
-        [TestCase(true, DeploymentStatus.Succeeded, DeploymentStatus.InProgress)]
-        [TestCase(true, DeploymentStatus.Succeeded, DeploymentStatus.Failed)]
-        [TestCase(true, DeploymentStatus.Succeeded, DeploymentStatus.Succeeded)]
-        [TestCase(false, DeploymentStatus.InProgress, DeploymentStatus.InProgress)]
-        [TestCase(false, DeploymentStatus.InProgress, DeploymentStatus.Failed)]
-        [TestCase(false, DeploymentStatus.InProgress, DeploymentStatus.Succeeded)]
-        public void ShouldNotContinueWhenDeploymentTimeoutIsReached(bool isStabilizing, DeploymentStatus oldStatus, DeploymentStatus newStatus)
+        [TestCase(DeploymentStatus.Failed, DeploymentStatus.InProgress)]
+        [TestCase(DeploymentStatus.Failed, DeploymentStatus.Failed)]
+        [TestCase(DeploymentStatus.Failed, DeploymentStatus.Succeeded)]
+        [TestCase(DeploymentStatus.Succeeded, DeploymentStatus.InProgress)]
+        [TestCase(DeploymentStatus.Succeeded, DeploymentStatus.Failed)]
+        [TestCase(DeploymentStatus.Succeeded, DeploymentStatus.Succeeded)]
+        public void ShouldNotContinueWhenDeploymentTimeoutIsReachedDuringStabilization(DeploymentStatus oldStatus, DeploymentStatus newStatus)
         {
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
 
             deploymentTimer.Complete();
-            if (isStabilizing)
-            {
-                stabilizationTimer.Start();
-            }
-            
+            stabilizationTimer.Start();
+
+            var shouldContinue = ResourceStatusChecker.ShouldContinue(
+                deploymentTimer,
+                stabilizationTimer,
+                oldStatus,
+                newStatus);
+
+            shouldContinue.Should().BeFalse();
+        }
+        
+        [TestCase(DeploymentStatus.InProgress, DeploymentStatus.InProgress)]
+        [TestCase(DeploymentStatus.InProgress, DeploymentStatus.Failed)]
+        [TestCase(DeploymentStatus.InProgress, DeploymentStatus.Succeeded)]
+        public void ShouldNotContinueWhenDeploymentTimeoutIsReachedWhenNotStabilizing(DeploymentStatus oldStatus, DeploymentStatus newStatus)
+        {
+            var deploymentTimer = new MockCountdownTimer();
+            var stabilizationTimer = new MockCountdownTimer();
+
+            deploymentTimer.Complete();
+
             var shouldContinue = ResourceStatusChecker.ShouldContinue(
                 deploymentTimer, 
                 stabilizationTimer, 
