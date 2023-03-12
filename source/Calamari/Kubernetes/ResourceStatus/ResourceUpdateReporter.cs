@@ -67,6 +67,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {"actionId", variables.Get("Octopus.Action.Id")},
                 {"taskId", variables.Get(KnownVariables.ServerTask.Id)},
                 {"targetId", variables.Get("Octopus.Machine.Id")},
+                {"targetName", variables.Get("Octopus.Machine.Name")},
                 {"environmentId", variables.Get(DeploymentEnvironment.Id)},
                 {"spaceId", variables.Get("Octopus.Space.Id")},
                 {"tenantId", variables.Get(DeploymentVariables.Tenant.Id)},
