@@ -1,10 +1,9 @@
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
-using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
@@ -15,33 +14,65 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         [Test]
         public void ReturnsCorrectObjectHierarchyForDeployments()
         {
-            var kubectlGet = new MockKubectlGet(TestFileLoader.Load("deployment-with-3-replicas.json"));
-            var resourceRetriever = new ResourceRetriever(kubectlGet);
+            var deploymentUid = Guid.NewGuid().ToString();
+            var replicaSetUid = Guid.NewGuid().ToString();
 
+            var nginxDeployment = new ResourceResponseBuilder()
+                .WithKind("Deployment")
+                .WithName("nginx")
+                .WithUid(deploymentUid)
+                .Build();
+
+            var nginxReplicaSet = new ResourceResponseBuilder()
+                .WithKind("ReplicaSet")
+                .WithName("nginx-replicaset")
+                .WithUid(replicaSetUid)
+                .WithOwnerUid(deploymentUid)
+                .Build();
+
+            var pod1 = new ResourceResponseBuilder()
+                .WithKind("Pod")
+                .WithName("nginx-pod-1")
+                .WithOwnerUid(replicaSetUid)
+                .Build();
+            
+            var pod2 = new ResourceResponseBuilder()
+                .WithKind("Pod")
+                .WithName("nginx-pod-2")
+                .WithOwnerUid(replicaSetUid)
+                .Build();
+
+            var kubectlGet = new MockKubectlGet();
+            var resourceRetriever = new ResourceRetriever(kubectlGet);
+            
+            kubectlGet.SetResource("nginx", nginxDeployment);
+            kubectlGet.SetAllResources("ReplicaSet", nginxReplicaSet);
+            kubectlGet.SetAllResources("Pod", pod1, pod2);
+            
+            
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
                     new ResourceIdentifier("Deployment", "nginx", "octopus")
                 },
                 null);
-
+            
             got.Should().BeEquivalentTo(new object[]
             {
                 new
                 {
                     Kind = "Deployment",
                     Name = "nginx",
-                    Namespace = "octopus",
                     Children = new object[]
                     {
                         new
                         {
                             Kind = "ReplicaSet",
+                            Name = "nginx-replicaset",
                             Children = new object[]
                             {
-                                new {Kind = "Pod"},
-                                new {Kind = "Pod"},
-                                new {Kind = "Pod"}
+                                new { Kind = "Pod", Name = "nginx-pod-1"},
+                                new { Kind = "Pod", Name = "nginx-pod-2"},
                             }
                         }
                     }
@@ -52,86 +83,203 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         [Test]
         public void ReturnsCorrectObjectHierarchyForMultipleResources()
         {
-            var kubectlGet = new MockKubectlGet(TestFileLoader.Load("2-deployments-with-3-replicas-each.json"));
-            var resourceRetriever = new ResourceRetriever(kubectlGet);
+            var deployment1Uid = Guid.NewGuid().ToString();
+            var deployment2Uid = Guid.NewGuid().ToString();
 
+            var deployment1 = new ResourceResponseBuilder()
+                .WithKind("Deployment")
+                .WithName("deployment-1")
+                .WithUid(deployment1Uid)
+                .Build();
+            
+            var replicaSet1 = new ResourceResponseBuilder()
+                .WithKind("ReplicaSet")
+                .WithName("replicaset-1")
+                .WithOwnerUid(deployment1Uid)
+                .Build();
+            
+            var deployment2 = new ResourceResponseBuilder()
+                .WithKind("Deployment")
+                .WithName("deployment-2")
+                .WithUid(deployment2Uid)
+                .Build();
+            
+            var replicaSet2 = new ResourceResponseBuilder()
+                .WithKind("ReplicaSet")
+                .WithName("replicaset-2")
+                .WithOwnerUid(deployment2Uid)
+                .Build();
+
+            var kubectlGet = new MockKubectlGet();
+            var resourceRetriever = new ResourceRetriever(kubectlGet);
+            
+            kubectlGet.SetResource("deployment-1", deployment1);
+            kubectlGet.SetResource("deployment-2", deployment2);
+            kubectlGet.SetAllResources("ReplicaSet", replicaSet1, replicaSet2);
+            kubectlGet.SetAllResources("Pod");
+            
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("Deployment", "nginx", "default"),
-                    new ResourceIdentifier("Deployment", "curl", "default"),
+                    new ResourceIdentifier("Deployment", "deployment-1", "octopus"),
+                    new ResourceIdentifier("Deployment", "deployment-2", "octopus")
                 },
                 null);
-
+            
             got.Should().BeEquivalentTo(new object[]
             {
                 new
                 {
                     Kind = "Deployment",
-                    Name = "nginx",
-                    Namespace = "default",
+                    Name = "deployment-1",
                     Children = new object[]
                     {
                         new
                         {
                             Kind = "ReplicaSet",
-                            Children = new object[]
-                            {
-                                new {Kind = "Pod"},
-                                new {Kind = "Pod"},
-                                new {Kind = "Pod"},
-                            }
-                        },
+                            Name = "replicaset-1",
+                        }
                     }
                 },
                 new
                 {
                     Kind = "Deployment",
-                    Name = "curl",
-                    Namespace = "default",
+                    Name = "deployment-2",
                     Children = new object[]
                     {
                         new
                         {
                             Kind = "ReplicaSet",
-                            Children = new object[]
-                            {
-                                new {Kind = "Pod"},
-                                new {Kind = "Pod"},
-                                new {Kind = "Pod"},
-                            }
-                        },
+                            Name = "replicaset-2",
+                        }
                     }
+                }
+            });
+        }
+
+        [Test]
+        public void IgnoresIrrelevantResources()
+        {
+            var replicaSetUid = Guid.NewGuid().ToString();
+
+            var replicaSet = new ResourceResponseBuilder()
+                .WithKind("ReplicaSet")
+                .WithName("rs")
+                .WithUid(replicaSetUid)
+                .Build();
+
+            var childPod = new ResourceResponseBuilder()
+                .WithKind("Pod")
+                .WithName("pod-1")
+                .WithOwnerUid(replicaSetUid)
+                .Build();
+
+            var irrelevantPod = new ResourceResponseBuilder()
+                .WithKind("Pod")
+                .WithName("pod-x")
+                .Build();
+
+            var kubectlGet = new MockKubectlGet();
+            var resourceRetriever = new ResourceRetriever(kubectlGet);
+            
+            kubectlGet.SetResource("rs", replicaSet);
+            kubectlGet.SetAllResources("Pod", childPod, irrelevantPod);
+
+
+            var got = resourceRetriever.GetAllOwnedResources(
+                new List<ResourceIdentifier>
+                {
+                    new ResourceIdentifier("ReplicaSet", "rs", "octopus"),
                 },
+                null);
+            
+            got.Should().BeEquivalentTo(new object[]
+            {
+                new
+                {
+                    Kind = "ReplicaSet",
+                    Name = "rs",
+                    Children = new object[]
+                    {
+                        new { Kind = "Pod", Name = "pod-1" }
+                    }
+                }
             });
         }
     }
 
     public class MockKubectlGet : IKubectlGet
     {
-        private readonly IEnumerable<JObject> data;
+        private readonly Dictionary<string, string> resourceEntries = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> resourcesByKind = new Dictionary<string, string>();
 
-        public MockKubectlGet(string json)
+        public void SetResource(string name, string data)
         {
-            data = JArray.Parse(json).Cast<JObject>();
+            resourceEntries.Add(name, data);
         }
+
+        public void SetAllResources(string kind, params string[] data)
+        {
+            resourcesByKind.Add(kind, $"{{items: [{string.Join(',', data)}]}}");
+        }
+
 
         public string Resource(string kind, string name, string @namespace, Kubectl kubectl)
         {
-            var result = data
-                .FirstOrDefault(item =>
-                    item.SelectToken("$.kind").Value<string>() == kind
-                    && item.SelectToken("$.metadata.name").Value<string>() == name
-                    && item.SelectToken($".metadata.namespace").Value<string>() == @namespace);
-            return result == null ? string.Empty : result.ToString();
+            return resourceEntries[name];
         }
 
         public string AllResources(string kind, string @namespace, Kubectl kubectl)
         {
-            var items = new JArray(data.Where(item =>
-                item.SelectToken("$.kind").Value<string>() == kind &&
-                item.SelectToken($".metadata.namespace").Value<string>() == @namespace));
-            return $"{{items: {items}}}";
+            return resourcesByKind[kind];
         }
+    }
+
+    public class ResourceResponseBuilder
+    {
+        private static string template = @"
+{{
+    ""kind"": ""{0}"",
+    ""metadata"": {{
+        ""name"": ""{1}"",
+        ""uid"": ""{2}"",
+        ""ownerReferences"": [
+            {{
+                ""uid"": ""{3}""
+            }}
+        ]
+    }}
+}}";
+
+        private string kind = "";
+        private string name = "";
+        private string uid = Guid.NewGuid().ToString();
+        private string ownerUid = Guid.NewGuid().ToString();
+
+        public ResourceResponseBuilder WithKind(string kind)
+        {
+            this.kind = kind;
+            return this;
+        }
+
+        public ResourceResponseBuilder WithName(string name)
+        {
+            this.name = name;
+            return this;
+        }
+
+        public ResourceResponseBuilder WithUid(string uid)
+        {
+            this.uid = uid;
+            return this;
+        }
+
+        public ResourceResponseBuilder WithOwnerUid(string ownerUid)
+        {
+            this.ownerUid = ownerUid;
+            return this;
+        }
+
+        public string Build() => string.Format(template, kind, name, uid, ownerUid);
     }
 }
