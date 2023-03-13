@@ -77,11 +77,11 @@ namespace Calamari.Kubernetes.Integration
         }
 
         public IEnumerable<string> ExecuteCommandAndReturnOutput(params string[] arguments) =>
-            base.ExecuteCommandAndReturnOutput(customKubectlExecutable, arguments);
+            base.ExecuteCommandAndReturnOutput(ExecutableLocation, arguments);
         
         public Maybe<SemanticVersion> GetVersion()
         {
-            var kubectlVersionOutput = ExecuteCommandAndReturnOutput(ExecutableLocation, "version", "--client", "--output=json");
+            var kubectlVersionOutput = ExecuteCommandAndReturnOutput("version", "--client", "--output=json");
             var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
             try
             {
