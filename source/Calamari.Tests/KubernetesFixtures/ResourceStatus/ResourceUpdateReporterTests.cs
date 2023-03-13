@@ -32,11 +32,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
                 .ToList();
 
-            serviceMessages.Should().HaveCount(2);
-            foreach (var message in serviceMessages)
-            {
-                message.Properties["removed"].Should().Be(false.ToString());
-            }
+            serviceMessages.Select(message => message.Properties["removed"])
+                .Should().BeEquivalentTo(new string[]
+                {
+                    bool.FalseString,
+                    bool.FalseString
+                });
         }
         
         [Test]
