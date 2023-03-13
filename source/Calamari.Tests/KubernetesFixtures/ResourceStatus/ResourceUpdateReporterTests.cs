@@ -32,6 +32,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
                 .ToList();
 
+            serviceMessages.Select(message => message.Properties["name"])
+                .Should().BeEquivalentTo(new string[]
+                {
+                    "nginx",
+                    "redis"
+                });
+            
             serviceMessages.Select(message => message.Properties["removed"])
                 .Should().BeEquivalentTo(new string[]
                 {
@@ -61,10 +68,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
                 .ToList();
 
-            serviceMessages.Should().HaveCount(1);
-            var updated = serviceMessages.First();
-            updated.Properties["removed"].Should().Be(false.ToString());
-            updated.Properties["name"].Should().Be("nginx");
+            serviceMessages.Should().ContainSingle().Which.Properties
+                .Should().Contain(new KeyValuePair<string, string>[]
+                {
+                    new KeyValuePair<string, string>("name", "nginx"),
+                    new KeyValuePair<string, string>("removed", bool.FalseString),
+                });
         }
         
         [Test]
@@ -88,10 +97,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
                 .ToList();
 
-            serviceMessages.Should().HaveCount(1);
-            var removed = serviceMessages.First();
-            removed.Properties["removed"].Should().Be(true.ToString());
-            removed.Properties["name"].Should().Be("redis");
+            serviceMessages.Should().ContainSingle().Which.Properties
+                .Should().Contain(new KeyValuePair<string, string>[]
+                {
+                    new KeyValuePair<string, string>("name", "redis"),
+                    new KeyValuePair<string, string>("removed", bool.TrueString),
+                });
         }
     }
 }
