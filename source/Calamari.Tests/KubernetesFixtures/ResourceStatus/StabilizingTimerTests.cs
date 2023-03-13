@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 {
     [TestFixture]
-    public class ResourceStatusCheckerTests
+    public class StabilizingTimerTests
     {
         [TestCase(DeploymentStatus.Failed, DeploymentStatus.InProgress)]
         [TestCase(DeploymentStatus.Failed, DeploymentStatus.Failed)]
@@ -17,13 +17,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
-
+            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
+            
+            timer.Start();
+            
             deploymentTimer.Complete();
             stabilizationTimer.Start();
 
-            var shouldContinue = ResourceStatusChecker.ShouldContinue(
-                deploymentTimer,
-                stabilizationTimer,
+            var shouldContinue = timer.ShouldContinue(
                 oldStatus,
                 newStatus);
 
@@ -37,12 +38,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
+            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
 
+            timer.Start();
+            
             deploymentTimer.Complete();
 
-            var shouldContinue = ResourceStatusChecker.ShouldContinue(
-                deploymentTimer, 
-                stabilizationTimer, 
+            var shouldContinue = timer.ShouldContinue(
                 oldStatus,
                 newStatus);
 
@@ -55,13 +57,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
+            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
+            
+            timer.Start();
             
             stabilizationTimer.Start();
             stabilizationTimer.Complete();
             
-            var shouldContinue = ResourceStatusChecker.ShouldContinue(
-                deploymentTimer, 
-                stabilizationTimer, 
+            var shouldContinue = timer.ShouldContinue(
                 status,
                 status);
 
@@ -77,18 +80,18 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
+            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
+            
+            timer.Start();
             
             stabilizationTimer.Start();
 
-            var shouldContinue = ResourceStatusChecker.ShouldContinue(
-                deploymentTimer, 
-                stabilizationTimer, 
+            var shouldContinue = timer.ShouldContinue(
                 oldStatus,
                 newStatus);
 
             shouldContinue.Should().BeTrue();
-
-            stabilizationTimer.HasStarted().Should().Be(newStabilizationShouldStart);
+            timer.IsStabilizing().Should().Be(newStabilizationShouldStart);
         }
 
         [TestCase(DeploymentStatus.Succeeded, true)]
@@ -98,15 +101,16 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
+            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
 
-            var shouldContinue = ResourceStatusChecker.ShouldContinue(
-                deploymentTimer, 
-                stabilizationTimer, 
+            timer.Start();
+            
+            var shouldContinue = timer.ShouldContinue(
                 DeploymentStatus.InProgress,
                 newStatus);
 
             shouldContinue.Should().BeTrue();
-            stabilizationTimer.HasStarted().Should().Be(shouldStartStabilization);
+            timer.IsStabilizing().Should().Be(shouldStartStabilization);
         }
     }
 

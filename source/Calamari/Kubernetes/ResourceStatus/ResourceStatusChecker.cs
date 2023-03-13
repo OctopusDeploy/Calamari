@@ -17,8 +17,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// </summary>
         /// <returns>true if all resources have been deployed successfully, otherwise false</returns>
         bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
-            ICountdownTimer deploymentTimer, 
-            ICountdownTimer stabilizationTimer, 
+            IStabilizingTimer stabilizingTimer, 
             Kubectl kubectl);
     }
 
@@ -28,9 +27,6 @@ namespace Calamari.Kubernetes.ResourceStatus
     public class ResourceStatusChecker : IResourceStatusChecker
     {
         private const int PollingIntervalSeconds = 2;
-
-        private IDictionary<string, Resource> statuses = new Dictionary<string, Resource>();
-        private DeploymentStatus deploymentStatus = DeploymentStatus.InProgress;
 
         private readonly IResourceRetriever resourceRetriever;
         private readonly IResourceUpdateReporter reporter;
@@ -42,75 +38,40 @@ namespace Calamari.Kubernetes.ResourceStatus
         }
         
         public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
-            ICountdownTimer deploymentTimer, 
-            ICountdownTimer stabilizationTimer, 
+            IStabilizingTimer stabilizingTimer,
             Kubectl kubectl)
         {
             var definedResources = resourceIdentifiers.ToList();
 
-            deploymentTimer.Start();
+            var resourceStatuses = new Dictionary<string, Resource>();
+            var deploymentStatus = DeploymentStatus.InProgress;
+            var shouldContinue = true;
+
+            stabilizingTimer.Start();
             
-            while (ShouldContinue(deploymentTimer, stabilizationTimer))
+            while (shouldContinue)
             {
-                UpdateResourceStatuses(definedResources, kubectl);
+                var newResourceStatuses = resourceRetriever
+                    .GetAllOwnedResources(definedResources, kubectl)
+                    .SelectMany(IterateResourceTree)
+                    .ToDictionary(resource => resource.Uid, resource => resource);
+
+                var newDeploymentStatus = GetDeploymentStatus(newResourceStatuses.Values.ToList());
+
+                reporter.ReportUpdatedResources(resourceStatuses, newResourceStatuses);
+                
+                shouldContinue = stabilizingTimer.ShouldContinue(deploymentStatus, newDeploymentStatus);
+
+                resourceStatuses = newResourceStatuses;
+                deploymentStatus = newDeploymentStatus;
+                
                 Thread.Sleep(PollingIntervalSeconds * 1000);
             }
 
-            return deploymentStatus == DeploymentStatus.Succeeded &&
-                   (!stabilizationTimer.HasStarted() || stabilizationTimer.HasCompleted());
+            return deploymentStatus == DeploymentStatus.Succeeded && !stabilizingTimer.IsStabilizing();
         }
 
-        public void UpdateResourceStatuses(IEnumerable<ResourceIdentifier> definedResources, Kubectl kubectl)
-        {
-            var newResourceStatuses = resourceRetriever
-                .GetAllOwnedResources(definedResources, kubectl)
-                .SelectMany(IterateResourceTree)
-                .ToDictionary(resource => resource.Uid, resource => resource);
-    
-            reporter.ReportUpdatedResources(statuses, newResourceStatuses);
-            statuses = newResourceStatuses;
-        }
-
-        private bool ShouldContinue(ICountdownTimer deploymentTimer, ICountdownTimer stabilizationTimer)
-        {
-            if (statuses.Count == 0)
-            {
-                return true;
-            }
-            var newStatus = GetStatus(statuses.Values.ToList());
-            var result = ShouldContinue(deploymentTimer, stabilizationTimer, deploymentStatus, newStatus);
-            deploymentStatus = newStatus;
-            return result;
-        }
-        
-        internal static bool ShouldContinue(ICountdownTimer deploymentTimer, ICountdownTimer stabilizationTimer, DeploymentStatus oldStatus, DeploymentStatus newStatus)
-        {
-            if (deploymentTimer.HasCompleted() || stabilizationTimer.HasCompleted())
-            {
-                return false;
-            }
-
-            if (stabilizationTimer.HasStarted())
-            {
-                if (newStatus != oldStatus)
-                {
-                    stabilizationTimer.Reset();
-
-                    if (newStatus != DeploymentStatus.InProgress)
-                    {
-                        stabilizationTimer.Start();
-                    }
-                }
-            }
-            else if (newStatus != DeploymentStatus.InProgress)
-            {
-                stabilizationTimer.Start();
-            }
-
-            return true;
-        }
-
-        private DeploymentStatus GetStatus(List<Resource> resources)
+        private static DeploymentStatus GetDeploymentStatus(List<Resource> resources)
         {
             if (resources.All(resource => resource.Status == Resources.ResourceStatus.Successful))
             {

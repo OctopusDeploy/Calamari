@@ -92,10 +92,13 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return new CommandResult(string.Empty, 1);
             }
 
+            var stabilizingTimer = new StabilizingTimer(
+                new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds)),
+                new CountdownTimer(TimeSpan.FromSeconds(stabilizationTimeoutSeconds)));
+            
             var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(
                 definedResources, 
-                new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds)), 
-                new CountdownTimer(TimeSpan.FromSeconds(stabilizationTimeoutSeconds)), 
+                stabilizingTimer,
                 kubectl);
             
             if (!completedSuccessfully)
