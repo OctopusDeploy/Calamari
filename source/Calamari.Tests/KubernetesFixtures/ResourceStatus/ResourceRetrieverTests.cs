@@ -220,7 +220,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
         public void SetAllResources(string kind, params string[] data)
         {
-            resourcesByKind.Add(kind, $"{{items: [{string.Join(',', data)}]}}");
+            resourcesByKind.Add(kind, $"{{items: [{string.Join(",", data)}]}}");
         }
 
 
