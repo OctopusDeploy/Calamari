@@ -65,6 +65,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 {"type", "k8s-status"},
                 {"actionId", variables.Get("Octopus.Action.Id")},
+                {"stepName", $"Step {variables.Get("Octopus.Action.Number")}: {variables.Get("Octopus.Action.StepName")}"},
                 {"taskId", variables.Get(KnownVariables.ServerTask.Id)},
                 {"targetId", variables.Get("Octopus.Machine.Id")},
                 {"targetName", variables.Get("Octopus.Machine.Name")},
