@@ -33,4 +33,16 @@ namespace Calamari.Kubernetes.ResourceStatus
         public bool HasStarted() => stopwatch.IsRunning;
         public bool HasCompleted() => stopwatch.Elapsed >= duration;
     }
+
+    /// <summary>
+    /// Represents a CountdownTimer that never completes
+    /// </summary>
+    public class InfiniteCountdownTimer : ICountdownTimer
+    {
+        private bool hasStarted;
+        public void Start() => hasStarted = true;
+        public void Reset() => hasStarted = false;
+        public bool HasStarted() => hasStarted;
+        public bool HasCompleted() => false;
+    }
 }

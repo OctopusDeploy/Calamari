@@ -59,8 +59,10 @@ namespace Calamari.Kubernetes.ResourceStatus
             Dictionary<string, string> environmentVars)
         {
             var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
-            var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 100;
-            var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 10;
+            var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 0;
+            var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 0;
+            var deploymentTimeoutEnabled = variables.GetFlag(SpecialVariables.DeploymentTimeoutEnabled);
+            var stabilizationTimeoutEnabled = variables.GetFlag(SpecialVariables.StabilizationTimeoutEnabled);
             var workingDirectory = Path.GetDirectoryName(script.File);
             
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
@@ -92,14 +94,18 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return new CommandResult(string.Empty, 1);
             }
 
-            var stabilizingTimer = new StabilizingTimer(
-                new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds)),
-                new CountdownTimer(TimeSpan.FromSeconds(stabilizationTimeoutSeconds)));
+            ICountdownTimer deploymentTimer = deploymentTimeoutEnabled
+                ? new InfiniteCountdownTimer()
+                : new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds));
+
+            ICountdownTimer stabilizationTimer = new CountdownTimer(
+                stabilizationTimeoutEnabled 
+                    ? TimeSpan.FromSeconds(stabilizationTimeoutSeconds) 
+                    : TimeSpan.Zero);
+
+            var stabilizingTimer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
             
-            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(
-                definedResources, 
-                stabilizingTimer,
-                kubectl);
+            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, stabilizingTimer, kubectl);
             
             if (!completedSuccessfully)
             {

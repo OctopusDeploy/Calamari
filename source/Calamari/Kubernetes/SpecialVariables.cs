@@ -16,6 +16,8 @@
         public const string DeploymentWait = "Octopus.Action.KubernetesContainers.DeploymentWait";
         public const string DeploymentTimeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string StabilizationTimeout = "Octopus.Action.Kubernetes.StabilizationTimeout";
+        public const string DeploymentTimeoutEnabled = "Octopus.Action.Kubernetes.DeploymentTimeoutEnabled";
+        public const string StabilizationTimeoutEnabled = "Octopus.Action.Kubernetes.StabilizationTimeoutEnabled";
 
         public const string KubernetesResourceStatusServiceMessageName = "k8s-status";
         
