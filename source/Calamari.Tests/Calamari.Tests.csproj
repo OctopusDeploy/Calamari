@@ -151,6 +151,9 @@
     <None Include="KubernetesFixtures\Approved\*.approved.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="KubernetesFixtures\ResourceStatus\assets\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Helpers\Certificates\SampleCertificateFiles\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

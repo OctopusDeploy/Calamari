@@ -2,6 +2,7 @@
 {
     public static class SpecialVariables
     {
+        public const string ActionId = "Octopus.Action.Id";
         public const string ClusterUrl = "Octopus.Action.Kubernetes.ClusterUrl";
         public const string AksClusterName = "Octopus.Action.Kubernetes.AksClusterName";
         public const string EksClusterName = "Octopus.Action.Kubernetes.EksClusterName";
@@ -9,7 +10,15 @@
         public const string Namespace = "Octopus.Action.Kubernetes.Namespace";
         public const string SkipTlsVerification = "Octopus.Action.Kubernetes.SkipTlsVerification";
         public const string OutputKubeConfig = "Octopus.Action.Kubernetes.OutputKubeConfig";
+        public const string CustomKubectlExecutable = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
+        public const string ResourceStatusCheck = "Octopus.Action.Kubernetes.ResourceStatusCheck";
+        public const string DeploymentStyle = "Octopus.Action.KubernetesContainers.DeploymentStyle";
+        public const string DeploymentWait = "Octopus.Action.KubernetesContainers.DeploymentWait";
+        public const string DeploymentTimeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
+        public const string StabilizationTimeout = "Octopus.Action.Kubernetes.StabilizationTimeout";
 
+        public const string KubernetesResourceStatusServiceMessageName = "k8s-status";
+        
         public static class Helm
         {
             public const string ReleaseName = "Octopus.Action.Helm.ReleaseName";
