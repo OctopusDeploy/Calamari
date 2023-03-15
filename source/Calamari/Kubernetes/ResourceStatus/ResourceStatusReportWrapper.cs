@@ -94,11 +94,11 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return new CommandResult(string.Empty, 1);
             }
 
-            ICountdownTimer deploymentTimer = deploymentTimeoutEnabled
-                ? new InfiniteCountdownTimer()
-                : new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds));
+            var deploymentTimer = deploymentTimeoutEnabled
+                ? new InfiniteCountdownTimer() as ICountdownTimer
+                : new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds)) as ICountdownTimer;
 
-            ICountdownTimer stabilizationTimer = new CountdownTimer(
+            var stabilizationTimer = new CountdownTimer(
                 stabilizationTimeoutEnabled 
                     ? TimeSpan.FromSeconds(stabilizationTimeoutSeconds) 
                     : TimeSpan.Zero);
