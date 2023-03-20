@@ -61,6 +61,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
             var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 100;
             var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 10;
+            var defaultNamespace = variables.Get(SpecialVariables.Namespace) ?? "default";
             var workingDirectory = Path.GetDirectoryName(script.File);
             
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
@@ -74,7 +75,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return result;
             }
             
-            var definedResources = KubernetesYaml.GetDefinedResources(content).ToList();
+            var definedResources = KubernetesYaml.GetDefinedResources(content, defaultNamespace).ToList();
 
             if (definedResources.Count == 0)
             {
