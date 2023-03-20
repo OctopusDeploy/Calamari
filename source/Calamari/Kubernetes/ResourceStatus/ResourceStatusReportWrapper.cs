@@ -59,8 +59,8 @@ namespace Calamari.Kubernetes.ResourceStatus
             Dictionary<string, string> environmentVars)
         {
             var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
-            var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 100;
-            var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 10;
+            var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 0;
+            var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 0;
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
             var workingDirectory = Path.GetDirectoryName(script.File);
             
@@ -93,14 +93,15 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return new CommandResult(string.Empty, 1);
             }
 
-            var stabilizingTimer = new StabilizingTimer(
-                new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds)),
-                new CountdownTimer(TimeSpan.FromSeconds(stabilizationTimeoutSeconds)));
+            var deploymentTimer = deploymentTimeoutSeconds == 0
+                ? new InfiniteCountdownTimer() as ICountdownTimer
+                : new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds)) as ICountdownTimer;
+
+            var stabilizationTimer = new CountdownTimer(TimeSpan.FromSeconds(stabilizationTimeoutSeconds));
+
+            var stabilizingTimer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
             
-            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(
-                definedResources, 
-                stabilizingTimer,
-                kubectl);
+            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, stabilizingTimer, kubectl);
             
             if (!completedSuccessfully)
             {
