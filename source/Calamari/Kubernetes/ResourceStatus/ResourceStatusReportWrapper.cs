@@ -61,8 +61,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
             var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 0;
             var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 0;
-            var deploymentTimeoutEnabled = variables.GetFlag(SpecialVariables.DeploymentTimeoutEnabled);
-            var stabilizationTimeoutEnabled = variables.GetFlag(SpecialVariables.StabilizationTimeoutEnabled);
             var workingDirectory = Path.GetDirectoryName(script.File);
             
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
@@ -94,14 +92,11 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return new CommandResult(string.Empty, 1);
             }
 
-            var deploymentTimer = deploymentTimeoutEnabled
+            var deploymentTimer = deploymentTimeoutSeconds == 0
                 ? new InfiniteCountdownTimer() as ICountdownTimer
                 : new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds)) as ICountdownTimer;
 
-            var stabilizationTimer = new CountdownTimer(
-                stabilizationTimeoutEnabled 
-                    ? TimeSpan.FromSeconds(stabilizationTimeoutSeconds) 
-                    : TimeSpan.Zero);
+            var stabilizationTimer = new CountdownTimer(TimeSpan.FromSeconds(stabilizationTimeoutSeconds));
 
             var stabilizingTimer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
             
