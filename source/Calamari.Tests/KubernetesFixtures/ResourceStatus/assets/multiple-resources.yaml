@@ -6,6 +6,7 @@ metadata:
   labels:
     app: nginx
   name: nginx
+  namespace: default
 spec:
   replicas: 3
   selector:
@@ -32,6 +33,7 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: config
+  namespace: default
 ---
 apiVersion: v1
 kind: Pod
@@ -40,6 +42,7 @@ metadata:
   labels:
     run: curl
   name: curl
+  namespace: default
 spec:
   containers:
     - image: curl
