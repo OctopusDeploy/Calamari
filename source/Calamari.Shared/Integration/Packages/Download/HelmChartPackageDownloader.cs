@@ -20,7 +20,7 @@ using Polly;
 
 namespace Calamari.Integration.Packages.Download
 {
-    public class HelmChartPackageDownloader: IPackageDownloader
+    public class HelmChartPackageDownloader : IPackageDownloader
     {
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         const string Extension = ".tgz";

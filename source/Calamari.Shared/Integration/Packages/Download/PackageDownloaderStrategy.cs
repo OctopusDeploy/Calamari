@@ -61,7 +61,9 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new GitHubPackageDownloader(log, fileSystem);
                     break;
                 case FeedType.Helm:
-                    downloader = new HelmChartPackageDownloader(fileSystem);
+                    downloader = feedUri.Scheme.Equals("oci", StringComparison.OrdinalIgnoreCase) 
+                        ? (IPackageDownloader?)new HelmOciChartPackageDownloader(engine,fileSystem, commandLineRunner, variables, log)
+                        : new HelmChartPackageDownloader(fileSystem);
                     break;
                 case FeedType.Docker:
                 case FeedType.AwsElasticContainerRegistry:

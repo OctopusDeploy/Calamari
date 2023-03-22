@@ -34,10 +34,13 @@ namespace Calamari.Kubernetes.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            var feedUri = deployment.Variables.Get("Octopus.Action.Package[].Feed.Uri");
+            if (!string.IsNullOrWhiteSpace(feedUri) && feedUri.StartsWith("oci", StringComparison.OrdinalIgnoreCase))
+                return;
+            
             ScriptSyntax syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
             var cmd = BuildHelmCommand(deployment, syntax);
             var fileName = SyntaxSpecificFileName(deployment, syntax);
-            
 
             using (new TemporaryFile(fileName))
             {
@@ -45,15 +48,13 @@ namespace Calamari.Kubernetes.Conventions
                 var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner);
                 if (result.ExitCode != 0)
                 {
-                    throw new CommandException(string.Format(
-                        "Helm Upgrade returned non-zero exit code: {0}. Deployment terminated.", result.ExitCode));
+                    throw new CommandException($"Helm Upgrade returned non-zero exit code: {result.ExitCode}. Deployment terminated.");
                 }
 
                 if (result.HasErrors &&
                     deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput, false))
                 {
-                    throw new CommandException(
-                        $"Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
+                    throw new CommandException("Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
                 }
             }
         }
