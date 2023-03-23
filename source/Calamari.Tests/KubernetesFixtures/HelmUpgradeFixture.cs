@@ -313,7 +313,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMac]
+        //[RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void AdditionalArgumentsPassed()
         {

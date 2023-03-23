@@ -30,6 +30,10 @@ namespace Calamari.Kubernetes.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            var feedUri = deployment.Variables.Get("Octopus.Action.Package[].Feed.Uri");
+            if (string.IsNullOrWhiteSpace(feedUri) || !feedUri.StartsWith("oci", StringComparison.OrdinalIgnoreCase))
+                return;
+            
             ScriptSyntax syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
             var cmd = BuildHelmCommand(deployment, syntax);
             var fileName = SyntaxSpecificFileName(deployment, syntax);
