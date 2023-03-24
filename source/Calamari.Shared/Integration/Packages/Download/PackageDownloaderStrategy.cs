@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Net;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -61,9 +59,14 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new GitHubPackageDownloader(log, fileSystem);
                     break;
                 case FeedType.Helm:
-                    downloader = feedUri.Scheme.Equals("oci", StringComparison.OrdinalIgnoreCase) 
-                        ? (IPackageDownloader?)new HelmOciChartPackageDownloader(engine,fileSystem, commandLineRunner, variables, log)
-                        : new HelmChartPackageDownloader(fileSystem);
+                    downloader = new HelmChartPackageDownloader(fileSystem);
+                    break;
+                case FeedType.HelmOci:
+                    downloader = new HelmOciChartPackageDownloader(engine,
+                                                                   fileSystem,
+                                                                   commandLineRunner,
+                                                                   variables,
+                                                                   log);
                     break;
                 case FeedType.Docker:
                 case FeedType.AwsElasticContainerRegistry:
