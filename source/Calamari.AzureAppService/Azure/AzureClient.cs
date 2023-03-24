@@ -1,6 +1,8 @@
 using System;
 using System.Net;
+using System.Net.Cache;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Identity;
@@ -64,9 +66,30 @@ namespace Calamari.AzureAppService.Azure
                 Transport = httpClientTransport,
                 Environment = armEnvironment
             };
+            armClientOptions.AddPolicy(new NoCachePolicy(), HttpPipelinePosition.PerCall);
             retryOptionsSetter?.Invoke(armClientOptions.Retry);
 
             return (armClientOptions, tokenCredentialOptions);
+        }
+    }
+
+    internal class NoCachePolicy : HttpPipelinePolicy
+    {
+        public override async ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
+        {
+            SetNoCacheHeader(message);
+            await ProcessNextAsync(message, pipeline);
+        }
+
+        public override void Process(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
+        {
+            SetNoCacheHeader(message);
+            ProcessNext(message, pipeline);
+        }
+
+        private static void SetNoCacheHeader(HttpMessage message)
+        {
+            message.Request.Headers.SetValue("Cache-Control", "no-cache");
         }
     }
 }
