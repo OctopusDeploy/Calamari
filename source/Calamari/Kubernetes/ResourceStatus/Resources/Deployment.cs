@@ -11,7 +11,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public int Ready { get; }
         public int Available { get; }
         public int Unavailable { get; }
-        public override ResourceStatus Status { get; }
+        public override ResourceStatus ResourceStatus { get; }
 
         public Deployment(JObject json) : base(json)
         {
@@ -21,7 +21,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
             Unavailable = FieldOrDefault("$.status.unavailableReplicas", 0);
 
-            Status = UpToDate == Replicas && Available == Replicas && Ready == Replicas 
+            ResourceStatus = UpToDate == Replicas && Available == Replicas && Ready == Replicas 
                 ? ResourceStatus.Successful 
                 : ResourceStatus.InProgress;
         }

@@ -10,7 +10,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public int Ready { get; }
         public int Replicas { get; }
     
-        public override ResourceStatus Status { get; }
+        public override ResourceStatus ResourceStatus { get; }
         
         public ReplicaSet(JObject json) : base(json)
         {
@@ -20,11 +20,11 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     
             if (Ready == Replicas && Available == Replicas)
             {
-                Status = ResourceStatus.Successful;
+                ResourceStatus = ResourceStatus.Successful;
             }
             else
             {
-                Status = ResourceStatus.InProgress;
+                ResourceStatus = ResourceStatus.InProgress;
             }
         }
         public override bool HasUpdate(Resource lastStatus)
