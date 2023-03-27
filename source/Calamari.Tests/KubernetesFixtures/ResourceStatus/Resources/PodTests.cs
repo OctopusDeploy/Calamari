@@ -215,7 +215,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
     
     public class PodResponseBuilder
     {
-        private const string template = @"
+        private const string Template = @"
 {{
     ""kind"": ""Pod"",
     ""metadata"": {{
@@ -235,7 +235,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         
         public string Build()
         {
-            return string.Format(template, Phase, InitContainerStatuses, ContainerStatuses);
+            return string.Format(Template, Phase, InitContainerStatuses, ContainerStatuses);
         }
         
         public PodResponseBuilder WithPhase(string phase)

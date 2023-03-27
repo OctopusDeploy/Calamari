@@ -14,10 +14,10 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             var phase = Field("$.status.phase");
             var initContainerStatuses = data
                 .SelectToken("$.status.initContainerStatuses")
-                ?.ToObject<ContainerStatus[]>() ?? Array.Empty<ContainerStatus>();
+                ?.ToObject<ContainerStatus[]>() ?? new ContainerStatus[] { };
             var containerStatuses = data
                 .SelectToken("$.status.containerStatuses")
-                ?.ToObject<ContainerStatus[]>() ?? Array.Empty<ContainerStatus>();
+                ?.ToObject<ContainerStatus[]>() ?? new ContainerStatus[] { };
 
             (Status, ResourceStatus) = GetStatus(phase, initContainerStatuses, containerStatuses);
         }
@@ -66,11 +66,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         private static (string, ResourceStatus) GetStatus(ContainerStatus[] containerStatuses)
         {
             var erroredContainer = containerStatuses.FirstOrDefault(HasError);
-            if (erroredContainer != null)
-            {
-                return (GetReason(erroredContainer), ResourceStatus.Failed);
-            }
-            return (GetReason(containerStatuses.FirstOrDefault(HasReason)), ResourceStatus.InProgress);
+            return erroredContainer != null 
+                ? (GetReason(erroredContainer), ResourceStatus.Failed) 
+                : (GetReason(containerStatuses.FirstOrDefault(HasReason)), ResourceStatus.InProgress);
         }
         
         private static string GetReason(ContainerStatus status)
