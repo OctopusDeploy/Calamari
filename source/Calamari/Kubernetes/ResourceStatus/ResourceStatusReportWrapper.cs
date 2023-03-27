@@ -79,13 +79,13 @@ namespace Calamari.Kubernetes.ResourceStatus
             
             var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
             
-            var secret = GetSecret();
+            var secret = GetSecret(defaultNamespace);
             if (secret != null)
             {
                 definedResources.Add(secret);
             }
             
-            var configMap = GetConfigMap();
+            var configMap = GetConfigMap(defaultNamespace);
             if (configMap != null)
             {
                 definedResources.Add(configMap);
@@ -144,15 +144,25 @@ namespace Calamari.Kubernetes.ResourceStatus
                 yield return fileSystem.ReadFile(file);
             }
         }
-
-        private ResourceIdentifier GetSecret()
+        
+        private ResourceIdentifier GetConfigMap(string defaultNamespace)
         {
-            return null;
+            if (!variables.GetFlag("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled"))
+            {
+                return null;
+            }
+            var configMapName = variables.Get("Octopus.Action.KubernetesContainers.ComputedConfigMapName");
+            return string.IsNullOrEmpty(configMapName) ? null : new ResourceIdentifier("ConfigMap", configMapName, defaultNamespace);
         }
-
-        private ResourceIdentifier GetConfigMap()
+        
+        private ResourceIdentifier GetSecret(string defaultNamespace)
         {
-            return null;
+            if (!variables.GetFlag("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled"))
+            {
+                return null;
+            }
+            var secretName = variables.Get("Octopus.Action.KubernetesContainers.ComputedSecretName");
+            return string.IsNullOrEmpty(secretName) ? null : new ResourceIdentifier("Secret", secretName, defaultNamespace);
         }
     }
 }
