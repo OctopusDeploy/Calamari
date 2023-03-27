@@ -5,7 +5,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     public class Pod : Resource
     {
         public string Phase { get; }
-        public override ResourceStatus Status { get; }
+        public override ResourceStatus ResourceStatus { get; }
     
         public Pod(JObject json) : base(json)
         {
@@ -16,13 +16,13 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             {
                 case"Succeeded": 
                 case "Running":
-                    Status = ResourceStatus.Successful;
+                    ResourceStatus = ResourceStatus.Successful;
                     break;
                 case "Pending":
-                    Status = ResourceStatus.InProgress;
+                    ResourceStatus = ResourceStatus.InProgress;
                     break;
                 default:
-                    Status = ResourceStatus.Failed;
+                    ResourceStatus = ResourceStatus.Failed;
                     break;
             }
         }

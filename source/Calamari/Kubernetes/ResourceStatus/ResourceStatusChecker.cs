@@ -73,12 +73,12 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private static DeploymentStatus GetDeploymentStatus(List<Resource> resources)
         {
-            if (resources.All(resource => resource.Status == Resources.ResourceStatus.Successful))
+            if (resources.All(resource => resource.ResourceStatus == Resources.ResourceStatus.Successful))
             {
                 return DeploymentStatus.Succeeded;
             }
 
-            if (resources.Any(resource => resource.Status == Resources.ResourceStatus.Failed))
+            if (resources.Any(resource => resource.ResourceStatus == Resources.ResourceStatus.Failed))
             {
                 return DeploymentStatus.Failed;
             }
