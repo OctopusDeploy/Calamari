@@ -3,14 +3,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
-using Azure.ResourceManager;
-using Azure.ResourceManager.AppService;
-using Azure.ResourceManager.Models;
 using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
@@ -67,7 +63,18 @@ namespace Calamari.AzureAppService.Behaviors
                 Log.Verbose($"Found {resources.Count} candidate web app resources.");
                 foreach (var resource in resources)
                 {
-                    var tagValues = resource.Data?.Tags;
+                    Log.Verbose($"Resource {resource.Data?.Name} Tags:");
+                    foreach (var tag in resource.Data?.Tags ?? new Dictionary<string, string>())
+                    {
+                        Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
+                    }
+                    var res1 = await resource.GetAsync(CancellationToken.None);
+                    var tagValues = res1.Value.Data?.Tags;
+                    Log.Verbose("AFTER GET:");
+                    foreach (var tag in tagValues ?? new Dictionary<string, string>())
+                    {
+                        Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
+                    }
 
                     if (tagValues == null)
                         continue;
