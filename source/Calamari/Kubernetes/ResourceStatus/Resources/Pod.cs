@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 
@@ -28,7 +27,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             return last.ResourceStatus != ResourceStatus || last.Status != Status;
         }
 
-        private (string, ResourceStatus) GetStatus(string phase, ContainerStatus[] initContainerStatuses,
+        private (string, ResourceStatus) GetStatus(
+            string phase, 
+            ContainerStatus[] initContainerStatuses,
             ContainerStatus[] containerStatuses)
         {
             switch (phase)
@@ -75,7 +76,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         {
             if (status == null)
             {
-                return null;
+                return "Pending";
             }
             
             if (status.State.Terminated != null)
@@ -88,7 +89,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 return status.State.Waiting.Reason;
             }
 
-            return null;
+            return "Pending";
         }
 
         private static bool HasError(ContainerStatus status)
@@ -100,8 +101,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
             if (status.State.Waiting != null)
             {
-                return status.State.Waiting.Reason != "PodInitializing" &&
-                       status.State.Waiting.Reason != "ContainerCreating";
+                return status.State.Waiting.Reason != "PodInitializing" 
+                    && status.State.Waiting.Reason != "ContainerCreating";
             }
 
             return false;
