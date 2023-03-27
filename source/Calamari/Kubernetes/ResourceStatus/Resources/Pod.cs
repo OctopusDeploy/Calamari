@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources
@@ -51,7 +50,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             }
         }
 
-        private (string, ResourceStatus) GetInitializingStatus(ContainerStatus[] initContainerStatuses)
+        private static (string, ResourceStatus) GetInitializingStatus(ContainerStatus[] initContainerStatuses)
         {
             var erroredContainer = initContainerStatuses.FirstOrDefault(HasError);
             if (erroredContainer != null)
@@ -64,7 +63,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             return ($"Init:{readyInit}/{totalInit}", ResourceStatus.InProgress);
         }
 
-        private (string, ResourceStatus) GetStatus(ContainerStatus[] containerStatuses)
+        private static (string, ResourceStatus) GetStatus(ContainerStatus[] containerStatuses)
         {
             var erroredContainer = containerStatuses.FirstOrDefault(HasError);
             if (erroredContainer != null)

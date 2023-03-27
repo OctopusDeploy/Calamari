@@ -1,22 +1,22 @@
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class ContainerStatus
     {
-        [JsonPropertyName("state")]
+        [JsonProperty("state")]
         public State State { get; set; }
     }
 
     public class State
     {
-        [JsonPropertyName("running")]
+        [JsonProperty("running")]
         public Running Running { get; set; }
         
-        [JsonPropertyName("waiting")]
+        [JsonProperty("waiting")]
         public Waiting Waiting { get; set; }
         
-        [JsonPropertyName("terminated")]
+        [JsonProperty("terminated")]
         public Terminated Terminated { get; set; }
     }
     
@@ -24,13 +24,13 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     
     public class Waiting
     {
-        [JsonPropertyName("reason")]
+        [JsonProperty("reason")]
         public string Reason { get; set; }
     }
     
     public class Terminated
     {
-        [JsonPropertyName("reason")]
+        [JsonProperty("reason")]
         public string Reason { get; set; }
     }
 }
