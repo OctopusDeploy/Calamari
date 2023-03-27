@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Integration;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
@@ -70,12 +71,25 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return result;
             }
 
-            if (!TryReadManifestFile(out var content))
+            var manifests = ReadManifestFiles().ToList();
+            if (!manifests.Any())
             {
                 return result;
             }
             
-            var definedResources = KubernetesYaml.GetDefinedResources(content, defaultNamespace).ToList();
+            var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
+            
+            var secret = GetSecret();
+            if (secret != null)
+            {
+                definedResources.Add(secret);
+            }
+            
+            var configMap = GetConfigMap();
+            if (configMap != null)
+            {
+                definedResources.Add(configMap);
+            }
 
             if (definedResources.Count == 0)
             {
@@ -111,15 +125,15 @@ namespace Calamari.Kubernetes.ResourceStatus
             return result;
         }
 
-        private bool TryReadManifestFile(out string content)
+        private IEnumerable<string> ReadManifestFiles()
         {
-            // TODO this won't handle configMaps defined together with a Deploy a Container step
-            var customResourceFileName =
-                variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
+            var customResourceFileName = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
+            
             var knownFileNames = new[]
             {
                 "secret.yml", customResourceFileName, "deployment.yml", "service.yml", "ingress.yml",
             };
+            
             foreach (var file in knownFileNames)
             {
                 if (!fileSystem.FileExists(file))
@@ -127,12 +141,18 @@ namespace Calamari.Kubernetes.ResourceStatus
                     continue;
                 }
 
-                content = fileSystem.ReadFile(file);
-                return true;
+                yield return fileSystem.ReadFile(file);
             }
+        }
 
-            content = null;
-            return false;
+        private ResourceIdentifier GetSecret()
+        {
+            return null;
+        }
+
+        private ResourceIdentifier GetConfigMap()
+        {
+            return null;
         }
     }
 }
