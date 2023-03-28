@@ -65,5 +65,26 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             got.Should().BeEquivalentTo(expected);
         }
+
+        [Test]
+        public void ShouldHandleMultipleYamlFiles()
+        {
+            var manifest = TestFileLoader.Load("single-deployment.yaml");
+            var multipleFileInput = new string[] {manifest, manifest};
+            var got = KubernetesYaml.GetDefinedResources(multipleFileInput, string.Empty);
+            var expected = new ResourceIdentifier[]
+            {
+                new ResourceIdentifier(
+                    "Deployment",
+                    "nginx",
+                    "test"),
+                new ResourceIdentifier(
+                    "Deployment",
+                    "nginx",
+                    "test"),
+            };
+
+            got.Should().BeEquivalentTo(expected);
+        }
     }
 }
