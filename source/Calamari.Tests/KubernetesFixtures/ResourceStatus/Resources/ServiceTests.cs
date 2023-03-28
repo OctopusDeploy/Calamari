@@ -18,7 +18,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         ""uid"": ""01695a39-5865-4eea-b4bf-1a4783cbce62""
     },
     ""spec"": {
-        ""type"": ""NodePort"",
+        ""type"": ""LoadBalancer"",
         ""clusterIP"": ""10.96.0.1"",
         ""ports"": [
             {
@@ -35,6 +35,16 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 ""nodePort"": 30080
             }
         ]
+    },
+    ""status"": {
+        ""loadBalancer"": {
+            ""ingress"": [
+                {
+                    ""ip"": ""192.168.49.2""
+                }
+            ]
+
+        }
     }
 }";
             var service = ResourceFactory.FromJson(input);
@@ -45,8 +55,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 Name = "my-svc",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",
-                Type = "NodePort",
+                Type = "LoadBalancer",
                 ClusterIp = "10.96.0.1",
+                ExternalIp = "192.168.49.2",
                 Ports = new string[] 
                 {
                     "443/TCP",
