@@ -30,7 +30,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         private static IEnumerable<string> FormatPorts(IEnumerable<PortEntry> ports)
         {
-            return ports.Select(port => string.IsNullOrEmpty(port.NodePort)
+            return ports.Select(port => port.NodePort == null
                 ? $"{port.Port}/{port.Protocol}"
                 : $"{port.Port}:{port.NodePort}/{port.Protocol}");
         }

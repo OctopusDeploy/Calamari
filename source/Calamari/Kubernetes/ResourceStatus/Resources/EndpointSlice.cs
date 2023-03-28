@@ -14,9 +14,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         {
             AddressType = Field("$.addressType");
             
-            var ports = data.SelectToken("$.spec.ports")
+            var ports = data.SelectToken("$.ports")
                 ?.ToObject<PortEntry[]>() ?? new PortEntry[] { };
-            Ports = ports.Select(port => port.Port);
+            Ports = ports.Select(port => port.Port.ToString());
 
             var endpoints = data.SelectToken("$.endpoints")
                 ?.ToObject<EndpointEntry[]>() ?? new EndpointEntry[] { };

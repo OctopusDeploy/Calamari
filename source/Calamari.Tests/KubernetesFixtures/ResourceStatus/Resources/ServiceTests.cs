@@ -1,0 +1,59 @@
+using Calamari.Kubernetes.ResourceStatus.Resources;
+using FluentAssertions;
+using NUnit.Framework;
+
+namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
+{
+    [TestFixture]
+    public class ServiceTests
+    {
+        [Test]
+        public void ShouldCollectCorrectProperties()
+        {
+            const string input = @"{
+    ""kind"": ""Service"",
+    ""metadata"": {
+        ""name"": ""my-svc"",
+        ""namespace"": ""default"",
+        ""uid"": ""01695a39-5865-4eea-b4bf-1a4783cbce62""
+    },
+    ""spec"": {
+        ""type"": ""NodePort"",
+        ""clusterIP"": ""10.96.0.1"",
+        ""ports"": [
+            {
+                ""name"": ""https"",
+                ""port"": 443,
+                ""protocol"": ""TCP"",
+                ""targetPort"": 8443
+            },
+            {
+                ""name"": """",
+                ""port"": 80,
+                ""protocol"": ""TCP"",
+                ""targetPort"": 8080,
+                ""nodePort"": 30080
+            }
+        ]
+    }
+}";
+            var service = ResourceFactory.FromJson(input);
+            
+            service.Should().BeEquivalentTo(new
+            {
+                Kind = "Service",
+                Name = "my-svc",
+                Namespace = "default",
+                Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",
+                Type = "NodePort",
+                ClusterIp = "10.96.0.1",
+                Ports = new string[] 
+                {
+                    "443/TCP",
+                    "80:30080/TCP"
+                },
+                ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful
+            });
+        }
+    }
+}
