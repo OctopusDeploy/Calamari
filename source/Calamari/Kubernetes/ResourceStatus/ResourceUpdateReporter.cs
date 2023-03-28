@@ -74,7 +74,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {"kind", resource.Kind},
                 {"name", resource.Name},
                 {"namespace", resource.Namespace},
-                {"status", resource.Status.ToString()},
+                {"status", resource.ResourceStatus.ToString()},
                 {"data", JsonConvert.SerializeObject(resource)},
                 {"removed", removed.ToString()}
             };

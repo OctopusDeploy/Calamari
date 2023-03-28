@@ -25,7 +25,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonIgnore]
         public string Namespace { get; }
         [JsonIgnore]
-        public virtual ResourceStatus Status => ResourceStatus.Successful;
+        public virtual ResourceStatus ResourceStatus => ResourceStatus.Successful;
         [JsonIgnore]
         public virtual string ChildKind => "";
     
