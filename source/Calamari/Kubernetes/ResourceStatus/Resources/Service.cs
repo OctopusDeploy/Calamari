@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources
@@ -11,7 +10,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public string Type { get; }
         public string ClusterIp { get; }
-        public string Ports { get; }
+        public IEnumerable<string> Ports { get; }
 
         public Service(JObject json) : base(json)
         {
@@ -26,26 +25,14 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public override bool HasUpdate(Resource lastStatus)
         {
             var last = CastOrThrow<Service>(lastStatus);
-            return last.ClusterIp != ClusterIp || last.Type != Type || last.Ports != Ports;
+            return last.ClusterIp != ClusterIp || last.Type != Type || last.Ports.SequenceEqual(Ports);
         }
 
-        private static string FormatPorts(IEnumerable<PortEntry> ports)
+        private static IEnumerable<string> FormatPorts(IEnumerable<PortEntry> ports)
         {
-            return string.Join(',', ports.Select(port => string.IsNullOrEmpty(port.NodePort)
+            return ports.Select(port => string.IsNullOrEmpty(port.NodePort)
                 ? $"{port.Port}/{port.Protocol}"
-                : $"{port.Port}:{port.NodePort}/{port.Protocol}"));
+                : $"{port.Port}:{port.NodePort}/{port.Protocol}");
         }
-    }
-
-    public class PortEntry
-    {
-        [JsonProperty("port")]
-        public string Port { get; set; }
-        
-        [JsonProperty("nodePort", Required = Required.AllowNull)]
-        public string NodePort { get; set; }
-        
-        [JsonProperty("protocol")]
-        public string Protocol { get; set; }
     }
 }
