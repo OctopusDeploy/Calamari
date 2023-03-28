@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
+using Calamari.AzureAppService.Azure.Rest;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
@@ -53,6 +55,8 @@ namespace Calamari.AzureAppService.Behaviors
                 retryOptions.MaxDelay = TimeSpan.FromSeconds(10);
                 retryOptions.MaxRetries = 5;
             });
+            var restClient = new AzureRestClient(() => new HttpClient());
+            await restClient.Authorise(account, CancellationToken.None);
             var subscription = await armClient.GetDefaultSubscriptionAsync(CancellationToken.None);
             try
             {
@@ -60,10 +64,12 @@ namespace Calamari.AzureAppService.Behaviors
                 var webApps = subscription.GetResources(WebAppType, PageSize, CancellationToken.None);
                 var slots = subscription.GetResources(WebAppSlotsType, PageSize, CancellationToken.None);
                 var resources = await webApps.Concat(slots).ToListAsync();
+                var restResources = (await restClient.GetResources(CancellationToken.None, AzureRestClient.WebAppType,
+                    AzureRestClient.WebAppSlotsType)).ToList();
                 Log.Verbose($"Found {resources.Count} candidate web app resources.");
-                foreach (var resource in resources)
+                foreach (var (resource, index) in resources.Select((r,i) => (r,i)))
                 {
-                    resource.GetTagResource();
+                    var restResource = restResources[index];
                     var res1 = resource;
                     var isTestWebApp = resource.Data?.Name.Contains("isaac") ?? false;
                     if (isTestWebApp)
@@ -74,6 +80,11 @@ namespace Calamari.AzureAppService.Behaviors
                             Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
                         }
                         res1 = (await resource.GetAsync(CancellationToken.None)).Value;
+                        Log.Verbose($"FROM REST CLIENT ({restResource.Name})");
+                        foreach (var tag in restResource.Tags)
+                        {
+                            Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
+                        }
                     }
 
                     var tagValues = res1.Data?.Tags;
