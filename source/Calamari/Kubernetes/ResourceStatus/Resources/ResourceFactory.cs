@@ -33,6 +33,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                     return new EndpointSlice(data); 
                 case "ConfigMap":
                     return new ConfigMap(data);
+                case "Secret":
+                    return new Secret(data);
                 default:
                     return new Resource(data);
             }

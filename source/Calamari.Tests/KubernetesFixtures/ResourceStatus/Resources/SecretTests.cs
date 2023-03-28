@@ -5,31 +5,33 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
 {
     [TestFixture]
-    public class ConfigMapTests
+    public class SecretTests
     {
         [Test]
         public void ShouldCollectCorrectProperties()
         {
             const string input = @"{
-    ""kind"": ""ConfigMap"",
+    ""kind"": ""Secret"",
     ""metadata"": {
-        ""name"": ""my-cm"",
+        ""name"": ""my-secret"",
         ""namespace"": ""default"",
         ""uid"": ""01695a39-5865-4eea-b4bf-1a4783cbce62""
     },
+    ""type"": ""Opaque"",
     ""data"": {
         ""x"": ""y"",
         ""a"": ""b""
     }
 }";
-            var configMap = ResourceFactory.FromJson(input);
+            var secret = ResourceFactory.FromJson(input);
             
-            configMap.Should().BeEquivalentTo(new
+            secret.Should().BeEquivalentTo(new
             {
-                Kind = "ConfigMap",
-                Name = "my-cm",
+                Kind = "Secret",
+                Name = "my-secret",
                 Namespace = "default",
                 Data = 2,
+                Type = "Opaque",
                 ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful
             });
         }
