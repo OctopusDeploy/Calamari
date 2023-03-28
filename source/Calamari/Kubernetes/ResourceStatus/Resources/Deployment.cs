@@ -6,22 +6,20 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     {
         public override string ChildKind => "ReplicaSet";
         
-        public int Replicas { get; }
         public int UpToDate { get; }
-        public int Ready { get; }
+        public string Ready { get; }
         public int Available { get; }
-        public int Unavailable { get; }
         public override ResourceStatus ResourceStatus { get; }
 
         public Deployment(JObject json) : base(json)
         {
-            Replicas = FieldOrDefault("$.status.replicas", 0);
+            var readyReplicas = FieldOrDefault("$.status.readyReplicas", 0);
+            var replicas = FieldOrDefault("$.status.replicas", 0);
+            Ready = $"{readyReplicas}/{replicas}";
             Available = FieldOrDefault("$.status.availableReplicas", 0);
-            Ready = FieldOrDefault("$.status.readyReplicas", 0);
             UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
-            Unavailable = FieldOrDefault("$.status.unavailableReplicas", 0);
 
-            ResourceStatus = UpToDate == Replicas && Available == Replicas && Ready == Replicas 
+            ResourceStatus = UpToDate == replicas && Available == replicas && readyReplicas == replicas 
                 ? ResourceStatus.Successful 
                 : ResourceStatus.InProgress;
         }
@@ -29,8 +27,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public override bool HasUpdate(Resource lastStatus)
         {
             var last = CastOrThrow<Deployment>(lastStatus);
-            return last.Replicas != Replicas 
-                   || last.UpToDate != UpToDate 
+            return last.UpToDate != UpToDate 
                    || last.Ready != Ready 
                    || last.Available != Available;
         }
