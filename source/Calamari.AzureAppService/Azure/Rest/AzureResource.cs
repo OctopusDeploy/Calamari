@@ -37,7 +37,7 @@ namespace Calamari.AzureAppService.Azure.Rest
                     return null;
                 }
                 var indexOfSlash = Name.LastIndexOf("/", StringComparison.InvariantCulture);
-                return indexOfSlash < 0 ? null : Name[(indexOfSlash + 1)..];
+                return indexOfSlash < 0 ? null : Name.Substring(indexOfSlash + 1);
             }
         }
     }

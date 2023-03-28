@@ -53,7 +53,7 @@ namespace Calamari.AzureAppService.Azure.Rest
 
             response.EnsureSuccessStatusCode();
 
-            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            var responseContent = await response.Content.ReadAsStringAsync();
             azureAdToken = JsonConvert.DeserializeObject<AzureADToken>(responseContent);
             baseResourceManagementEndpoint = account.ResourceManagementEndpointBaseUri;
             if (baseResourceManagementEndpoint.IsNullOrEmpty())
@@ -83,7 +83,7 @@ namespace Calamari.AzureAppService.Azure.Rest
 
             response.EnsureSuccessStatusCode();
 
-            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            var responseContent = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<AzureResourceCollection>(responseContent).Resources;
         }
 
@@ -101,7 +101,7 @@ namespace Calamari.AzureAppService.Azure.Rest
 
             response.EnsureSuccessStatusCode();
 
-            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            var responseContent = await response.Content.ReadAsStringAsync();
             var resource = JsonConvert.DeserializeObject<AzureResource>(responseContent);
             return resource;
         }
