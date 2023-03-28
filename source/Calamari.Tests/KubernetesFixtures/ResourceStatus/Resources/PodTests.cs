@@ -113,7 +113,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         public void WhenContainerFailsExecutionAndRestarting_TheStatusShouldShowCrashLoopBackOff()
         {
             var podResponse = new PodResponseBuilder()
-                .WithPhase("Pending")
+                .WithPhase("Running")
                 .WithContainerStatuses(new State[]
                 {
                     new State { Waiting = new Waiting { Reason = "CrashLoopBackOff" } }
@@ -195,7 +195,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         }
 
         [Test]
-        public void WhenMoreThanOneContainersFailed_TheStatusShouldShowTheFirstError()
+        public void WhenMoreThanOneContainersHaveErrors_TheStatusShouldShowTheFirstError()
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Pending")
