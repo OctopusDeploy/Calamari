@@ -27,6 +27,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                     return new Pod(data);
                 case "Service": 
                     return new Service(data);
+                case "Ingress":
+                    return new Ingress(data);
                 case "EndpointSlice": 
                     return new EndpointSlice(data); 
                 case "ConfigMap":

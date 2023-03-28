@@ -31,7 +31,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public override bool HasUpdate(Resource lastStatus)
         {
             var last = CastOrThrow<Service>(lastStatus);
-            return last.ClusterIp != ClusterIp || last.Type != Type || last.Ports.SequenceEqual(Ports);
+            return last.ClusterIp != ClusterIp || last.ExternalIp != ExternalIp || last.Type != Type || last.Ports.SequenceEqual(Ports);
         }
 
         private static IEnumerable<string> FormatPorts(IEnumerable<ServicePort> ports)
