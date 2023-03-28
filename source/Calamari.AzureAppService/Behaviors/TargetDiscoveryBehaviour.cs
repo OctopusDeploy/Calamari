@@ -63,17 +63,27 @@ namespace Calamari.AzureAppService.Behaviors
                 Log.Verbose($"Found {resources.Count} candidate web app resources.");
                 foreach (var resource in resources)
                 {
-                    Log.Verbose($"Resource {resource.Data?.Name} Tags:");
-                    foreach (var tag in resource.Data?.Tags ?? new Dictionary<string, string>())
+                    resource.GetTagResource();
+                    var res1 = resource;
+                    var isTestWebApp = resource.Data?.Name.Contains("isaac") ?? false;
+                    if (isTestWebApp)
                     {
-                        Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
+                        Log.Verbose($"Resource {resource.Data?.Name} Tags:");
+                        foreach (var tag in resource.Data?.Tags ?? new Dictionary<string, string>())
+                        {
+                            Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
+                        }
+                        res1 = (await resource.GetAsync(CancellationToken.None)).Value;
                     }
-                    var res1 = await resource.GetAsync(CancellationToken.None);
-                    var tagValues = res1.Value.Data?.Tags;
-                    Log.Verbose("AFTER GET:");
-                    foreach (var tag in tagValues ?? new Dictionary<string, string>())
+
+                    var tagValues = res1.Data?.Tags;
+                    if (isTestWebApp)
                     {
-                        Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
+                        Log.Verbose("AFTER GET:");
+                        foreach (var tag in tagValues ?? new Dictionary<string, string>())
+                        {
+                            Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
+                        }
                     }
 
                     if (tagValues == null)
