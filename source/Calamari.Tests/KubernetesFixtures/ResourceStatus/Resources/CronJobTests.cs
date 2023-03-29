@@ -5,37 +5,32 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
 {
     [TestFixture]
-    public class JobTests
+    public class CronJobTests
     {
         [Test]
         public void ShouldCollectCorrectProperties()
         {
             const string input = @"{
-    ""kind"": ""Job"",
+    ""kind"": ""CronJob"",
     ""metadata"": {
-        ""name"": ""my-job"",
+        ""name"": ""my-cj"",
         ""namespace"": ""default"",
         ""uid"": ""01695a39-5865-4eea-b4bf-1a4783cbce62""
     },
     ""spec"": {
-        ""backoffLimit"": 4,
-        ""completions"": 3
-    },
-    ""status"": {
-        ""succeeded"": 3,
-        ""startTime"": ""2023-03-29T00:00:00Z"",
-        ""completionTime"": ""2023-03-30T02:03:04Z""
+        ""schedule"": ""* * * * *"",
+        ""suspend"": false
     }
 }";
-            var job = ResourceFactory.FromJson(input);
+            var cronJob = ResourceFactory.FromJson(input);
             
-            job.Should().BeEquivalentTo(new
+            cronJob.Should().BeEquivalentTo(new
             {
-                Kind = "Job",
-                Name = "my-job",
+                Kind = "CronJob",
+                Name = "my-cj",
                 Namespace = "default",
-                Completions = "3/3",
-                Duration = "1.02:03:04",
+                Schedule = "* * * * *",
+                Suspend = false,
                 ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful
             });
         }

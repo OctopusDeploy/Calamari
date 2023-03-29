@@ -31,6 +31,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                     return new DaemonSet(data);
                 case "Job":
                     return new Job(data);
+                case "CronJob":
+                    return new CronJob(data);
                 case "Service": 
                     return new Service(data);
                 case "Ingress":
