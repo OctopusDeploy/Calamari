@@ -86,7 +86,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             // In real scenario this shouldn't happen, but we give it a default value just in case
             if (status == null)
             {
-                return "-";
+                return string.Empty;
             }
             
             if (status.State.Terminated != null)

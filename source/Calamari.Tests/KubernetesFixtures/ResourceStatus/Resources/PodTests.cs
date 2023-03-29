@@ -195,7 +195,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         }
 
         [Test]
-        public void WhenMoreThanOneContainersHaveErrors_TheStatusShouldShowTheFirstError()
+        public void WhenMoreThanOneContainerHasErrors_TheStatusShouldShowTheFirstError()
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Pending")
