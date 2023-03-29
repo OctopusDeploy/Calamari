@@ -5,7 +5,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class ConfigMap : Resource
     {
-        public int Data { get; set; }
+        public int Data { get; }
         
         public ConfigMap(JObject json) : base(json)
         {

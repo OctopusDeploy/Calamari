@@ -8,12 +8,12 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     {
         public override string ChildKind => "Pod";
 
-        public int Desired { get; set; }
-        public int Current { get; set; }
-        public int Ready { get; set; }
-        public int UpToDate { get; set; }
-        public int Available { get; set; }
-        public string NodeSelector { get; set; }
+        public int Desired { get; }
+        public int Current { get; }
+        public int Ready { get; }
+        public int UpToDate { get; }
+        public int Available { get; }
+        public string NodeSelector { get; }
         public override ResourceStatus ResourceStatus { get; }
 
         public DaemonSet(JObject json) : base(json)

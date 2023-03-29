@@ -19,7 +19,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             Ports = ports.Select(port => port.Port.ToString());
 
             var endpoints = data.SelectToken("$.endpoints")
-                ?.ToObject<EndpointEntry[]>() ?? new EndpointEntry[] { };
+                ?.ToObject<Endpoint[]>() ?? new Endpoint[] { };
             Endpoints = FormatEndpoints(endpoints);
         }
     
@@ -29,7 +29,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             return last.AddressType != AddressType || !last.Ports.SequenceEqual(Ports) || !last.Endpoints.SequenceEqual(Endpoints);
         }
 
-        private static IEnumerable<string> FormatEndpoints(IEnumerable<EndpointEntry> endpoints)
+        private static IEnumerable<string> FormatEndpoints(IEnumerable<Endpoint> endpoints)
         {
             return endpoints.SelectMany(endpoint => endpoint.Addresses);
         }

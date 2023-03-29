@@ -5,8 +5,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class Secret: Resource
     {
-        public int Data { get; set; }
-        public string Type { get; set; }
+        public int Data { get; }
+        public string Type { get; }
         
         public Secret(JObject json) : base(json)
         {

@@ -30,7 +30,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public virtual string ChildKind => "";
     
         [JsonIgnore]
-        public IEnumerable<Resource> Children { get; set; }
+        public IEnumerable<Resource> Children { get; internal set; }
     
         public Resource(JObject json)
         {

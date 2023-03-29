@@ -6,11 +6,11 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class PersistentVolumeClaim: Resource
     {
-        public string Status { get; set; }
-        public string Volume { get; set; }
-        public string Capacity { get; set; }
-        public IEnumerable<string> AccessModes { get; set; }
-        public string StorageClass { get; set; }
+        public string Status { get; }
+        public string Volume { get; }
+        public string Capacity { get; }
+        public IEnumerable<string> AccessModes { get; }
+        public string StorageClass { get; }
         
         public PersistentVolumeClaim(JObject json) : base(json)
         {

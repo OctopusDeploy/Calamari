@@ -6,8 +6,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class Ingress : Resource
     {
-        public string Class { get; set; }
-        public IEnumerable<string> Hosts { get; set; }
+        public string Class { get; }
+        public IEnumerable<string> Hosts { get; }
         public string Address { get; set; }
 
         public Ingress(JObject json) : base(json)

@@ -4,8 +4,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class CronJob: Resource
     {
-        public string Schedule { get; set; }
-        public bool Suspend { get; set; }
+        public string Schedule { get; }
+        public bool Suspend { get; }
 
         public CronJob(JObject json) : base(json)
         {

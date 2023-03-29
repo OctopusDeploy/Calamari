@@ -5,8 +5,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class Job: Resource
     {
-        public string Completions { get; set; }
-        public string Duration { get; set; }
+        public string Completions { get; }
+        public string Duration { get; }
 
         public override ResourceStatus ResourceStatus { get; }
 
