@@ -79,23 +79,26 @@ namespace Calamari.AzureAppService.Behaviors
                         {
                             Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
                         }
-                        res1 = (await resource.GetAsync(CancellationToken.None)).Value;
                         Log.Verbose($"FROM REST CLIENT ({restResource.Name})");
                         foreach (var tag in restResource.Tags ?? new Dictionary<string, string>{{"NO","TAGS"}})
+                        {
+                            Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
+                        }
+                        res1 = (await resource.GetAsync(CancellationToken.None)).Value;
+                        var res2 = await restClient.GetResourceDetails(restResource.Id, CancellationToken.None);
+                        Log.Verbose("AFTER GET:");
+                        foreach (var tag in res1.Data.Tags ?? new Dictionary<string, string>())
+                        {
+                            Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
+                        }
+                        Log.Verbose($"FROM REST CLIENT ({res2.Name})");
+                        foreach (var tag in res2.Tags ?? new Dictionary<string, string>{{"NO","TAGS"}})
                         {
                             Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
                         }
                     }
 
                     var tagValues = res1.Data?.Tags;
-                    if (isTestWebApp)
-                    {
-                        Log.Verbose("AFTER GET:");
-                        foreach (var tag in tagValues ?? new Dictionary<string, string>())
-                        {
-                            Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
-                        }
-                    }
 
                     if (tagValues == null)
                         continue;
