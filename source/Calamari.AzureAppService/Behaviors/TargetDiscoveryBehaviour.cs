@@ -65,11 +65,11 @@ namespace Calamari.AzureAppService.Behaviors
                 var slots = subscription.GetResources(WebAppSlotsType, PageSize, CancellationToken.None);
                 var resources = await webApps.Concat(slots).ToListAsync();
                 var restResources = (await restClient.GetResources(CancellationToken.None, AzureRestClient.WebAppType,
-                    AzureRestClient.WebAppSlotsType)).ToList();
+                    AzureRestClient.WebAppSlotsType)).ToDictionary(r => r.Id, r => r);
                 Log.Verbose($"Found {resources.Count} candidate web app resources.");
-                foreach (var (resource, index) in resources.Select((r,i) => (r,i)))
+                foreach (var resource in resources)
                 {
-                    var restResource = restResources[index];
+                    var restResource = restResources[resource.Id.ToString()];
                     var res1 = resource;
                     var isTestWebApp = resource.Data?.Name.Contains("isaac") ?? false;
                     if (isTestWebApp)
