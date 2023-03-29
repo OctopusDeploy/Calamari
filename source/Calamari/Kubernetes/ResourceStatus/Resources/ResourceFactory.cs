@@ -26,6 +26,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                     return new Deployment(data);
                 case "StatefulSet":
                     return new StatefulSet(data);
+                case "DaemonSet":
+                    return new DaemonSet(data);
                 case "Service": 
                     return new Service(data);
                 case "Ingress":
