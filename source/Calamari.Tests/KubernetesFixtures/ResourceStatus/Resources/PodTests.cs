@@ -11,6 +11,37 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
     public class PodTests
     {
         [Test]
+        public void ShouldCollectCorrectProperties()
+        {
+            var podResponse = new PodResponseBuilder()
+                .WithPhase("Pending")
+                .WithContainerStatuses(new ContainerStatus[]
+                {
+                    new ContainerStatus()
+                    {
+                        State = new State { Running = new Running() },
+                        Ready = true
+                    },
+                    new ContainerStatus()
+                    {
+                        State = new State { Waiting = new Waiting { Reason = "CrashLoopBackOff" } },
+                        Ready = false,
+                        RestartCount = 3
+                    }
+                })
+                .Build();
+                
+            var pod = ResourceFactory.FromJson(podResponse);
+            
+            pod.Should().BeEquivalentTo(new
+            {
+                Ready = "1/2",
+                Restarts = 3,
+                ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed
+            });
+        }
+        
+        [Test]
         public void WhenThePodCannotBeScheduled_TheStatusShouldBePending()
         {
             var podResponse = new PodResponseBuilder()
@@ -28,7 +59,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Pending")
-                .WithInitContainerStatuses(new State[]
+                .WithInitContainerStates(new State[]
                 {
                     new State { Waiting = new Waiting { Reason = "PodInitializing" } },
                     new State { Terminated = new Terminated { Reason = "Completed" } }
@@ -46,7 +77,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Pending")
-                .WithInitContainerStatuses(new State[]
+                .WithInitContainerStates(new State[]
                 {
                     new State { Waiting = new Waiting { Reason = "ImagePullBackOff" } }
                 })
@@ -63,7 +94,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Pending")
-                .WithInitContainerStatuses(new State[]
+                .WithInitContainerStates(new State[]
                 {
                     new State { Waiting = new Waiting { Reason = "CrashLoopBackOff" } }
                 })
@@ -80,7 +111,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Pending")
-                .WithContainerStatuses(new State[]
+                .WithContainerStates(new State[]
                 {
                     new State { Waiting = new Waiting { Reason = "ContainerCreating" } }
                 })
@@ -97,7 +128,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Pending")
-                .WithContainerStatuses(new State[]
+                .WithContainerStates(new State[]
                 {
                     new State { Waiting = new Waiting { Reason = "ImagePullBackOff" } }
                 })
@@ -114,7 +145,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Pending")
-                .WithContainerStatuses(new State[]
+                .WithContainerStates(new State[]
                 {
                     new State { Waiting = new Waiting { Reason = "CrashLoopBackOff" } }
                 })
@@ -131,7 +162,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Failed")
-                .WithContainerStatuses(new State[]
+                .WithContainerStates(new State[]
                 {
                     new State { Terminated = new Terminated { Reason = "ContainerCannotRun" } }
                 })
@@ -148,7 +179,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Failed")
-                .WithContainerStatuses(new State[]
+                .WithContainerStates(new State[]
                 {
                     new State { Terminated = new Terminated { Reason = "Error" } }
                 })
@@ -165,7 +196,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Succeeded")
-                .WithContainerStatuses(new State[]
+                .WithContainerStates(new State[]
                 {
                     new State { Terminated = new Terminated { Reason = "Completed" } }
                 })
@@ -182,7 +213,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Running")
-                .WithContainerStatuses(new State[]
+                .WithContainerStates(new State[]
                 {
                     new State { Running = new Running() }
                 })
@@ -199,7 +230,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         {
             var podResponse = new PodResponseBuilder()
                 .WithPhase("Pending")
-                .WithContainerStatuses(new State[]
+                .WithContainerStates(new State[]
                 {
                     new State { Waiting = new Waiting { Reason = "ImagePullBackOff" } },
                     new State { Waiting = new Waiting { Reason = "CrashLoopBackOff" } }
@@ -244,17 +275,23 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             return this;
         }
     
-        public PodResponseBuilder WithInitContainerStatuses(params State[] initContainerStates)
+        public PodResponseBuilder WithInitContainerStates(params State[] initContainerStates)
         {
             var statuses = initContainerStates.Select(state => new ContainerStatus { State = state });
             InitContainerStatuses = JsonConvert.SerializeObject(statuses);
             return this;
         }
     
-        public PodResponseBuilder WithContainerStatuses(params State[] containerStates)
+        public PodResponseBuilder WithContainerStates(params State[] containerStates)
         {
             var statuses = containerStates.Select(state => new ContainerStatus { State = state });
             ContainerStatuses = JsonConvert.SerializeObject(statuses);
+            return this;
+        }
+
+        public PodResponseBuilder WithContainerStatuses(params ContainerStatus[] containerStatuses)
+        {
+            ContainerStatuses = JsonConvert.SerializeObject(containerStatuses);
             return this;
         }
     }

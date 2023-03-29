@@ -6,6 +6,12 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     {
         [JsonProperty("state")]
         public State State { get; set; }
+        
+        [JsonProperty("ready")]
+        public bool Ready { get; set; }
+        
+        [JsonProperty("restartCount")]
+        public int RestartCount { get; set; }
     }
 
     public class State
