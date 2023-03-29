@@ -29,6 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 Kind = "CronJob",
                 Name = "my-cj",
                 Namespace = "default",
+                Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",
                 Schedule = "* * * * *",
                 Suspend = false,
                 ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful

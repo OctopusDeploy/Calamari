@@ -42,6 +42,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 Kind = "DaemonSet",
                 Name = "my-ds",
                 Namespace = "default",
+                Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",
                 Desired = 2,
                 Current = 1,
                 Ready = 1,

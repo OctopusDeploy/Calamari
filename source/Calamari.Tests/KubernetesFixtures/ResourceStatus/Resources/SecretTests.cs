@@ -30,6 +30,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 Kind = "Secret",
                 Name = "my-secret",
                 Namespace = "default",
+                Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",
                 Data = 2,
                 Type = "Opaque",
                 ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful

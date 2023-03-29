@@ -29,6 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 Kind = "ConfigMap",
                 Name = "my-cm",
                 Namespace = "default",
+                Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",
                 Data = 2,
                 ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful
             });

@@ -38,6 +38,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 Kind = "PersistentVolumeClaim",
                 Name = "my-pvc",
                 Namespace = "default",
+                Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",
                 Status = "Bound",
                 Volume = "pvc-08cdb1f6-42e4-4938-b4c7-0576030a8da6",
                 Capacity = "1Mi",

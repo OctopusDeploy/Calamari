@@ -29,6 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 Kind = "StatefulSet",
                 Name = "my-sts",
                 Namespace = "default",
+                Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",
                 Ready = "2/3",
                 ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress
             });

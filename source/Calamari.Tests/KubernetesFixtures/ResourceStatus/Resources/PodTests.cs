@@ -35,6 +35,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             pod.Should().BeEquivalentTo(new
             {
+                Kind = "Pod",
+                Name = "Test",
+                Namespace = "test",
                 Ready = "1/2",
                 Restarts = 3,
                 ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed
@@ -251,6 +254,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
     ""kind"": ""Pod"",
     ""metadata"": {{
         ""name"": ""Test"",
+        ""namespace"": ""test"",
         ""uid"": ""123""
     }},
     ""status"": {{
