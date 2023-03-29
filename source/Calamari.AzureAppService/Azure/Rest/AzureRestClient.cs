@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
@@ -23,13 +24,16 @@ namespace Calamari.AzureAppService.Azure.Rest
         private const string FilterParameterName = "$filter";
 
         private readonly Func<HttpClient> clientFactory;
+        private readonly ILog log;
         private AzureADToken azureAdToken;
         private string baseResourceManagementEndpoint;
         private string subscriptionNumber;
 
-        public AzureRestClient(Func<HttpClient> clientFactory)
+        public AzureRestClient(Func<HttpClient> clientFactory,
+            ILog log)
         {
             this.clientFactory = clientFactory;
+            this.log = log;
         }
 
         public async Task Authorise(ServicePrincipalAccount account, CancellationToken cancellationToken)
@@ -82,7 +86,7 @@ namespace Calamari.AzureAppService.Azure.Rest
             var response = await client.GetAsync(requestUri, cancellationToken);
 
             response.EnsureSuccessStatusCode();
-
+            log.Verbose("REST RESPONSE HEADERS: " + response.Headers);
             var responseContent = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<AzureResourceCollection>(responseContent).Resources;
         }

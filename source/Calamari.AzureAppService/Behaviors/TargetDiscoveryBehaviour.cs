@@ -55,7 +55,7 @@ namespace Calamari.AzureAppService.Behaviors
                 retryOptions.MaxDelay = TimeSpan.FromSeconds(10);
                 retryOptions.MaxRetries = 5;
             });
-            var restClient = new AzureRestClient(() => new HttpClient());
+            var restClient = new AzureRestClient(() => new HttpClient(), Log);
             await restClient.Authorise(account, CancellationToken.None);
             var subscription = await armClient.GetDefaultSubscriptionAsync(CancellationToken.None);
             try
@@ -65,23 +65,23 @@ namespace Calamari.AzureAppService.Behaviors
                 var slots = subscription.GetResources(WebAppSlotsType, PageSize, CancellationToken.None);
                 var resources = await webApps.Concat(slots).ToListAsync();
                 var restResources = (await restClient.GetResources(CancellationToken.None, AzureRestClient.WebAppType,
-                    AzureRestClient.WebAppSlotsType)).ToDictionary(r => r.Id, r => r);
+                    AzureRestClient.WebAppSlotsType)).ToDictionary(r => r.Name, r => r);
                 Log.Verbose($"Found {resources.Count} candidate web app resources.");
                 foreach (var resource in resources)
                 {
-                    var restResource = restResources[resource.Id.ToString()];
+                    var restResource = restResources[resource.Data.Name];
                     var res1 = resource;
-                    var isTestWebApp = resource.Data?.Name.Contains("isaac") ?? false;
+                    var isTestWebApp = resource.Data.Name.Contains("isaac");
                     if (isTestWebApp)
                     {
-                        Log.Verbose($"Resource {resource.Data?.Name} Tags:");
-                        foreach (var tag in resource.Data?.Tags ?? new Dictionary<string, string>())
+                        Log.Verbose($"Resource {resource.Data.Name} Tags:");
+                        foreach (var tag in resource.Data.Tags ?? new Dictionary<string, string>{{"NO","TAGS"}})
                         {
                             Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
                         }
                         res1 = (await resource.GetAsync(CancellationToken.None)).Value;
                         Log.Verbose($"FROM REST CLIENT ({restResource.Name})");
-                        foreach (var tag in restResource.Tags)
+                        foreach (var tag in restResource.Tags ?? new Dictionary<string, string>{{"NO","TAGS"}})
                         {
                             Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
                         }
