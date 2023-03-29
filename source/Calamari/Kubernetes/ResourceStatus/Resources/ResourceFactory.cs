@@ -35,6 +35,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                     return new ConfigMap(data);
                 case "Secret":
                     return new Secret(data);
+                case "PersistentVolumeClaim":
+                    return new PersistentVolumeClaim(data);
                 default:
                     return new Resource(data);
             }
