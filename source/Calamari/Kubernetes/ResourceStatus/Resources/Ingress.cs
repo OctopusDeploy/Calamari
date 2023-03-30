@@ -35,7 +35,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         
         private static string FormatAddress(IEnumerable<LoadBalancerIngress> loadBalancerIngresses)
         {
-            return string.Join(',', loadBalancerIngresses.Select(ingress => ingress.Ip));
+            return string.Join(",", loadBalancerIngresses.Select(ingress => ingress.Ip));
         }
 
         private static IEnumerable<string> FormatHosts(IEnumerable<IngressRule> rules)

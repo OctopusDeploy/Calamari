@@ -41,9 +41,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 : $"{port.Port}:{port.NodePort}/{port.Protocol}");
         }
 
-        private static string FormatExternalIp(IEnumerable<LoadBalancerIngress> loadBalancerIngresses)
+        private static string FormatExternalIp(LoadBalancerIngress[] loadBalancerIngresses)
         {
-            return !loadBalancerIngresses.Any() ? "<none>" : string.Join(',', loadBalancerIngresses.Select(ingress => ingress.Ip));
+            return !loadBalancerIngresses.Any() ? "<none>" : string.Join(",", loadBalancerIngresses.Select(ingress => ingress.Ip));
         }
     }
 }

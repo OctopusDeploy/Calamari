@@ -50,7 +50,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 .OrderBy(_ => _.Key)
                 .ThenBy(_ => _.Value)
                 .Select(_ => $"{_.Key}={_.Value}");
-            return string.Join(',', selectors);
+            return string.Join(",", selectors);
         }
     }
 }

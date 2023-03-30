@@ -2,7 +2,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
-    public class CronJob: Resource
+    public class CronJob : Resource
     {
         public string Schedule { get; }
         public bool Suspend { get; }
