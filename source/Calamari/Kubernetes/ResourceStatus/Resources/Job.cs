@@ -16,15 +16,16 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             var desired = FieldOrDefault("$.spec.completions", 0);
             Completions = $"{succeeded}/{desired}";
 
-            var completionTime = FieldOrDefault("$.status.completionTime", DateTime.Now);
-            var startTime = FieldOrDefault("$.status.startTime", DateTime.MinValue);
+            var defaultTime = DateTime.Now;
+            var completionTime = FieldOrDefault("$.status.completionTime", defaultTime);
+            var startTime = FieldOrDefault("$.status.startTime", defaultTime);
 
             Duration = $"{completionTime - startTime:c}";
 
             var backoffLimit = FieldOrDefault("$.spec.backoffLimit", 0);
             var failed = FieldOrDefault("$.status.failed", 0);
 
-            if (failed == backoffLimit)
+            if (backoffLimit != 0 && failed == backoffLimit)
             {
                 ResourceStatus = ResourceStatus.Failed;
             } 
