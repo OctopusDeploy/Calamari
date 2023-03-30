@@ -30,7 +30,10 @@ function decode_servicemessagevalue
 # -----------------------------------------------------------------------------
 function __mask_sensitive_value
 {
+    # We want to write to both stdout and stderr due to a racecondition between stdout and stderr
+    # causing error logs to not be masked if stderr event is handled first.
     echo "##octopus[mask value='$(encode_servicemessagevalue "$1")']"
+    echo "##octopus[mask value='$(encode_servicemessagevalue "$1")']" >&2
 }
 
 __mask_sensitive_value $sensitiveVariableKey
