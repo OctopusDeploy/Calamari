@@ -27,7 +27,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             return last.ResourceStatus != ResourceStatus || last.Status != Status;
         }
 
-        private (string, ResourceStatus) GetStatus(
+        private static (string, ResourceStatus) GetStatus(
             string phase, 
             ContainerStatus[] initContainerStatuses,
             ContainerStatus[] containerStatuses)
@@ -47,7 +47,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 case "Succeeded":
                     return (GetReason(containerStatuses.FirstOrDefault()), ResourceStatus.Successful);
                 default:
-                    return ("Running", ResourceStatus.Successful);
+                    return GetStatus(containerStatuses);
             }
         }
 
@@ -67,16 +67,26 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         private static (string, ResourceStatus) GetStatus(ContainerStatus[] containerStatuses)
         {
             var erroredContainer = containerStatuses.FirstOrDefault(HasError);
-            return erroredContainer != null 
-                ? (GetReason(erroredContainer), ResourceStatus.Failed) 
-                : (GetReason(containerStatuses.FirstOrDefault(HasReason)), ResourceStatus.InProgress);
+            if (erroredContainer != null)
+            {
+                return (GetReason(erroredContainer), ResourceStatus.Failed);
+            }
+
+            var containerWithReason = containerStatuses.FirstOrDefault(HasReason);
+            if (containerWithReason != null)
+            {
+                return (GetReason(containerWithReason), ResourceStatus.InProgress);
+            }
+
+            return ("Running", ResourceStatus.Successful);
         }
         
         private static string GetReason(ContainerStatus status)
         {
+            // In real scenario this shouldn't happen, but we give it a default value just in case
             if (status == null)
             {
-                return "Pending";
+                return string.Empty;
             }
             
             if (status.State.Terminated != null)
