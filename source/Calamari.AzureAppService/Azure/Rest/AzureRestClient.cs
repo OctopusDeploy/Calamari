@@ -78,10 +78,16 @@ namespace Calamari.AzureAppService.Azure.Rest
                 parameters.Add(FilterParameterName, filterParameter);
             }
 
+            var r = $"{baseResourceManagementEndpoint}subscriptions/{subscriptionNumber}/providers";
+            r = QueryHelpers.AddQueryString(r, EndpointVersionParameterName, "2021-04-01");
+
             var requestUri = $"{baseResourceManagementEndpoint}subscriptions/{subscriptionNumber}/resources";
             requestUri = QueryHelpers.AddQueryString(requestUri, parameters);
 
             using var client = GetAuthorisedHttpClient();
+
+            var res = await client.GetAsync(r, cancellationToken);
+            var resp = await res.Content.ReadAsStringAsync();
 
             var response = await client.GetAsync(requestUri, cancellationToken);
 
