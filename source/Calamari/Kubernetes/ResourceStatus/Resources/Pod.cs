@@ -5,6 +5,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class Pod : Resource
     {
+        public string Ready { get; }
+        public int Restarts { get; }
         public string Status { get; }
         public override ResourceStatus ResourceStatus { get; }
     
@@ -19,6 +21,13 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 ?.ToObject<ContainerStatus[]>() ?? new ContainerStatus[] { };
 
             (Status, ResourceStatus) = GetStatus(phase, initContainerStatuses, containerStatuses);
+
+            var containers = containerStatuses.Length;
+            var readyContainers = containerStatuses.Count(status => status.Ready);
+            Ready = $"{readyContainers}/{containers}";
+            Restarts = containerStatuses
+                .Select(status => status.RestartCount)
+                .Aggregate(0, (sum, count) => sum + count);
         }
     
         public override bool HasUpdate(Resource lastStatus)

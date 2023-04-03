@@ -18,19 +18,33 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         {
             var kind = data.SelectToken("$.kind")?.Value<string>();
             switch (kind)
-            {
-                case "Deployment":
-                    return new Deployment(data);
-                case "ReplicaSet": 
-                    return new ReplicaSet(data);
+            {   
                 case "Pod": 
                     return new Pod(data);
+                case "ReplicaSet": 
+                    return new ReplicaSet(data);
+                case "Deployment":
+                    return new Deployment(data);
+                case "StatefulSet":
+                    return new StatefulSet(data);
+                case "DaemonSet":
+                    return new DaemonSet(data);
+                case "Job":
+                    return new Job(data);
+                case "CronJob":
+                    return new CronJob(data);
                 case "Service": 
                     return new Service(data);
+                case "Ingress":
+                    return new Ingress(data);
                 case "EndpointSlice": 
                     return new EndpointSlice(data); 
                 case "ConfigMap":
                     return new ConfigMap(data);
+                case "Secret":
+                    return new Secret(data);
+                case "PersistentVolumeClaim":
+                    return new PersistentVolumeClaim(data);
                 default:
                     return new Resource(data);
             }
