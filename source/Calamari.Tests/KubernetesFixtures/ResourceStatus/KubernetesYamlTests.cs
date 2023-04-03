@@ -12,7 +12,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldGenerateCorrectIdentifiers()
         {
             var input = TestFileLoader.Load("single-deployment.yaml");
-            var got = KubernetesYaml.GetDefinedResources(input, string.Empty);
+            var got = KubernetesYaml.GetDefinedResources(new string[] { input }, string.Empty);
             var expected = new ResourceIdentifier[]
             {
                 new ResourceIdentifier(
@@ -29,7 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldOmitDefinitionIfTheMetadataSectionIsNotSet()
         {
             var input = TestFileLoader.Load("invalid.yaml");
-            var got = KubernetesYaml.GetDefinedResources(input, string.Empty);
+            var got = KubernetesYaml.GetDefinedResources(new string[] { input }, string.Empty);
             got.Should().BeEmpty();
         }
         
@@ -37,7 +37,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldHandleMultipleResourcesDefinedInTheSameFile()
         {
             var input = TestFileLoader.Load("multiple-resources.yaml");
-            var got = KubernetesYaml.GetDefinedResources(input, string.Empty);
+            var got = KubernetesYaml.GetDefinedResources(new string[] { input }, string.Empty);
             var expected = new ResourceIdentifier[]
             {
                 new ResourceIdentifier("Deployment", "nginx", "default"),
@@ -53,7 +53,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             const string defaultNamespace = "DefaultNamespace";
             var input = TestFileLoader.Load("no-namespace.yaml");
-            var got = KubernetesYaml.GetDefinedResources(input, defaultNamespace);
+            var got = KubernetesYaml.GetDefinedResources(new string[] { input }, defaultNamespace);
             var expected = new ResourceIdentifier[]
             {
                 new ResourceIdentifier(
@@ -61,6 +61,27 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                     "nginx",
                     defaultNamespace
                 )
+            };
+
+            got.Should().BeEquivalentTo(expected);
+        }
+
+        [Test]
+        public void ShouldHandleMultipleYamlFiles()
+        {
+            var manifest = TestFileLoader.Load("single-deployment.yaml");
+            var multipleFileInput = new string[] {manifest, manifest};
+            var got = KubernetesYaml.GetDefinedResources(multipleFileInput, string.Empty);
+            var expected = new ResourceIdentifier[]
+            {
+                new ResourceIdentifier(
+                    "Deployment",
+                    "nginx",
+                    "test"),
+                new ResourceIdentifier(
+                    "Deployment",
+                    "nginx",
+                    "test"),
             };
 
             got.Should().BeEquivalentTo(expected);

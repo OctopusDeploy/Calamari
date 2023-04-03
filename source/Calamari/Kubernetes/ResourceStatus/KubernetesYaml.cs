@@ -15,19 +15,22 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// Gets resource identifiers which are defined in a YAML file.
         /// A YAML file can define multiple resources, separated by '---'.
         /// </summary>
-        public static IEnumerable<ResourceIdentifier> GetDefinedResources(string manifests, string defaultNamespace)
+        public static IEnumerable<ResourceIdentifier> GetDefinedResources(IEnumerable<string> manifests, string defaultNamespace)
         {
-            var input = new StringReader(manifests);
-
-            var parser = new Parser(input);
-            parser.Consume<StreamStart>();
-            
-            while (!parser.Accept<StreamEnd>(out _))
+            foreach (var manifest in manifests)
             {
-                var definedResource = GetDefinedResource(parser, defaultNamespace);
-                if (definedResource != null)
+                var input = new StringReader(manifest);
+    
+                var parser = new Parser(input);
+                parser.Consume<StreamStart>();
+                
+                while (!parser.Accept<StreamEnd>(out _))
                 {
-                    yield return definedResource;
+                    var definedResource = GetDefinedResource(parser, defaultNamespace);
+                    if (definedResource != null)
+                    {
+                        yield return definedResource;
+                    }
                 }
             }
         }
