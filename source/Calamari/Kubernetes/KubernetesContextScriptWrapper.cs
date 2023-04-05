@@ -84,30 +84,31 @@ namespace Calamari.Kubernetes
                 return new CommandResult(String.Empty, 1);
             }
 
-            if (scriptSyntax == ScriptSyntax.PowerShell && accountType == "AzureServicePrincipal")
-            {
-                variables.Set("OctopusKubernetesTargetScript", $"{script.File}");
-                variables.Set("OctopusKubernetesTargetScriptParameters", script.Parameters);
-
-                using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
-                {
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
-                }
-            }
+            // if (scriptSyntax == ScriptSyntax.PowerShell && accountType == "AzureServicePrincipal")
+            // {
+            //     variables.Set("OctopusKubernetesTargetScript", $"{script.File}");
+            //     variables.Set("OctopusKubernetesTargetScriptParameters", script.Parameters);
+            //
+            //     using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
+            //     {
+            //         return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
+            //     }
+            // }
 
             return NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
         }
 
-        string CreateContextScriptFile(string workingDirectory)
-        {
-            const string contextFile = "AzurePowershellContext.ps1";
-            var contextScriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
-            var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Kubernetes.Scripts.{contextFile}");
-            fileSystem.OverwriteFile(contextScriptFile, contextScript);
-            return contextScriptFile;
-        }
+        // string CreateContextScriptFile(string workingDirectory)
+        // {
+        //     const string contextFile = "AzurePowershellContext.ps1";
+        //     var contextScriptFile = Path.Combine(workingDirectory, $"Octopus.{contextFile}");
+        //     var contextScript = embeddedResources.GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"Calamari.Kubernetes.Scripts.{contextFile}");
+        //     fileSystem.OverwriteFile(contextScriptFile, contextScript);
+        //     return contextScriptFile;
+        // }
+    }
 
-        class SetupKubectlAuthentication
+    public class SetupKubectlAuthentication
         {
             readonly IVariables variables;
             readonly RedactedValuesLogger log;
@@ -639,5 +640,4 @@ namespace Calamari.Kubernetes
                     : Enumerable.Empty<string>();
             }
         }
-    }
 }
