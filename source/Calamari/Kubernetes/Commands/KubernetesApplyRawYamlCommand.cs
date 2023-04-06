@@ -18,6 +18,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Kubernetes.Conventions;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -82,8 +83,9 @@ namespace Calamari.Kubernetes.Commands
                 new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
                 new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, configurationTransformer, transformFileLocator, log)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
-                new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService))
-                //new GatherAndKubectlApplyRawYamlConvention(),
+                new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
+                new KubernetesAuthContextConvention(log, commandLineRunner),
+                new GatherAndApplyRawYamlConvention(log, fileSystem, commandLineRunner),
                 //new MonitorKubernetesResourcesConvention()
             };
 

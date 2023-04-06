@@ -92,7 +92,7 @@ namespace Calamari.Kubernetes.Integration
 
             return result.ExitCode == 0
                 ? captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray()
-                : Enumerable.Empty<string>();
+                : new[] { result.Errors };
         }
     }
 }
