@@ -1,6 +1,11 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Integration;
@@ -76,7 +81,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var log = new SilentLog();
             var fileSystem = new TestCalamariPhysicalFileSystem();
             var statusChecker = new MockResourceStatusChecker();
-
+            
             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
             variables.Set(SpecialVariables.ResourceStatusCheck, "True");
@@ -87,19 +92,90 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
 
+        [Test]
         public void FindsCorrectManifestFiles()
         {
+            var variables = new CalamariVariables();
+            var log = new SilentLog();
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+            var statusChecker = new MockResourceStatusChecker();
             
+            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
+            variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
+            variables.Set(SpecialVariables.ResourceStatusCheck, "True");
+
+            fileSystem.WriteAllText( "secret.yml", "");
+
+            var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+            wrapper.NextWrapper = new StubScriptWrapper();
+
+            var result = wrapper.ExecuteScript(
+                new Script("stub"), 
+                Syntax, 
+                new CommandLineRunner(log, variables),
+                new Dictionary<string, string>());
+
+            result.VerifySuccess();
         }
 
+        [Test]
         public void FindsConfigMapsDeployedInADeployContainerStep()
         {
-            
+            var variables = new CalamariVariables();
+            var log = new SilentLog();
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+            var statusChecker = new MockResourceStatusChecker();
+
+            const string configMapName = "ConfigMap-Deployment-01";
+            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
+            variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
+            variables.Set(SpecialVariables.ResourceStatusCheck, "True");
+            variables.Set("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled", "True");
+            variables.Set("Octopus.Action.KubernetesContainers.ComputedConfigMapName", configMapName);
+
+            var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+            wrapper.NextWrapper = new StubScriptWrapper();
+
+            wrapper.ExecuteScript(
+                new Script("stub"), 
+                Syntax, 
+                new CommandLineRunner(log, variables),
+                new Dictionary<string, string>());
+
+            statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
+            {
+                new ResourceIdentifier("ConfigMap", configMapName, "default")
+            });
         }
 
+        [Test]
         public void FindsSecretsDeployedInADeployContainerStep()
         {
+            var variables = new CalamariVariables();
+            var log = new SilentLog();
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+            var statusChecker = new MockResourceStatusChecker();
+
+            const string secret = "Secret-Deployment-01";
+            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
+            variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
+            variables.Set(SpecialVariables.ResourceStatusCheck, "True");
+            variables.Set("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled", "True");
+            variables.Set("Octopus.Action.KubernetesContainers.ComputedSecretName", secret);
+
+            var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+            wrapper.NextWrapper = new StubScriptWrapper();
+
+            wrapper.ExecuteScript(
+                new Script("stub"), 
+                Syntax, 
+                new CommandLineRunner(log, variables),
+                new Dictionary<string, string>());
             
+            statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
+            {
+                new ResourceIdentifier("Secret", secret, "default")
+            });
         }
     }
 
@@ -116,5 +192,20 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             return true;
         }
     }
-}
 
+    internal class StubScriptWrapper : IScriptWrapper
+    {
+        public int Priority { get; } = ScriptWrapperPriorities.TerminalScriptPriority;
+        public IScriptWrapper NextWrapper { get; set; }
+        public bool IsEnabled(ScriptSyntax syntax) => true;
+
+        public CommandResult ExecuteScript(
+            Script script, 
+            ScriptSyntax scriptSyntax, 
+            ICommandLineRunner commandLineRunner,
+            Dictionary<string, string> environmentVars)
+        {
+            return new CommandResult("stub", 0);
+        }
+    }
+}
