@@ -96,6 +96,15 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return result;
             }
 
+            
+            var kubeConfig = Path.Combine(workingDirectory, "kubectl-octo.yml");
+
+            if (environmentVars == null)
+            {
+                environmentVars = new Dictionary<string, string>();
+            }
+            environmentVars.Add("KUBECONFIG", kubeConfig);
+            
             foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
             {
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;
