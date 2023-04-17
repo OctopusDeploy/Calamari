@@ -62,7 +62,7 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             ReplaceVariables(currentDirectory,
                 variables.GetPaths(ActionVariables.StructuredConfigurationVariablesTargets)
-                         .SelectMany(v => v.Split(";")).ToList());
+                         .SelectMany(v => v.Split(';')).ToList());
         }
 
         public void ReplaceVariables(string currentDirectory, List<string> targets)

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -26,7 +25,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         public void SubstituteBasedSettingsInSuppliedVariables(string currentDirectory)
         {
             var filesToTarget = variables.GetPaths(PackageVariables.SubstituteInFilesTargets)
-                                         .SelectMany(v => v.Split(";")).ToArray();
+                                         .SelectMany(v => v.Split(';')).ToArray();
             Substitute(currentDirectory, filesToTarget);
         }
 
