@@ -120,13 +120,13 @@ function ConnectAzAccount
     else
     {
         # Windows Powershell
-        if (Get-AzureRmModuleInstalled)
-        {
-            Initialize-AzureRmContext
-        }
-        elseif (Get-AzModuleInstalled)
+        if (Get-AzModuleInstalled)
         {
             Initialize-AzContext
+        }
+        elseif (Get-AzureRmModuleInstalled)
+        {
+            Initialize-AzureRmContext
         }
     }
 }
