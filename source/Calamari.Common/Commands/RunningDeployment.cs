@@ -7,6 +7,10 @@ namespace Calamari.Common.Commands
 {
     public class RunningDeployment
     {
+        protected RunningDeployment(IVariables variables) : this(variables, null)
+        {
+        }
+
         public RunningDeployment(IVariables variables, Dictionary<string, string>? environmentVariables = null) : this(
             null, variables, environmentVariables)
         {
