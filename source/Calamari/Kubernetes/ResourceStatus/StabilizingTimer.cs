@@ -1,3 +1,5 @@
+using Calamari.Common.Plumbing.Logging;
+
 namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IStabilizingTimer
@@ -11,11 +13,13 @@ namespace Calamari.Kubernetes.ResourceStatus
     {
         private readonly ICountdownTimer deploymentTimer;
         private readonly ICountdownTimer stabilizationTimer;
+        private readonly ILog log;
         
-        public StabilizingTimer(ICountdownTimer deploymentTimer, ICountdownTimer stabilizationTimer)
+        public StabilizingTimer(ICountdownTimer deploymentTimer, ICountdownTimer stabilizationTimer, ILog log)
         {
             this.deploymentTimer = deploymentTimer;
             this.stabilizationTimer = stabilizationTimer;
+            this.log = log;
         }
 
         public void Start() => deploymentTimer.Start();
@@ -33,16 +37,19 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 if (newDeploymentStatus != oldDeploymentStatus)
                 {
+                    log.Verbose($"Resetting stabilization period because the deployment status has changed");
                     stabilizationTimer.Reset();
 
                     if (newDeploymentStatus != DeploymentStatus.InProgress)
                     {
+                        log.Verbose($"Starting stabilization period for status {(newDeploymentStatus == DeploymentStatus.Succeeded ? "Succeeded" : "Failed")}");
                         stabilizationTimer.Start();
                     }
                 }
             }
             else if (newDeploymentStatus != DeploymentStatus.InProgress)
             {
+                log.Verbose($"Starting stabilization period for status {(newDeploymentStatus == DeploymentStatus.Succeeded ? "Succeeded" : "Failed")}");
                 stabilizationTimer.Start();
             }
 
