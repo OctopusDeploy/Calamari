@@ -34,7 +34,7 @@ namespace Calamari.Kubernetes.Conventions
             if (rawGlobs == null)
                 return;
 
-            var globs = rawGlobs.Split(";");
+            var globs = rawGlobs.Split(';');
             var directories = new List<string>();
             foreach (var (glob, idx) in globs.Select((g,i) => (g,i)))
             {

@@ -30,7 +30,7 @@ namespace Calamari.Kubernetes.Commands
         public CommandResult ExecuteScript(Script script, ScriptSyntax scriptSyntax, ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
-            var yamlGlobs = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName")?.Split(";");
+            var yamlGlobs = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName")?.Split(';');
 
             if (yamlGlobs == null)
                 return NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
