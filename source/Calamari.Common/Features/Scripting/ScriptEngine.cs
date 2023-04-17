@@ -46,7 +46,7 @@ namespace Calamari.Common.Features.Scripting
         {
             var syntax = script.File.ToScriptType();
             return BuildWrapperChain(syntax, variables)
-                .ExecuteScript(script, syntax, commandLineRunner, environmentVars);
+                .ExecuteScript(script, syntax, commandLineRunner, environmentVars ?? new Dictionary<string, string>());
         }
 
         /// <summary>
