@@ -15,11 +15,15 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         {
             var readyReplicas = FieldOrDefault("$.status.readyReplicas", 0);
             var desiredReplicas = FieldOrDefault("$.spec.replicas", 0);
+            var totalReplicas = FieldOrDefault("$.status.replicas", 0);
             Ready = $"{readyReplicas}/{desiredReplicas}";
             Available = FieldOrDefault("$.status.availableReplicas", 0);
             UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
 
-            ResourceStatus = UpToDate == desiredReplicas && Available == desiredReplicas && readyReplicas == desiredReplicas 
+            ResourceStatus = totalReplicas == desiredReplicas 
+                             && UpToDate == desiredReplicas 
+                             && Available == desiredReplicas 
+                             && readyReplicas == desiredReplicas 
                 ? ResourceStatus.Successful 
                 : ResourceStatus.InProgress;
         }

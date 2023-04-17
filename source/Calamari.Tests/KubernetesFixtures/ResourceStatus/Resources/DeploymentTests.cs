@@ -21,6 +21,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         ""replicas"": 3
     },
     ""status"": {
+        ""replicas"": 4,
         ""availableReplicas"": 3,
         ""readyReplicas"": 3,
         ""updatedReplicas"": 1
