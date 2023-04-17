@@ -142,6 +142,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             variables.Set("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled", "True");
             variables.Set("Octopus.Action.KubernetesContainers.ComputedConfigMapName", configMapName);
 
+            var tempDirectory = fileSystem.CreateTemporaryDirectory();
+            fileSystem.SetFileBasePath(tempDirectory);
+            
             var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
             wrapper.NextWrapper = new StubScriptWrapper();
 
@@ -172,6 +175,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             variables.Set("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled", "True");
             variables.Set("Octopus.Action.KubernetesContainers.ComputedSecretName", secret);
 
+            var tempDirectory = fileSystem.CreateTemporaryDirectory();
+            fileSystem.SetFileBasePath(tempDirectory);
+            
             var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
             wrapper.NextWrapper = new StubScriptWrapper();
 
