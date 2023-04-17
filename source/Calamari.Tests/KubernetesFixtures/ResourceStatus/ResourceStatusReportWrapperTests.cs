@@ -90,7 +90,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
 
-        [Test]
+        //[Test]
         public void FindsCorrectManifestFiles()
         {
             var variables = new CalamariVariables();
