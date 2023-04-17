@@ -1,5 +1,8 @@
+using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using YamlDotNet.Core.Tokens;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
@@ -10,36 +13,47 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public int UpToDate { get; }
         public string Ready { get; }
         public int Available { get; }
-        public override ResourceStatus ResourceStatus { get; }
+
+        [JsonIgnore]
+        public int Desired { get; }
+        [JsonIgnore]
+        public int TotalReplicas { get; }
+        [JsonIgnore]
+        public int ReadyReplicas { get; }
 
         public Deployment(JObject json) : base(json)
         {
-            var readyReplicas = FieldOrDefault("$.status.readyReplicas", 0);
-            var desiredReplicas = FieldOrDefault("$.spec.replicas", 0);
-            var totalReplicas = FieldOrDefault("$.status.replicas", 0);
-            Ready = $"{readyReplicas}/{desiredReplicas}";
+            ReadyReplicas = FieldOrDefault("$.status.readyReplicas", 0);
+            Desired = FieldOrDefault("$.spec.replicas", 0);
+            TotalReplicas = FieldOrDefault("$.status.replicas", 0);
+            Ready = $"{ReadyReplicas}/{Desired}";
             Available = FieldOrDefault("$.status.availableReplicas", 0);
             UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
-
-            var foundReplicas = Children
-                ?.SelectMany(child => child?.Children ?? Enumerable.Empty<Resource>())
-                .Count() ?? 0;
             
-            ResourceStatus = foundReplicas == desiredReplicas
-                             && totalReplicas == desiredReplicas 
-                             && UpToDate == desiredReplicas 
-                             && Available == desiredReplicas 
-                             && readyReplicas == desiredReplicas 
+            ResourceStatus = TotalReplicas == Desired
+                             && UpToDate == Desired
+                             && Available == Desired 
+                             && ReadyReplicas == Desired
                 ? ResourceStatus.Successful 
                 : ResourceStatus.InProgress;
         }
-    
+
+        public override void UpdateChildren(IEnumerable<Resource> children)
+        {
+            base.UpdateChildren(children);
+            var foundReplicas = Children
+                ?.SelectMany(child => child?.Children ?? Enumerable.Empty<Resource>())
+                .Count() ?? 0;
+            ResourceStatus = foundReplicas != Desired ? ResourceStatus.InProgress : ResourceStatus;
+        }
+
         public override bool HasUpdate(Resource lastStatus)
         {
             var last = CastOrThrow<Deployment>(lastStatus);
-            return last.UpToDate != UpToDate 
-                   || last.Ready != Ready 
-                   || last.Available != Available;
+            return last.ResourceStatus != ResourceStatus
+                || last.UpToDate != UpToDate 
+                || last.Ready != Ready 
+                || last.Available != Available;
         }
     }
 }
