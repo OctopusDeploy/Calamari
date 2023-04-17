@@ -72,11 +72,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             var manifests = ReadManifestFiles().ToList();
-            if (!manifests.Any())
-            {
-                return result;
-            }
-            
             var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
             
             var secret = GetSecret(defaultNamespace);
@@ -91,11 +86,19 @@ namespace Calamari.Kubernetes.ResourceStatus
                 definedResources.Add(configMap);
             }
 
-            if (definedResources.Count == 0)
+            if (!definedResources.Any())
             {
                 return result;
             }
 
+            var kubeConfig = Path.Combine(workingDirectory, "kubectl-octo.yml");
+
+            if (environmentVars == null)
+            {
+                environmentVars = new Dictionary<string, string>();
+            }
+            environmentVars.Add("KUBECONFIG", kubeConfig);
+            
             foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
             {
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;
