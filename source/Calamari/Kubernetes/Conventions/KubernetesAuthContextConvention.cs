@@ -6,6 +6,9 @@ using Calamari.Deployment.Conventions;
 
 namespace Calamari.Kubernetes.Conventions
 {
+    /// <summary>
+    /// An Implementation of IInstallConvention which setups Kubectl Authentication Context
+    /// </summary>
     public class KubernetesAuthContextConvention : IInstallConvention
     {
         private readonly ILog log;
