@@ -4,30 +4,31 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
 
-namespace Calamari.Kubernetes.Conventions;
-
-public class KubernetesAuthContextConvention : IInstallConvention
+namespace Calamari.Kubernetes.Conventions
 {
-    private readonly ILog log;
-    private readonly ICommandLineRunner commandLineRunner;
-
-    public KubernetesAuthContextConvention(ILog log, ICommandLineRunner commandLineRunner)
+    public class KubernetesAuthContextConvention : IInstallConvention
     {
-        this.log = log;
-        this.commandLineRunner = commandLineRunner;
-    }
+        private readonly ILog log;
+        private readonly ICommandLineRunner commandLineRunner;
 
-    public void Install(RunningDeployment deployment)
-    {
-        var setupKubectlAuthentication = new SetupKubectlAuthentication(deployment.Variables,
-            log,
-            ScriptSyntax.PowerShell,
-            commandLineRunner,
-            deployment.EnvironmentVariables,
-            deployment.CurrentDirectory);
+        public KubernetesAuthContextConvention(ILog log, ICommandLineRunner commandLineRunner)
+        {
+            this.log = log;
+            this.commandLineRunner = commandLineRunner;
+        }
 
-        var accountType = deployment.Variables.Get("Octopus.Account.AccountType");
+        public void Install(RunningDeployment deployment)
+        {
+            var setupKubectlAuthentication = new SetupKubectlAuthentication(deployment.Variables,
+                log,
+                ScriptSyntax.PowerShell,
+                commandLineRunner,
+                deployment.EnvironmentVariables,
+                deployment.CurrentDirectory);
 
-        setupKubectlAuthentication.Execute(accountType);
+            var accountType = deployment.Variables.Get("Octopus.Account.AccountType");
+
+            setupKubectlAuthentication.Execute(accountType);
+        }
     }
 }
