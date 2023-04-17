@@ -14,6 +14,7 @@
         public const string ResourceStatusCheck = "Octopus.Action.Kubernetes.ResourceStatusCheck";
         public const string DeploymentStyle = "Octopus.Action.KubernetesContainers.DeploymentStyle";
         public const string DeploymentWait = "Octopus.Action.KubernetesContainers.DeploymentWait";
+        public const string CustomResourceYamlFileName = "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName";
         public const string DeploymentTimeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string StabilizationTimeout = "Octopus.Action.Kubernetes.StabilizationTimeout";
 

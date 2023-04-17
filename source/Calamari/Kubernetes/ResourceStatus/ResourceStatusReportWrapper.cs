@@ -136,7 +136,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private IEnumerable<string> ReadManifestFiles()
         {
-            var customResourceFileName = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
+            var customResourceFileName = variables.Get(SpecialVariables.CustomResourceYamlFileName);
             
             var knownFileNames = new[]
             {

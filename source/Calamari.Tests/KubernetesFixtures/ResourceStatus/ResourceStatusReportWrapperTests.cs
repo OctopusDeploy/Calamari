@@ -1,16 +1,14 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -103,19 +101,30 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
             variables.Set(SpecialVariables.ResourceStatusCheck, "True");
+            variables.Set(SpecialVariables.CustomResourceYamlFileName, "custom.yml");
 
-            fileSystem.WriteAllText( "secret.yml", "");
-
+            var testDirectory =
+                TestEnvironment.GetTestPath("KubernetesFixtures", "ResourceStatus", "assets", "manifests");
+            
+            fileSystem.SetFileBasePath(testDirectory);
+            
             var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
             wrapper.NextWrapper = new StubScriptWrapper();
 
-            var result = wrapper.ExecuteScript(
+            wrapper.ExecuteScript(
                 new Script("stub"), 
                 Syntax, 
                 new CommandLineRunner(log, variables),
                 new Dictionary<string, string>());
 
-            result.VerifySuccess();
+            statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier[]
+            {
+                new ResourceIdentifier("Deployment", "deployment", "default"),
+                new ResourceIdentifier("Ingress", "ingress", "default"),
+                new ResourceIdentifier("Secret", "secret", "default"),
+                new ResourceIdentifier("Service", "service", "default"),
+                new ResourceIdentifier("CustomResource", "custom-resource", "default")
+            });
         }
 
         [Test]
