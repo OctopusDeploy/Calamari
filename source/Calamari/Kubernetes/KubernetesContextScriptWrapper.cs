@@ -57,6 +57,11 @@ namespace Calamari.Kubernetes
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
 
+            if (environmentVars == null)
+            {
+                environmentVars = new Dictionary<string, string>();
+            }
+            
             var setupKubectlAuthentication = new SetupKubectlAuthentication(variables,
                                                                             log,
                                                                             scriptSyntax,
