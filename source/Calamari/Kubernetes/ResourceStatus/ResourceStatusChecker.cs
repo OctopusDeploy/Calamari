@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 
@@ -30,11 +32,13 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private readonly IResourceRetriever resourceRetriever;
         private readonly IResourceUpdateReporter reporter;
+        private readonly ILog log;
 
-        public ResourceStatusChecker(IResourceRetriever resourceRetriever, IResourceUpdateReporter reporter)
+        public ResourceStatusChecker(IResourceRetriever resourceRetriever, IResourceUpdateReporter reporter, ILog log)
         {
             this.resourceRetriever = resourceRetriever;
             this.reporter = reporter;
+            this.log = log;
         }
         
         public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
@@ -68,7 +72,37 @@ namespace Calamari.Kubernetes.ResourceStatus
                 Thread.Sleep(PollingIntervalSeconds * 1000);
             }
 
-            return deploymentStatus == DeploymentStatus.Succeeded && !stabilizingTimer.IsStabilizing();
+            if (stabilizingTimer.IsStabilizing())
+            {
+                switch (deploymentStatus)
+                {
+                    case DeploymentStatus.Succeeded:
+                        log.Verbose("Resource status check terminated during stabilization period with all resources being successful");
+                        break;
+                    case DeploymentStatus.Failed:
+                        log.Verbose("Resource status check terminated during stabilization period with some failed resources");
+                        break;
+                    default:
+                        break;
+                }
+
+                return false;
+            }
+
+            switch (deploymentStatus)
+            {
+                case DeploymentStatus.Succeeded:
+                    log.Verbose("Resource status check completed successfully because all resources are deployed successfully and have stabilized");
+                    return true;
+                case DeploymentStatus.InProgress:
+                    log.Verbose("Resource status check terminated because the execution timeout has been reached but some resources are still in progress");
+                    return false;
+                case DeploymentStatus.Failed:
+                    log.Verbose("Resource status check terminated with errors because some resources have failed and did not recover during stabilization period");
+                    return false;
+                default:
+                    return false;
+            }
         }
 
         private static DeploymentStatus GetDeploymentStatus(List<Resource> resources)
