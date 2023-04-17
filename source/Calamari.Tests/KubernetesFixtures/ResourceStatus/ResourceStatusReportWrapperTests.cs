@@ -90,7 +90,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
 
-        //[Test]
+        [Test]
         public void FindsCorrectManifestFiles()
         {
             var variables = new CalamariVariables();
@@ -143,21 +143,28 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             variables.Set("Octopus.Action.KubernetesContainers.ComputedConfigMapName", configMapName);
 
             var tempDirectory = fileSystem.CreateTemporaryDirectory();
-            fileSystem.SetFileBasePath(tempDirectory);
-            
-            var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
-            wrapper.NextWrapper = new StubScriptWrapper();
-
-            wrapper.ExecuteScript(
-                new Script("stub"), 
-                Syntax, 
-                new CommandLineRunner(log, variables),
-                new Dictionary<string, string>());
-
-            statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
+            try
             {
-                new ResourceIdentifier("ConfigMap", configMapName, "default")
-            });
+                fileSystem.SetFileBasePath(tempDirectory);
+
+                var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+                wrapper.NextWrapper = new StubScriptWrapper();
+
+                wrapper.ExecuteScript(
+                    new Script("stub"),
+                    Syntax,
+                    new CommandLineRunner(log, variables),
+                    new Dictionary<string, string>());
+
+                statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
+                {
+                    new ResourceIdentifier("ConfigMap", configMapName, "default")
+                });
+            }
+            finally
+            {
+                fileSystem.DeleteDirectory(tempDirectory);
+            }
         }
 
         [Test]
@@ -176,21 +183,28 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             variables.Set("Octopus.Action.KubernetesContainers.ComputedSecretName", secret);
 
             var tempDirectory = fileSystem.CreateTemporaryDirectory();
-            fileSystem.SetFileBasePath(tempDirectory);
-            
-            var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
-            wrapper.NextWrapper = new StubScriptWrapper();
-
-            wrapper.ExecuteScript(
-                new Script("stub"), 
-                Syntax, 
-                new CommandLineRunner(log, variables),
-                new Dictionary<string, string>());
-            
-            statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
+            try
             {
-                new ResourceIdentifier("Secret", secret, "default")
-            });
+                fileSystem.SetFileBasePath(tempDirectory);
+
+                var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+                wrapper.NextWrapper = new StubScriptWrapper();
+
+                wrapper.ExecuteScript(
+                    new Script("stub"),
+                    Syntax,
+                    new CommandLineRunner(log, variables),
+                    new Dictionary<string, string>());
+
+                statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
+                {
+                    new ResourceIdentifier("Secret", secret, "default")
+                });
+            }
+            finally
+            {
+                fileSystem.DeleteDirectory(tempDirectory);
+            }
         }
     }
 
