@@ -17,10 +17,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         ""namespace"": ""default"",
         ""uid"": ""01695a39-5865-4eea-b4bf-1a4783cbce62""
     },
+    ""spec"": {
+        ""replicas"": 3
+    },
     ""status"": {
         ""availableReplicas"": 3,
         ""readyReplicas"": 3,
-        ""replicas"": 3,
         ""updatedReplicas"": 1
     }
 }";

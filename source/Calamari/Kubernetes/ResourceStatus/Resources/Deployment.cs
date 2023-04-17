@@ -14,12 +14,12 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public Deployment(JObject json) : base(json)
         {
             var readyReplicas = FieldOrDefault("$.status.readyReplicas", 0);
-            var replicas = FieldOrDefault("$.status.replicas", 0);
-            Ready = $"{readyReplicas}/{replicas}";
+            var desiredReplicas = FieldOrDefault("$.spec.replicas", 0);
+            Ready = $"{readyReplicas}/{desiredReplicas}";
             Available = FieldOrDefault("$.status.availableReplicas", 0);
             UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
 
-            ResourceStatus = UpToDate == replicas && Available == replicas && readyReplicas == replicas 
+            ResourceStatus = UpToDate == desiredReplicas && Available == desiredReplicas && readyReplicas == desiredReplicas 
                 ? ResourceStatus.Successful 
                 : ResourceStatus.InProgress;
         }
