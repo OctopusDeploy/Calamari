@@ -21,7 +21,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             Available = FieldOrDefault("$.status.availableReplicas", 0);
             UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
 
-            var foundReplicas = Children.SelectMany(child => child?.Children ?? Enumerable.Empty<Resource>()).Count();
+            var foundReplicas = Children
+                ?.SelectMany(child => child?.Children ?? Enumerable.Empty<Resource>())
+                .Count() ?? 0;
             
             ResourceStatus = foundReplicas == desiredReplicas
                              && totalReplicas == desiredReplicas 
