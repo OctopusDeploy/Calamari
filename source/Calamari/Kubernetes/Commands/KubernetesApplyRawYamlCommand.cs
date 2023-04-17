@@ -19,6 +19,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes.Conventions;
+using Calamari.Kubernetes.ResourceStatus;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -35,6 +36,7 @@ namespace Calamari.Kubernetes.Commands
         private readonly IExtractPackage extractPackage;
         private readonly ISubstituteInFiles substituteInFiles;
         private readonly IStructuredConfigVariablesService structuredConfigVariablesService;
+        private readonly ResourceStatusReportExecutor statusReportExecutor;
 
         private PathToPackage pathToPackage;
 
@@ -46,7 +48,8 @@ namespace Calamari.Kubernetes.Commands
             ICalamariFileSystem fileSystem,
             IExtractPackage extractPackage,
             ISubstituteInFiles substituteInFiles,
-            IStructuredConfigVariablesService structuredConfigVariablesService)
+            IStructuredConfigVariablesService structuredConfigVariablesService,
+            ResourceStatusReportExecutor statusReportExecutor)
         {
             this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
@@ -56,6 +59,7 @@ namespace Calamari.Kubernetes.Commands
             this.extractPackage = extractPackage;
             this.substituteInFiles = substituteInFiles;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
+            this.statusReportExecutor = statusReportExecutor;
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         }
         public override int Execute(string[] commandLineArguments)
@@ -86,7 +90,7 @@ namespace Calamari.Kubernetes.Commands
                 new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
                 new KubernetesAuthContextConvention(log, commandLineRunner),
                 new GatherAndApplyRawYamlConvention(log, fileSystem, commandLineRunner),
-                //new MonitorKubernetesResourcesConvention()
+                new ResourceStatusReportConvention(statusReportExecutor, commandLineRunner)
             };
 
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
