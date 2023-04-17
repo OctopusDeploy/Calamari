@@ -1,3 +1,4 @@
+using System.Linq;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources
@@ -20,7 +21,10 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             Available = FieldOrDefault("$.status.availableReplicas", 0);
             UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
 
-            ResourceStatus = totalReplicas == desiredReplicas 
+            var foundReplicas = Children.SelectMany(child => child?.Children ?? Enumerable.Empty<Resource>()).Count();
+            
+            ResourceStatus = foundReplicas == desiredReplicas
+                             && totalReplicas == desiredReplicas 
                              && UpToDate == desiredReplicas 
                              && Available == desiredReplicas 
                              && readyReplicas == desiredReplicas 
