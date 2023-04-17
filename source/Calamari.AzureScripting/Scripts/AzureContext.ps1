@@ -116,7 +116,9 @@ function Initialize-AzContext {
 
     # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
     Write-Host "##octopus[stdout-verbose]"
+    Set-Item -Path Env:\SuppressAzureRmModulesRetiringWarning -Value $true
     Disable-AzContextAutosave -Scope Process
+    Set-Item -Path Env:\SuppressAzureRmModulesRetiringWarning -Value $false
     Write-Host "##octopus[stdout-default]"
 
     $AzureEnvironment = Get-AzEnvironment -Name $OctopusAzureEnvironment
