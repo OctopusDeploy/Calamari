@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             return new TestWindowsPhysicalFileSystem();
         }
 
-        public void SetFileBasePath(string basePath) => File = new TestFile(basePath);
+        // public void SetFileBasePath(string basePath) => File = new TestFile(basePath);
         
         public override bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes)
         {
