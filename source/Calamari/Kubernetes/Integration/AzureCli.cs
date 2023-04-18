@@ -16,10 +16,11 @@ namespace Calamari.Kubernetes.Integration
 
         public bool TrySetAz()
         {
-            var foundExecutable = CalamariEnvironment.IsRunningOnWindows
-                ? ExecuteCommandAndReturnOutput("where", "az.cmd").FirstOrDefault()
-                : ExecuteCommandAndReturnOutput("which", "az").FirstOrDefault();
+            var result = CalamariEnvironment.IsRunningOnWindows
+                ? ExecuteCommandAndReturnOutput("where", "az.cmd")
+                : ExecuteCommandAndReturnOutput("which", "az");
 
+            var foundExecutable = result.Output.Messages.FirstOrDefault()?.Text;
             if (string.IsNullOrEmpty(foundExecutable))
             {
                 log.Error("Could not find az. Make sure az is on the PATH.");

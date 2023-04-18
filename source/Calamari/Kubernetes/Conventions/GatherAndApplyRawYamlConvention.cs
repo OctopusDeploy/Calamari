@@ -62,10 +62,24 @@ namespace Calamari.Kubernetes.Conventions
             foreach (var (directory, index) in directories.Select((d,i) => (d,i)))
             {
                 log.Verbose($"Applying Yaml Batch #{index}");
-                var output = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "-o", "json");
-                foreach (var logLine in output)
+                var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "-o", "json");
+                foreach (var message in result.Output.Messages)
                 {
-                    log.Verbose(logLine);
+                    switch (message.Level)
+                    {
+                        case Level.Info:
+                            log.Verbose(message.Text);
+                            break;
+                        case Level.Error:
+                            log.Error(message.Text);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                }
+                if (result.Result.ExitCode != 0)
+                {
+                    throw new Exception(result.Result.Errors);
                 }
             }
         }

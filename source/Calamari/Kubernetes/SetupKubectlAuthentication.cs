@@ -525,7 +525,10 @@ namespace Calamari.Kubernetes
 
             var result = commandLineRunner.Execute(invocation);
 
-            captureCommandOutput.Messages.ForEach(message => log.Verbose(message.Text));
+            foreach (var message in captureCommandOutput.Messages)
+            {
+                log.Verbose(message.Text);
+            }
 
             return result;
         }
