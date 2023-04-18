@@ -30,7 +30,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public virtual string ChildKind => "";
     
         [JsonIgnore]
-        public IEnumerable<Resource> Children { get; set; }
+        public IEnumerable<Resource> Children { get; internal set; }
     
         public Resource(JObject json)
         {
@@ -49,7 +49,18 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         protected T FieldOrDefault<T>(string jsonPath, T defaultValue)
         {
             var result = data.SelectToken(jsonPath);
-            return result == null ? defaultValue : result.Value<T>();
+            if (result == null)
+            {
+                return defaultValue;
+            }
+            try
+            {
+                return result.Value<T>();
+            }
+            catch
+            {
+                return defaultValue;
+            }
         }
     
         protected static T CastOrThrow<T>(Resource resource) where T: Resource

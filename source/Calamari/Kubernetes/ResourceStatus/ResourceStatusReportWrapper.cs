@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Integration;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
@@ -70,18 +71,41 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return result;
             }
 
-            if (!TryReadManifestFile(out var content))
+            var manifests = ReadManifestFiles().ToList();
+            var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
+            
+            var secret = GetSecret(defaultNamespace);
+            if (secret != null)
             {
-                return result;
+                definedResources.Add(secret);
             }
             
-            var definedResources = KubernetesYaml.GetDefinedResources(content, defaultNamespace).ToList();
-
-            if (definedResources.Count == 0)
+            var configMap = GetConfigMap(defaultNamespace);
+            if (configMap != null)
             {
+                definedResources.Add(configMap);
+            }
+
+            if (!definedResources.Any())
+            {
+                log.Verbose("No defined resources are found, skipping resource status check");
                 return result;
             }
 
+            log.Verbose("Performing resource status checks on the following resources:");
+            foreach (var resourceIdentifier in definedResources)
+            {
+                log.Verbose($" - {resourceIdentifier.Kind}/{resourceIdentifier.Name} in namespace {resourceIdentifier.Namespace}");
+            }
+            
+            var kubeConfig = Path.Combine(workingDirectory, "kubectl-octo.yml");
+
+            if (environmentVars == null)
+            {
+                environmentVars = new Dictionary<string, string>();
+            }
+            environmentVars.Add("KUBECONFIG", kubeConfig);
+            
             foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
             {
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;
@@ -99,7 +123,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var stabilizationTimer = new CountdownTimer(TimeSpan.FromSeconds(stabilizationTimeoutSeconds));
 
-            var stabilizingTimer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
+            var stabilizingTimer = new StabilizingTimer(deploymentTimer, stabilizationTimer, log);
             
             var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, stabilizingTimer, kubectl);
             
@@ -111,15 +135,15 @@ namespace Calamari.Kubernetes.ResourceStatus
             return result;
         }
 
-        private bool TryReadManifestFile(out string content)
+        private IEnumerable<string> ReadManifestFiles()
         {
-            // TODO this won't handle configMaps defined together with a Deploy a Container step
-            var customResourceFileName =
-                variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
+            var customResourceFileName = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
+            
             var knownFileNames = new[]
             {
                 "secret.yml", customResourceFileName, "deployment.yml", "service.yml", "ingress.yml",
             };
+            
             foreach (var file in knownFileNames)
             {
                 if (!fileSystem.FileExists(file))
@@ -127,12 +151,28 @@ namespace Calamari.Kubernetes.ResourceStatus
                     continue;
                 }
 
-                content = fileSystem.ReadFile(file);
-                return true;
+                yield return fileSystem.ReadFile(file);
             }
-
-            content = null;
-            return false;
+        }
+        
+        private ResourceIdentifier GetConfigMap(string defaultNamespace)
+        {
+            if (!variables.GetFlag("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled"))
+            {
+                return null;
+            }
+            var configMapName = variables.Get("Octopus.Action.KubernetesContainers.ComputedConfigMapName");
+            return string.IsNullOrEmpty(configMapName) ? null : new ResourceIdentifier("ConfigMap", configMapName, defaultNamespace);
+        }
+        
+        private ResourceIdentifier GetSecret(string defaultNamespace)
+        {
+            if (!variables.GetFlag("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled"))
+            {
+                return null;
+            }
+            var secretName = variables.Get("Octopus.Action.KubernetesContainers.ComputedSecretName");
+            return string.IsNullOrEmpty(secretName) ? null : new ResourceIdentifier("Secret", secretName, defaultNamespace);
         }
     }
 }

@@ -2,33 +2,41 @@ using Newtonsoft.Json;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
+    // Subset of: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#containerstatus-v1-core
     public class ContainerStatus
     {
         [JsonProperty("state")]
-        public State State { get; set; }
+        public ContainerState State { get; set; }
+        
+        [JsonProperty("ready")]
+        public bool Ready { get; set; }
+        
+        [JsonProperty("restartCount")]
+        public int RestartCount { get; set; }
     }
 
-    public class State
+    // Subset of: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#containerstate-v1-core
+    public class ContainerState
     {
         [JsonProperty("running")]
-        public Running Running { get; set; }
+        public ContainerStateRunning Running { get; set; }
         
         [JsonProperty("waiting")]
-        public Waiting Waiting { get; set; }
+        public ContainerStateWaiting Waiting { get; set; }
         
         [JsonProperty("terminated")]
-        public Terminated Terminated { get; set; }
+        public ContainerStateTerminated Terminated { get; set; }
     }
     
-    public class Running {}
+    public class ContainerStateRunning {}
     
-    public class Waiting
+    public class ContainerStateWaiting
     {
         [JsonProperty("reason")]
         public string Reason { get; set; }
     }
     
-    public class Terminated
+    public class ContainerStateTerminated
     {
         [JsonProperty("reason")]
         public string Reason { get; set; }

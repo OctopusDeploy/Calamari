@@ -3,12 +3,14 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
-    public class ConfigMap : Resource
+    public class Secret: Resource
     {
         public int Data { get; }
+        public string Type { get; }
         
-        public ConfigMap(JObject json) : base(json)
+        public Secret(JObject json) : base(json)
         {
+            Type = Field("$.type");
             Data = (data.SelectToken("$.data")
                 ?.ToObject<Dictionary<string, string>>() ?? new Dictionary<string, string>())
                 .Count;
@@ -16,8 +18,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public override bool HasUpdate(Resource lastStatus)
         {
-            var last = CastOrThrow<ConfigMap>(lastStatus);
-            return last.Data != Data;
+            var last = CastOrThrow<Secret>(lastStatus);
+            return last.Data != Data || last.Type != Type;
         }
     }
 }
+

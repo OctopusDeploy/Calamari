@@ -6,19 +6,19 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     {
         public override string ChildKind => "Pod";
         
-        public int Available { get; }
+        public int Desired { get; }
+        public int Current { get; }
         public int Ready { get; }
-        public int Replicas { get; }
-    
+
         public override ResourceStatus ResourceStatus { get; }
         
         public ReplicaSet(JObject json) : base(json)
         {
-            Replicas = FieldOrDefault("$.status.replicas", 0);
+            Desired = FieldOrDefault("$.status.replicas", 0);
+            Current = FieldOrDefault($".status.availableReplicas", 0);
             Ready = FieldOrDefault("$.status.readyReplicas", 0);
-            Available = FieldOrDefault($".status.availableReplicas", 0);
-    
-            if (Ready == Replicas && Available == Replicas)
+            
+            if (Ready == Desired && Desired == Current)
             {
                 ResourceStatus = ResourceStatus.Successful;
             }
@@ -30,7 +30,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public override bool HasUpdate(Resource lastStatus)
         {
             var last = CastOrThrow<ReplicaSet>(lastStatus);
-            return last.Available != Available || last.Ready != Ready || last.Replicas != Replicas;
+            return last.Desired != Desired|| last.Ready != Ready || last.Current != Current;
         }
     }
 }
