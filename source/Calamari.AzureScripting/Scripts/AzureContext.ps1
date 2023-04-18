@@ -104,21 +104,22 @@ function Initialize-AzContext {
     # Authenticate via Service Principal
     $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
     $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-
+    $tempWarningPreference = $WarningPreference
+    $WarningPreference = 'SilentlyContinue'
     if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
     {
+        $WarningPreference = $tempWarningPreference
         Write-Verbose "Enabling AzureRM aliasing"
 
         # Turn on AzureRm aliasing
         # See https://docs.microsoft.com/en-us/powershell/azure/migrate-from-azurerm-to-az?view=azps-3.0.0#enable-azurerm-compatibility-aliases
         Enable-AzureRmAlias -Scope Process
     }
+    $WarningPreference = $tempWarningPreference
 
     # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
     Write-Host "##octopus[stdout-verbose]"
-    Set-Item -Path Env:\SuppressAzureRmModulesRetiringWarning -Value $true
     Disable-AzContextAutosave -Scope Process
-    Set-Item -Path Env:\SuppressAzureRmModulesRetiringWarning -Value $false
     Write-Host "##octopus[stdout-default]"
 
     $AzureEnvironment = Get-AzEnvironment -Name $OctopusAzureEnvironment
