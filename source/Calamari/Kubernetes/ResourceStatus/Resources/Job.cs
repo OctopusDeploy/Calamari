@@ -8,8 +8,6 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public string Completions { get; }
         public string Duration { get; }
 
-        public override ResourceStatus ResourceStatus { get; }
-
         public Job(JObject json) : base(json)
         {
             var succeeded = FieldOrDefault("$.status.succeeded", 0);
