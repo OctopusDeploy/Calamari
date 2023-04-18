@@ -66,6 +66,7 @@ namespace Calamari.Common
 
             builder.RegisterAssemblyTypes(assemblies)
                    .AssignableTo<IScriptWrapper>()
+                   .Where(wrapper => wrapper.IsPublic)
                    .Except<TerminalScriptWrapper>()
                    .As<IScriptWrapper>()
                    .SingleInstance();
