@@ -29,9 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var fileSystem = new TestCalamariPhysicalFileSystem();
             var statusChecker = new MockResourceStatusChecker();
 
-            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
-            variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
-            variables.Set(SpecialVariables.ResourceStatusCheck, "True");
+            AddKubernetesStatusCheckVariables(variables);
             
             var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
 
@@ -62,9 +60,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var fileSystem = new TestCalamariPhysicalFileSystem();
             var statusChecker = new MockResourceStatusChecker();
 
-            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
-            variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
-            variables.Set(SpecialVariables.ResourceStatusCheck, "True");
+            AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentStyle, "bluegreen");
             
             var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
@@ -80,9 +76,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var fileSystem = new TestCalamariPhysicalFileSystem();
             var statusChecker = new MockResourceStatusChecker();
             
-            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
-            variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
-            variables.Set(SpecialVariables.ResourceStatusCheck, "True");
+            AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentWait, "wait");
             
             var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
@@ -98,9 +92,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var fileSystem = new TestCalamariPhysicalFileSystem();
              var statusChecker = new MockResourceStatusChecker();
              
-             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
-             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
-             variables.Set(SpecialVariables.ResourceStatusCheck, "True");
+             AddKubernetesStatusCheckVariables(variables);
              variables.Set(SpecialVariables.CustomResourceYamlFileName, "custom.yml");
         
              var testDirectory =
@@ -136,9 +128,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var statusChecker = new MockResourceStatusChecker();
         
              const string configMapName = "ConfigMap-Deployment-01";
-             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
-             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
-             variables.Set(SpecialVariables.ResourceStatusCheck, "True");
+             AddKubernetesStatusCheckVariables(variables);
              variables.Set("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled", "True");
              variables.Set("Octopus.Action.KubernetesContainers.ComputedConfigMapName", configMapName);
         
@@ -176,9 +166,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var statusChecker = new MockResourceStatusChecker();
         
              const string secret = "Secret-Deployment-01";
-             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
-             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
-             variables.Set(SpecialVariables.ResourceStatusCheck, "True");
+             AddKubernetesStatusCheckVariables(variables);
              variables.Set("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled", "True");
              variables.Set("Octopus.Action.KubernetesContainers.ComputedSecretName", secret);
         
@@ -205,6 +193,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              {
                  fileSystem.DeleteDirectory(tempDirectory);
              }
+         }
+
+         private static void AddKubernetesStatusCheckVariables(IVariables variables)
+         {
+             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
+             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
+             variables.Set(SpecialVariables.ResourceStatusCheck, "True");
          }
     }
 
