@@ -1,4 +1,6 @@
 using Calamari.Kubernetes.ResourceStatus;
+using Calamari.Testing.Helpers;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -17,7 +19,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
-            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
+            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer, new InMemoryLog());
             
             timer.Start();
             
@@ -38,7 +40,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
-            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
+            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer, new InMemoryLog());
 
             timer.Start();
             
@@ -57,7 +59,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
-            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
+            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer, new InMemoryLog());
             
             timer.Start();
             
@@ -80,7 +82,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
-            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
+            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer, new InMemoryLog());
             
             timer.Start();
             
@@ -101,7 +103,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var deploymentTimer = new MockCountdownTimer();
             var stabilizationTimer = new MockCountdownTimer();
-            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
+            var timer = new StabilizingTimer(deploymentTimer, stabilizationTimer, new InMemoryLog());
 
             timer.Start();
             

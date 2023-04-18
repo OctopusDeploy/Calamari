@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Logging;
@@ -33,15 +32,19 @@ namespace Calamari.Kubernetes.ResourceStatus
         
         public void ReportUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses)
         {
-            foreach (var resource in GetCreatedOrUpdatedResources(originalStatuses, newStatuses))
+            var createdOrUpdatedResources = GetCreatedOrUpdatedResources(originalStatuses, newStatuses).ToList();
+            foreach (var resource in createdOrUpdatedResources)
             {
                 SendServiceMessage(resource, false);
             }
-            
-            foreach (var resource in GetRemovedResources(originalStatuses, newStatuses))
+
+            var removedResources = GetRemovedResources(originalStatuses, newStatuses).ToList();
+            foreach (var resource in removedResources)
             {
                 SendServiceMessage(resource, true);
             }
+            
+            log.Verbose($"Resource status reported: {createdOrUpdatedResources.Count} updates, {removedResources.Count} removals");
         }
         
         private static IEnumerable<Resource> GetCreatedOrUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses)

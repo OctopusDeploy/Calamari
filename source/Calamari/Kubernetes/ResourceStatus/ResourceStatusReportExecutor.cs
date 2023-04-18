@@ -51,7 +51,14 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             if (!definedResources.Any())
             {
+                log.Verbose("No defined resources are found, skipping resource status check");
                 return;
+            }
+
+            log.Verbose("Performing resource status checks on the following resources:");
+            foreach (var resourceIdentifier in definedResources)
+            {
+                log.Verbose($" - {resourceIdentifier.Kind}/{resourceIdentifier.Name} in namespace {resourceIdentifier.Namespace}");
             }
 
             var kubeConfig = Path.Combine(workingDirectory, "kubectl-octo.yml");
@@ -79,7 +86,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var stabilizationTimer = new CountdownTimer(TimeSpan.FromSeconds(stabilizationTimeoutSeconds));
 
-            var stabilizingTimer = new StabilizingTimer(deploymentTimer, stabilizationTimer);
+            var stabilizingTimer = new StabilizingTimer(deploymentTimer, stabilizationTimer, log);
 
             var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, stabilizingTimer, kubectl);
 
