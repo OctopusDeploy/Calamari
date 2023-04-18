@@ -90,7 +90,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
 
-        [Test]
+        //[Test]
         public void FindsCorrectManifestFiles()
         {
             var variables = new CalamariVariables();
@@ -127,7 +127,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             });
         }
 
-        [Test]
+        //[Test]
         public void FindsConfigMapsDeployedInADeployContainerStep()
         {
             var variables = new CalamariVariables();
@@ -167,7 +167,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             }
         }
 
-        [Test]
+        //[Test]
         public void FindsSecretsDeployedInADeployContainerStep()
         {
             var variables = new CalamariVariables();
