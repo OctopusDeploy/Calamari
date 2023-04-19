@@ -84,7 +84,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
 
-        [Test]
+         [Test]
          public void FindsCorrectManifestFiles()
          {
              var variables = new CalamariVariables();
@@ -101,7 +101,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              fileSystem.SetFileBasePath(testDirectory);
              
              var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
-             wrapper.NextWrapper = new StubScriptWrapper();
+             wrapper.NextWrapper = new StubScriptWrapper().Enable();
         
              wrapper.ExecuteScript(
                  new Script("stub"), 
@@ -119,7 +119,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              });
          }
 
-        [Test]
+         [Test]
          public void FindsConfigMapsDeployedInADeployContainerStep()
          {
              var variables = new CalamariVariables();
@@ -138,7 +138,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                  fileSystem.SetFileBasePath(tempDirectory);
         
                  var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
-                 wrapper.NextWrapper = new StubScriptWrapper();
+                 wrapper.NextWrapper = new StubScriptWrapper().Enable();
         
                  wrapper.ExecuteScript(
                      new Script("stub"),
@@ -157,7 +157,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              }
          }
 
-        [Test]
+         [Test]
          public void FindsSecretsDeployedInADeployContainerStep()
          {
              var variables = new CalamariVariables();
@@ -176,7 +176,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                  fileSystem.SetFileBasePath(tempDirectory);
         
                  var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
-                 wrapper.NextWrapper = new StubScriptWrapper();
+                 wrapper.NextWrapper = new StubScriptWrapper().Enable();
         
                  wrapper.ExecuteScript(
                      new Script("stub"),
@@ -219,9 +219,19 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
     internal class StubScriptWrapper : IScriptWrapper
     {
+        private bool isEnabled = false;
+        
         public int Priority { get; } = 1;
         public IScriptWrapper NextWrapper { get; set; }
-        public bool IsEnabled(ScriptSyntax syntax) => true;
+        public bool IsEnabled(ScriptSyntax syntax) => isEnabled;
+
+        // We manually enable this wrapper when needed,
+        // to avoid this wrapper being auto-registered and called from real programs
+        public StubScriptWrapper Enable()
+        {
+            isEnabled = true;
+            return this;
+        }
 
         public CommandResult ExecuteScript(
             Script script, 
