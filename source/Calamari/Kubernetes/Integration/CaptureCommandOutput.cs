@@ -9,7 +9,7 @@ namespace Calamari.Kubernetes.Integration
     }
     public class CaptureCommandOutput : ICommandInvocationOutputSink, ICommandOutput
     {
-        private readonly List<Message> messages = new();
+        private readonly List<Message> messages = new List<Message>();
         public IReadOnlyList<Message> Messages => messages;
         public void WriteInfo(string line)
         {
