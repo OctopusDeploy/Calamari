@@ -23,6 +23,9 @@ namespace Calamari.AzureAppService.Behaviors
 {
     public class TargetDiscoveryBehaviour : IDeployBehaviour
     {
+        private const string WebAppSlotsType = "microsoft.web/sites/slots";
+        private const string WebAppType = "microsoft.web/sites";
+
         private ILog Log { get; }
 
         public TargetDiscoveryBehaviour(ILog log)
@@ -52,7 +55,7 @@ namespace Calamari.AzureAppService.Behaviors
             });
             try
             {
-                var resources = await armClient.GetAllAzureWebAppsAndSlots();
+                var resources = await armClient.ResourcesByType(WebAppType, WebAppSlotsType);
                 var discoveredTargetCount = 0;
                 Log.Verbose($"Found {resources.Length} candidate web app resources.");
                 foreach (var resource in resources)
@@ -153,9 +156,6 @@ namespace Calamari.AzureAppService.Behaviors
 
     public static class TargetDiscoveryHelpers
     {
-        private const string WebAppSlotsType = "microsoft.web/sites/slots";
-        private const string WebAppType = "microsoft.web/sites";
-
         public static ServiceMessage CreateWebAppTargetCreationServiceMessage(string? resourceGroupName, string webAppName, string accountId, string role, string? workerPoolId, string? slotName)
         {
             var parameters = new Dictionary<string, string?> {
@@ -175,11 +175,14 @@ namespace Calamari.AzureAppService.Behaviors
                 parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
         }
 
-        public static async Task<AzureResource[]> GetAllAzureWebAppsAndSlots(this ArmClient armClient)
+        public static async Task<AzureResource[]> ResourcesByType(this ArmClient armClient, params string[] types)
         {
             var tenant = armClient.GetTenants().First();
+            var typeCondition = types.Any()
+                ? $"| where {string.Join(" or ", types.Select(t => $"type == '{t}'"))} |"
+                : string.Empty;
             var query = new ResourceQueryContent(
-                $"Resources | where type == '{WebAppType}' or type == '{WebAppSlotsType}' | project name, type, tags, resourceGroup");
+                $"Resources {typeCondition} project name, type, tags, resourceGroup");
             var response = await tenant.GetResourcesAsync(query, CancellationToken.None);
             return JsonConvert.DeserializeObject<AzureResource[]>(response.Value.Data.ToString());
         }
