@@ -35,7 +35,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             foreach (var resource in resources)
             {
-                resource.Children = GetChildrenResources(resource, kubectl);
+                resource.UpdateChildren(GetChildrenResources(resource, kubectl));
             }
 
             return resources;
@@ -60,7 +60,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid))
                 .Select(child =>
                 {
-                    child.Children = GetChildrenResources(child, kubectl);
+                    child.UpdateChildren(GetChildrenResources(child, kubectl));
                     return child;
                 }).ToList();
         }

@@ -10,22 +10,17 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     /// </summary>
     public class Resource
     {
-        [JsonIgnore] 
-        protected JObject data;
-        
-        [JsonIgnore]
-        public IEnumerable<string> OwnerUids { get; }
-        
-        [JsonIgnore]
-        public string Uid { get; }
-        [JsonIgnore]
-        public string Kind { get; }
-        [JsonIgnore]
-        public string Name { get; }
-        [JsonIgnore]
-        public string Namespace { get; }
-        [JsonIgnore]
-        public virtual ResourceStatus ResourceStatus => ResourceStatus.Successful;
+        [JsonIgnore] protected JObject data;
+
+        [JsonIgnore] public IEnumerable<string> OwnerUids { get; }
+
+        [JsonIgnore] public string Uid { get; }
+        [JsonIgnore] public string Kind { get; }
+        [JsonIgnore] public string Name { get; }
+        [JsonIgnore] public string Namespace { get; }
+
+        [JsonIgnore] public virtual ResourceStatus ResourceStatus { get; set; } = ResourceStatus.Successful;
+
         [JsonIgnore]
         public virtual string ChildKind => "";
     
@@ -43,7 +38,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         }
     
         public virtual bool HasUpdate(Resource lastStatus) => false;
-    
+
+        public virtual void UpdateChildren(IEnumerable<Resource> children) => Children = children;
+        
         protected string Field(string jsonPath) => FieldOrDefault(jsonPath, "");
         
         protected T FieldOrDefault<T>(string jsonPath, T defaultValue)

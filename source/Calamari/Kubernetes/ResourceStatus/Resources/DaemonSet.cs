@@ -14,7 +14,6 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public int UpToDate { get; }
         public int Available { get; }
         public string NodeSelector { get; }
-        public override ResourceStatus ResourceStatus { get; }
 
         public DaemonSet(JObject json) : base(json)
         {
