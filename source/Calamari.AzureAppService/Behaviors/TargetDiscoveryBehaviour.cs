@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure;
+using Azure.ResourceManager;
 using Azure.ResourceManager.ResourceGraph;
 using Azure.ResourceManager.ResourceGraph.Models;
-using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
-using Calamari.AzureAppService.Azure.Rest;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
@@ -26,9 +23,6 @@ namespace Calamari.AzureAppService.Behaviors
 {
     public class TargetDiscoveryBehaviour : IDeployBehaviour
     {
-        private const string WebAppSlotsType = "sites/slots";
-        private const string WebAppType = "sites";
-        private const int PageSize = 500;
         private ILog Log { get; }
 
         public TargetDiscoveryBehaviour(ILog log)
@@ -56,59 +50,19 @@ namespace Calamari.AzureAppService.Behaviors
                 retryOptions.MaxDelay = TimeSpan.FromSeconds(10);
                 retryOptions.MaxRetries = 5;
             });
-            // var restClient = new AzureRestClient(() => new HttpClient(), Log);
-            // await restClient.Authorise(account, CancellationToken.None);
-            // var subscription = await armClient.GetDefaultSubscriptionAsync(CancellationToken.None);
             try
             {
-                var tenant = armClient.GetTenants().First();
-                var query = new ResourceQueryContent("Resources | where type == 'microsoft.web/sites' or type == 'microsoft.web/sites/slots' | project name, type, tags, resourceGroup");
-                var response = await tenant.GetResourcesAsync(query, CancellationToken.None);
-                var resources = JsonConvert.DeserializeObject<AzureResource[]>(response.Value.Data.ToString());
+                var resources = await armClient.GetAllAzureWebAppsAndSlots();
                 var discoveredTargetCount = 0;
-                // var webApps = subscription.GetResources(WebAppType, PageSize, CancellationToken.None);
-                // var slots = subscription.GetResources(WebAppSlotsType, PageSize, CancellationToken.None);
-                // var resources = await webApps.Concat(slots).ToListAsync();
-                // var restResources = (await restClient.GetResources(CancellationToken.None, AzureRestClient.WebAppType,
-                //     AzureRestClient.WebAppSlotsType)).ToDictionary(r => r.Name, r => r);
                 Log.Verbose($"Found {resources.Length} candidate web app resources.");
                 foreach (var resource in resources)
                 {
-                    // var restResource = restResources[resource.Data.Name];
-                    var res1 = resource;
-                    var isTestWebApp = resource.Name.Contains("isaac");
-                    if (isTestWebApp)
-                    {
-                        Log.Verbose($"Resource {resource.Name} Tags:");
-                        foreach (var tag in resource.Tags ?? new Dictionary<string, string>{{"NO","TAGS"}})
-                        {
-                            Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
-                        }
-                        // Log.Verbose($"FROM REST CLIENT ({restResource.Name})");
-                        // foreach (var tag in restResource.Tags ?? new Dictionary<string, string>{{"NO","TAGS"}})
-                        // {
-                        //     Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
-                        // }
-                        // res1 = (await resource.GetAsync(CancellationToken.None)).Value;
-                        // var res2 = await restClient.GetResourceDetails(restResource.Id, CancellationToken.None);
-                        // Log.Verbose("AFTER GET:");
-                        // foreach (var tag in res1.Data.Tags ?? new Dictionary<string, string>())
-                        // {
-                        //     Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
-                        // }
-                        // Log.Verbose($"FROM REST CLIENT ({res2.Name})");
-                        // foreach (var tag in res2.Tags ?? new Dictionary<string, string>{{"NO","TAGS"}})
-                        // {
-                        //     Log.Verbose($"Name: {tag.Key}, Value: {tag.Value}");
-                        // }
-                    }
-
-                    var tagValues = res1.Tags;
+                    var tagValues = resource.Tags;
 
                     if (tagValues == null)
                         continue;
 
-                    var tags = AzureWebAppHelper.GetOctopusTags(new ReadOnlyDictionary<string, string>(tagValues));
+                    var tags = AzureWebAppHelper.GetOctopusTags(tagValues);
                     var matchResult = targetDiscoveryContext.Scope.Match(tags);
                     if (matchResult.IsSuccess)
                     {
@@ -199,6 +153,9 @@ namespace Calamari.AzureAppService.Behaviors
 
     public static class TargetDiscoveryHelpers
     {
+        private const string WebAppSlotsType = "microsoft.web/sites/slots";
+        private const string WebAppType = "microsoft.web/sites";
+
         public static ServiceMessage CreateWebAppTargetCreationServiceMessage(string? resourceGroupName, string webAppName, string accountId, string role, string? workerPoolId, string? slotName)
         {
             var parameters = new Dictionary<string, string?> {
@@ -218,11 +175,13 @@ namespace Calamari.AzureAppService.Behaviors
                 parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
         }
 
-        // public static AsyncPageable<GenericResource> GetResources(this SubscriptionResource subscription,
-        //     string resourceType, int pageSize, CancellationToken cancellationToken)
-        // {
-        //     return subscription.GetGenericResourcesAsync($"resourceType eq 'Microsoft.web/{resourceType}'",
-        //         top: pageSize, cancellationToken: cancellationToken);
-        // }
+        public static async Task<AzureResource[]> GetAllAzureWebAppsAndSlots(this ArmClient armClient)
+        {
+            var tenant = armClient.GetTenants().First();
+            var query = new ResourceQueryContent(
+                $"Resources | where type == '{WebAppType}' or type == '{WebAppSlotsType}' | project name, type, tags, resourceGroup");
+            var response = await tenant.GetResourcesAsync(query, CancellationToken.None);
+            return JsonConvert.DeserializeObject<AzureResource[]>(response.Value.Data.ToString());
+        }
     }
 }

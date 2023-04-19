@@ -2,13 +2,10 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace Calamari.AzureAppService.Azure.Rest
+namespace Calamari.AzureAppService.Azure
 {
     public class AzureResource
     {
-        // [JsonProperty("id")]
-        // public string Id {get; set;}
-
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -18,17 +15,8 @@ namespace Calamari.AzureAppService.Azure.Rest
         [JsonProperty("resourceGroup")]
         public string ResourceGroup { get; set; }
 
-        // [JsonProperty("kind")]
-        // public string Kind { get; set; }
-        //
-        // [JsonProperty("location")]
-        // public string Location { get; set; }
-
         [JsonProperty("tags")]
         public Dictionary<string,string> Tags { get; set; }
-
-        // [JsonProperty("properties")]
-        // public AzureResourceProperties Properties { get; set; }
 
         [JsonIgnore]
         public bool IsSlot => Type.EndsWith("/slots");
@@ -61,10 +49,4 @@ namespace Calamari.AzureAppService.Azure.Rest
             }
         }
     }
-
-    // public class AzureResourceProperties
-    // {
-    //     [JsonProperty("resourceGroup")]
-    //     public string ResourceGroup { get; set; }
-    // }
 }
