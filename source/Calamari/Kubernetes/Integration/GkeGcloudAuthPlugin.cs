@@ -19,7 +19,7 @@ namespace Calamari.Kubernetes.Integration
                 ? ExecuteCommandAndReturnOutput("where", "gke-gcloud-auth-plugin.exe")
                 : ExecuteCommandAndReturnOutput("which", "gke-gcloud-auth-plugin");
 
-            var foundExecutable = result.Output.Messages.FirstOrDefault()?.Text;
+            var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
             return !string.IsNullOrEmpty(foundExecutable);
         }
     }

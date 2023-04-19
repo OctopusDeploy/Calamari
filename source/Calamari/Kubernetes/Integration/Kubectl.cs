@@ -29,7 +29,7 @@ namespace Calamari.Kubernetes.Integration
                     ? base.ExecuteCommandAndReturnOutput("where", "kubectl.exe")
                     : base.ExecuteCommandAndReturnOutput("which", "kubectl");
 
-                var foundExecutable = result.Output.Messages.FirstOrDefault()?.Text;
+                var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
 
                 if (string.IsNullOrEmpty(foundExecutable))
                 {
@@ -83,7 +83,7 @@ namespace Calamari.Kubernetes.Integration
 
         public Maybe<SemanticVersion> GetVersion()
         {
-            var kubectlVersionOutput = ExecuteCommandAndReturnOutput("version", "--client", "--output=json");
+            var kubectlVersionOutput = ExecuteCommandAndReturnOutput("version", "--client", "--output=json").Output.InfoLogs;
             var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
             try
             {

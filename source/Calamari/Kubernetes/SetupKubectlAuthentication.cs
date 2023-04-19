@@ -548,7 +548,7 @@ namespace Calamari.Kubernetes
             var result = commandLineRunner.Execute(invocation);
 
             return result.ExitCode == 0
-                ? captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray()
+                ? captureCommandOutput.InfoLogs.ToArray()
                 : Enumerable.Empty<string>();
         }
     }

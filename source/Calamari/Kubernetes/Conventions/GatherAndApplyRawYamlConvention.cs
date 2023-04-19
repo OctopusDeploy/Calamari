@@ -73,7 +73,7 @@ namespace Calamari.Kubernetes.Conventions
                     var result = kubectl.ExecuteCommandAndReturnOutput("get", resource.Kind, resource.Metadata.Name,
                         "-o", "json");
                     variables.SetOutputVariable($"CustomResources({resource.Metadata.Name})",
-                        result.Output.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).Join("\n"));
+                        result.Output.InfoLogs.Join("\n"));
                 }
                 catch
                 {
@@ -129,8 +129,7 @@ namespace Calamari.Kubernetes.Conventions
             }
 
             // If it did not error, the output should be valid json.
-            var outputJson = result.Output.Messages.Where(m => m.Level == Level.Info)
-                                   .Select(m => m.Text).Join(Environment.NewLine);
+            var outputJson = result.Output.InfoLogs.Join(Environment.NewLine);
             try
             {
                 var token = JToken.Parse(outputJson);

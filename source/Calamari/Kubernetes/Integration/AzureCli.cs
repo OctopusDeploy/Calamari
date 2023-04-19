@@ -20,7 +20,7 @@ namespace Calamari.Kubernetes.Integration
                 ? ExecuteCommandAndReturnOutput("where", "az.cmd")
                 : ExecuteCommandAndReturnOutput("which", "az");
 
-            var foundExecutable = result.Output.Messages.FirstOrDefault()?.Text;
+            var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
             if (string.IsNullOrEmpty(foundExecutable))
             {
                 log.Error("Could not find az. Make sure az is on the PATH.");
