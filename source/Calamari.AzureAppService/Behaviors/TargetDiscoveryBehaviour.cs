@@ -55,7 +55,7 @@ namespace Calamari.AzureAppService.Behaviors
             });
             try
             {
-                var resources = await armClient.ResourcesByType(WebAppType, WebAppSlotsType);
+                var resources = await armClient.GetResourcesByType(WebAppType, WebAppSlotsType);
                 var discoveredTargetCount = 0;
                 Log.Verbose($"Found {resources.Length} candidate web app resources.");
                 foreach (var resource in resources)
@@ -175,7 +175,7 @@ namespace Calamari.AzureAppService.Behaviors
                 parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
         }
 
-        public static async Task<AzureResource[]> ResourcesByType(this ArmClient armClient, params string[] types)
+        public static async Task<AzureResource[]> GetResourcesByType(this ArmClient armClient, params string[] types)
         {
             var tenant = armClient.GetTenants().First();
             var typeCondition = types.Any()
