@@ -8,20 +8,15 @@ namespace Calamari.Common.Features.Scripting
     public static class ScriptWrapperPriorities
     {
         /// <summary>
-        /// TODO:
-        /// </summary>
-        public const int KubernetesCustomResourcePriority = 1003;
-
-        /// <summary>
         /// The priority for script wrappers that configure kubernetes authentication
         /// </summary>
         public const int KubernetesContextPriority = 1002;
-
+        
         /// <summary>
         /// The priority for the script wrapper that checks deployed Kubernetes resources status
         /// </summary>
         public const int KubernetesStatusCheckPriority = 1001;
-
+        
         /// <summary>
         /// The priority for script wrappers that configure cloud authentication
         /// </summary>
