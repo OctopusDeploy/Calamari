@@ -36,7 +36,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         static readonly string ExpectedMavenPackageHash = "3564ef3803de51fb0530a8377ec6100b33b0d073";
         static readonly long ExpectedMavenPackageSize = 2575022;
-        static readonly string MavenPublicFeedUri = "https://repo.maven.apache.org/maven2/";
+        static readonly string MavenPublicFeedUri = "https://repo1.maven.org/maven2/";
         static readonly SampleFeedPackage MavenPublicFeed = new SampleFeedPackage("#") { Id = "feeds-maven", Version = VersionFactory.CreateMavenVersion("22.0"), PackageId = "com.google.guava:guava" };
 
        static readonly string MavenSnapshotPublicFeedUri = "https://oss.sonatype.org/content/repositories/snapshots/";
