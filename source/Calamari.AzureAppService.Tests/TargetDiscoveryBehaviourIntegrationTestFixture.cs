@@ -14,14 +14,23 @@ using Microsoft.Rest;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
+using FluentAssertions.Extensions;
 
 namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
     public class TargetDiscoveryBehaviourIntegrationTestFixture
     {
+        // After Azure Resources have been created it takes a
+        // bit of time for the API to reflect the new state
+        // due to the way Azure caches results in different regions.
+        // We execute a Task.Delay() after creating resources to give
+        // the Azure API time to process before executing the target discovery.
+        private readonly TimeSpan waitForAzureToProcessPeriod = 1.Minutes();
+
         private string clientId;
         private string clientSecret;
         private string tenantId;
@@ -114,12 +123,15 @@ namespace Calamari.AzureAppService.Tests
 
             await CreateOrUpdateTestWebApp(tags);
 
+            await Task.Delay(waitForAzureToProcessPeriod);
+
             // Act
             await sut.Execute(context);
 
             // Assert
             var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
-            log.StandardOut.Should().Contain(serviceMessageToCreateWebAppTarget.ToString());
+            var serviceMessageString = serviceMessageToCreateWebAppTarget.ToString();
+            log.StandardOut.Should().Contain(serviceMessageString);
         }
 
         [Test]
@@ -140,6 +152,8 @@ namespace Calamari.AzureAppService.Tests
             };
 
             await CreateOrUpdateTestWebApp(tags);
+
+            await Task.Delay(waitForAzureToProcessPeriod);
 
             // Act
             await sut.Execute(context);
@@ -167,6 +181,8 @@ namespace Calamari.AzureAppService.Tests
             };
 
             await CreateOrUpdateTestWebAppSlots(tags);
+
+            await Task.Delay(waitForAzureToProcessPeriod);
 
             // Act
             await sut.Execute(context);
@@ -202,6 +218,8 @@ namespace Calamari.AzureAppService.Tests
             await CreateOrUpdateTestWebApp(tags);
             await CreateOrUpdateTestWebAppSlots(tags);
 
+            await Task.Delay(waitForAzureToProcessPeriod);
+
             // Act
             await sut.Execute(context);
 
@@ -217,7 +235,7 @@ namespace Calamari.AzureAppService.Tests
         }
 
         [Test]
-        public async Task Execute_MultipleWebAppSlotsWithPartialTags_WebAppWithPartialTags_CreatesNoTargets()
+        public async Task   Execute_MultipleWebAppSlotsWithPartialTags_WebAppWithPartialTags_CreatesNoTargets()
         {
             // Arrange
             var variables = new CalamariVariables();
@@ -239,6 +257,8 @@ namespace Calamari.AzureAppService.Tests
 
             await CreateOrUpdateTestWebApp(webAppTags);
             await CreateOrUpdateTestWebAppSlots(slotTags);
+
+            await Task.Delay(waitForAzureToProcessPeriod);
 
             // Act
             await sut.Execute(context);
