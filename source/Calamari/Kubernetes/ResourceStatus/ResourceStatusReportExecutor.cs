@@ -110,7 +110,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             var customResourceFileName =
-                variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName");
+                variables.Get(SpecialVariables.CustomResourceYamlFileName);
 
             return new[]
             {
