@@ -34,7 +34,7 @@ namespace Calamari.Kubernetes.Conventions
         public void Install(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            var globs = variables.Get("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName")?.Split(';');
+            var globs = variables.Get(SpecialVariables.CustomResourceYamlFileName)?.Split(';');
             if (globs == null || globs.All(g => g.IsNullOrEmpty()))
                 return;
 
@@ -53,7 +53,7 @@ namespace Calamari.Kubernetes.Conventions
 
         private Kubectl GetAndInitialiseKubectl(RunningDeployment deployment, IVariables variables)
         {
-            var kubectl = new Kubectl(variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable"), log,
+            var kubectl = new Kubectl(variables.Get(SpecialVariables.CustomKubectlExecutable), log,
                 commandLineRunner, deployment.CurrentDirectory, deployment.EnvironmentVariables);
 
             if (!kubectl.TrySetKubectl())
@@ -99,7 +99,7 @@ namespace Calamari.Kubernetes.Conventions
                 directories.Add(directory);
             }
 
-            variables.Set("Octopus.Action.KubernetesContainers.YamlDirectories", string.Join(";", directories));
+            variables.Set(SpecialVariables.GroupedYamlDirectories, string.Join(";", directories));
             return directories;
         }
 

@@ -103,7 +103,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private IEnumerable<string> GetManifestFileNames()
         {
-            var groupedDirectories = variables.Get("Octopus.Action.KubernetesContainers.YamlDirectories");
+            var groupedDirectories = variables.Get(SpecialVariables.GroupedYamlDirectories);
             if (groupedDirectories != null)
             {
                 return groupedDirectories.Split(';').SelectMany(d => fileSystem.EnumerateFiles(d));
