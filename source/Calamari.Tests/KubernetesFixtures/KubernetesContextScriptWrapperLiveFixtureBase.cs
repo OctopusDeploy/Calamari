@@ -176,10 +176,17 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 variables.Save(variablesFile.FilePath);
 
-                return InvokeInProcess(Calamari()
-                                       .Action(KubernetesDiscoveryCommand.Name)
-                                       .Argument("variables", variablesFile.FilePath)
-                                       .Argument("extensions", string.Join(',', extensions)));
+                var result = InvokeInProcess(Calamari()
+                       .Action(KubernetesDiscoveryCommand.Name)
+                       .Argument("variables", variablesFile.FilePath)
+                       .Argument("extensions", string.Join(',', extensions)));
+
+                foreach (var message in Log.Messages)
+                {
+                    Console.WriteLine($"[{message.Level}] {message.FormattedMessage}");
+                }
+
+                return result;
             }
         }
     }
