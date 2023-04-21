@@ -63,10 +63,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var calamariResult = ExecuteScriptInternal(new CommandLineRunner(Log, variables), wrapper, scriptName);
 
-            foreach (var message in Log.Messages)
-            {
-                Console.WriteLine($"[{message.Level}] {message.FormattedMessage}");
-            }
+            WriteLogMessagesToTestOutput();
 
             return calamariResult;
         }
@@ -181,12 +178,17 @@ namespace Calamari.Tests.KubernetesFixtures
                        .Argument("variables", variablesFile.FilePath)
                        .Argument("extensions", string.Join(',', extensions)));
 
-                foreach (var message in Log.Messages)
-                {
-                    Console.WriteLine($"[{message.Level}] {message.FormattedMessage}");
-                }
+                WriteLogMessagesToTestOutput();
 
                 return result;
+            }
+        }
+
+        private void WriteLogMessagesToTestOutput()
+        {
+            foreach (var message in Log.Messages)
+            {
+                Console.WriteLine($"[{message.Level}] {message.FormattedMessage}");
             }
         }
     }
