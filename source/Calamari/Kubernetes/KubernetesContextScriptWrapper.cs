@@ -61,7 +61,7 @@ namespace Calamari.Kubernetes
             {
                 environmentVars = new Dictionary<string, string>();
             }
-
+            
             var setupKubectlAuthentication = new SetupKubectlAuthentication(variables,
                                                                             log,
                                                                             scriptSyntax,

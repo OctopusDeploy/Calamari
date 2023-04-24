@@ -3,7 +3,6 @@ using System.IO;
 using System.Reflection;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Integration.FileSystem;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {
@@ -19,6 +18,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             return new TestWindowsPhysicalFileSystem();
         }
 
+        public void SetFileBasePath(string basePath) => File = new TestFile(basePath);
+        
         public override bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes)
         {
             throw new NotImplementedException("*testing* this is in TestCalamariPhysicalFileSystem");
