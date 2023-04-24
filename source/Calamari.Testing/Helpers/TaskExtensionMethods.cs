@@ -13,7 +13,7 @@ namespace Calamari.Testing.Helpers
             var doerTask = task;
 
             var thrower = new TaskCompletionSource<object>();
-            await using (cancellationToken.Register(tcs => ((TaskCompletionSource<object>)tcs).SetResult(new object()), thrower))
+            using (cancellationToken.Register(tcs => ((TaskCompletionSource<object>)tcs).SetResult(new object()), thrower))
             {
                 var throwerTask = thrower.Task;
 
