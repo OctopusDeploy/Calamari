@@ -178,11 +178,15 @@ namespace Calamari.AzureAppService.Behaviors
         public static async Task<AzureResource[]> GetResourcesByType(this ArmClient armClient, params string[] types)
         {
             var tenant = armClient.GetTenants().First();
+
+            var typesToRetrieveClause = string.Join(" or ", types.Select(t => $"type == '{t}'"));
             var typeCondition = types.Any()
-                ? $"| where {string.Join(" or ", types.Select(t => $"type == '{t}'"))} |"
+                ? $"| where { typesToRetrieveClause } |"
                 : string.Empty;
+
             var query = new ResourceQueryContent(
                 $"Resources {typeCondition} project name, type, tags, resourceGroup");
+
             var response = await tenant.GetResourcesAsync(query, CancellationToken.None);
             return JsonConvert.DeserializeObject<AzureResource[]>(response.Value.Data.ToString());
         }
