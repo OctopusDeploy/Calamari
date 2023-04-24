@@ -23,6 +23,12 @@ namespace Calamari.AzureAppService.Behaviors
 {
     public class TargetDiscoveryBehaviour : IDeployBehaviour
     {
+        // These values are well-known resource types in Azure's API.
+        // The format is {resource-provider}/{resource-type}
+        // WebAppType refers to Azure Web Apps, Azure Functions Apps and Azure App Services
+        // while WebAppSlotsType refers to Slots of any of the above resources.
+        // More info about Azure Resource Providers and Types here:
+        // https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types
         private const string WebAppSlotsType = "microsoft.web/sites/slots";
         private const string WebAppType = "microsoft.web/sites";
 
