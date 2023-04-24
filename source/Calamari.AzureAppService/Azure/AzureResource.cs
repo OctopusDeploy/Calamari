@@ -31,7 +31,7 @@ namespace Calamari.AzureAppService.Azure
                     return null;
                 }
                 var indexOfSlash = Name.LastIndexOf("/", StringComparison.InvariantCulture);
-                return indexOfSlash < 0 ? null : Name.Substring(indexOfSlash + 1);
+                return indexOfSlash < 0 ? "" : Name.Substring(indexOfSlash + 1);
             }
         }
 
@@ -45,7 +45,7 @@ namespace Calamari.AzureAppService.Azure
                     return null;
                 }
                 var indexOfSlash = Name.LastIndexOf("/", StringComparison.InvariantCulture);
-                return indexOfSlash < 0 ? null : Name.Substring(0, indexOfSlash);
+                return indexOfSlash < 0 ? Name : Name.Substring(0, indexOfSlash);
             }
         }
     }
