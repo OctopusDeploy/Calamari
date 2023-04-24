@@ -235,7 +235,7 @@ namespace Calamari.AzureAppService.Tests
         }
 
         [Test]
-        public async Task   Execute_MultipleWebAppSlotsWithPartialTags_WebAppWithPartialTags_CreatesNoTargets()
+        public async Task Execute_MultipleWebAppSlotsWithPartialTags_WebAppWithPartialTags_CreatesNoTargets()
         {
             // Arrange
             var variables = new CalamariVariables();
