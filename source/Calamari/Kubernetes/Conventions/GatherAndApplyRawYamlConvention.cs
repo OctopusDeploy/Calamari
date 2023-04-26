@@ -45,7 +45,7 @@ namespace Calamari.Kubernetes.Conventions
             var resources = new List<Resource>();
             foreach (var (directory, index) in directories.Select((d,i) => (d,i)))
             {
-                resources.AddRange(ApplyBatchAndReturnResources(index, kubectl, directory));
+                resources.AddRange(ApplyBatchAndReturnResources(index, globs[index], kubectl, directory));
             }
 
             SaveResourcesToOutputVariables(resources, kubectl, variables);
@@ -103,9 +103,9 @@ namespace Calamari.Kubernetes.Conventions
             return directories;
         }
 
-        private IEnumerable<Resource> ApplyBatchAndReturnResources(int index, Kubectl kubectl, string directory)
+        private IEnumerable<Resource> ApplyBatchAndReturnResources(int index, string glob, Kubectl kubectl, string directory)
         {
-            log.Verbose($"Applying Yaml Batch #{index}");
+            log.Info($"Applying Batch #{index} for YAML matching '{glob}'");
             var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "-o", "json");
 
             foreach (var message in result.Output.Messages)
