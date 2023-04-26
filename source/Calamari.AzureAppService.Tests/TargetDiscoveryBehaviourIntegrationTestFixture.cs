@@ -141,7 +141,7 @@ namespace Calamari.AzureAppService.Tests
             var tags = new Dictionary<string, string>
             {
                 { TargetTags.EnvironmentTagName, EnvironmentName },
-                { TargetTags.RoleTagName, "a-different-role" },
+                { TargetTags.RoleTagName, Role },
             };
 
             await CreateOrUpdateTestWebApp(tags);
@@ -150,7 +150,7 @@ namespace Calamari.AzureAppService.Tests
             await sut.Execute(context);
 
             // Assert
-            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, "a-different-role", null, null);
             log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "The web app target should not be created as the role tag did not match");
         }
 
