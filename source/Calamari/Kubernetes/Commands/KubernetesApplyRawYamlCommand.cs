@@ -18,6 +18,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Conventions;
 using Calamari.Kubernetes.ResourceStatus;
 
@@ -64,6 +65,10 @@ namespace Calamari.Kubernetes.Commands
         }
         public override int Execute(string[] commandLineArguments)
         {
+            if (!FeatureToggle.GitSourcedYamlManifestsFeatureToggle.IsEnabled(variables))
+                throw new InvalidOperationException(
+                    "Unable to execute Kubernetes Apply Raw Yaml Command because the appropriate feature has not been enabled.");
+
             Options.Parse(commandLineArguments);
             var deployment = new RunningDeployment(pathToPackage, variables);
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
