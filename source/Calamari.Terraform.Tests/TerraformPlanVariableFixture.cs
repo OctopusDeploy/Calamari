@@ -37,7 +37,7 @@ namespace Calamari.Terraform.Tests
             commandLineRunner = Substitute.For<ICommandLineRunner>();
             variables = new CalamariVariables();
             variables.Set(TerraformSpecialVariables.Action.Terraform.PlanJsonOutput, "True");
-            runningDeployment = Substitute.For<RunningDeployment>(variables);
+            runningDeployment = Substitute.For<MockableRunningDeployment>(variables);
         }
 
         [TestCase("0.11", "")]
@@ -63,6 +63,13 @@ namespace Calamari.Terraform.Tests
             outputVars[TerraformSpecialVariables.Action.Terraform.PlanJsonChangesAdd].ShouldBe("0");
             outputVars[TerraformSpecialVariables.Action.Terraform.PlanJsonChangesRemove].ShouldBe("0");
             outputVars[TerraformSpecialVariables.Action.Terraform.PlanJsonChangesChange].ShouldBe("0");
+        }
+
+        public class MockableRunningDeployment : RunningDeployment
+        {
+            public MockableRunningDeployment(IVariables variables) : base(variables)
+            {
+            }
         }
     }
 }
