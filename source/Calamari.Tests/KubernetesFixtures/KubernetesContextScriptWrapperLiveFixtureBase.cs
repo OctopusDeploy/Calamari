@@ -104,6 +104,27 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
+        protected void DeploymentScriptAndVerifySuccess(IScriptWrapper wrapper, string kubectlExe = "kubectl")
+        {
+            using (var dir = TemporaryDirectory.Create())
+            {
+                var folderPath = Path.Combine(dir.DirectoryPath, "TestFolder");
+
+                var scriptExtension = variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString()
+                    ? "sh"
+                    : "ps1";
+
+                var scriptFileName = $"KubernetesDeployment.{scriptExtension}";
+
+                var tempFilePath = Path.Combine(folderPath, scriptFileName);
+                var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts", scriptFileName);
+                File.Copy(scriptPath, tempFilePath);
+
+                var output = ExecuteScript(wrapper, tempFilePath);
+                output.AssertSuccess();
+            }
+        }
+
         protected void TestScriptAndVerifyCluster(IScriptWrapper wrapper, string scriptName, string kubectlExe = "kubectl")
         {
             using (var dir = TemporaryDirectory.Create())
