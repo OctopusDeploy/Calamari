@@ -58,7 +58,7 @@ namespace Calamari.Kubernetes.Conventions
 
             if (!kubectl.TrySetKubectl())
             {
-                throw new Exception("Could not set KubeCtl");
+                throw new Exception("Could not set kubectl");
             }
 
             return kubectl;
