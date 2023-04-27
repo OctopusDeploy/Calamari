@@ -67,7 +67,7 @@ namespace Calamari.Kubernetes.Commands
         {
             if (!FeatureToggle.GitSourcedYamlManifestsFeatureToggle.IsEnabled(variables))
                 throw new InvalidOperationException(
-                    "Unable to execute Kubernetes Apply Raw Yaml Command because the appropriate feature has not been enabled.");
+                    "Unable to execute the Kubernetes Apply Raw YAML Command because the appropriate feature has not been enabled.");
 
             Options.Parse(commandLineArguments);
             var deployment = new RunningDeployment(pathToPackage, variables);
