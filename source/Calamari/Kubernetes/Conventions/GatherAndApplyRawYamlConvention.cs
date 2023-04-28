@@ -105,7 +105,7 @@ namespace Calamari.Kubernetes.Conventions
 
         private IEnumerable<Resource> ApplyBatchAndReturnResources(int index, string glob, Kubectl kubectl, string directory)
         {
-            log.Info($"Applying Batch #{index} for YAML matching '{glob}'");
+            log.Info($"Applying Batch #{index+1} for YAML matching '{glob}'");
             var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "-o", "json");
 
             foreach (var message in result.Output.Messages)
