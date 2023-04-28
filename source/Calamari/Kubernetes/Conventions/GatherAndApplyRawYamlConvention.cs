@@ -139,12 +139,8 @@ namespace Calamari.Kubernetes.Conventions
                 {
                     lastResources = token.ToObject<List<Resource>>();
                 }
-                else if (token["kind"]?.ToString() == "List" &&
-                    token["items"]?.ToObject<List<Resource>>() is { } resources)
-                {
-                    lastResources = resources;
-                }
-                else
+                else if (token["kind"]?.ToString() != "List" ||
+                    (lastResources = token["items"]?.ToObject<List<Resource>>()) == null)
                 {
                     lastResources = new List<Resource> { token.ToObject<Resource>() };
                 }
