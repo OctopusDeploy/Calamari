@@ -133,9 +133,21 @@ namespace Calamari.Kubernetes.Conventions
             try
             {
                 var token = JToken.Parse(outputJson);
-                var lastResources = token.Type == JTokenType.Array
-                    ? token.ToObject<List<Resource>>()
-                    : new List<Resource> { token.ToObject<Resource>() };
+
+                List<Resource> lastResources;
+                if (token.Type == JTokenType.Array)
+                {
+                    lastResources = token.ToObject<List<Resource>>();
+                }
+                else if (token["kind"]?.ToString() == "List" &&
+                    token["items"]?.ToObject<List<Resource>>() is { } resources)
+                {
+                    lastResources = resources;
+                }
+                else
+                {
+                    lastResources = new List<Resource> { token.ToObject<Resource>() };
+                }
 
                 foreach (var resource in lastResources)
                 {
