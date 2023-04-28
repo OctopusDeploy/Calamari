@@ -25,9 +25,11 @@ namespace Calamari.Kubernetes.Integration
         {
             if (string.IsNullOrEmpty(customKubectlExecutable))
             {
-                var foundExecutable = CalamariEnvironment.IsRunningOnWindows
-                    ? base.ExecuteCommandAndReturnOutput("where", "kubectl.exe").FirstOrDefault()
-                    : base.ExecuteCommandAndReturnOutput("which", "kubectl").FirstOrDefault();
+                var result = CalamariEnvironment.IsRunningOnWindows
+                    ? base.ExecuteCommandAndReturnOutput("where", "kubectl.exe")
+                    : base.ExecuteCommandAndReturnOutput("which", "kubectl");
+
+                var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
 
                 if (string.IsNullOrEmpty(foundExecutable))
                 {
@@ -69,19 +71,19 @@ namespace Calamari.Kubernetes.Integration
             var commandInvocation = new CommandLineInvocation(ExecutableLocation, kubectlArguments);
             return ExecuteCommandAndLogOutput(commandInvocation);
         }
-        
+
         public void ExecuteCommandAndAssertSuccess(params string[] arguments)
         {
             var result = ExecuteCommand(arguments);
             result.VerifySuccess();
         }
 
-        public IEnumerable<string> ExecuteCommandAndReturnOutput(params string[] arguments) =>
+        public CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments) =>
             base.ExecuteCommandAndReturnOutput(ExecutableLocation, arguments);
-        
+
         public Maybe<SemanticVersion> GetVersion()
         {
-            var kubectlVersionOutput = ExecuteCommandAndReturnOutput("version", "--client", "--output=json");
+            var kubectlVersionOutput = ExecuteCommandAndReturnOutput("version", "--client", "--output=json").Output.InfoLogs;
             var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
             try
             {

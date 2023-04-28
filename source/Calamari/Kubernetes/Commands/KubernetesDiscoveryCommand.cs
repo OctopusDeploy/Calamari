@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 
 namespace Calamari.Kubernetes.Commands
 {
-    [Command(Name, Description = "Discovery Kubernetes cluster targets")]
+    [Command(Name, Description = "Discover Kubernetes cluster targets")]
     public class KubernetesDiscoveryCommand : Command
     {
         public const string Name = "kubernetes-target-discovery";

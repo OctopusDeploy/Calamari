@@ -16,14 +16,14 @@ namespace Calamari.Common.Features.StructuredVariables
     public class StructuredConfigVariablesModule : Module
     {
         protected override void Load(ContainerBuilder builder)
-        {            
+        {
             builder.RegisterType<JsonFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(1);
             builder.RegisterType<XmlFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(2);
             builder.RegisterType<YamlFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(3);
             builder.RegisterType<PropertiesFormatVariableReplacer>().As<IFileFormatVariableReplacer>().WithPriority(4);
 
             builder.RegisterPrioritisedList<IFileFormatVariableReplacer>();
-            
+
             builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
         }
     }
@@ -60,7 +60,9 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public void ReplaceVariables(string currentDirectory)
         {
-            ReplaceVariables(currentDirectory, variables.GetPaths(ActionVariables.StructuredConfigurationVariablesTargets));
+            ReplaceVariables(currentDirectory,
+                variables.GetPaths(ActionVariables.StructuredConfigurationVariablesTargets)
+                         .SelectMany(v => v.Split(';')).ToList());
         }
 
         public void ReplaceVariables(string currentDirectory, List<string> targets)
@@ -86,9 +88,9 @@ namespace Calamari.Common.Features.StructuredVariables
                 foreach (var filePath in matchingFiles)
                 {
                     var replacersToTry = GetReplacersToTryForFile(filePath, onlyPerformJsonReplacement).ToArray();
-                    
+
                     log.Verbose($"The registered replacers we will try, in order, are: " + string.Join(",", replacersToTry.Select(r => r.GetType().Name)));
-                    
+
                     DoReplacement(filePath, variables, replacersToTry);
                 }
             }
@@ -154,7 +156,7 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             log.Verbose($"The file at {filePath} does not match any known filename patterns. "
                         + "The file will be tried as multiple formats and will be treated as the first format that can be successfully parsed.");
-            
+
             // Order so that the json replacer comes first
             yield return jsonReplacer;
             foreach (var replacer in allReplacers.Except(new[] { jsonReplacer }))

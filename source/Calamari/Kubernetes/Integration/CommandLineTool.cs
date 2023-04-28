@@ -76,7 +76,7 @@ namespace Calamari.Kubernetes.Integration
             }
         }
 
-        protected IEnumerable<string> ExecuteCommandAndReturnOutput(string exe, params string[] arguments)
+        protected CommandResultWithOutput ExecuteCommandAndReturnOutput(string exe, params string[] arguments)
         {
             var captureCommandOutput = new CaptureCommandOutput();
             var invocation = new CommandLineInvocation(exe, arguments)
@@ -90,9 +90,20 @@ namespace Calamari.Kubernetes.Integration
 
             var result = commandLineRunner.Execute(invocation);
 
-            return result.ExitCode == 0
-                ? captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray()
-                : Enumerable.Empty<string>();
+            return new CommandResultWithOutput(result, captureCommandOutput);
         }
+    }
+
+    public class CommandResultWithOutput
+    {
+        public CommandResultWithOutput(CommandResult result, ICommandOutput output)
+        {
+            Result = result;
+            Output = output;
+        }
+
+        public CommandResult Result { get; }
+
+        public ICommandOutput Output { get; set; }
     }
 }
