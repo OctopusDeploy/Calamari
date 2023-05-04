@@ -195,6 +195,38 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              }
          }
 
+         [TestCase(null)]
+         [TestCase("")]
+         public void SetNamespaceToDefaultWhenTheDefaultNamespaceIsNullOrAnEmptyString(string @namespace)
+         {
+             var variables = new CalamariVariables();
+             var log = new SilentLog();
+             var fileSystem = new TestCalamariPhysicalFileSystem();
+             var statusChecker = new MockResourceStatusChecker();
+
+             AddKubernetesStatusCheckVariables(variables);
+             variables.Set(SpecialVariables.Namespace, @namespace);
+
+             var testDirectory =
+                 TestEnvironment.GetTestPath("KubernetesFixtures", "ResourceStatus", "assets", "no-namespace");
+
+             fileSystem.SetFileBasePath(testDirectory);
+
+             var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+             wrapper.NextWrapper = new StubScriptWrapper().Enable();
+
+             wrapper.ExecuteScript(
+                 new Script("stub"),
+                 Syntax,
+                 new CommandLineRunner(log, variables),
+                 new Dictionary<string, string>());
+
+             statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier[]
+             {
+                 new ResourceIdentifier("Deployment", "deployment", "default"),
+             });
+         }
+
          private static void AddKubernetesStatusCheckVariables(IVariables variables)
          {
              variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");

@@ -31,6 +31,11 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
+            // When the namespace on a target was set and then cleared, it's going to be "" instead of null
+            if (string.IsNullOrEmpty(defaultNamespace))
+            {
+                defaultNamespace = "default";
+            }
             var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 0;
             var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 0;
 
