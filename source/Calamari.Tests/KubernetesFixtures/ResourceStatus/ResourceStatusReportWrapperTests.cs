@@ -195,8 +195,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              }
          }
 
-         [Test]
-         public void SetNamespaceToDefaultWhenTheDefaultNamespaceIsAnEmptyString()
+         [TestCase(null)]
+         [TestCase("")]
+         public void SetNamespaceToDefaultWhenTheDefaultNamespaceIsNullOrAnEmptyString(string @namespace)
          {
              var variables = new CalamariVariables();
              var log = new SilentLog();
@@ -204,7 +205,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var statusChecker = new MockResourceStatusChecker();
 
              AddKubernetesStatusCheckVariables(variables);
-             variables.Set(SpecialVariables.Namespace, "");
+             variables.Set(SpecialVariables.Namespace, @namespace);
 
              var testDirectory =
                  TestEnvironment.GetTestPath("KubernetesFixtures", "ResourceStatus", "assets", "no-namespace");
