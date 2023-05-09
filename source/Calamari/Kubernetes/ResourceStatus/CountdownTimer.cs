@@ -31,7 +31,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         public void Start() => stopwatch.Start();
         public void Reset() => stopwatch.Reset();
         public bool HasStarted() => stopwatch.IsRunning;
-        public bool HasCompleted() => stopwatch.Elapsed >= duration;
+        public bool HasCompleted() => stopwatch.Elapsed > duration;
     }
 
     /// <summary>
