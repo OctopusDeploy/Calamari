@@ -10,12 +10,12 @@ namespace Calamari.Deployment.Conventions
 {
     public class StageScriptPackagesConvention : IInstallConvention
     {
-        private readonly string packagePathContainingScript;
+        private readonly string? packagePathContainingScript;
         private readonly ICalamariFileSystem fileSystem;
         private readonly IPackageExtractor extractor;
         private readonly bool forceExtract;
 
-        public StageScriptPackagesConvention(string packagePathContainingScript, ICalamariFileSystem fileSystem, IPackageExtractor extractor, bool forceExtract = false)
+        public StageScriptPackagesConvention(string? packagePathContainingScript, ICalamariFileSystem fileSystem, IPackageExtractor extractor, bool forceExtract = false)
         {
             this.packagePathContainingScript = packagePathContainingScript;
             this.fileSystem = fileSystem;

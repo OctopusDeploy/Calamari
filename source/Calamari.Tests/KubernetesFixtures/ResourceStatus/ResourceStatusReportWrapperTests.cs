@@ -20,7 +20,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     public class ResourceStatusReportWrapperTests
     {
         private const ScriptSyntax Syntax = ScriptSyntax.Bash;
-        
+
         [Test]
         public void Enabled_WhenDeployingToAKubernetesClusterWithStatusCheckEnabled()
         {
@@ -30,8 +30,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var statusChecker = new MockResourceStatusChecker();
 
             AddKubernetesStatusCheckVariables(variables);
-            
-            var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+
+            var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
 
             wrapper.IsEnabled(Syntax).Should().BeTrue();
         }
@@ -47,11 +47,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
 
-            var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+            var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
-        
+
         [Test]
         public void NotEnabled_WhenDoingABlueGreenDeployment()
         {
@@ -62,8 +62,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentStyle, "bluegreen");
-            
-            var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+
+            var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
@@ -75,11 +75,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var log = new SilentLog();
             var fileSystem = new TestCalamariPhysicalFileSystem();
             var statusChecker = new MockResourceStatusChecker();
-            
+
             AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentWait, "wait");
-            
-            var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+
+            var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
@@ -91,24 +91,24 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var log = new SilentLog();
              var fileSystem = new TestCalamariPhysicalFileSystem();
              var statusChecker = new MockResourceStatusChecker();
-             
+
              AddKubernetesStatusCheckVariables(variables);
              variables.Set(SpecialVariables.CustomResourceYamlFileName, "custom.yml");
-        
+
              var testDirectory =
                  TestEnvironment.GetTestPath("KubernetesFixtures", "ResourceStatus", "assets", "manifests");
-             
+
              fileSystem.SetFileBasePath(testDirectory);
-             
-             var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+
+             var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
              wrapper.NextWrapper = new StubScriptWrapper().Enable();
-        
+
              wrapper.ExecuteScript(
-                 new Script("stub"), 
-                 Syntax, 
+                 new Script("stub"),
+                 Syntax,
                  new CommandLineRunner(log, variables),
                  new Dictionary<string, string>());
-        
+
              statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier[]
              {
                  new ResourceIdentifier("Deployment", "deployment", "default"),
@@ -126,26 +126,26 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var log = new SilentLog();
              var fileSystem = new TestCalamariPhysicalFileSystem();
              var statusChecker = new MockResourceStatusChecker();
-        
+
              const string configMapName = "ConfigMap-Deployment-01";
              AddKubernetesStatusCheckVariables(variables);
              variables.Set("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled", "True");
              variables.Set("Octopus.Action.KubernetesContainers.ComputedConfigMapName", configMapName);
-        
+
              var tempDirectory = fileSystem.CreateTemporaryDirectory();
              try
              {
                  fileSystem.SetFileBasePath(tempDirectory);
-        
-                 var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+
+                 var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
                  wrapper.NextWrapper = new StubScriptWrapper().Enable();
-        
+
                  wrapper.ExecuteScript(
                      new Script("stub"),
                      Syntax,
                      new CommandLineRunner(log, variables),
                      new Dictionary<string, string>());
-        
+
                  statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
                  {
                      new ResourceIdentifier("ConfigMap", configMapName, "default")
@@ -164,26 +164,26 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var log = new SilentLog();
              var fileSystem = new TestCalamariPhysicalFileSystem();
              var statusChecker = new MockResourceStatusChecker();
-        
+
              const string secret = "Secret-Deployment-01";
              AddKubernetesStatusCheckVariables(variables);
              variables.Set("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled", "True");
              variables.Set("Octopus.Action.KubernetesContainers.ComputedSecretName", secret);
-        
+
              var tempDirectory = fileSystem.CreateTemporaryDirectory();
              try
              {
                  fileSystem.SetFileBasePath(tempDirectory);
-        
-                 var wrapper = new ResourceStatusReportWrapper(variables, log, fileSystem, statusChecker);
+
+                 var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
                  wrapper.NextWrapper = new StubScriptWrapper().Enable();
-        
+
                  wrapper.ExecuteScript(
                      new Script("stub"),
                      Syntax,
                      new CommandLineRunner(log, variables),
                      new Dictionary<string, string>());
-        
+
                  statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
                  {
                      new ResourceIdentifier("Secret", secret, "default")
@@ -193,6 +193,38 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              {
                  fileSystem.DeleteDirectory(tempDirectory);
              }
+         }
+
+         [TestCase(null)]
+         [TestCase("")]
+         public void SetNamespaceToDefaultWhenTheDefaultNamespaceIsNullOrAnEmptyString(string @namespace)
+         {
+             var variables = new CalamariVariables();
+             var log = new SilentLog();
+             var fileSystem = new TestCalamariPhysicalFileSystem();
+             var statusChecker = new MockResourceStatusChecker();
+
+             AddKubernetesStatusCheckVariables(variables);
+             variables.Set(SpecialVariables.Namespace, @namespace);
+
+             var testDirectory =
+                 TestEnvironment.GetTestPath("KubernetesFixtures", "ResourceStatus", "assets", "no-namespace");
+
+             fileSystem.SetFileBasePath(testDirectory);
+
+             var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+             wrapper.NextWrapper = new StubScriptWrapper().Enable();
+
+             wrapper.ExecuteScript(
+                 new Script("stub"),
+                 Syntax,
+                 new CommandLineRunner(log, variables),
+                 new Dictionary<string, string>());
+
+             statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier[]
+             {
+                 new ResourceIdentifier("Deployment", "deployment", "default"),
+             });
          }
 
          private static void AddKubernetesStatusCheckVariables(IVariables variables)
@@ -208,7 +240,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public List<ResourceIdentifier> CheckedResources { get; private set; }
 
         public bool CheckStatusUntilCompletionOrTimeout(
-            IEnumerable<ResourceIdentifier> resourceIdentifiers, 
+            IEnumerable<ResourceIdentifier> resourceIdentifiers,
             IStabilizingTimer stabilizingTimer,
             Kubectl kubectl)
         {
@@ -220,7 +252,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     internal class StubScriptWrapper : IScriptWrapper
     {
         private bool isEnabled = false;
-        
+
         public int Priority { get; } = 1;
         public IScriptWrapper NextWrapper { get; set; }
         public bool IsEnabled(ScriptSyntax syntax) => isEnabled;
@@ -234,8 +266,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         }
 
         public CommandResult ExecuteScript(
-            Script script, 
-            ScriptSyntax scriptSyntax, 
+            Script script,
+            ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {

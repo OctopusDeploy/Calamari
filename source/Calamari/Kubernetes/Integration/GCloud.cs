@@ -11,24 +11,25 @@ namespace Calamari.Kubernetes.Integration
 {
     public class GCloud : CommandLineTool
     {
-        public GCloud(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars) 
+        public GCloud(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
             : base(log, commandLineRunner, workingDirectory, environmentVars)
         {
         }
 
         public bool TrySetGcloud()
         {
-            var foundExecutable = CalamariEnvironment.IsRunningOnWindows
-                ? ExecuteCommandAndReturnOutput("where", "gcloud.cmd").FirstOrDefault()
-                : ExecuteCommandAndReturnOutput("which", "gcloud").FirstOrDefault();
+            var result = CalamariEnvironment.IsRunningOnWindows
+                ? ExecuteCommandAndReturnOutput("where", "gcloud.cmd")
+                : ExecuteCommandAndReturnOutput("which", "gcloud");
 
+            var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
             if (string.IsNullOrEmpty(foundExecutable))
             {
                 log.Error("Could not find gcloud. Make sure gcloud is on the PATH.");
                 return false;
             }
 
-            ExecutableLocation = foundExecutable?.Trim();
+            ExecutableLocation = foundExecutable.Trim();
             return true;
         }
 

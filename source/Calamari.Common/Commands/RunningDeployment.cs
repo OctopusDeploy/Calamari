@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Variables;
 
@@ -6,11 +7,13 @@ namespace Calamari.Common.Commands
 {
     public class RunningDeployment
     {
-        public RunningDeployment(IVariables variables) : this(null, variables)
+        public RunningDeployment(IVariables variables, Dictionary<string, string>? environmentVariables = null) : this(
+            null, variables, environmentVariables)
         {
         }
 
-        public RunningDeployment(string? packageFilePath, IVariables variables)
+        public RunningDeployment(string? packageFilePath, IVariables variables,
+            Dictionary<string, string>? environmentVariables = null)
         {
             if (!string.IsNullOrEmpty(packageFilePath))
             {
@@ -18,6 +21,7 @@ namespace Calamari.Common.Commands
             }
 
             Variables = variables;
+            EnvironmentVariables = environmentVariables ?? new Dictionary<string, string>();
         }
 
         public PathToPackage? PackageFilePath { get; }
@@ -54,6 +58,8 @@ namespace Calamari.Common.Commands
                 : CustomDirectory ?? throw new InvalidOperationException("Current directory is not set for the deployment");
 
         public IVariables Variables { get; }
+
+        public Dictionary<string, string> EnvironmentVariables { get; }
 
         public bool SkipJournal
         {

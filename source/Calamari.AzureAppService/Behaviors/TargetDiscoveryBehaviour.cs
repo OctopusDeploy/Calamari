@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure;
-using Azure.Core;
 using Azure.ResourceManager;
-using Azure.ResourceManager.AppService;
-using Azure.ResourceManager.Models;
-using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.ResourceGraph;
+using Azure.ResourceManager.ResourceGraph.Models;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
@@ -19,6 +14,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
 using JsonException = System.Text.Json.JsonException;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -27,9 +23,15 @@ namespace Calamari.AzureAppService.Behaviors
 {
     public class TargetDiscoveryBehaviour : IDeployBehaviour
     {
-        private const string WebAppSlotsType = "sites/slots";
-        private const string WebAppType = "sites";
-        private const int PageSize = 500;
+        // These values are well-known resource types in Azure's API.
+        // The format is {resource-provider}/{resource-type}
+        // WebAppType refers to Azure Web Apps, Azure Functions Apps and Azure App Services
+        // while WebAppSlotsType refers to Slots of any of the above resources.
+        // More info about Azure Resource Providers and Types here:
+        // https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types
+        private const string WebAppSlotsType = "microsoft.web/sites/slots";
+        private const string WebAppType = "microsoft.web/sites";
+
         private ILog Log { get; }
 
         public TargetDiscoveryBehaviour(ILog log)
@@ -57,33 +59,30 @@ namespace Calamari.AzureAppService.Behaviors
                 retryOptions.MaxDelay = TimeSpan.FromSeconds(10);
                 retryOptions.MaxRetries = 5;
             });
-            var subscription = await armClient.GetDefaultSubscriptionAsync(CancellationToken.None);
             try
             {
+                var resources = await armClient.GetResourcesByType(WebAppType, WebAppSlotsType);
                 var discoveredTargetCount = 0;
-                var webApps = subscription.GetResources(WebAppType, PageSize, CancellationToken.None);
-                var slots = subscription.GetResources(WebAppSlotsType, PageSize, CancellationToken.None);
-                var resources = await webApps.Concat(slots).ToListAsync();
-                Log.Verbose($"Found {resources.Count} candidate web app resources.");
+                Log.Verbose($"Found {resources.Length} candidate web app resources.");
                 foreach (var resource in resources)
                 {
-                    var tagValues = resource.Data?.Tags;
+                    var tagValues = resource.Tags;
 
                     if (tagValues == null)
                         continue;
 
-                    var tags = AzureWebAppHelper.GetOctopusTags(new ReadOnlyDictionary<string, string>(tagValues));
+                    var tags = AzureWebAppHelper.GetOctopusTags(tagValues);
                     var matchResult = targetDiscoveryContext.Scope.Match(tags);
                     if (matchResult.IsSuccess)
                     {
                         discoveredTargetCount++;
-                        Log.Info($"Discovered matching web app resource: {resource.Data!.Name}");
+                        Log.Info($"Discovered matching web app resource: {resource.Name}");
                         WriteTargetCreationServiceMessage(
-                            resource.Id, targetDiscoveryContext, matchResult);
+                            resource, targetDiscoveryContext, matchResult);
                     }
                     else
                     {
-                        Log.Verbose($"Web app {resource.Data!.Name} does not match target requirements:");
+                        Log.Verbose($"Web app {resource.Name} does not match target requirements:");
                         foreach (var reason in matchResult.FailureReasons)
                         {
                             Log.Verbose($"- {reason}");
@@ -109,21 +108,21 @@ namespace Calamari.AzureAppService.Behaviors
         }
 
         private void WriteTargetCreationServiceMessage(
-            ResourceIdentifier identifier,
+            AzureResource resource,
             TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
-            var resourceName = identifier.Name;
+            var resourceName = resource.Name;
             string? slotName = null;
-            if (identifier.ResourceType.Type == WebAppSlotsType)
+            if (resource.IsSlot)
             {
-                slotName = identifier.Name;
-                resourceName = identifier.Parent!.Name;
+                slotName = resource.SlotName;
+                resourceName = resource.ParentName;
             }
 
             Log.WriteServiceMessage(
                 TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(
-                    identifier.ResourceGroupName,
+                    resource.ResourceGroup,
                     resourceName,
                     context.Authentication!.AccountId,
                     matchResult.Role,
@@ -182,11 +181,20 @@ namespace Calamari.AzureAppService.Behaviors
                 parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
         }
 
-        public static AsyncPageable<GenericResource> GetResources(this SubscriptionResource subscription,
-            string resourceType, int pageSize, CancellationToken cancellationToken)
+        public static async Task<AzureResource[]> GetResourcesByType(this ArmClient armClient, params string[] types)
         {
-            return subscription.GetGenericResourcesAsync($"resourceType eq 'Microsoft.web/{resourceType}'",
-                top: pageSize, cancellationToken: cancellationToken);
+            var tenant = armClient.GetTenants().First();
+
+            var typesToRetrieveClause = string.Join(" or ", types.Select(t => $"type == '{t}'"));
+            var typeCondition = types.Any()
+                ? $"| where { typesToRetrieveClause } |"
+                : string.Empty;
+
+            var query = new ResourceQueryContent(
+                $"Resources {typeCondition} project name, type, tags, resourceGroup");
+
+            var response = await tenant.GetResourcesAsync(query, CancellationToken.None);
+            return JsonConvert.DeserializeObject<AzureResource[]>(response.Value.Data.ToString());
         }
     }
 }
