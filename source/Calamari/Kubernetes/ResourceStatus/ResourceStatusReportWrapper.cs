@@ -104,8 +104,8 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 environmentVars = new Dictionary<string, string>();
             }
-            environmentVars.Add("KUBECONFIG", kubeConfig);
-            
+            environmentVars["KUBECONFIG"] = kubeConfig;
+
             foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
             {
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;

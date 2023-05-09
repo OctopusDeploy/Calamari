@@ -76,10 +76,11 @@ namespace Calamari.Tests.KubernetesFixtures
 
         //TODO: tests for all types of deployments (secrets, configmaps, deployments, services, raw yaml, etc etc).
         [Test]
-        public void DeploySecret_DeployUpdatedSecret_EnsureOriginalSecretIsRemoved()
+        public void DeployRawYaml_WithObjectStatusSwitchedOff_OutputShouldIndicateSuccessfulDeployment()
         {
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
+            const string customResourceFileName = "customresource.yaml";
 
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
             variables.Set(SpecialVariables.ClusterUrl, eksClusterEndpoint);
@@ -90,7 +91,20 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{account}.SecretKey", eksSecretKey);
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
-            var wrapper = CreateWrapper();
+
+            variables.Set("Octopus.Action.Script.ScriptSource", "Inline");
+            variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx");
+            variables.Set("Octopus.Action.Package.JsonConfigurationVariablesTargets", "**/*.{yml,yaml}");
+            variables.Set("Octopus.Action.Kubernetes.ResourceStatusCheck", "True");
+            variables.Set("Octopus.Action.KubernetesContainers.DeploymentWait", "NoWait");
+            variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "180");
+            variables.Set("Octopus.Action.Kubernetes.StabilizationTimeout", "10");
+
+            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles,
+                FeatureToggles.FeatureToggle.KubernetesDeploymentStatusFeatureToggle.ToString());
+
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+            var wrapper = new[] { CreateWrapper(fileSystem), CreateK8sResourceStatusReporterScriptWrapper(fileSystem) };
 
             // When authorising via AWS, We need to make sure we are using the correct version of
             // kubectl for the test script as newer versions may cause kubectl to fail with an error like:
@@ -99,7 +113,23 @@ namespace Calamari.Tests.KubernetesFixtures
                 throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
 
             //TODO: Update this method to create all wrappers required to replicate the real world deployment.
-            TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
+            // TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
+            DeploymentScriptAndVerifySuccess(wrapper, fileSystem, kubectlExecutable, dir =>
+            {
+                var pathToCustomResource = Path.Combine(dir.DirectoryPath, "TestFolder", customResourceFileName);
+                File.WriteAllText(pathToCustomResource,
+                    "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80");
+                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", pathToCustomResource);
+            });
+
+            this.Assent(string.Join("\n", Log.Messages.Select(m => m.FormattedMessage).TakeLast(21)), AssentConfiguration.Default);
+        }
+
+        private IScriptWrapper CreateK8sResourceStatusReporterScriptWrapper(ICalamariFileSystem fileSystem)
+        {
+            return new ResourceStatusReportWrapper(variables, Log, fileSystem,
+                new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
+                    new ResourceUpdateReporter(variables, Log), Log));
         }
 
         [Test]
