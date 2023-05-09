@@ -72,8 +72,12 @@ namespace Calamari.Kubernetes.Conventions
                 {
                     var result = kubectl.ExecuteCommandAndReturnOutput("get", resource.Kind, resource.Metadata.Name,
                         "-o", "json");
-                    variables.SetOutputVariable($"CustomResources({resource.Metadata.Name})",
-                        result.Output.InfoLogs.Join("\n"));
+
+                    log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.SetVariable.Name, new Dictionary<string, string>
+                    {
+                        {ServiceMessageNames.SetVariable.NameAttribute, $"CustomResources({resource.Metadata.Name})"},
+                        {ServiceMessageNames.SetVariable.ValueAttribute, result.Output.InfoLogs.Join("\n")}
+                    }));
                 }
                 catch
                 {
@@ -135,11 +139,7 @@ namespace Calamari.Kubernetes.Conventions
                 var token = JToken.Parse(outputJson);
 
                 List<Resource> lastResources;
-                if (token.Type == JTokenType.Array)
-                {
-                    lastResources = token.ToObject<List<Resource>>();
-                }
-                else if (token["kind"]?.ToString() != "List" ||
+                if (token["kind"]?.ToString() != "List" ||
                     (lastResources = token["items"]?.ToObject<List<Resource>>()) == null)
                 {
                     lastResources = new List<Resource> { token.ToObject<Resource>() };
