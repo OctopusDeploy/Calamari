@@ -1,12 +1,19 @@
 #if NETCORE
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Assent;
 using Calamari.Aws.Kubernetes.Discovery;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.AWS;
+using Calamari.Tests.Fixtures.Integration.FileSystem;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -127,9 +134,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
         private IScriptWrapper CreateK8sResourceStatusReporterScriptWrapper(ICalamariFileSystem fileSystem)
         {
-            return new ResourceStatusReportWrapper(variables, Log, fileSystem,
+            return new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, Log,
+                fileSystem,
                 new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
-                    new ResourceUpdateReporter(variables, Log), Log));
+                    new ResourceUpdateReporter(variables, Log), Log)));
         }
 
         [Test]
