@@ -3,7 +3,7 @@ using Calamari.Kubernetes.ResourceStatus;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
+namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 {
     [TestFixture]
     public class CountdownTimerTests
