@@ -46,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                     bool.FalseString
                 });
             
-            serviceMessages.Select(message => message.Properties["countOfChecks"])
+            serviceMessages.Select(message => message.Properties["checkCount"])
                 .Should().BeEquivalentTo(new string[]
                 {
                     "1",
@@ -80,7 +80,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 {
                     new KeyValuePair<string, string>("name", "nginx"),
                     new KeyValuePair<string, string>("removed", bool.FalseString),
-                    new KeyValuePair<string, string>("countOfChecks", "1")
+                    new KeyValuePair<string, string>("checkCount", "1")
                 });
         }
         
@@ -110,7 +110,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 {
                     new KeyValuePair<string, string>("name", "redis"),
                     new KeyValuePair<string, string>("removed", bool.TrueString),
-                    new KeyValuePair<string, string>("countOfChecks", "1"),
+                    new KeyValuePair<string, string>("checkCount", "1"),
                 });
         }
     }

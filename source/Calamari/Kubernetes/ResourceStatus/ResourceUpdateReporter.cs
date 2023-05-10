@@ -13,7 +13,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// <summary>
         /// Reports the difference of the originalStatuses and newStatuses to server.
         /// </summary>
-        void ReportUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses, int countOfChecks);
+        void ReportUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses, int checkCount);
     }
     
     /// <summary>
@@ -30,18 +30,18 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
         }
         
-        public void ReportUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses, int countOfChecks)
+        public void ReportUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses, int checkCount)
         {
             var createdOrUpdatedResources = GetCreatedOrUpdatedResources(originalStatuses, newStatuses).ToList();
             foreach (var resource in createdOrUpdatedResources)
             {
-                SendServiceMessage(resource, false, countOfChecks);
+                SendServiceMessage(resource, false, checkCount);
             }
 
             var removedResources = GetRemovedResources(originalStatuses, newStatuses).ToList();
             foreach (var resource in removedResources)
             {
-                SendServiceMessage(resource, true, countOfChecks);
+                SendServiceMessage(resource, true, checkCount);
             }
             
             log.Verbose($"Resource status reported: {createdOrUpdatedResources.Count} updates, {removedResources.Count} removals");
@@ -62,7 +62,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 .Select(resource => resource.Value);
         }
         
-        private void SendServiceMessage(Resource resource, bool removed, int countOfChecks)
+        private void SendServiceMessage(Resource resource, bool removed, int checkCount)
         {
             var parameters = new Dictionary<string, string>
             {
@@ -80,7 +80,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {"status", resource.ResourceStatus.ToString()},
                 {"data", JsonConvert.SerializeObject(resource)},
                 {"removed", removed.ToString()},
-                {"countOfChecks", countOfChecks.ToString()}
+                {"checkCount", checkCount.ToString()}
             };
     
             var message = new ServiceMessage(SpecialVariables.KubernetesResourceStatusServiceMessageName, parameters);

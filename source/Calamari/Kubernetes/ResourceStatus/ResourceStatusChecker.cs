@@ -50,7 +50,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             var resourceStatuses = new Dictionary<string, Resource>();
             var deploymentStatus = DeploymentStatus.InProgress;
             var shouldContinue = true;
-            var countOfChecks = 0;
+            var checkCount = 0;
             
             stabilizingTimer.Start();
             
@@ -63,7 +63,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
                 var newDeploymentStatus = GetDeploymentStatus(newResourceStatuses.Values.ToList());
 
-                reporter.ReportUpdatedResources(resourceStatuses, newResourceStatuses, ++countOfChecks);
+                reporter.ReportUpdatedResources(resourceStatuses, newResourceStatuses, ++checkCount);
                 
                 shouldContinue = stabilizingTimer.ShouldContinue(deploymentStatus, newDeploymentStatus);
 
