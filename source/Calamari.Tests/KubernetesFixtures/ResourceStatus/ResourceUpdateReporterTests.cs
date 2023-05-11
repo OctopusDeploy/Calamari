@@ -26,7 +26,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .FromListJson(TestFileLoader.Load("two-deployments.json")) 
                 .ToDictionary(resource => resource.Uid, resource => resource);
             
-            reporter.ReportUpdatedResources(originalStatuses, newStatuses);
+            reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
 
             var serviceMessages = log.ServiceMessages
                 .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
@@ -45,6 +45,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                     bool.FalseString,
                     bool.FalseString
                 });
+            
+            serviceMessages.Select(message => message.Properties["checkCount"])
+                .Should().BeEquivalentTo(new string[]
+                {
+                    "1",
+                    "1"
+                });
         }
         
         [Test]
@@ -62,7 +69,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .FromListJson(TestFileLoader.Load("one-old-deployment-and-one-new-deployment.json"))
                 .ToDictionary(resource => resource.Uid, resource => resource);
             
-            reporter.ReportUpdatedResources(originalStatuses, newStatuses);
+            reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
             
             var serviceMessages = log.ServiceMessages
                 .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
@@ -73,6 +80,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 {
                     new KeyValuePair<string, string>("name", "nginx"),
                     new KeyValuePair<string, string>("removed", bool.FalseString),
+                    new KeyValuePair<string, string>("checkCount", "1")
                 });
         }
         
@@ -91,7 +99,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .FromListJson(TestFileLoader.Load("one-deployment.json"))
                 .ToDictionary(resource => resource.Uid, resource => resource);
             
-            reporter.ReportUpdatedResources(originalStatuses, newStatuses);
+            reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
             
             var serviceMessages = log.ServiceMessages
                 .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
@@ -102,6 +110,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 {
                     new KeyValuePair<string, string>("name", "redis"),
                     new KeyValuePair<string, string>("removed", bool.TrueString),
+                    new KeyValuePair<string, string>("checkCount", "1"),
                 });
         }
     }
