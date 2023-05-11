@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Aws.Integration;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -20,6 +21,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Conventions;
+using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 
 namespace Calamari.Kubernetes.Commands
@@ -52,7 +54,7 @@ namespace Calamari.Kubernetes.Commands
             IStructuredConfigVariablesService structuredConfigVariablesService,
             ResourceStatusReportExecutor statusReportExecutor)
         {
-            this.log = log;
+            this.log = log as RedactedValuesLogger ?? new RedactedValuesLogger(log);
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.commandLineRunner = commandLineRunner;
@@ -63,6 +65,7 @@ namespace Calamari.Kubernetes.Commands
             this.statusReportExecutor = statusReportExecutor;
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         }
+
         public override int Execute(string[] commandLineArguments)
         {
             if (!FeatureToggle.GitSourcedYamlManifestsFeatureToggle.IsEnabled(variables))
@@ -74,6 +77,8 @@ namespace Calamari.Kubernetes.Commands
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var replacer = new ConfigurationVariablesReplacer(variables, log);
+            var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
+            Kubectl kubectl = null;
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d =>
@@ -89,13 +94,19 @@ namespace Calamari.Kubernetes.Commands
                     d.StagingDirectory = stagingDirectory;
                     d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                 }),
+                new DelegateInstallConvention(d =>
+                {
+                    kubectl = new Kubectl(customKubectlExecutable, log, commandLineRunner, d.CurrentDirectory,
+                        d.EnvironmentVariables);
+                }),
                 new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
                 new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, configurationTransformer, transformFileLocator, log)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
                 new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
-                new KubernetesAuthContextConvention(log, commandLineRunner),
-                new GatherAndApplyRawYamlConvention(log, fileSystem, commandLineRunner),
-                new ResourceStatusReportConvention(statusReportExecutor, commandLineRunner)
+                new AwsAuthConvention(log),
+                new KubernetesAuthContextConvention(log, commandLineRunner, () => kubectl),
+                new GatherAndApplyRawYamlConvention(log, fileSystem, () => kubectl),
+                new ResourceStatusReportConvention(statusReportExecutor, commandLineRunner, () => kubectl)
             };
 
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);

@@ -27,7 +27,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.statusChecker = statusChecker;
         }
 
-        public void ReportStatus(string workingDirectory, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars = null)
+        public void ReportStatus(string workingDirectory, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars = null, Kubectl kubectl = null)
         {
             var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
@@ -68,18 +68,22 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var kubeConfig = Path.Combine(workingDirectory, "kubectl-octo.yml");
 
-            if (environmentVars == null)
+            if (kubectl is null)
             {
-                environmentVars = new Dictionary<string, string>();
-            }
-            environmentVars["KUBECONFIG"] = kubeConfig;
+                if (environmentVars == null)
+                {
+                    environmentVars = new Dictionary<string, string>();
+                }
+                environmentVars["KUBECONFIG"] = kubeConfig;
 
-            foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
-            {
-                environmentVars[proxyVariable.Key] = proxyVariable.Value;
+                foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
+                {
+                    environmentVars[proxyVariable.Key] = proxyVariable.Value;
+                }
+
+                kubectl = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars);
             }
 
-            var kubectl = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars);
             if (!kubectl.TrySetKubectl())
             {
                 throw new Exception("Unable to set KubeCtl");

@@ -37,14 +37,14 @@ namespace Calamari.Kubernetes
             string workingDirectory)
         {
             this.variables = variables;
-            this.log = new RedactedValuesLogger(log);
+            this.log = log as RedactedValuesLogger ?? new RedactedValuesLogger(log);
             this.scriptSyntax = scriptSyntax;
             this.commandLineRunner = commandLineRunner;
             this.environmentVars = environmentVars;
             this.workingDirectory = workingDirectory;
         }
 
-        public CommandResult Execute(string accountType)
+        public CommandResult Execute(string accountType, Kubectl kubectl = null)
         {
             var errorResult = new CommandResult(string.Empty, 1);
 
@@ -55,8 +55,14 @@ namespace Calamari.Kubernetes
 
             var kubeConfig = CreateKubectlConfig();
 
-            var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
-            kubectlCli = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars);
+            if (kubectl is null)
+            {
+                var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
+                kubectl = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory,
+                    environmentVars);
+            }
+
+            kubectlCli = kubectl;
             if (!kubectlCli.TrySetKubectl())
             {
                 return errorResult;

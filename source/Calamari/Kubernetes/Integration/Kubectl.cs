@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
@@ -14,6 +15,7 @@ namespace Calamari.Kubernetes.Integration
     public class Kubectl : CommandLineTool
     {
         readonly string customKubectlExecutable;
+        private bool isSet;
 
         public Kubectl(string customKubectlExecutable, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
             : base(log, commandLineRunner, workingDirectory, environmentVars)
@@ -23,6 +25,8 @@ namespace Calamari.Kubernetes.Integration
 
         public bool TrySetKubectl()
         {
+            if (isSet) return true;
+
             if (string.IsNullOrEmpty(customKubectlExecutable))
             {
                 var result = CalamariEnvironment.IsRunningOnWindows
@@ -53,6 +57,7 @@ namespace Calamari.Kubernetes.Integration
             if (TryExecuteKubectlCommand("version", "--client", "--short"))
             {
                 log.Verbose($"Found kubectl and successfully verified it can be executed.");
+                isSet = true;
                 return true;
             }
 
