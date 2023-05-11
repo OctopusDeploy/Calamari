@@ -82,49 +82,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void DeployRawYaml_WithDeploymentScript_OutputShouldIndicateSuccessfulDeployment()
-        {
-            const string account = "eks_account";
-            const string certificateAuthority = "myauthority";
-            const string customResourceFileName = "customresource.yml";
-
-            variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
-            variables.Set(KubernetesSpecialVariables.ClusterUrl, eksClusterEndpoint);
-            variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
-            variables.Set("Octopus.Action.Aws.Region", region);
-            variables.Set("Octopus.Action.AwsAccount.Variable", account);
-            variables.Set($"{account}.AccessKey", eksClientID);
-            variables.Set($"{account}.SecretKey", eksSecretKey);
-            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
-            variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
-
-            variables.Set("Octopus.Action.Script.ScriptSource", "Inline");
-            variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx");
-            variables.Set("Octopus.Action.Package.JsonConfigurationVariablesTargets", "**/*.{yml,yaml}");
-            variables.Set("Octopus.Action.Kubernetes.ResourceStatusCheck", "True");
-            variables.Set("Octopus.Action.KubernetesContainers.DeploymentWait", "NoWait");
-            variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "180");
-            variables.Set("Octopus.Action.Kubernetes.StabilizationTimeout", "10");
-
-            variables.SetFeatureToggles(
-                FeatureToggle.KubernetesDeploymentStatusFeatureToggle,
-                FeatureToggle.GitSourcedYamlManifestsFeatureToggle);
-
-            var fileSystem = new TestCalamariPhysicalFileSystem();
-            var wrapper = new[] { CreateWrapper(fileSystem), CreateK8sResourceStatusReporterScriptWrapper(fileSystem) };
-
-            DeployWithScriptAndVerifySuccess(wrapper, fileSystem, dir =>
-            {
-                var pathToCustomResource = Path.Combine(dir.DirectoryPath, "TestFolder", customResourceFileName);
-                File.WriteAllText(pathToCustomResource,
-                    "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80");
-                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", customResourceFileName);
-            });
-
-            this.Assent(string.Join("\n", Log.Messages.Select(m => m.FormattedMessage)), AssentConfiguration.Default);
-        }
-
-        [Test]
         [TestCase(true)]
         [TestCase(false)]
         public void DeployRawYaml_WithRawYamlCommandOrDeploymentScript_OutputShouldIndicateSuccessfulDeployment(bool useScriptDeployment)
