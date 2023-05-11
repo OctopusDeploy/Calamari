@@ -26,6 +26,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
@@ -184,7 +185,28 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        protected void DeploymentScriptAndVerifySuccess(IReadOnlyList<IScriptWrapper> wrappers, ICalamariFileSystem fileSystem, Action<TemporaryDirectory> addFilesAction = null)
+        protected void DeployWithScriptAndVerifySuccess(IReadOnlyList<IScriptWrapper> wrappers,
+            ICalamariFileSystem fileSystem, Action<TemporaryDirectory> addFilesAction = null)
+        {
+            SetupTempDirectoryAndVerifyResult(addFilesAction, () =>
+            {
+                var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts");
+                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash),
+                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.sh")));
+                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell),
+                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1")));
+
+                return ExecuteScript(wrappers, null, fileSystem);
+            });
+        }
+
+        protected void DeployWithRawYamlCommandAndVerifySuccess(ICalamariFileSystem fileSystem,
+            Action<TemporaryDirectory> addFilesAction = null)
+        {
+            SetupTempDirectoryAndVerifyResult(addFilesAction, () => ExecuteApplyRawYamlCommand(fileSystem));
+        }
+
+        private void SetupTempDirectoryAndVerifyResult(Action<TemporaryDirectory> addFilesAction, Func<CalamariResult> func)
         {
             using (var dir = TemporaryDirectory.Create())
             {
@@ -193,19 +215,25 @@ namespace Calamari.Tests.KubernetesFixtures
                 var currentDirectory = Environment.CurrentDirectory;
                 Environment.CurrentDirectory = folderPath;
 
-                addFilesAction?.Invoke(dir);
+                try
+                {
+                    addFilesAction?.Invoke(dir);
 
-                var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts");
-                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash),
-                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.sh")));
-                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell),
-                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1")));
+                    var output = func();
 
-                // var output = ExecuteScript(wrappers, null, fileSystem);
-                var output = ExecuteApplyRawYamlCommand(fileSystem);
-                output.AssertSuccess();
+                    output.AssertSuccess();
 
-                Environment.CurrentDirectory = currentDirectory;
+                    WriteLogMessagesToTestOutput();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    Environment.CurrentDirectory = currentDirectory;
+                }
             }
         }
 

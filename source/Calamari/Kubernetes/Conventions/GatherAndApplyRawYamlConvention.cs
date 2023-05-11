@@ -138,7 +138,7 @@ namespace Calamari.Kubernetes.Conventions
 
                 foreach (var resource in lastResources)
                 {
-                    log.Info($"'{resource.Kind}/{resource.Metadata.Name}' created.");
+                    log.Info($"{resource.Kind}/{resource.Metadata.Name} created");
                 }
 
                 return lastResources;

@@ -12,12 +12,30 @@ namespace Calamari.Common.Plumbing.ServiceMessages
 
         readonly Dictionary<string, string> properties;
 
+        public static ServiceMessage ParseRawServiceMessage(string serviceMessageLog)
+        {
+            serviceMessageLog = serviceMessageLog.Split('[')[1].Split(']')[0];
+            var parts = serviceMessageLog.Split(" ");
+            var serviceMessageType = parts[0];
+            var properties = parts.Skip(1).Select(s =>
+            {
+                var key = s.Substring(0, s.IndexOf('='));
+                var value = s.Substring(s.IndexOf('=') + 1).Trim('\'', '\"');
+                return (Key: key, Value: value);
+            });
+            return new ServiceMessage(serviceMessageType,
+                properties.ToDictionary(x => x.Key, x =>
+                {
+                    return AbstractLog.UnconvertServiceMessageValue(x.Value);
+                }));
+        }
+
         public ServiceMessage(string name, Dictionary<string, string>? properties = null)
         {
             this.Name = name;
             this.properties = properties ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
-        
+
         private ServiceMessage(string name, params (string, string)[] parameters)
         {
             this.Name = name;

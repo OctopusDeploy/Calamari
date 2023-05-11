@@ -81,17 +81,16 @@ namespace Calamari.Tests.KubernetesFixtures
             };
         }
 
-        //TODO: tests for all types of deployments (secrets, configmaps, deployments, services, raw yaml, etc etc).
         [Test]
-        public void DeployRawYaml_WithObjectStatusSwitchedOff_OutputShouldIndicateSuccessfulDeployment()
+        public void DeployRawYaml_WithDeploymentScript_OutputShouldIndicateSuccessfulDeployment()
         {
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
-            const string customResourceFileName = "customresource.yaml";
+            const string customResourceFileName = "customresource.yml";
 
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
-            variables.Set(SpecialVariables.ClusterUrl, eksClusterEndpoint);
-            variables.Set(SpecialVariables.EksClusterName, eksClusterName);
+            variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(KubernetesSpecialVariables.ClusterUrl, eksClusterEndpoint);
+            variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set("Octopus.Action.AwsAccount.Variable", account);
             variables.Set($"{account}.AccessKey", eksClientID);
@@ -107,29 +106,97 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "180");
             variables.Set("Octopus.Action.Kubernetes.StabilizationTimeout", "10");
 
-            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles,
-                FeatureToggles.FeatureToggle.KubernetesDeploymentStatusFeatureToggle.ToString());
+            variables.SetFeatureToggles(
+                FeatureToggle.KubernetesDeploymentStatusFeatureToggle,
+                FeatureToggle.GitSourcedYamlManifestsFeatureToggle);
 
             var fileSystem = new TestCalamariPhysicalFileSystem();
             var wrapper = new[] { CreateWrapper(fileSystem), CreateK8sResourceStatusReporterScriptWrapper(fileSystem) };
 
-            // When authorising via AWS, We need to make sure we are using the correct version of
-            // kubectl for the test script as newer versions may cause kubectl to fail with an error like:
-            // 'error: exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"'
-            var kubectlExecutable = variables.Get(KubeCtlExecutableVariableName) ??
-                throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
-
-            //TODO: Update this method to create all wrappers required to replicate the real world deployment.
-            // TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
-            DeploymentScriptAndVerifySuccess(wrapper, fileSystem, kubectlExecutable, dir =>
+            DeployWithScriptAndVerifySuccess(wrapper, fileSystem, dir =>
             {
                 var pathToCustomResource = Path.Combine(dir.DirectoryPath, "TestFolder", customResourceFileName);
                 File.WriteAllText(pathToCustomResource,
                     "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80");
-                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", pathToCustomResource);
+                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", customResourceFileName);
             });
 
-            this.Assent(string.Join("\n", Log.Messages.Select(m => m.FormattedMessage).TakeLast(21)), AssentConfiguration.Default);
+            this.Assent(string.Join("\n", Log.Messages.Select(m => m.FormattedMessage)), AssentConfiguration.Default);
+        }
+
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void DeployRawYaml_WithRawYamlCommandOrDeploymentScript_OutputShouldIndicateSuccessfulDeployment(bool useScriptDeployment)
+        {
+            const string account = "eks_account";
+            const string certificateAuthority = "myauthority";
+            const string customResourceFileName = "customresource.yml";
+
+            variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(KubernetesSpecialVariables.ClusterUrl, eksClusterEndpoint);
+            variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
+            variables.Set("Octopus.Action.Aws.Region", region);
+            variables.Set("Octopus.Action.AwsAccount.Variable", account);
+            variables.Set($"{account}.AccessKey", eksClientID);
+            variables.Set($"{account}.SecretKey", eksSecretKey);
+            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
+            variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
+
+            variables.Set("Octopus.Action.Script.ScriptSource", "Inline");
+            variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx");
+            variables.Set("Octopus.Action.Package.JsonConfigurationVariablesTargets", "**/*.{yml,yaml}");
+            variables.Set("Octopus.Action.Kubernetes.ResourceStatusCheck", "True");
+            variables.Set("Octopus.Action.KubernetesContainers.DeploymentWait", "NoWait");
+            variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "180");
+            variables.Set("Octopus.Action.Kubernetes.StabilizationTimeout", "10");
+
+            variables.SetFeatureToggles(
+                FeatureToggle.KubernetesDeploymentStatusFeatureToggle,
+                FeatureToggle.GitSourcedYamlManifestsFeatureToggle);
+
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+
+            void AddCustomResourceFile(TemporaryDirectory dir)
+            {
+                var pathToCustomResource = Path.Combine(dir.DirectoryPath, "TestFolder", customResourceFileName);
+                File.WriteAllText(pathToCustomResource, "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80");
+                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", customResourceFileName);
+            }
+
+            if (useScriptDeployment)
+            {
+                var wrapper = new[] { CreateWrapper(fileSystem), CreateK8sResourceStatusReporterScriptWrapper(fileSystem) };
+
+                DeployWithScriptAndVerifySuccess(wrapper, fileSystem, AddCustomResourceFile);
+            }
+            else
+            {
+                DeployWithRawYamlCommandAndVerifySuccess(fileSystem, AddCustomResourceFile);
+            }
+
+
+            var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
+
+            rawLogs.Should().ContainSingle(m => m.Contains("Deployment/nginx-deployment created"));
+
+            var variableMessages = Log.Messages.GetServiceMessagesOfType("setVariable");
+
+            var variableMessage =
+                variableMessages.Should().ContainSingle(m => m.Properties["name"] == "CustomResources(nginx-deployment)")
+                                .Subject;
+
+            this.Assent(KubernetesJsonResourceScrubber.ScrubRawJson(variableMessage.Properties["value"]));
+
+            var idx = Array.IndexOf(rawLogs, "Performing resource status checks on the following resources:");
+            rawLogs[idx + 1].Should().Be(" - Deployment/nginx-deployment in namespace calamari-testing");
+
+            var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
+
+            objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(5);
+
+            rawLogs.Should().ContainSingle(m =>
+                m.Contains("Resource status check completed successfully because all resources are deployed successfully and have stabilized"));
         }
 
         private IScriptWrapper CreateK8sResourceStatusReporterScriptWrapper(ICalamariFileSystem fileSystem)
@@ -147,8 +214,8 @@ namespace Calamari.Tests.KubernetesFixtures
             const string certificateAuthority = "myauthority";
 
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
-            variables.Set(SpecialVariables.ClusterUrl, eksClusterEndpoint);
-            variables.Set(SpecialVariables.EksClusterName, eksClusterName);
+            variables.Set(KubernetesSpecialVariables.ClusterUrl, eksClusterEndpoint);
+            variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set("Octopus.Action.AwsAccount.Variable", account);
             variables.Set($"{account}.AccessKey", eksClientID);
@@ -174,8 +241,8 @@ namespace Calamari.Tests.KubernetesFixtures
             const string unreachableClusterEndpoint = "https://example.kubernetes.com";
 
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
-            variables.Set(SpecialVariables.ClusterUrl, unreachableClusterEndpoint);
-            variables.Set(SpecialVariables.EksClusterName, eksClusterName);
+            variables.Set(KubernetesSpecialVariables.ClusterUrl, unreachableClusterEndpoint);
+            variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set("Octopus.Action.AwsAccount.Variable", account);
             variables.Set($"{account}.AccessKey", eksClientID);

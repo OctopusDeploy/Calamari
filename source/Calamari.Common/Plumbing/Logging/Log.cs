@@ -208,5 +208,11 @@ namespace Calamari.Common.Plumbing.Logging
         {
             return Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
         }
+
+        public static string UnconvertServiceMessageValue(string value)
+        {
+            var bytes = Convert.FromBase64String(value);
+            return Encoding.UTF8.GetString(bytes);
+        }
     }
 }
