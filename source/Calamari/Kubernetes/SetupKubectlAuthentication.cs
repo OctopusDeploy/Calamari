@@ -6,6 +6,7 @@ using System.Text;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
@@ -20,7 +21,7 @@ namespace Calamari.Kubernetes
     public class SetupKubectlAuthentication
     {
         readonly IVariables variables;
-        readonly RedactedValuesLogger log;
+        readonly ILog log;
         readonly ScriptSyntax scriptSyntax;
         readonly ICommandLineRunner commandLineRunner;
         readonly Dictionary<string, string> environmentVars;
@@ -37,7 +38,7 @@ namespace Calamari.Kubernetes
             string workingDirectory)
         {
             this.variables = variables;
-            this.log = new RedactedValuesLogger(log);
+            this.log = log;
             this.scriptSyntax = scriptSyntax;
             this.commandLineRunner = commandLineRunner;
             this.environmentVars = environmentVars;
