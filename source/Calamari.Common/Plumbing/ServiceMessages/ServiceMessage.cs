@@ -14,7 +14,7 @@ namespace Calamari.Common.Plumbing.ServiceMessages
         public static ServiceMessage ParseRawServiceMessage(string serviceMessageLog)
         {
             serviceMessageLog = serviceMessageLog.Split('[')[1].Split(']')[0];
-            var parts = serviceMessageLog.Split(" ");
+            var parts = serviceMessageLog.Split(' ');
             var serviceMessageType = parts[0];
             var properties = parts.Skip(1).Select(s =>
             {
