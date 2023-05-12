@@ -15,13 +15,13 @@ namespace Calamari.Kubernetes.Conventions
     {
         private readonly ILog log;
         private readonly ICommandLineRunner commandLineRunner;
-        private readonly Func<Kubectl> kubectlFactory;
+        private readonly Kubectl kubectl;
 
-        public KubernetesAuthContextConvention(ILog log, ICommandLineRunner commandLineRunner, Func<Kubectl> kubectlFactory)
+        public KubernetesAuthContextConvention(ILog log, ICommandLineRunner commandLineRunner, Kubectl kubectl)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;
-            this.kubectlFactory = kubectlFactory;
+            this.kubectl = kubectl;
         }
 
         public void Install(RunningDeployment deployment)
@@ -35,7 +35,7 @@ namespace Calamari.Kubernetes.Conventions
 
             var accountType = deployment.Variables.Get("Octopus.Account.AccountType");
 
-            setupKubectlAuthentication.Execute(accountType, kubectlFactory());
+            setupKubectlAuthentication.Execute(accountType, kubectl);
         }
     }
 }

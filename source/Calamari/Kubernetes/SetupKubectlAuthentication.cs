@@ -6,6 +6,7 @@ using System.Text;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
@@ -20,7 +21,7 @@ namespace Calamari.Kubernetes
     public class SetupKubectlAuthentication
     {
         readonly IVariables variables;
-        readonly RedactedValuesLogger log;
+        readonly ILog log;
         readonly ScriptSyntax scriptSyntax;
         readonly ICommandLineRunner commandLineRunner;
         readonly Dictionary<string, string> environmentVars;
@@ -37,7 +38,7 @@ namespace Calamari.Kubernetes
             string workingDirectory)
         {
             this.variables = variables;
-            this.log = log as RedactedValuesLogger ?? new RedactedValuesLogger(log);
+            this.log = log;
             this.scriptSyntax = scriptSyntax;
             this.commandLineRunner = commandLineRunner;
             this.environmentVars = environmentVars;
@@ -55,12 +56,8 @@ namespace Calamari.Kubernetes
 
             var kubeConfig = CreateKubectlConfig();
 
-            if (kubectl is null)
-            {
-                var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
-                kubectl = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory,
-                    environmentVars);
-            }
+            kubectl ??= new Kubectl(variables, log, commandLineRunner)
+                { WorkingDirectory = workingDirectory, EnvironmentVariables = environmentVars };
 
             kubectlCli = kubectl;
             if (!kubectlCli.TrySetKubectl())

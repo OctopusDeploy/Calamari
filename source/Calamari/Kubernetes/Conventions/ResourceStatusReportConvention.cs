@@ -11,20 +11,20 @@ namespace Calamari.Kubernetes.Conventions
     {
         private readonly ResourceStatusReportExecutor statusReportExecutor;
         private readonly ICommandLineRunner commandLineRunner;
-        private readonly Func<Kubectl> kubectlFactory;
+        private readonly Kubectl kubectl;
 
         public ResourceStatusReportConvention(ResourceStatusReportExecutor statusReportExecutor,
-            ICommandLineRunner commandLineRunner, Func<Kubectl> kubectlFactory)
+            ICommandLineRunner commandLineRunner, Kubectl kubectl)
         {
             this.statusReportExecutor = statusReportExecutor;
             this.commandLineRunner = commandLineRunner;
-            this.kubectlFactory = kubectlFactory;
+            this.kubectl = kubectl;
         }
 
         public void Install(RunningDeployment deployment)
         {
             statusReportExecutor.ReportStatus(deployment.CurrentDirectory, commandLineRunner,
-                deployment.EnvironmentVariables, kubectlFactory());
+                deployment.EnvironmentVariables, kubectl);
         }
     }
 }

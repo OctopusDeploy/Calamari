@@ -10,16 +10,19 @@ namespace Calamari.Deployment
 {
     public class ConventionProcessor
     {
-        readonly RunningDeployment deployment;
+        public delegate ConventionProcessor Factory(RunningDeployment deployment, List<IConvention> conventions);
+
         readonly List<IConvention> conventions;
         readonly ILog log;
 
         public ConventionProcessor(RunningDeployment deployment, List<IConvention> conventions, ILog log)
         {
-            this.deployment = deployment;
+            Deployment = deployment;
             this.conventions = conventions;
             this.log = log;
         }
+
+        public RunningDeployment Deployment { get; }
 
         public void RunConventions()
         {
@@ -40,7 +43,7 @@ namespace Calamari.Deployment
 
                 Console.Error.WriteLine("Running rollback conventions...");
 
-                deployment.Error(installException);
+                Deployment.Error(installException);
 
                 try
                 {
@@ -70,9 +73,9 @@ namespace Calamari.Deployment
         {
             foreach (var convention in conventions.OfType<IInstallConvention>())
             {
-                convention.Install(deployment);
+                convention.Install(Deployment);
 
-                if (deployment.Variables.GetFlag(Common.Plumbing.Variables.KnownVariables.Action.SkipRemainingConventions))
+                if (Deployment.Variables.GetFlag(Common.Plumbing.Variables.KnownVariables.Action.SkipRemainingConventions))
                 {
                     break;
                 }
@@ -83,7 +86,7 @@ namespace Calamari.Deployment
         {
             foreach (var convention in conventions.OfType<IRollbackConvention>())
             {
-                convention.Rollback(deployment);
+                convention.Rollback(Deployment);
             }
         }
 
@@ -91,12 +94,12 @@ namespace Calamari.Deployment
         {
             foreach (var convention in conventions.OfType<IRollbackConvention>())
             {
-                if (deployment.Variables.GetFlag(Common.Plumbing.Variables.KnownVariables.Action.SkipRemainingConventions))
+                if (Deployment.Variables.GetFlag(Common.Plumbing.Variables.KnownVariables.Action.SkipRemainingConventions))
                 {
                     break;
                 }
 
-                convention.Cleanup(deployment);
+                convention.Cleanup(Deployment);
             }
         }
     }

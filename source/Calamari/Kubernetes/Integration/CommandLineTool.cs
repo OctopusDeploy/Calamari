@@ -9,20 +9,20 @@ namespace Calamari.Kubernetes.Integration
     public class CommandLineTool
     {
         protected readonly ILog log;
-        protected readonly string workingDirectory;
-        protected readonly Dictionary<string, string> environmentVars;
 
         readonly ICommandLineRunner commandLineRunner;
 
-        protected CommandLineTool(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
+        protected CommandLineTool(ILog log, ICommandLineRunner commandLineRunner)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;
-            this.workingDirectory = workingDirectory;
-            this.environmentVars = environmentVars;
         }
 
+        public string WorkingDirectory { get; set; }
+
         public string ExecutableLocation { get; protected set; }
+
+        public Dictionary<string,string> EnvironmentVariables { get; set; }
 
         protected bool TryExecuteCommandAndLogOutput(string exe, params string[] arguments)
         {
@@ -32,8 +32,8 @@ namespace Calamari.Kubernetes.Integration
 
         protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
         {
-            invocation.EnvironmentVars = environmentVars;
-            invocation.WorkingDirectory = workingDirectory;
+            invocation.EnvironmentVars = EnvironmentVariables;
+            invocation.WorkingDirectory = WorkingDirectory;
             invocation.OutputAsVerbose = false;
             invocation.OutputToLog = false;
 
@@ -81,8 +81,8 @@ namespace Calamari.Kubernetes.Integration
             var captureCommandOutput = new CaptureCommandOutput();
             var invocation = new CommandLineInvocation(exe, arguments)
             {
-                EnvironmentVars = environmentVars,
-                WorkingDirectory = workingDirectory,
+                EnvironmentVars = EnvironmentVariables,
+                WorkingDirectory = WorkingDirectory,
                 OutputAsVerbose = false,
                 OutputToLog = false,
                 AdditionalInvocationOutputSink = captureCommandOutput

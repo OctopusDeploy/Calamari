@@ -23,5 +23,16 @@ namespace Calamari.Common.Plumbing.Extensions
 
             log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.CalamariDeploymentMetric.Name, serviceMessageParameters));
         }
+
+        public static void AddValueToRedact(this ILog log, string? value, string replacement)
+        {
+            if (!(log is RedactedValuesLogger redactedValuesLogger))
+            {
+                throw new InvalidOperationException(
+                    "Unable to Add Values to Redact because logger is not capable of redacting values");
+            }
+
+            redactedValuesLogger.AddValueToRedact(value, replacement);
+        }
     }
 }

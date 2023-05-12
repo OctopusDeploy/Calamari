@@ -29,7 +29,6 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         public void ReportStatus(string workingDirectory, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars = null, Kubectl kubectl = null)
         {
-            var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
             // When the namespace on a target was set and then cleared, it's going to be "" instead of null
             if (string.IsNullOrEmpty(defaultNamespace))
@@ -81,7 +80,8 @@ namespace Calamari.Kubernetes.ResourceStatus
                     environmentVars[proxyVariable.Key] = proxyVariable.Value;
                 }
 
-                kubectl = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars);
+                kubectl = new Kubectl(variables, log, commandLineRunner)
+                    { WorkingDirectory = workingDirectory, EnvironmentVariables = environmentVars };
             }
 
             if (!kubectl.TrySetKubectl())

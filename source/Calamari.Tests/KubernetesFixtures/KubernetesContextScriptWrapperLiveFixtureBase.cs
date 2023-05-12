@@ -5,6 +5,10 @@ using System.IO;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Commands;
+using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
@@ -17,16 +21,20 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands;
+using Calamari.Kubernetes.Conventions;
+using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
@@ -41,6 +49,8 @@ namespace Calamari.Tests.KubernetesFixtures
         protected IVariables variables;
         protected string testFolder;
 
+        protected ILog redactionLog;
+
         [OneTimeSetUp]
         public void SetupTests()
         {
@@ -52,14 +62,14 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             variables = new CalamariVariables();
 
-            Log = new DoNotDoubleLog();
+            redactionLog = new RedactedValuesLogger(Log = new DoNotDoubleLog());
 
             SetTestClusterVariables();
         }
 
         protected KubernetesContextScriptWrapper CreateWrapper(ICalamariFileSystem fileSystem = null)
         {
-            return new KubernetesContextScriptWrapper(variables, Log, new AssemblyEmbeddedResources(), fileSystem ?? new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, redactionLog, new AssemblyEmbeddedResources(), fileSystem ?? new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()
@@ -77,7 +87,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrappers = new List<IScriptWrapper>(additionalWrappers);
             if (variables.Get(SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
             {
-                wrappers.Add(new AwsScriptWrapper(Log, variables));
+                wrappers.Add(new AwsScriptWrapper(redactionLog, variables));
             }
 
             var result = fileSystem != null
@@ -92,22 +102,30 @@ namespace Calamari.Tests.KubernetesFixtures
         CalamariResult ExecuteApplyRawYamlCommand(ICalamariFileSystem fileSystem)
         {
             var commandLineRunner = CreateCommandLineRunner();
-            var command = new KubernetesApplyRawYamlCommand(Log,
-                new DeploymentJournalWriter(fileSystem),
+            var kubectl = new Kubectl(variables, redactionLog, commandLineRunner);
+            var command = new KubernetesApplyRawYamlCommand(new DeploymentJournalWriter(fileSystem),
                 variables,
-                commandLineRunner,
+                kubectl,
+                d => new DelegateInstallConvention(d),
+                () => CreateSubstituteInFilesConvention(fileSystem),
+                () => CreateConfigurationTransformsConvention(fileSystem),
+                () => CreateConfigurationVariablesConvention(fileSystem),
+                () => CreateStructuredConfigurationVariablesConvention(fileSystem),
+                CreateAwsAuthConvention,
+                () => CreateKubernetesAuthContextConvention(commandLineRunner, kubectl),
+                () => CreateGatherAndApplyRawYamlConvention(fileSystem, kubectl),
+                () => CreateResourceStatusReportConvention(fileSystem, commandLineRunner, kubectl),
+                (d, c) => new ConventionProcessor(d, c, redactionLog),
+                p => new RunningDeployment(p, variables),
                 fileSystem,
-                CreateExtractPackage(fileSystem, commandLineRunner),
-                CreateSubstituteInFiles(fileSystem),
-                CreateStructuredConfigVariablesService(fileSystem),
-                CreateResourceStatusReportExecutor(fileSystem));
+                CreateExtractPackage(fileSystem, commandLineRunner));
 
             return new CalamariResult(command.Execute(Array.Empty<string>()), new CaptureCommandInvocationOutputSink());
         }
 
         CalamariResult ExecuteWithRunScriptCommand(ICalamariFileSystem fileSystem, IEnumerable<IScriptWrapper> scriptWrappers)
         {
-            var command = new RunScriptCommand(Log,
+            var command = new RunScriptCommand(redactionLog,
                 new DeploymentJournalWriter(fileSystem),
                 variables,
                 new ScriptEngine(scriptWrappers),
@@ -119,27 +137,67 @@ namespace Calamari.Tests.KubernetesFixtures
             return new CalamariResult(command.Execute(Array.Empty<string>()), new CaptureCommandInvocationOutputSink());
         }
 
+        private ISubstituteInFiles CreateSubstituteInFiles(ICalamariFileSystem fileSystem)
+        {
+            return new SubstituteInFiles(redactionLog, fileSystem, new FileSubstituter(redactionLog, fileSystem), variables);
+        }
+
+        private ResourceStatusReportConvention CreateResourceStatusReportConvention(ICalamariFileSystem fileSystem, CommandLineRunner commandLineRunner, Kubectl kubectl)
+        {
+            return new ResourceStatusReportConvention(new ResourceStatusReportExecutor(variables, redactionLog, fileSystem,
+                new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
+                    new ResourceUpdateReporter(variables, redactionLog), redactionLog)), commandLineRunner, kubectl);
+        }
+
+        private GatherAndApplyRawYamlConvention CreateGatherAndApplyRawYamlConvention(ICalamariFileSystem fileSystem, Kubectl kubectl)
+        {
+            return new GatherAndApplyRawYamlConvention(redactionLog, fileSystem, kubectl);
+        }
+
+        private KubernetesAuthContextConvention CreateKubernetesAuthContextConvention(CommandLineRunner commandLineRunner, Kubectl kubectl)
+        {
+            return new KubernetesAuthContextConvention(redactionLog, commandLineRunner, kubectl);
+        }
+
+        private AwsAuthConvention CreateAwsAuthConvention()
+        {
+            return new AwsAuthConvention(redactionLog);
+        }
+
         CommandLineRunner CreateCommandLineRunner()
         {
-            return new CommandLineRunner(Log, variables);
+            return new CommandLineRunner(redactionLog, variables);
         }
 
         ExtractPackage CreateExtractPackage(ICalamariFileSystem fileSystem, CommandLineRunner commandLineRunner)
         {
-            return new ExtractPackage(new CombinedPackageExtractor(Log, variables, commandLineRunner), fileSystem,
-                variables, Log);
+            return new ExtractPackage(new CombinedPackageExtractor(redactionLog, variables, commandLineRunner), fileSystem,
+                variables, redactionLog);
         }
 
-        ResourceStatusReportExecutor CreateResourceStatusReportExecutor(ICalamariFileSystem fileSystem)
+        StructuredConfigurationVariablesConvention CreateStructuredConfigurationVariablesConvention(
+            ICalamariFileSystem fileSystem)
         {
-            return new ResourceStatusReportExecutor(variables, Log, fileSystem,
-                new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
-                    new ResourceUpdateReporter(variables, Log), Log));
+            return new StructuredConfigurationVariablesConvention(
+                new StructuredConfigurationVariablesBehaviour(CreateStructuredConfigVariablesService(fileSystem)));
         }
 
-        SubstituteInFiles CreateSubstituteInFiles(ICalamariFileSystem fileSystem)
+        ConfigurationVariablesConvention CreateConfigurationVariablesConvention(ICalamariFileSystem fileSystem)
         {
-            return new SubstituteInFiles(Log, fileSystem, new FileSubstituter(Log, fileSystem), variables);
+            return new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables,
+                new ConfigurationVariablesReplacer(variables, redactionLog), redactionLog));
+        }
+
+        ConfigurationTransformsConvention CreateConfigurationTransformsConvention(ICalamariFileSystem fileSystem)
+        {
+            return new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables,
+                ConfigurationTransformer.FromVariables(variables, redactionLog), new TransformFileLocator(fileSystem, redactionLog),
+                redactionLog));
+        }
+
+        SubstituteInFilesConvention CreateSubstituteInFilesConvention(ICalamariFileSystem fileSystem)
+        {
+            return new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(CreateSubstituteInFiles(fileSystem)));
         }
 
         StructuredConfigVariablesService CreateStructuredConfigVariablesService(ICalamariFileSystem fileSystem)
@@ -147,16 +205,16 @@ namespace Calamari.Tests.KubernetesFixtures
             return new StructuredConfigVariablesService(
                 new PrioritisedList<IFileFormatVariableReplacer>(new IFileFormatVariableReplacer[]
                 {
-                    new JsonFormatVariableReplacer(fileSystem, Log),
-                    new XmlFormatVariableReplacer(fileSystem, Log),
-                    new YamlFormatVariableReplacer(fileSystem, Log),
-                    new PropertiesFormatVariableReplacer(fileSystem, Log)
-                }), variables, fileSystem, Log);
+                    new JsonFormatVariableReplacer(fileSystem, redactionLog),
+                    new XmlFormatVariableReplacer(fileSystem, redactionLog),
+                    new YamlFormatVariableReplacer(fileSystem, redactionLog),
+                    new PropertiesFormatVariableReplacer(fileSystem, redactionLog)
+                }), variables, fileSystem, redactionLog);
         }
 
         CalamariResult ExecuteDirectlyWithScriptEngine(IReadOnlyList<IScriptWrapper> wrappers, string scriptName)
         {
-            var commandLineRunner = new CommandLineRunner(Log, variables);
+            var commandLineRunner = new CommandLineRunner(redactionLog, variables);
             var engine = new ScriptEngine(wrappers);
             var result = engine.Execute(new Script(scriptName), variables, commandLineRunner, GetEnvironments());
 

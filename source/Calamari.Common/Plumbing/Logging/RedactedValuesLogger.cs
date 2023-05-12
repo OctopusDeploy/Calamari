@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Kubernetes
+namespace Calamari.Common.Plumbing.Logging
 {
     public class RedactedValuesLogger : ILog
     {
@@ -17,8 +15,9 @@ namespace Calamari.Kubernetes
             log = innerLogger;
         }
 
-        public void AddValueToRedact(string value, string replacement)
+        public void AddValueToRedact(string? value, string replacement)
         {
+            if (value is null) return;
             redactionMap[value] = replacement;
         }
 

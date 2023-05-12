@@ -19,21 +19,20 @@ namespace Calamari.Kubernetes.Conventions
     {
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly Func<Kubectl> kubectlFactory;
+        private readonly Kubectl kubectl;
 
         public GatherAndApplyRawYamlConvention(
             ILog log,
             ICalamariFileSystem fileSystem,
-            Func<Kubectl> kubectlFactory)
+            Kubectl kubectl)
         {
             this.log = log;
             this.fileSystem = fileSystem;
-            this.kubectlFactory = kubectlFactory;
+            this.kubectl = kubectl;
         }
 
         public void Install(RunningDeployment deployment)
         {
-            var kubectl = kubectlFactory();
             var variables = deployment.Variables;
             var globs = variables.Get(SpecialVariables.CustomResourceYamlFileName)?.Split(';');
             if (globs == null || globs.All(g => g.IsNullOrEmpty()))
@@ -44,13 +43,13 @@ namespace Calamari.Kubernetes.Conventions
             var resources = new List<Resource>();
             foreach (var (directory, index) in directories.Select((d,i) => (d,i)))
             {
-                resources.AddRange(ApplyBatchAndReturnResources(index, globs[index], kubectl, directory));
+                resources.AddRange(ApplyBatchAndReturnResources(index, globs[index], directory));
             }
 
-            WriteResourcesToOutputVariables(resources, kubectl);
+            WriteResourcesToOutputVariables(resources);
         }
 
-        private void WriteResourcesToOutputVariables(List<Resource> resources, Kubectl kubectl)
+        private void WriteResourcesToOutputVariables(List<Resource> resources)
         {
             foreach (var resource in resources)
             {
@@ -93,7 +92,7 @@ namespace Calamari.Kubernetes.Conventions
             return directories;
         }
 
-        private IEnumerable<Resource> ApplyBatchAndReturnResources(int index, string glob, Kubectl kubectl, string directory)
+        private IEnumerable<Resource> ApplyBatchAndReturnResources(int index, string glob, string directory)
         {
             log.Info($"Applying Batch #{index+1} for YAML matching '{glob}'");
             foreach (var file in Directory.EnumerateFiles(directory))

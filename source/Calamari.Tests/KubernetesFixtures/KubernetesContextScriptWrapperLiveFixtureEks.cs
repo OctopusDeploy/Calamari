@@ -7,17 +7,21 @@ using System.Threading.Tasks;
 using Assent;
 using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Deployment;
+using Calamari.FeatureToggles;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
-using Calamari.Tests.AWS;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Kubernetes.SpecialVariables;
+using File = System.IO.File;
+using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
+
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -158,10 +162,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
         private IScriptWrapper CreateK8sResourceStatusReporterScriptWrapper(ICalamariFileSystem fileSystem)
         {
-            return new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, Log,
+            return new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, redactionLog,
                 fileSystem,
                 new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
-                    new ResourceUpdateReporter(variables, Log), Log)));
+                    new ResourceUpdateReporter(variables, redactionLog), redactionLog)));
         }
 
         [Test]
@@ -170,7 +174,7 @@ namespace Calamari.Tests.KubernetesFixtures
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
 
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
             variables.Set(KubernetesSpecialVariables.ClusterUrl, eksClusterEndpoint);
             variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
             variables.Set("Octopus.Action.Aws.Region", region);
