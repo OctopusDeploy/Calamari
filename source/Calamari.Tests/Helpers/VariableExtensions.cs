@@ -3,13 +3,14 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.FeatureToggles;
 
-namespace Calamari.Tests.Helpers;
-
-public static class VariableExtensions
+namespace Calamari.Tests.Helpers
 {
-    public static void SetFeatureToggles(this IVariables variables, params FeatureToggle[] featureToggles)
+    public static class VariableExtensions
     {
-        variables.Set(SpecialVariables.EnabledFeatureToggles,
-            string.Join(",", featureToggles.Select(t => t.ToString())));
+        public static void SetFeatureToggles(this IVariables variables, params FeatureToggle[] featureToggles)
+        {
+            variables.Set(SpecialVariables.EnabledFeatureToggles,
+                string.Join(",", featureToggles.Select(t => t.ToString())));
+        }
     }
 }

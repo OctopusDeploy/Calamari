@@ -3,21 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 
-namespace Calamari.Tests.Helpers;
-
-public static class KubernetesJsonResourceScrubber
+namespace Calamari.Tests.Helpers
 {
-    public static string ScrubRawJson(string json)
+    public static class KubernetesJsonResourceScrubber
     {
-        var jObject = JObject.Parse(json);
+        public static string ScrubRawJson(string json)
+        {
+            var jObject = JObject.Parse(json);
 
-        jObject.Descendants()
-               .OfType<JProperty>()
-               .Where(p => p.Name.Contains("time", StringComparison.InvariantCultureIgnoreCase) ||
-                   p.Name == "annotations")
-               .ToList()
-               .ForEach(p => p.Remove());
+            jObject.Descendants()
+                   .OfType<JProperty>()
+                   .Where(p => p.Name.Contains("time", StringComparison.InvariantCultureIgnoreCase) ||
+                       p.Name == "annotations")
+                   .ToList()
+                   .ForEach(p => p.Remove());
 
-        return jObject.ToString();
+            return jObject.ToString();
+        }
     }
 }
