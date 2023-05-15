@@ -1,7 +1,7 @@
 using Autofac;
 using Calamari.Common.Aws;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.Aws.Integration
 {
     public class CloudAccountsModule : Module
     {

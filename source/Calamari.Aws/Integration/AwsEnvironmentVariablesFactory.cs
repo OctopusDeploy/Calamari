@@ -1,10 +1,11 @@
 using System;
 using System.Threading.Tasks;
+using Calamari.CloudAccounts;
 using Calamari.Common.Aws;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.CloudAccounts
+namespace Calamari.Aws.Integration
 {
     public class AwsEnvironmentVariablesFactory : IAwsEnvironmentVariablesFactory
     {
