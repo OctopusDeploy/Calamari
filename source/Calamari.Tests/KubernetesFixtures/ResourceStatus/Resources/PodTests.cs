@@ -40,7 +40,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 Namespace = "test",
                 Ready = "1/2",
                 Restarts = 3,
-                ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed
+                ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress
             });
         }
         
@@ -89,7 +89,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var pod = (Pod)ResourceFactory.FromJson(podResponse);
 
             pod.Status.Should().Be("Init:ImagePullBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
         }
         
         [Test]
@@ -106,7 +106,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var pod = (Pod)ResourceFactory.FromJson(podResponse);
 
             pod.Status.Should().Be("Init:CrashLoopBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
         }
         
         [Test]
@@ -140,7 +140,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var pod = (Pod)ResourceFactory.FromJson(podResponse);
 
             pod.Status.Should().Be("ImagePullBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
         }
         
         [Test]
@@ -157,7 +157,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var pod = (Pod)ResourceFactory.FromJson(podResponse);
 
             pod.Status.Should().Be("CrashLoopBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Successful);
         }
         
         [Test]
@@ -243,7 +243,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var pod = (Pod)ResourceFactory.FromJson(podResponse);
 
             pod.Status.Should().Be("ImagePullBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
         }
     }
     
