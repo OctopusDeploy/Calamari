@@ -6,11 +6,11 @@ using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.ScriptCS
+namespace Calamari.Tests.Fixtures.DotnetScript
 {
     [TestFixture]
-    [Category(TestCategory.ScriptingSupport.ScriptCS)]
-    public class ScriptCSFixture : CalamariFixture
+    [Category(TestCategory.ScriptingSupport.DotnetScript)]
+    public class DotnetScriptFixture : CalamariFixture
     {
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
         public void ShouldPrintEncodedVariable()
@@ -63,7 +63,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
 
             output.AssertSuccess();
             output.AssertOutput("Hello Paul");
-            output.AssertProcessNameAndId("scriptcs");
+            output.AssertProcessNameAndId("dotnet-script");
         }
 
         [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]

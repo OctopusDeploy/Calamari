@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting.Bash;
+using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.Scripting.FSharp;
 using Calamari.Common.Features.Scripting.Python;
-using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
@@ -98,7 +98,7 @@ namespace Calamari.Common.Features.Scripting
                 case ScriptSyntax.PowerShell:
                     return new PowerShellScriptExecutor();
                 case ScriptSyntax.CSharp:
-                    return new ScriptCSScriptExecutor();
+                    return new DotnetScriptExecutor();
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor();
                 case ScriptSyntax.FSharp:

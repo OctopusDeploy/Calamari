@@ -63,6 +63,7 @@ namespace Calamari.Common.Plumbing.Extensions
 
         Aes GetCryptoProvider(byte[]? iv = null)
         {
+
             var provider = new AesCryptoServiceProvider
             {
                 Mode = CipherMode.CBC,

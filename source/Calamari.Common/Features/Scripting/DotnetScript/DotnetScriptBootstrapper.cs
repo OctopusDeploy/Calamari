@@ -12,33 +12,33 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Common.Features.Scripting.ScriptCS
+namespace Calamari.Common.Features.Scripting.DotnetScript
 {
-    public static class ScriptCSBootstrapper
+    public static class DotnetScriptBootstrapper
     {
         static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-        static ScriptCSBootstrapper()
+        static DotnetScriptBootstrapper()
         {
-            BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(ScriptCSBootstrapper).Namespace + ".Bootstrap.csx");
+            BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(DotnetScriptBootstrapper).Namespace + ".Bootstrap.csx");
         }
 
         public static string FindExecutable()
         {
-            if (!ScriptingEnvironment.IsNet45OrNewer())
-                throw new CommandException("ScriptCS scripts require the Roslyn CTP, which requires .NET framework 4.5");
+            if (ScriptingEnvironment.IsNetFramework())
+                throw new CommandException("dotnet-script requires dotnet core 2.1 or dotnet 5 and later");
 
-            var myPath = typeof(ScriptCSScriptExecutor).Assembly.Location;
+            var myPath = typeof(DotnetScriptExecutor).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
-            var executable = Path.GetFullPath(Path.Combine(parent, "ScriptCS", "scriptcs.exe"));
+            var executable = Path.GetFullPath(Path.Combine(parent, "DotnetScript", "dotnet-script.exe"));
 
             if (File.Exists(executable))
                 return executable;
 
-            throw new CommandException(string.Format("ScriptCS.exe was not found at '{0}'", executable));
+            throw new CommandException(string.Format("dotnet-script.exe was not found at '{0}'", executable));
         }
 
         public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
@@ -46,7 +46,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             scriptParameters = RetrieveParameterValues(scriptParameters);
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            commandArguments.AppendFormat("-script \"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
+            commandArguments.AppendFormat("\"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
             return commandArguments.ToString();
         }
 
@@ -130,10 +130,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
                 return "null;";
 
             var bytes = Encoding.UTF8.GetBytes(value);
-            // We used to call System.Text.Encoding.UTF8.GetString(bytes) here, but on mono 5.10 and newer mono throws `The method or operation is not implemented.' (mono 5.8 work).
-            // So, now we call System.Text.Encoding.UTF8.GetString(bytes, start, length) which has been tested and confirmed working on mono 5.8 and also 5.10 and newer.
-            // See https://github.com/OctopusDeploy/Issues/issues/4404
-            return $"System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(\"{Convert.ToBase64String(bytes)}\"), 0, {bytes.Length})";
+            return $"System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(\"{Convert.ToBase64String(bytes)}\"))";
         }
 
         static string EncryptVariable(string? value)

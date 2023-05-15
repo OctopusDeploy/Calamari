@@ -34,7 +34,7 @@ public static class Octopus
         if (Parameters.ContainsKey("Octopus.Action.Script.SuppressEnvironmentLogging") && Parameters["Octopus.Action.Script.SuppressEnvironmentLogging"] == "True")
             return;
 
-        var environmentInformationStamp = $"ScriptCS Environment Information:{Environment.NewLine}" +
+        var environmentInformationStamp = $"Dotnet-Script Environment Information:{Environment.NewLine}" +
             $"  {string.Join($"{Environment.NewLine}  ", SafelyGetEnvironmentInformation())}";
 
         Console.WriteLine("##octopus[stdout-verbose]");
@@ -102,14 +102,12 @@ public static class Octopus
 
         public string DecryptString(string encrypted, string iv)
         {
-            using (var algorithm = new AesCryptoServiceProvider()
+            using (var algorithm = Aes.Create())
             {
-                Mode = CipherMode.CBC,
-                Padding = PaddingMode.PKCS7,
-                KeySize = 128,
-                BlockSize = 128
-            })
-            {
+                algorithm.Mode = CipherMode.CBC;
+                algorithm.Padding = PaddingMode.PKCS7;
+                algorithm.KeySize = 128;
+                algorithm.BlockSize = 128;
                 algorithm.Key = Key;
                 algorithm.IV = Convert.FromBase64String(iv);
                 using (var dec = algorithm.CreateDecryptor())
@@ -241,4 +239,16 @@ public static class Octopus
     }
 }
 
-Octopus.Initialize(Env.ScriptArgs[Env.ScriptArgs.Count - 1]);
+public class ScriptArgsEnv {
+
+    public ScriptArgsEnv(IList<string> args)
+    {
+        ScriptArgs = args;
+    }
+
+    public IList<string> ScriptArgs { get; set; }
+}
+
+var Env = new ScriptArgsEnv(Args);
+
+Octopus.Initialize(Args[Args.Count - 1]);

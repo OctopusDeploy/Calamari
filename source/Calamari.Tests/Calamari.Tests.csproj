@@ -136,7 +136,7 @@
     <None Include="Fixtures\Python\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\ScriptCS\Scripts\**">
+    <None Include="Fixtures\DotnetScript\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="KubernetesFixtures\Charts\**">
@@ -250,11 +250,9 @@
   -->
   <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="CopyTools" AfterTargets="Build" DependsOnTargets="RunResolvePackageDependencies">
+    <Exec Command="dotnet tool update dotnet-script --version 1.4.0 --framework net6.0 --tool-path $(OutDir)/DotnetScript/" Condition="'$(TargetFramework)' == 'net6.0'" />
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
-    </CreateItem>
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
-      <Output TaskParameter="Include" ItemName="ScriptCSRef" />
     </CreateItem>
     <CreateItem Include="@(PackageDefinitions)" Condition=" '$(TargetFramework)' == 'net461' And '%(Name)' == 'NuGet.CommandLine'">
       <Output TaskParameter="Include" ItemName="NuGetCommandLineRef" />
@@ -262,23 +260,21 @@
     <PropertyGroup>
       <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
       <FSharpCompilerToolsExe Condition="'$(TargetFramework)' == 'net6.0'">@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.exe</FSharpCompilerToolsExe>
-      <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
-      <ScriptCSExe Condition="'$(TargetFramework)' == 'net6.0'">@(ScriptCSRef->'%(ResolvedPath)')/tools/*.exe</ScriptCSExe>
       <NuGetCommandLine>@(NuGetCommandLineRef->'%(ResolvedPath)')/tools/*.*</NuGetCommandLine>
     </PropertyGroup>
     <ItemGroup>
       <FSharpFiles Include="$(FSharpCompilerTools)" />
       <FSharpFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(FSharpCompilerToolsExe)" />
-      <ScriptCSFiles Include="$(ScriptCS)" />
-      <ScriptCSFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(ScriptCSExe)" />
+      <DotnetScriptFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(OutDir)/DotnetScript/**/*.*" />
+      <DotnetScriptFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(OutDir)/DotnetScript/*.exe" />
       <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net461'" />
     </ItemGroup>
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutDir)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net461'" />
     <Exec Command="chmod +x %(FSharpFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <Exec Command="chmod +x %(ScriptCSFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" Condition="'$(PublishDir)' != ''" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" Condition="'$(PublishDir)' != ''" />
+    <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
+    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/DotnetScript/%(RecursiveDir)" Condition="'$(PublishDir)' != '' And $(TargetFramework) == 'net6.0'" />
+    <Exec Command="chmod +x %(DotnetScriptFiles.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
   </Target>
 </Project>

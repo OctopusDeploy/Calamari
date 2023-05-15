@@ -182,6 +182,22 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
             log.StandardOut.Should().ContainMatch("Cannot create symbolic link*");
         }
+        
+        [Test]
+        [TestCase(typeof(TarGzipPackageExtractor), "tgz", true)]
+        public void ExtractCanHandlePaxHeaders(Type extractorType, string extension, bool preservesTimestamp)
+        {
+            var fileName = GetFixtureResource("Samples", string.Format("{0}.{1}.{2}", "example", "0.0.1", extension));
+
+            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType, ConsoleLog.Instance);
+            var targetDir = GetTargetDir(extractorType, fileName);
+
+            extractor.Extract(fileName, targetDir);
+            var textFileName = Path.Combine(targetDir, "file-from-child-archive.txt");
+            Assert.That(File.Exists(textFileName), Is.False, $"The file '{Path.GetFileName(textFileName)}' should not have been extracted.");
+            var childArchiveName = Path.Combine(targetDir, "child-archive." + extension);
+            Assert.That(File.Exists(childArchiveName), Is.True, $"Expected nested archive '{Path.GetFileName(childArchiveName)}' to have been extracted");
+        }
 
         private string GetFileName(string extension)
         {

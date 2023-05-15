@@ -56,7 +56,6 @@
     <PackageReference Include="Octodiff" Version="1.1.2" />
     <PackageReference Include="Octopus.Versioning" Version="5.1.155" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
-    <PackageReference Include="scriptcs" Version="0.17.1" />
     <PackageReference Include="Octostache" Version="3.3.0" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
     <PackageReference Include="Sprache" Version="2.3.0" />
@@ -113,7 +112,7 @@
   <ItemGroup>
     <None Remove="Integration\Scripting\Bash\Bootstrap.sh" />
     <None Remove="Integration\Scripting\FSharp\Bootstrap.fsx" />
-    <None Remove="Integration\Scripting\ScriptCS\Bootstrap.csx" />
+    <None Remove="Integration\Scripting\DotnetScript\Bootstrap.csx" />
     <None Remove="Integration\Scripting\Python\Configuration.py" />
     <None Remove="Integration\Scripting\Python\InstallDependencies.py" />
     <None Remove="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
@@ -122,4 +121,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <Target Condition="'$(TargetFramework)' == 'net6.0'" Name="Restore Local Tools" AfterTargets="Build">
+    <Exec Command="dotnet tool update dotnet-script --version 1.4.0 --framework net6.0 --tool-path $(OutDir)/DotnetScript/" />
+  </Target>
 </Project>
