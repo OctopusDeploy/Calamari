@@ -131,6 +131,30 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             result.Should().Be(true);
         }
+        
+        [Test]
+        public void ShouldNotReturnSuccessIfSomeOfTheDefinedResourcesWereNotCreated()
+        {
+            var retriever = new TestRetriever();
+            var reporter = new TestReporter();
+            var resourceStatusChecker = new ResourceStatusChecker(retriever, reporter, new InMemoryLog());
+
+            var timer = new TestTimer(2);
+
+            retriever.SetResponses(
+                new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) },
+                new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) }
+            );
+            
+            var result = resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
+                new ResourceIdentifier[]
+                {
+                    new ResourceIdentifier("Pod", "my-pod", "default"),
+                    new ResourceIdentifier("Service", "my-service", "default")
+                }, timer, null, new Options());
+
+            result.Should().Be(false);
+        }
     }
 
     public class TestRetriever : IResourceRetriever
