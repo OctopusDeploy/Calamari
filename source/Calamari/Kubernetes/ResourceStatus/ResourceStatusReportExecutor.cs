@@ -14,6 +14,8 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public class ResourceStatusReportExecutor
     {
+        private const int PollingIntervalSeconds = 2;
+        
         private readonly IVariables variables;
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
@@ -85,8 +87,8 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             var timer = timeoutSeconds == 0
-                ? new InfiniteCountdownTimer() as ICountdownTimer
-                : new CountdownTimer(TimeSpan.FromSeconds(timeoutSeconds));
+                ? new InfiniteTimer(TimeSpan.FromSeconds(PollingIntervalSeconds)) as ITimer
+                : new Timer(TimeSpan.FromSeconds(timeoutSeconds), TimeSpan.FromSeconds(PollingIntervalSeconds));
 
             var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, timer, kubectl);
 

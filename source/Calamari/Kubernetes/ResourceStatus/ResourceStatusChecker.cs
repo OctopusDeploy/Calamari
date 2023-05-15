@@ -18,7 +18,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// </summary>
         /// <returns>true if all defined resources have been deployed successfully, otherwise false</returns>
         bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
-            ICountdownTimer timer, 
+            ITimer timer, 
             Kubectl kubectl);
     }
 
@@ -41,7 +41,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         }
         
         public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
-            ICountdownTimer timer,
+            ITimer timer,
             Kubectl kubectl)
         {
             var resourceStatuses = new Dictionary<string, Resource>();
@@ -60,16 +60,16 @@ namespace Calamari.Kubernetes.ResourceStatus
                     .SelectMany(IterateResourceTree)
                     .ToDictionary(resource => resource.Uid, resource => resource);
 
-                var newDeploymentStatus = GetDeploymentStatus(newDefinedResourceStatuses);
+                var newDeploymentStatus = GetDeploymentStatus(newDefinedResourceStatuses, definedResources);
 
                 reporter.ReportUpdatedResources(resourceStatuses, newResourceStatuses, ++checkCount);
 
                 resourceStatuses = newResourceStatuses;
                 deploymentStatus = newDeploymentStatus;
                 
-                Thread.Sleep(PollingIntervalSeconds * 1000);
+                timer.Tick();
             }
-            while (!timer.HasCompleted()) ;
+            while (!timer.HasCompleted() && deploymentStatus == DeploymentStatus.InProgress);
 
             switch (deploymentStatus)
             {
@@ -86,16 +86,17 @@ namespace Calamari.Kubernetes.ResourceStatus
                     return false;
             }
         }
-
-        private static DeploymentStatus GetDeploymentStatus(List<Resource> resources)
+        
+        private static DeploymentStatus GetDeploymentStatus(List<Resource> resources, List<ResourceIdentifier> definedResources)
         {
             if (resources.Where(resource => resource.Kind != "Job")
-                .All(resource => resource.ResourceStatus == Resources.ResourceStatus.Successful))
+                .All(resource => resource.ResourceStatus == ResourceStatus.Resources.ResourceStatus.Successful)
+                && resources.Count == definedResources.Count)
             {
                 return DeploymentStatus.Succeeded;
             }
 
-            if (resources.Any(resource => resource.ResourceStatus == Resources.ResourceStatus.Failed))
+            if (resources.Any(resource => resource.ResourceStatus == ResourceStatus.Resources.ResourceStatus.Failed))
             {
                 return DeploymentStatus.Failed;
             }
