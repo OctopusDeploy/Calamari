@@ -218,7 +218,6 @@ function Deploy-CustomResources() {
 		if ($DeploymentSuccess)
 		{
 			Write-Verbose $(Get-Content -Raw "#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}")
-			Write-Verbose "Command: $Kubectl_Exe apply -f ""#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}\"" -o json";
 			$applyResult = Execute-CommandAndReturn {& $Kubectl_Exe apply -f "#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}" -o json}
 			$retValue = $LASTEXITCODE -eq 0
 			try {
