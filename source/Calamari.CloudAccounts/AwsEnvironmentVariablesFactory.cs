@@ -8,9 +8,9 @@ namespace Calamari.CloudAccounts
 {
     public class AwsEnvironmentVariablesFactory : IAwsEnvironmentVariablesFactory
     {
-        public async Task<IAwsEnvironmentVariables> Create(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null)
+        public IAwsEnvironmentVariables Create(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null)
         {
-            return await AwsEnvironmentGeneration.Create(log, variables, verifyLogin);
+            return AwsEnvironmentGeneration.Create(log, variables, verifyLogin).GetAwaiter().GetResult();
         }
     }
 }

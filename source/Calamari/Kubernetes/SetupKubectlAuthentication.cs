@@ -318,7 +318,7 @@ namespace Calamari.Kubernetes
 
         void GenerateAwsEnvironmentVariables()
         {
-            var awsEnvironmentVars = awsEnvironmentVariablesFactory.Create(log, variables).GetAwaiter().GetResult();
+            var awsEnvironmentVars = awsEnvironmentVariablesFactory.Create(log, variables);
             foreach (var envVar in awsEnvironmentVars.EnvironmentVars)
             {
                 environmentVars[envVar.Key] = envVar.Value;

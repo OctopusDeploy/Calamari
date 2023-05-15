@@ -7,6 +7,6 @@ namespace Calamari.Common.Aws
 {
     public interface IAwsEnvironmentVariablesFactory
     {
-        Task<IAwsEnvironmentVariables> Create(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null);
+        IAwsEnvironmentVariables Create(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null);
     }
 }
