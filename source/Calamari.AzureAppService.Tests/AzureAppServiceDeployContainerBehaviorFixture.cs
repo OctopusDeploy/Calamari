@@ -48,14 +48,14 @@ namespace Calamari.AzureAppService.Tests
         public async Task Setup()
         {
             resourceGroupName = Guid.NewGuid().ToString();
-
+        
             clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
             clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
 
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
-
+            
             authToken = await GetAuthToken(tenantId, clientId, clientSecret);
 
             var resourcesClient = new ResourcesManagementClient(subscriptionId,
@@ -99,7 +99,7 @@ namespace Calamari.AzureAppService.Tests
                         AlwaysOn = true
                     }
                 });
-
+            
             webappName = site.Name;
 
             await AssertSetupSuccessAsync();
@@ -118,7 +118,6 @@ namespace Calamari.AzureAppService.Tests
             //}
         }
 
-        [Ignore("This test is flaky and muting it doesn't work. Will be fixed by #team-modern-deployments-requests-and-discussion")]
         [Test]
         public async Task AzureLinuxContainerDeploy()
         {
@@ -132,12 +131,11 @@ namespace Calamari.AzureAppService.Tests
             await AssertDeploySuccessAsync(AzureWebAppHelper.GetAzureTargetSite(site.Name, "", resourceGroupName));
         }
 
-        [Ignore("This test is flaky and muting it doesn't work. Will be fixed by #team-modern-deployments-requests-and-discussion")]
         [Test]
         public async Task AzureLinuxContainerSlotDeploy()
         {
             var slotName = "stage";
-
+            
             newVariables = new CalamariVariables();
             AddVariables(newVariables);
             newVariables.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
@@ -156,7 +154,7 @@ namespace Calamari.AzureAppService.Tests
             var result = await client.GetAsync($@"https://{webappName}.azurewebsites.net");
             var recievedContent = await result.Content.ReadAsStringAsync();
 
-            recievedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>");
+            recievedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>"); 
             Assert.IsTrue(result.IsSuccessStatusCode);
         }
 
