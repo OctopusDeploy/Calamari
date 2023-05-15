@@ -192,7 +192,7 @@ function deploy_customresources {
 	if file_exists "#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}"; then
 		if [[ $SUCCESS -eq $TRUE ]]; then
 			write_verbose "$(cat "#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}")"
-
+			write_verbose "Command: ${Kubectl_Exe} apply -f \"#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}\" -o json"
 			newCustomResources=$(${Kubectl_Exe} apply -f "#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}" -o json)
 			SUCCESS=$?
 

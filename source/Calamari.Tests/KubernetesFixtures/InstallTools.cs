@@ -84,8 +84,8 @@ namespace Calamari.Tests.KubernetesFixtures
                             client,
                             downloadUrl);
 
-                        var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                        return terraformExecutable;
+                        var kubectlExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                        return kubectlExecutable;
                     });
             }
         }

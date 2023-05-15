@@ -13,8 +13,10 @@ namespace Calamari.Tests.Helpers
             jObject.Descendants()
                    .OfType<JProperty>()
                    .Where(p => p.Name.Contains("Time") ||
-                       p.Name == "annotations")
-                   .ToList()
+                       p.Name == "annotations" ||
+                       p.Name == "uid" ||
+                       p.Name == "conditions")
+                .ToList()
                    .ForEach(p => p.Remove());
 
             return jObject.ToString();

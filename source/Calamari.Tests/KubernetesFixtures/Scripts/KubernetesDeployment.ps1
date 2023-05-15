@@ -1,4 +1,4 @@
-﻿<# 
+﻿<#
 	This selector will identify old resources based on the step, environment and tenant ids. This is how
 	we originally identified resources, but it was not sufficiently unique. However existing
 	deployments have these labels, and so we retain this query for compatibility.
@@ -13,7 +13,7 @@ $selectorV1 = "!Octopus.Kubernetes.SelectionStrategyVersion,Octopus.Step.Id=#{Oc
 $selectorV2 = "Octopus.Kubernetes.SelectionStrategyVersion=SelectionStrategyVersion2,Octopus.Project.Id=#{Octopus.Project.Id | ToLower},Octopus.Step.Id=#{Octopus.Step.Id | ToLower},Octopus.Action.Id=#{Octopus.Action.Id | ToLower},Octopus.Environment.Id=#{Octopus.Environment.Id | ToLower},Octopus.Deployment.Tenant.Id=#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id | ToLower}#{/if},Octopus.Deployment.Id!=#{Octopus.Deployment.Id | ToLower}"
 <#
 	This selector is used when K8S steps are called from runbooks. Note that runbooks don't have an Octopus.Deployment.Id
-	variable, so we use the Octopus.RunbookRun.Id instead. 
+	variable, so we use the Octopus.RunbookRun.Id instead.
 #>
 $selectorRunbookV2 = "Octopus.Kubernetes.SelectionStrategyVersion=SelectionStrategyVersion2,Octopus.Project.Id=#{Octopus.Project.Id | ToLower},Octopus.Step.Id=#{Octopus.Step.Id | ToLower},Octopus.Action.Id=#{Octopus.Action.Id | ToLower},Octopus.Environment.Id=#{Octopus.Environment.Id | ToLower},Octopus.Deployment.Tenant.Id=#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id | ToLower}#{/if},Octopus.RunbookRun.Id!=#{Octopus.RunbookRun.Id | ToLower}"
 
@@ -218,6 +218,7 @@ function Deploy-CustomResources() {
 		if ($DeploymentSuccess)
 		{
 			Write-Verbose $(Get-Content -Raw "#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}")
+			Write-Verbose "Command: $Kubectl_Exe apply -f ""#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}\"" -o json";
 			$applyResult = Execute-CommandAndReturn {& $Kubectl_Exe apply -f "#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}" -o json}
 			$retValue = $LASTEXITCODE -eq 0
 			try {
@@ -233,7 +234,7 @@ function Deploy-CustomResources() {
 			}
 			if ($null -ne $json) {
 				# kubectl apply will return a list if multiple resources were applied, or a single object.
-				# We can distinguish between the two by the "kind" of the returned value	    
+				# We can distinguish between the two by the "kind" of the returned value
 				if ($json.kind -eq "List") {
 					# Get a list of the names and kinds of the created resources
 					$script:newCustomResources = $json |
@@ -283,7 +284,7 @@ function Deploy-Deployment() {
 			if (((Is-BlueGreen) -or (Is-WaitingForDeployment)) -and $rolloutType -ine "OnDelete" -and $retValue -and $resourceType -ine "Job")
 			{
 				# There can be cases where the rollout command fails when it is executed straight away,
-				# so we need to wait for the deployment to be visible				
+				# so we need to wait for the deployment to be visible
 				For ($i=0; $i -lt 5; $i++) {
 					Execute-Command {& $Kubectl_Exe get $resourceType "#{Octopus.Action.KubernetesContainers.ComputedDeploymentName}"} $true
 					if ($LASTEXITCODE -eq 0) {
@@ -522,7 +523,7 @@ function Write-FailureMessage() {
 					% {$_.metadata.name}
 
 			# Get the first 10 non-running pods. A deployment could be hundreds of pods, so we don't want to spend time
-			# describing them all.    
+			# describing them all.
 			$pods = Execute-CommandAndReturn {& $Kubectl_Exe get pods -o json} -Silent $true |
 					ConvertFrom-Json |
 					Select -ExpandProperty items |

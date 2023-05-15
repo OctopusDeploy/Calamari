@@ -32,9 +32,10 @@ namespace Calamari.Aws.Integration
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
+            log.Verbose($"AwsScriptWrapper.ExecuteScript(): {script.File}");
             var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables, VerifyAmazonLogin).GetAwaiter().GetResult().EnvironmentVars;
             awsEnvironmentVars.AddRange(environmentVars);
-
+            log.Verbose($"AwsScriptWrapper.ExecuteScript() Done: {script.File}");
             return NextWrapper.ExecuteScript(
                 script, scriptSyntax,
                 commandLineRunner,
