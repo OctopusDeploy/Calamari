@@ -22,7 +22,6 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
         <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
-<!--        <PackageReference Include="scriptcs" Version="0.17.1" />-->
     </ItemGroup>
 
     <!-- The following is to stop incorrect nullable reference type warnings for net452 build -->
@@ -43,17 +42,10 @@
             <PackageFlatten>false</PackageFlatten>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-<!--        <Content Include="scriptcs/*.*">-->
-<!--            <LinkBase>scriptcs</LinkBase>-->
-<!--            <Visible>false</Visible>-->
-<!--            <Pack>true</Pack>-->
-<!--            <PackagePath>contentFiles/any/any/scriptcs/</PackagePath>-->
-<!--            <PackageCopyToOutput>true</PackageCopyToOutput>-->
-<!--            <PackageFlatten>false</PackageFlatten>-->
-<!--            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>-->
-<!--        </Content>-->
     </ItemGroup>
-
+    <Target Condition="'$(TargetFramework)' == 'net6.0'" Name="Restore Local Tools" AfterTargets="Build">
+        <Exec Command="dotnet tool update dotnet-script --version 1.4.0 --framework net6.0 --tool-path $(OutDir)/DotnetScript/" />
+    </Target>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     </ItemGroup>

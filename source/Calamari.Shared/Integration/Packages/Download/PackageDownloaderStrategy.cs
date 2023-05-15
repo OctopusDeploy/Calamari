@@ -50,12 +50,6 @@ namespace Calamari.Integration.Packages.Download
                                                            int maxDownloadAttempts,
                                                            TimeSpan downloadAttemptBackoff)
         {
-            using var proc = Process.GetCurrentProcess();
-            Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
-            while (!Debugger.IsAttached)
-            {
-                Thread.Sleep(1000);
-            }
 
             IPackageDownloader? downloader = null;
             switch (feedType)
