@@ -91,6 +91,13 @@ namespace Calamari.Tests.KubernetesFixtures
 
         CalamariResult ExecuteWithRunScriptCommand(ICalamariFileSystem fileSystem, IEnumerable<IScriptWrapper> scriptWrappers)
         {
+            var oldEnvVars = new Dictionary<string, string>();
+            foreach (var envVar in GetEnvironments())
+            {
+                oldEnvVars[envVar.Key] = Environment.GetEnvironmentVariable(envVar.Key);
+                Environment.SetEnvironmentVariable(envVar.Key, envVar.Value);
+            }
+
             var command = new RunScriptCommand(redactionLog,
                 new DeploymentJournalWriter(fileSystem),
                 variables,
@@ -100,7 +107,14 @@ namespace Calamari.Tests.KubernetesFixtures
                 CreateSubstituteInFiles(fileSystem),
                 CreateStructuredConfigVariablesService(fileSystem));
 
-            return new CalamariResult(command.Execute(Array.Empty<string>()), new CaptureCommandInvocationOutputSink());
+            var result = command.Execute(Array.Empty<string>());
+
+            foreach (var envVar in GetEnvironments())
+            {
+                Environment.SetEnvironmentVariable(envVar.Key, oldEnvVars[envVar.Key]);
+            }
+
+            return new CalamariResult(result, new CaptureCommandInvocationOutputSink());
         }
 
         private ISubstituteInFiles CreateSubstituteInFiles(ICalamariFileSystem fileSystem)
