@@ -44,22 +44,23 @@ namespace Calamari.Kubernetes.ResourceStatus
             ICountdownTimer timer,
             Kubectl kubectl)
         {
-            var definedResources = resourceIdentifiers.ToList();
-
             var resourceStatuses = new Dictionary<string, Resource>();
             var deploymentStatus = DeploymentStatus.InProgress;
             var checkCount = 0;
+            var definedResources = resourceIdentifiers.ToList();
             
             timer.Start();
             
             do
             {
-                var newResourceStatuses = resourceRetriever
+                var newDefinedResourceStatuses = resourceRetriever
                     .GetAllOwnedResources(definedResources, kubectl)
+                    .ToList();
+                var newResourceStatuses = newDefinedResourceStatuses
                     .SelectMany(IterateResourceTree)
                     .ToDictionary(resource => resource.Uid, resource => resource);
 
-                var newDeploymentStatus = GetDeploymentStatus(newResourceStatuses.Values.ToList());
+                var newDeploymentStatus = GetDeploymentStatus(newDefinedResourceStatuses);
 
                 reporter.ReportUpdatedResources(resourceStatuses, newResourceStatuses, ++checkCount);
 
@@ -88,7 +89,8 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private static DeploymentStatus GetDeploymentStatus(List<Resource> resources)
         {
-            if (resources.All(resource => resource.ResourceStatus == Resources.ResourceStatus.Successful))
+            if (resources.Where(resource => resource.Kind != "Job")
+                .All(resource => resource.ResourceStatus == Resources.ResourceStatus.Successful))
             {
                 return DeploymentStatus.Succeeded;
             }
