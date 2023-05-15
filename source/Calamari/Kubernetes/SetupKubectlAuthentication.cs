@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Calamari.CloudAccounts;
 using Calamari.Common.Aws;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
