@@ -1,3 +1,4 @@
+using Calamari.Common.Aws;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
@@ -13,17 +14,23 @@ namespace Calamari.Kubernetes.Conventions
     {
         private readonly ILog log;
         private readonly ICommandLineRunner commandLineRunner;
+        private readonly IAwsEnvironmentVariablesFactory awsEnvironmentVariablesFactory;
 
-        public KubernetesAuthContextConvention(ILog log, ICommandLineRunner commandLineRunner)
+        public KubernetesAuthContextConvention(
+            ILog log,
+            ICommandLineRunner commandLineRunner,
+            IAwsEnvironmentVariablesFactory awsEnvironmentVariablesFactory)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;
+            this.awsEnvironmentVariablesFactory = awsEnvironmentVariablesFactory;
         }
 
         public void Install(RunningDeployment deployment)
         {
             var setupKubectlAuthentication = new SetupKubectlAuthentication(deployment.Variables,
                 log,
+                awsEnvironmentVariablesFactory,
                 ScriptSyntax.PowerShell,
                 commandLineRunner,
                 deployment.EnvironmentVariables,

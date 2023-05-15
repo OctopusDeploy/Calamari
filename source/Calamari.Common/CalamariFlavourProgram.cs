@@ -39,7 +39,7 @@ namespace Calamari.Common
             try
             {
                 AppDomainConfiguration.SetDefaultRegexMatchTimeout();
-                
+
                 SecurityProtocols.EnableAllSecurityProtocols();
                 var options = CommonOptions.Parse(args);
 
@@ -118,6 +118,8 @@ namespace Calamari.Common
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
+
+            builder.RegisterAssemblyModules(assemblies);
 
             builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
 

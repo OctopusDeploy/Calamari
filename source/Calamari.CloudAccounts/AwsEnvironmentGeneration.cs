@@ -6,6 +6,7 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
+using Calamari.Common.Aws;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
@@ -16,7 +17,7 @@ namespace Calamari.CloudAccounts
     /// This service is used to generate the appropriate environment variables required to authentication
     /// custom scripts and the C# AWS SDK code exposed as Calamari commands that interact with AWS.
     /// </summary>
-    public class AwsEnvironmentGeneration
+    public class AwsEnvironmentGeneration : IAwsEnvironmentVariables
     {
         const string TokenUri = "http://169.254.169.254/latest/api/token";
         const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";

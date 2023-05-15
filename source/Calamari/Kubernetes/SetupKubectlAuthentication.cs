@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Calamari.CloudAccounts;
+using Calamari.Common.Aws;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
@@ -22,6 +23,7 @@ namespace Calamari.Kubernetes
     public class SetupKubectlAuthentication
     {
         readonly IVariables variables;
+        private readonly IAwsEnvironmentVariablesFactory awsEnvironmentVariablesFactory;
         readonly ILog log;
         readonly ScriptSyntax scriptSyntax;
         readonly ICommandLineRunner commandLineRunner;
@@ -33,12 +35,14 @@ namespace Calamari.Kubernetes
 
         public SetupKubectlAuthentication(IVariables variables,
             ILog log,
+            IAwsEnvironmentVariablesFactory awsEnvironmentVariablesFactory,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars,
             string workingDirectory)
         {
             this.variables = variables;
+            this.awsEnvironmentVariablesFactory = awsEnvironmentVariablesFactory;
             this.log = log;
             this.scriptSyntax = scriptSyntax;
             this.commandLineRunner = commandLineRunner;
@@ -315,8 +319,8 @@ namespace Calamari.Kubernetes
 
         void GenerateAwsEnvironmentVariables()
         {
-            var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult().EnvironmentVars;
-            foreach (var envVar in awsEnvironmentVars)
+            var awsEnvironmentVars = awsEnvironmentVariablesFactory.Create(log, variables).GetAwaiter().GetResult();
+            foreach (var envVar in awsEnvironmentVars.EnvironmentVars)
             {
                 environmentVars[envVar.Key] = envVar.Value;
             }
