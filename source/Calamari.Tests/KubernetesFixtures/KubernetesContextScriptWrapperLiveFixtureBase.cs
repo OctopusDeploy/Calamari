@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Kubernetes.Discovery;
+using Calamari.CloudAccounts;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
@@ -49,7 +50,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected KubernetesContextScriptWrapper CreateWrapper()
         {
-            return new KubernetesContextScriptWrapper(variables, Log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, Log, new AwsEnvironmentVariablesFactory(),
+                new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()
