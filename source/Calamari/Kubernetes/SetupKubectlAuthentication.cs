@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Calamari.CloudAccounts;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
@@ -299,6 +300,7 @@ namespace Calamari.Kubernetes
 
         void SetupContextForAmazonServiceAccount(string @namespace, string clusterUrl, string user)
         {
+            GenerateAwsEnvironmentVariables();
             var clusterName = variables.Get(SpecialVariables.EksClusterName);
             log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
 
@@ -309,6 +311,15 @@ namespace Calamari.Kubernetes
 
             log.Verbose("Attempting to authenticate with aws-iam-authenticator");
             SetKubeConfigAuthenticationToAwsIAm(user, clusterName);
+        }
+
+        void GenerateAwsEnvironmentVariables()
+        {
+            var awsEnvironmentVars = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult().EnvironmentVars;
+            foreach (var envVar in awsEnvironmentVars)
+            {
+                environmentVars[envVar.Key] = envVar.Value;
+            }
         }
 
         bool TrySetKubeConfigAuthenticationToAwsCli(string clusterName, string clusterUrl, string user)

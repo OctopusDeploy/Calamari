@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Calamari.Aws.Integration;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -94,7 +93,6 @@ namespace Calamari.Kubernetes.Commands
                 new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, configurationTransformer, transformFileLocator, log)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
                 new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
-                new AwsAuthConvention(log), //This is skipped internally if the deployment is not using AWS credentials.
                 new KubernetesAuthContextConvention(log, commandLineRunner),
                 new GatherAndApplyRawYamlConvention(log, fileSystem, commandLineRunner),
                 new ResourceStatusReportConvention(statusReportExecutor, commandLineRunner)
