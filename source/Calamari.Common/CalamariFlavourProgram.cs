@@ -119,8 +119,6 @@ namespace Calamari.Common
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
-            builder.RegisterAssemblyModules(assemblies);
-
             builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
