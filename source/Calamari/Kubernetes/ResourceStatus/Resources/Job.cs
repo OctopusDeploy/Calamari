@@ -8,7 +8,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public string Completions { get; }
         public string Duration { get; }
 
-        public Job(JObject json) : base(json)
+        public Job(JObject json, Options options) : base(json, options)
         {
             var succeeded = FieldOrDefault("$.status.succeeded", 0);
             var desired = FieldOrDefault("$.spec.completions", 0);
@@ -23,6 +23,12 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             var backoffLimit = FieldOrDefault("$.spec.backoffLimit", 0);
             var failed = FieldOrDefault("$.status.failed", 0);
 
+            if (!options.WaitForJobs)
+            {
+                ResourceStatus = ResourceStatus.Successful;
+                return;
+            }
+            
             if (backoffLimit != 0 && failed == backoffLimit)
             {
                 ResourceStatus = ResourceStatus.Failed;

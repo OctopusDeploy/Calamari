@@ -1,3 +1,4 @@
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using NUnit.Framework;
@@ -31,7 +32,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         }
     }
 }";
-            var persistentVolumeClaim = ResourceFactory.FromJson(input);
+            var persistentVolumeClaim = ResourceFactory.FromJson(input, new Options());
             
             persistentVolumeClaim.Should().BeEquivalentTo(new
             {

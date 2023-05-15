@@ -39,7 +39,8 @@ namespace Calamari.Kubernetes.ResourceStatus
                 defaultNamespace = "default";
             }
             var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
-
+            var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
+            
             var manifests = ReadManifestFiles().ToList();
             var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
 
@@ -90,7 +91,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 ? new InfiniteTimer(TimeSpan.FromSeconds(PollingIntervalSeconds)) as ITimer
                 : new Timer(TimeSpan.FromSeconds(timeoutSeconds), TimeSpan.FromSeconds(PollingIntervalSeconds));
 
-            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, timer, kubectl);
+            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, timer, kubectl, new Options() {  WaitForJobs = waitForJobs});
 
             if (!completedSuccessfully)
             {

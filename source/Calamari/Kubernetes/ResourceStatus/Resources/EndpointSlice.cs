@@ -10,7 +10,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public IEnumerable<string> Ports { get; }
         public IEnumerable<string> Endpoints { get; }
 
-        public EndpointSlice(JObject json) : base(json)
+        public EndpointSlice(JObject json, Options options) : base(json, options)
         {
             AddressType = Field("$.addressType");
             

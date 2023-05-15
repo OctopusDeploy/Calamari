@@ -19,7 +19,8 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// <returns>true if all defined resources have been deployed successfully, otherwise false</returns>
         bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
             ITimer timer, 
-            Kubectl kubectl);
+            Kubectl kubectl,
+            Options options);
     }
 
     /// <summary>
@@ -27,8 +28,6 @@ namespace Calamari.Kubernetes.ResourceStatus
     /// </summary>
     public class ResourceStatusChecker : IResourceStatusChecker
     {
-        private const int PollingIntervalSeconds = 2;
-
         private readonly IResourceRetriever resourceRetriever;
         private readonly IResourceUpdateReporter reporter;
         private readonly ILog log;
@@ -42,7 +41,8 @@ namespace Calamari.Kubernetes.ResourceStatus
         
         public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
             ITimer timer,
-            Kubectl kubectl)
+            Kubectl kubectl,
+            Options options)
         {
             var resourceStatuses = new Dictionary<string, Resource>();
             var deploymentStatus = DeploymentStatus.InProgress;
@@ -54,7 +54,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             do
             {
                 var newDefinedResourceStatuses = resourceRetriever
-                    .GetAllOwnedResources(definedResources, kubectl)
+                    .GetAllOwnedResources(definedResources, kubectl, options)
                     .ToList();
                 var newResourceStatuses = newDefinedResourceStatuses
                     .SelectMany(IterateResourceTree)
@@ -89,14 +89,15 @@ namespace Calamari.Kubernetes.ResourceStatus
         
         private static DeploymentStatus GetDeploymentStatus(List<Resource> resources, List<ResourceIdentifier> definedResources)
         {
-            if (resources.Where(resource => resource.Kind != "Job")
-                .All(resource => resource.ResourceStatus == ResourceStatus.Resources.ResourceStatus.Successful)
+            
+            if (resources.All(resource => resource.ResourceStatus == ResourceStatus.Resources.ResourceStatus.Successful)
                 && resources.Count == definedResources.Count)
             {
                 return DeploymentStatus.Succeeded;
             }
 
-            if (resources.Any(resource => resource.ResourceStatus == ResourceStatus.Resources.ResourceStatus.Failed))
+            if (resources
+                .Any(resource => resource.ResourceStatus == ResourceStatus.Resources.ResourceStatus.Failed))
             {
                 return DeploymentStatus.Failed;
             }

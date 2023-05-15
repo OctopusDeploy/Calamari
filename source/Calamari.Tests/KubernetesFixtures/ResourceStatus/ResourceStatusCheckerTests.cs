@@ -34,7 +34,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new ResourceIdentifier[]
                 {
                     new ResourceIdentifier("Pod", "my-pod", "default")
-                }, timer, null);
+                }, timer, null, new Options());
             
             reporter.CheckCounts().Should().BeEquivalentTo(new List<int>() { 1, 2, 3, 4, 5 });
         }
@@ -56,7 +56,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new ResourceIdentifier[]
                 {
                     new ResourceIdentifier("Pod", "my-pod", "default")
-                }, timer, null);
+                }, timer, null, new Options());
 
             result.Should().Be(true);
         }
@@ -78,7 +78,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new ResourceIdentifier[]
                 {
                     new ResourceIdentifier("Pod", "my-pod", "default")
-                }, timer, null);
+                }, timer, null, new Options());
 
             result.Should().Be(false);
         }
@@ -101,7 +101,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new ResourceIdentifier[]
                 {
                     new ResourceIdentifier("Pod", "my-pod", "default")
-                }, timer, null);
+                }, timer, null, new Options());
 
             result.Should().Be(false);
         }
@@ -127,29 +127,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new ResourceIdentifier[]
                 {
                     new ResourceIdentifier("ReplicaSet", "my-rs", "default")
-                }, timer, null);
-
-            result.Should().Be(true);
-        }
-
-        [Test]
-        public void JobsAreIgnored()
-        {
-            var retriever = new TestRetriever();
-            var reporter = new TestReporter();
-            var resourceStatusChecker = new ResourceStatusChecker(retriever, reporter, new InMemoryLog());
-
-            var timer = new TestTimer(5);
-
-            retriever.SetResponses(
-                new List<Resource> { new TestResource("Job", Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed) }
-            );
-            
-            var result = resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
-                new ResourceIdentifier[]
-                {
-                    new ResourceIdentifier("Job", "my-job", "default")
-                }, timer, null);
+                }, timer, null, new Options());
 
             result.Should().Be(true);
         }
@@ -160,7 +138,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         private readonly List<List<Resource>> responses = new List<List<Resource>>();
         private int current;
         
-        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, Kubectl kubectl)
+        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, Kubectl kubectl, Options options)
         {
             return current >= responses.Count ? new List<Resource>() : responses[current++];
         }
@@ -205,7 +183,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             Children = children.ToList();
         }
         
-        public TestResource(JObject json) : base(json)
+        public TestResource(JObject json, Options options) : base(json, options)
         {
         }
     }

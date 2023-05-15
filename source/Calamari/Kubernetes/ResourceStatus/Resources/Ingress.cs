@@ -10,7 +10,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public IEnumerable<string> Hosts { get; }
         public string Address { get; set; }
 
-        public Ingress(JObject json) : base(json)
+        public Ingress(JObject json, Options options) : base(json, options)
         {
             Class = Field("$.spec.ingressClassName");
 

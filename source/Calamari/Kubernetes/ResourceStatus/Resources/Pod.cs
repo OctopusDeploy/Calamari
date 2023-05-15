@@ -9,7 +9,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public int Restarts { get; }
         public string Status { get; }
 
-        public Pod(JObject json) : base(json)
+        public Pod(JObject json, Options options) : base(json, options)
         {
             var phase = Field("$.status.phase");
             var initContainerStatuses = data

@@ -20,7 +20,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonIgnore]
         public int ReadyReplicas { get; }
 
-        public Deployment(JObject json) : base(json)
+        public Deployment(JObject json, Options options) : base(json, options)
         {
             ReadyReplicas = FieldOrDefault("$.status.readyReplicas", 0);
             Desired = FieldOrDefault("$.spec.replicas", 0);

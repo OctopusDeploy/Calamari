@@ -1,4 +1,5 @@
 using System.Linq;
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using NUnit.Framework;
@@ -18,7 +19,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 .WithReadyReplicas(3)
                 .WithUpdatedReplicas(1)
                 .Build();
-            var deployment = ResourceFactory.FromJson(input);
+            var deployment = ResourceFactory.FromJson(input, new Options());
             
             deployment.Should().BeEquivalentTo(new
             {
@@ -43,14 +44,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 .WithReadyReplicas(3)
                 .WithUpdatedReplicas(3)
                 .Build();
-            var deployment = ResourceFactory.FromJson(input);
+            var deployment = ResourceFactory.FromJson(input, new Options());
             
             var pod = new PodResponseBuilder().Build();
             // More pods remaining than desired
             var children = Enumerable.Range(0, 4) 
-                .Select(_ => ResourceFactory.FromJson(pod));
+                .Select(_ => ResourceFactory.FromJson(pod, new Options()));
             
-            var replicaSet = ResourceFactory.FromJson("{}");
+            var replicaSet = ResourceFactory.FromJson("{}", new Options());
             replicaSet.UpdateChildren(children);
             
             deployment.UpdateChildren(new Resource[] { replicaSet });
@@ -68,13 +69,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 .WithReadyReplicas(3)
                 .WithUpdatedReplicas(3)
                 .Build();
-            var deployment = ResourceFactory.FromJson(input);
+            var deployment = ResourceFactory.FromJson(input, new Options());
             
             var pod = new PodResponseBuilder().Build();
             var children = Enumerable.Range(0, 3)
-                .Select(_ => ResourceFactory.FromJson(pod));
+                .Select(_ => ResourceFactory.FromJson(pod, new Options()));
             
-            var replicaSet = ResourceFactory.FromJson("{}");
+            var replicaSet = ResourceFactory.FromJson("{}", new Options());
             replicaSet.UpdateChildren(children);
             
             deployment.UpdateChildren(new Resource[] { replicaSet });

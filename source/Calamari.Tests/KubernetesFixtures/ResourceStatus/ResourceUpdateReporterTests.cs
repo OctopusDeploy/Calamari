@@ -23,7 +23,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             
             var originalStatuses = new Dictionary<string, Resource>();
             var newStatuses = ResourceFactory
-                .FromListJson(TestFileLoader.Load("two-deployments.json")) 
+                .FromListJson(TestFileLoader.Load("two-deployments.json"), new Options()) 
                 .ToDictionary(resource => resource.Uid, resource => resource);
             
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
@@ -63,10 +63,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var reporter = new ResourceUpdateReporter(variables, log);
             
             var originalStatuses = ResourceFactory
-                .FromListJson(TestFileLoader.Load("two-deployments.json"))
+                .FromListJson(TestFileLoader.Load("two-deployments.json"), new Options())
                 .ToDictionary(resource => resource.Uid, resource => resource);
             var newStatuses = ResourceFactory
-                .FromListJson(TestFileLoader.Load("one-old-deployment-and-one-new-deployment.json"))
+                .FromListJson(TestFileLoader.Load("one-old-deployment-and-one-new-deployment.json"), new Options())
                 .ToDictionary(resource => resource.Uid, resource => resource);
             
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
@@ -93,10 +93,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var reporter = new ResourceUpdateReporter(variables, log);
             
             var originalStatuses = ResourceFactory
-                .FromListJson(TestFileLoader.Load("two-deployments.json"))
+                .FromListJson(TestFileLoader.Load("two-deployments.json"), new Options())
                 .ToDictionary(resource => resource.Uid, resource => resource);
             var newStatuses = ResourceFactory
-                .FromListJson(TestFileLoader.Load("one-deployment.json"))
+                .FromListJson(TestFileLoader.Load("one-deployment.json"), new Options())
                 .ToDictionary(resource => resource.Uid, resource => resource);
             
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);

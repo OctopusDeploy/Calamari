@@ -1,3 +1,4 @@
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using NUnit.Framework;
@@ -22,7 +23,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         ""replicas"": 3
     }
 }";
-            var statefulSet = ResourceFactory.FromJson(input);
+            var statefulSet = ResourceFactory.FromJson(input, new Options());
             
             statefulSet.Should().BeEquivalentTo(new
             {

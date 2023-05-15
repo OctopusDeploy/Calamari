@@ -55,7 +55,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 {
                     new ResourceIdentifier("Deployment", "nginx", "octopus")
                 },
-                null);
+                null, new Options());
             
             got.Should().BeEquivalentTo(new object[]
             {
@@ -124,7 +124,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                     new ResourceIdentifier("Deployment", "deployment-1", "octopus"),
                     new ResourceIdentifier("Deployment", "deployment-2", "octopus")
                 },
-                null);
+                null, new Options());
             
             got.Should().BeEquivalentTo(new object[]
             {
@@ -191,7 +191,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 {
                     new ResourceIdentifier("ReplicaSet", "rs", "octopus"),
                 },
-                null);
+                null, new Options());
             
             got.Should().BeEquivalentTo(new object[]
             {

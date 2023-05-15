@@ -29,7 +29,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     
         internal Resource() { }
         
-        public Resource(JObject json)
+        public Resource(JObject json, Options options)
         {
             data = json;
             OwnerUids = data.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>();
