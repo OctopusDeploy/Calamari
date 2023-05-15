@@ -36,8 +36,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 defaultNamespace = "default";
             }
-            var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 0;
-            var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 0;
+            var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
 
             var manifests = ReadManifestFiles().ToList();
             var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
@@ -85,15 +84,11 @@ namespace Calamari.Kubernetes.ResourceStatus
                 throw new Exception("Unable to set KubeCtl");
             }
 
-            var deploymentTimer = deploymentTimeoutSeconds == 0
+            var timer = timeoutSeconds == 0
                 ? new InfiniteCountdownTimer() as ICountdownTimer
-                : new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds));
+                : new CountdownTimer(TimeSpan.FromSeconds(timeoutSeconds));
 
-            var stabilizationTimer = new CountdownTimer(TimeSpan.FromSeconds(stabilizationTimeoutSeconds));
-
-            var stabilizingTimer = new StabilizingTimer(deploymentTimer, stabilizationTimer, log);
-
-            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, stabilizingTimer, kubectl);
+            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, timer, kubectl);
 
             if (!completedSuccessfully)
             {

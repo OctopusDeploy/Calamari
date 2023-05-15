@@ -16,7 +16,7 @@
         public const string DeploymentWait = "Octopus.Action.KubernetesContainers.DeploymentWait";
         public const string CustomResourceYamlFileName = "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName";
         public const string GroupedYamlDirectories = "Octopus.Action.KubernetesContainers.YamlDirectories";
-        public const string DeploymentTimeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
+        public const string Timeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string StabilizationTimeout = "Octopus.Action.Kubernetes.StabilizationTimeout";
 
         public const string KubernetesResourceStatusServiceMessageName = "k8s-status";
