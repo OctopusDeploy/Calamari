@@ -18,14 +18,28 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             var containerStatuses = data
                 .SelectToken("$.status.containerStatuses")
                 ?.ToObject<ContainerStatus[]>() ?? new ContainerStatus[] { };
+            var ready = data
+                .SelectToken("$.status.conditions[?(@.type == 'Ready')].status")
+                ?.Value<string>() ?? string.Empty;
             
             Status = GetStatus(phase, initContainerStatuses, containerStatuses);
-            
-            ResourceStatus = phase == "Failed" || phase == "Unknown"
-                ? ResourceStatus.Failed
-                : phase == "Pending"
-                    ? ResourceStatus.InProgress
-                    : ResourceStatus.Successful;
+
+            switch (phase)
+            {
+                case "Failed":
+                case "Unknown":
+                    ResourceStatus = ResourceStatus.Failed;
+                    break;
+                case "Succeeded":
+                    ResourceStatus = ResourceStatus.Successful;
+                    break;
+                case "Pending":
+                    ResourceStatus = ResourceStatus.InProgress;
+                    break;
+                default:
+                    ResourceStatus = ready == "True" ? ResourceStatus.Successful : ResourceStatus.InProgress;
+                    break;
+            }
 
             var containers = containerStatuses.Length;
             var readyContainers = containerStatuses.Count(status => status.Ready);
