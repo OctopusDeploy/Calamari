@@ -13,6 +13,7 @@ using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -31,7 +32,7 @@ namespace Calamari.AzureAppService.Tests
 
         private ResourceGroupsOperations resourceGroupClient;
         private readonly HttpClient client = new HttpClient();
-        
+
         [OneTimeSetUp]
         public async Task Setup()
         {
@@ -42,7 +43,7 @@ namespace Calamari.AzureAppService.Tests
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
                 DefaultVariables.ActiveDirectoryEndpoint;
 
-            resourceGroupName = Guid.NewGuid().ToString();
+            resourceGroupName = Randomizer.CreateRandomizer().GetString(36);
 
             clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
             clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
@@ -60,7 +61,7 @@ namespace Calamari.AzureAppService.Tests
 
             var resourceGroup = new ResourceGroup(resourceGroupLocation);
             resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
-            
+
             webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
             {
                 SubscriptionId = subscriptionId,
@@ -71,21 +72,21 @@ namespace Calamari.AzureAppService.Tests
         }
 
         protected abstract Task ConfigureTestResources(ResourceGroup resourceGroup);
-        
+
         [OneTimeTearDown]
         public async Task Cleanup()
         {
             if (resourceGroupClient != null)
                 await resourceGroupClient.StartDeleteAsync(resourceGroupName);
         }
-        
+
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
             var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
 
             result.Should().Contain(actualText);
         }
-        
+
         protected static async Task DoWithRetries(int retries, Func<Task> action, int secondsBetweenRetries)
         {
             foreach (var retry in Enumerable.Range(1, retries))
@@ -99,12 +100,12 @@ namespace Calamari.AzureAppService.Tests
                 {
                     if (retry == retries)
                         throw;
-                        
+
                     await Task.Delay(secondsBetweenRetries * 1000);
                 }
             }
         }
-        
+
         protected void AddAzureVariables(CommandTestBuilderContext context)
         {
             context.Variables.Add(AccountVariables.ClientId, clientId);
