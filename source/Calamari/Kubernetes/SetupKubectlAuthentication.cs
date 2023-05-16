@@ -22,7 +22,7 @@ namespace Calamari.Kubernetes
     public class SetupKubectlAuthentication
     {
         readonly IVariables variables;
-        private readonly IAwsEnvironmentVariablesFactory awsEnvironmentVariablesFactory;
+        private readonly Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
         readonly ILog log;
         readonly ScriptSyntax scriptSyntax;
         readonly ICommandLineRunner commandLineRunner;
@@ -34,7 +34,7 @@ namespace Calamari.Kubernetes
 
         public SetupKubectlAuthentication(IVariables variables,
             ILog log,
-            IAwsEnvironmentVariablesFactory awsEnvironmentVariablesFactory,
+            Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars,
@@ -318,7 +318,7 @@ namespace Calamari.Kubernetes
 
         void GenerateAwsEnvironmentVariables()
         {
-            var awsEnvironmentVars = awsEnvironmentVariablesFactory.Create(log, variables);
+            var awsEnvironmentVars = awsEnvironmentVariablesFactory.Value.Create(log, variables);
             foreach (var envVar in awsEnvironmentVars.EnvironmentVars)
             {
                 environmentVars[envVar.Key] = envVar.Value;

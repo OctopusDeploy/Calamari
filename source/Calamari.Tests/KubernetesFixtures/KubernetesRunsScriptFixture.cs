@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Assent;
 using Calamari.Aws.Integration;
 using Calamari.CloudAccounts;
+using Calamari.Common.Aws;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -341,7 +342,9 @@ namespace Calamari.Tests.KubernetesFixtures
 
         KubernetesContextScriptWrapper CreateWrapper()
         {
-            return new KubernetesContextScriptWrapper(variables, log, new AwsEnvironmentVariablesFactory(), new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, log,
+                new Lazy<IAwsEnvironmentVariablesFactory>(() => new AwsEnvironmentVariablesFactory()),
+                new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()

@@ -17,12 +17,12 @@ namespace Calamari.Kubernetes
     {
         readonly IVariables variables;
         readonly ILog log;
-        private readonly IAwsEnvironmentVariablesFactory awsEnvironmentVariablesFactory;
+        private readonly Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
 
         public KubernetesContextScriptWrapper(IVariables variables, ILog log,
-            IAwsEnvironmentVariablesFactory awsEnvironmentVariablesFactory,
+            Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory,
             ICalamariEmbeddedResources embeddedResources, ICalamariFileSystem fileSystem)
         {
             this.variables = variables;

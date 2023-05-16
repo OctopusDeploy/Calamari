@@ -1,3 +1,4 @@
+using System;
 using Calamari.Common.Aws;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
@@ -14,12 +15,12 @@ namespace Calamari.Kubernetes.Conventions
     {
         private readonly ILog log;
         private readonly ICommandLineRunner commandLineRunner;
-        private readonly IAwsEnvironmentVariablesFactory awsEnvironmentVariablesFactory;
+        private readonly Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
 
         public KubernetesAuthContextConvention(
             ILog log,
             ICommandLineRunner commandLineRunner,
-            IAwsEnvironmentVariablesFactory awsEnvironmentVariablesFactory)
+            Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;
