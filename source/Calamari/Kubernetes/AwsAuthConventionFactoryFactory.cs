@@ -7,16 +7,16 @@ namespace Calamari.Kubernetes
 {
     public class AwsAuthConventionFactoryFactory
     {
-        private readonly Lazy<IAwsAuthConventionFactory> awsEnvironmentVariablesGeneratorLazy;
+        private readonly IAwsAuthConventionFactory awsEnvironmentVariablesGenerator;
 
-        public AwsAuthConventionFactoryFactory(Lazy<IAwsAuthConventionFactory> awsEnvironmentVariablesGeneratorLazy)
+        public AwsAuthConventionFactoryFactory(IAwsAuthConventionFactory awsEnvironmentVariablesGenerator)
         {
-            this.awsEnvironmentVariablesGeneratorLazy = awsEnvironmentVariablesGeneratorLazy;
+            this.awsEnvironmentVariablesGenerator = awsEnvironmentVariablesGenerator;
         }
 
         public IInstallConvention Create(ILog log, IVariables variables)
         {
-            return awsEnvironmentVariablesGeneratorLazy.Value.Create(log, variables);
+            return awsEnvironmentVariablesGenerator.Create(log, variables);
         }
     }
 }
