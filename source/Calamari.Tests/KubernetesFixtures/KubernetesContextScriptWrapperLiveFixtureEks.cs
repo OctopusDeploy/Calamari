@@ -51,7 +51,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected override void ExtractVariablesFromTerraformOutput(JObject jsonOutput)
         {
-            eksClientID = jsonOutput["eks_client_id"]["value"].Value<string>();
+            eksClientID =  jsonOutput["eks_client_id"]["value"].Value<string>();
             eksSecretKey = jsonOutput["eks_secret_key"]["value"].Value<string>();
             eksClusterEndpoint = jsonOutput["eks_cluster_endpoint"]["value"].Value<string>();
             eksClusterCaCertificate = jsonOutput["eks_cluster_ca_certificate"]["value"].Value<string>();
@@ -62,7 +62,7 @@ namespace Calamari.Tests.KubernetesFixtures
             awsSubnetID = jsonOutput["aws_subnet_id"]["value"].Value<string>();
             awsIamInstanceProfileName = jsonOutput["aws_iam_instance_profile_name"]["value"].Value<string>();
         }
-        
+
         protected override Dictionary<string, string> GetEnvironmentVars()
         {
             return new Dictionary<string, string>
@@ -79,7 +79,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
-            
+
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
             variables.Set(SpecialVariables.ClusterUrl, eksClusterEndpoint);
             variables.Set(SpecialVariables.EksClusterName, eksClusterName);
@@ -90,13 +90,13 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
             var wrapper = CreateWrapper();
-            
+
             // When authorising via AWS, We need to make sure we are using the correct version of
             // kubectl for the test script as newer versions may cause kubectl to fail with an error like:
             // 'error: exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"'
             var kubectlExecutable = variables.Get(KubeCtlExecutableVariableName) ??
                 throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
-            
+
             TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
         }
 
@@ -106,7 +106,7 @@ namespace Calamari.Tests.KubernetesFixtures
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
             const string unreachableClusterEndpoint = "https://example.kubernetes.com";
-            
+
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
             variables.Set(SpecialVariables.ClusterUrl, unreachableClusterEndpoint);
             variables.Set(SpecialVariables.EksClusterName, eksClusterName);
@@ -125,7 +125,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public void UsingEc2Instance()
         {
             var terraformWorkingFolder = InitialiseTerraformWorkingFolder("terraform_working/EC2", "KubernetesFixtures/Terraform/EC2");
-        
+
             var env = new Dictionary<string, string>
             {
                 { "TF_VAR_iam_role_arn", eksIamRolArn },
@@ -135,7 +135,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "TF_VAR_aws_iam_instance_profile_name", awsIamInstanceProfileName },
                 { "TF_VAR_aws_region", region }
             };
-        
+
             RunTerraformInternal(terraformWorkingFolder, env, "init");
             try
             {
@@ -161,7 +161,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, eksClientID);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, eksSecretKey);
-                
+
                 var authenticationDetails = new AwsAuthenticationDetails
                 {
                     Type = "Aws",
@@ -173,7 +173,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     },
                     Regions = new []{region}
                 };
-                
+
                 var serviceMessageProperties = new Dictionary<string, string>
                     {
                         { "name", eksClusterArn },
@@ -211,7 +211,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, eksClientID);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, eksSecretKey);
-                
+
                 var authenticationDetails = new AwsAuthenticationDetails
                 {
                     Type = "Aws",
@@ -219,7 +219,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     Role = new AwsAssumedRole { Type = "noAssumedRole" },
                     Regions = new []{region}
                 };
-                
+
                 var serviceMessageProperties = new Dictionary<string, string>
                     {
                         { "name", eksClusterArn },
@@ -243,7 +243,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, originalSecretKey);
             }
         }
-        
+
         [Test]
         public void DiscoverKubernetesClusterWithAwsAccountCredentialsAndNoIamRole()
         {
@@ -278,10 +278,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "awsUseWorkerCredentials", bool.FalseString },
                 { "awsAssumeRole", bool.FalseString }
             };
-            
+
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);
         }
-        
+
         [Test]
         public void DiscoverKubernetesClusterWithAwsAccountCredentialsAndIamRole()
         {
@@ -326,10 +326,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "awsAssumeRoleSession", "ThisIsASessionName" },
                 { "awsAssumeRoleSessionDurationSeconds", sessionDuration.ToString() }
             };
-            
+
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);
         }
-        
+
         [Test]
         public void DiscoverKubernetesClusterWithNoValidCredentials()
         {
@@ -342,7 +342,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, null);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, null);
-                
+
                 var authenticationDetails = new AwsAuthenticationDetails
                 {
                     Type = "Aws",
@@ -350,7 +350,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     Role = new AwsAssumedRole { Type = "noAssumedRole" },
                     Regions = new []{region}
                 };
-                
+
                 DoDiscovery(authenticationDetails);
 
                 Log.ServiceMessages.Should().BeEmpty();
@@ -371,7 +371,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, originalSecretKey);
             }
         }
-        
+
         [Test]
         public void DiscoverKubernetesClusterWithInvalidAccountCredentials()
         {
@@ -404,7 +404,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 .ContainSingle(m =>
                     m.Level == InMemoryLog.Level.Warn &&
                     m.FormattedMessage ==
-                    "Unable to authorise credentials, see verbose log for details."); 
+                    "Unable to authorise credentials, see verbose log for details.");
         }
     }
 }
