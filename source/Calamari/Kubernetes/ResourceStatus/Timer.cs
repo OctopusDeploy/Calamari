@@ -11,7 +11,7 @@ namespace Calamari.Kubernetes.ResourceStatus
     {
         void Start();
         bool HasCompleted();
-        void Tick();
+        void WaitForInterval();
     }
     
     /// <summary>
@@ -32,7 +32,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         public void Start() => stopwatch.Start();
         public bool HasCompleted() => stopwatch.IsRunning && stopwatch.Elapsed >= duration;
-        public void Tick() => Thread.Sleep(interval);
+        public void WaitForInterval() => Thread.Sleep(interval);
     }
 
     /// <summary>
@@ -46,6 +46,6 @@ namespace Calamari.Kubernetes.ResourceStatus
         
         public void Start() { }
         public bool HasCompleted() => false;
-        public void Tick() => Thread.Sleep(interval);
+        public void WaitForInterval() => Thread.Sleep(interval);
     }
 }

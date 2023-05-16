@@ -46,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var reporter = new TestReporter();
             var resourceStatusChecker = new ResourceStatusChecker(retriever, reporter, new InMemoryLog());
 
-            var timer = new TestTimer(5);
+            var timer = new TestTimer(2);
 
             retriever.SetResponses(
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) }
@@ -68,7 +68,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var reporter = new TestReporter();
             var resourceStatusChecker = new ResourceStatusChecker(retriever, reporter, new InMemoryLog());
 
-            var timer = new TestTimer(5);
+            var timer = new TestTimer(2);
 
             retriever.SetResponses(
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed) }
@@ -187,14 +187,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
     public class TestTimer : ITimer
     {
-        private readonly int maxTicks;
-        private int ticks;
+        private readonly int maxChecks;
+        private int checks;
         
-        public TestTimer(int maxTicks) => this.maxTicks = maxTicks;
-
+        public TestTimer(int maxChecks) => this.maxChecks = maxChecks;
         public void Start() { }
-        public bool HasCompleted() => ticks >= maxTicks;
-        public void Tick() => ticks++;
+        public bool HasCompleted() => checks >= maxChecks;
+        public void WaitForInterval() => checks++;
     }
 
     public sealed class TestResource : Resource

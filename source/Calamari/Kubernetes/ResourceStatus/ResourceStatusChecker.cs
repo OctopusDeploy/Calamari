@@ -67,7 +67,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 resourceStatuses = newResourceStatuses;
                 deploymentStatus = newDeploymentStatus;
                 
-                timer.Tick();
+                timer.WaitForInterval();
             }
             while (!timer.HasCompleted() && deploymentStatus == DeploymentStatus.InProgress);
 
