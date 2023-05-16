@@ -12,7 +12,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
     [Category(TestCategory.ScriptingSupport.DotnetScript)]
     public class DotnetScriptFixture : CalamariFixture
     {
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
+        [Test, RequiresDotNetCore]
         public void ShouldPrintEncodedVariable()
         {
             var (output, _) = RunScript("PrintEncodedVariable.csx");
@@ -21,7 +21,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
 
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
+        [Test, RequiresDotNetCore]
         public void ShouldPrintSensitiveVariable()
         {
             var (output, _) = RunScript("PrintSensitiveVariable.csx");
@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
         }
 
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
+        [Test, RequiresDotNetCore]
         public void ShouldCreateArtifact()
         {
             var (output, _) = RunScript("CreateArtifact.csx");
@@ -40,7 +40,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("name='bXlGaWxlLnR4dA==' length='MTAw']");
         }
 
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
+        [Test, RequiresDotNetCore]
         public void ShouldUpdateProgress()
         {
             var (output, _) = RunScript("UpdateProgress.csx");
@@ -49,7 +49,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
         }
 
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
+        [Test, RequiresDotNetCore]
         public void ShouldCallHello()
         {
             var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
@@ -66,7 +66,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertProcessNameAndId("dotnet-script");
         }
 
-        [Test, RequiresDotNet45, RequiresMonoVersion400OrAbove, RequiresMonoVersionBefore(5, 14, 0)]
+        [Test, RequiresDotNetCore]
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
@@ -76,7 +76,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("Hello NameToEncrypt");
         }
 
-        [Test, RequiresDotNet45]
+        [Test, RequiresDotNetCore]
         public void ShouldConsumeParametersWithQuotes()
         {
             var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
@@ -86,7 +86,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("Parameters Para meter0Parameter1");
         }
 
-        [Test, RequiresDotNet45]
+        [Test, RequiresDotNetCore]
         public void ShouldConsumeParametersWithoutParametersPrefix()
         {
             var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
