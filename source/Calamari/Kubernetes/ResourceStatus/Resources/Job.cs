@@ -14,7 +14,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             var desired = FieldOrDefault("$.spec.completions", 0);
             Completions = $"{succeeded}/{desired}";
 
-            var defaultTime = DateTime.Now;
+            var defaultTime = DateTime.UtcNow;
             var completionTime = FieldOrDefault("$.status.completionTime", defaultTime);
             var startTime = FieldOrDefault("$.status.startTime", defaultTime);
 
