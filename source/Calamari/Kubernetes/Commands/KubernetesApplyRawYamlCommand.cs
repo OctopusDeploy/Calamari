@@ -39,7 +39,7 @@ namespace Calamari.Kubernetes.Commands
         private readonly ISubstituteInFiles substituteInFiles;
         private readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         private readonly ResourceStatusReportExecutor statusReportExecutor;
-        private readonly Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
+        private readonly Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
 
         private PathToPackage pathToPackage;
 
@@ -53,7 +53,7 @@ namespace Calamari.Kubernetes.Commands
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
             ResourceStatusReportExecutor statusReportExecutor,
-            Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory)
+            Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory)
         {
             this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;

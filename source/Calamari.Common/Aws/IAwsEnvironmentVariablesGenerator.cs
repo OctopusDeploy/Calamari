@@ -5,7 +5,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Aws
 {
-    public interface IAwsEnvironmentVariablesFactory
+    public interface IAwsEnvironmentVariablesGenerator
     {
         IAwsEnvironmentVariables Create(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null);
     }

@@ -7,7 +7,7 @@ namespace Calamari.Aws.Integration
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<AwsEnvironmentVariablesFactory>().As<IAwsEnvironmentVariablesFactory>();
+            builder.RegisterType<AwsEnvironmentVariablesGenerator>().As<IAwsEnvironmentVariablesGenerator>();
         }
     }
 }

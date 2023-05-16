@@ -15,12 +15,12 @@ namespace Calamari.Kubernetes.Conventions
     {
         private readonly ILog log;
         private readonly ICommandLineRunner commandLineRunner;
-        private readonly Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
+        private readonly Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
 
         public KubernetesAuthContextConvention(
             ILog log,
             ICommandLineRunner commandLineRunner,
-            Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory)
+            Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;

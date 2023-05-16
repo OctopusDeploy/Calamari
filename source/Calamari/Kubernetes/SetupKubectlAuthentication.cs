@@ -22,7 +22,7 @@ namespace Calamari.Kubernetes
     public class SetupKubectlAuthentication
     {
         readonly IVariables variables;
-        private readonly Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
+        private readonly Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
         readonly ILog log;
         readonly ScriptSyntax scriptSyntax;
         readonly ICommandLineRunner commandLineRunner;
@@ -34,7 +34,7 @@ namespace Calamari.Kubernetes
 
         public SetupKubectlAuthentication(IVariables variables,
             ILog log,
-            Lazy<IAwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory,
+            Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars,
