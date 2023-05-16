@@ -19,8 +19,7 @@ namespace Calamari.Kubernetes
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
 
-        public KubernetesContextScriptWrapper(IVariables variables, ILog log,
-            ICalamariEmbeddedResources embeddedResources, ICalamariFileSystem fileSystem)
+        public KubernetesContextScriptWrapper(IVariables variables, ILog log, ICalamariEmbeddedResources embeddedResources, ICalamariFileSystem fileSystem)
         {
             this.variables = variables;
             this.log = log;
@@ -53,7 +52,7 @@ namespace Calamari.Kubernetes
             {
                 environmentVars = new Dictionary<string, string>();
             }
-
+            
             var setupKubectlAuthentication = new SetupKubectlAuthentication(variables,
                                                                             log,
                                                                             scriptSyntax,

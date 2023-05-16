@@ -14,9 +14,7 @@ namespace Calamari.Kubernetes.Conventions
         private readonly ILog log;
         private readonly ICommandLineRunner commandLineRunner;
 
-        public KubernetesAuthContextConvention(
-            ILog log,
-            ICommandLineRunner commandLineRunner)
+        public KubernetesAuthContextConvention(ILog log, ICommandLineRunner commandLineRunner)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;

@@ -49,8 +49,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected KubernetesContextScriptWrapper CreateWrapper()
         {
-            return new KubernetesContextScriptWrapper(variables, Log,
-                new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, Log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()
