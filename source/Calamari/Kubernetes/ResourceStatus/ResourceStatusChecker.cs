@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -15,12 +14,13 @@ namespace Calamari.Kubernetes.ResourceStatus
     {
         /// <summary>
         /// Polls the resource status in a cluster and sends the update to the server
-        /// until the deployment timeout is met, or the deployment has succeeded or failed stably.
+        /// until the deployment timeout is met, or the deployment has succeeded or failed.
         /// </summary>
-        /// <returns>true if all resources have been deployed successfully, otherwise false</returns>
+        /// <returns>true if all defined resources have been deployed successfully, otherwise false</returns>
         bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
-            IStabilizingTimer stabilizingTimer, 
-            Kubectl kubectl);
+            ITimer timer, 
+            Kubectl kubectl,
+            Options options);
     }
 
     /// <summary>
@@ -28,8 +28,6 @@ namespace Calamari.Kubernetes.ResourceStatus
     /// </summary>
     public class ResourceStatusChecker : IResourceStatusChecker
     {
-        private const int PollingIntervalSeconds = 2;
-
         private readonly IResourceRetriever resourceRetriever;
         private readonly IResourceUpdateReporter reporter;
         private readonly ILog log;
@@ -42,78 +40,64 @@ namespace Calamari.Kubernetes.ResourceStatus
         }
         
         public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
-            IStabilizingTimer stabilizingTimer,
-            Kubectl kubectl)
+            ITimer timer,
+            Kubectl kubectl,
+            Options options)
         {
-            var definedResources = resourceIdentifiers.ToList();
-
             var resourceStatuses = new Dictionary<string, Resource>();
             var deploymentStatus = DeploymentStatus.InProgress;
-            var shouldContinue = true;
             var checkCount = 0;
+            var definedResources = resourceIdentifiers.ToList();
             
-            stabilizingTimer.Start();
+            timer.Start();
             
-            while (shouldContinue)
+            do
             {
-                var newResourceStatuses = resourceRetriever
-                    .GetAllOwnedResources(definedResources, kubectl)
+                var newDefinedResourceStatuses = resourceRetriever
+                    .GetAllOwnedResources(definedResources, kubectl, options)
+                    .ToList();
+                var newResourceStatuses = newDefinedResourceStatuses
                     .SelectMany(IterateResourceTree)
                     .ToDictionary(resource => resource.Uid, resource => resource);
 
-                var newDeploymentStatus = GetDeploymentStatus(newResourceStatuses.Values.ToList());
+                var newDeploymentStatus = GetDeploymentStatus(newDefinedResourceStatuses, definedResources);
 
                 reporter.ReportUpdatedResources(resourceStatuses, newResourceStatuses, ++checkCount);
-                
-                shouldContinue = stabilizingTimer.ShouldContinue(deploymentStatus, newDeploymentStatus);
 
                 resourceStatuses = newResourceStatuses;
                 deploymentStatus = newDeploymentStatus;
                 
-                Thread.Sleep(PollingIntervalSeconds * 1000);
+                timer.WaitForInterval();
             }
-
-            if (stabilizingTimer.IsStabilizing())
-            {
-                switch (deploymentStatus)
-                {
-                    case DeploymentStatus.Succeeded:
-                        log.Verbose("Resource status check terminated during stabilization period with all resources being successful");
-                        break;
-                    case DeploymentStatus.Failed:
-                        log.Verbose("Resource status check terminated during stabilization period with some failed resources");
-                        break;
-                    default:
-                        break;
-                }
-
-                return false;
-            }
+            while (!timer.HasCompleted() && deploymentStatus == DeploymentStatus.InProgress);
 
             switch (deploymentStatus)
             {
                 case DeploymentStatus.Succeeded:
-                    log.Verbose("Resource status check completed successfully because all resources are deployed successfully and have stabilized");
+                    log.Verbose("Resource status check completed successfully because all resources are deployed successfully");
                     return true;
                 case DeploymentStatus.InProgress:
-                    log.Verbose("Resource status check terminated because the execution timeout has been reached but some resources are still in progress");
+                    log.Verbose("Resource status check terminated because the timeout has been reached but some resources are still in progress");
                     return false;
                 case DeploymentStatus.Failed:
-                    log.Verbose("Resource status check terminated with errors because some resources have failed and did not recover during stabilization period");
+                    log.Verbose("Resource status check terminated with errors because some resources have failed");
                     return false;
                 default:
                     return false;
             }
         }
-
-        private static DeploymentStatus GetDeploymentStatus(List<Resource> resources)
+        
+        private static DeploymentStatus GetDeploymentStatus(List<Resource> resources, List<ResourceIdentifier> definedResources)
         {
-            if (resources.All(resource => resource.ResourceStatus == Resources.ResourceStatus.Successful))
+            
+            if (resources.All(resource => resource.ResourceStatus == ResourceStatus.Resources.ResourceStatus.Successful)
+                && resources.Count == definedResources.Count)
             {
                 return DeploymentStatus.Succeeded;
             }
 
-            if (resources.Any(resource => resource.ResourceStatus == Resources.ResourceStatus.Failed))
+            if (resources
+                .Any(resource => resource.ResourceStatus == ResourceStatus.Resources.ResourceStatus.Failed))
             {
                 return DeploymentStatus.Failed;
             }

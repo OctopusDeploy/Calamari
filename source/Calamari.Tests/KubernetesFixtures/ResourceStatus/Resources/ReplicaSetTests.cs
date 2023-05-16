@@ -1,3 +1,4 @@
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using NUnit.Framework;
@@ -23,7 +24,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         ""replicas"": 3,
     }
 }";
-            var replicaSet = ResourceFactory.FromJson(input);
+            var replicaSet = ResourceFactory.FromJson(input, new Options());
             
             replicaSet.Should().BeEquivalentTo(new
             {
