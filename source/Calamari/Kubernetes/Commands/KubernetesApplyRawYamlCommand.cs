@@ -65,7 +65,7 @@ namespace Calamari.Kubernetes.Commands
         }
         public override int Execute(string[] commandLineArguments)
         {
-            if (!FeatureToggle.GitSourcedYamlManifestsFeatureToggle.IsEnabled(variables))
+            if (!FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle.IsEnabled(variables))
                 throw new InvalidOperationException(
                     "Unable to execute the Kubernetes Apply Raw YAML Command because the appropriate feature has not been enabled.");
 
