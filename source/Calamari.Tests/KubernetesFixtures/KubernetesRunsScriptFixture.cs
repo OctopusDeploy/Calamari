@@ -345,7 +345,8 @@ namespace Calamari.Tests.KubernetesFixtures
             return new KubernetesContextScriptWrapper(variables, log,
                 new Lazy<AwsEnvironmentVariablesFactory>(() =>
                     new AwsEnvironmentVariablesFactory(
-                        new Lazy<IAwsEnvironmentVariablesGenerator>(new AwsEnvironmentVariablesGenerator()))),
+                        new Lazy<IAwsEnvironmentVariablesGenerator>(() =>
+                            new AwsEnvironmentVariablesGenerator()))),
                 new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
         }
 
