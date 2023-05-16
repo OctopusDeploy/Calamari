@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.Commands;
 using Calamari.Commands.Support;
-using Calamari.Common.Aws;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Features.ConfigurationTransforms;
@@ -39,7 +38,7 @@ namespace Calamari.Kubernetes.Commands
         private readonly ISubstituteInFiles substituteInFiles;
         private readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         private readonly ResourceStatusReportExecutor statusReportExecutor;
-        private readonly Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
+        private readonly Lazy<AwsAuthConventionFactoryFactory> awsAuthConventionFactoryFactory;
 
         private PathToPackage pathToPackage;
 
@@ -53,7 +52,7 @@ namespace Calamari.Kubernetes.Commands
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
             ResourceStatusReportExecutor statusReportExecutor,
-            Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory)
+            Lazy<AwsAuthConventionFactoryFactory> awsAuthConventionFactoryFactory)
         {
             this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
@@ -64,7 +63,7 @@ namespace Calamari.Kubernetes.Commands
             this.substituteInFiles = substituteInFiles;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
             this.statusReportExecutor = statusReportExecutor;
-            this.awsEnvironmentVariablesFactory = awsEnvironmentVariablesFactory;
+            this.awsAuthConventionFactoryFactory = awsAuthConventionFactoryFactory;
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         }
         public override int Execute(string[] commandLineArguments)
@@ -97,10 +96,19 @@ namespace Calamari.Kubernetes.Commands
                 new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, configurationTransformer, transformFileLocator, log)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
                 new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
-                new KubernetesAuthContextConvention(log, commandLineRunner, awsEnvironmentVariablesFactory),
+            };
+
+            if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
+            {
+                conventions.Add(awsAuthConventionFactoryFactory.Value.Create(log, variables));
+            }
+
+            conventions.AddRange(new IInstallConvention[]
+            {
+                new KubernetesAuthContextConvention(log, commandLineRunner),
                 new GatherAndApplyRawYamlConvention(log, fileSystem, commandLineRunner),
                 new ResourceStatusReportConvention(statusReportExecutor, commandLineRunner)
-            };
+            });
 
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             try

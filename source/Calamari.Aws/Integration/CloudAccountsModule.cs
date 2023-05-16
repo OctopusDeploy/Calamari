@@ -1,5 +1,5 @@
 using Autofac;
-using Calamari.Common.Aws;
+using Calamari.Deployment.Conventions;
 
 namespace Calamari.Aws.Integration
 {
@@ -7,7 +7,7 @@ namespace Calamari.Aws.Integration
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<AwsEnvironmentVariablesGenerator>().As<IAwsEnvironmentVariablesGenerator>();
+            builder.RegisterType<AwsAuthConventionFactory>().As<IAwsAuthConventionFactory>();
         }
     }
 }

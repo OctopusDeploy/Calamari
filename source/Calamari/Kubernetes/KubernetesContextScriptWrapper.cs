@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using Calamari.Common.Aws;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -17,17 +16,14 @@ namespace Calamari.Kubernetes
     {
         readonly IVariables variables;
         readonly ILog log;
-        private readonly Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
 
         public KubernetesContextScriptWrapper(IVariables variables, ILog log,
-            Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory,
             ICalamariEmbeddedResources embeddedResources, ICalamariFileSystem fileSystem)
         {
             this.variables = variables;
             this.log = log;
-            this.awsEnvironmentVariablesFactory = awsEnvironmentVariablesFactory;
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
         }
@@ -60,7 +56,6 @@ namespace Calamari.Kubernetes
 
             var setupKubectlAuthentication = new SetupKubectlAuthentication(variables,
                                                                             log,
-                                                                            awsEnvironmentVariablesFactory,
                                                                             scriptSyntax,
                                                                             commandLineRunner,
                                                                             environmentVars,

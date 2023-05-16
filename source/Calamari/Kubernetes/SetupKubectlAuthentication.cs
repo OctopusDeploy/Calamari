@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Calamari.Common.Aws;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
@@ -22,7 +21,6 @@ namespace Calamari.Kubernetes
     public class SetupKubectlAuthentication
     {
         readonly IVariables variables;
-        private readonly Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory;
         readonly ILog log;
         readonly ScriptSyntax scriptSyntax;
         readonly ICommandLineRunner commandLineRunner;
@@ -34,14 +32,12 @@ namespace Calamari.Kubernetes
 
         public SetupKubectlAuthentication(IVariables variables,
             ILog log,
-            Lazy<AwsEnvironmentVariablesFactory> awsEnvironmentVariablesFactory,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars,
             string workingDirectory)
         {
             this.variables = variables;
-            this.awsEnvironmentVariablesFactory = awsEnvironmentVariablesFactory;
             this.log = log;
             this.scriptSyntax = scriptSyntax;
             this.commandLineRunner = commandLineRunner;
@@ -303,7 +299,6 @@ namespace Calamari.Kubernetes
 
         void SetupContextForAmazonServiceAccount(string @namespace, string clusterUrl, string user)
         {
-            GenerateAwsEnvironmentVariables();
             var clusterName = variables.Get(SpecialVariables.EksClusterName);
             log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
 
@@ -314,15 +309,6 @@ namespace Calamari.Kubernetes
 
             log.Verbose("Attempting to authenticate with aws-iam-authenticator");
             SetKubeConfigAuthenticationToAwsIAm(user, clusterName);
-        }
-
-        void GenerateAwsEnvironmentVariables()
-        {
-            var awsEnvironmentVars = awsEnvironmentVariablesFactory.Value.Create(log, variables);
-            foreach (var envVar in awsEnvironmentVars.EnvironmentVars)
-            {
-                environmentVars[envVar.Key] = envVar.Value;
-            }
         }
 
         bool TrySetKubeConfigAuthenticationToAwsCli(string clusterName, string clusterUrl, string user)
