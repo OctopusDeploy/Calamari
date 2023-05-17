@@ -5,7 +5,6 @@
     "generation": 1,
     "name": "nginx-deployment",
     "namespace": "calamari-testing",
-    "resourceVersion": "1288"
   },
   "spec": {
     "progressDeadlineSeconds": 600,
