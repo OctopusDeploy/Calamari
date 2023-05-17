@@ -38,7 +38,7 @@ namespace Calamari.Kubernetes.Commands
         private readonly ISubstituteInFiles substituteInFiles;
         private readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         private readonly ResourceStatusReportExecutor statusReportExecutor;
-        private readonly Lazy<AwsAuthConventionFactoryFactory> awsAuthConventionFactoryFactory;
+        private readonly Lazy<AwsAuthConventionFactoryWrapper> awsAuthConventionFactoryFactory;
 
         private PathToPackage pathToPackage;
 
@@ -52,7 +52,7 @@ namespace Calamari.Kubernetes.Commands
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
             ResourceStatusReportExecutor statusReportExecutor,
-            Lazy<AwsAuthConventionFactoryFactory> awsAuthConventionFactoryFactory)
+            Lazy<AwsAuthConventionFactoryWrapper> awsAuthConventionFactoryFactory)
         {
             this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
@@ -100,7 +100,7 @@ namespace Calamari.Kubernetes.Commands
 
             if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
             {
-                conventions.Add(awsAuthConventionFactoryFactory.Value.Create(log, variables));
+                conventions.Add(awsAuthConventionFactoryFactory.Value.Create());
             }
 
             conventions.AddRange(new IInstallConvention[]

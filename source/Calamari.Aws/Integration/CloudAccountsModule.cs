@@ -8,6 +8,7 @@ namespace Calamari.Aws.Integration
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<AwsAuthConventionFactory>().As<IAwsAuthConventionFactory>();
+            builder.RegisterType<AwsAuthConvention>().AsSelf();
         }
     }
 }

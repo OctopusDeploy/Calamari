@@ -7,6 +7,6 @@ namespace Calamari.Deployment.Conventions
 {
     public interface IAwsAuthConventionFactory
     {
-        IInstallConvention Create(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null);
+        IInstallConvention Create(Func<Task<bool>>? verifyLogin = null);
     }
 }

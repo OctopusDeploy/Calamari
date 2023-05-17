@@ -10,6 +10,8 @@ namespace Calamari.Aws.Integration
 {
     public class AwsAuthConvention : IInstallConvention
     {
+        public delegate AwsAuthConvention Factory(Func<Task<bool>> verifyLogin = null);
+
         private readonly ILog log;
         private readonly IVariables variables;
         private readonly Func<Task<bool>> verifyLogin;

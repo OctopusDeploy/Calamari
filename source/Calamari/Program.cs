@@ -72,7 +72,7 @@ namespace Calamari
                    .As<IKubernetesDiscovererFactory>()
                    .SingleInstance();
 
-            builder.RegisterType<AwsAuthConventionFactoryFactory>().AsSelf();
+            builder.RegisterType<AwsAuthConventionFactoryWrapper>().AsSelf();
 
             builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
 

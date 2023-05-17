@@ -8,9 +8,16 @@ namespace Calamari.Aws.Integration
 {
     public class AwsAuthConventionFactory : IAwsAuthConventionFactory
     {
-        public IInstallConvention Create(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null)
+        private readonly AwsAuthConvention.Factory awsAuthConventionFactory;
+
+        public AwsAuthConventionFactory(AwsAuthConvention.Factory awsAuthConventionFactory)
         {
-            return new AwsAuthConvention(log, variables, verifyLogin);
+            this.awsAuthConventionFactory = awsAuthConventionFactory;
+        }
+
+        public IInstallConvention Create(Func<Task<bool>> verifyLogin = null)
+        {
+            return awsAuthConventionFactory(verifyLogin);
         }
     }
 }
