@@ -137,7 +137,14 @@ namespace Calamari.Tests.KubernetesFixtures
                 variableMessages.Should().ContainSingle(m => m.Properties["name"] == "CustomResources(nginx-deployment)")
                                 .Subject;
 
-            this.Assent(KubernetesJsonResourceScrubber.ScrubRawJson(variableMessage.Properties["value"]), configuration: AssentConfiguration.Default);
+            var scrubbedJson = KubernetesJsonResourceScrubber.ScrubRawJson(variableMessage.Properties["value"], p =>
+                p.Name.Contains("Time") ||
+                p.Name == "annotations" ||
+                p.Name == "uid" ||
+                p.Name == "conditions" ||
+                p.Name == "resourceVersion");
+
+            this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
 
             var idx = Array.IndexOf(rawLogs, "Performing resource status checks on the following resources:");
             rawLogs[idx + 1].Should().Be(" - Deployment/nginx-deployment in namespace calamari-testing");
