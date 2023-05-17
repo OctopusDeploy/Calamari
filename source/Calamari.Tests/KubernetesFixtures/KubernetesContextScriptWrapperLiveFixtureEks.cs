@@ -154,7 +154,7 @@ namespace Calamari.Tests.KubernetesFixtures
             objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(5);
 
             rawLogs.Should().ContainSingle(m =>
-                m.Contains("Resource status check completed successfully because all resources are deployed successfully and have stabilized"));
+                m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
         }
 
         private IScriptWrapper CreateK8sResourceStatusReporterScriptWrapper(ICalamariFileSystem fileSystem)
