@@ -155,8 +155,6 @@ namespace Calamari.AzureAppService.Behaviors
             catch (JsonException ex)
             {
                 Log.Warn($"Target discovery context from variable {contextVariableName} is in wrong format: {ex.Message}");
-                Log.Verbose("Raw JSON:");
-                Log.Verbose(json);
                 return null;
             }
         }
