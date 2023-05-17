@@ -15,9 +15,8 @@ namespace Calamari.Common.Plumbing.Logging
             log = innerLogger;
         }
 
-        public void AddValueToRedact(string? value, string replacement)
+        public void AddValueToRedact(string value, string replacement)
         {
-            if (value is null) return;
             redactionMap[value] = replacement;
         }
 

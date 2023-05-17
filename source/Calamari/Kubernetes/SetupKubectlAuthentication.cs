@@ -290,7 +290,10 @@ namespace Calamari.Kubernetes
         {
             var username = variables.Get("Octopus.Account.Username");
             var password = variables.Get("Octopus.Account.Password");
-            log.AddValueToRedact(password, "<password>");
+            if (password != null)
+            {
+                log.AddValueToRedact(password, "<password>");
+            }
             kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--username={username}", $"--password={password}");
         }
 
