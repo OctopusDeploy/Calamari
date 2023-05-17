@@ -112,7 +112,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             variables.SetFeatureToggles(
                 FeatureToggle.KubernetesDeploymentStatusFeatureToggle,
-                FeatureToggle.GitSourcedYamlManifestsFeatureToggle);
+                FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
 
             var fileSystem = new TestCalamariPhysicalFileSystem();
 
