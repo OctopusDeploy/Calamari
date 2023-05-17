@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities;
 using Octopus.Versioning.Semver;
@@ -14,15 +14,18 @@ namespace Calamari.Kubernetes.Integration
     public class Kubectl : CommandLineTool
     {
         readonly string customKubectlExecutable;
+        private bool isSet;
 
-        public Kubectl(string customKubectlExecutable, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
-            : base(log, commandLineRunner, workingDirectory, environmentVars)
+        public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner)
+            : base(log, commandLineRunner)
         {
-            this.customKubectlExecutable = customKubectlExecutable;
+            customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
         }
 
         public bool TrySetKubectl()
         {
+            if (isSet) return true;
+
             if (string.IsNullOrEmpty(customKubectlExecutable))
             {
                 var result = CalamariEnvironment.IsRunningOnWindows
@@ -53,6 +56,7 @@ namespace Calamari.Kubernetes.Integration
             if (TryExecuteKubectlCommand("version", "--client", "--short"))
             {
                 log.Verbose($"Found kubectl and successfully verified it can be executed.");
+                isSet = true;
                 return true;
             }
 

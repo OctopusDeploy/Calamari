@@ -6,19 +6,30 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Autofac.Features.Metadata;
+using Calamari.Aws.Integration;
 using Calamari.Commands;
 using Calamari.Common;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Behaviours;
+using Calamari.Common.Features.ConfigurationTransforms;
+using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.Processes.Semaphores;
+using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
+using Calamari.Deployment.Conventions;
 using Calamari.Deployment.PackageRetention;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.Kubernetes.Commands.Discovery;
+using Calamari.Kubernetes.Conventions;
+using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
@@ -70,7 +81,33 @@ namespace Calamari
             builder.RegisterType<ResourceStatusChecker>().As<IResourceStatusChecker>().SingleInstance();
             builder.RegisterType<ResourceUpdateReporter>().As<IResourceUpdateReporter>().SingleInstance();
             builder.RegisterType<ResourceStatusReportExecutor>().AsSelf();
+            builder.RegisterType<Kubectl>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<KubectlGet>().As<IKubectlGet>().SingleInstance();
+            builder.RegisterType<DelegateInstallConvention>().AsSelf();
+            builder.RegisterType<ConventionProcessor>().AsSelf();
+            builder.RegisterType<RunningDeployment>().AsSelf();
+            builder.RegisterType<SubstituteInFilesConvention>().AsSelf();
+            builder.RegisterType<SubstituteInFilesBehaviour>().AsSelf();
+            builder.RegisterType<ConfigurationTransformsConvention>().AsSelf();
+            builder.Register(c =>
+            {
+                var variables = c.Resolve<IVariables>();
+                var log = c.Resolve<ILog>();
+                return new ConfigurationTransformsBehaviour(c.Resolve<ICalamariFileSystem>(), variables,
+                    ConfigurationTransformer.FromVariables(variables, log), c.Resolve<ITransformFileLocator>(), log);
+            }).As<ConfigurationTransformsBehaviour>();
+            builder.RegisterType<ConfigurationTransformer>().As<IConfigurationTransformer>();
+            builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
+            builder.RegisterType<ConfigurationVariablesConvention>().AsSelf();
+            builder.RegisterType<ConfigurationVariablesBehaviour>().AsSelf();
+            builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
+            builder.RegisterType<StructuredConfigurationVariablesConvention>().AsSelf();
+            builder.RegisterType<StructuredConfigurationVariablesBehaviour>().AsSelf();
+            builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
+            builder.RegisterType<AwsAuthConvention>().AsSelf();
+            builder.RegisterType<KubernetesAuthContextConvention>().AsSelf();
+            builder.RegisterType<GatherAndApplyRawYamlConvention>().AsSelf();
+            builder.RegisterType<ResourceStatusReportConvention>().AsSelf();
 
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()
@@ -84,8 +121,6 @@ namespace Calamari
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
-
-            builder.RegisterAssemblyModules(assembliesToRegister);
 
             builder.RegisterAssemblyTypes(assembliesToRegister)
                    .AssignableTo<IKubernetesDiscoverer>()

@@ -1,8 +1,10 @@
+using System;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
+using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.Conventions
 {
@@ -13,11 +15,13 @@ namespace Calamari.Kubernetes.Conventions
     {
         private readonly ILog log;
         private readonly ICommandLineRunner commandLineRunner;
+        private readonly Kubectl kubectl;
 
-        public KubernetesAuthContextConvention(ILog log, ICommandLineRunner commandLineRunner)
+        public KubernetesAuthContextConvention(ILog log, ICommandLineRunner commandLineRunner, Kubectl kubectl)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;
+            this.kubectl = kubectl;
         }
 
         public void Install(RunningDeployment deployment)
@@ -31,7 +35,7 @@ namespace Calamari.Kubernetes.Conventions
 
             var accountType = deployment.Variables.Get("Octopus.Account.AccountType");
 
-            setupKubectlAuthentication.Execute(accountType);
+            setupKubectlAuthentication.Execute(accountType, kubectl);
         }
     }
 }

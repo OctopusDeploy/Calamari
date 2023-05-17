@@ -29,9 +29,8 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.statusChecker = statusChecker;
         }
 
-        public void ReportStatus(string workingDirectory, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars)
+        public void ReportStatus(string workingDirectory, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars = null, Kubectl kubectl = null)
         {
-            var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
             // When the namespace on a target was set and then cleared, it's going to be "" instead of null
             if (string.IsNullOrEmpty(defaultNamespace))
@@ -67,8 +66,12 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 log.Verbose($" - {resourceIdentifier.Kind}/{resourceIdentifier.Name} in namespace {resourceIdentifier.Namespace}");
             }
+            if (kubectl is null)
+            {
+                kubectl = new Kubectl(variables, log, commandLineRunner)
+                    { WorkingDirectory = workingDirectory, EnvironmentVariables = environmentVars };
+            }
 
-            var kubectl = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars);
             if (!kubectl.TrySetKubectl())
             {
                 throw new Exception("Unable to set KubeCtl");

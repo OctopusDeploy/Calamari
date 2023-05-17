@@ -4,23 +4,16 @@ using System.IO;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Behaviours;
-using Calamari.Common.Features.ConfigurationTransforms;
-using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.Packages;
-using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.StructuredVariables;
-using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Conventions;
-using Calamari.Kubernetes.ResourceStatus;
+using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -29,41 +22,59 @@ namespace Calamari.Kubernetes.Commands
     {
         private const string Name = "kubernetes-apply-raw-yaml";
 
-        private readonly ILog log;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         private readonly IVariables variables;
-        private readonly ICommandLineRunner commandLineRunner;
+        private readonly Kubectl kubectl;
+        private readonly DelegateInstallConvention.Factory delegateInstallFactory;
+        private readonly Func<SubstituteInFilesConvention> substituteInFilesFactory;
+        private readonly Func<ConfigurationTransformsConvention> configurationTransformationFactory;
+        private readonly Func<ConfigurationVariablesConvention> configurationVariablesFactory;
+        private readonly Func<StructuredConfigurationVariablesConvention> structuredConfigurationVariablesFactory;
         private readonly ICalamariFileSystem fileSystem;
         private readonly IExtractPackage extractPackage;
-        private readonly ISubstituteInFiles substituteInFiles;
-        private readonly IStructuredConfigVariablesService structuredConfigVariablesService;
-        private readonly ResourceStatusReportExecutor statusReportExecutor;
         private readonly IAwsAuthConventionFactory awsAuthConventionFactory;
+        private readonly Func<KubernetesAuthContextConvention> kubernetesAuthContextFactory;
+        private readonly Func<GatherAndApplyRawYamlConvention> gatherAndApplyRawYamlFactory;
+        private readonly Func<ResourceStatusReportConvention> resourceStatusReportFactory;
+        private readonly ConventionProcessor.Factory conventionProcessorFactory;
+        private readonly RunningDeployment.Factory runningDeploymentFactory;
 
         private PathToPackage pathToPackage;
 
         public KubernetesApplyRawYamlCommand(
-            ILog log,
             IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
-            ICommandLineRunner commandLineRunner,
+            Kubectl kubectl,
+            DelegateInstallConvention.Factory delegateInstallFactory,
+            Func<SubstituteInFilesConvention> substituteInFilesFactory,
+            Func<ConfigurationTransformsConvention> configurationTransformationFactory,
+            Func<ConfigurationVariablesConvention> configurationVariablesFactory,
+            Func<StructuredConfigurationVariablesConvention> structuredConfigurationVariablesFactory,
+            IAwsAuthConventionFactory awsAuthConventionFactory,
+            Func<KubernetesAuthContextConvention> kubernetesAuthContextFactory,
+            Func<GatherAndApplyRawYamlConvention> gatherAndApplyRawYamlFactory,
+            Func<ResourceStatusReportConvention> resourceStatusReportFactory,
+            ConventionProcessor.Factory conventionProcessorFactory,
+            RunningDeployment.Factory runningDeploymentFactory,
             ICalamariFileSystem fileSystem,
-            IExtractPackage extractPackage,
-            ISubstituteInFiles substituteInFiles,
-            IStructuredConfigVariablesService structuredConfigVariablesService,
-            ResourceStatusReportExecutor statusReportExecutor,
-            IAwsAuthConventionFactory awsAuthConventionFactory)
+            IExtractPackage extractPackage)
         {
-            this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
-            this.commandLineRunner = commandLineRunner;
+            this.kubectl = kubectl;
+            this.delegateInstallFactory = delegateInstallFactory;
+            this.substituteInFilesFactory = substituteInFilesFactory;
+            this.configurationTransformationFactory = configurationTransformationFactory;
+            this.configurationVariablesFactory = configurationVariablesFactory;
+            this.structuredConfigurationVariablesFactory = structuredConfigurationVariablesFactory;
+            this.awsAuthConventionFactory = awsAuthConventionFactory;
+            this.kubernetesAuthContextFactory = kubernetesAuthContextFactory;
+            this.gatherAndApplyRawYamlFactory = gatherAndApplyRawYamlFactory;
+            this.resourceStatusReportFactory = resourceStatusReportFactory;
+            this.conventionProcessorFactory = conventionProcessorFactory;
+            this.runningDeploymentFactory = runningDeploymentFactory;
             this.fileSystem = fileSystem;
             this.extractPackage = extractPackage;
-            this.substituteInFiles = substituteInFiles;
-            this.structuredConfigVariablesService = structuredConfigVariablesService;
-            this.statusReportExecutor = statusReportExecutor;
-            this.awsAuthConventionFactory = awsAuthConventionFactory;
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         }
         public override int Execute(string[] commandLineArguments)
@@ -73,13 +84,9 @@ namespace Calamari.Kubernetes.Commands
                     "Unable to execute the Kubernetes Apply Raw YAML Command because the appropriate feature has not been enabled.");
 
             Options.Parse(commandLineArguments);
-            var deployment = new RunningDeployment(pathToPackage, variables);
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
-            var transformFileLocator = new TransformFileLocator(fileSystem, log);
-            var replacer = new ConfigurationVariablesReplacer(variables, log);
             var conventions = new List<IConvention>
             {
-                new DelegateInstallConvention(d =>
+                delegateInstallFactory(d =>
                 {
                     extractPackage.ExtractToStagingDirectory(pathToPackage);
                     //If using the inline yaml, copy it to the staging directory.
@@ -91,11 +98,13 @@ namespace Calamari.Kubernetes.Commands
                     }
                     d.StagingDirectory = stagingDirectory;
                     d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+                    kubectl.WorkingDirectory = d.CurrentDirectory;
+                    kubectl.EnvironmentVariables = d.EnvironmentVariables;
                 }),
-                new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
-                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, configurationTransformer, transformFileLocator, log)),
-                new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
-                new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
+                substituteInFilesFactory(),
+                configurationTransformationFactory(),
+                configurationVariablesFactory(),
+                structuredConfigurationVariablesFactory()
             };
 
             if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
@@ -105,20 +114,20 @@ namespace Calamari.Kubernetes.Commands
 
             conventions.AddRange(new IInstallConvention[]
             {
-                new KubernetesAuthContextConvention(log, commandLineRunner),
-                new GatherAndApplyRawYamlConvention(log, fileSystem, commandLineRunner),
-                new ResourceStatusReportConvention(statusReportExecutor, commandLineRunner)
+                kubernetesAuthContextFactory(),
+                gatherAndApplyRawYamlFactory(),
+                resourceStatusReportFactory()
             });
 
-            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
+            var conventionRunner = conventionProcessorFactory(runningDeploymentFactory(pathToPackage), conventions);
             try
             {
                 conventionRunner.RunConventions();
-                deploymentJournalWriter.AddJournalEntry(deployment, true, pathToPackage);
+                deploymentJournalWriter.AddJournalEntry(conventionRunner.Deployment, true, pathToPackage);
             }
             catch (Exception)
             {
-                deploymentJournalWriter.AddJournalEntry(deployment, false, pathToPackage);
+                deploymentJournalWriter.AddJournalEntry(conventionRunner.Deployment, false, pathToPackage);
                 throw;
             }
 

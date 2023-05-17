@@ -12,8 +12,10 @@ namespace Calamari.Kubernetes.Integration
     public class GCloud : CommandLineTool
     {
         public GCloud(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
-            : base(log, commandLineRunner, workingDirectory, environmentVars)
+            : base(log, commandLineRunner)
         {
+            WorkingDirectory = workingDirectory;
+            EnvironmentVariables = environmentVars;
         }
 
         public bool TrySetGcloud()
@@ -37,17 +39,17 @@ namespace Calamari.Kubernetes.Integration
         {
             if (!string.IsNullOrEmpty(project))
             {
-                environmentVars.Add("CLOUDSDK_CORE_PROJECT", project);
+                EnvironmentVariables.Add("CLOUDSDK_CORE_PROJECT", project);
             }
 
             if (!string.IsNullOrEmpty(region))
             {
-                environmentVars.Add("CLOUDSDK_COMPUTE_REGION", region);
+                EnvironmentVariables.Add("CLOUDSDK_COMPUTE_REGION", region);
             }
 
             if (!string.IsNullOrEmpty(zone))
             {
-                environmentVars.Add("CLOUDSDK_COMPUTE_ZONE", zone);
+                EnvironmentVariables.Add("CLOUDSDK_COMPUTE_ZONE", zone);
             }
 
             if (!useVmServiceAccount)
@@ -60,7 +62,7 @@ namespace Calamari.Kubernetes.Integration
 
                 log.Verbose("Authenticating to gcloud with key file");
                 var bytes = Convert.FromBase64String(jsonKey);
-                using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, "gcpJsonKey.json")))
+                using (var keyFile = new TemporaryFile(Path.Combine(WorkingDirectory, "gcpJsonKey.json")))
                 {
                     File.WriteAllBytes(keyFile.FilePath, bytes);
                     var result = ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, "auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\""));
@@ -75,7 +77,7 @@ namespace Calamari.Kubernetes.Integration
             }
 
             if (!string.IsNullOrEmpty(impersonationEmails))
-                environmentVars.Add("CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT", impersonationEmails);
+                EnvironmentVariables.Add("CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT", impersonationEmails);
         }
 
         public void ConfigureGkeKubeCtlAuthentication(Kubectl kubectlCli, string gkeClusterName, string region, string zone, string @namespace)
