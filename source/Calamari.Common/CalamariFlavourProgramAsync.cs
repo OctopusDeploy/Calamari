@@ -35,7 +35,7 @@ namespace Calamari.Common
 
         protected CalamariFlavourProgramAsync(ILog log)
         {
-            this.log = log;
+            this.log = new RedactedValuesLogger(log);
         }
 
         protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
@@ -100,7 +100,7 @@ namespace Calamari.Common
             try
             {
                 AppDomainConfiguration.SetDefaultRegexMatchTimeout();
-                
+
                 SecurityProtocols.EnableAllSecurityProtocols();
                 var options = CommonOptions.Parse(args);
 
