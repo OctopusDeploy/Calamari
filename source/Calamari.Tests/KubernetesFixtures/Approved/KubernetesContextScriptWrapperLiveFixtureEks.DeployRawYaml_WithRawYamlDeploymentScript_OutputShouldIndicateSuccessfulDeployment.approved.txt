@@ -4,7 +4,7 @@
   "metadata": {
     "generation": 1,
     "name": "nginx-deployment",
-    "namespace": "calamari-testing",
+    "namespace": "calamari-testing"
   },
   "spec": {
     "progressDeadlineSeconds": 600,
