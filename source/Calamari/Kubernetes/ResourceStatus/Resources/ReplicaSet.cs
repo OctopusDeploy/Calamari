@@ -10,7 +10,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public int Current { get; }
         public int Ready { get; }
 
-        public ReplicaSet(JObject json) : base(json)
+        public ReplicaSet(JObject json, Options options) : base(json, options)
         {
             Desired = FieldOrDefault("$.status.replicas", 0);
             Current = FieldOrDefault($".status.availableReplicas", 0);

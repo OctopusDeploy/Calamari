@@ -14,8 +14,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         [JsonIgnore] public IEnumerable<string> OwnerUids { get; }
 
-        [JsonIgnore] public string Uid { get; }
-        [JsonIgnore] public string Kind { get; }
+        [JsonIgnore] public string Uid { get; set; }
+        [JsonIgnore] public string Kind { get; set; }
         [JsonIgnore] public string Name { get; }
         [JsonIgnore] public string Namespace { get; }
 
@@ -27,7 +27,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonIgnore]
         public IEnumerable<Resource> Children { get; internal set; }
     
-        public Resource(JObject json)
+        internal Resource() { }
+        
+        public Resource(JObject json, Options options)
         {
             data = json;
             OwnerUids = data.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>();

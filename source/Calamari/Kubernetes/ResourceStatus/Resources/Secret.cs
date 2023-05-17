@@ -8,7 +8,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public int Data { get; }
         public string Type { get; }
         
-        public Secret(JObject json) : base(json)
+        public Secret(JObject json, Options options) : base(json, options)
         {
             Type = Field("$.type");
             Data = (data.SelectToken("$.data")

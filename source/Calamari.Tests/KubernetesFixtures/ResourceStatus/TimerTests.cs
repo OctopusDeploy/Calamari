@@ -6,12 +6,12 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 {
     [TestFixture]
-    public class CountdownTimerTests
+    public class TimerTests
     {
         [Test]
-        public void ZeroDurationCountdownTimer_ShouldNotCompleteBeforeItIsStarted()
+        public void ZeroDurationTimer_ShouldNotCompleteBeforeItIsStarted()
         {
-            var timer = new CountdownTimer(TimeSpan.Zero);
+            var timer = new Timer(TimeSpan.Zero, TimeSpan.FromSeconds(1));
             timer.HasCompleted().Should().BeFalse();
         }
     }

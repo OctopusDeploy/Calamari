@@ -14,6 +14,8 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public class ResourceStatusReportExecutor
     {
+        private const int PollingIntervalSeconds = 2;
+        
         private readonly IVariables variables;
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
@@ -36,9 +38,9 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 defaultNamespace = "default";
             }
-            var deploymentTimeoutSeconds = variables.GetInt32(SpecialVariables.DeploymentTimeout) ?? 0;
-            var stabilizationTimeoutSeconds = variables.GetInt32(SpecialVariables.StabilizationTimeout) ?? 0;
-
+            var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
+            var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
+            
             var manifests = ReadManifestFiles().ToList();
             var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
 
@@ -85,15 +87,11 @@ namespace Calamari.Kubernetes.ResourceStatus
                 throw new Exception("Unable to set KubeCtl");
             }
 
-            var deploymentTimer = deploymentTimeoutSeconds == 0
-                ? new InfiniteCountdownTimer() as ICountdownTimer
-                : new CountdownTimer(TimeSpan.FromSeconds(deploymentTimeoutSeconds));
+            var timer = timeoutSeconds == 0
+                ? new InfiniteTimer(TimeSpan.FromSeconds(PollingIntervalSeconds)) as ITimer
+                : new Timer(TimeSpan.FromSeconds(timeoutSeconds), TimeSpan.FromSeconds(PollingIntervalSeconds));
 
-            var stabilizationTimer = new CountdownTimer(TimeSpan.FromSeconds(stabilizationTimeoutSeconds));
-
-            var stabilizingTimer = new StabilizingTimer(deploymentTimer, stabilizationTimer, log);
-
-            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, stabilizingTimer, kubectl);
+            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, timer, kubectl, new Options() {  WaitForJobs = waitForJobs});
 
             if (!completedSuccessfully)
             {

@@ -1,3 +1,4 @@
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using NUnit.Framework;
@@ -18,7 +19,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 .WithCompletionTime("2023-03-30T02:03:04Z")
                 .Build();
             
-            var job = ResourceFactory.FromJson(jobResponse);
+            var job = ResourceFactory.FromJson(jobResponse, new Options());
             
             job.Should().BeEquivalentTo(new
             {
@@ -33,7 +34,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         }
 
         [Test]
-        public void ShouldHaveStatusOfFailedIfBackOffLimitHasBeenReached()
+        public void WhenWaitForJobsNotEnabled_ShouldHaveStatusOfSuccess()
         {
             var jobResponse = new JobResponseBuilder()
                 .WithCompletions(3)
@@ -41,13 +42,27 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 .WithFailed(4)
                 .Build();
 
-            var job = ResourceFactory.FromJson(jobResponse);
+            var job = ResourceFactory.FromJson(jobResponse, new Options());
+
+            job.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful);
+        }
+        
+        [Test]
+        public void WhenWaitForJobsIsEnabled_ShouldHaveStatusOfFailedIfBackOffLimitHasBeenReached()
+        {
+            var jobResponse = new JobResponseBuilder()
+                .WithCompletions(3)
+                .WithBackoffLimit(4)
+                .WithFailed(4)
+                .Build();
+
+            var job = ResourceFactory.FromJson(jobResponse, new Options() { WaitForJobs = true });
 
             job.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed);
         }
 
         [Test]
-        public void ShouldHaveStatusOfSuccessfulIfDesiredCompletionsHaveBeenAchieved()
+        public void WhenWaitForJobsIsEnabled_ShouldHaveStatusOfSuccessfulIfDesiredCompletionsHaveBeenAchieved()
         {
             var jobResponse = new JobResponseBuilder()
                 .WithCompletions(3)
@@ -55,13 +70,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 .WithFailed(1)
                 .Build();
 
-            var job = ResourceFactory.FromJson(jobResponse);
+            var job = ResourceFactory.FromJson(jobResponse, new Options() { WaitForJobs = true });
 
             job.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful);
         }
 
         [Test]
-        public void ShouldHaveStatusOfInProgressIsDesiredCompletionsHaveNotBeenReached()
+        public void WhenWaitForJobsIsEnabled_ShouldHaveStatusOfInProgressIsDesiredCompletionsHaveNotBeenReached()
         {
             var jobResponse = new JobResponseBuilder()
                 .WithCompletions(3)
@@ -69,7 +84,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 .WithFailed(1)
                 .Build();
 
-            var job = ResourceFactory.FromJson(jobResponse);
+            var job = ResourceFactory.FromJson(jobResponse, new Options() { WaitForJobs = true });
 
             job.ResourceStatus.Should().Be(Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress);
         }

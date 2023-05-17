@@ -7,7 +7,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public string Schedule { get; }
         public bool Suspend { get; }
 
-        public CronJob(JObject json) : base(json)
+        public CronJob(JObject json, Options options) : base(json, options)
         {
             Schedule = Field("$.spec.schedule");
             Suspend = FieldOrDefault("$.spec.suspend", false);
