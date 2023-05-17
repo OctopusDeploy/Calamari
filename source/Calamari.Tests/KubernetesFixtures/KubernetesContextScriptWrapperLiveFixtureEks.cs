@@ -86,7 +86,9 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void DeployRawYaml_WithRawYamlDeploymentScript_OutputShouldIndicateSuccessfulDeployment()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void DeployRawYaml_WithRawYamlDeploymentScript_OutputShouldIndicateSuccessfulDeployment(bool runAsScript)
         {
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
@@ -123,9 +125,17 @@ namespace Calamari.Tests.KubernetesFixtures
                 variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", customResourceFileName);
             }
 
-            var wrapper = new[] { CreateWrapper(fileSystem), CreateK8sResourceStatusReporterScriptWrapper(fileSystem) };
+            if (runAsScript)
+            {
+                var wrapper = new[] { CreateWrapper(fileSystem), CreateK8sResourceStatusReporterScriptWrapper(fileSystem) };
 
-            DeployWithScriptAndVerifySuccess(wrapper, fileSystem, AddCustomResourceFile);
+                DeployWithScriptAndVerifySuccess(wrapper, fileSystem, AddCustomResourceFile);
+            }
+            else
+            {
+                DeployWithRawYamlCommandAndVerifySuccess(fileSystem, AddCustomResourceFile);
+            }
+
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
