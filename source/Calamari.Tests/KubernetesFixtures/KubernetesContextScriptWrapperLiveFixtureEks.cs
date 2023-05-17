@@ -162,7 +162,9 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void AuthorisingWithAmazonAccount()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithAmazonAccount(bool runAsScript)
         {
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
@@ -176,15 +178,23 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{account}.SecretKey", eksSecretKey);
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
-            var wrapper = CreateWrapper();
 
-            // When authorising via AWS, We need to make sure we are using the correct version of
-            // kubectl for the test script as newer versions may cause kubectl to fail with an error like:
-            // 'error: exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"'
-            var kubectlExecutable = variables.Get(KubeCtlExecutableVariableName) ??
-                throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
+            if (runAsScript)
+            {
+                var wrapper = CreateWrapper();
 
-            TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
+                // When authorising via AWS, We need to make sure we are using the correct version of
+                // kubectl for the test script as newer versions may cause kubectl to fail with an error like:
+                // 'error: exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"'
+                var kubectlExecutable = variables.Get(KubeCtlExecutableVariableName) ??
+                    throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
+
+                TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
+            }
+            else
+            {
+                DeployWithTestCommandAndVerifySuccess();
+            }
         }
 
         [Test]
@@ -194,7 +204,7 @@ namespace Calamari.Tests.KubernetesFixtures
             const string certificateAuthority = "myauthority";
             const string unreachableClusterEndpoint = "https://example.kubernetes.com";
 
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
             variables.Set(KubernetesSpecialVariables.ClusterUrl, unreachableClusterEndpoint);
             variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
             variables.Set("Octopus.Action.Aws.Region", region);
@@ -226,7 +236,7 @@ namespace Calamari.Tests.KubernetesFixtures
             RunTerraformInternal(terraformWorkingFolder, env, "init");
             try
             {
-                // This actual tests are run via EC2/test.sh which executes the tests in
+                // The actual tests are run via EC2/test.sh which executes the tests in
                 // KubernetesContextScriptWrapperLiveFixtureForAmazon.cs
                 RunTerraformInternal(terraformWorkingFolder, env, "apply", "-auto-approve");
             }

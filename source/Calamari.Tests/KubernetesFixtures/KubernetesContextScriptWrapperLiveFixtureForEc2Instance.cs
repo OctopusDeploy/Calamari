@@ -11,7 +11,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures
 {
     /// <remarks>
-    /// This is a special test fixture, that gets remotely executed on the cluster created by the test 
+    /// This is a special test fixture, that gets remotely executed on the cluster created by the test
     /// Calamari.Tests.KubernetesFixtures.KubernetesContextScriptWrapperLiveFixture.UsingEc2Instance
     /// (see Terraform/EC2/ec2.kubernetes.tf and Terraform/EC2/test.sh)
     ///
@@ -39,7 +39,9 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void AuthoriseWithAmazonEC2Role()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthoriseWithAmazonEC2Role(bool runAsScript)
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
             variables.Set(SpecialVariables.ClusterUrl, eksClusterEndpoint);
@@ -48,8 +50,15 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Aws.AssumeRole", Boolean.FalseString);
             variables.Set("Octopus.Action.Aws.Region", region);
 
-            var wrapper = CreateWrapper();
-            TestScriptAndVerifyCluster(wrapper, "Test-Script");
+            if (runAsScript)
+            {
+                var wrapper = CreateWrapper();
+                TestScriptAndVerifyCluster(wrapper, "Test-Script");
+            }
+            else
+            {
+                DeployWithTestCommandAndVerifySuccess();
+            }
         }
 
         [Test]
@@ -96,7 +105,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 Role = new AwsAssumedRole { Type = "noAssumedRole" },
                 Regions = new []{region}
             };
-                
+
             var serviceMessageProperties = new Dictionary<string, string>
             {
                 { "name", eksClusterArn },
