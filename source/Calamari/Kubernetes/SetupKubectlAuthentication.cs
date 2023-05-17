@@ -56,7 +56,7 @@ namespace Calamari.Kubernetes
 
             var kubeConfig = CreateKubectlConfig();
 
-            kubectl ??= new Kubectl(variables, log, commandLineRunner)
+            kubectl = kubectl ?? new Kubectl(variables, log, commandLineRunner)
                 { WorkingDirectory = workingDirectory, EnvironmentVariables = environmentVars };
 
             kubectlCli = kubectl;
