@@ -14,8 +14,10 @@ using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
+    [Command(Name, Description = "used for tests")]
     public class TestableKubernetesDeploymentCommand : KubernetesDeploymentCommandBase
     {
+        private const string Name = "test-kubernetes-command";
         private readonly Kubectl kubectl;
 
         public TestableKubernetesDeploymentCommand(
