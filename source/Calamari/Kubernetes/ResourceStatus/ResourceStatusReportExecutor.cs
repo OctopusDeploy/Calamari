@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
@@ -66,19 +64,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             foreach (var resourceIdentifier in definedResources)
             {
                 log.Verbose($" - {resourceIdentifier.Kind}/{resourceIdentifier.Name} in namespace {resourceIdentifier.Namespace}");
-            }
-
-            var kubeConfig = Path.Combine(workingDirectory, "kubectl-octo.yml");
-
-            if (environmentVars == null)
-            {
-                environmentVars = new Dictionary<string, string>();
-            }
-            environmentVars.Add("KUBECONFIG", kubeConfig);
-
-            foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
-            {
-                environmentVars[proxyVariable.Key] = proxyVariable.Value;
             }
 
             var kubectl = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars);
