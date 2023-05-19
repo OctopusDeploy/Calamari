@@ -25,7 +25,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common
 {
-    public abstract class  CalamariFlavourProgram
+    public abstract class CalamariFlavourProgram
     {
         protected readonly ILog Log;
 
@@ -39,7 +39,7 @@ namespace Calamari.Common
             try
             {
                 AppDomainConfiguration.SetDefaultRegexMatchTimeout();
-
+                
                 SecurityProtocols.EnableAllSecurityProtocols();
                 var options = CommonOptions.Parse(args);
 
