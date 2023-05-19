@@ -184,7 +184,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "awsAssumeRole", bool.FalseString }
             };
 
-            if (scope.HealthCheckContainer is not null)
+            if (scope.HealthCheckContainer != null)
             {
                 serviceMessageProperties.Add("healthCheckContainerImageFeedIdOrName", scope.HealthCheckContainer.FeedIdOrName);
                 serviceMessageProperties.Add("healthCheckContainerImage", scope.HealthCheckContainer.ImageNameAndTag);
