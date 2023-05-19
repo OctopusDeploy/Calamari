@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Commands;
+using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
@@ -91,13 +93,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
         CalamariResult ExecuteWithRunScriptCommand(ICalamariFileSystem fileSystem, IEnumerable<IScriptWrapper> scriptWrappers)
         {
-            var oldEnvVars = new Dictionary<string, string>();
-            foreach (var envVar in GetEnvironments())
-            {
-                oldEnvVars[envVar.Key] = Environment.GetEnvironmentVariable(envVar.Key);
-                Environment.SetEnvironmentVariable(envVar.Key, envVar.Value);
-            }
-
             var command = new RunScriptCommand(redactionLog,
                 new DeploymentJournalWriter(fileSystem),
                 variables,
@@ -105,16 +100,19 @@ namespace Calamari.Tests.KubernetesFixtures
                 fileSystem,
                 CreateCommandLineRunner(),
                 CreateSubstituteInFiles(fileSystem),
-                CreateStructuredConfigVariablesService(fileSystem));
+                CreateStructuredConfigVariablesService(fileSystem),
+                CreateRunningDeployment());
 
             var result = command.Execute(Array.Empty<string>());
 
-            foreach (var envVar in GetEnvironments())
-            {
-                Environment.SetEnvironmentVariable(envVar.Key, oldEnvVars[envVar.Key]);
-            }
-
             return new CalamariResult(result, new CaptureCommandInvocationOutputSink());
+        }
+
+        private RunningDeployment.Factory CreateRunningDeployment()
+        {
+            return (p, e) => new RunningDeployment(p, variables,
+                GetEnvironments().Concat(e ?? new Dictionary<string, string>())
+                                 .ToDictionary(x => x.Key, x => x.Value));
         }
 
         private ISubstituteInFiles CreateSubstituteInFiles(ICalamariFileSystem fileSystem)
