@@ -11,7 +11,6 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
@@ -31,7 +30,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected IVariables variables;
         protected string testFolder;
-        private RedactedValuesLogger redactLog;
 
         [OneTimeSetUp]
         public void SetupTests()
@@ -44,14 +42,14 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             variables = new CalamariVariables();
 
-            redactLog = new RedactedValuesLogger(Log = new DoNotDoubleLog());
+            Log = new DoNotDoubleLog();
 
             SetTestClusterVariables();
         }
 
         protected KubernetesContextScriptWrapper CreateWrapper()
         {
-            return new KubernetesContextScriptWrapper(variables, redactLog, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, Log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()
@@ -63,7 +61,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName)
         {
-            var calamariResult = ExecuteScriptInternal(new CommandLineRunner(redactLog, variables), wrapper, scriptName);
+            var calamariResult = ExecuteScriptInternal(new CommandLineRunner(Log, variables), wrapper, scriptName);
 
             WriteLogMessagesToTestOutput();
 
@@ -75,7 +73,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrappers = new List<IScriptWrapper>(new[] { wrapper });
             if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
             {
-                wrappers.Add(new AwsScriptWrapper(redactLog, variables));
+                wrappers.Add(new AwsScriptWrapper(Log, variables));
             }
 
             var engine = new ScriptEngine(wrappers);

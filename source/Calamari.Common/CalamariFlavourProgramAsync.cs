@@ -35,7 +35,7 @@ namespace Calamari.Common
 
         protected CalamariFlavourProgramAsync(ILog log)
         {
-            this.log = new RedactedValuesLogger(log);
+            this.log = log;
         }
 
         protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)

@@ -31,7 +31,7 @@ namespace Calamari.Common
 
         protected CalamariFlavourProgram(ILog log)
         {
-            Log = new RedactedValuesLogger(log);
+            Log = log;
         }
 
         protected virtual int Run(string[] args)

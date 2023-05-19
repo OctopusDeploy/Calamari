@@ -36,14 +36,12 @@ namespace Calamari.Tests.KubernetesFixtures
         InMemoryLog log;
         Dictionary<string, string> redactMap;
         static InstallTools installTools;
-        private RedactedValuesLogger redactLog;
 
         [SetUp]
         public void Setup()
         {
             variables = new CalamariVariables();
             log = new DoNotDoubleLog();
-            redactLog = new RedactedValuesLogger(log);
             redactMap = new Dictionary<string, string>();
             SetTestClusterVariables();
         }
@@ -342,7 +340,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         KubernetesContextScriptWrapper CreateWrapper()
         {
-            return new KubernetesContextScriptWrapper(variables, redactLog, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()
