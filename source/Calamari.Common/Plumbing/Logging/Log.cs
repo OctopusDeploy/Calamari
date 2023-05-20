@@ -93,7 +93,10 @@ namespace Calamari.Common.Plumbing.Logging
 
         protected string ProcessRedactions(string message)
         {
-            return redactionMap.Aggregate(message, (current, pair) => current.Replace(pair.Key, pair.Value));
+            lock (sync)
+            {
+                return redactionMap.Aggregate(message, (current, pair) => current.Replace(pair.Key, pair.Value));
+            }
         }
 
         void SetMode(string mode)
