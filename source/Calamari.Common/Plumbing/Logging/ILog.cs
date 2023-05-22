@@ -6,6 +6,7 @@ namespace Calamari.Common.Plumbing.Logging
 {
     public interface ILog
     {
+        void AddValueToRedact(string value, string replacement);
         void Verbose(string message);
         void VerboseFormat(string messageFormat, params object[] args);
         void Info(string message);
