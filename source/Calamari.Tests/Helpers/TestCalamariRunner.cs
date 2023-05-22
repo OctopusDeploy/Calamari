@@ -15,11 +15,10 @@ namespace Calamari.Tests.Helpers
 {
     class TestCalamariRunner : CalamariRunner
     {
-        private readonly bool registerTestAssembly;
+        private bool registerTestAssembly = true;
 
-        public TestCalamariRunner(ILog log = null, bool registerTestAssembly = true) : base(log = log ?? new InMemoryLog())
+        public TestCalamariRunner(ILog log = null) : base(log = log ?? new InMemoryLog())
         {
-            this.registerTestAssembly = registerTestAssembly;
             TestLog = log as InMemoryLog;
         }
 
@@ -35,6 +34,7 @@ namespace Calamari.Tests.Helpers
 
         public int RunStubCommand()
         {
+            registerTestAssembly = false;
             CommandOverride  = new StubCommand(() => StubWasCalled = true);
             return Run(new [] {"stub"});
         }
