@@ -15,13 +15,12 @@ namespace Calamari.Tests.Helpers
 {
     class TestCalamariRunner : CalamariRunner
     {
-        public TestCalamariRunner(InMemoryLog log) : base(log)
-        {
-            TestLog = log;
-        }
+        private readonly bool registerTestAssembly;
 
-        public TestCalamariRunner(ILog log): base(log)
+        public TestCalamariRunner(ILog log = null, bool registerTestAssembly = true) : base(log = log ?? new InMemoryLog())
         {
+            this.registerTestAssembly = registerTestAssembly;
+            TestLog = log as InMemoryLog;
         }
 
         internal InMemoryLog TestLog { get; }
@@ -47,7 +46,13 @@ namespace Calamari.Tests.Helpers
 
         protected override IEnumerable<Assembly> GetAllAssembliesToRegister()
         {
-            return base.GetAllAssembliesToRegister().Concat(new[] { typeof(TestCalamariRunner).Assembly });
+            var allAssemblies = base.GetAllAssembliesToRegister();
+            if (registerTestAssembly)
+            {
+                allAssemblies = allAssemblies.Concat(new[] { typeof(TestCalamariRunner).Assembly });
+            }
+
+            return allAssemblies;
         }
 
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
