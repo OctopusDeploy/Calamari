@@ -18,7 +18,6 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
@@ -41,8 +40,6 @@ namespace Calamari.Tests.KubernetesFixtures
         protected IVariables variables;
         protected string testFolder;
 
-        protected ILog redactionLog;
-
         [OneTimeSetUp]
         public void SetupTests()
         {
@@ -54,14 +51,14 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             variables = new CalamariVariables();
 
-            redactionLog = new RedactedValuesLogger(Log = new DoNotDoubleLog());
+            Log = new DoNotDoubleLog();
 
             SetTestClusterVariables();
         }
 
         protected KubernetesContextScriptWrapper CreateWrapper(ICalamariFileSystem fileSystem = null)
         {
-            return new KubernetesContextScriptWrapper(variables, redactionLog, new AssemblyEmbeddedResources(), fileSystem ?? new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, Log, new AssemblyEmbeddedResources(), fileSystem ?? new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()
@@ -79,7 +76,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrappers = new List<IScriptWrapper>(additionalWrappers);
             if (variables.Get(SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
             {
-                wrappers.Add(new AwsScriptWrapper(redactionLog, variables));
+                wrappers.Add(new AwsScriptWrapper(Log, variables));
             }
 
             var result = fileSystem != null
@@ -93,7 +90,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         CalamariResult ExecuteWithRunScriptCommand(ICalamariFileSystem fileSystem, IEnumerable<IScriptWrapper> scriptWrappers)
         {
-            var command = new RunScriptCommand(redactionLog,
+            var command = new RunScriptCommand(Log,
                 new DeploymentJournalWriter(fileSystem),
                 variables,
                 new ScriptEngine(scriptWrappers),
@@ -117,12 +114,12 @@ namespace Calamari.Tests.KubernetesFixtures
 
         private ISubstituteInFiles CreateSubstituteInFiles(ICalamariFileSystem fileSystem)
         {
-            return new SubstituteInFiles(redactionLog, fileSystem, new FileSubstituter(redactionLog, fileSystem), variables);
+            return new SubstituteInFiles(Log, fileSystem, new FileSubstituter(Log, fileSystem), variables);
         }
 
         CommandLineRunner CreateCommandLineRunner()
         {
-            return new CommandLineRunner(redactionLog, variables);
+            return new CommandLineRunner(Log, variables);
         }
 
         StructuredConfigVariablesService CreateStructuredConfigVariablesService(ICalamariFileSystem fileSystem)
@@ -130,16 +127,16 @@ namespace Calamari.Tests.KubernetesFixtures
             return new StructuredConfigVariablesService(
                 new PrioritisedList<IFileFormatVariableReplacer>(new IFileFormatVariableReplacer[]
                 {
-                    new JsonFormatVariableReplacer(fileSystem, redactionLog),
-                    new XmlFormatVariableReplacer(fileSystem, redactionLog),
-                    new YamlFormatVariableReplacer(fileSystem, redactionLog),
-                    new PropertiesFormatVariableReplacer(fileSystem, redactionLog)
-                }), variables, fileSystem, redactionLog);
+                    new JsonFormatVariableReplacer(fileSystem, Log),
+                    new XmlFormatVariableReplacer(fileSystem, Log),
+                    new YamlFormatVariableReplacer(fileSystem, Log),
+                    new PropertiesFormatVariableReplacer(fileSystem, Log)
+                }), variables, fileSystem, Log);
         }
 
         CalamariResult ExecuteDirectlyWithScriptEngine(IReadOnlyList<IScriptWrapper> wrappers, string scriptName)
         {
-            var commandLineRunner = new CommandLineRunner(redactionLog, variables);
+            var commandLineRunner = new CommandLineRunner(Log, variables);
             var engine = new ScriptEngine(wrappers);
             var result = engine.Execute(new Script(scriptName), variables, commandLineRunner, GetEnvironments());
 

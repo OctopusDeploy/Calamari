@@ -159,10 +159,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
         private IScriptWrapper CreateK8sResourceStatusReporterScriptWrapper(ICalamariFileSystem fileSystem)
         {
-            return new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, redactionLog,
+            return new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, Log,
                 fileSystem,
                 new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
-                    new ResourceUpdateReporter(variables, redactionLog), redactionLog)));
+                    new ResourceUpdateReporter(variables, Log), Log)));
         }
 
         [Test]
