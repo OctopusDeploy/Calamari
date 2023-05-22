@@ -47,7 +47,7 @@ namespace Calamari.Tests.Helpers
 
         protected override IEnumerable<Assembly> GetAllAssembliesToRegister()
         {
-            return base.GetAllAssembliesToRegister().Append(typeof(TestCalamariRunner).Assembly);
+            return base.GetAllAssembliesToRegister().Concat(new[] { typeof(TestCalamariRunner).Assembly });
         }
 
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
