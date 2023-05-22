@@ -32,6 +32,9 @@ namespace Calamari.Kubernetes.Authentication
             if (!azureCli.TrySetAz())
                 return false;
 
+            if (!kubeLogin.TrySetKubeLogin())
+                return false;
+
             var disableAzureCli = deploymentVariables.GetFlag("OctopusDisableAzureCLI");
             if (!disableAzureCli)
             {

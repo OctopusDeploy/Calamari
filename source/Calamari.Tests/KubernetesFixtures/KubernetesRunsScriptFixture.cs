@@ -427,6 +427,11 @@ namespace Calamari.Tests.KubernetesFixtures
                     ExecuteCommand(invocation, invocation.Executable);
                 }
 
+                if (new[] { "kubelogin" }.Contains(invocation.Executable))
+                {
+                    ExecuteCommand(invocation, invocation.Executable);
+                }
+
                 // We only want to output executable string. eg. ExecuteCommandAndReturnOutput("where", "kubectl.exe")
                 if (new[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe" }.Contains(invocation.Arguments))
                     invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));

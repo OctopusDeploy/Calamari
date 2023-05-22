@@ -31,6 +31,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public string KubectlExecutable { get; private set; }
         public string AwsAuthenticatorExecutable { get; private set; }
         public string AwsCliExecutable { get; private set; }
+        public string KubeloginExecutable { get; private set; }
         public string GcloudExecutable { get; private set; }
 
         public async Task Install()
@@ -219,6 +220,27 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
+        public async Task InstallKubelogin()
+        {
+            using (var client = new HttpClient())
+            {
+                GcloudExecutable = await DownloadCli("kubelogin",
+                                                     () => Task.FromResult<(string, string)>(("v0.0.25", string.Empty)),
+                                                     async (destinationDirectoryName, tuple) =>
+                                                     {
+                                                         var downloadUrl = GetKubeloginDownloadLink(tuple.version);
+                                                         var fileName = GetKubeloginZipFileName();
+
+                                                         await DownloadGcloud(fileName,
+                                                                              client,
+                                                                              downloadUrl,
+                                                                              destinationDirectoryName);
+
+                                                         return GetGcloudExecutablePath(destinationDirectoryName);
+                                                     });
+            }
+        } 
+
         static void AddExecutePermission(string exePath)
         {
             if (CalamariEnvironment.IsRunningOnWindows)
@@ -325,6 +347,26 @@ namespace Calamari.Tests.KubernetesFixtures
         static string GetGcloudDownloadLink(string currentVersion)
         {
             return $"https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/{GetGcloudZipFileName(currentVersion)}";
+        }
+
+        static string GetKubeloginDownloadLink(string currentVersion)
+        {
+            if (CalamariEnvironment.IsRunningOnNix)
+            {
+                return $"https://github.com/Azure/kubelogin/releases/download/${currentVersion}";
+            }
+
+            return $"https://github.com/Azure/kubelogin/releases/download/${currentVersion}";
+        }
+
+        public string GetKubeloginZipFileName()
+        {
+            if (CalamariEnvironment.IsRunningOnNix)
+            {
+                return $"kubelogin-linux-amd64.zip";
+            }
+
+            return $"kubelogin.zip";
         }
 
         static string GetGcloudZipFileName(string currentVersion)
