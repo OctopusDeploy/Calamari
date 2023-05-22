@@ -18,7 +18,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.PackageRetention;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
-using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands.Discovery;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.LaunchTools;
@@ -71,8 +70,6 @@ namespace Calamari
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()
                    .SingleInstance();
-
-            builder.RegisterType<AwsAuthConventionFactoryWrapper>().AsSelf();
 
             builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
 

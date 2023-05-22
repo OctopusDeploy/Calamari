@@ -38,7 +38,7 @@ namespace Calamari.Kubernetes.Commands
         private readonly ISubstituteInFiles substituteInFiles;
         private readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         private readonly ResourceStatusReportExecutor statusReportExecutor;
-        private readonly Lazy<AwsAuthConventionFactoryWrapper> awsAuthConventionFactoryFactory;
+        private readonly IAwsAuthConventionFactory awsAuthConventionFactory;
 
         private PathToPackage pathToPackage;
 
@@ -52,7 +52,7 @@ namespace Calamari.Kubernetes.Commands
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
             ResourceStatusReportExecutor statusReportExecutor,
-            Lazy<AwsAuthConventionFactoryWrapper> awsAuthConventionFactoryFactory)
+            IAwsAuthConventionFactory awsAuthConventionFactory)
         {
             this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
@@ -63,7 +63,7 @@ namespace Calamari.Kubernetes.Commands
             this.substituteInFiles = substituteInFiles;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
             this.statusReportExecutor = statusReportExecutor;
-            this.awsAuthConventionFactoryFactory = awsAuthConventionFactoryFactory;
+            this.awsAuthConventionFactory = awsAuthConventionFactory;
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         }
         public override int Execute(string[] commandLineArguments)
@@ -100,7 +100,7 @@ namespace Calamari.Kubernetes.Commands
 
             if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
             {
-                conventions.Add(awsAuthConventionFactoryFactory.Value.Create());
+                conventions.Add(awsAuthConventionFactory.Create());
             }
 
             conventions.AddRange(new IInstallConvention[]
