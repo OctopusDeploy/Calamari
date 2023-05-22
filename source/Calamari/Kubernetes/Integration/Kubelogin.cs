@@ -17,7 +17,7 @@ namespace Calamari.Kubernetes.Integration
         public bool TrySetKubeLogin()
         {
             var result = CalamariEnvironment.IsRunningOnWindows
-                ? ExecuteCommandAndReturnOutput("where", "kubelogin.cmd")
+                ? ExecuteCommandAndReturnOutput("where", "kubelogin")
                 : ExecuteCommandAndReturnOutput("which", "kubelogin");
             
             var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
