@@ -1,20 +1,27 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Autofac;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 
 namespace Calamari.Tests.Helpers
 {
-    class TestProgram : Program
+    class TestCalamariRunner : CalamariRunner
     {
-        public TestProgram(InMemoryLog log) : base(log)
+        public TestCalamariRunner(InMemoryLog log) : base(log)
         {
             TestLog = log;
+        }
+
+        public TestCalamariRunner(ILog log): base(log)
+        {
         }
 
         internal InMemoryLog TestLog { get; }
@@ -35,9 +42,12 @@ namespace Calamari.Tests.Helpers
 
         protected override Assembly GetProgramAssemblyToRegister()
         {
-            // Return Calamari Assembly as it contains the helm commands that needs to be tested.
-            // Don't register Calamari.Test Assembly as the only thing we need to register is the stub command and that's handled below
-            return typeof(Program).Assembly;
+            return typeof(CalamariRunner).Assembly;
+        }
+
+        protected override IEnumerable<Assembly> GetAllAssembliesToRegister()
+        {
+            return base.GetAllAssembliesToRegister().Append(typeof(TestCalamariRunner).Assembly);
         }
 
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)

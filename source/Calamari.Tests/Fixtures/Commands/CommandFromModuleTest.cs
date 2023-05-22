@@ -1,5 +1,4 @@
 ﻿#if NETFX
-using Calamari.Tests.Helpers;
 using NUnit.Framework;
 using System;
 using System.IO;
@@ -13,12 +12,6 @@ namespace Calamari.Tests.Fixtures.Commands
     [TestFixture]
     public class CommandFromModuleTest
     {
-        // The Azure extensions are not used in testing because the machines do not have the required
-        // PowerShell modules. i.e. you get the error:
-        // The term 'Get-AzureRmEnvironment' is not recognized as the name of a cmdlet
-        // You can uncomment the line below for local testing though.
-        //private string Extensions = "--extensions=Calamari.Aws,Calamari.Azure,Calamari.Tests";
-
         private string Script = GetFixtureResource("Scripts", "awsscript.ps1");
 
         private static string GetFixtureResource(params string[] paths)
@@ -73,12 +66,11 @@ namespace Calamari.Tests.Fixtures.Commands
                 {
                     "run-test-script",
                     "--script=" + Script,
-                    "--extensions=Calamari.Aws,Calamari.Tests",
                     "--variables=" + temp.FilePath
                 };
 
                 ScriptHookMock.WasCalled = false;
-                var retCode = Program.Main(args);
+                var retCode = TestProgramWrapper.Main(args);
                 Assert.AreEqual(0, retCode);
                 // TestModule should have been loaded because we are treating the
                 // Calamari.Test dll as an extension. This means ScriptHookMock and

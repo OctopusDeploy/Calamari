@@ -50,7 +50,7 @@ namespace Calamari.Tests.Helpers
         protected CalamariResult InvokeInProcess(CommandLine command, IVariables variables = null)
         {
             var args = command.GetRawArgs();
-            var program = new TestProgram(Log);
+            var program = new TestCalamariRunner(Log);
             int exitCode;
             try
             {

@@ -29,15 +29,22 @@ using Calamari.Azure;
 
 namespace Calamari
 {
-    public class Program : CalamariFlavourProgram
+    public class Program
     {
-        protected Program(ILog log) : base(log)
+        public static int Main(string[] args)
+        {
+            return new CalamariRunner(ConsoleLog.Instance).Execute(args);
+        }
+    }
+    public class CalamariRunner : CalamariFlavourProgram {
+
+        public CalamariRunner(ILog log) : base(log)
         {
         }
 
-        public static int Main(string[] args)
+        public int Execute(params string[] args)
         {
-            return new Program(ConsoleLog.Instance).Run(args);
+            return Run(args);
         }
 
         protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)

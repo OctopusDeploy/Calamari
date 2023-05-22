@@ -1,7 +1,5 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Calamari.Commands;
-using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
@@ -74,7 +72,7 @@ namespace Calamari.Tests.Fixtures.Manifest
                     { nameof(NodeInstructions.DeploymentTargetInputsVariable), "deploymentTargetInputs" },
                 };
 
-                var result = ExecuteCommand(variables, "Calamari.Tests");
+                var result = ExecuteCommand(variables);
 
                 result.AssertSuccess();
                 result.AssertOutput("Hello from TestCommand");
@@ -85,7 +83,7 @@ namespace Calamari.Tests.Fixtures.Manifest
             }
         }
 
-        CalamariResult ExecuteCommand(VariableDictionary variables, string extensions = "")
+        CalamariResult ExecuteCommand(VariableDictionary variables)
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
@@ -94,8 +92,7 @@ namespace Calamari.Tests.Fixtures.Manifest
                 return Invoke(Calamari()
                               .Action("execute-manifest")
                               .Argument("variables", variablesFile.FilePath)
-                              .Argument("sensitiveVariablesPassword", "GB8KdBqYRlgAON9ISUPdnQ==")
-                              .Argument("extensions", extensions));
+                              .Argument("sensitiveVariablesPassword", "GB8KdBqYRlgAON9ISUPdnQ=="));
             }
         }
     }
