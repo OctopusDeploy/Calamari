@@ -1,15 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-        <TargetFrameworks>net452;netstandard2.1;net40</TargetFrameworks>
+        <TargetFrameworks>net452;netstandard2.1</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
         <TargetFramework>netstandard2.1</TargetFramework>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
-        <DefineConstants>$(DefineConstants);USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
-        <PlatformTarget>anycpu</PlatformTarget>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
         <DefineConstants>$(DefineConstants);USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
@@ -22,7 +17,7 @@
       <LangVersion>8</LangVersion>
       <Nullable>enable</Nullable>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net452' ">
         <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
     </PropertyGroup>
 
@@ -37,18 +32,13 @@
         <PackageReference Include="System.Diagnostics.Tracing" Version="4.3.0" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
-        <PackageReference Include="Autofac" Version="3.5.2" />
-        <Reference Include="System.Web" />
-    </ItemGroup>
-
     <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
         <PackageReference Include="Autofac" Version="4.8.0" />
         <PackageReference Include="Polly" Version="5.4.0" />
         <PackageReference Include="System.Diagnostics.Tracing" Version="4.3.0" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
+    <ItemGroup Condition="'$(TargetFramework)' == 'net452' ">
         <Reference Include="System.Security" />
         <Reference Include="System.Net" />
         <PackageReference Include="NuGet.CommandLine" Version="2.8.6" />

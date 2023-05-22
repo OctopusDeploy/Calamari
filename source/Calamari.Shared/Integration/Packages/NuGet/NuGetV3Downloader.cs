@@ -4,18 +4,14 @@
 #if USE_NUGET_V2_LIBS
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Web;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Deployment;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning;
 using Octopus.Versioning.Semver;
 
@@ -35,20 +31,6 @@ namespace Calamari.Integration.Packages.NuGet
 
         static bool IsJsonEndpoint(Uri feedUri, ICredentials feedCredentials, TimeSpan httpTimeout)
         {
-#if NET40
-            var request = WebRequest.Create(feedUri);
-            request.Credentials = feedCredentials;
-            request.Timeout = (int)httpTimeout.TotalMilliseconds;
-            using (var response = (HttpWebResponse)request.GetResponse())
-            {
-                if (response.IsSuccessStatusCode())
-                {
-                    return response.ContentType == "application/json";
-                }
-
-                throw new HttpException((int)response.StatusCode, $"Received status code that indicate not successful response. Uri:{feedUri}");
-            }
-#else
             var request = new HttpRequestMessage(HttpMethod.Get, feedUri);
 
             using (var httpClient = CreateHttpClient(feedCredentials, httpTimeout))
@@ -63,7 +45,6 @@ namespace Calamari.Integration.Packages.NuGet
                     return response.Content.Headers.ContentType.MediaType == "application/json";
                 }
             }
-#endif
         }
 
         class PackageIdentifier
@@ -206,26 +187,6 @@ namespace Calamari.Integration.Packages.NuGet
 
         static void GetHttp(Uri uri, ICredentials credentials, TimeSpan httpTimeout, Action<Stream> processContent)
         {
-#if NET40
-            var request = WebRequest.Create(uri);
-            request.Credentials = credentials;
-            request.Timeout = (int)httpTimeout.TotalMilliseconds;
-            using (var response = (HttpWebResponse)request.GetResponse())
-            {
-                if (response.IsSuccessStatusCode())
-                {
-                    using (var respStream = response.GetResponseStream())
-                    {
-                        processContent(respStream);
-                    }
-                }
-                else
-                {
-                    throw new HttpException((int)response.StatusCode, $"Received status code that indicate not successful response. Uri:{uri}");
-                }
-            }
-
-#else
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
             using (var httpClient = CreateHttpClient(credentials, httpTimeout))
@@ -240,7 +201,6 @@ namespace Calamari.Integration.Packages.NuGet
                     processContent(readingStream.Result);
                 }
             }
-#endif
         }
 
         static Uri? GetPackageBaseUri(IDictionary<string, List<Uri>> resources)

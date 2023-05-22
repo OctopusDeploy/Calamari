@@ -1,14 +1,10 @@
 using System;
-using System.Diagnostics;
 using System.Net;
-using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Retry;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Octopus.Versioning;
 
@@ -126,9 +122,8 @@ namespace Calamari.Integration.Packages.NuGet
         TimeSpan GetHttpTimeout()
         {
             const string expectedTimespanFormat = "c";
-            
-            // Equal to Timeout.InfiniteTimeSpan, which isn't available in net40
-            var defaultTimeout = new TimeSpan(0, 0, 0, 0, -1);
+
+            var defaultTimeout = Timeout.InfiniteTimeSpan;
             
             var rawTimeout = variables.Get(KnownVariables.NugetHttpTimeout);
             if (string.IsNullOrWhiteSpace(rawTimeout))

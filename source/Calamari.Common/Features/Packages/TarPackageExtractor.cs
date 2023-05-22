@@ -5,10 +5,7 @@ using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 using SharpCompress.Readers.Tar;
-#if !NET40
 using Polly;
-
-#endif
 
 namespace Calamari.Common.Features.Packages
 {
@@ -52,9 +49,6 @@ namespace Calamari.Common.Features.Packages
 
         void ExtractEntry(string directory, TarReader reader)
         {
-#if NET40
-            reader.WriteEntryToDirectory(directory, new PackageExtractionOptions(log));
-#else
             var extractAttempts = 10;
             Policy.Handle<IOException>()
                 .WaitAndRetry(
@@ -68,7 +62,6 @@ namespace Calamari.Common.Features.Packages
                 {
                     reader.WriteEntryToDirectory(directory, new PackageExtractionOptions(log));
                 });
-#endif
         }
 
         protected virtual Stream GetCompressionStream(Stream stream)

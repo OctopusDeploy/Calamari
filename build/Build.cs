@@ -198,7 +198,7 @@ namespace Calamari.Build
 
                       var nugetVersion = NugetVersion.Value;
                       DoPublish(RootProjectName,
-                                OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.Net60,
+                                OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
                                 nugetVersion);
                       DoPublish(RootProjectName,
                                 OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
@@ -235,7 +235,7 @@ namespace Calamari.Build
         async Task PublishCalamariProjects(List<Project> projects)
         {
             // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
-            // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
+            // eg:  net452, net48 vs netcoreapp3.1, net5.0, net6.0
             bool IsCrossPlatform(string targetFramework) => targetFramework.Contains('.');
 
             var calamariPackages = projects
@@ -335,7 +335,7 @@ namespace Calamari.Build
                                 var packageActions = new List<Action>
                                 {
                                     () => DoPackage(RootProjectName,
-                                                    OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.Net60,
+                                                    OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
                                                     nugetVersion),
                                     () => DoPackage(RootProjectName,
                                                     OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
