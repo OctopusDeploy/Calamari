@@ -13,6 +13,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Testing;
@@ -223,7 +224,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public void ExecutionWithEKS_IAMAuthenticator()
         {
             InstallTools(InstallAwsCli);
-            
+
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
@@ -236,7 +237,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrapper = CreateWrapper();
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
         }
-        
+
         [Test]
         [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
         [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
@@ -258,7 +259,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrapper = CreateWrapper();
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
         }
-        
+
         [Test]
         public void ExecutionWithGoogleCloudAccount_WhenZoneIsProvided()
         {
@@ -273,7 +274,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrapper = CreateWrapper();
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
         }
-        
+
         [Test]
         public void ExecutionWithGoogleCloudAccount_WhenRegionIsProvided()
         {
@@ -288,7 +289,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrapper = CreateWrapper();
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
         }
-        
+
         [Test]
         public void ExecutionWithGoogleCloudAccount_WhenBothZoneAndRegionAreProvided()
         {
@@ -304,7 +305,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrapper = CreateWrapper();
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
         }
-        
+
         [Test]
         public void ExecutionWithGoogleCloudAccount_WhenNeitherZoneOrRegionAreProvided()
         {
@@ -412,7 +413,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 Variables = variables;
             }
-            
+
             public CommandResult Execute(CommandLineInvocation invocation)
             {
                 // If were running an aws command (we check the version and get the eks token endpoint) or checking it's location i.e. 'where aws' we want to run the actual command result.
@@ -420,14 +421,14 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     ExecuteCommand(invocation, installTools.AwsCliExecutable);
                 }
-                
+
                 if (new[] { "kubectl", "kubectl.exe" }.Contains(invocation.Executable) && invocation.Arguments.Contains("version --client --output=json"))
                 {
                     ExecuteCommand(invocation, invocation.Executable);
                 }
-                
+
                 // We only want to output executable string. eg. ExecuteCommandAndReturnOutput("where", "kubectl.exe")
-                if (new[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe" }.Contains(invocation.Arguments)) 
+                if (new[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe" }.Contains(invocation.Arguments))
                     invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));
                 return new CommandResult(invocation.ToString(), 0);
             }
@@ -443,7 +444,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     OutputToLog = false,
                     AdditionalInvocationOutputSink = captureCommandOutput
                 };
-                    
+
                 var commandLineRunner = new CommandLineRunner(new SilentLog(), Variables);
                 commandLineRunner.Execute(installedToolInvocation);
                 foreach (var message in captureCommandOutput.AllMessages)

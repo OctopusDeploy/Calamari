@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.ServiceMessages;
@@ -84,9 +86,18 @@ namespace Calamari.Common.Plumbing.Logging
     {
         readonly object sync = new object();
         string? stdOutMode;
+        readonly Dictionary<string, string> redactionMap = new Dictionary<string, string>();
 
         protected abstract void StdOut(string message);
         protected abstract void StdErr(string message);
+
+        protected string ProcessRedactions(string message)
+        {
+            lock (sync)
+            {
+                return redactionMap.Aggregate(message, (current, pair) => current.Replace(pair.Key, pair.Value));
+            }
+        }
 
         void SetMode(string mode)
         {
@@ -96,12 +107,20 @@ namespace Calamari.Common.Plumbing.Logging
             stdOutMode = mode;
         }
 
+        public void AddValueToRedact(string value, string replacement)
+        {
+            lock (sync)
+            {
+                redactionMap[value] = replacement;
+            }
+        }
+
         public virtual void Verbose(string message)
         {
             lock (sync)
             {
                 SetMode("verbose");
-                StdOut(message);
+                StdOut(ProcessRedactions(message));
             }
         }
 
@@ -115,7 +134,7 @@ namespace Calamari.Common.Plumbing.Logging
             lock (sync)
             {
                 SetMode("default");
-                StdOut(message);
+                StdOut(ProcessRedactions(message));
             }
         }
 
@@ -129,7 +148,7 @@ namespace Calamari.Common.Plumbing.Logging
             lock (sync)
             {
                 SetMode("warning");
-                StdOut(message);
+                StdOut(ProcessRedactions(message));
             }
         }
 
@@ -142,7 +161,7 @@ namespace Calamari.Common.Plumbing.Logging
         {
             lock (sync)
             {
-                StdErr(message);
+                StdErr(ProcessRedactions(message));
             }
         }
 
