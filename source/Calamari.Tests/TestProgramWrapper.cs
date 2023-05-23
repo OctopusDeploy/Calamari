@@ -10,7 +10,7 @@ namespace Calamari.Tests
         //Calamari project we only get the dll, not the exe
         public static int Main(string[] args)
         {
-            return new TestCalamariRunner(ConsoleLog.Instance).Execute(args);
+            return new TestProgram(ConsoleLog.Instance).Execute(args);
         }
     }
 }

@@ -13,11 +13,11 @@ using Calamari.Testing.Helpers;
 
 namespace Calamari.Tests.Helpers
 {
-    class TestCalamariRunner : CalamariRunner
+    class TestProgram : Program
     {
         private bool registerTestAssembly = true;
 
-        public TestCalamariRunner(ILog log = null) : base(log = log ?? new InMemoryLog())
+        public TestProgram(ILog log = null) : base(log = log ?? new InMemoryLog())
         {
             TestLog = log as InMemoryLog;
         }
@@ -41,7 +41,7 @@ namespace Calamari.Tests.Helpers
 
         protected override Assembly GetProgramAssemblyToRegister()
         {
-            return typeof(CalamariRunner).Assembly;
+            return typeof(Program).Assembly;
         }
 
         protected override IEnumerable<Assembly> GetAllAssembliesToRegister()
@@ -49,7 +49,7 @@ namespace Calamari.Tests.Helpers
             var allAssemblies = base.GetAllAssembliesToRegister();
             if (registerTestAssembly)
             {
-                allAssemblies = allAssemblies.Concat(new[] { typeof(TestCalamariRunner).Assembly });
+                allAssemblies = allAssemblies.Concat(new[] { typeof(TestProgram).Assembly });
             }
 
             return allAssemblies;

@@ -17,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Commands
         [Test]
         public void RunScript()
         {
-            var program = new TestCalamariRunner();
+            var program = new TestProgram();
             var retCode = program.RunStubCommand();
 
             retCode.Should().Be(0);
