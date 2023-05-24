@@ -29,8 +29,8 @@ using Calamari.Azure;
 
 namespace Calamari
 {
-    public class Program : CalamariFlavourProgram {
-
+    public class Program : CalamariFlavourProgram
+    {
         protected Program(ILog log) : base(log)
         {
         }
@@ -84,6 +84,8 @@ namespace Calamari
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
+
+            builder.RegisterAssemblyModules(assembliesToRegister);
 
             builder.RegisterAssemblyTypes(assembliesToRegister)
                    .AssignableTo<IKubernetesDiscoverer>()
