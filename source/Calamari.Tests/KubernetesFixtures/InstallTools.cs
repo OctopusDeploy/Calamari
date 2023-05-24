@@ -210,7 +210,7 @@ namespace Calamari.Tests.KubernetesFixtures
                         var downloadUrl = GetGcloudDownloadLink(tuple.version);
                         var fileName = GetGcloudZipFileName(tuple.version);
 
-                        await DownloadGcloud(fileName,
+                        await DownloadAndExtractToDestination(fileName,
                             client,
                             downloadUrl,
                             destinationDirectoryName);
@@ -224,19 +224,19 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             using (var client = new HttpClient())
             {
-                GcloudExecutable = await DownloadCli("kubelogin",
+                KubeloginExecutable = await DownloadCli("kubelogin",
                                                      () => Task.FromResult<(string, string)>(("v0.0.25", string.Empty)),
                                                      async (destinationDirectoryName, tuple) =>
                                                      {
                                                          var downloadUrl = GetKubeloginDownloadLink(tuple.version);
                                                          var fileName = GetKubeloginZipFileName();
 
-                                                         await DownloadGcloud(fileName,
+                                                         await DownloadAndExtractToDestination(fileName,
                                                                               client,
                                                                               downloadUrl,
                                                                               destinationDirectoryName);
 
-                                                         return GetGcloudExecutablePath(destinationDirectoryName);
+                                                         return GetKubeloginExecutablePath(destinationDirectoryName);
                                                      });
             }
         } 
@@ -353,10 +353,10 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             if (CalamariEnvironment.IsRunningOnNix)
             {
-                return $"https://github.com/Azure/kubelogin/releases/download/${currentVersion}";
+                return $"https://github.com/Azure/kubelogin/releases/download/{currentVersion}/kubelogin-linux-amd64.zip";
             }
 
-            return $"https://github.com/Azure/kubelogin/releases/download/${currentVersion}";
+            return $"https://github.com/Azure/kubelogin/releases/download/{currentVersion}/kubelogin-win-amd64.zip";
         }
 
         public string GetKubeloginZipFileName()
@@ -387,6 +387,16 @@ namespace Calamari.Tests.KubernetesFixtures
             else
                 executableName = "gcloud";
             return Path.Combine(extractPath, "google-cloud-sdk", "bin", executableName);
+        }
+
+        static string GetKubeloginExecutablePath(string extractPath)
+        {
+            var executableName = string.Empty;
+            if (CalamariEnvironment.IsRunningOnWindows)
+                executableName = "kubelogin.exe";
+            else
+                executableName = "kubelogin";
+            return Path.Combine(extractPath, "bin", "windows_amd64", executableName);
         }
 
         static async Task Download(string path,
@@ -423,7 +433,7 @@ namespace Calamari.Tests.KubernetesFixtures
             return $"{downloadBaseUrl}{fileName}";
         }
 
-        static async Task DownloadGcloud(string fileName,
+        static async Task DownloadAndExtractToDestination(string fileName,
                                          HttpClient client,
                                          string downloadUrl,
                                          string destination)

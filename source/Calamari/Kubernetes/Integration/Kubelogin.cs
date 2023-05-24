@@ -39,7 +39,7 @@ namespace Calamari.Kubernetes.Integration
                 "-l",
                 "azurecli",
                 "--kubeconfig",
-                $"{kubeConfigPath}"
+                $"\"{kubeConfigPath}\"",
             });
 
             ExecuteCommandAndAssertSuccess(arguments.ToArray());
