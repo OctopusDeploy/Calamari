@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Calamari.Azure;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.FileSystem;
@@ -33,7 +34,12 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected override IEnumerable<string> ToolsToAddToPath(InstallTools tools)
         {
-            yield break;
+            yield return tools.KubeloginExecutable;
+        }
+        
+        protected override async Task InstallOptionalTools(InstallTools tools)
+        {
+            await tools.InstallKubelogin();
         }
 
         protected override void ExtractVariablesFromTerraformOutput(JObject jsonOutput)
