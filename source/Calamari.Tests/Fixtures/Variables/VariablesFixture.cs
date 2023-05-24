@@ -22,8 +22,10 @@ namespace Calamari.Tests.Fixtures.Variables
             const string rawVariableValue = "The environment is #{Octopus.Environment.Name}";
             variables.Set(variableName, rawVariableValue);
 
-            var program = new TestProgram(new InMemoryLog());
-            program.VariablesOverride = variables;
+            var program = new TestProgram
+            {
+                VariablesOverride = variables
+            };
             program.RunStubCommand();
 
             var messages = program.TestLog.Messages;

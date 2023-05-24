@@ -22,12 +22,14 @@ using Calamari.Kubernetes.Commands.Discovery;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
+#if !NET40
+using Calamari.Aws.Deployment;
+using Calamari.Azure;
+#endif
 
 namespace Calamari
 {
-    public class Program : CalamariFlavourProgram
-    {
-        List<string> extensions;
+    public class Program : CalamariFlavourProgram {
 
         protected Program(ILog log) : base(log)
         {
@@ -35,7 +37,12 @@ namespace Calamari
 
         public static int Main(string[] args)
         {
-            return new Program(ConsoleLog.Instance).Run(args);
+            return new Program(ConsoleLog.Instance).Execute(args);
+        }
+
+        public int Execute(params string[] args)
+        {
+            return Run(args);
         }
 
         protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
@@ -54,10 +61,6 @@ namespace Calamari
 
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
-            // Setting extensions here as in the new Modularity world we don't register extensions
-            // and GetAllAssembliesToRegister doesn't get passed CommonOptions
-            extensions = options.Extensions;
-
             base.ConfigureContainer(builder, options);
 
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
@@ -105,8 +108,14 @@ namespace Calamari
 
         IEnumerable<Assembly> GetExtensionAssemblies()
         {
-            foreach (var extension in extensions)
-                yield return Assembly.Load(extension) ?? throw new CommandException($"Could not find the extension {extension}");
+#if !NET40
+            //Calamari.Aws
+            yield return typeof(AwsSpecialVariables).Assembly;
+            //Calamari.Azure
+            yield return typeof(ServicePrincipalAccount).Assembly;
+#else
+                return Enumerable.Empty<Assembly>();
+#endif
         }
 
         protected override IEnumerable<Assembly> GetAllAssembliesToRegister()
@@ -124,14 +133,6 @@ namespace Calamari
             {
                 yield return extensionAssembly;
             }
-        }
-    }
-
-    static class ExtensionMethods
-    {
-        public static bool HasAttribute<T>(this Type type) where T : Attribute
-        {
-            return type.GetCustomAttributes(false).Any(a => a is T);
         }
     }
 }

@@ -10,6 +10,11 @@ namespace Calamari.Aws.Deployment
     {
         public const string IamCapabilities = "Octopus.Action.Aws.IamCapabilities";
 
+        public static class Authentication
+        {
+            public static readonly string UseInstanceRole = "Octopus.Action.AwsAccount.UseInstanceRole";
+        }
+
         public static class S3
         {
             public const string FileSelections = "Octopus.Action.Aws.S3.FileSelections";
@@ -25,7 +30,7 @@ namespace Calamari.Aws.Deployment
             public const string TemplateParametersRaw = "Octopus.Action.Aws.CloudFormationTemplateParametersRaw";
             public const string RoleArn = "Octopus.Action.Aws.CloudFormation.RoleArn";
             public const string Tags = "Octopus.Action.Aws.CloudFormation.Tags";
-            
+
             public static class Changesets
             {
                 public const string Feature = "Octopus.Features.CloudFormation.ChangeSet.Feature";
