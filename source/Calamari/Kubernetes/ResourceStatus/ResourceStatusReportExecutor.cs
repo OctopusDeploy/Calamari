@@ -13,7 +13,7 @@ namespace Calamari.Kubernetes.ResourceStatus
     public class ResourceStatusReportExecutor
     {
         private const int PollingIntervalSeconds = 2;
-        
+
         private readonly IVariables variables;
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
@@ -27,7 +27,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.statusChecker = statusChecker;
         }
 
-        public void ReportStatus(string workingDirectory, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars = null)
+        public void ReportStatus(string workingDirectory, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars)
         {
             var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
@@ -38,7 +38,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
             var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
             var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
-            
+
             var manifests = ReadManifestFiles().ToList();
             var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
 
