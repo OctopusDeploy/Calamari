@@ -31,13 +31,15 @@ namespace Calamari.Kubernetes.Integration
             return true;
         }
 
-        public void ConfigureAksKubeLogin()
+        public void ConfigureAksKubeLogin(string kubeConfigPath)
         {
             var arguments = new List<string>(new[]
             {
                 "convert-kubeconfig",
                 "-l",
-                "azurecli"
+                "azurecli",
+                "--kubeconfig",
+                $"{kubeConfigPath}"
             });
 
             ExecuteCommandAndAssertSuccess(arguments.ToArray());
