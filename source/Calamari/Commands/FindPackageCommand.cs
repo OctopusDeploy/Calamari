@@ -94,7 +94,7 @@ namespace Calamari.Commands
                 log.VerboseFormat("  - {0}: {1}", nearestPackage.Version, nearestPackage.FullFilePath);
                 LogPackageFound(
                     nearestPackage.PackageId,
-                    nearestPackage.Version,
+                    nearestPackage.FileVersion,
                     nearestPackage.Hash,
                     nearestPackage.Extension,
                     nearestPackage.FullFilePath,
