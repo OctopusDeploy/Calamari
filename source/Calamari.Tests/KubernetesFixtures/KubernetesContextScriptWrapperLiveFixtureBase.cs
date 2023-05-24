@@ -186,28 +186,15 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 var folderPath = Path.Combine(dir.DirectoryPath, "TestFolder");
                 Directory.CreateDirectory(folderPath);
-                var currentDirectory = Environment.CurrentDirectory;
-                Environment.CurrentDirectory = folderPath;
+                variables.Add(KnownVariables.OriginalPackageDirectoryPath, folderPath);
 
-                try
-                {
-                    addFilesAction?.Invoke(dir);
+                addFilesAction?.Invoke(dir);
 
-                    var output = func();
+                var output = func();
 
-                    output.AssertSuccess();
+                output.AssertSuccess();
 
-                    WriteLogMessagesToTestOutput();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
-                }
-                finally
-                {
-                    Environment.CurrentDirectory = currentDirectory;
-                }
+                WriteLogMessagesToTestOutput();
             }
         }
 

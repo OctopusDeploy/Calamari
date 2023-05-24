@@ -74,7 +74,8 @@ namespace Calamari.Commands
             var replacer = new ConfigurationVariablesReplacer(variables, log);
 
             ValidateArguments();
-            WriteVariableScriptToFile();
+            var deployment = runningDeploymentFactory(packageFile);
+            WriteVariableScriptToFile(deployment);
 
             var conventions = new List<IConvention>
             {
@@ -89,7 +90,6 @@ namespace Calamari.Commands
                 new ExecuteScriptConvention(scriptEngine, commandLineRunner)
             };
 
-            var deployment = runningDeploymentFactory(packageFile);
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             conventionRunner.RunConventions();
@@ -98,7 +98,7 @@ namespace Calamari.Commands
             return exitCode.Value;
         }
 
-        void WriteVariableScriptToFile()
+        void WriteVariableScriptToFile(RunningDeployment deployment)
         {
             if (!TryGetScriptFromVariables(out var scriptBody, out var relativeScriptFile, out var scriptSyntax) &&
                 !WasProvided(variables.Get(ScriptVariables.ScriptFileName)))
@@ -109,7 +109,7 @@ namespace Calamari.Commands
 
             if (WasProvided(scriptBody))
             {
-                var scriptFile = Path.GetFullPath(relativeScriptFile);
+                var scriptFile = Path.Combine(deployment.CurrentDirectory, relativeScriptFile);
 
                 //Set the name of the script we are about to create to the variables collection for replacement later on
                 variables.Set(ScriptVariables.ScriptFileName, relativeScriptFile);

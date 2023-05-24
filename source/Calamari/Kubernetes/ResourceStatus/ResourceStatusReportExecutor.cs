@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.FileSystem;
@@ -39,7 +41,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
             var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
 
-            var manifests = ReadManifestFiles().ToList();
+            var manifests = ReadManifestFiles(workingDirectory).ToList();
             var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
 
             var secret = GetSecret(defaultNamespace);
@@ -84,19 +86,22 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
         }
 
-        private IEnumerable<string> ReadManifestFiles()
+        private IEnumerable<string> ReadManifestFiles(string workingDirectory)
         {
-            return from file in GetManifestFileNames() where fileSystem.FileExists(file) select fileSystem.ReadFile(file);
+            foreach (var file in GetManifestFileNames())
+            {
+                var filePath = Path.Combine(workingDirectory, file);
+                if (fileSystem.FileExists(filePath)) yield return fileSystem.ReadFile(filePath);
+            }
+
+            foreach (var file in GetGroupedYamlDirectories(workingDirectory))
+            {
+                if (fileSystem.FileExists(file)) yield return fileSystem.ReadFile(file);
+            }
         }
 
         private IEnumerable<string> GetManifestFileNames()
         {
-            var groupedDirectories = variables.Get(SpecialVariables.GroupedYamlDirectories);
-            if (groupedDirectories != null)
-            {
-                return groupedDirectories.Split(';').SelectMany(d => fileSystem.EnumerateFiles(d));
-            }
-
             var customResourceFileName =
                 variables.Get(SpecialVariables.CustomResourceYamlFileName);
 
@@ -104,6 +109,14 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 "secret.yml", customResourceFileName, "deployment.yml", "service.yml", "ingress.yml",
             };
+        }
+
+        private IEnumerable<string> GetGroupedYamlDirectories(string workingDirectory)
+        {
+            var groupedDirectories = variables.Get(SpecialVariables.GroupedYamlDirectories);
+            return groupedDirectories != null
+                ? groupedDirectories.Split(';').SelectMany(d => fileSystem.EnumerateFiles(Path.Combine(workingDirectory, d)))
+                : Enumerable.Empty<string>();
         }
 
         private ResourceIdentifier GetConfigMap(string defaultNamespace)
