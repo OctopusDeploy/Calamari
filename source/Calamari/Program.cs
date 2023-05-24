@@ -37,7 +37,12 @@ namespace Calamari
 
         public static int Main(string[] args)
         {
-            return new Program(ConsoleLog.Instance).Run(args);
+            return new Program(ConsoleLog.Instance).Execute(args);
+        }
+
+        public int Execute(params string[] args)
+        {
+            return Run(args);
         }
 
         protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)

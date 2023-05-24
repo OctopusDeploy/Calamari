@@ -18,7 +18,7 @@ namespace Calamari.Kubernetes.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            statusReportExecutor.ReportStatus(deployment.CurrentDirectory, commandLineRunner);
+            statusReportExecutor.ReportStatus(deployment.CurrentDirectory, commandLineRunner, deployment.EnvironmentVariables);
         }
     }
 }

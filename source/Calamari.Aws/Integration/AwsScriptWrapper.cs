@@ -20,10 +20,14 @@ namespace Calamari.Aws.Integration
         readonly IVariables variables;
         public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
 
-        bool IScriptWrapper.IsEnabled(ScriptSyntax syntax) =>
-            variables.Get(SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount" ||
-            string.Equals(variables.Get(AwsSpecialVariables.Authentication.UseInstanceRole), bool.TrueString,
-                StringComparison.InvariantCultureIgnoreCase);
+        bool IScriptWrapper.IsEnabled(ScriptSyntax syntax)
+        {
+            var accountType = variables.Get(SpecialVariables.Account.AccountType);
+            var useAwsInstanceRole = variables.Get(AwsSpecialVariables.Authentication.UseInstanceRole);
+            return accountType == "AmazonWebServicesAccount" ||
+                string.Equals(useAwsInstanceRole, bool.TrueString, StringComparison.InvariantCultureIgnoreCase);
+        }
+
         public IScriptWrapper NextWrapper { get; set; }
 
         public Func<Task<bool>> VerifyAmazonLogin { get; set; }
