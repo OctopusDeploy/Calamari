@@ -157,10 +157,11 @@ namespace Calamari.Common.Features.Packages
         {
             var fileName = Path.GetFileName(path) ?? "";
 
-            if (!TryParseEncodedFileName(fileName, out var packageId, out var version, out var extension) &&
-                !TryParseUnsafeFileName(fileName, out packageId, out version, out extension))
+            if (!TryParseEncodedFileName(fileName, out var packageId, out var fileVersion, out var extension) &&
+                !TryParseUnsafeFileName(fileName, out packageId, out fileVersion, out extension))
                 throw new Exception($"Unexpected file format in {fileName}.\nExpected Octopus cached file format: `<PackageId>{SectionDelimiter}<Version>{SectionDelimiter}<CacheBuster>.<Extension>` or `<PackageId>.<SemverVersion>.<Extension>`");
 
+            var version = fileVersion;
             //TODO: Extract... Obviously _could_ be an issue for .net core
             if (extension.Equals(".nupkg", StringComparison.OrdinalIgnoreCase) && File.Exists(path))
             {
@@ -172,7 +173,7 @@ namespace Calamari.Common.Features.Packages
                 packageId = metaData.Id;
             }
 
-            return new PackageFileNameMetadata(packageId, version, extension);
+            return new PackageFileNameMetadata(packageId, version, fileVersion, extension);
         }
         
         public static bool TryMatchTarExtensions(string fileName, out string strippedFileName, out string extension)
