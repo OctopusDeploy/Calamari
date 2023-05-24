@@ -103,7 +103,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         private IEnumerable<string> GetManifestFileNames()
         {
             var customResourceFileName =
-                variables.Get(SpecialVariables.CustomResourceYamlFileName);
+                variables.Get(SpecialVariables.CustomResourceYamlFileName) ?? "customresource.yml";
 
             return new[]
             {
