@@ -52,11 +52,5 @@
         "terminationGracePeriodSeconds": 30
       }
     }
-  },
-  "status": {
-    "observedGeneration": 1,
-    "replicas": 3,
-    "unavailableReplicas": 3,
-    "updatedReplicas": 3
   }
 }
