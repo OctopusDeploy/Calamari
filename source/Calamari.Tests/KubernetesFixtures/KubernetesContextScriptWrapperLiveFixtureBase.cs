@@ -89,9 +89,9 @@ namespace Calamari.Tests.KubernetesFixtures
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
 
-        protected void DeployWithScriptAndVerifySuccess(Action<TemporaryDirectory> addFilesAction = null)
+        protected void DeployWithScriptAndVerifySuccess(Func<string, string> addFilesOrPackageFunc = null)
         {
-            SetupTempDirectoryAndVerifyResult(addFilesAction, d =>
+            SetupTempDirectoryAndVerifyResult(addFilesOrPackageFunc, (d, p) =>
             {
                 var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts");
                 variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash),
@@ -99,26 +99,27 @@ namespace Calamari.Tests.KubernetesFixtures
                 variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell),
                     File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1")));
 
-                return ExecuteCommand(RunScriptCommand.Name, d);
+                return ExecuteCommand(RunScriptCommand.Name, d, p);
             });
         }
 
         protected void ExecuteCommandAndVerifySuccess(string commandName,
-            Action<TemporaryDirectory> addFilesAction = null)
+            Func<string, string> addFilesOrPackageFunc = null)
         {
-            SetupTempDirectoryAndVerifyResult(addFilesAction, d => ExecuteCommand(commandName, d));
+            SetupTempDirectoryAndVerifyResult(addFilesOrPackageFunc, (d, p) => ExecuteCommand(commandName, d, p));
         }
 
-        private void SetupTempDirectoryAndVerifyResult(Action<TemporaryDirectory> addFilesAction, Func<string, CalamariResult> func)
+        private void SetupTempDirectoryAndVerifyResult(Func<string, string> addFilesOrPackageFunc, Func<string, string, CalamariResult> func)
         {
             using (var dir = TemporaryDirectory.Create())
             {
-                var folderPath = Path.Combine(dir.DirectoryPath, "TestFolder");
+                var directoryPath = dir.DirectoryPath;
+                var folderPath = Path.Combine(directoryPath, "TestFolder");
                 Directory.CreateDirectory(folderPath);
 
-                addFilesAction?.Invoke(dir);
+                var packagePath = addFilesOrPackageFunc?.Invoke(directoryPath);
 
-                var output = func(folderPath);
+                var output = func(directoryPath, packagePath);
 
                 output.AssertSuccess();
 
@@ -126,7 +127,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        CalamariResult ExecuteCommand(string command, string workingDirectory)
+        CalamariResult ExecuteCommand(string command, string workingDirectory, string packagePath)
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
@@ -137,6 +138,11 @@ namespace Calamari.Tests.KubernetesFixtures
                                                 .WithEnvironmentVariables(GetEnvironments())
                                                 .WithWorkingDirectory(workingDirectory)
                                                 .OutputToLog(true);
+
+                if (packagePath != null)
+                {
+                    calamariCommand.Argument("package", packagePath);
+                }
 
                 return Invoke(calamariCommand, variables, Log);
             }

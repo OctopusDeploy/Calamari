@@ -17,6 +17,8 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Common;
 using File = System.IO.File;
 using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
 
@@ -27,6 +29,9 @@ namespace Calamari.Tests.KubernetesFixtures
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class KubernetesContextScriptWrapperLiveFixtureEks: KubernetesContextScriptWrapperLiveFixture
     {
+        const string simpleDeploymentResource =
+            "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80";
+
         string eksClientID;
         string eksSecretKey;
         string eksClusterEndpoint;
@@ -84,13 +89,14 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [TestCase(true)]
-        [TestCase(false)]
-        public void DeployRawYaml_WithRawYamlDeploymentScriptOrCommand_OutputShouldIndicateSuccessfulDeployment(bool runAsScript)
+        [TestCase(true, true)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        [TestCase(false, false)]
+        public void DeployRawYaml_WithRawYamlDeploymentScriptOrCommand_OutputShouldIndicateSuccessfulDeployment(bool runAsScript, bool usePackage)
         {
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
-            const string customResourceFileName = "customresource.yml";
 
             variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
             variables.Set(KubernetesSpecialVariables.ClusterUrl, eksClusterEndpoint);
@@ -112,22 +118,57 @@ namespace Calamari.Tests.KubernetesFixtures
 
             variables.SetFeatureToggles(FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
 
-            void AddCustomResourceFile(TemporaryDirectory dir)
+            string CreateResourceYamlFile(string directory, string fileName, string content)
             {
-                var pathToCustomResource = Path.Combine(dir.DirectoryPath, "TestFolder", customResourceFileName);
-                File.WriteAllText(pathToCustomResource, "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80");
+                var pathToCustomResource = Path.Combine(directory, fileName);
+                File.WriteAllText(pathToCustomResource, content);
+                return pathToCustomResource;
+            }
+
+            string AddCustomResourceFile(string directory)
+            {
+                const string customResourceFileName = "customresource.yml";
+                CreateResourceYamlFile(directory, customResourceFileName, simpleDeploymentResource);
                 variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", customResourceFileName);
+                return null;
+            }
+
+            string AddPackage(string directory)
+            {
+                const string resourceFileName = "deployment.yml";
+                const string resourcePackageFileName = "package.1.0.0.zip";
+                var pathToCustomResource = CreateResourceYamlFile(directory, resourceFileName, simpleDeploymentResource);
+                var pathInPackage = Path.Combine("deployments", resourceFileName);
+                var pathToPackage = Path.Combine(directory, resourcePackageFileName);
+                using (var archive = ZipArchive.Create())
+                {
+                    using (var readStream = File.OpenRead(pathToCustomResource))
+                    {
+                        archive.AddEntry(pathInPackage, readStream);
+                        using (var writeStream = File.OpenWrite(pathToPackage))
+                        {
+                            archive.SaveTo(writeStream, CompressionType.Deflate);
+                        }
+                    }
+                }
+                File.Delete(pathToCustomResource);
+                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", pathInPackage);
+                return pathToPackage;
             }
 
             if (runAsScript)
             {
-                DeployWithScriptAndVerifySuccess(AddCustomResourceFile);
+                DeployWithScriptAndVerifySuccess(usePackage
+                    ? (Func<string, string>)AddPackage
+                    : AddCustomResourceFile);
             }
             else
             {
-                ExecuteCommandAndVerifySuccess(KubernetesApplyRawYamlCommand.Name, AddCustomResourceFile);
+                ExecuteCommandAndVerifySuccess(KubernetesApplyRawYamlCommand.Name,
+                    usePackage
+                    ? (Func<string, string>)AddPackage
+                    : AddCustomResourceFile);
             }
-
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
