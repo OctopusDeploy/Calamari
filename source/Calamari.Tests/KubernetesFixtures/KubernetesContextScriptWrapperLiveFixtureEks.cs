@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Assent;
 using Calamari.Aws.Kubernetes.Discovery;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Deployment;
 using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Commands;
