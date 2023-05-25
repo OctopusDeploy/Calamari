@@ -116,8 +116,6 @@ namespace Calamari.Tests.KubernetesFixtures
                 FeatureToggle.KubernetesDeploymentStatusFeatureToggle,
                 FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
 
-            var fileSystem = new TestCalamariPhysicalFileSystem();
-
             void AddCustomResourceFile(TemporaryDirectory dir)
             {
                 var pathToCustomResource = Path.Combine(dir.DirectoryPath, "TestFolder", customResourceFileName);
@@ -127,13 +125,11 @@ namespace Calamari.Tests.KubernetesFixtures
 
             if (runAsScript)
             {
-                var wrapper = new[] { CreateWrapper(fileSystem), CreateK8sResourceStatusReporterScriptWrapper(fileSystem) };
-
-                DeployWithScriptAndVerifySuccess(wrapper, fileSystem, AddCustomResourceFile);
+                DeployWithScriptAndVerifySuccess(AddCustomResourceFile);
             }
             else
             {
-                DeployWithRawYamlCommandAndVerifySuccess(fileSystem, AddCustomResourceFile);
+                DeployWithRawYamlCommandAndVerifySuccess(AddCustomResourceFile);
             }
 
 
@@ -165,14 +161,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
             rawLogs.Should().ContainSingle(m =>
                 m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
-        }
-
-        private IScriptWrapper CreateK8sResourceStatusReporterScriptWrapper(ICalamariFileSystem fileSystem)
-        {
-            return new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, Log,
-                fileSystem,
-                new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
-                    new ResourceUpdateReporter(variables, Log), Log)));
         }
 
         [Test]

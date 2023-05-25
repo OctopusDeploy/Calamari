@@ -20,7 +20,7 @@ namespace Calamari.Kubernetes.Commands
     [Command(Name, Description = "Apply Raw Yaml to Kubernetes Cluster")]
     public class KubernetesApplyRawYamlCommand : Command
     {
-        private const string Name = "kubernetes-apply-raw-yaml";
+        public const string Name = "kubernetes-apply-raw-yaml";
 
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         private readonly IVariables variables;

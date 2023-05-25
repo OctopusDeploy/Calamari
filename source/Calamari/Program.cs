@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Autofac.Features.Metadata;
-using Calamari.Aws.Integration;
 using Calamari.Commands;
 using Calamari.Common;
 using Calamari.Common.Commands;
@@ -104,7 +103,6 @@ namespace Calamari
             builder.RegisterType<StructuredConfigurationVariablesConvention>().AsSelf();
             builder.RegisterType<StructuredConfigurationVariablesBehaviour>().AsSelf();
             builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
-            builder.RegisterType<AwsAuthConvention>().AsSelf();
             builder.RegisterType<KubernetesAuthContextConvention>().AsSelf();
             builder.RegisterType<GatherAndApplyRawYamlConvention>().AsSelf();
             builder.RegisterType<ResourceStatusReportConvention>().AsSelf();

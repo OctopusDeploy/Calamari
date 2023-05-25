@@ -2,35 +2,20 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Commands;
-using Calamari.Common.Commands;
-using Calamari.Common.Features.Behaviours;
-using Calamari.Common.Features.ConfigurationTransforms;
-using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.EmbeddedResources;
-using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.Features.StructuredVariables;
-using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
-using Calamari.Common.Plumbing.Deployment.Journal;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands;
-using Calamari.Kubernetes.Conventions;
-using Calamari.Kubernetes.Integration;
-using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
@@ -80,7 +65,7 @@ namespace Calamari.Tests.KubernetesFixtures
         CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName) =>
             ExecuteScript(new[] { wrapper }, scriptName);
 
-        CalamariResult ExecuteScript(IReadOnlyList<IScriptWrapper> additionalWrappers, string scriptName, ICalamariFileSystem fileSystem = null)
+        CalamariResult ExecuteScript(IReadOnlyList<IScriptWrapper> additionalWrappers, string scriptName)
         {
             var wrappers = new List<IScriptWrapper>(additionalWrappers);
             if (variables.Get(SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
@@ -88,136 +73,11 @@ namespace Calamari.Tests.KubernetesFixtures
                 wrappers.Add(new AwsScriptWrapper(Log, variables));
             }
 
-            var result = fileSystem != null
-                ? ExecuteWithRunScriptCommand(fileSystem, wrappers)
-                : ExecuteDirectlyWithScriptEngine(wrappers, scriptName);
+            var result = ExecuteDirectlyWithScriptEngine(wrappers, scriptName);
 
             WriteLogMessagesToTestOutput();
 
             return result;
-        }
-
-        CalamariResult ExecuteApplyRawYamlCommand(ICalamariFileSystem fileSystem)
-        {
-            var commandLineRunner = CreateCommandLineRunner();
-            var kubectl = new Kubectl(variables, Log, commandLineRunner);
-            var command = new KubernetesApplyRawYamlCommand(new DeploymentJournalWriter(fileSystem),
-                variables,
-                kubectl,
-                d => new DelegateInstallConvention(d),
-                () => CreateSubstituteInFilesConvention(fileSystem),
-                () => CreateConfigurationTransformsConvention(fileSystem),
-                () => CreateConfigurationVariablesConvention(fileSystem),
-                () => CreateStructuredConfigurationVariablesConvention(fileSystem),
-                CreateAwsAuthConventionFactory(),
-                () => CreateKubernetesAuthContextConvention(commandLineRunner, kubectl),
-                () => CreateGatherAndApplyRawYamlConvention(fileSystem, kubectl),
-                () => CreateResourceStatusReportConvention(fileSystem, commandLineRunner, kubectl),
-                (d, c) => new ConventionProcessor(d, c, Log),
-                CreateRunningDeployment(),
-                fileSystem,
-                CreateExtractPackage(fileSystem, commandLineRunner));
-
-            return new CalamariResult(command.Execute(Array.Empty<string>()), new CaptureCommandInvocationOutputSink());
-        }
-
-        CalamariResult ExecuteWithRunScriptCommand(ICalamariFileSystem fileSystem, IEnumerable<IScriptWrapper> scriptWrappers)
-        {
-            var command = new RunScriptCommand(Log,
-                new DeploymentJournalWriter(fileSystem),
-                variables,
-                new ScriptEngine(scriptWrappers),
-                fileSystem,
-                CreateCommandLineRunner(),
-                CreateSubstituteInFiles(fileSystem),
-                CreateStructuredConfigVariablesService(fileSystem),
-                CreateRunningDeployment());
-
-            var result = command.Execute(Array.Empty<string>());
-
-            return new CalamariResult(result, new CaptureCommandInvocationOutputSink());
-        }
-
-        private RunningDeployment.Factory CreateRunningDeployment()
-        {
-            return (p, e) => new RunningDeployment(p, variables,
-                GetEnvironments().Concat(e ?? new Dictionary<string, string>())
-                                 .ToDictionary(x => x.Key, x => x.Value));
-        }
-
-        private ISubstituteInFiles CreateSubstituteInFiles(ICalamariFileSystem fileSystem)
-        {
-            return new SubstituteInFiles(Log, fileSystem, new FileSubstituter(Log, fileSystem), variables);
-        }
-
-        private ResourceStatusReportConvention CreateResourceStatusReportConvention(ICalamariFileSystem fileSystem, CommandLineRunner commandLineRunner, Kubectl kubectl)
-        {
-            return new ResourceStatusReportConvention(new ResourceStatusReportExecutor(variables, Log, fileSystem,
-                new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
-                    new ResourceUpdateReporter(variables, Log), Log)), commandLineRunner, kubectl);
-        }
-
-        private GatherAndApplyRawYamlConvention CreateGatherAndApplyRawYamlConvention(ICalamariFileSystem fileSystem, Kubectl kubectl)
-        {
-            return new GatherAndApplyRawYamlConvention(Log, fileSystem, kubectl);
-        }
-
-        private KubernetesAuthContextConvention CreateKubernetesAuthContextConvention(CommandLineRunner commandLineRunner, Kubectl kubectl)
-        {
-            return new KubernetesAuthContextConvention(Log, commandLineRunner, kubectl);
-        }
-
-        private IAwsAuthConventionFactory CreateAwsAuthConventionFactory()
-        {
-            return new AwsAuthConventionFactory(_ => new AwsAuthConvention(Log, variables));
-        }
-
-        CommandLineRunner CreateCommandLineRunner()
-        {
-            return new CommandLineRunner(Log, variables);
-        }
-
-        ExtractPackage CreateExtractPackage(ICalamariFileSystem fileSystem, CommandLineRunner commandLineRunner)
-        {
-            return new ExtractPackage(new CombinedPackageExtractor(Log, variables, commandLineRunner), fileSystem,
-                variables, Log);
-        }
-
-        StructuredConfigurationVariablesConvention CreateStructuredConfigurationVariablesConvention(
-            ICalamariFileSystem fileSystem)
-        {
-            return new StructuredConfigurationVariablesConvention(
-                new StructuredConfigurationVariablesBehaviour(CreateStructuredConfigVariablesService(fileSystem)));
-        }
-
-        ConfigurationVariablesConvention CreateConfigurationVariablesConvention(ICalamariFileSystem fileSystem)
-        {
-            return new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables,
-                new ConfigurationVariablesReplacer(variables, Log), Log));
-        }
-
-        ConfigurationTransformsConvention CreateConfigurationTransformsConvention(ICalamariFileSystem fileSystem)
-        {
-            return new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables,
-                ConfigurationTransformer.FromVariables(variables, Log), new TransformFileLocator(fileSystem, Log),
-                Log));
-        }
-
-        SubstituteInFilesConvention CreateSubstituteInFilesConvention(ICalamariFileSystem fileSystem)
-        {
-            return new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(CreateSubstituteInFiles(fileSystem)));
-        }
-
-        StructuredConfigVariablesService CreateStructuredConfigVariablesService(ICalamariFileSystem fileSystem)
-        {
-            return new StructuredConfigVariablesService(
-                new PrioritisedList<IFileFormatVariableReplacer>(new IFileFormatVariableReplacer[]
-                {
-                    new JsonFormatVariableReplacer(fileSystem, Log),
-                    new XmlFormatVariableReplacer(fileSystem, Log),
-                    new YamlFormatVariableReplacer(fileSystem, Log),
-                    new PropertiesFormatVariableReplacer(fileSystem, Log)
-                }), variables, fileSystem, Log);
         }
 
         CalamariResult ExecuteDirectlyWithScriptEngine(IReadOnlyList<IScriptWrapper> wrappers, string scriptName)
@@ -227,6 +87,55 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = engine.Execute(new Script(scriptName), variables, commandLineRunner, GetEnvironments());
 
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
+        }
+
+        protected void DeployWithScriptAndVerifySuccess(Action<TemporaryDirectory> addFilesAction = null)
+        {
+            SetupTempDirectoryAndVerifyResult(addFilesAction, () =>
+            {
+                var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts");
+                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash),
+                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.sh")));
+                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell),
+                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1")));
+
+                return ExecuteCommand(RunScriptCommand.Name);
+            });
+        }
+
+        protected void DeployWithRawYamlCommandAndVerifySuccess(Action<TemporaryDirectory> addFilesAction = null)
+        {
+            SetupTempDirectoryAndVerifyResult(addFilesAction, () => ExecuteCommand(KubernetesApplyRawYamlCommand.Name));
+        }
+
+        private void SetupTempDirectoryAndVerifyResult(Action<TemporaryDirectory> addFilesAction, Func<CalamariResult> func)
+        {
+            using (var dir = TemporaryDirectory.Create())
+            {
+                var folderPath = Path.Combine(dir.DirectoryPath, "TestFolder");
+                Directory.CreateDirectory(folderPath);
+                variables.Add(KnownVariables.OriginalPackageDirectoryPath, folderPath);
+
+                addFilesAction?.Invoke(dir);
+
+                var output = func();
+
+                output.AssertSuccess();
+
+                WriteLogMessagesToTestOutput();
+            }
+        }
+
+        CalamariResult ExecuteCommand(string command)
+        {
+            using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
+            {
+                variables.Save(variablesFile.FilePath);
+
+                return InvokeInProcess(Calamari()
+                                       .Action(command)
+                                       .Argument("variables", variablesFile.FilePath));
+            }
         }
 
         protected virtual Dictionary<string, string> GetEnvironments()
@@ -248,45 +157,6 @@ namespace Calamari.Tests.KubernetesFixtures
                     var output = ExecuteScript(wrapper, temp.FilePath);
                     output.AssertSuccess();
                 }
-            }
-        }
-
-        protected void DeployWithScriptAndVerifySuccess(IReadOnlyList<IScriptWrapper> wrappers,
-            ICalamariFileSystem fileSystem, Action<TemporaryDirectory> addFilesAction = null)
-        {
-            SetupTempDirectoryAndVerifyResult(addFilesAction, () =>
-            {
-                var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts");
-                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash),
-                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.sh")));
-                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell),
-                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1")));
-
-                return ExecuteScript(wrappers, null, fileSystem);
-            });
-        }
-
-        protected void DeployWithRawYamlCommandAndVerifySuccess(ICalamariFileSystem fileSystem,
-            Action<TemporaryDirectory> addFilesAction = null)
-        {
-            SetupTempDirectoryAndVerifyResult(addFilesAction, () => ExecuteApplyRawYamlCommand(fileSystem));
-        }
-
-        private void SetupTempDirectoryAndVerifyResult(Action<TemporaryDirectory> addFilesAction, Func<CalamariResult> func)
-        {
-            using (var dir = TemporaryDirectory.Create())
-            {
-                var folderPath = Path.Combine(dir.DirectoryPath, "TestFolder");
-                Directory.CreateDirectory(folderPath);
-                variables.Add(KnownVariables.OriginalPackageDirectoryPath, folderPath);
-
-                addFilesAction?.Invoke(dir);
-
-                var output = func();
-
-                output.AssertSuccess();
-
-                WriteLogMessagesToTestOutput();
             }
         }
 

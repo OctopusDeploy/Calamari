@@ -23,9 +23,10 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Commands
 {
-    [Command("run-script", Description = "Invokes a script")]
+    [Command(Name, Description = "Invokes a script")]
     public class RunScriptCommand : Command
     {
+        public const string Name = "run-script";
         string scriptFileArg;
         string packageFile;
         string scriptParametersArg;
