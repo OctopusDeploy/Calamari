@@ -396,7 +396,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 executableName = "kubelogin.exe";
             else
                 executableName = "kubelogin";
-            return Path.Combine(extractPath, "bin", CalamariEnvironment.IsRunningOnWindows ? "windows_amd64" : "kubelogin-linux-amd64" , executableName);
+            return Path.Combine(extractPath, "bin", CalamariEnvironment.IsRunningOnWindows ? "windows_amd64" : "linux-amd64", executableName);
         }
 
         static async Task Download(string path,
