@@ -361,12 +361,18 @@ namespace Calamari.Tests.KubernetesFixtures
 
         public string GetKubeloginZipFileName()
         {
-            if (CalamariEnvironment.IsRunningOnNix)
+            if (CalamariEnvironment.IsRunningOnWindows)
             {
-                return $"kubelogin-linux-amd64.zip";
+                return $"kubelogin.zip";
             }
 
-            return $"kubelogin.zip";
+            return $"kubelogin-linux-amd64.zip";
+        }
+
+        static string GetKubeloginExecutablePath(string extractPath)
+        {
+            var executableName = CalamariEnvironment.IsRunningOnWindows ? "kubelogin.exe" : "kubelogin";
+            return Path.Combine(extractPath, "bin", CalamariEnvironment.IsRunningOnWindows ? "windows_amd64" : "linux_amd64", executableName);
         }
 
         static string GetGcloudZipFileName(string currentVersion)
@@ -387,16 +393,6 @@ namespace Calamari.Tests.KubernetesFixtures
             else
                 executableName = "gcloud";
             return Path.Combine(extractPath, "google-cloud-sdk", "bin", executableName);
-        }
-
-        static string GetKubeloginExecutablePath(string extractPath)
-        {
-            var executableName = string.Empty;
-            if (CalamariEnvironment.IsRunningOnWindows)
-                executableName = "kubelogin.exe";
-            else
-                executableName = "kubelogin";
-            return Path.Combine(extractPath, "bin", CalamariEnvironment.IsRunningOnWindows ? "windows_amd64" : "linux-amd64", executableName);
         }
 
         static async Task Download(string path,
@@ -477,6 +473,12 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     path = GetAwsCliExecutablePath(destinationDirectoryName);
                 }
+
+                if (toolName == "kubelogin")
+                {
+                    path = GetKubeloginExecutablePath(destinationDirectoryName);
+                }
+
                 if (path == null || !File.Exists(path))
                 {
                     return null;
