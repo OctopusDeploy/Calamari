@@ -100,7 +100,7 @@ namespace Calamari.Tests.KubernetesFixtures
         CalamariResult ExecuteApplyRawYamlCommand(ICalamariFileSystem fileSystem)
         {
             var commandLineRunner = CreateCommandLineRunner();
-            var kubectl = new Kubectl(variables, redactionLog, commandLineRunner);
+            var kubectl = new Kubectl(variables, Log, commandLineRunner);
             var command = new KubernetesApplyRawYamlCommand(new DeploymentJournalWriter(fileSystem),
                 variables,
                 kubectl,
@@ -109,11 +109,11 @@ namespace Calamari.Tests.KubernetesFixtures
                 () => CreateConfigurationTransformsConvention(fileSystem),
                 () => CreateConfigurationVariablesConvention(fileSystem),
                 () => CreateStructuredConfigurationVariablesConvention(fileSystem),
-                CreateAwsAuthConventionFactoryLazy(),
+                CreateAwsAuthConventionFactory(),
                 () => CreateKubernetesAuthContextConvention(commandLineRunner, kubectl),
                 () => CreateGatherAndApplyRawYamlConvention(fileSystem, kubectl),
                 () => CreateResourceStatusReportConvention(fileSystem, commandLineRunner, kubectl),
-                (d, c) => new ConventionProcessor(d, c, redactionLog),
+                (d, c) => new ConventionProcessor(d, c, Log),
                 CreateRunningDeployment(),
                 fileSystem,
                 CreateExtractPackage(fileSystem, commandLineRunner));
@@ -152,25 +152,24 @@ namespace Calamari.Tests.KubernetesFixtures
 
         private ResourceStatusReportConvention CreateResourceStatusReportConvention(ICalamariFileSystem fileSystem, CommandLineRunner commandLineRunner, Kubectl kubectl)
         {
-            return new ResourceStatusReportConvention(new ResourceStatusReportExecutor(variables, redactionLog, fileSystem,
+            return new ResourceStatusReportConvention(new ResourceStatusReportExecutor(variables, Log, fileSystem,
                 new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
-                    new ResourceUpdateReporter(variables, redactionLog), redactionLog)), commandLineRunner, kubectl);
+                    new ResourceUpdateReporter(variables, Log), Log)), commandLineRunner, kubectl);
         }
 
         private GatherAndApplyRawYamlConvention CreateGatherAndApplyRawYamlConvention(ICalamariFileSystem fileSystem, Kubectl kubectl)
         {
-            return new GatherAndApplyRawYamlConvention(redactionLog, fileSystem, kubectl);
+            return new GatherAndApplyRawYamlConvention(Log, fileSystem, kubectl);
         }
 
         private KubernetesAuthContextConvention CreateKubernetesAuthContextConvention(CommandLineRunner commandLineRunner, Kubectl kubectl)
         {
-            return new KubernetesAuthContextConvention(redactionLog, commandLineRunner, kubectl);
+            return new KubernetesAuthContextConvention(Log, commandLineRunner, kubectl);
         }
 
-        private Lazy<AwsAuthConventionFactoryFactory> CreateAwsAuthConventionFactoryLazy()
+        private IAwsAuthConventionFactory CreateAwsAuthConventionFactory()
         {
-            return new Lazy<AwsAuthConventionFactoryFactory>(() =>
-                new AwsAuthConventionFactoryFactory(_ => new AwsAuthConvention(redactionLog, variables)));
+            return new AwsAuthConventionFactory(_ => new AwsAuthConvention(Log, variables));
         }
 
         CommandLineRunner CreateCommandLineRunner()
