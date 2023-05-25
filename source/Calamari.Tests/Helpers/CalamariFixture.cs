@@ -47,31 +47,37 @@ namespace Calamari.Tests.Helpers
             return new CommandLine(octoDiffExe);
         }
 
-        protected CalamariResult InvokeInProcess(CommandLine command, IVariables variables = null)
+        protected CalamariResult InvokeInProcess(CommandLine command, IVariables variables = null,
+            Func<IEnumerable<KeyValuePair<string, string>>> environmentVariables = null)
         {
-            var args = command.GetRawArgs();
-            var program = new TestProgram(Log);
-            int exitCode;
-            try
+            using (new EnvironmentVariableSetter(environmentVariables ??
+                Enumerable.Empty<KeyValuePair<string, string>>))
             {
-                exitCode = program.RunWithArgs(args);
+                var args = command.GetRawArgs();
+                var program = new TestProgram(Log);
+                int exitCode;
+                try
+                {
+                    exitCode = program.RunWithArgs(args);
+                }
+                catch (Exception ex)
+                {
+                    exitCode = ConsoleFormatter.PrintError(Log, ex);
+                }
+
+                variables = variables ?? new CalamariVariables();
+                var capture = new CaptureCommandInvocationOutputSink();
+                var sco = new SplitCommandInvocationOutputSink(new ServiceMessageCommandInvocationOutputSink(variables),
+                    capture);
+
+                foreach (var line in Log.StandardOut)
+                    sco.WriteInfo(line);
+
+                foreach (var line in Log.StandardError)
+                    sco.WriteError(line);
+
+                return new CalamariResult(exitCode, capture);
             }
-            catch (Exception ex)
-            {
-                exitCode = ConsoleFormatter.PrintError(Log, ex);
-            }
-
-            variables = variables ?? new CalamariVariables();
-            var capture = new CaptureCommandInvocationOutputSink();
-            var sco = new SplitCommandInvocationOutputSink(new ServiceMessageCommandInvocationOutputSink(variables), capture);
-
-            foreach(var line in Log.StandardOut)
-                sco.WriteInfo(line);
-
-            foreach(var line in Log.StandardError)
-                sco.WriteError(line);
-
-            return new CalamariResult(exitCode, capture);
         }
 
         protected CalamariResult Invoke(CommandLine command, IVariables variables = null)
