@@ -9,7 +9,7 @@ using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Deployment;
 using Calamari.FeatureToggles;
-using Calamari.Kubernetes.ResourceStatus;
+using Calamari.Kubernetes.Commands;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.AWS;
