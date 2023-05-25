@@ -122,6 +122,8 @@ namespace Calamari
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
 
+            builder.RegisterAssemblyModules(assembliesToRegister);
+
             builder.RegisterAssemblyTypes(assembliesToRegister)
                    .AssignableTo<IKubernetesDiscoverer>()
                    .As<IKubernetesDiscoverer>();
