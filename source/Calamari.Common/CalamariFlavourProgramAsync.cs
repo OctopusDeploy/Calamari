@@ -59,6 +59,7 @@ namespace Calamari.Common
             builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
+            builder.RegisterType<RunningDeployment>().AsSelf();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
@@ -100,7 +101,7 @@ namespace Calamari.Common
             try
             {
                 AppDomainConfiguration.SetDefaultRegexMatchTimeout();
-                
+
                 SecurityProtocols.EnableAllSecurityProtocols();
                 var options = CommonOptions.Parse(args);
 

@@ -2,14 +2,21 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Kubernetes.Discovery;
+using Calamari.Commands;
+using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Features.StructuredVariables;
+using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Deployment.Journal;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
@@ -21,6 +28,8 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
+using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -47,37 +56,89 @@ namespace Calamari.Tests.KubernetesFixtures
             SetTestClusterVariables();
         }
 
-        protected KubernetesContextScriptWrapper CreateWrapper()
+        protected KubernetesContextScriptWrapper CreateWrapper(ICalamariFileSystem fileSystem = null)
         {
-            return new KubernetesContextScriptWrapper(variables, Log, new AssemblyEmbeddedResources(), new TestCalamariPhysicalFileSystem());
+            return new KubernetesContextScriptWrapper(variables, Log, new AssemblyEmbeddedResources(), fileSystem ?? new TestCalamariPhysicalFileSystem());
         }
 
         void SetTestClusterVariables()
         {
 
-            variables.Set(SpecialVariables.Namespace, TestNamespace);
+            variables.Set(KubernetesSpecialVariables.Namespace, TestNamespace);
             variables.Set(ScriptVariables.Syntax, CalamariEnvironment.IsRunningOnWindows ? ScriptSyntax.PowerShell.ToString() : ScriptSyntax.Bash.ToString());
         }
 
-        CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName)
+        CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName) =>
+            ExecuteScript(new[] { wrapper }, scriptName);
+
+        CalamariResult ExecuteScript(IReadOnlyList<IScriptWrapper> additionalWrappers, string scriptName, ICalamariFileSystem fileSystem = null)
         {
-            var calamariResult = ExecuteScriptInternal(new CommandLineRunner(Log, variables), wrapper, scriptName);
-
-            WriteLogMessagesToTestOutput();
-
-            return calamariResult;
-        }
-
-        CalamariResult ExecuteScriptInternal(ICommandLineRunner runner, IScriptWrapper wrapper, string scriptName)
-        {
-            var wrappers = new List<IScriptWrapper>(new[] { wrapper });
-            if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
+            var wrappers = new List<IScriptWrapper>(additionalWrappers);
+            if (variables.Get(SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
             {
                 wrappers.Add(new AwsScriptWrapper(Log, variables));
             }
 
+            var result = fileSystem != null
+                ? ExecuteWithRunScriptCommand(fileSystem, wrappers)
+                : ExecuteDirectlyWithScriptEngine(wrappers, scriptName);
+
+            WriteLogMessagesToTestOutput();
+
+            return result;
+        }
+
+        CalamariResult ExecuteWithRunScriptCommand(ICalamariFileSystem fileSystem, IEnumerable<IScriptWrapper> scriptWrappers)
+        {
+            var command = new RunScriptCommand(Log,
+                new DeploymentJournalWriter(fileSystem),
+                variables,
+                new ScriptEngine(scriptWrappers),
+                fileSystem,
+                CreateCommandLineRunner(),
+                CreateSubstituteInFiles(fileSystem),
+                CreateStructuredConfigVariablesService(fileSystem),
+                CreateRunningDeployment());
+
+            var result = command.Execute(Array.Empty<string>());
+
+            return new CalamariResult(result, new CaptureCommandInvocationOutputSink());
+        }
+
+        private RunningDeployment.Factory CreateRunningDeployment()
+        {
+            return (p, e) => new RunningDeployment(p, variables,
+                GetEnvironments().Concat(e ?? new Dictionary<string, string>())
+                                 .ToDictionary(x => x.Key, x => x.Value));
+        }
+
+        private ISubstituteInFiles CreateSubstituteInFiles(ICalamariFileSystem fileSystem)
+        {
+            return new SubstituteInFiles(Log, fileSystem, new FileSubstituter(Log, fileSystem), variables);
+        }
+
+        CommandLineRunner CreateCommandLineRunner()
+        {
+            return new CommandLineRunner(Log, variables);
+        }
+
+        StructuredConfigVariablesService CreateStructuredConfigVariablesService(ICalamariFileSystem fileSystem)
+        {
+            return new StructuredConfigVariablesService(
+                new PrioritisedList<IFileFormatVariableReplacer>(new IFileFormatVariableReplacer[]
+                {
+                    new JsonFormatVariableReplacer(fileSystem, Log),
+                    new XmlFormatVariableReplacer(fileSystem, Log),
+                    new YamlFormatVariableReplacer(fileSystem, Log),
+                    new PropertiesFormatVariableReplacer(fileSystem, Log)
+                }), variables, fileSystem, Log);
+        }
+
+        CalamariResult ExecuteDirectlyWithScriptEngine(IReadOnlyList<IScriptWrapper> wrappers, string scriptName)
+        {
+            var commandLineRunner = new CommandLineRunner(Log, variables);
             var engine = new ScriptEngine(wrappers);
-            var result = engine.Execute(new Script(scriptName), variables, runner, GetEnvironments());
+            var result = engine.Execute(new Script(scriptName), variables, commandLineRunner, GetEnvironments());
 
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
@@ -101,6 +162,39 @@ namespace Calamari.Tests.KubernetesFixtures
                     var output = ExecuteScript(wrapper, temp.FilePath);
                     output.AssertSuccess();
                 }
+            }
+        }
+
+        protected void DeployWithScriptAndVerifySuccess(IReadOnlyList<IScriptWrapper> wrappers,
+            ICalamariFileSystem fileSystem, Action<TemporaryDirectory> addFilesAction = null)
+        {
+            SetupTempDirectoryAndVerifyResult(addFilesAction, () =>
+            {
+                var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts");
+                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash),
+                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.sh")));
+                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell),
+                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1")));
+
+                return ExecuteScript(wrappers, null, fileSystem);
+            });
+        }
+
+        private void SetupTempDirectoryAndVerifyResult(Action<TemporaryDirectory> addFilesAction, Func<CalamariResult> func)
+        {
+            using (var dir = TemporaryDirectory.Create())
+            {
+                var folderPath = Path.Combine(dir.DirectoryPath, "TestFolder");
+                Directory.CreateDirectory(folderPath);
+                variables.Add(KnownVariables.OriginalPackageDirectoryPath, folderPath);
+
+                addFilesAction?.Invoke(dir);
+
+                var output = func();
+
+                output.AssertSuccess();
+
+                WriteLogMessagesToTestOutput();
             }
         }
 

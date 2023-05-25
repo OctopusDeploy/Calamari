@@ -20,7 +20,6 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.PackageRetention;
 
 namespace Calamari.Commands
 {
@@ -38,6 +37,7 @@ namespace Calamari.Commands
         readonly ICommandLineRunner commandLineRunner;
         readonly ISubstituteInFiles substituteInFiles;
         readonly IStructuredConfigVariablesService structuredConfigVariablesService;
+        private readonly RunningDeployment.Factory runningDeploymentFactory;
 
         public RunScriptCommand(
             ILog log,
@@ -47,7 +47,8 @@ namespace Calamari.Commands
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
             ISubstituteInFiles substituteInFiles,
-            IStructuredConfigVariablesService structuredConfigVariablesService
+            IStructuredConfigVariablesService structuredConfigVariablesService,
+            RunningDeployment.Factory runningDeploymentFactory
         )
         {
             Options.Add("package=", "Path to the package to extract that contains the script.", v => packageFile = Path.GetFullPath(v));
@@ -61,6 +62,7 @@ namespace Calamari.Commands
             this.commandLineRunner = commandLineRunner;
             this.substituteInFiles = substituteInFiles;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
+            this.runningDeploymentFactory = runningDeploymentFactory;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -72,7 +74,8 @@ namespace Calamari.Commands
             var replacer = new ConfigurationVariablesReplacer(variables, log);
 
             ValidateArguments();
-            WriteVariableScriptToFile();
+            var deployment = runningDeploymentFactory(packageFile);
+            WriteVariableScriptToFile(deployment);
 
             var conventions = new List<IConvention>
             {
@@ -87,7 +90,6 @@ namespace Calamari.Commands
                 new ExecuteScriptConvention(scriptEngine, commandLineRunner)
             };
 
-            var deployment = new RunningDeployment(packageFile, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             conventionRunner.RunConventions();
@@ -96,7 +98,7 @@ namespace Calamari.Commands
             return exitCode.Value;
         }
 
-        void WriteVariableScriptToFile()
+        void WriteVariableScriptToFile(RunningDeployment deployment)
         {
             if (!TryGetScriptFromVariables(out var scriptBody, out var relativeScriptFile, out var scriptSyntax) &&
                 !WasProvided(variables.Get(ScriptVariables.ScriptFileName)))
@@ -107,7 +109,7 @@ namespace Calamari.Commands
 
             if (WasProvided(scriptBody))
             {
-                var scriptFile = Path.GetFullPath(relativeScriptFile);
+                var scriptFile = Path.Combine(deployment.CurrentDirectory, relativeScriptFile);
 
                 //Set the name of the script we are about to create to the variables collection for replacement later on
                 variables.Set(ScriptVariables.ScriptFileName, relativeScriptFile);

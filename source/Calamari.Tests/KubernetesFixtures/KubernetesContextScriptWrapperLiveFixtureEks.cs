@@ -1,16 +1,27 @@
 #if NETCORE
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Assent;
 using Calamari.Aws.Kubernetes.Discovery;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Deployment;
+using Calamari.FeatureToggles;
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.AWS;
+using Calamari.Tests.Fixtures.Integration.FileSystem;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Kubernetes.SpecialVariables;
+using File = System.IO.File;
+using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
+
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -62,7 +73,7 @@ namespace Calamari.Tests.KubernetesFixtures
             awsSubnetID = jsonOutput["aws_subnet_id"]["value"].Value<string>();
             awsIamInstanceProfileName = jsonOutput["aws_iam_instance_profile_name"]["value"].Value<string>();
         }
-        
+
         protected override Dictionary<string, string> GetEnvironmentVars()
         {
             return new Dictionary<string, string>
@@ -75,14 +86,94 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        public void DeployRawYaml_WithRawYamlDeploymentScript_OutputShouldIndicateSuccessfulDeployment()
+        {
+            const string account = "eks_account";
+            const string certificateAuthority = "myauthority";
+            const string customResourceFileName = "customresource.yml";
+
+            variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(KubernetesSpecialVariables.ClusterUrl, eksClusterEndpoint);
+            variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
+            variables.Set("Octopus.Action.Aws.Region", region);
+            variables.Set("Octopus.Action.AwsAccount.Variable", account);
+            variables.Set($"{account}.AccessKey", eksClientID);
+            variables.Set($"{account}.SecretKey", eksSecretKey);
+            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
+            variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
+
+            variables.Set("Octopus.Action.Script.ScriptSource", "Inline");
+            variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx");
+            variables.Set("Octopus.Action.Package.JsonConfigurationVariablesTargets", "**/*.{yml,yaml}");
+            variables.Set("Octopus.Action.Kubernetes.ResourceStatusCheck", "True");
+            variables.Set("Octopus.Action.KubernetesContainers.DeploymentWait", "NoWait");
+            variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "180");
+            variables.Set("Octopus.Action.Kubernetes.StabilizationTimeout", "10");
+
+            variables.SetFeatureToggles(
+                FeatureToggle.KubernetesDeploymentStatusFeatureToggle,
+                FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
+
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+
+            void AddCustomResourceFile(TemporaryDirectory dir)
+            {
+                var pathToCustomResource = Path.Combine(dir.DirectoryPath, "TestFolder", customResourceFileName);
+                File.WriteAllText(pathToCustomResource, "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80");
+                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", customResourceFileName);
+            }
+
+            var wrapper = new[] { CreateWrapper(fileSystem), CreateK8sResourceStatusReporterScriptWrapper(fileSystem) };
+
+            DeployWithScriptAndVerifySuccess(wrapper, fileSystem, AddCustomResourceFile);
+
+            var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
+
+            rawLogs.Should().ContainSingle(m => m.Contains("Deployment/nginx-deployment created"));
+
+            var variableMessages = Log.Messages.GetServiceMessagesOfType("setVariable");
+
+            var variableMessage =
+                variableMessages.Should().ContainSingle(m => m.Properties["name"] == "CustomResources(nginx-deployment)")
+                                .Subject;
+
+            var scrubbedJson = KubernetesJsonResourceScrubber.ScrubRawJson(variableMessage.Properties["value"], p =>
+                p.Name.Contains("Time") ||
+                p.Name == "annotations" ||
+                p.Name == "uid" ||
+                p.Name == "conditions" ||
+                p.Name == "resourceVersion");
+
+            this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
+
+            var idx = Array.IndexOf(rawLogs, "Performing resource status checks on the following resources:");
+            rawLogs[idx + 1].Should().Be(" - Deployment/nginx-deployment in namespace calamari-testing");
+
+            var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
+
+            objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(5);
+
+            rawLogs.Should().ContainSingle(m =>
+                m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
+        }
+
+        private IScriptWrapper CreateK8sResourceStatusReporterScriptWrapper(ICalamariFileSystem fileSystem)
+        {
+            return new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, Log,
+                fileSystem,
+                new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
+                    new ResourceUpdateReporter(variables, Log), Log)));
+        }
+
+        [Test]
         public void AuthorisingWithAmazonAccount()
         {
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
-            
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
-            variables.Set(SpecialVariables.ClusterUrl, eksClusterEndpoint);
-            variables.Set(SpecialVariables.EksClusterName, eksClusterName);
+
+            variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(KubernetesSpecialVariables.ClusterUrl, eksClusterEndpoint);
+            variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set("Octopus.Action.AwsAccount.Variable", account);
             variables.Set($"{account}.AccessKey", eksClientID);
@@ -90,13 +181,13 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
             var wrapper = CreateWrapper();
-            
+
             // When authorising via AWS, We need to make sure we are using the correct version of
             // kubectl for the test script as newer versions may cause kubectl to fail with an error like:
             // 'error: exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"'
             var kubectlExecutable = variables.Get(KubeCtlExecutableVariableName) ??
                 throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
-            
+
             TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
         }
 
@@ -106,10 +197,10 @@ namespace Calamari.Tests.KubernetesFixtures
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
             const string unreachableClusterEndpoint = "https://example.kubernetes.com";
-            
+
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
-            variables.Set(SpecialVariables.ClusterUrl, unreachableClusterEndpoint);
-            variables.Set(SpecialVariables.EksClusterName, eksClusterName);
+            variables.Set(KubernetesSpecialVariables.ClusterUrl, unreachableClusterEndpoint);
+            variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set("Octopus.Action.AwsAccount.Variable", account);
             variables.Set($"{account}.AccessKey", eksClientID);
@@ -125,7 +216,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public void UsingEc2Instance()
         {
             var terraformWorkingFolder = InitialiseTerraformWorkingFolder("terraform_working/EC2", "KubernetesFixtures/Terraform/EC2");
-        
+
             var env = new Dictionary<string, string>
             {
                 { "TF_VAR_iam_role_arn", eksIamRolArn },
@@ -135,7 +226,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "TF_VAR_aws_iam_instance_profile_name", awsIamInstanceProfileName },
                 { "TF_VAR_aws_region", region }
             };
-        
+
             RunTerraformInternal(terraformWorkingFolder, env, "init");
             try
             {
@@ -161,7 +252,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, eksClientID);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, eksSecretKey);
-                
+
                 var authenticationDetails = new AwsAuthenticationDetails
                 {
                     Type = "Aws",
@@ -173,7 +264,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     },
                     Regions = new []{region}
                 };
-                
+
                 var serviceMessageProperties = new Dictionary<string, string>
                     {
                         { "name", eksClusterArn },
@@ -211,7 +302,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, eksClientID);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, eksSecretKey);
-                
+
                 var authenticationDetails = new AwsAuthenticationDetails
                 {
                     Type = "Aws",
@@ -219,7 +310,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     Role = new AwsAssumedRole { Type = "noAssumedRole" },
                     Regions = new []{region}
                 };
-                
+
                 var serviceMessageProperties = new Dictionary<string, string>
                     {
                         { "name", eksClusterArn },
@@ -243,7 +334,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, originalSecretKey);
             }
         }
-        
+
         [Test]
         public void DiscoverKubernetesClusterWithAwsAccountCredentialsAndNoIamRole()
         {
@@ -278,10 +369,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "awsUseWorkerCredentials", bool.FalseString },
                 { "awsAssumeRole", bool.FalseString }
             };
-            
+
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);
         }
-        
+
         [Test]
         public void DiscoverKubernetesClusterWithAwsAccountCredentialsAndIamRole()
         {
@@ -326,10 +417,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "awsAssumeRoleSession", "ThisIsASessionName" },
                 { "awsAssumeRoleSessionDurationSeconds", sessionDuration.ToString() }
             };
-            
+
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);
         }
-        
+
         [Test]
         public void DiscoverKubernetesClusterWithNoValidCredentials()
         {
@@ -342,7 +433,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, null);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, null);
-                
+
                 var authenticationDetails = new AwsAuthenticationDetails
                 {
                     Type = "Aws",
@@ -350,7 +441,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     Role = new AwsAssumedRole { Type = "noAssumedRole" },
                     Regions = new []{region}
                 };
-                
+
                 DoDiscovery(authenticationDetails);
 
                 Log.ServiceMessages.Should().BeEmpty();
@@ -371,7 +462,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, originalSecretKey);
             }
         }
-        
+
         [Test]
         public void DiscoverKubernetesClusterWithInvalidAccountCredentials()
         {
@@ -404,7 +495,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 .ContainSingle(m =>
                     m.Level == InMemoryLog.Level.Warn &&
                     m.FormattedMessage ==
-                    "Unable to authorise credentials, see verbose log for details."); 
+                    "Unable to authorise credentials, see verbose log for details.");
         }
     }
 }
