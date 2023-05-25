@@ -91,19 +91,20 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private IEnumerable<string> ReadManifestFiles(string workingDirectory)
         {
-            foreach (var file in GetManifestFileNames())
+            var groupedFiles = GetGroupedYamlDirectories(workingDirectory).ToList();
+            if (groupedFiles.Any())
             {
-                var filePath = Path.Combine(workingDirectory, file);
-                if (fileSystem.FileExists(filePath)) yield return fileSystem.ReadFile(filePath);
+                return from file in groupedFiles
+                       where fileSystem.FileExists(file)
+                       select fileSystem.ReadFile(file);
             }
 
-            foreach (var file in GetGroupedYamlDirectories(workingDirectory))
-            {
-                if (fileSystem.FileExists(file)) yield return fileSystem.ReadFile(file);
-            }
+            return from file in GetManifestFileNames(workingDirectory)
+                   where fileSystem.FileExists(file)
+                   select fileSystem.ReadFile(file);
         }
 
-        private IEnumerable<string> GetManifestFileNames()
+        private IEnumerable<string> GetManifestFileNames(string workingDirectory)
         {
             var customResourceFileName =
                 variables.Get(SpecialVariables.CustomResourceYamlFileName) ?? "customresource.yml";
@@ -111,7 +112,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             return new[]
             {
                 "secret.yml", customResourceFileName, "deployment.yml", "service.yml", "ingress.yml",
-            };
+            }.Select(p => Path.Combine(workingDirectory, p));
         }
 
         private IEnumerable<string> GetGroupedYamlDirectories(string workingDirectory)

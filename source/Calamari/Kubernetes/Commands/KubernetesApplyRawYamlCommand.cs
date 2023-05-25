@@ -88,13 +88,13 @@ namespace Calamari.Kubernetes.Commands
             {
                 delegateInstallFactory(d =>
                 {
-                    extractPackage.ExtractToStagingDirectory(pathToPackage);
+                    extractPackage.ExtractToStagingDirectory(pathToPackage, workingDirectory: d.CurrentDirectory);
                     //If using the inline yaml, copy it to the staging directory.
-                    var inlineFile = Path.Combine(Environment.CurrentDirectory, "customresource.yml");
-                    var stagingDirectory = Path.Combine(Environment.CurrentDirectory, "staging");
+                    var inlineFile = Path.Combine(d.CurrentDirectory, "customresource.yml");
+                    var stagingDirectory = Path.Combine(d.CurrentDirectory, "staging");
                     if (fileSystem.FileExists(inlineFile))
                     {
-                        fileSystem.CopyFile(inlineFile, Path.Combine(stagingDirectory, "customresource.yml"));
+                        fileSystem.MoveFile(inlineFile, Path.Combine(stagingDirectory, "customresource.yml"));
                     }
                     d.StagingDirectory = stagingDirectory;
                     d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
