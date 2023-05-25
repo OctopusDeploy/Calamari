@@ -103,9 +103,10 @@ namespace Calamari.Tests.KubernetesFixtures
             });
         }
 
-        protected void DeployWithRawYamlCommandAndVerifySuccess(Action<TemporaryDirectory> addFilesAction = null)
+        protected void ExecuteCommandAndVerifySuccess(string commandName,
+            Action<TemporaryDirectory> addFilesAction = null)
         {
-            SetupTempDirectoryAndVerifyResult(addFilesAction, d => ExecuteCommand(KubernetesApplyRawYamlCommand.Name, d));
+            SetupTempDirectoryAndVerifyResult(addFilesAction, d => ExecuteCommand(commandName, d));
         }
 
         private void SetupTempDirectoryAndVerifyResult(Action<TemporaryDirectory> addFilesAction, Func<string, CalamariResult> func)

@@ -1,11 +1,8 @@
 ﻿#if NETCORE
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Kubernetes;
-using Calamari.Testing;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -57,7 +54,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
             else
             {
-                DeployWithTestCommandAndVerifySuccess();
+                ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
             }
         }
 
