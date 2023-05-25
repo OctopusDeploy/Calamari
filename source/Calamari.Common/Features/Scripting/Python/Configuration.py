@@ -21,7 +21,7 @@ def decrypt(encrypted, iv):
     return decrypted.decode('utf-8')
 
 def get_octopusvariable(key):
-    return octopusvariables[key]
+    return octopusvariables.get(key, "")
 
 def set_octopusvariable(name, value, sensitive=False):
     octopusvariables[name] = value
