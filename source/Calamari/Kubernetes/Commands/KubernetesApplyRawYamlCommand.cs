@@ -88,16 +88,24 @@ namespace Calamari.Kubernetes.Commands
             {
                 delegateInstallFactory(d =>
                 {
-                    extractPackage.ExtractToStagingDirectory(pathToPackage, workingDirectory: d.CurrentDirectory);
-                    //If using the inline yaml, copy it to the staging directory.
-                    var inlineFile = Path.Combine(d.CurrentDirectory, "customresource.yml");
-                    var stagingDirectory = Path.Combine(d.CurrentDirectory, "staging");
-                    if (fileSystem.FileExists(inlineFile))
+                    if (pathToPackage != null)
                     {
-                        fileSystem.MoveFile(inlineFile, Path.Combine(stagingDirectory, "customresource.yml"));
+                        extractPackage.ExtractToStagingDirectory(pathToPackage, workingDirectory: d.CurrentDirectory);
                     }
-                    d.StagingDirectory = stagingDirectory;
-                    d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+                    else
+                    {
+                        //If using the inline yaml, copy it to the staging directory.
+                        var inlineFile = Path.Combine(d.CurrentDirectory, "customresource.yml");
+                        var stagingDirectory = Path.Combine(d.CurrentDirectory, "staging");
+                        fileSystem.EnsureDirectoryExists(stagingDirectory);
+                        if (fileSystem.FileExists(inlineFile))
+                        {
+                            fileSystem.MoveFile(inlineFile, Path.Combine(stagingDirectory, "customresource.yml"));
+                        }
+                        d.StagingDirectory = stagingDirectory;
+                        d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+                    }
+
                     kubectl.WorkingDirectory = d.CurrentDirectory;
                     kubectl.EnvironmentVariables = d.EnvironmentVariables;
                 }),
