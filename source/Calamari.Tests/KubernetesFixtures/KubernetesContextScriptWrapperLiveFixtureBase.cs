@@ -89,7 +89,7 @@ namespace Calamari.Tests.KubernetesFixtures
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
 
-        protected void DeployWithScriptAndVerifySuccess(Func<string, string> addFilesOrPackageFunc = null)
+        protected void DeployWithScriptAndVerifyResult(Func<string, string> addFilesOrPackageFunc = null, bool shouldSucceed = true)
         {
             SetupTempDirectoryAndVerifyResult(addFilesOrPackageFunc, (d, p) =>
             {
@@ -100,16 +100,17 @@ namespace Calamari.Tests.KubernetesFixtures
                     File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1")));
 
                 return ExecuteCommand(RunScriptCommand.Name, d, p);
-            });
+            }, shouldSucceed);
         }
 
-        protected void ExecuteCommandAndVerifySuccess(string commandName,
-            Func<string, string> addFilesOrPackageFunc = null)
+        protected void ExecuteCommandAndVerifyResult(string commandName,
+            Func<string, string> addFilesOrPackageFunc = null,
+            bool shouldSucceed = true)
         {
-            SetupTempDirectoryAndVerifyResult(addFilesOrPackageFunc, (d, p) => ExecuteCommand(commandName, d, p));
+            SetupTempDirectoryAndVerifyResult(addFilesOrPackageFunc, (d, p) => ExecuteCommand(commandName, d, p), shouldSucceed);
         }
 
-        private void SetupTempDirectoryAndVerifyResult(Func<string, string> addFilesOrPackageFunc, Func<string, string, CalamariResult> func)
+        private void SetupTempDirectoryAndVerifyResult(Func<string, string> addFilesOrPackageFunc, Func<string, string, CalamariResult> func, bool shouldSucceed)
         {
             using (var dir = TemporaryDirectory.Create())
             {
@@ -121,7 +122,14 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 var output = func(directoryPath, packagePath);
 
-                output.AssertSuccess();
+                if (shouldSucceed)
+                {
+                    output.AssertSuccess();
+                }
+                else
+                {
+                    output.AssertFailure();
+                }
 
                 WriteLogMessagesToTestOutput();
             }

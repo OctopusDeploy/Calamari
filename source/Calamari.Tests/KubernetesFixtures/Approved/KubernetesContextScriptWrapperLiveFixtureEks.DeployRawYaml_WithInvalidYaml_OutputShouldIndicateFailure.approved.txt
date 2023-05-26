@@ -1,0 +1,6 @@
+"kubectl apply -o json" returned invalid JSON for Batch #0:
+---------------------------
+---------------------------
+This can happen with older versions of kubectl. Please update to a recent version of kubectl.
+See https://github.com/kubernetes/kubernetes/issues/58834 for more details.
+Custom resources will not be saved as output variables.

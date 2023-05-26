@@ -28,11 +28,17 @@ namespace Calamari.Tests.KubernetesFixtures
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class KubernetesContextScriptWrapperLiveFixtureEks: KubernetesContextScriptWrapperLiveFixture
     {
-        private const string simpleDeploymentResource =
+        private const string ResourceFileName = "customresource.yml";
+        private const string SimpleDeploymentResourceType = "Deployment";
+        private const string SimpleDeploymentResourceName = "nginx-deployment";
+        private const string SimpleDeploymentResource =
             "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80";
 
-        private const string invalidDeploymentResource =
+        private const string InvalidDeploymentResource =
             "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\nbad text here\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80\n";
+
+        private const string FailToDeploymentResource =
+            "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx-bad-container-name:1.14.2\n        ports:\n        - containerPort: 80\n";
 
         string eksClientID;
         string eksSecretKey;
@@ -97,48 +103,15 @@ namespace Calamari.Tests.KubernetesFixtures
         [TestCase(false, false)]
         public void DeployRawYaml_WithRawYamlDeploymentScriptOrCommand_OutputShouldIndicateSuccessfulDeployment(bool runAsScript, bool usePackage)
         {
-            SetVariablesToAuthoriseWithAmazonAccount();
-
-            SetVariablesForKubernetesResourceStatusCheck();
-
-            SetVariablesForRawYamlCommand();
-
-            if (runAsScript)
-            {
-                DeployWithScriptAndVerifySuccess(usePackage
-                    ? CreateAddPackageFunc(simpleDeploymentResource)
-                    : CreateAddCustomResourceFileFunc(simpleDeploymentResource));
-            }
-            else
-            {
-                ExecuteCommandAndVerifySuccess(KubernetesApplyRawYamlCommand.Name,
-                    usePackage
-                    ? CreateAddPackageFunc(simpleDeploymentResource)
-                    : CreateAddCustomResourceFileFunc(simpleDeploymentResource));
-            }
+            SetupAndRunKubernetesRawYamlDeployment(runAsScript, usePackage, SimpleDeploymentResource);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
-            rawLogs.Should().ContainSingle(m => m.Contains("Deployment/nginx-deployment created"));
-
-            var variableMessages = Log.Messages.GetServiceMessagesOfType("setVariable");
-
-            var variableMessage =
-                variableMessages.Should().ContainSingle(m => m.Properties["name"] == "CustomResources(nginx-deployment)")
-                                .Subject;
-
-            var scrubbedJson = KubernetesJsonResourceScrubber.ScrubRawJson(variableMessage.Properties["value"], p =>
-                p.Name.Contains("Time") ||
-                p.Name == "annotations" ||
-                p.Name == "uid" ||
-                p.Name == "conditions" ||
-                p.Name == "resourceVersion" ||
-                p.Name == "status");
+            var scrubbedJson = AssertResourceCreatedAndGetJson(rawLogs, SimpleDeploymentResourceType, SimpleDeploymentResourceName);
 
             this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
 
-            var idx = Array.IndexOf(rawLogs, "Performing resource status checks on the following resources:");
-            rawLogs[idx + 1].Should().Be(" - Deployment/nginx-deployment in namespace calamari-testing");
+            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
 
             var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
 
@@ -148,6 +121,35 @@ namespace Calamari.Tests.KubernetesFixtures
                 m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
         }
 
+        private static void AssertObjectStatusMonitoringStarted(string[] rawLogs, params (string Type, string Name)[] resources)
+        {
+            var idx = Array.IndexOf(rawLogs, "Performing resource status checks on the following resources:");
+            foreach (var (i, type, name) in resources.Select((t, i) => (i, t.Type, t.Name)))
+            {
+                rawLogs[idx + i + 1].Should().Be($" - {type}/{name} in namespace calamari-testing");
+            }
+        }
+
+        private string AssertResourceCreatedAndGetJson(string[] rawLogs, string resourceType, string resourceName)
+        {
+            rawLogs.Should().ContainSingle(m => m.Contains($"{resourceType}/{resourceName} created"));
+
+            var variableMessages = Log.Messages.GetServiceMessagesOfType("setVariable");
+
+            var variableMessage =
+                variableMessages.Should().ContainSingle(m => m.Properties["name"] == $"CustomResources({resourceName})")
+                                .Subject;
+
+            return KubernetesJsonResourceScrubber.ScrubRawJson(variableMessage.Properties["value"], p =>
+                p.Name.Contains("Time") ||
+                p.Name == "annotations" ||
+                p.Name == "uid" ||
+                p.Name == "conditions" ||
+                p.Name == "resourceVersion" ||
+                p.Name == "status" ||
+                p.Name == "generation");
+        }
+
         [Test]
         [TestCase(true, true)]
         [TestCase(true, false)]
@@ -155,55 +157,70 @@ namespace Calamari.Tests.KubernetesFixtures
         [TestCase(false, false)]
         public void DeployRawYaml_WithInvalidYaml_OutputShouldIndicateFailure(bool runAsScript, bool usePackage)
         {
-            SetVariablesToAuthoriseWithAmazonAccount();
+            SetupAndRunKubernetesRawYamlDeployment(runAsScript, usePackage, InvalidDeploymentResource);
 
-            SetVariablesForKubernetesResourceStatusCheck();
+            var rawLogs2 = Log.Messages.Select(m => m.FormattedMessage).ToArray();
+            var rawLogs = Log.Messages.Select(m => m.FormattedMessage).Where(m => !m.StartsWith("##octopus") && m != string.Empty).ToArray();
 
-            SetVariablesForRawYamlCommand();
+            var fileName = runAsScript && usePackage ? $"deployments/{ResourceFileName}" : ResourceFileName;
+            var initialErrorMessage =
+                $"error: error parsing {fileName}: error converting YAML to JSON: yaml: line 7: could not find expected ':'";
+            rawLogs.Should()
+                   .ContainSingle(l => l == initialErrorMessage);
+            var index = Array.IndexOf(rawLogs, initialErrorMessage);
+            var logsToCompare = new List<string>(rawLogs);
+            // We'll check the rest of the logs after the one above
+            // as they should be the same for all cases (except those
+            // filtered out or adjusted below).
+            logsToCompare.RemoveRange(0, index+1);
+            logsToCompare = logsToCompare.Select(l =>
+                                         {
+                                             // This log line is slightly different in the new command because
+                                             // we apply the yaml in batches (even if there is only one file).
+                                             return l.Replace("\"kubectl apply -o json\" returned invalid JSON.",
+                                                 "\"kubectl apply -o json\" returned invalid JSON for Batch #0:");
+                                         })
+                                         .Select(l =>
+                                         {
+                                             // There was actually no clean-up process for custom resources
+                                             // so the log line produced by the deployment script doesn't
+                                             // make sense. The new command does not have that part of the
+                                             // log line.
+                                             return l.Replace(
+                                                 "Custom resources will not be saved as output variables, and will not be automatically cleaned up.",
+                                                 "Custom resources will not be saved as output variables.");
+                                         })
+                                         .Where(l =>
+                                         {
+                                             // These log lines are in the old deployment script but the script
+                                             // doesn't actually do the things that the logs describe and so they
+                                             // aren't in the new command.
+                                             return l != "The previous custom resources were not removed." &&
+                                                 l != "The deployment process failed. The resources created by this step will be passed to \"kubectl describe\" and logged below.";
+                                         })
+                                         .ToList();
 
-            if (runAsScript)
-            {
-                DeployWithScriptAndVerifySuccess(usePackage
-                    ? CreateAddPackageFunc(invalidDeploymentResource)
-                    : CreateAddCustomResourceFileFunc(invalidDeploymentResource));
-            }
-            else
-            {
-                ExecuteCommandAndVerifySuccess(KubernetesApplyRawYamlCommand.Name,
-                    usePackage
-                        ? CreateAddPackageFunc(invalidDeploymentResource)
-                        : CreateAddCustomResourceFileFunc(invalidDeploymentResource));
-            }
+            this.Assent(string.Join('\n', logsToCompare), configuration: AssentConfiguration.Default);
+        }
+
+        [Test]
+        [TestCase(true, true)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        [TestCase(false, false)]
+        public void DeployRawYaml_WithYamlThatWillNotSucceed_OutputShouldIndicateFailure(bool runAsScript, bool usePackage)
+        {
+            SetupAndRunKubernetesRawYamlDeployment(runAsScript, usePackage, FailToDeploymentResource);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
-            rawLogs.Should().ContainSingle(m => m.Contains("Deployment/nginx-deployment created"));
-
-            var variableMessages = Log.Messages.GetServiceMessagesOfType("setVariable");
-
-            var variableMessage =
-                variableMessages.Should().ContainSingle(m => m.Properties["name"] == "CustomResources(nginx-deployment)")
-                                .Subject;
-
-            var scrubbedJson = KubernetesJsonResourceScrubber.ScrubRawJson(variableMessage.Properties["value"], p =>
-                p.Name.Contains("Time") ||
-                p.Name == "annotations" ||
-                p.Name == "uid" ||
-                p.Name == "conditions" ||
-                p.Name == "resourceVersion" ||
-                p.Name == "status");
+            var scrubbedJson = AssertResourceCreatedAndGetJson(rawLogs, SimpleDeploymentResourceType, SimpleDeploymentResourceName);
 
             this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
 
-            var idx = Array.IndexOf(rawLogs, "Performing resource status checks on the following resources:");
-            rawLogs[idx + 1].Should().Be(" - Deployment/nginx-deployment in namespace calamari-testing");
+            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
 
             var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
-
-            objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(5);
-
-            rawLogs.Should().ContainSingle(m =>
-                m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
         }
 
         [Test]
@@ -227,7 +244,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
             else
             {
-                ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
             }
         }
 
@@ -538,6 +555,31 @@ namespace Calamari.Tests.KubernetesFixtures
                     "Unable to authorise credentials, see verbose log for details.");
         }
 
+        private void SetupAndRunKubernetesRawYamlDeployment(bool runAsScript, bool usePackage, string resource)
+        {
+            SetVariablesToAuthoriseWithAmazonAccount();
+
+            SetVariablesForKubernetesResourceStatusCheck();
+
+            SetVariablesForRawYamlCommand();
+
+            if (runAsScript)
+            {
+                DeployWithScriptAndVerifyResult(usePackage
+                        ? CreateAddPackageFunc(FailToDeploymentResource)
+                        : CreateAddCustomResourceFileFunc(FailToDeploymentResource),
+                    shouldSucceed: false);
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(KubernetesApplyRawYamlCommand.Name,
+                    usePackage
+                        ? CreateAddPackageFunc(FailToDeploymentResource)
+                        : CreateAddCustomResourceFileFunc(FailToDeploymentResource),
+                    shouldSucceed: false);
+            }
+        }
+
         private void SetVariablesToAuthoriseWithAmazonAccount()
         {
             const string account = "eks_account";
@@ -566,7 +608,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             variables.Set("Octopus.Action.Kubernetes.ResourceStatusCheck", "True");
             variables.Set("Octopus.Action.KubernetesContainers.DeploymentWait", "NoWait");
-            variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "180");
+            variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "5");
         }
 
         private static string CreateResourceYamlFile(string directory, string fileName, string content)
@@ -580,22 +622,20 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             return directory =>
             {
-                const string customResourceFileName = "customresource.yml";
-                CreateResourceYamlFile(directory, customResourceFileName, yamlContent);
-                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", customResourceFileName);
+                CreateResourceYamlFile(directory, ResourceFileName, yamlContent);
+                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", ResourceFileName);
                 return null;
             };
         }
 
         private Func<string,string> CreateAddPackageFunc(string yamlContent)
         {
-            const string resourceFileName = "deployment.yml";
             const string resourcePackageFileName = "package.1.0.0.zip";
             return directory =>
             {
                 var pathToCustomResource =
-                    CreateResourceYamlFile(directory, resourceFileName, yamlContent);
-                var pathInPackage = Path.Combine("deployments", resourceFileName);
+                    CreateResourceYamlFile(directory, ResourceFileName, yamlContent);
+                var pathInPackage = Path.Combine("deployments", ResourceFileName);
                 var pathToPackage = Path.Combine(directory, resourcePackageFileName);
                 using (var archive = ZipArchive.Create())
                 {

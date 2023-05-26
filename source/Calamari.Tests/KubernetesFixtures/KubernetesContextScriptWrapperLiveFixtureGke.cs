@@ -70,7 +70,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
             else
             {
-                ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
             }
         }
 
@@ -94,7 +94,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
             else
             {
-                ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
             }
         }
 
