@@ -115,12 +115,18 @@ namespace Calamari.Kubernetes.Commands
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
             try
             {
-                conventionRunner.RunConventions();
+                conventionRunner.RunConventions(logExceptions: false);
                 deploymentJournalWriter.AddJournalEntry(runningDeployment, true, pathToPackage);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 deploymentJournalWriter.AddJournalEntry(runningDeployment, false, pathToPackage);
+
+                if (e is KubernetesDeploymentFailedException || e is TimeoutException)
+                {
+                    return -1;
+                }
+
                 throw;
             }
 

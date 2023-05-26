@@ -9,6 +9,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Calamari.Kubernetes.Commands;
 using Calamari.Kubernetes.Integration;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
@@ -41,7 +42,7 @@ namespace Calamari.Kubernetes.Conventions
             var directories = GroupFilesIntoDirectories(deployment, globs, variables);
 
             var resources = new List<Resource>();
-            foreach (var (directory, index) in directories.Select((d,i) => (d,i)))
+            foreach (var (directory, index) in directories.Select((d, i) => (d, i)))
             {
                 resources.AddRange(ApplyBatchAndReturnResources(index, globs[index], directory));
             }
@@ -110,7 +111,9 @@ namespace Calamari.Kubernetes.Conventions
                         //No need to log as it's the output json from above.
                         break;
                     case Level.Error:
-                        log.Error(message.Text);
+                        //Files in the error are shown with the full path in their batch directory,
+                        //so we'll remove that for the user.
+                        log.Error(message.Text.Replace($"{directory}{Path.DirectorySeparatorChar}", ""));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -119,7 +122,7 @@ namespace Calamari.Kubernetes.Conventions
 
             if (result.Result.ExitCode != 0)
             {
-                throw new Exception(result.Result.Errors);
+                LogParsingError(null, index);
             }
 
             // If it did not error, the output should be valid json.
@@ -144,16 +147,23 @@ namespace Calamari.Kubernetes.Conventions
             }
             catch
             {
-                log.Error($"\"kubectl apply -o json\" returned invalid JSON for Batch #{index}:");
-                log.Error("---------------------------");
-                log.Error(outputJson);
-                log.Error("---------------------------");
-                log.Error("This can happen with older versions of kubectl. Please update to a recent version of kubectl.");
-                log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
-                log.Error("Custom resources will not be saved as output variables.");
+                LogParsingError(outputJson, index);
             }
 
             return Enumerable.Empty<Resource>();
+        }
+
+        private void LogParsingError(string outputJson, int index)
+        {
+            log.Error($"\"kubectl apply -o json\" returned invalid JSON for Batch #{index}:");
+            log.Error("---------------------------");
+            log.Error(outputJson);
+            log.Error("---------------------------");
+            log.Error("This can happen with older versions of kubectl. Please update to a recent version of kubectl.");
+            log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
+            log.Error("Custom resources will not be saved as output variables.");
+
+            throw new KubernetesDeploymentFailedException();
         }
 
         private class ResourceMetadata
