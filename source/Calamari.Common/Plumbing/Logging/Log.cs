@@ -91,8 +91,9 @@ namespace Calamari.Common.Plumbing.Logging
         protected abstract void StdOut(string message);
         protected abstract void StdErr(string message);
 
-        protected string ProcessRedactions(string message)
+        protected string ProcessRedactions(string? message)
         {
+            message = message ?? string.Empty;
             lock (sync)
             {
                 return redactionMap.Aggregate(message, (current, pair) => current.Replace(pair.Key, pair.Value));
