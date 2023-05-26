@@ -36,7 +36,7 @@ namespace Calamari.Tests.Helpers
 
             if (!File.Exists(calamariFullPath))
                 throw new Exception($"Could not find Calamari test wrapper at {calamariFullPath}");
-            return new CommandLine(calamariFullPath).UseDotnet();
+            return new CommandLine(calamariFullPath).UseDotnet().OutputToLog(false);
 #endif
         }
 

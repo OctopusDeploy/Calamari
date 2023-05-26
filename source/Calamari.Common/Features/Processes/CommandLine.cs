@@ -13,6 +13,7 @@ namespace Calamari.Common.Features.Processes
         string? action;
         bool useDotnet;
         private Dictionary<string,string>? environmentVariables = null;
+        private bool outputToLog = true;
 
         public CommandLine(Func<string[], int> func)
         {
@@ -69,6 +70,12 @@ namespace Calamari.Common.Features.Processes
             return this;
         }
 
+        public CommandLine OutputToLog(bool outputToLog)
+        {
+            this.outputToLog = outputToLog;
+            return this;
+        }
+
         public CommandLineInvocation Build()
         {
             var argLine = new List<Arg>();
@@ -88,7 +95,8 @@ namespace Calamari.Common.Features.Processes
 
             return new CommandLineInvocation(actualExe, argLine.Select(b => b.Build(true)).ToArray())
             {
-                EnvironmentVars = environmentVariables
+                EnvironmentVars = environmentVariables,
+                OutputToLog = outputToLog
             };
         }
 

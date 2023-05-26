@@ -134,7 +134,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 var calamariCommand = Calamari().Action(command)
                                                 .Argument("variables", variablesFile.FilePath)
-                                                .WithEnvironmentVariables(GetEnvironments());
+                                                .WithEnvironmentVariables(GetEnvironments())
+                                                .OutputToLog(true);
 
                 return Invoke(calamariCommand, variables, Log);
             }
