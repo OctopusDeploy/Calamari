@@ -80,9 +80,9 @@ namespace Calamari.Tests.Helpers
             }
         }
 
-        protected CalamariResult Invoke(CommandLine command, IVariables variables = null)
+        protected CalamariResult Invoke(CommandLine command, IVariables variables = null, ILog log = null)
         {
-            var runner = new TestCommandLineRunner(ConsoleLog.Instance, variables ?? new CalamariVariables());
+            var runner = new TestCommandLineRunner(log ?? ConsoleLog.Instance, variables ?? new CalamariVariables());
             var result = runner.Execute(command.Build());
             return new CalamariResult(result.ExitCode, runner.Output);
         }

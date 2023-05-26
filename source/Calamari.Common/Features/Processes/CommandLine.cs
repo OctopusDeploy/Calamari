@@ -12,6 +12,7 @@ namespace Calamari.Common.Features.Processes
         readonly List<Arg> args = new List<Arg>();
         string? action;
         bool useDotnet;
+        private Dictionary<string,string>? environmentVariables = null;
 
         public CommandLine(Func<string[], int> func)
         {
@@ -62,10 +63,16 @@ namespace Calamari.Common.Features.Processes
             return this;
         }
 
+        public CommandLine WithEnvironmentVariables(Dictionary<string, string> environmentVariables)
+        {
+            this.environmentVariables = environmentVariables;
+            return this;
+        }
+
         public CommandLineInvocation Build()
         {
             var argLine = new List<Arg>();
-            
+
             var actualExe = executable;
 
             if (actualExe == null)
@@ -79,7 +86,10 @@ namespace Calamari.Common.Features.Processes
 
             argLine.AddRange(args);
 
-            return new CommandLineInvocation(actualExe, argLine.Select(b => b.Build(true)).ToArray());
+            return new CommandLineInvocation(actualExe, argLine.Select(b => b.Build(true)).ToArray())
+            {
+                EnvironmentVars = environmentVariables
+            };
         }
 
         public LibraryCallInvocation BuildLibraryCall()
