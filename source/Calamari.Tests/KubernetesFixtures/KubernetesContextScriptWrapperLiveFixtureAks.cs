@@ -44,13 +44,13 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected override void ExtractVariablesFromTerraformOutput(JObject jsonOutput)
         {
-            aksClusterHost = jsonOutput["aks_cluster_host"]["value"].Value<string>();
-            aksClusterClientCertificate = jsonOutput["aks_cluster_client_certificate"]["value"].Value<string>();
-            aksClusterClientKey = jsonOutput["aks_cluster_client_key"]["value"].Value<string>();
-            aksClusterCaCertificate = jsonOutput["aks_cluster_ca_certificate"]["value"].Value<string>();
-            aksClusterName = jsonOutput["aks_cluster_name"]["value"].Value<string>();
-            aksPodServiceAccountToken = jsonOutput["aks_service_account_token"]["value"].Value<string>();
-            azurermResourceGroup = jsonOutput["aks_rg_name"]["value"].Value<string>();
+            aksClusterHost = jsonOutput.Get<string>("aks_cluster_host", "value");
+            aksClusterClientCertificate = jsonOutput.Get<string>("aks_cluster_client_certificate", "value");
+            aksClusterClientKey = jsonOutput.Get<string>("aks_cluster_client_key", "value");
+            aksClusterCaCertificate = jsonOutput.Get<string>("aks_cluster_ca_certificate", "value");
+            aksClusterName = jsonOutput.Get<string>("aks_cluster_name", "value");
+            aksPodServiceAccountToken = jsonOutput.Get<string>("aks_service_account_token", "value");
+            azurermResourceGroup = jsonOutput.Get<string>("aks_rg_name", "value");
         }
 
         protected override Dictionary<string, string> GetEnvironmentVars()
@@ -99,6 +99,21 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
             var wrapper = CreateWrapper();
             TestScriptAndVerifyCluster(wrapper, "Test-Script");
+        }
+        
+        [Test]
+        public void GetNamespaceWithAzureServicePrincipal()
+        {
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
+            variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", azurermResourceGroup);
+            variables.Set(SpecialVariables.AksClusterName, aksClusterName);
+            variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.FalseString);
+            variables.Set("Octopus.Action.Azure.SubscriptionId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionId));
+            variables.Set("Octopus.Action.Azure.TenantId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
+            variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
+            variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
+            var wrapper = CreateWrapper();
+            TestScriptAndGetNamespace(wrapper, "Test-Script");
         }
 
         [Test]

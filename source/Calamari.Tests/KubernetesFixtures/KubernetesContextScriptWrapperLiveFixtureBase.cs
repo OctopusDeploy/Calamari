@@ -122,6 +122,23 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
             }
         }
+        
+        protected void TestScriptAndGetNamespace(IScriptWrapper wrapper, string scriptName, string kubectlExe = "kubectl")
+        {
+            using (var dir = TemporaryDirectory.Create())
+            {
+                var folderPath = Path.Combine(dir.DirectoryPath, "Folder with spaces");
+
+                using (var temp = new TemporaryFile(Path.Combine(folderPath, $"{scriptName}.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
+                {
+                    Directory.CreateDirectory(folderPath);
+                    File.WriteAllText(temp.FilePath, $"{kubectlExe} get namespace default");
+
+                    var output = ExecuteScript(wrapper, temp.FilePath);
+                    output.AssertSuccess();
+                }
+            }
+        }
 
         protected void DoDiscovery(AwsAuthenticationDetails authenticationDetails)
         {
