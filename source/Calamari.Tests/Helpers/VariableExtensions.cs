@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
@@ -7,10 +8,15 @@ namespace Calamari.Tests.Helpers
 {
     public static class VariableExtensions
     {
-        public static void SetFeatureToggles(this IVariables variables, params FeatureToggle[] featureToggles)
+        public static void AddFeatureToggles(this IVariables variables, params FeatureToggle[] featureToggles)
         {
+            var existingToggles = variables.Get(SpecialVariables.EnabledFeatureToggles)?.Split(',')
+                                           .Select(Enum.Parse<FeatureToggle>) ?? Enumerable.Empty<FeatureToggle>();
+
+            var allToggles = existingToggles.Concat(featureToggles).Distinct();
+
             variables.Set(SpecialVariables.EnabledFeatureToggles,
-                string.Join(",", featureToggles.Select(t => t.ToString())));
+                string.Join(",", allToggles.Select(t => t.ToString())));
         }
     }
 }

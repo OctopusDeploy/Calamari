@@ -28,8 +28,11 @@ namespace Calamari.Tests.KubernetesFixtures
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class KubernetesContextScriptWrapperLiveFixtureEks: KubernetesContextScriptWrapperLiveFixture
     {
-        const string simpleDeploymentResource =
+        private const string simpleDeploymentResource =
             "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80";
+
+        private const string invalidDeploymentResource =
+            "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\nbad text here\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80\n";
 
         string eksClientID;
         string eksSecretKey;
@@ -94,79 +97,82 @@ namespace Calamari.Tests.KubernetesFixtures
         [TestCase(false, false)]
         public void DeployRawYaml_WithRawYamlDeploymentScriptOrCommand_OutputShouldIndicateSuccessfulDeployment(bool runAsScript, bool usePackage)
         {
-            const string account = "eks_account";
-            const string certificateAuthority = "myauthority";
+            SetVariablesToAuthoriseWithAmazonAccount();
 
-            variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
-            variables.Set(KubernetesSpecialVariables.ClusterUrl, eksClusterEndpoint);
-            variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
-            variables.Set("Octopus.Action.Aws.Region", region);
-            variables.Set("Octopus.Action.AwsAccount.Variable", account);
-            variables.Set($"{account}.AccessKey", eksClientID);
-            variables.Set($"{account}.SecretKey", eksSecretKey);
-            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
-            variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
+            SetVariablesForKubernetesResourceStatusCheck();
 
-            variables.Set("Octopus.Action.Script.ScriptSource", "Inline");
-            variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx");
-            variables.Set("Octopus.Action.Package.JsonConfigurationVariablesTargets", "**/*.{yml,yaml}");
-            variables.Set("Octopus.Action.Kubernetes.ResourceStatusCheck", "True");
-            variables.Set("Octopus.Action.KubernetesContainers.DeploymentWait", "NoWait");
-            variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "180");
-            variables.Set("Octopus.Action.Kubernetes.StabilizationTimeout", "10");
-
-            variables.SetFeatureToggles(FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
-
-            string CreateResourceYamlFile(string directory, string fileName, string content)
-            {
-                var pathToCustomResource = Path.Combine(directory, fileName);
-                File.WriteAllText(pathToCustomResource, content);
-                return pathToCustomResource;
-            }
-
-            string AddCustomResourceFile(string directory)
-            {
-                const string customResourceFileName = "customresource.yml";
-                CreateResourceYamlFile(directory, customResourceFileName, simpleDeploymentResource);
-                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", customResourceFileName);
-                return null;
-            }
-
-            string AddPackage(string directory)
-            {
-                const string resourceFileName = "deployment.yml";
-                const string resourcePackageFileName = "package.1.0.0.zip";
-                var pathToCustomResource = CreateResourceYamlFile(directory, resourceFileName, simpleDeploymentResource);
-                var pathInPackage = Path.Combine("deployments", resourceFileName);
-                var pathToPackage = Path.Combine(directory, resourcePackageFileName);
-                using (var archive = ZipArchive.Create())
-                {
-                    using (var readStream = File.OpenRead(pathToCustomResource))
-                    {
-                        archive.AddEntry(pathInPackage, readStream);
-                        using (var writeStream = File.OpenWrite(pathToPackage))
-                        {
-                            archive.SaveTo(writeStream, CompressionType.Deflate);
-                        }
-                    }
-                }
-                File.Delete(pathToCustomResource);
-                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", pathInPackage);
-                return pathToPackage;
-            }
+            SetVariablesForRawYamlCommand();
 
             if (runAsScript)
             {
                 DeployWithScriptAndVerifySuccess(usePackage
-                    ? (Func<string, string>)AddPackage
-                    : AddCustomResourceFile);
+                    ? CreateAddPackageFunc(simpleDeploymentResource)
+                    : CreateAddCustomResourceFileFunc(simpleDeploymentResource));
             }
             else
             {
                 ExecuteCommandAndVerifySuccess(KubernetesApplyRawYamlCommand.Name,
                     usePackage
-                    ? (Func<string, string>)AddPackage
-                    : AddCustomResourceFile);
+                    ? CreateAddPackageFunc(simpleDeploymentResource)
+                    : CreateAddCustomResourceFileFunc(simpleDeploymentResource));
+            }
+
+            var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
+
+            rawLogs.Should().ContainSingle(m => m.Contains("Deployment/nginx-deployment created"));
+
+            var variableMessages = Log.Messages.GetServiceMessagesOfType("setVariable");
+
+            var variableMessage =
+                variableMessages.Should().ContainSingle(m => m.Properties["name"] == "CustomResources(nginx-deployment)")
+                                .Subject;
+
+            var scrubbedJson = KubernetesJsonResourceScrubber.ScrubRawJson(variableMessage.Properties["value"], p =>
+                p.Name.Contains("Time") ||
+                p.Name == "annotations" ||
+                p.Name == "uid" ||
+                p.Name == "conditions" ||
+                p.Name == "resourceVersion" ||
+                p.Name == "status");
+
+            this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
+
+            var idx = Array.IndexOf(rawLogs, "Performing resource status checks on the following resources:");
+            rawLogs[idx + 1].Should().Be(" - Deployment/nginx-deployment in namespace calamari-testing");
+
+            var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
+
+            objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(5);
+
+            rawLogs.Should().ContainSingle(m =>
+                m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
+        }
+
+        [Test]
+        [TestCase(true, true)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        [TestCase(false, false)]
+        public void DeployRawYaml_WithInvalidYaml_OutputShouldIndicateFailure(bool runAsScript, bool usePackage)
+        {
+            SetVariablesToAuthoriseWithAmazonAccount();
+
+            SetVariablesForKubernetesResourceStatusCheck();
+
+            SetVariablesForRawYamlCommand();
+
+            if (runAsScript)
+            {
+                DeployWithScriptAndVerifySuccess(usePackage
+                    ? CreateAddPackageFunc(invalidDeploymentResource)
+                    : CreateAddCustomResourceFileFunc(invalidDeploymentResource));
+            }
+            else
+            {
+                ExecuteCommandAndVerifySuccess(KubernetesApplyRawYamlCommand.Name,
+                    usePackage
+                        ? CreateAddPackageFunc(invalidDeploymentResource)
+                        : CreateAddCustomResourceFileFunc(invalidDeploymentResource));
             }
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
@@ -205,18 +211,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [TestCase(false)]
         public void AuthorisingWithAmazonAccount(bool runAsScript)
         {
-            const string account = "eks_account";
-            const string certificateAuthority = "myauthority";
-
-            variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
-            variables.Set(KubernetesSpecialVariables.ClusterUrl, eksClusterEndpoint);
-            variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
-            variables.Set("Octopus.Action.Aws.Region", region);
-            variables.Set("Octopus.Action.AwsAccount.Variable", account);
-            variables.Set($"{account}.AccessKey", eksClientID);
-            variables.Set($"{account}.SecretKey", eksSecretKey);
-            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
-            variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
+            SetVariablesToAuthoriseWithAmazonAccount();
 
             if (runAsScript)
             {
@@ -541,6 +536,83 @@ namespace Calamari.Tests.KubernetesFixtures
                     m.Level == InMemoryLog.Level.Warn &&
                     m.FormattedMessage ==
                     "Unable to authorise credentials, see verbose log for details.");
+        }
+
+        private void SetVariablesToAuthoriseWithAmazonAccount()
+        {
+            const string account = "eks_account";
+            const string certificateAuthority = "myauthority";
+
+            variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(KubernetesSpecialVariables.ClusterUrl, eksClusterEndpoint);
+            variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
+            variables.Set("Octopus.Action.Aws.Region", region);
+            variables.Set("Octopus.Action.AwsAccount.Variable", account);
+            variables.Set($"{account}.AccessKey", eksClientID);
+            variables.Set($"{account}.SecretKey", eksSecretKey);
+            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
+            variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
+        }
+
+        private void SetVariablesForRawYamlCommand()
+        {
+            variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx");
+            variables.Set("Octopus.Action.Package.JsonConfigurationVariablesTargets", "**/*.{yml,yaml}");
+
+            variables.AddFeatureToggles(FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
+        }
+
+        private void SetVariablesForKubernetesResourceStatusCheck()
+        {
+            variables.Set("Octopus.Action.Kubernetes.ResourceStatusCheck", "True");
+            variables.Set("Octopus.Action.KubernetesContainers.DeploymentWait", "NoWait");
+            variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "180");
+        }
+
+        private static string CreateResourceYamlFile(string directory, string fileName, string content)
+        {
+            var pathToCustomResource = Path.Combine(directory, fileName);
+            File.WriteAllText(pathToCustomResource, content);
+            return pathToCustomResource;
+        }
+
+        private Func<string,string> CreateAddCustomResourceFileFunc(string yamlContent)
+        {
+            return directory =>
+            {
+                const string customResourceFileName = "customresource.yml";
+                CreateResourceYamlFile(directory, customResourceFileName, yamlContent);
+                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", customResourceFileName);
+                return null;
+            };
+        }
+
+        private Func<string,string> CreateAddPackageFunc(string yamlContent)
+        {
+            const string resourceFileName = "deployment.yml";
+            const string resourcePackageFileName = "package.1.0.0.zip";
+            return directory =>
+            {
+                var pathToCustomResource =
+                    CreateResourceYamlFile(directory, resourceFileName, yamlContent);
+                var pathInPackage = Path.Combine("deployments", resourceFileName);
+                var pathToPackage = Path.Combine(directory, resourcePackageFileName);
+                using (var archive = ZipArchive.Create())
+                {
+                    using (var readStream = File.OpenRead(pathToCustomResource))
+                    {
+                        archive.AddEntry(pathInPackage, readStream);
+                        using (var writeStream = File.OpenWrite(pathToPackage))
+                        {
+                            archive.SaveTo(writeStream, CompressionType.Deflate);
+                        }
+                    }
+                }
+
+                File.Delete(pathToCustomResource);
+                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", pathInPackage);
+                return pathToPackage;
+            };
         }
     }
 }
