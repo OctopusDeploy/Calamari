@@ -159,7 +159,6 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             SetupAndRunKubernetesRawYamlDeployment(runAsScript, usePackage, InvalidDeploymentResource);
 
-            var rawLogs2 = Log.Messages.Select(m => m.FormattedMessage).ToArray();
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).Where(m => !m.StartsWith("##octopus") && m != string.Empty).ToArray();
 
             var fileName = runAsScript && usePackage ? $"deployments/{ResourceFileName}" : ResourceFileName;
@@ -220,7 +219,9 @@ namespace Calamari.Tests.KubernetesFixtures
 
             AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
 
-            var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
+            rawLogs.Should().ContainSingle(l =>
+                l ==
+                "Resource status check terminated because the timeout has been reached but some resources are still in progress");
         }
 
         [Test]
