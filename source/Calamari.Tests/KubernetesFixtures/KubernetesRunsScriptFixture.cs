@@ -15,6 +15,7 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.FeatureToggles;
 using Calamari.Kubernetes;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
@@ -41,6 +42,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public void Setup()
         {
             variables = new CalamariVariables();
+            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, FeatureToggle.KubernetesAksKubeloginFeatureToggle.ToString());
             log = new DoNotDoubleLog();
             redactMap = new Dictionary<string, string>();
             SetTestClusterVariables();

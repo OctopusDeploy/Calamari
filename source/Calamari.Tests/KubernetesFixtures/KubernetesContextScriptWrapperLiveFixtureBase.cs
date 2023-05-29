@@ -13,6 +13,7 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.FeatureToggles;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands;
 using Calamari.Testing.Helpers;
@@ -41,6 +42,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public void Setup()
         {
             variables = new CalamariVariables();
+            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, FeatureToggle.KubernetesAksKubeloginFeatureToggle.ToString());
 
             Log = new DoNotDoubleLog();
 
