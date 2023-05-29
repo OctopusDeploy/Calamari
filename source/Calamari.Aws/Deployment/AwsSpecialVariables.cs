@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Calamari.Aws.Deployment
+﻿namespace Calamari.Aws.Deployment
 {
     public static class AwsSpecialVariables
     {
@@ -13,6 +7,7 @@ namespace Calamari.Aws.Deployment
         public static class Authentication
         {
             public static readonly string UseInstanceRole = "Octopus.Action.AwsAccount.UseInstanceRole";
+            public static readonly string AwsAccountVariable = "Octopus.Action.AwsAccount.Variable";
         }
 
         public static class S3
