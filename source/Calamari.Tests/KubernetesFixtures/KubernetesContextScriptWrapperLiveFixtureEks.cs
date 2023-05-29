@@ -230,6 +230,12 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        public void DeployRawYaml_WithMultipleYamlFilesSpecifiedByGlobPatterns_YamlFilesAreAppliedInCorrectBatches()
+        {
+
+        }
+
+        [Test]
         [TestCase(true)]
         [TestCase(false)]
         public void AuthorisingWithAmazonAccount(bool runAsScript)
