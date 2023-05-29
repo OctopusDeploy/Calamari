@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Aws.Deployment;
 using Calamari.CloudAccounts;
@@ -11,6 +10,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Integration
 {
@@ -23,8 +23,10 @@ namespace Calamari.Aws.Integration
         bool IScriptWrapper.IsEnabled(ScriptSyntax syntax)
         {
             var accountType = variables.Get(SpecialVariables.Account.AccountType);
+            var awsAccountVariable = variables.Get(AwsSpecialVariables.Authentication.AwsAccountVariable);
             var useAwsInstanceRole = variables.Get(AwsSpecialVariables.Authentication.UseInstanceRole);
             return accountType == "AmazonWebServicesAccount" ||
+                !awsAccountVariable.IsNullOrEmpty() ||
                 string.Equals(useAwsInstanceRole, bool.TrueString, StringComparison.InvariantCultureIgnoreCase);
         }
 
