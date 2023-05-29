@@ -8,6 +8,7 @@
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
         KubernetesDeploymentStatusFeatureToggle,
-        MultiGlobPathsForRawYamlFeatureToggle
+        MultiGlobPathsForRawYamlFeatureToggle,
+        KubernetesAksKubeloginFeatureToggle
     }
 }

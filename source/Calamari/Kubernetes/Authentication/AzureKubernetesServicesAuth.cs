@@ -1,6 +1,7 @@
 ﻿using System;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.Authentication
@@ -32,8 +33,11 @@ namespace Calamari.Kubernetes.Authentication
             if (!azureCli.TrySetAz())
                 return false;
 
-            if (!kubeLogin.TrySetKubeLogin())
-                return false;
+            if (FeatureToggle.KubernetesAksKubeloginFeatureToggle.IsEnabled(deploymentVariables))
+            {
+                if (!kubeLogin.TrySetKubeLogin())
+                    return false;
+            }
 
             var disableAzureCli = deploymentVariables.GetFlag("OctopusDisableAzureCLI");
             if (!disableAzureCli)
@@ -49,7 +53,10 @@ namespace Calamari.Kubernetes.Authentication
                 var azureCluster = deploymentVariables.Get(SpecialVariables.AksClusterName);
                 var azureAdmin = deploymentVariables.GetFlag("Octopus.Action.Kubernetes.AksAdminLogin");
                 azureCli.ConfigureAksKubeCtlAuthentication(kubectlCli, azureResourceGroup, azureCluster, @namespace, kubeConfig, azureAdmin);
-                kubeLogin.ConfigureAksKubeLogin(kubeConfig);
+                if (FeatureToggle.KubernetesAksKubeloginFeatureToggle.IsEnabled(deploymentVariables))
+                {
+                    kubeLogin.ConfigureAksKubeLogin(kubeConfig);
+                }
             }
 
             return true;
