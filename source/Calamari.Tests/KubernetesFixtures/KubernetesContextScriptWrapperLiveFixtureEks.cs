@@ -567,16 +567,16 @@ namespace Calamari.Tests.KubernetesFixtures
             if (runAsScript)
             {
                 DeployWithScriptAndVerifyResult(usePackage
-                        ? CreateAddPackageFunc(FailToDeploymentResource)
-                        : CreateAddCustomResourceFileFunc(FailToDeploymentResource),
+                        ? CreateAddPackageFunc(resource)
+                        : CreateAddCustomResourceFileFunc(resource),
                     shouldSucceed: false);
             }
             else
             {
                 ExecuteCommandAndVerifyResult(KubernetesApplyRawYamlCommand.Name,
                     usePackage
-                        ? CreateAddPackageFunc(FailToDeploymentResource)
-                        : CreateAddCustomResourceFileFunc(FailToDeploymentResource),
+                        ? CreateAddPackageFunc(resource)
+                        : CreateAddCustomResourceFileFunc(resource),
                     shouldSucceed: false);
             }
         }
