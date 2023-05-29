@@ -32,17 +32,4 @@ resource "azurerm_kubernetes_cluster" "default" {
     managed            = true
     azure_rbac_enabled = true
   }
-
-#  azure_active_directory_role_based_access_control {
-#    managed                = false
-#
-#    client_app_id = var.aks_client_id
-#    server_app_id = var.aks_client_id
-#    server_app_secret = var.aks_client_secret
-#  }
-
-#  service_principal {
-#    client_id     = var.aks_client_id
-#    client_secret = var.aks_client_secret
-#  }
 }
