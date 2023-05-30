@@ -122,6 +122,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 var output = func(directoryPath, packagePath);
 
+                WriteLogMessagesToTestOutput();
+
                 if (shouldSucceed)
                 {
                     output.AssertSuccess();
@@ -130,8 +132,6 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     output.AssertFailure();
                 }
-
-                WriteLogMessagesToTestOutput();
             }
         }
 
