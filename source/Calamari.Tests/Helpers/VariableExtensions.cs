@@ -11,7 +11,7 @@ namespace Calamari.Tests.Helpers
         public static void AddFeatureToggles(this IVariables variables, params FeatureToggle[] featureToggles)
         {
             var existingToggles = variables.Get(SpecialVariables.EnabledFeatureToggles)?.Split(',')
-                                           .Select(Enum.Parse<FeatureToggle>) ?? Enumerable.Empty<FeatureToggle>();
+                                           .Select(t => (FeatureToggle)Enum.Parse(typeof(FeatureToggle), t)) ?? Enumerable.Empty<FeatureToggle>();
 
             var allToggles = existingToggles.Concat(featureToggles).Distinct();
 
