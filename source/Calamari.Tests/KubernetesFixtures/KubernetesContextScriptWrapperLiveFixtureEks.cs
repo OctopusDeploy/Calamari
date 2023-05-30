@@ -157,7 +157,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [TestCase(false, false)]
         public void DeployRawYaml_WithInvalidYaml_OutputShouldIndicateFailure(bool runAsScript, bool usePackage)
         {
-            SetupAndRunKubernetesRawYamlDeployment(runAsScript, usePackage, InvalidDeploymentResource);
+            SetupAndRunKubernetesRawYamlDeployment(runAsScript, usePackage, InvalidDeploymentResource, shouldSucceed: false);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).Where(m => !m.StartsWith("##octopus") && m != string.Empty).ToArray();
 
@@ -209,7 +209,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [TestCase(false, false)]
         public void DeployRawYaml_WithYamlThatWillNotSucceed_OutputShouldIndicateFailure(bool runAsScript, bool usePackage)
         {
-            SetupAndRunKubernetesRawYamlDeployment(runAsScript, usePackage, FailToDeploymentResource);
+            SetupAndRunKubernetesRawYamlDeployment(runAsScript, usePackage, FailToDeploymentResource, shouldSucceed: false);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
@@ -556,7 +556,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     "Unable to authorise credentials, see verbose log for details.");
         }
 
-        private void SetupAndRunKubernetesRawYamlDeployment(bool runAsScript, bool usePackage, string resource)
+        private void SetupAndRunKubernetesRawYamlDeployment(bool runAsScript, bool usePackage, string resource, bool shouldSucceed = true)
         {
             SetVariablesToAuthoriseWithAmazonAccount();
 
@@ -569,7 +569,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 DeployWithScriptAndVerifyResult(usePackage
                         ? CreateAddPackageFunc(resource)
                         : CreateAddCustomResourceFileFunc(resource),
-                    shouldSucceed: false);
+                    shouldSucceed);
             }
             else
             {
@@ -577,7 +577,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     usePackage
                         ? CreateAddPackageFunc(resource)
                         : CreateAddCustomResourceFileFunc(resource),
-                    shouldSucceed: false);
+                    shouldSucceed);
             }
         }
 
