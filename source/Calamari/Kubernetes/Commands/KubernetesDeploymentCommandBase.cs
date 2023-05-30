@@ -20,7 +20,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Conventions;
 using Calamari.Kubernetes.Integration;
 
@@ -65,10 +64,6 @@ namespace Calamari.Kubernetes.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            if (!FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle.IsEnabled(variables))
-                throw new InvalidOperationException(
-                    "Unable to execute the Kubernetes Apply Raw YAML Command because the appropriate feature has not been enabled.");
-
             Options.Parse(commandLineArguments);
             var conventions = new List<IConvention>
             {

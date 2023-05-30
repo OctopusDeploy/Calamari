@@ -1,16 +1,16 @@
 #if !NET40
+using System;
 using System.Collections.Generic;
-using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
-using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Conventions;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
@@ -23,6 +23,7 @@ namespace Calamari.Kubernetes.Commands
         public const string Name = "kubernetes-apply-raw-yaml";
 
         private readonly ILog log;
+        private readonly IVariables variables;
         private readonly ICalamariFileSystem fileSystem;
         private readonly ResourceStatusReportExecutor statusReportExecutor;
         private readonly Kubectl kubectl;
@@ -41,12 +42,19 @@ namespace Calamari.Kubernetes.Commands
             substituteInFiles, structuredConfigVariablesService, kubectl)
         {
             this.log = log;
+            this.variables = variables;
             this.fileSystem = fileSystem;
             this.statusReportExecutor = statusReportExecutor;
             this.kubectl = kubectl;
+        }
 
-            Options.Add("package=", "Path to the NuGet package to install.",
-                v => new PathToPackage(Path.GetFullPath(v)));
+        public override int Execute(string[] commandLineArguments)
+        {
+            if (!FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle.IsEnabled(variables))
+                throw new InvalidOperationException(
+                    "Unable to execute the Kubernetes Apply Raw YAML Command because the appropriate feature has not been enabled.");
+
+            return base.Execute(commandLineArguments);
         }
 
         protected override IEnumerable<IInstallConvention> CommandSpecificConventions()
