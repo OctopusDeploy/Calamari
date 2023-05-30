@@ -206,8 +206,8 @@ namespace Calamari.Common.Plumbing.FileSystem
             var parentDirectoryInfo = new DirectoryInfo(parentDirectoryPath);
 
             return searchPatterns.Length == 0
-                ? parentDirectoryInfo.GetFiles("*", SearchOption.TopDirectoryOnly).Select(fi => fi.FullName)
-                : searchPatterns.SelectMany(pattern => parentDirectoryInfo.GetFiles(pattern, SearchOption.TopDirectoryOnly).Select(fi => fi.FullName));
+                ? parentDirectoryInfo.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Select(fi => fi.FullName)
+                : searchPatterns.SelectMany(pattern => parentDirectoryInfo.EnumerateFiles(pattern, SearchOption.TopDirectoryOnly).Select(fi => fi.FullName));
         }
 
         public virtual IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns)
@@ -215,8 +215,8 @@ namespace Calamari.Common.Plumbing.FileSystem
             var parentDirectoryInfo = new DirectoryInfo(parentDirectoryPath);
 
             return searchPatterns.Length == 0
-                ? parentDirectoryInfo.GetFiles("*", SearchOption.AllDirectories).Select(fi => fi.FullName)
-                : searchPatterns.SelectMany(pattern => parentDirectoryInfo.GetFiles(pattern, SearchOption.AllDirectories).Select(fi => fi.FullName));
+                ? parentDirectoryInfo.EnumerateFiles("*", SearchOption.AllDirectories).Select(fi => fi.FullName)
+                : searchPatterns.SelectMany(pattern => parentDirectoryInfo.EnumerateFiles(pattern, SearchOption.AllDirectories).Select(fi => fi.FullName));
         }
 
         public IEnumerable<string> EnumerateDirectories(string parentDirectoryPath)
@@ -397,9 +397,14 @@ namespace Calamari.Common.Plumbing.FileSystem
         public string CreateTemporaryDirectory()
         {
             var path = Path.Combine(GetTempBasePath(), Guid.NewGuid().ToString());
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
+            CreateDirectory(path);
             return path;
+        }
+
+        public void CreateDirectory(string directory)
+        {
+            if (!Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
         }
 
         public void PurgeDirectory(string targetDirectory, FailureOptions options)
@@ -516,7 +521,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 LogFileAccess(originalFile);
                 LogFileAccess(temporaryReplacement);
                 LogFileAccess(backup);
-    
+
                 throw unauthorizedAccessException;
             }
 

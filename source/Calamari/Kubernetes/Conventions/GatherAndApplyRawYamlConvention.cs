@@ -11,6 +11,8 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes.Commands;
 using Calamari.Kubernetes.Integration;
+using Microsoft.Extensions.FileSystemGlobbing;
+using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 
@@ -78,12 +80,23 @@ namespace Calamari.Kubernetes.Conventions
             var directories = new List<string>();
             foreach (var (glob, idx) in globs.Select((g, i) => (g, i)))
             {
-                var files = Directory.GetFiles(deployment.CurrentDirectory, glob);
                 var directory = Path.Combine(deployment.CurrentDirectory, "grouped", idx.ToString());
-                Directory.CreateDirectory(directory);
-                foreach (var file in files)
+                fileSystem.CreateDirectory(directory);
+
+                var matcher = new Matcher();
+                matcher.AddInclude(glob);
+                var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(deployment.CurrentDirectory)));
+                foreach (var file in result.Files)
                 {
-                    fileSystem.CopyFile(file, Path.Combine(directory, Path.GetFileName(file)));
+                    var relativeFilePath = file.Path ?? file.Stem;
+                    var fullPath = Path.Combine(deployment.CurrentDirectory, relativeFilePath);
+                    var targetPath = Path.Combine(directory, relativeFilePath);
+                    var targetDirectory = Path.GetDirectoryName(targetPath);
+                    if (targetDirectory != null)
+                    {
+                        fileSystem.CreateDirectory(targetDirectory);
+                    }
+                    fileSystem.CopyFile(fullPath, targetPath);
                 }
 
                 directories.Add(directory);
@@ -96,12 +109,12 @@ namespace Calamari.Kubernetes.Conventions
         private IEnumerable<Resource> ApplyBatchAndReturnResources(int index, string glob, string directory)
         {
             log.Info($"Applying Batch #{index+1} for YAML matching '{glob}'");
-            foreach (var file in Directory.EnumerateFiles(directory))
+            foreach (var file in fileSystem.EnumerateFilesRecursively(directory))
             {
-                log.Verbose($"{Path.GetFileName(file)} Contents:");
-                log.Verbose(File.ReadAllText(file));
+                log.Verbose($"{Path.GetRelativePath(directory, file)} Contents:");
+                log.Verbose(fileSystem.ReadFile(file));
             }
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "-o", "json");
+            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "--recursive", "-o", "json");
 
             foreach (var message in result.Output.Messages)
             {

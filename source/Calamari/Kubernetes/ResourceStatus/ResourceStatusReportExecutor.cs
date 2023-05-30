@@ -119,7 +119,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             var groupedDirectories = variables.Get(SpecialVariables.GroupedYamlDirectories);
             return groupedDirectories != null
-                ? groupedDirectories.Split(';').SelectMany(d => fileSystem.EnumerateFiles(Path.Combine(workingDirectory, d)))
+                ? groupedDirectories.Split(';').SelectMany(d => fileSystem.EnumerateFilesRecursively(Path.Combine(workingDirectory, d)))
                 : Enumerable.Empty<string>();
         }
 
