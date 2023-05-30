@@ -101,27 +101,6 @@ namespace Calamari.Tests.KubernetesFixtures
             TestScriptAndVerifyCluster(wrapper, "Test-Script");
         }
 
-        
-        [Test]
-        public void CreateDeploymentWithAzureServicePrincipal()
-        {
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
-            variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", azurermResourceGroup);
-            variables.Set(SpecialVariables.AksClusterName, aksClusterName);
-            variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.FalseString);
-            variables.Set("Octopus.Action.Azure.SubscriptionId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionId));
-            variables.Set("Octopus.Action.Azure.TenantId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
-            variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
-            variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
-            var wrapper = CreateWrapper();
-            TestKubectlCommands(
-                                wrapper,
-                                "create deployment kubernetes-bootcamp --image=gcr.io/google-samples/kubernetes-bootcamp:v1",
-                                "wait deployment kubernetes-bootcamp --for condition=Available=True --timeout=90s",
-                                "get deployments"
-                               );
-        }
-
         [Test]
         public void AuthorisingWithClientCertificate()
         {

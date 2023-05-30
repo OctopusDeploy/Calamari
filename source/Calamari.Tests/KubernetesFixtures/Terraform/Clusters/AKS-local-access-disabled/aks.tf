@@ -21,10 +21,15 @@ resource "azurerm_kubernetes_cluster" "default" {
     os_disk_size_gb = 30
   }
 
-  role_based_access_control_enabled = true
+  identity {
+    type = "SystemAssigned"
+  }
 
-  service_principal {
-    client_id     = var.aks_client_id
-    client_secret = var.aks_client_secret
+  role_based_access_control_enabled = true
+  local_account_disabled            = true
+
+  azure_active_directory_role_based_access_control {
+    managed            = true
+    azure_rbac_enabled = true
   }
 }

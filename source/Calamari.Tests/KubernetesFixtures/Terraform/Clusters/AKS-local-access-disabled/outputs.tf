@@ -39,8 +39,3 @@ output "aks_rg_name" {
   description = "RG name."
   value       = azurerm_resource_group.default.name
 }
-
-output "aks_service_account_token" {
-  value     = kubernetes_secret.default.data.token
-  sensitive = true
-}
