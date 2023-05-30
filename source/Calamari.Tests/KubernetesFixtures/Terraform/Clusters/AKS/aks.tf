@@ -8,7 +8,6 @@ resource "azurerm_kubernetes_cluster" "default" {
   resource_group_name = azurerm_resource_group.default.name
   location            = "Australia East"
   dns_prefix          = "${random_pet.prefix.id}-k8s"
-  local_account_disabled = true
   
   tags = {
     octopus-environment = "Staging"
