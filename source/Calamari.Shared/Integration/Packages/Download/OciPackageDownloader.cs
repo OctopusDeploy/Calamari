@@ -105,7 +105,7 @@ namespace Calamari.Integration.Packages.Download
         static string? GetPackageHashFromDigest(string digest)
         {
             var matches = Regex.Match(digest, @"[A-Za-z0-9_+.-]+:(?<hash>[A-Fa-f0-9]+)"); 
-            return matches.Groups.FirstOrDefault(g => g.Name.Equals("hash")) is { } ? matches.Groups["hash"].Value : null;
+            return matches.Groups["hash"]?.Value;
         }
 
         private (string digest, int size) GetPackageDetails(
