@@ -21,6 +21,7 @@ resource "azurerm_kubernetes_cluster" "default" {
     os_disk_size_gb = 30
   }
 
+  local_account_disabled            = false
   role_based_access_control_enabled = true
 
   service_principal {
