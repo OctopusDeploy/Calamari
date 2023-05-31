@@ -175,10 +175,10 @@ namespace Calamari.Common.Features.Packages
 
             return new PackageFileNameMetadata(packageId, version, fileVersion, extension);
         }
-        
+
         public static bool TryMatchTarExtensions(string fileName, out string strippedFileName, out string extension)
         {
-            // At the moment we only have one use case for this: files ending in ".tar.xyz" 
+            // At the moment we only have one use case for this: files ending in ".tar.xyz"
             // As that is the only format of multiple part extensions we currently supported: https://octopus.com/docs/packaging-applications
             // But if in the future we have more, we can modify this method to accomodate more cases.
             var knownExtensionPatterns = @"\.tar((\.[a-zA-Z0-9]+)?)";
@@ -235,6 +235,8 @@ namespace Calamari.Common.Features.Packages
                     return VersionFactory.CreateSemanticVersion(Decode(input.Substring(1)), true);
                 case 'M':
                     return VersionFactory.CreateMavenVersion(Decode(input.Substring(1)));
+                case 'O':
+                    return VersionFactory.CreateOctopusVersion(Decode(input.Substring(1)));
             }
 
             throw new Exception($"Unrecognised Version format `{input}`");
