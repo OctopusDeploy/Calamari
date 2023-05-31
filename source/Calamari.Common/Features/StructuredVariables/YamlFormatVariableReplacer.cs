@@ -92,7 +92,7 @@ namespace Calamari.Common.Features.StructuredVariables
                             else if (node is YamlNode<SequenceStart> sequenceStart
                                      && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
                                 structureWeAreReplacing = (sequenceStart, sequenceReplacement());
-                            else if (node is YamlNode<Comment> comment && comment.Event.IsInline)
+                            else if (node is YamlNode<Comment> comment)
                                 structureWeAreReplacing = (comment, null);
                             else
                                 outputEvents.Add(node.Event);
