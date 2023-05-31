@@ -13,6 +13,12 @@
       "commands": [
         "octonotes"
       ]
+    },
+    "dotnet-affected": {
+      "version": "3.1.1",
+      "commands": [
+        "dotnet-affected"
+      ]
     }
   }
 }
