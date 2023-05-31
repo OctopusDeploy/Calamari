@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Calamari.Aws.Deployment;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -20,13 +18,7 @@ namespace Calamari.Aws.Integration
         readonly IVariables variables;
         public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
 
-        bool IScriptWrapper.IsEnabled(ScriptSyntax syntax)
-        {
-            var accountType = variables.Get(SpecialVariables.Account.AccountType);
-            var useAwsInstanceRole = variables.Get(AwsSpecialVariables.Authentication.UseInstanceRole);
-            return accountType == "AmazonWebServicesAccount" ||
-                string.Equals(useAwsInstanceRole, bool.TrueString, StringComparison.InvariantCultureIgnoreCase);
-        }
+        bool IScriptWrapper.IsEnabled(ScriptSyntax syntax) => variables.Get(SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount";
 
         public IScriptWrapper NextWrapper { get; set; }
 
