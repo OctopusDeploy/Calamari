@@ -65,7 +65,7 @@
         <PackageReference Include="Octostache" Version="3.3.0" />
         <PackageReference Include="SharpCompress" Version="0.24.0" />
         <PackageReference Include="XPath2" Version="1.0.12" />
-        <PackageReference Include="YamlDotNet" Version="8.1.2" />
+        <PackageReference Include="YamlDotNet" Version="13.1.0" />
         <PackageReference Include="System.ValueTuple" Version="4.4.0" />
     </ItemGroup>
 
