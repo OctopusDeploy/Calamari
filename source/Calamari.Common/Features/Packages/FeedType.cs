@@ -10,7 +10,7 @@ namespace Calamari.Common.Features.Packages
         Maven,
         GitHub,
         Helm,
-        HelmOci,
+        OciRegistry,
         AwsElasticContainerRegistry,
         S3,
         AzureContainerRegistry,
