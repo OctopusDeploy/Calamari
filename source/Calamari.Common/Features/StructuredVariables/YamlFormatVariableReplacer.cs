@@ -93,6 +93,7 @@ namespace Calamari.Common.Features.StructuredVariables
                                      && variablesByKey.TryGetValue(sequenceStart.Path, out var sequenceReplacement))
                                 structureWeAreReplacing = (sequenceStart, sequenceReplacement());
                             else if (node is YamlNode<Comment> comment)
+                                // TODO: remove this hack when https://github.com/aaubry/YamlDotNet/issues/812 is fixed
                                 structureWeAreReplacing = (comment, null);
                             else
                                 outputEvents.Add(node.Event);
@@ -122,6 +123,8 @@ namespace Calamari.Common.Features.StructuredVariables
                             else if ((node is YamlNode<MappingStart> || node is YamlNode<SequenceStart>)
                                      && structureWeAreReplacing.Value.startEvent is YamlNode<Comment>)
                             {
+                                // TODO: remove this hack when https://github.com/aaubry/YamlDotNet/issues/812 is fixed
+                                
                                 // We aren't doing any replacement here, YamlDotNet gives us the comment and the
                                 // mapping/sequence start element in a different order to what we would expect
                                 // (comment first, start element second instead of the other way around),
