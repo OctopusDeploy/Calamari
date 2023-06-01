@@ -18,17 +18,17 @@ namespace Calamari.Common.Plumbing.ServiceMessages
             this.properties = properties ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
         
-        private ServiceMessage(string name, params (string, string)[] parameters)
+        private ServiceMessage(string name, params KeyValuePair<string, string>[] parameters)
         {
             this.Name = name;
-            this.properties = parameters.ToDictionary(kvp => kvp.Item1, kvp => kvp.Item2);
+            this.properties = parameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public string Name { get; }
 
         public IDictionary<string, string> Properties => properties;
 
-        public static ServiceMessage Create(string name, params (string, string)[] parameters) =>
+        public static ServiceMessage Create(string name, params KeyValuePair<string, string>[] parameters) =>
             new ServiceMessage(name, parameters);
 
         public string? GetValue(string key)

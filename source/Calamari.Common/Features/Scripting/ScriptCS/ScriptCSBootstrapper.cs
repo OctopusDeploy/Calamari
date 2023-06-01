@@ -58,7 +58,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
                 .Trim();
         }
 
-        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, IVariables variables)
+        public static BootstrapFiles PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, IVariables variables)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(scriptFilePath));
             var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
@@ -73,7 +73,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             }
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
-            return (bootstrapFile, scriptModulePaths);
+            return new BootstrapFiles(bootstrapFile, scriptModulePaths);
         }
 
         static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory)

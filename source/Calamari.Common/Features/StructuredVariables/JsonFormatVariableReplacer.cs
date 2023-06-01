@@ -31,36 +31,45 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             try
             {
-                var json = LoadJson(filePath);
+                JToken root;
+                StringExtensions.LineEnding? lineEnding = null;
+                Encoding? encoding = null;
+                
+                if (!fileSystem.FileExists(filePath))
+                {
+                    root = new JObject();
+                }
+                else
+                {
+                     var fileText = fileSystem.ReadFile(filePath, out encoding);
+                     if (fileText.Length == 0)
+                     {
+                         root = new JObject();
+                     }
+                     else
+                     {
+                         root = JToken.Parse(fileText);
+                         lineEnding = fileText.GetMostCommonLineEnding();
+                     }
+                }
+                
                 var map = new JsonUpdateMap(log);
-                map.Load(json.root);
+                map.Load(root);
                 map.Update(variables);
 
                 fileSystem.OverwriteFile(filePath,
                                          textWriter =>
                                          {
-                                             textWriter.NewLine = json.lineEnding == StringExtensions.LineEnding.Unix ? "\n" : "\r\n";
+                                             textWriter.NewLine = lineEnding == StringExtensions.LineEnding.Unix ? "\n" : "\r\n";
                                              var jsonWriter = new JsonTextWriter(textWriter);
                                              jsonWriter.Formatting = Formatting.Indented;
-                                             json.root.WriteTo(jsonWriter);
-                                         }, json.encoding);
+                                             root.WriteTo(jsonWriter);
+                                         }, encoding);
             }
             catch (JsonReaderException e)
             {
                 throw new StructuredConfigFileParseException(e.Message, e);
             }
-        }
-
-        (JToken root, StringExtensions.LineEnding? lineEnding, Encoding? encoding) LoadJson(string jsonFilePath)
-        {
-            if (!fileSystem.FileExists(jsonFilePath))
-                return (new JObject(), null, null);
-
-            var fileText = fileSystem.ReadFile(jsonFilePath, out var encoding);
-            if (fileText.Length == 0)
-                return (new JObject(), null, null);
-
-            return (JToken.Parse(fileText), fileText.GetMostCommonLineEnding(), encoding);
         }
     }
 }

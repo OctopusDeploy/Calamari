@@ -17,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Logging
         public void WriteServiceMessage_CorrectlyFormatsMessages()
         {
             // Arrange
-            var serviceMessage = ServiceMessage.Create("do-it", ("foo", "1"), ("bar", null));
+            var serviceMessage = ServiceMessage.Create("do-it", new KeyValuePair<string, string>("foo", "1"), new KeyValuePair<string, string>("bar", null));
 
             // Testing functionality from abstract base class, so it doesn't matter that this is a test class.
             var sut = new InMemoryLog();

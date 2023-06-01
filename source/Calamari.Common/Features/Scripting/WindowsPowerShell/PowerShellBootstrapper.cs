@@ -249,20 +249,22 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             return true;
         }
 
-        public (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, IVariables variables)
+        public BootstrapFiles PrepareBootstrapFile(Script script, IVariables variables)
         {
             var parent = Path.GetDirectoryName(Path.GetFullPath(script.File));
             var name = Path.GetFileName(script.File);
             var bootstrapFile = Path.Combine(parent, "Bootstrap." + name);
-            var variableString = GetEncryptedVariablesString(variables);
+            var variableString = GetEncryptedVariablesString(variables, out var iv);
 
-            var (scriptModulePaths, scriptModuleDeclarations) = DeclareScriptModules(variables, parent);
-
+            var output = new StringBuilder();
+            var scriptModulePaths = WriteScriptModules(variables, parent, output);
+            var scriptModuleDeclarations = output.ToString();
+            
             var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("{{TargetScriptFile}}", script.File.EscapeSingleQuotedString())
                 .Replace("{{ScriptParameters}}", script.Parameters)
-                .Replace("{{EncryptedVariablesString}}", variableString.encrypted)
-                .Replace("{{VariablesIV}}", variableString.iv)
+                .Replace("{{EncryptedVariablesString}}", variableString)
+                .Replace("{{VariablesIV}}", iv)
                 .Replace("{{LocalVariableDeclarations}}", DeclareLocalVariables(variables))
                 .Replace("{{ScriptModules}}", scriptModuleDeclarations);
 
@@ -271,7 +273,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             CalamariFileSystem.OverwriteFile(bootstrapFile, builder.ToString(), new UTF8Encoding(true));
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
-            return (bootstrapFile, scriptModulePaths);
+            return new BootstrapFiles(bootstrapFile, scriptModulePaths);
         }
 
         static StringBuilder SetupDebugBreakpoints(StringBuilder builder, IVariables variables)
@@ -326,15 +328,6 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             return debugBootstrapFile;
         }
 
-        static (string[] scriptModulePaths, string scriptModuleDeclarations) DeclareScriptModules(IVariables variables, string parentDirectory)
-        {
-            var output = new StringBuilder();
-
-            var scriptModules = WriteScriptModules(variables, parentDirectory, output);
-
-            return (scriptModules, output.ToString());
-        }
-
         static string[] WriteScriptModules(IVariables variables, string parentDirectory, StringBuilder output)
         {
             var scriptModules = new List<string>();
@@ -358,7 +351,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             return scriptModules.ToArray();
         }
 
-        static (string encrypted, string iv) GetEncryptedVariablesString(IVariables variables)
+        static string GetEncryptedVariablesString(IVariables variables, out string iv)
         {
             var sb = new StringBuilder();
             foreach (var variableName in variables.GetNames().Where(name => !ScriptVariables.IsLibraryScriptModule(name)))
@@ -369,11 +362,9 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             }
 
             var encrypted = VariableEncryptor.Encrypt(sb.ToString());
-            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);
-            return (
-                Convert.ToBase64String(rawEncrypted, Base64FormattingOptions.InsertLineBreaks),
-                Convert.ToBase64String(iv)
-            );
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var rawIv);
+            iv = Convert.ToBase64String(rawIv);
+            return Convert.ToBase64String(rawEncrypted, Base64FormattingOptions.InsertLineBreaks);
         }
 
         static string DeclareLocalVariables(IVariables variables)

@@ -97,7 +97,7 @@ namespace Calamari.Common.Features.Scripting.Python
             File.WriteAllText(scriptFilePath, text);
         }
 
-        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(Script script, string workingDirectory, string configurationFile, IVariables variables)
+        public static BootstrapFiles PrepareBootstrapFile(Script script, string workingDirectory, string configurationFile, IVariables variables)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(script.File));
             var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
@@ -113,7 +113,7 @@ namespace Calamari.Common.Features.Scripting.Python
 
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
             EnsureValidUnixFile(script.File);
-            return (bootstrapFile, scriptModulePaths);
+            return new BootstrapFiles(bootstrapFile, scriptModulePaths);
         }
 
         static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory)

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
@@ -16,8 +15,8 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             var workingDirectory = Path.GetDirectoryName(script.File);
             var executable = ScriptCSBootstrapper.FindExecutable();
             var configurationFile = ScriptCSBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
-            var (bootstrapFile, otherTemporaryFiles) = ScriptCSBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
-            var arguments = ScriptCSBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
+            var bootstrapFiles = ScriptCSBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
+            var arguments = ScriptCSBootstrapper.FormatCommandArguments(bootstrapFiles.BootstrapFile, script.Parameters);
 
             yield return new ScriptExecution(
                 new CommandLineInvocation(executable, arguments)
@@ -25,7 +24,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
                     WorkingDirectory = workingDirectory,
                     EnvironmentVars = environmentVars
                 },
-                otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile })
+                bootstrapFiles.TemporaryFiles.Concat(new[] { bootstrapFiles.BootstrapFile, configurationFile })
             );
         }
     }

@@ -20,11 +20,11 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
         {
             var powerShellBootstrapper = GetPowerShellBootstrapper(variables);
 
-            var (bootstrapFile, otherTemporaryFiles) = powerShellBootstrapper.PrepareBootstrapFile(script, variables);
+            var bootstrapFiles = powerShellBootstrapper.PrepareBootstrapFile(script, variables);
             var debuggingBootstrapFile = powerShellBootstrapper.PrepareDebuggingBootstrapFile(script);
 
             var executable = powerShellBootstrapper.PathToPowerShellExecutable(variables);
-            var arguments = powerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
+            var arguments = powerShellBootstrapper.FormatCommandArguments(bootstrapFiles.BootstrapFile, debuggingBootstrapFile, variables);
 
             var invocation = new CommandLineInvocation(executable, arguments)
             {
@@ -38,7 +38,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             {
                 new ScriptExecution(
                     invocation,
-                    otherTemporaryFiles.Concat(new[] { bootstrapFile, debuggingBootstrapFile })
+                    bootstrapFiles.TemporaryFiles.Concat(new[] { bootstrapFiles.BootstrapFile, debuggingBootstrapFile })
                 )
             };
         }

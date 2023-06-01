@@ -16,7 +16,7 @@ namespace Calamari.Tests.Fixtures.ServiceMessages
         public void ToString_FormatsMessageCorrectly()
         {
             // Arrange
-            var sut = ServiceMessage.Create("my-message-name", ("foo", "my-parameter-value"));
+            var sut = ServiceMessage.Create("my-message-name", new KeyValuePair<string, string>("foo", "my-parameter-value"));
 
             // Act
             var text = sut.ToString();
@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.ServiceMessages
         public void ToString_IgnoresNullParameters()
         {
             // Arrange
-            var sut = ServiceMessage.Create("my-message-name", ("foo", "1"), ("bar", null));
+            var sut = ServiceMessage.Create("my-message-name", new KeyValuePair<string, string>("foo", "1"), new KeyValuePair<string, string>("bar", null));
 
             // Act
             var text = sut.ToString();

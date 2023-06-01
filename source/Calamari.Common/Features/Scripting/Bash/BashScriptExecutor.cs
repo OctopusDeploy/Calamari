@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
@@ -15,11 +14,11 @@ namespace Calamari.Common.Features.Scripting.Bash
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             var configurationFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
-            var (bootstrapFile, otherTemporaryFiles) = BashScriptBootstrapper.PrepareBootstrapFile(script, configurationFile, workingDirectory, variables);
+            var bootstrapFiles = BashScriptBootstrapper.PrepareBootstrapFile(script, configurationFile, workingDirectory, variables);
 
             var invocation = new CommandLineInvocation(
                 BashScriptBootstrapper.FindBashExecutable(),
-                BashScriptBootstrapper.FormatCommandArguments(Path.GetFileName(bootstrapFile))
+                BashScriptBootstrapper.FormatCommandArguments(Path.GetFileName(bootstrapFiles.BootstrapFile))
             )
             {
                 WorkingDirectory = workingDirectory,
@@ -28,7 +27,7 @@ namespace Calamari.Common.Features.Scripting.Bash
 
             yield return new ScriptExecution(
                 invocation,
-                otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile })
+                bootstrapFiles.TemporaryFiles.Concat(new[] { bootstrapFiles.BootstrapFile, configurationFile })
             );
         }
     }
