@@ -39,8 +39,9 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-    <!--This is built-in in .net6.0-->
+    <!--These are built-in in .net6.0-->
     <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="2.0.0-preview2-final" />
+    <PackageReference Include="System.IO" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
