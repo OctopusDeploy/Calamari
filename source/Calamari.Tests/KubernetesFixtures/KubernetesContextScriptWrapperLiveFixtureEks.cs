@@ -197,6 +197,11 @@ namespace Calamari.Tests.KubernetesFixtures
                                              return l != "The previous custom resources were not removed." &&
                                                  l != "The deployment process failed. The resources created by this step will be passed to \"kubectl describe\" and logged below.";
                                          })
+                                         .Where(l =>
+                                             {
+                                               // These logs are printed after an error is caught but only for the new command
+                                               return l != "Adding journal entry:" && !l.StartsWith("<Deployment Id=");
+                                             })
                                          .ToList();
 
             this.Assent(string.Join('\n', logsToCompare), configuration: AssentConfiguration.Default);
