@@ -1,6 +1,6 @@
 #if !NET40
 using System;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.StructuredVariables;
@@ -25,7 +25,7 @@ namespace Calamari.Kubernetes.Commands
         private readonly ILog log;
         private readonly IVariables variables;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly ResourceStatusReportExecutor statusReportExecutor;
+        private readonly IResourceStatusChecker resourceStatusChecker;
         private readonly Kubectl kubectl;
 
         public KubernetesApplyRawYamlCommand(
@@ -36,7 +36,7 @@ namespace Calamari.Kubernetes.Commands
             IExtractPackage extractPackage,
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
-            ResourceStatusReportExecutor statusReportExecutor,
+            IResourceStatusChecker resourceStatusChecker,
             Kubectl kubectl)
             : base(log, deploymentJournalWriter, variables, fileSystem, extractPackage,
             substituteInFiles, structuredConfigVariablesService, kubectl)
@@ -44,7 +44,7 @@ namespace Calamari.Kubernetes.Commands
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
-            this.statusReportExecutor = statusReportExecutor;
+            this.resourceStatusChecker = resourceStatusChecker;
             this.kubectl = kubectl;
         }
 
@@ -57,10 +57,22 @@ namespace Calamari.Kubernetes.Commands
             return base.Execute(commandLineArguments);
         }
 
-        protected override IEnumerable<IInstallConvention> CommandSpecificConventions()
+        protected override async Task CommandImplementation(RunningDeployment runningDeployment)
         {
-            yield return new GatherAndApplyRawYamlConvention(log, fileSystem, kubectl);
-            yield return new ResourceStatusReportConvention(statusReportExecutor);
+            var resourcesAppliedEvent = new KubectlResourcesAppliedEvent();
+
+            var resourceStatusReportExecutor = new ResourceStatusReportExecutor(variables, log, fileSystem,
+                resourceStatusChecker, resourcesAppliedEvent, kubectl, new ResourceStatusReportExecutor.Settings
+                    { FindResourcesFromFiles = false, ReceiveResourcesFromResourcesAppliedEvent = true });
+
+            var gatherAndApplyRawYamlExecutor =
+                new GatherAndApplyRawYamlConvention(log, fileSystem, kubectl, resourcesAppliedEvent);
+
+            var resourceStatusTask = resourceStatusReportExecutor.ReportStatus(runningDeployment.CurrentDirectory);
+
+            gatherAndApplyRawYamlExecutor.Install(runningDeployment);
+
+            await resourceStatusTask;
         }
     }
 }

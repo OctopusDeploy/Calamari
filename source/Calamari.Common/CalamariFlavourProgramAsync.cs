@@ -8,6 +8,7 @@ using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
 using Calamari.Common.Commands;
+using Calamari.Common.Events;
 using Calamari.Common.Features.ConfigurationTransforms;
 using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.EmbeddedResources;
@@ -26,6 +27,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Util;
 
 namespace Calamari.Common
 {
@@ -61,6 +63,16 @@ namespace Calamari.Common
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
+
+            builder.RegisterAssemblyTypes(assemblies)
+                   .AssignableTo<InProcessEventBase>()
+                   .AsSelf()
+                   .SingleInstance();
+
+            builder.RegisterAssemblyTypes(assemblies)
+                   .Where(t => t.IsSubclassOfRawGeneric(typeof(InProcessEventBase<>)))
+                   .AsSelf()
+                   .SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
 

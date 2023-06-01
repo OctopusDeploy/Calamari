@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -12,29 +13,42 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public class ResourceStatusReportExecutor
     {
+        public class Settings
+        {
+            public bool FindResourcesFromFiles { get; set; } = true;
+
+            public bool ReceiveResourcesFromResourcesAppliedEvent { get; set; }
+        }
+
         private const int PollingIntervalSeconds = 2;
 
         private readonly IVariables variables;
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly IResourceStatusChecker statusChecker;
+        private readonly KubectlResourcesAppliedEvent resourcesAppliedEvent;
         private readonly Kubectl kubectl;
+        private readonly Settings settings;
 
         public ResourceStatusReportExecutor(
             IVariables variables,
             ILog log,
             ICalamariFileSystem fileSystem,
             IResourceStatusChecker statusChecker,
-            Kubectl kubectl)
+            KubectlResourcesAppliedEvent resourcesAppliedEvent,
+            Kubectl kubectl,
+            Settings settings = null)
         {
             this.variables = variables;
             this.log = log;
             this.fileSystem = fileSystem;
             this.statusChecker = statusChecker;
+			this.resourcesAppliedEvent = resourcesAppliedEvent;
             this.kubectl = kubectl;
+            this.settings = settings ?? new Settings();
         }
 
-        public void ReportStatus(string workingDirectory)
+        public async Task ReportStatus(string workingDirectory)
         {
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
             // When the namespace on a target was set and then cleared, it's going to be "" instead of null
@@ -42,28 +56,37 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 defaultNamespace = "default";
             }
-            var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
-            var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
 
-            var manifests = ReadManifestFiles(workingDirectory).ToList();
-            var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
-
-            var secret = GetSecret(defaultNamespace);
-            if (secret != null)
+            if (settings.ReceiveResourcesFromResourcesAppliedEvent)
             {
-                definedResources.Add(secret);
+                resourcesAppliedEvent.Subscribe(HandleNewResources);
             }
 
-            var configMap = GetConfigMap(defaultNamespace);
-            if (configMap != null)
+            var definedResources = new List<ResourceIdentifier>();
+            if (settings.FindResourcesFromFiles)
             {
-                definedResources.Add(configMap);
-            }
+                var manifests = ReadManifestFiles(workingDirectory).ToList();
+                definedResources.AddRange(KubernetesYaml.GetDefinedResources(manifests, defaultNamespace));
 
-            if (!definedResources.Any())
-            {
-                log.Verbose("No defined resources are found, skipping resource status check");
-                return;
+                var secret = GetSecret(defaultNamespace);
+                if (secret != null)
+                {
+                    definedResources.Add(secret);
+                }
+
+                var configMap = GetConfigMap(defaultNamespace);
+                if (configMap != null)
+                {
+                    definedResources.Add(configMap);
+                }
+
+                if (!definedResources.Any())
+                {
+                    if (!settings.ReceiveResourcesFromResourcesAppliedEvent)
+                        log.Verbose("No defined resources are found, skipping resource status check");
+
+                    return;
+                }
             }
 
             log.Verbose("Performing resource status checks on the following resources:");
@@ -72,21 +95,34 @@ namespace Calamari.Kubernetes.ResourceStatus
                 log.Verbose($" - {resourceIdentifier.Kind}/{resourceIdentifier.Name} in namespace {resourceIdentifier.Namespace}");
             }
 
-            if (!kubectl.TrySetKubectl())
+            if (!definedResources.Any())
             {
-                throw new Exception("Unable to set KubeCtl");
+                log.Info("Resource Status Check: Waiting for resources to be applied.");
             }
+
+            await DoResourceCheck(definedResources);
+        }
+
+        private async Task DoResourceCheck(List<ResourceIdentifier> initialResources)
+        {
+            var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
+            var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
 
             var timer = timeoutSeconds == 0
                 ? new InfiniteTimer(TimeSpan.FromSeconds(PollingIntervalSeconds)) as ITimer
                 : new Timer(TimeSpan.FromSeconds(timeoutSeconds), TimeSpan.FromSeconds(PollingIntervalSeconds));
 
-            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, timer, kubectl, new Options() {  WaitForJobs = waitForJobs });
+            var completedSuccessfully = await statusChecker.CheckStatusUntilCompletionOrTimeout(kubectl, initialResources, timer, new Options {  WaitForJobs = waitForJobs});
 
             if (!completedSuccessfully)
             {
                 throw new TimeoutException("Not all resources have deployed successfully within timeout");
             }
+        }
+
+        private void HandleNewResources(ResourceIdentifier[] resources)
+        {
+            statusChecker.AddResources(resources);
         }
 
         private IEnumerable<string> ReadManifestFiles(string workingDirectory)

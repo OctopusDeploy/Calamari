@@ -12,6 +12,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes.Commands;
 using Calamari.Kubernetes.Integration;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Newtonsoft.Json.Linq;
@@ -24,15 +25,18 @@ namespace Calamari.Kubernetes.Conventions
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly Kubectl kubectl;
+        private readonly KubectlResourcesAppliedEvent resourcesAppliedEvent;
 
         public GatherAndApplyRawYamlConvention(
             ILog log,
             ICalamariFileSystem fileSystem,
-            Kubectl kubectl)
+            Kubectl kubectl,
+            KubectlResourcesAppliedEvent resourcesAppliedEvent)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.kubectl = kubectl;
+            this.resourcesAppliedEvent = resourcesAppliedEvent;
         }
 
         public void Install(RunningDeployment deployment)
@@ -44,7 +48,12 @@ namespace Calamari.Kubernetes.Conventions
 
             var directories = GroupFilesIntoDirectories(deployment, globs, variables);
 
-            var resources = directories.SelectMany(ApplyBatchAndReturnResources);
+            var resources = directories.SelectMany(d =>
+            {
+                var res = ApplyBatchAndReturnResources(d).ToList();
+				resourcesAppliedEvent.Publish(res.Select(r => r.ToResourceIdentifier()).ToArray());
+				return res;
+			});
 
             WriteResourcesToOutputVariables(resources);
         }
@@ -186,6 +195,7 @@ namespace Calamari.Kubernetes.Conventions
 
         private class ResourceMetadata
         {
+            public string Namespace { get; set; }
             public string Name { get; set; }
         }
 
@@ -193,6 +203,11 @@ namespace Calamari.Kubernetes.Conventions
         {
             public string Kind { get; set; }
             public ResourceMetadata Metadata { get; set; }
+
+            public ResourceIdentifier ToResourceIdentifier()
+            {
+                return new ResourceIdentifier(Kind, Metadata.Name, Metadata.Namespace);
+            }
         }
 
         private class GlobDirectory

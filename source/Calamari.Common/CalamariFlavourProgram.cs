@@ -8,6 +8,7 @@ using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
 using Calamari.Common.Commands;
+using Calamari.Common.Events;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.FunctionScriptContributions;
 using Calamari.Common.Features.Packages;
@@ -22,6 +23,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Util;
 
 namespace Calamari.Common
 {
@@ -118,6 +120,23 @@ namespace Calamari.Common
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
+
+            builder.RegisterAssemblyTypes(assemblies)
+                   .AssignableTo<InProcessEventBase>()
+                   .AsSelf()
+                   .SingleInstance();
+
+            builder.RegisterAssemblyTypes(assemblies)
+                   .Where(t =>
+                   {
+                       if (t.Name == "KubectlResourcesAppliedEvent")
+                       {
+
+                       }
+                       return t.IsSubclassOfRawGeneric(typeof(InProcessEventBase<>));
+                   })
+                   .AsSelf()
+                   .SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
 

@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
@@ -11,15 +13,17 @@ namespace Calamari.Kubernetes.ResourceStatus
     /// </summary>
     public interface IResourceStatusChecker
     {
+        bool IsCheckingStatus { get; }
+
         /// <summary>
         /// Polls the resource status in a cluster and sends the update to the server
         /// until the deployment timeout is met, or the deployment has succeeded or failed.
         /// </summary>
         /// <returns>true if all defined resources have been deployed successfully, otherwise false</returns>
-        bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
-            ITimer timer, 
-            Kubectl kubectl,
+        Task<bool> CheckStatusUntilCompletionOrTimeout(IKubectl kubectl, IEnumerable<ResourceIdentifier> initialResources, ITimer timer,
             Options options);
+
+        void AddResources(IEnumerable<ResourceIdentifier> newResources);
     }
 
     /// <summary>
@@ -30,51 +34,91 @@ namespace Calamari.Kubernetes.ResourceStatus
         internal const string MessageDeploymentSucceeded = "Resource status check completed successfully because all resources are deployed successfully";
         internal const string MessageDeploymentFailed = "Resource status check terminated with errors because some resources have failed";
         internal const string MessageInProgressAtTheEndOfTimeout = "Resource status check terminated because the timeout has been reached but some resources are still in progress";
-        
+
         private readonly IResourceRetriever resourceRetriever;
         private readonly IResourceUpdateReporter reporter;
         private readonly ILog log;
+        private ITimer timer;
+        private readonly List<ResourceIdentifier> resources = new List<ResourceIdentifier>();
+        private readonly object resourceLock = new object();
 
-        public ResourceStatusChecker(IResourceRetriever resourceRetriever, IResourceUpdateReporter reporter, ILog log)
+        public ResourceStatusChecker(
+            IResourceRetriever resourceRetriever,
+            IResourceUpdateReporter reporter,
+            ILog log)
         {
             this.resourceRetriever = resourceRetriever;
             this.reporter = reporter;
             this.log = log;
         }
-        
-        public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
+
+        public bool IsCheckingStatus { get; private set; }
+
+        public async Task<bool> CheckStatusUntilCompletionOrTimeout(
+            IKubectl kubectl,
+            IEnumerable<ResourceIdentifier> initialResources,
             ITimer timer,
-            Kubectl kubectl,
             Options options)
         {
-            List<Resource> definedResourceStatuses;
+            if (IsCheckingStatus)
+                throw new InvalidOperationException(
+                    "method CheckStatusUntilCompletionOrTimeout must only be called once.");
+
+            IsCheckingStatus = true;
+
+            lock (resourceLock)
+            {
+                resources.AddRange(initialResources);
+            }
+
+            this.timer = timer;
+
+            if (!kubectl.TrySetKubectl())
+            {
+                throw new Exception("Unable to set KubeCtl");
+            }
+
+            Resource[] definedResourceStatuses = Array.Empty<Resource>();
+            ResourceIdentifier[] definedResources = Array.Empty<ResourceIdentifier>();
             var resourceStatuses = new Dictionary<string, Resource>();
             var deploymentStatus = DeploymentStatus.InProgress;
             var checkCount = 0;
-            var definedResources = resourceIdentifiers.ToList();
-            
+
             timer.Start();
-            
-            do
+
+            await Task.Run(() =>
             {
-                var newDefinedResourceStatuses = resourceRetriever
-                    .GetAllOwnedResources(definedResources, kubectl, options)
-                    .ToList();
-                var newResourceStatuses = newDefinedResourceStatuses
-                    .SelectMany(IterateResourceTree)
-                    .ToDictionary(resource => resource.Uid, resource => resource);
+                do
+                {
 
-                var newDeploymentStatus = GetDeploymentStatus(newDefinedResourceStatuses, definedResources);
+                    lock (resourceLock)
+                    {
+                        definedResources = resources.ToArray();
+                    }
 
-                reporter.ReportUpdatedResources(resourceStatuses, newResourceStatuses, ++checkCount);
+                    if (definedResources.Any())
+                    {
+                        var newDefinedResourceStatuses = resourceRetriever
+                                                         .GetAllOwnedResources(definedResources, kubectl, options)
+                                                         .ToArray();
+                        var newResourceStatuses = newDefinedResourceStatuses
+                                                  .SelectMany(IterateResourceTree)
+                                                  .ToDictionary(resource => resource.Uid, resource => resource);
 
-                resourceStatuses = newResourceStatuses;
-                definedResourceStatuses = newDefinedResourceStatuses;
-                deploymentStatus = newDeploymentStatus;
-                
-                timer.WaitForInterval();
-            }
-            while (!timer.HasCompleted() && deploymentStatus == DeploymentStatus.InProgress);
+                        var newDeploymentStatus = GetDeploymentStatus(newDefinedResourceStatuses, definedResources);
+
+                        reporter.ReportUpdatedResources(resourceStatuses, newResourceStatuses, ++checkCount);
+
+                        resourceStatuses = newResourceStatuses;
+						definedResourceStatuses = newDefinedResourceStatuses;
+                        deploymentStatus = newDeploymentStatus;
+                    }
+
+                    timer.WaitForInterval();
+                } while (!timer.HasCompleted() && deploymentStatus == DeploymentStatus.InProgress);
+            });
+
+            IsCheckingStatus = false;
 
             switch (deploymentStatus)
             {
@@ -93,12 +137,23 @@ namespace Calamari.Kubernetes.ResourceStatus
                     return false;
             }
         }
-        
-        private static DeploymentStatus GetDeploymentStatus(List<Resource> resources, List<ResourceIdentifier> definedResources)
+
+        public void AddResources(IEnumerable<ResourceIdentifier> newResources)
         {
-            
+            lock (resourceLock)
+            {
+                var newResourcesList = newResources.ToList();
+                log.Info($"Resource Status Check: {newResourcesList.Count} new resources have been added.");
+                resources.AddRange(newResourcesList);
+                timer?.Restart();
+            }
+        }
+
+        private static DeploymentStatus GetDeploymentStatus(Resource[] resources, ResourceIdentifier[] definedResources)
+        {
+
             if (resources.All(resource => resource.ResourceStatus == ResourceStatus.Resources.ResourceStatus.Successful)
-                && resources.Count == definedResources.Count)
+                && resources.Length == definedResources.Length)
             {
                 return DeploymentStatus.Succeeded;
             }
@@ -112,7 +167,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             return DeploymentStatus.InProgress;
         }
 
-        private void LogInProgressResources(List<Resource> definedResourceStatuses, Dictionary<string, Resource> resourceStatuses, List<ResourceIdentifier> definedResources)
+        private void LogInProgressResources(Resource[] definedResourceStatuses, Dictionary<string, Resource> resourceStatuses, IEnumerable<ResourceIdentifier> definedResources)
         {
             var inProgress = resourceStatuses.Select(resource => resource.Value)
                 .Where(resource => resource.ResourceStatus == Resources.ResourceStatus.InProgress)
@@ -129,15 +184,15 @@ namespace Calamari.Kubernetes.ResourceStatus
             foreach (var definedResource in definedResources)
             {
                 if (!definedResourceStatuses.Any(resource =>
-                        resource.Kind == definedResource.Kind 
-                        && resource.Name == definedResource.Name 
+                        resource.Kind == definedResource.Kind
+                        && resource.Name == definedResource.Name
                         && resource.Namespace == definedResource.Namespace))
                 {
                     log.Verbose($"Resource {definedResource.Kind}/{definedResource.Name} in namespace {definedResource.Namespace} is not created by the end of timeout");
                 }
             }
         }
-        
+
         private void LogFailedResources(Dictionary<string, Resource> resources)
         {
             log.Verbose("The following resources have failed:");

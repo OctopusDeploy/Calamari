@@ -51,7 +51,9 @@ namespace Calamari.Kubernetes.ResourceStatus
             return hasClusterUrl || hasClusterName;
         }
 
-        public CommandResult ExecuteScript(Script script, ScriptSyntax scriptSyntax,
+        public CommandResult ExecuteScript(
+            Script script,
+            ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
@@ -59,7 +61,8 @@ namespace Calamari.Kubernetes.ResourceStatus
             var kubectl = new Kubectl(variables, log, commandLineRunner, workingDirectory, environmentVars);
 
             var resourceStatusReportExecutor =
-                new ResourceStatusReportExecutor(variables, log, fileSystem, resourceStatusChecker, kubectl);
+                new ResourceStatusReportExecutor(variables, log, fileSystem, resourceStatusChecker,
+                    new KubectlResourcesAppliedEvent(), kubectl);
 
 
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
@@ -70,7 +73,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             try
             {
-                resourceStatusReportExecutor.ReportStatus(workingDirectory);
+                resourceStatusReportExecutor.ReportStatus(workingDirectory).GetAwaiter().GetResult();
             }
             catch (Exception e)
             {

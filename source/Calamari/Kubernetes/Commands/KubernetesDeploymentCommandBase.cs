@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Aws.Integration;
 using Calamari.Commands;
 using Calamari.Commands.Support;
@@ -60,7 +62,11 @@ namespace Calamari.Kubernetes.Commands
                 v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         }
 
-        protected abstract IEnumerable<IInstallConvention> CommandSpecificConventions();
+        protected virtual IEnumerable<IInstallConvention> CommandSpecificInstallConventions() =>
+            Enumerable.Empty<IInstallConvention>();
+
+        protected virtual async Task CommandImplementation(RunningDeployment runningDeployment) =>
+            await Task.CompletedTask;
 
         public override int Execute(string[] commandLineArguments)
         {
@@ -108,7 +114,7 @@ namespace Calamari.Kubernetes.Commands
 
             conventions.Add(new KubernetesAuthContextConvention(log, new CommandLineRunner(log, variables), kubectl));
 
-            conventions.AddRange(CommandSpecificConventions());
+            conventions.AddRange(CommandSpecificInstallConventions());
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
 
@@ -116,6 +122,7 @@ namespace Calamari.Kubernetes.Commands
             try
             {
                 conventionRunner.RunConventions(logExceptions: false);
+                CommandImplementation(runningDeployment).GetAwaiter().GetResult();
                 deploymentJournalWriter.AddJournalEntry(runningDeployment, true, pathToPackage);
             }
             catch (Exception e)

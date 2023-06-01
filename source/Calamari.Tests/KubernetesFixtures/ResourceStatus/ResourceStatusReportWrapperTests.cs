@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
@@ -109,14 +110,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                  new CommandLineRunner(log, variables),
                  new Dictionary<string, string>());
 
-             statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier[]
-             {
+             statusChecker.CheckedResources.Should().BeEquivalentTo(
                  new ResourceIdentifier("Deployment", "deployment", "default"),
                  new ResourceIdentifier("Ingress", "ingress", "default"),
                  new ResourceIdentifier("Secret", "secret", "default"),
                  new ResourceIdentifier("Service", "service", "default"),
-                 new ResourceIdentifier("CustomResource", "custom-resource", "default")
-             });
+                 new ResourceIdentifier("CustomResource", "custom-resource", "default"));
          }
 
          [Test]
@@ -146,10 +145,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                      new CommandLineRunner(log, variables),
                      new Dictionary<string, string>());
 
-                 statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
-                 {
-                     new ResourceIdentifier("ConfigMap", configMapName, "default")
-                 });
+                 statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier("ConfigMap", configMapName, "default"));
              }
              finally
              {
@@ -184,10 +180,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                      new CommandLineRunner(log, variables),
                      new Dictionary<string, string>());
 
-                 statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
-                 {
-                     new ResourceIdentifier("Secret", secret, "default")
-                 });
+                 statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier("Secret", secret, "default"));
              }
              finally
              {
@@ -221,10 +214,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                  new CommandLineRunner(log, variables),
                  new Dictionary<string, string>());
 
-             statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier[]
-             {
-                 new ResourceIdentifier("Deployment", "deployment", "default"),
-             });
+             statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier("Deployment", "deployment", "default"));
          }
 
          private static void AddKubernetesStatusCheckVariables(IVariables variables)
@@ -238,14 +228,16 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     {
         public List<ResourceIdentifier> CheckedResources { get; private set; }
 
-        public bool CheckStatusUntilCompletionOrTimeout(
-            IEnumerable<ResourceIdentifier> resourceIdentifiers,
-            ITimer timer,
-            Kubectl kubectl,
-            Options options)
+        public bool IsCheckingStatus => false;
+        public async Task<bool> CheckStatusUntilCompletionOrTimeout(IKubectl kubectl, IEnumerable<ResourceIdentifier> initialResources, ITimer timer, Options options)
         {
-            CheckedResources = resourceIdentifiers.ToList();
+            await Task.CompletedTask;
+            CheckedResources = initialResources.ToList();
             return true;
+        }
+
+        public void AddResources(IEnumerable<ResourceIdentifier> newResources)
+        {
         }
     }
 
