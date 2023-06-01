@@ -112,7 +112,7 @@ namespace Calamari.Kubernetes.Conventions
             log.Info($"Applying Batch #{index+1} for YAML matching '{glob}'");
             foreach (var file in fileSystem.EnumerateFilesRecursively(directory))
             {
-                log.Verbose($"{Path.GetRelativePath(directory, file)} Contents:");
+                log.Verbose($"{fileSystem.GetRelativePath(directory, file)} Contents:");
                 log.Verbose(fileSystem.ReadFile(file));
             }
             var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "--recursive", "-o", "json");
