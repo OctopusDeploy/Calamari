@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -16,7 +17,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// Polls the resource status in a cluster and sends the update to the server
         /// until the deployment timeout is met, or the deployment has succeeded or failed.
         /// </summary>
-        void CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
+        bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
             ITimer timer, 
             Kubectl kubectl,
             Options options);
@@ -38,13 +39,13 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
         }
         
-        public void CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
+        public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
             ITimer timer,
             Kubectl kubectl,
             Options options)
         {
+            List<Resource> definedResourceStatuses;
             var resourceStatuses = new Dictionary<string, Resource>();
-            var definedResourceStatuses = new List<Resource>();
             var deploymentStatus = DeploymentStatus.InProgress;
             var checkCount = 0;
             var definedResources = resourceIdentifiers.ToList();
@@ -76,15 +77,17 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 case DeploymentStatus.Succeeded:
                     log.Info("Resource status check completed successfully because all resources are deployed successfully");
-                    break;
+                    return true;
                 case DeploymentStatus.InProgress:
                     LogInProgressResources(definedResourceStatuses, resourceStatuses, definedResources);
                     log.Error("Resource status check terminated because the timeout has been reached but some resources are still in progress");
-                    break;
+                    return false;
                 case DeploymentStatus.Failed:
                     LogFailedResources(resourceStatuses);
                     log.Error("Resource status check terminated with errors because some resources have failed");
-                    break;
+                    return false;
+                default:
+                    return false;
             }
         }
         
