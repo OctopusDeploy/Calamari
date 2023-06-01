@@ -112,7 +112,10 @@ namespace Calamari.Kubernetes.Conventions
             log.Info($"Applying Batch #{index+1} for YAML matching '{glob}'");
             foreach (var file in fileSystem.EnumerateFilesRecursively(directory))
             {
-                log.Verbose($"{fileSystem.GetRelativePath(directory, file)} Contents:");
+                // TODO: Once we have moved to a higher .net Framework version, update fileSystem.GetRelativePath to use
+                // Path.GetRelativePath() instead of our own implementation, and update the code below to remove the
+                // usage of Path.DirectorySeparatorChar.
+                log.Verbose($"{fileSystem.GetRelativePath($"{directory}{Path.DirectorySeparatorChar}", file)} Contents:");
                 log.Verbose(fileSystem.ReadFile(file));
             }
             var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "--recursive", "-o", "json");
