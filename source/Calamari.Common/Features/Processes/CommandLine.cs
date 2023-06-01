@@ -14,6 +14,7 @@ namespace Calamari.Common.Features.Processes
         bool useDotnet;
         private Dictionary<string,string>? environmentVariables = null;
         private bool outputToLog = true;
+        private string workingDirectory;
 
         public CommandLine(Func<string[], int> func)
         {
@@ -70,6 +71,12 @@ namespace Calamari.Common.Features.Processes
             return this;
         }
 
+        public CommandLine WithWorkingDirectory(string workingDirectory)
+        {
+            this.workingDirectory = workingDirectory;
+            return this;
+        }
+
         public CommandLine OutputToLog(bool outputToLog)
         {
             this.outputToLog = outputToLog;
@@ -96,7 +103,8 @@ namespace Calamari.Common.Features.Processes
             return new CommandLineInvocation(actualExe, argLine.Select(b => b.Build(true)).ToArray())
             {
                 EnvironmentVars = environmentVariables,
-                OutputToLog = outputToLog
+                OutputToLog = outputToLog,
+                WorkingDirectory = workingDirectory
             };
         }
 
