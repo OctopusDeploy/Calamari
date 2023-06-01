@@ -16,8 +16,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// Polls the resource status in a cluster and sends the update to the server
         /// until the deployment timeout is met, or the deployment has succeeded or failed.
         /// </summary>
-        /// <returns>true if all defined resources have been deployed successfully, otherwise false</returns>
-        bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
+        void CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
             ITimer timer, 
             Kubectl kubectl,
             Options options);
@@ -39,12 +38,13 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
         }
         
-        public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
+        public void CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
             ITimer timer,
             Kubectl kubectl,
             Options options)
         {
             var resourceStatuses = new Dictionary<string, Resource>();
+            var definedResourceStatuses = new List<Resource>();
             var deploymentStatus = DeploymentStatus.InProgress;
             var checkCount = 0;
             var definedResources = resourceIdentifiers.ToList();
@@ -65,6 +65,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 reporter.ReportUpdatedResources(resourceStatuses, newResourceStatuses, ++checkCount);
 
                 resourceStatuses = newResourceStatuses;
+                definedResourceStatuses = newDefinedResourceStatuses;
                 deploymentStatus = newDeploymentStatus;
                 
                 timer.WaitForInterval();
@@ -74,16 +75,16 @@ namespace Calamari.Kubernetes.ResourceStatus
             switch (deploymentStatus)
             {
                 case DeploymentStatus.Succeeded:
-                    log.Verbose("Resource status check completed successfully because all resources are deployed successfully");
-                    return true;
+                    log.Info("Resource status check completed successfully because all resources are deployed successfully");
+                    break;
                 case DeploymentStatus.InProgress:
-                    log.Verbose("Resource status check terminated because the timeout has been reached but some resources are still in progress");
-                    return false;
+                    LogInProgressResources(definedResourceStatuses, resourceStatuses, definedResources);
+                    log.Error("Resource status check terminated because the timeout has been reached but some resources are still in progress");
+                    break;
                 case DeploymentStatus.Failed:
-                    log.Verbose("Resource status check terminated with errors because some resources have failed");
-                    return false;
-                default:
-                    return false;
+                    LogFailedResources(resourceStatuses);
+                    log.Error("Resource status check terminated with errors because some resources have failed");
+                    break;
             }
         }
         
@@ -103,6 +104,41 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             return DeploymentStatus.InProgress;
+        }
+
+        private void LogInProgressResources(List<Resource> definedResourceStatuses, Dictionary<string, Resource> resourceStatuses, List<ResourceIdentifier> definedResources)
+        {
+            var inProgress = resourceStatuses.Select(resource => resource.Value)
+                .Where(resource => resource.ResourceStatus == Resources.ResourceStatus.InProgress)
+                .ToList();
+            if (inProgress.Any())
+            {
+                log.Verbose("The following resources are still in progress by the end of timeout:");
+                foreach (var resource in inProgress)
+                {
+                    log.Verbose($" - {resource.Kind}/{resource.Name} in namespace {resource.Namespace}");
+                }
+            }
+
+            foreach (var definedResource in definedResources)
+            {
+                if (!definedResourceStatuses.Any(resource =>
+                        resource.Kind == definedResource.Kind 
+                        && resource.Name == definedResource.Name 
+                        && resource.Namespace == definedResource.Namespace))
+                {
+                    log.Verbose($"Resource {definedResource.Kind}/{definedResource.Name} in namespace {definedResource.Namespace} is not created by the end of timeout");
+                }
+            }
+        }
+        
+        private void LogFailedResources(Dictionary<string, Resource> resources)
+        {
+            log.Verbose("The following resources have failed:");
+            foreach (var resource in resources.Select(resource => resource.Value))
+            {
+                log.Verbose($" - {resource.Kind}/{resource.Name} in namespace {resource.Namespace}");
+            }
         }
 
         private static IEnumerable<Resource> IterateResourceTree(Resource root)

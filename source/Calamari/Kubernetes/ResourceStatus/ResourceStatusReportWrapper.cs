@@ -57,14 +57,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return result;
             }
 
-            try
-            {
-                statusReportExecutor.ReportStatus(workingDirectory, commandLineRunner, environmentVars);
-            }
-            catch (Exception e)
-            {
-                return new CommandResult("K8s Resource Status Reporting", 1, e.Message, workingDirectory);
-            }
+            statusReportExecutor.ReportStatus(workingDirectory, commandLineRunner, environmentVars);
 
             return result;
         }
