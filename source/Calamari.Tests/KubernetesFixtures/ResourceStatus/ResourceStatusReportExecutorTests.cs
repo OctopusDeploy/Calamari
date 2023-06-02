@@ -17,7 +17,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 {
     [TestFixture]
-    public class ResourceStatusReportWrapperTests
+    public class ResourceStatusReportExecutorTests
     {
         private const ScriptSyntax Syntax = ScriptSyntax.Bash;
 
