@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
@@ -17,7 +15,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// Polls the resource status in a cluster and sends the update to the server
         /// until the deployment timeout is met, or the deployment has succeeded or failed.
         /// </summary>
-        bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
+        void CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
             ITimer timer, 
             Kubectl kubectl,
             Options options);
@@ -28,6 +26,10 @@ namespace Calamari.Kubernetes.ResourceStatus
     /// </summary>
     public class ResourceStatusChecker : IResourceStatusChecker
     {
+        internal const string MessageDeploymentSucceeded = "Resource status check completed successfully because all resources are deployed successfully";
+        internal const string MessageDeploymentFailed = "Resource status check terminated with errors because some resources have failed";
+        internal const string MessageInProgressAtTheEndOfTimeout = "Resource status check terminated because the timeout has been reached but some resources are still in progress";
+        
         private readonly IResourceRetriever resourceRetriever;
         private readonly IResourceUpdateReporter reporter;
         private readonly ILog log;
@@ -39,7 +41,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
         }
         
-        public bool CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
+        public void CheckStatusUntilCompletionOrTimeout(IEnumerable<ResourceIdentifier> resourceIdentifiers, 
             ITimer timer,
             Kubectl kubectl,
             Options options)
@@ -76,18 +78,16 @@ namespace Calamari.Kubernetes.ResourceStatus
             switch (deploymentStatus)
             {
                 case DeploymentStatus.Succeeded:
-                    log.Info("Resource status check completed successfully because all resources are deployed successfully");
-                    return true;
+                    log.Info(MessageDeploymentSucceeded);
+                    break;
                 case DeploymentStatus.InProgress:
                     LogInProgressResources(definedResourceStatuses, resourceStatuses, definedResources);
-                    log.Error("Resource status check terminated because the timeout has been reached but some resources are still in progress");
-                    return false;
+                    log.Error(MessageInProgressAtTheEndOfTimeout);
+                    break;
                 case DeploymentStatus.Failed:
                     LogFailedResources(resourceStatuses);
-                    log.Error("Resource status check terminated with errors because some resources have failed");
-                    return false;
-                default:
-                    return false;
+                    log.Error(MessageDeploymentFailed);
+                    break;
             }
         }
         
