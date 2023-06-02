@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using InvalidOperationException = System.InvalidOperationException;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
@@ -29,6 +30,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly KubectlResourcesAppliedEvent resourcesAppliedEvent;
         private readonly Kubectl kubectl;
         private readonly Settings settings;
+        private Task resourceCheckTask;
 
         public ResourceStatusReportExecutor(
             IVariables variables,
@@ -48,7 +50,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.settings = settings ?? new Settings();
         }
 
-        public async Task ReportStatus(string workingDirectory)
+        public void StartReportingStatus(string workingDirectory)
         {
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
             // When the namespace on a target was set and then cleared, it's going to be "" instead of null
@@ -100,7 +102,20 @@ namespace Calamari.Kubernetes.ResourceStatus
                 log.Info("Resource Status Check: Waiting for resources to be applied.");
             }
 
-            await DoResourceCheck(definedResources);
+            resourceCheckTask = DoResourceCheck(definedResources);
+        }
+
+        public async Task WaitForStatusReportingToComplete()
+        {
+            if (resourceCheckTask == null)
+                throw new InvalidOperationException(
+                    "Please call `StartReportingStatus` before `WaitForStatusReportingToComplete`");
+            await resourceCheckTask;
+        }
+
+        public void AddResources(ResourceIdentifier[] resources)
+        {
+            statusChecker.AddResources(resources);
         }
 
         private async Task DoResourceCheck(List<ResourceIdentifier> initialResources)

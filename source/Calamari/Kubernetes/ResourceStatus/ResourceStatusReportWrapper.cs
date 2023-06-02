@@ -60,10 +60,9 @@ namespace Calamari.Kubernetes.ResourceStatus
             var workingDirectory = Path.GetDirectoryName(script.File);
             var kubectl = new Kubectl(variables, log, commandLineRunner, workingDirectory, environmentVars);
 
-            var resourceStatusReportExecutor =
+            var statusReportExecutor =
                 new ResourceStatusReportExecutor(variables, log, fileSystem, resourceStatusChecker,
                     new KubectlResourcesAppliedEvent(), kubectl);
-
 
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
             if (result.ExitCode != 0)
@@ -73,7 +72,8 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             try
             {
-                resourceStatusReportExecutor.ReportStatus(workingDirectory).GetAwaiter().GetResult();
+                statusReportExecutor.StartReportingStatus(workingDirectory);
+                statusReportExecutor.WaitForStatusReportingToComplete().GetAwaiter().GetResult();
             }
             catch (Exception e)
             {

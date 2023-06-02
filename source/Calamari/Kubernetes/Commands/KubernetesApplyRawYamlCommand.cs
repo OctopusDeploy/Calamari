@@ -9,11 +9,11 @@ using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.Conventions;
 using Calamari.FeatureToggles;
-using Calamari.Kubernetes.Conventions;
+using Calamari.Kubernetes.Commands.Executors;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -57,22 +57,22 @@ namespace Calamari.Kubernetes.Commands
             return base.Execute(commandLineArguments);
         }
 
-        protected override async Task CommandImplementation(RunningDeployment runningDeployment)
+        protected override async Task ExecuteCommand(RunningDeployment runningDeployment)
         {
             var resourcesAppliedEvent = new KubectlResourcesAppliedEvent();
 
-            var resourceStatusReportExecutor = new ResourceStatusReportExecutor(variables, log, fileSystem,
+            var statusReportExecutor = new ResourceStatusReportExecutor(variables, log, fileSystem,
                 resourceStatusChecker, resourcesAppliedEvent, kubectl, new ResourceStatusReportExecutor.Settings
                     { FindResourcesFromFiles = false, ReceiveResourcesFromResourcesAppliedEvent = true });
 
             var gatherAndApplyRawYamlExecutor =
-                new GatherAndApplyRawYamlConvention(log, fileSystem, kubectl, resourcesAppliedEvent);
+                new GatherAndApplyRawYamlExecutor(log, fileSystem, kubectl, resourcesAppliedEvent);
 
-            var resourceStatusTask = resourceStatusReportExecutor.ReportStatus(runningDeployment.CurrentDirectory);
+            statusReportExecutor.StartReportingStatus(runningDeployment.CurrentDirectory);
 
-            gatherAndApplyRawYamlExecutor.Install(runningDeployment);
+            gatherAndApplyRawYamlExecutor.Execute(runningDeployment, statusReportExecutor.AddResources);
 
-            await resourceStatusTask;
+            await statusReportExecutor.WaitForStatusReportingToComplete();
         }
     }
 }

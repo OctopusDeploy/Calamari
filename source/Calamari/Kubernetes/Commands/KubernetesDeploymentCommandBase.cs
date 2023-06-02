@@ -65,7 +65,7 @@ namespace Calamari.Kubernetes.Commands
         protected virtual IEnumerable<IInstallConvention> CommandSpecificInstallConventions() =>
             Enumerable.Empty<IInstallConvention>();
 
-        protected virtual async Task CommandImplementation(RunningDeployment runningDeployment) =>
+        protected virtual async Task ExecuteCommand(RunningDeployment runningDeployment) =>
             await Task.CompletedTask;
 
         public override int Execute(string[] commandLineArguments)
@@ -122,7 +122,7 @@ namespace Calamari.Kubernetes.Commands
             try
             {
                 conventionRunner.RunConventions(logExceptions: false);
-                CommandImplementation(runningDeployment).GetAwaiter().GetResult();
+                ExecuteCommand(runningDeployment).GetAwaiter().GetResult();
                 deploymentJournalWriter.AddJournalEntry(runningDeployment, true, pathToPackage);
             }
             catch (Exception e)

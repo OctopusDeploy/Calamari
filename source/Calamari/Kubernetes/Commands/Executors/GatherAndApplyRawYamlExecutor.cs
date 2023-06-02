@@ -9,8 +9,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.Conventions;
-using Calamari.Kubernetes.Commands;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Microsoft.Extensions.FileSystemGlobbing;
@@ -18,16 +16,16 @@ using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.Kubernetes.Conventions
+namespace Calamari.Kubernetes.Commands.Executors
 {
-    public class GatherAndApplyRawYamlConvention: IInstallConvention
+    public class GatherAndApplyRawYamlExecutor
     {
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly Kubectl kubectl;
         private readonly KubectlResourcesAppliedEvent resourcesAppliedEvent;
 
-        public GatherAndApplyRawYamlConvention(
+        public GatherAndApplyRawYamlExecutor(
             ILog log,
             ICalamariFileSystem fileSystem,
             Kubectl kubectl,
@@ -39,7 +37,7 @@ namespace Calamari.Kubernetes.Conventions
             this.resourcesAppliedEvent = resourcesAppliedEvent;
         }
 
-        public void Install(RunningDeployment deployment)
+        public void Execute(RunningDeployment deployment, Action<ResourceIdentifier[]> appliedResourcesCallback)
         {
             var variables = deployment.Variables;
             var globs = variables.Get(SpecialVariables.CustomResourceYamlFileName)?.Split(';');
@@ -51,7 +49,8 @@ namespace Calamari.Kubernetes.Conventions
             var resources = directories.SelectMany(d =>
             {
                 var res = ApplyBatchAndReturnResources(d).ToList();
-				resourcesAppliedEvent.Publish(res.Select(r => r.ToResourceIdentifier()).ToArray());
+                appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
+                // resourcesAppliedEvent.Publish(res.Select(r => r.ToResourceIdentifier()).ToArray());
 				return res;
 			});
 
