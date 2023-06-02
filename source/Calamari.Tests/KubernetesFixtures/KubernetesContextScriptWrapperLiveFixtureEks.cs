@@ -565,7 +565,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             SetVariablesToAuthoriseWithAmazonAccount();
 
-            SetVariablesForKubernetesResourceStatusCheck();
+            SetVariablesForKubernetesResourceStatusCheck(shouldSucceed ? 30 : 5);
 
             SetVariablesForRawYamlCommand();
 
@@ -610,11 +610,11 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.AddFeatureToggles(FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
         }
 
-        private void SetVariablesForKubernetesResourceStatusCheck()
+        private void SetVariablesForKubernetesResourceStatusCheck(int timeout)
         {
             variables.Set("Octopus.Action.Kubernetes.ResourceStatusCheck", "True");
             variables.Set("Octopus.Action.KubernetesContainers.DeploymentWait", "NoWait");
-            variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "5");
+            variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", timeout.ToString());
         }
 
         private static string CreateResourceYamlFile(string directory, string fileName, string content)
