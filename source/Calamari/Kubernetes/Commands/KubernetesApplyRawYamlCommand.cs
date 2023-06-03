@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
@@ -25,17 +24,10 @@ namespace Calamari.Kubernetes.Commands
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         private readonly IVariables variables;
         private readonly Kubectl kubectl;
-        private readonly DelegateInstallConvention.Factory delegateInstallFactory;
-        private readonly Func<SubstituteInFilesConvention> substituteInFilesFactory;
-        private readonly Func<ConfigurationTransformsConvention> configurationTransformationFactory;
-        private readonly Func<ConfigurationVariablesConvention> configurationVariablesFactory;
-        private readonly Func<StructuredConfigurationVariablesConvention> structuredConfigurationVariablesFactory;
+        private readonly IInstallConventionFactory conventionFactory;
         private readonly ICalamariFileSystem fileSystem;
         private readonly IExtractPackage extractPackage;
         private readonly IAwsAuthConventionFactory awsAuthConventionFactory;
-        private readonly Func<KubernetesAuthContextConvention> kubernetesAuthContextFactory;
-        private readonly Func<GatherAndApplyRawYamlConvention> gatherAndApplyRawYamlFactory;
-        private readonly Func<ResourceStatusReportConvention> resourceStatusReportFactory;
         private readonly ConventionProcessor.Factory conventionProcessorFactory;
         private readonly RunningDeployment.Factory runningDeploymentFactory;
 
@@ -45,15 +37,8 @@ namespace Calamari.Kubernetes.Commands
             IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
             Kubectl kubectl,
-            DelegateInstallConvention.Factory delegateInstallFactory,
-            Func<SubstituteInFilesConvention> substituteInFilesFactory,
-            Func<ConfigurationTransformsConvention> configurationTransformationFactory,
-            Func<ConfigurationVariablesConvention> configurationVariablesFactory,
-            Func<StructuredConfigurationVariablesConvention> structuredConfigurationVariablesFactory,
+            IInstallConventionFactory conventionFactory,
             IAwsAuthConventionFactory awsAuthConventionFactory,
-            Func<KubernetesAuthContextConvention> kubernetesAuthContextFactory,
-            Func<GatherAndApplyRawYamlConvention> gatherAndApplyRawYamlFactory,
-            Func<ResourceStatusReportConvention> resourceStatusReportFactory,
             ConventionProcessor.Factory conventionProcessorFactory,
             RunningDeployment.Factory runningDeploymentFactory,
             ICalamariFileSystem fileSystem,
@@ -62,15 +47,8 @@ namespace Calamari.Kubernetes.Commands
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.kubectl = kubectl;
-            this.delegateInstallFactory = delegateInstallFactory;
-            this.substituteInFilesFactory = substituteInFilesFactory;
-            this.configurationTransformationFactory = configurationTransformationFactory;
-            this.configurationVariablesFactory = configurationVariablesFactory;
-            this.structuredConfigurationVariablesFactory = structuredConfigurationVariablesFactory;
+            this.conventionFactory = conventionFactory;
             this.awsAuthConventionFactory = awsAuthConventionFactory;
-            this.kubernetesAuthContextFactory = kubernetesAuthContextFactory;
-            this.gatherAndApplyRawYamlFactory = gatherAndApplyRawYamlFactory;
-            this.resourceStatusReportFactory = resourceStatusReportFactory;
             this.conventionProcessorFactory = conventionProcessorFactory;
             this.runningDeploymentFactory = runningDeploymentFactory;
             this.fileSystem = fileSystem;
@@ -86,7 +64,7 @@ namespace Calamari.Kubernetes.Commands
             Options.Parse(commandLineArguments);
             var conventions = new List<IConvention>
             {
-                delegateInstallFactory(d =>
+                conventionFactory.ResolveDelegate(d =>
                 {
                     if (pathToPackage != null)
                     {
@@ -109,10 +87,10 @@ namespace Calamari.Kubernetes.Commands
                     kubectl.WorkingDirectory = d.CurrentDirectory;
                     kubectl.EnvironmentVariables = d.EnvironmentVariables;
                 }),
-                substituteInFilesFactory(),
-                configurationTransformationFactory(),
-                configurationVariablesFactory(),
-                structuredConfigurationVariablesFactory()
+                conventionFactory.Resolve<SubstituteInFilesConvention>(),
+                conventionFactory.Resolve<ConfigurationTransformsConvention>(),
+                conventionFactory.Resolve<ConfigurationVariablesConvention>(),
+                conventionFactory.Resolve<StructuredConfigurationVariablesConvention>()
             };
 
             if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
@@ -120,11 +98,11 @@ namespace Calamari.Kubernetes.Commands
                 conventions.Add(awsAuthConventionFactory.Create());
             }
 
-            conventions.AddRange(new IInstallConvention[]
+            conventions.AddRange(new[]
             {
-                kubernetesAuthContextFactory(),
-                gatherAndApplyRawYamlFactory(),
-                resourceStatusReportFactory()
+                conventionFactory.Resolve<KubernetesAuthContextConvention>(),
+                conventionFactory.Resolve<GatherAndApplyRawYamlConvention>(),
+                conventionFactory.Resolve<ResourceStatusReportConvention>(),
             });
 
             var conventionRunner = conventionProcessorFactory(runningDeploymentFactory(pathToPackage), conventions);
