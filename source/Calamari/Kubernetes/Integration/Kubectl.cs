@@ -53,7 +53,7 @@ namespace Calamari.Kubernetes.Integration
                 ExecutableLocation = customKubectlExecutable;
             }
 
-            if (TryExecuteKubectlCommand("version", "--client", "--short"))
+            if (TryExecuteKubectlCommand("version", "--client", "--output=yaml"))
             {
                 log.Verbose($"Found kubectl and successfully verified it can be executed.");
                 isSet = true;
