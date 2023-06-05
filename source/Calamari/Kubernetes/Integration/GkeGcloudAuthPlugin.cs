@@ -9,10 +9,8 @@ namespace Calamari.Kubernetes.Integration
     public class GkeGcloudAuthPlugin : CommandLineTool
     {
         public GkeGcloudAuthPlugin(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
-            : base(log, commandLineRunner)
+            : base(log, commandLineRunner, workingDirectory, environmentVars)
         {
-            WorkingDirectory = workingDirectory;
-            EnvironmentVariables = environmentVars;
         }
 
         public bool ExistsOnPath()

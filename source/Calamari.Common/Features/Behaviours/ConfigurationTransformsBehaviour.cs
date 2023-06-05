@@ -31,13 +31,6 @@ namespace Calamari.Common.Features.Behaviours
             this.log = log;
         }
 
-
-        public ConfigurationTransformsBehaviour(ICalamariFileSystem fileSystem, IVariables variables,
-            ITransformFileLocator transformFileLocator, ILog log) : this(fileSystem, variables,
-            ConfigurationTransformer.FromVariables(variables, log), transformFileLocator, log)
-        {
-        }
-
         public bool IsEnabled(RunningDeployment deployment)
         {
             return deployment.Variables.IsFeatureEnabled(KnownVariables.Features.ConfigurationTransforms);

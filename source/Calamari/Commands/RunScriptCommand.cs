@@ -38,7 +38,6 @@ namespace Calamari.Commands
         readonly ICommandLineRunner commandLineRunner;
         readonly ISubstituteInFiles substituteInFiles;
         readonly IStructuredConfigVariablesService structuredConfigVariablesService;
-        private readonly RunningDeployment.Factory runningDeploymentFactory;
 
         public RunScriptCommand(
             ILog log,
@@ -48,8 +47,7 @@ namespace Calamari.Commands
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
             ISubstituteInFiles substituteInFiles,
-            IStructuredConfigVariablesService structuredConfigVariablesService,
-            RunningDeployment.Factory runningDeploymentFactory
+            IStructuredConfigVariablesService structuredConfigVariablesService
         )
         {
             Options.Add("package=", "Path to the package to extract that contains the script.", v => packageFile = Path.GetFullPath(v));
@@ -63,7 +61,6 @@ namespace Calamari.Commands
             this.commandLineRunner = commandLineRunner;
             this.substituteInFiles = substituteInFiles;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
-            this.runningDeploymentFactory = runningDeploymentFactory;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -75,7 +72,7 @@ namespace Calamari.Commands
             var replacer = new ConfigurationVariablesReplacer(variables, log);
 
             ValidateArguments();
-            var deployment = runningDeploymentFactory(packageFile);
+            var deployment = new RunningDeployment(packageFile, variables);
             WriteVariableScriptToFile(deployment);
 
             var conventions = new List<IConvention>

@@ -82,30 +82,6 @@ namespace Calamari
             builder.RegisterType<ResourceStatusReportExecutor>().AsSelf();
             builder.RegisterType<Kubectl>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<KubectlGet>().As<IKubectlGet>().SingleInstance();
-            builder.RegisterType<DelegateInstallConvention>().AsSelf();
-            builder.RegisterType<ConventionProcessor>().AsSelf();
-            builder.RegisterType<RunningDeployment>().AsSelf();
-            builder.RegisterType<SubstituteInFilesConvention>().AsSelf();
-            builder.RegisterType<SubstituteInFilesBehaviour>().AsSelf();
-            builder.RegisterType<ConfigurationTransformsConvention>().AsSelf();
-            builder.Register(c =>
-            {
-                var variables = c.Resolve<IVariables>();
-                var log = c.Resolve<ILog>();
-                return new ConfigurationTransformsBehaviour(c.Resolve<ICalamariFileSystem>(), variables,
-                    ConfigurationTransformer.FromVariables(variables, log), c.Resolve<ITransformFileLocator>(), log);
-            }).As<ConfigurationTransformsBehaviour>();
-            builder.RegisterType<ConfigurationTransformer>().As<IConfigurationTransformer>();
-            builder.RegisterType<TransformFileLocator>().As<ITransformFileLocator>();
-            builder.RegisterType<ConfigurationVariablesConvention>().AsSelf();
-            builder.RegisterType<ConfigurationVariablesBehaviour>().AsSelf();
-            builder.RegisterType<ConfigurationVariablesReplacer>().As<IConfigurationVariablesReplacer>();
-            builder.RegisterType<StructuredConfigurationVariablesConvention>().AsSelf();
-            builder.RegisterType<StructuredConfigurationVariablesBehaviour>().AsSelf();
-            builder.RegisterType<StructuredConfigVariablesService>().As<IStructuredConfigVariablesService>();
-            builder.RegisterType<KubernetesAuthContextConvention>().AsSelf();
-            builder.RegisterType<GatherAndApplyRawYamlConvention>().AsSelf();
-            builder.RegisterType<ResourceStatusReportConvention>().AsSelf();
 
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()

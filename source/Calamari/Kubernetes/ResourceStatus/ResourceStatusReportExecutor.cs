@@ -1,9 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -20,16 +18,23 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly IResourceStatusChecker statusChecker;
+        private readonly Kubectl kubectl;
 
-        public ResourceStatusReportExecutor(IVariables variables, ILog log, ICalamariFileSystem fileSystem, IResourceStatusChecker statusChecker)
+        public ResourceStatusReportExecutor(
+            IVariables variables,
+            ILog log,
+            ICalamariFileSystem fileSystem,
+            IResourceStatusChecker statusChecker,
+            Kubectl kubectl)
         {
             this.variables = variables;
             this.log = log;
             this.fileSystem = fileSystem;
             this.statusChecker = statusChecker;
+            this.kubectl = kubectl;
         }
 
-        public void ReportStatus(string workingDirectory, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars = null, Kubectl kubectl = null)
+        public void ReportStatus(string workingDirectory)
         {
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
             // When the namespace on a target was set and then cleared, it's going to be "" instead of null
@@ -65,11 +70,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             foreach (var resourceIdentifier in definedResources)
             {
                 log.Verbose($" - {resourceIdentifier.Kind}/{resourceIdentifier.Name} in namespace {resourceIdentifier.Namespace}");
-            }
-            if (kubectl is null)
-            {
-                kubectl = new Kubectl(variables, log, commandLineRunner)
-                    { WorkingDirectory = workingDirectory, EnvironmentVariables = environmentVars };
             }
 
             if (!kubectl.TrySetKubectl())

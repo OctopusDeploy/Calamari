@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Logging;
 
@@ -9,20 +8,24 @@ namespace Calamari.Kubernetes.Integration
     public class CommandLineTool
     {
         protected readonly ILog log;
+        protected string workingDirectory;
+        protected Dictionary<string, string> environmentVars;
 
         readonly ICommandLineRunner commandLineRunner;
 
-        protected CommandLineTool(ILog log, ICommandLineRunner commandLineRunner)
+        protected CommandLineTool(
+            ILog log,
+            ICommandLineRunner commandLineRunner,
+            string workingDirectory,
+            Dictionary<string, string> environmentVars)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;
+            this.workingDirectory = workingDirectory;
+            this.environmentVars = environmentVars;
         }
 
-        public string WorkingDirectory { get; set; }
-
         public string ExecutableLocation { get; protected set; }
-
-        public Dictionary<string,string> EnvironmentVariables { get; set; }
 
         protected bool TryExecuteCommandAndLogOutput(string exe, params string[] arguments)
         {
@@ -32,8 +35,8 @@ namespace Calamari.Kubernetes.Integration
 
         protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
         {
-            invocation.EnvironmentVars = EnvironmentVariables;
-            invocation.WorkingDirectory = WorkingDirectory;
+            invocation.EnvironmentVars = environmentVars;
+            invocation.WorkingDirectory = workingDirectory;
             invocation.OutputAsVerbose = false;
             invocation.OutputToLog = false;
 
@@ -81,8 +84,8 @@ namespace Calamari.Kubernetes.Integration
             var captureCommandOutput = new CaptureCommandOutput();
             var invocation = new CommandLineInvocation(exe, arguments)
             {
-                EnvironmentVars = EnvironmentVariables,
-                WorkingDirectory = WorkingDirectory,
+                EnvironmentVars = environmentVars,
+                WorkingDirectory = workingDirectory,
                 OutputAsVerbose = false,
                 OutputToLog = false,
                 AdditionalInvocationOutputSink = captureCommandOutput

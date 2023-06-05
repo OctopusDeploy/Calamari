@@ -23,16 +23,16 @@ namespace Calamari.Common.Features.Packages
             this.log = log;
         }
 
-        public void ExtractToStagingDirectory(PathToPackage? pathToPackage, IPackageExtractor? customPackageExtractor = null, string? workingDirectory = null)
+        public void ExtractToStagingDirectory(PathToPackage? pathToPackage, IPackageExtractor? customPackageExtractor = null)
         {
-            var targetPath = Path.Combine(workingDirectory ?? Environment.CurrentDirectory, "staging");
+            var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
             fileSystem.EnsureDirectoryExists(targetPath);
             Extract(pathToPackage, targetPath, PackageVariables.Output.InstallationDirectoryPath, customPackageExtractor);
         }
 
-        public void ExtractToStagingDirectory(PathToPackage? pathToPackage, string extractedToPathOutputVariableName, string? workingDirectory = null)
+        public void ExtractToStagingDirectory(PathToPackage? pathToPackage, string extractedToPathOutputVariableName)
         {
-            var targetPath = Path.Combine(workingDirectory ?? Environment.CurrentDirectory, "staging");
+            var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
             fileSystem.EnsureDirectoryExists(targetPath);
             Extract(pathToPackage, targetPath, extractedToPathOutputVariableName, null);
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
@@ -17,9 +18,23 @@ namespace Calamari.Kubernetes.Integration
         private bool isSet;
 
         public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner)
-            : base(log, commandLineRunner)
+            : this(variables, log, commandLineRunner, Environment.CurrentDirectory, new Dictionary<string, string>())
+        {
+        }
+
+        public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory,
+            Dictionary<string, string> environmentVariables) : base(log, commandLineRunner, workingDirectory, environmentVariables)
         {
             customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
+        }
+        public void SetWorkingDirectory(string directory)
+        {
+            workingDirectory = directory;
+        }
+
+        public void SetEnvironmentVariables(Dictionary<string, string> variables)
+        {
+            environmentVars = variables;
         }
 
         public bool TrySetKubectl()

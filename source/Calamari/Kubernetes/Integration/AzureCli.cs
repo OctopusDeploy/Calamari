@@ -10,10 +10,8 @@ namespace Calamari.Kubernetes.Integration
     public class AzureCli : CommandLineTool
     {
         public AzureCli(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
-            : base(log, commandLineRunner)
+            : base(log, commandLineRunner, workingDirectory, environmentVars)
         {
-            EnvironmentVariables = environmentVars;
-            WorkingDirectory = workingDirectory;
         }
 
         public bool TrySetAz()
@@ -39,7 +37,7 @@ namespace Calamari.Kubernetes.Integration
                                        string password,
                                        string azEnvironment)
         {
-            EnvironmentVariables.Add("AZURE_CONFIG_DIR", Path.Combine(WorkingDirectory, "azure-cli"));
+            environmentVars.Add("AZURE_CONFIG_DIR", Path.Combine(workingDirectory, "azure-cli"));
 
             TryExecuteCommandAndLogOutput(ExecutableLocation,
                                           "cloud",

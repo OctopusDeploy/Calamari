@@ -31,7 +31,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             AddKubernetesStatusCheckVariables(variables);
 
-            var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+            var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
 
             wrapper.IsEnabled(Syntax).Should().BeTrue();
         }
@@ -47,7 +47,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
 
-            var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+            var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
@@ -63,7 +63,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentStyle, "bluegreen");
 
-            var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+            var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
@@ -79,7 +79,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentWait, "wait");
 
-            var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+            var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
@@ -100,7 +100,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
              fileSystem.SetFileBasePath(testDirectory);
 
-             var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+             var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
              wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
              wrapper.ExecuteScript(
@@ -137,7 +137,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              {
                  fileSystem.SetFileBasePath(tempDirectory);
 
-                 var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+                 var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
                  wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
                  wrapper.ExecuteScript(
@@ -175,7 +175,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              {
                  fileSystem.SetFileBasePath(tempDirectory);
 
-                 var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+                 var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
                  wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
                  wrapper.ExecuteScript(
@@ -212,7 +212,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
              fileSystem.SetFileBasePath(testDirectory);
 
-             var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+             var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
              wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
              wrapper.ExecuteScript(
