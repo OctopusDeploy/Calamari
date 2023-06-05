@@ -69,7 +69,6 @@ namespace Calamari.Kubernetes.Commands
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         }
 
-
         public override int Execute(string[] commandLineArguments)
         {
             if (!FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle.IsEnabled(variables))
