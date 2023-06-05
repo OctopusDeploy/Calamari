@@ -59,14 +59,12 @@ namespace Calamari.Kubernetes.Commands
 
         protected override async Task ExecuteCommand(RunningDeployment runningDeployment)
         {
-            var resourcesAppliedEvent = new KubectlResourcesAppliedEvent();
-
             var statusReportExecutor = new ResourceStatusReportExecutor(variables, log, fileSystem,
-                resourceStatusChecker, resourcesAppliedEvent, kubectl, new ResourceStatusReportExecutor.Settings
+                resourceStatusChecker, kubectl, new ResourceStatusReportExecutor.Settings
                     { FindResourcesFromFiles = false, ReceiveResourcesFromResourcesAppliedEvent = true });
 
             var gatherAndApplyRawYamlExecutor =
-                new GatherAndApplyRawYamlExecutor(log, fileSystem, kubectl, resourcesAppliedEvent);
+                new GatherAndApplyRawYamlExecutor(log, fileSystem, kubectl);
 
             statusReportExecutor.StartReportingStatus(runningDeployment.CurrentDirectory);
 

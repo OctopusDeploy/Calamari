@@ -27,7 +27,6 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly IResourceStatusChecker statusChecker;
-        private readonly KubectlResourcesAppliedEvent resourcesAppliedEvent;
         private readonly Kubectl kubectl;
         private readonly Settings settings;
         private Task resourceCheckTask;
@@ -37,7 +36,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             ILog log,
             ICalamariFileSystem fileSystem,
             IResourceStatusChecker statusChecker,
-            KubectlResourcesAppliedEvent resourcesAppliedEvent,
             Kubectl kubectl,
             Settings settings = null)
         {
@@ -45,7 +43,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
             this.fileSystem = fileSystem;
             this.statusChecker = statusChecker;
-			this.resourcesAppliedEvent = resourcesAppliedEvent;
             this.kubectl = kubectl;
             this.settings = settings ?? new Settings();
         }
@@ -57,11 +54,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             if (string.IsNullOrEmpty(defaultNamespace))
             {
                 defaultNamespace = "default";
-            }
-
-            if (settings.ReceiveResourcesFromResourcesAppliedEvent)
-            {
-                resourcesAppliedEvent.Subscribe(HandleNewResources);
             }
 
             var definedResources = new List<ResourceIdentifier>();
@@ -133,11 +125,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 throw new TimeoutException("Not all resources have deployed successfully within timeout");
             }
-        }
-
-        private void HandleNewResources(ResourceIdentifier[] resources)
-        {
-            statusChecker.AddResources(resources);
         }
 
         private IEnumerable<string> ReadManifestFiles(string workingDirectory)

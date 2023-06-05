@@ -23,18 +23,15 @@ namespace Calamari.Kubernetes.Commands.Executors
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly Kubectl kubectl;
-        private readonly KubectlResourcesAppliedEvent resourcesAppliedEvent;
 
         public GatherAndApplyRawYamlExecutor(
             ILog log,
             ICalamariFileSystem fileSystem,
-            Kubectl kubectl,
-            KubectlResourcesAppliedEvent resourcesAppliedEvent)
+            Kubectl kubectl)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.kubectl = kubectl;
-            this.resourcesAppliedEvent = resourcesAppliedEvent;
         }
 
         public void Execute(RunningDeployment deployment, Action<ResourceIdentifier[]> appliedResourcesCallback)

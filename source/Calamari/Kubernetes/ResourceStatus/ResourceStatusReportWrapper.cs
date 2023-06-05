@@ -61,8 +61,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             var kubectl = new Kubectl(variables, log, commandLineRunner, workingDirectory, environmentVars);
 
             var statusReportExecutor =
-                new ResourceStatusReportExecutor(variables, log, fileSystem, resourceStatusChecker,
-                    new KubectlResourcesAppliedEvent(), kubectl);
+                new ResourceStatusReportExecutor(variables, log, fileSystem, resourceStatusChecker, kubectl);
 
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
             if (result.ExitCode != 0)
