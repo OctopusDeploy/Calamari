@@ -71,8 +71,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             try
             {
-                statusReportExecutor.StartReportingStatus(workingDirectory);
-                statusReportExecutor.WaitForStatusReportingToComplete().GetAwaiter().GetResult();
+                statusReportExecutor.ReportStatus(workingDirectory);
             }
             catch (Exception e)
             {

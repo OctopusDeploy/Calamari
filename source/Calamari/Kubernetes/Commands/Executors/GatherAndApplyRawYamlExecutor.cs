@@ -47,7 +47,6 @@ namespace Calamari.Kubernetes.Commands.Executors
             {
                 var res = ApplyBatchAndReturnResources(d).ToList();
                 appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
-                // resourcesAppliedEvent.Publish(res.Select(r => r.ToResourceIdentifier()).ToArray());
 				return res;
 			});
 

@@ -14,13 +14,6 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public class ResourceStatusReportExecutor
     {
-        public class Settings
-        {
-            public bool FindResourcesFromFiles { get; set; } = true;
-
-            public bool ReceiveResourcesFromResourcesAppliedEvent { get; set; }
-        }
-
         private const int PollingIntervalSeconds = 2;
 
         private readonly IVariables variables;
@@ -28,7 +21,6 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly ICalamariFileSystem fileSystem;
         private readonly IResourceStatusChecker statusChecker;
         private readonly Kubectl kubectl;
-        private readonly Settings settings;
         private Task resourceCheckTask;
 
         public ResourceStatusReportExecutor(
@@ -36,18 +28,29 @@ namespace Calamari.Kubernetes.ResourceStatus
             ILog log,
             ICalamariFileSystem fileSystem,
             IResourceStatusChecker statusChecker,
-            Kubectl kubectl,
-            Settings settings = null)
+            Kubectl kubectl)
         {
             this.variables = variables;
             this.log = log;
             this.fileSystem = fileSystem;
             this.statusChecker = statusChecker;
             this.kubectl = kubectl;
-            this.settings = settings ?? new Settings();
+        }
+
+        public void ReportStatus(string workingDirectory)
+        {
+            if (StartReportingStatusInternal(workingDirectory, initialResourcesOnly: true))
+            {
+                WaitForStatusReportingToComplete().GetAwaiter().GetResult();
+            }
         }
 
         public void StartReportingStatus(string workingDirectory)
+        {
+            StartReportingStatusInternal(workingDirectory, initialResourcesOnly: false);
+        }
+
+        private bool StartReportingStatusInternal(string workingDirectory, bool initialResourcesOnly)
         {
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
             // When the namespace on a target was set and then cleared, it's going to be "" instead of null
@@ -57,30 +60,26 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             var definedResources = new List<ResourceIdentifier>();
-            if (settings.FindResourcesFromFiles)
+            var manifests = ReadManifestFiles(workingDirectory).ToList();
+            definedResources.AddRange(KubernetesYaml.GetDefinedResources(manifests, defaultNamespace));
+
+            var secret = GetSecret(defaultNamespace);
+            if (secret != null)
             {
-                var manifests = ReadManifestFiles(workingDirectory).ToList();
-                definedResources.AddRange(KubernetesYaml.GetDefinedResources(manifests, defaultNamespace));
+                definedResources.Add(secret);
+            }
 
-                var secret = GetSecret(defaultNamespace);
-                if (secret != null)
-                {
-                    definedResources.Add(secret);
-                }
+            var configMap = GetConfigMap(defaultNamespace);
+            if (configMap != null)
+            {
+                definedResources.Add(configMap);
+            }
 
-                var configMap = GetConfigMap(defaultNamespace);
-                if (configMap != null)
-                {
-                    definedResources.Add(configMap);
-                }
-
-                if (!definedResources.Any())
-                {
-                    if (!settings.ReceiveResourcesFromResourcesAppliedEvent)
-                        log.Verbose("No defined resources are found, skipping resource status check");
-
-                    return;
-                }
+            if (!definedResources.Any() &&
+                initialResourcesOnly)
+            {
+                log.Verbose("No defined resources are found, skipping resource status check");
+                return false;
             }
 
             log.Verbose("Performing resource status checks on the following resources:");
@@ -95,6 +94,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             resourceCheckTask = DoResourceCheck(definedResources);
+            return true;
         }
 
         public async Task WaitForStatusReportingToComplete()
