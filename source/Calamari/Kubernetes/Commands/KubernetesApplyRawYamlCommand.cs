@@ -13,7 +13,6 @@ using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Commands.Executors;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
-using Calamari.Kubernetes.ResourceStatus.Resources;
 
 namespace Calamari.Kubernetes.Commands
 {
