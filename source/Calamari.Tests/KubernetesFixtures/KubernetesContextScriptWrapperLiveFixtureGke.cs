@@ -65,8 +65,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{certificateAuthority}.CertificatePem", gkeClusterCaCertificate);
             if (runAsScript)
             {
-                var wrapper = CreateWrapper();
-                TestScriptAndVerifyCluster(wrapper, "Test-Script");
+                DeployWithKubectlTestScriptAndVerifyResult();
             }
             else
             {
@@ -89,8 +88,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.GoogleCloud.Zone", gkeLocation);
             if (runAsScript)
             {
-                var wrapper = CreateWrapper();
-                TestScriptAndVerifyCluster(wrapper, "Test-Script");
+                DeployWithKubectlTestScriptAndVerifyResult();
             }
             else
             {
@@ -110,8 +108,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", gkeClusterCaCertificate);
 
-            var wrapper = CreateWrapper();
-            TestScript(wrapper, "Test-Script");
+            DeployWithNonKubectlTestScriptAndVerifyResult();
         }
     }
 }

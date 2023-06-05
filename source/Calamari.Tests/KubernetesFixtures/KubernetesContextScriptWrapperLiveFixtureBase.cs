@@ -50,11 +50,6 @@ namespace Calamari.Tests.KubernetesFixtures
             SetTestClusterVariables();
         }
 
-        protected KubernetesContextScriptWrapper CreateWrapper(ICalamariFileSystem fileSystem = null)
-        {
-            return new KubernetesContextScriptWrapper(variables, Log, new AssemblyEmbeddedResources(), fileSystem ?? new TestCalamariPhysicalFileSystem());
-        }
-
         void SetTestClusterVariables()
         {
 
@@ -89,15 +84,43 @@ namespace Calamari.Tests.KubernetesFixtures
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
 
-        protected void DeployWithScriptAndVerifyResult(Func<string, string> addFilesOrPackageFunc = null, bool shouldSucceed = true)
+        protected void DeployWithDeploymentScriptAndVerifyResult(Func<string, string> addFilesOrPackageFunc = null, bool shouldSucceed = true)
+        {
+            DeployWithScriptAndVerifyResult(() =>
+            {
+                var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts");
+                var bashScript = File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.sh"));
+                var powershellScript = File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1"));
+                return (bashScript, powershellScript);
+            }, addFilesOrPackageFunc, shouldSucceed);
+        }
+
+        protected void DeployWithKubectlTestScriptAndVerifyResult()
+        {
+            DeployWithScriptAndVerifyResult("#{Octopus.Action.Kubernetes.CustomKubectlExecutable} cluster-info");
+        }
+
+        protected void DeployWithNonKubectlTestScriptAndVerifyResult()
+        {
+            DeployWithScriptAndVerifyResult("echo running target script...");
+        }
+
+        private void DeployWithScriptAndVerifyResult(string script,
+            Func<string, string> addFilesOrPackageFunc = null, bool shouldSucceed = true)
+        {
+            DeployWithScriptAndVerifyResult(() => (script, script), addFilesOrPackageFunc, shouldSucceed);
+        }
+
+        private void DeployWithScriptAndVerifyResult(Func<(string bashScript, string powershellScript)> scriptFactory,
+            Func<string, string> addFilesOrPackageFunc = null, bool shouldSucceed = true)
         {
             SetupTempDirectoryAndVerifyResult(addFilesOrPackageFunc, (d, p) =>
             {
-                var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts");
+                var (bashScript, powershellScript) = scriptFactory();
                 variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash),
-                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.sh")));
+                    bashScript);
                 variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell),
-                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1")));
+                    powershellScript);
 
                 return ExecuteCommand(RunScriptCommand.Name, d, p);
             }, shouldSucceed);
@@ -161,40 +184,6 @@ namespace Calamari.Tests.KubernetesFixtures
             return new Dictionary<string, string>();
         }
 
-        protected void TestScript(IScriptWrapper wrapper, string scriptName)
-        {
-            using (var dir = TemporaryDirectory.Create())
-            {
-                var folderPath = Path.Combine(dir.DirectoryPath, "Folder with spaces");
-
-                using (var temp = new TemporaryFile(Path.Combine(folderPath, $"{scriptName}.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
-                {
-                    Directory.CreateDirectory(folderPath);
-                    File.WriteAllText(temp.FilePath, $"echo running target script...");
-
-                    var output = ExecuteScript(wrapper, temp.FilePath);
-                    output.AssertSuccess();
-                }
-            }
-        }
-
-        protected void TestScriptAndVerifyCluster(IScriptWrapper wrapper, string scriptName, string kubectlExe = "kubectl")
-        {
-            using (var dir = TemporaryDirectory.Create())
-            {
-                var folderPath = Path.Combine(dir.DirectoryPath, "Folder with spaces");
-
-                using (var temp = new TemporaryFile(Path.Combine(folderPath, $"{scriptName}.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
-                {
-                    Directory.CreateDirectory(folderPath);
-                    File.WriteAllText(temp.FilePath, $"{kubectlExe} cluster-info");
-
-                    var output = ExecuteScript(wrapper, temp.FilePath);
-                    output.AssertSuccess();
-                }
-            }
-        }
-
         protected void DoDiscovery(AwsAuthenticationDetails authenticationDetails)
         {
             var scope = new TargetDiscoveryScope("TestSpace",
@@ -209,12 +198,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 new TargetDiscoveryContext<AwsAuthenticationDetails>(scope,
                     authenticationDetails);
 
-            var result =
-                ExecuteDiscoveryCommand(targetDiscoveryContext,
-                    new[]{"Calamari.Aws"}
-                );
-
-            result.AssertSuccess();
+            ExecuteDiscoveryCommandAndVerifyResult(targetDiscoveryContext);
         }
 
         protected void DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(
@@ -233,29 +217,15 @@ namespace Calamari.Tests.KubernetesFixtures
                 .BeEquivalentTo(expectedServiceMessage);
         }
 
-        protected CalamariResult ExecuteDiscoveryCommand<TAuthenticationDetails>(
-            TargetDiscoveryContext<TAuthenticationDetails> discoveryContext,
-            IEnumerable<string> extensions,
-            params (string key, string value)[] otherVariables)
+        protected void ExecuteDiscoveryCommandAndVerifyResult<TAuthenticationDetails>(
+            TargetDiscoveryContext<TAuthenticationDetails> discoveryContext)
             where TAuthenticationDetails : class, ITargetDiscoveryAuthenticationDetails
         {
-            using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
-            {
-                variables.Add(KubernetesDiscoveryCommand.ContextVariableName, JsonConvert.SerializeObject(discoveryContext));
-                foreach (var (key, value) in otherVariables)
-                    variables.Add(key, value);
+            variables.Add(KubernetesDiscoveryCommand.ContextVariableName,
+                JsonConvert.SerializeObject(discoveryContext));
 
-                variables.Save(variablesFile.FilePath);
-
-                var result = InvokeInProcess(Calamari()
-                       .Action(KubernetesDiscoveryCommand.Name)
-                       .Argument("variables", variablesFile.FilePath)
-                       .Argument("extensions", string.Join(',', extensions)));
-
-                WriteLogMessagesToTestOutput();
-
-                return result;
-            }
+            SetupTempDirectoryAndVerifyResult(null,
+                (dir, _) => ExecuteCommand(KubernetesDiscoveryCommand.Name, dir, null), shouldSucceed: true);
         }
 
         private void WriteLogMessagesToTestOutput()

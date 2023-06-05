@@ -238,15 +238,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             if (runAsScript)
             {
-                var wrapper = CreateWrapper();
-
-                // When authorising via AWS, We need to make sure we are using the correct version of
-                // kubectl for the test script as newer versions may cause kubectl to fail with an error like:
-                // 'error: exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"'
-                var kubectlExecutable = variables.Get(KubeCtlExecutableVariableName) ??
-                    throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
-
-                TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
+                DeployWithKubectlTestScriptAndVerifyResult();
             }
             else
             {
@@ -270,9 +262,8 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{account}.SecretKey", eksSecretKey);
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
-            var wrapper = CreateWrapper();
 
-            TestScript(wrapper, "Test-Script");
+            DeployWithNonKubectlTestScriptAndVerifyResult();
         }
 
         [Test]
@@ -571,7 +562,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             if (runAsScript)
             {
-                DeployWithScriptAndVerifyResult(usePackage
+                DeployWithDeploymentScriptAndVerifyResult(usePackage
                         ? CreateAddPackageFunc(resource)
                         : CreateAddCustomResourceFileFunc(resource),
                     shouldSucceed);

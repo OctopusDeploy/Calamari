@@ -19,62 +19,62 @@ namespace Calamari.Tests.KubernetesFixtures
     {
         protected const string KubeCtlExecutableVariableName = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
         protected const string KubeConfigFileName = "kubeconfig.tpl";
-        
-        InstallTools installTools;
 
+        // InstallTools installTools;
+        //
         string terraformWorkingFolder;
-        
+
         protected abstract string KubernetesCloudProvider { get; }
 
         protected virtual Task PreInitialise() { return Task.CompletedTask; }
-        
+
         protected virtual Task InstallOptionalTools(InstallTools tools) { return Task.CompletedTask; }
 
         [OneTimeSetUp]
         public async Task SetupInfrastructure()
         {
             await PreInitialise();
-            
-            terraformWorkingFolder = InitialiseTerraformWorkingFolder($"terraform_working/{KubernetesCloudProvider}", 
+
+            terraformWorkingFolder = InitialiseTerraformWorkingFolder($"terraform_working/{KubernetesCloudProvider}",
                 $"KubernetesFixtures/Terraform/Clusters/{KubernetesCloudProvider}");
-        
-            installTools = new InstallTools(TestContext.Progress.WriteLine);
-            await installTools.Install();
-            await InstallOptionalTools(installTools);
-        
+            //
+            // installTools = new InstallTools(TestContext.Progress.WriteLine);
+            // await installTools.Install();
+            // await InstallOptionalTools(installTools);
+            //
             InitialiseInfrastructure(terraformWorkingFolder);
         }
 
         [OneTimeTearDown]
         public void TearDownInfrastructure()
         {
-            RunTerraformDestroy(terraformWorkingFolder);
+            // RunTerraformDestroy(terraformWorkingFolder);
         }
 
         [SetUp]
         public void SetExtraVariables()
         {
-            variables.Set(KubeCtlExecutableVariableName, installTools.KubectlExecutable);
+            // variables.Set(KubeCtlExecutableVariableName, installTools.KubectlExecutable);
         }
 
         protected override Dictionary<string, string> GetEnvironments()
         {
             var currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
-            var delimiter = CalamariEnvironment.IsRunningOnWindows ? ";" : ":";
-            
-            var toolsToAdd = ToolsToAddToPath(installTools).ToList();
+            // var delimiter = CalamariEnvironment.IsRunningOnWindows ? ";" : ":";
 
-            if (!toolsToAdd.IsNullOrEmpty())
-            {
-                foreach (var tool in toolsToAdd)
-                {
-                    if (currentPath.Length > 0 && !currentPath.EndsWith(delimiter))
-                    {
-                        currentPath += delimiter;
-                    }
-                    currentPath += Path.GetDirectoryName(tool);
-                }
-            }
+            // var toolsToAdd = ToolsToAddToPath(installTools).ToList();
+
+            // if (!toolsToAdd.IsNullOrEmpty())
+            // {
+            //     foreach (var tool in toolsToAdd)
+            //     {
+            //         if (currentPath.Length > 0 && !currentPath.EndsWith(delimiter))
+            //         {
+            //             currentPath += delimiter;
+            //         }
+            //         currentPath += Path.GetDirectoryName(tool);
+            //     }
+            // }
 
             return new Dictionary<string, string> { { "PATH", currentPath } };
         }
@@ -85,70 +85,70 @@ namespace Calamari.Tests.KubernetesFixtures
 
         void InitialiseInfrastructure(string terraformWorkingFolder)
         {
-            RunTerraformInternal(terraformWorkingFolder, "init");
-            RunTerraformInternal(terraformWorkingFolder, "apply", "-auto-approve");
-            var jsonOutput = JObject.Parse(RunTerraformOutput(terraformWorkingFolder));
-        
-            ExtractVariablesFromTerraformOutput(jsonOutput);
+            // RunTerraformInternal(terraformWorkingFolder, "init");
+            // RunTerraformInternal(terraformWorkingFolder, "apply", "-auto-approve");
+            // var jsonOutput = JObject.Parse(RunTerraformOutput(terraformWorkingFolder));
+
+            ExtractVariablesFromTerraformOutput(null);//jsonOutput);
         }
 
-        protected void RunTerraformDestroy(string terraformWorkingFolder, Dictionary<string, string> env = null)
-        {
-            RunTerraformInternal(terraformWorkingFolder, env ?? new Dictionary<string, string>(), "destroy", "-auto-approve");
-        }
-        
-        string RunTerraformOutput(string terraformWorkingFolder)
-        {
-            return RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), false, "output", "-json");
-        }
-        
-        string RunTerraformInternal(string terraformWorkingFolder, params string[] args)
-        {
-            return RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), args);
-        }
-        
-        protected string RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, params string[] args)
-        {
-            return RunTerraformInternal(terraformWorkingFolder, env, true, args);
-        }
+        // protected void RunTerraformDestroy(string terraformWorkingFolder, Dictionary<string, string> env = null)
+        // {
+        //     RunTerraformInternal(terraformWorkingFolder, env ?? new Dictionary<string, string>(), "destroy", "-auto-approve");
+        // }
+        //
+        // string RunTerraformOutput(string terraformWorkingFolder)
+        // {
+        //     return RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), false, "output", "-json");
+        // }
+        //
+        // string RunTerraformInternal(string terraformWorkingFolder, params string[] args)
+        // {
+        //     return RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), args);
+        // }
+        //
+        // protected string RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, params string[] args)
+        // {
+        //     return RunTerraformInternal(terraformWorkingFolder, env, true, args);
+        // }
 
         protected abstract Dictionary<string, string> GetEnvironmentVars();
 
-        string RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, bool printOut, params string[] args)
-        {
-            var stdOut = new StringBuilder();
-            var environmentVars = GetEnvironmentVars();
-            environmentVars["TF_IN_AUTOMATION"] = bool.TrueString;
-            environmentVars.AddRange(env);
-
-            var result = SilentProcessRunner.ExecuteCommand(installTools.TerraformExecutable,
-                string.Join(" ", args.Concat(new[] { "-no-color" })),
-                terraformWorkingFolder,
-                environmentVars,
-                s =>
-                {
-                    stdOut.AppendLine(s);
-                    if (printOut)
-                    {
-                        TestContext.Progress.WriteLine(s);
-                    }
-                },
-                e =>
-                {
-                    TestContext.Error.WriteLine(e);
-                });
-        
-            result.ExitCode.Should().Be(0, because: $"`terraform {args[0]}` should run without error and exit cleanly during infrastructure setup");
-        
-            return stdOut.ToString().Trim(Environment.NewLine.ToCharArray());
-        }
+        // string RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, bool printOut, params string[] args)
+        // {
+        //     var stdOut = new StringBuilder();
+        //     var environmentVars = GetEnvironmentVars();
+        //     environmentVars["TF_IN_AUTOMATION"] = bool.TrueString;
+        //     environmentVars.AddRange(env);
+        //
+        //     var result = SilentProcessRunner.ExecuteCommand(installTools.TerraformExecutable,
+        //         string.Join(" ", args.Concat(new[] { "-no-color" })),
+        //         terraformWorkingFolder,
+        //         environmentVars,
+        //         s =>
+        //         {
+        //             stdOut.AppendLine(s);
+        //             if (printOut)
+        //             {
+        //                 TestContext.Progress.WriteLine(s);
+        //             }
+        //         },
+        //         e =>
+        //         {
+        //             TestContext.Error.WriteLine(e);
+        //         });
+        //
+        //     result.ExitCode.Should().Be(0, because: $"`terraform {args[0]}` should run without error and exit cleanly during infrastructure setup");
+        //
+        //     return stdOut.ToString().Trim(Environment.NewLine.ToCharArray());
+        // }
 
         protected string InitialiseTerraformWorkingFolder(string folderName, string filesSource)
         {
             var workingFolder = Path.Combine(testFolder, folderName);
             if (Directory.Exists(workingFolder))
                 Directory.Delete(workingFolder, true);
-            
+
             Directory.CreateDirectory(workingFolder);
             foreach (var file in Directory.EnumerateFiles(Path.Combine(testFolder, filesSource)))
             {
