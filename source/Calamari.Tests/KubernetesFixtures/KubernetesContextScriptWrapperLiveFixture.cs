@@ -19,29 +19,29 @@ namespace Calamari.Tests.KubernetesFixtures
     {
         protected const string KubeCtlExecutableVariableName = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
         protected const string KubeConfigFileName = "kubeconfig.tpl";
-
+        
         InstallTools installTools;
 
         string terraformWorkingFolder;
-
+        
         protected abstract string KubernetesCloudProvider { get; }
 
         protected virtual Task PreInitialise() { return Task.CompletedTask; }
-
+        
         protected virtual Task InstallOptionalTools(InstallTools tools) { return Task.CompletedTask; }
 
         [OneTimeSetUp]
         public async Task SetupInfrastructure()
         {
             await PreInitialise();
-
-            terraformWorkingFolder = InitialiseTerraformWorkingFolder($"terraform_working/{KubernetesCloudProvider}",
+            
+            terraformWorkingFolder = InitialiseTerraformWorkingFolder($"terraform_working/{KubernetesCloudProvider}", 
                 $"KubernetesFixtures/Terraform/Clusters/{KubernetesCloudProvider}");
-
+        
             installTools = new InstallTools(TestContext.Progress.WriteLine);
             await installTools.Install();
             await InstallOptionalTools(installTools);
-
+        
             InitialiseInfrastructure(terraformWorkingFolder);
         }
 
@@ -61,7 +61,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
             var delimiter = CalamariEnvironment.IsRunningOnWindows ? ";" : ":";
-
+            
             var toolsToAdd = ToolsToAddToPath(installTools).ToList();
 
             if (!toolsToAdd.IsNullOrEmpty())
@@ -88,25 +88,25 @@ namespace Calamari.Tests.KubernetesFixtures
             RunTerraformInternal(terraformWorkingFolder, "init");
             RunTerraformInternal(terraformWorkingFolder, "apply", "-auto-approve");
             var jsonOutput = JObject.Parse(RunTerraformOutput(terraformWorkingFolder));
-
-            ExtractVariablesFromTerraformOutput(null);//jsonOutput);
+        
+            ExtractVariablesFromTerraformOutput(jsonOutput);
         }
 
         protected void RunTerraformDestroy(string terraformWorkingFolder, Dictionary<string, string> env = null)
         {
             RunTerraformInternal(terraformWorkingFolder, env ?? new Dictionary<string, string>(), "destroy", "-auto-approve");
         }
-
+        
         string RunTerraformOutput(string terraformWorkingFolder)
         {
             return RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), false, "output", "-json");
         }
-
+        
         string RunTerraformInternal(string terraformWorkingFolder, params string[] args)
         {
             return RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), args);
         }
-
+        
         protected string RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, params string[] args)
         {
             return RunTerraformInternal(terraformWorkingFolder, env, true, args);
@@ -137,9 +137,9 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     TestContext.Error.WriteLine(e);
                 });
-
+        
             result.ExitCode.Should().Be(0, because: $"`terraform {args[0]}` should run without error and exit cleanly during infrastructure setup");
-
+        
             return stdOut.ToString().Trim(Environment.NewLine.ToCharArray());
         }
 
@@ -148,7 +148,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var workingFolder = Path.Combine(testFolder, folderName);
             if (Directory.Exists(workingFolder))
                 Directory.Delete(workingFolder, true);
-
+            
             Directory.CreateDirectory(workingFolder);
             foreach (var file in Directory.EnumerateFiles(Path.Combine(testFolder, filesSource)))
             {
