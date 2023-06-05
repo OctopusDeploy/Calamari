@@ -17,7 +17,8 @@ environment: # inline at top level
       arch: x86
 skip_tags: false
 branches:
-  only:
-  - main
-  # - alt
-  - aux
+# block between mapping key and value
+  only: # inline between mapping key and value
+    - main
+    # - alt
+    - aux
