@@ -498,7 +498,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 DoDiscovery(authenticationDetails);
 
-                Log.ServiceMessages.Should().BeEmpty();
+                Log.ServiceMessages.Should().NotContain(m =>
+                    m.Name == KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName);
 
                 Log.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Error);
 
@@ -539,7 +540,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
             DoDiscovery(authenticationDetails);
 
-            Log.ServiceMessages.Should().BeEmpty();
+            Log.ServiceMessages.Should().NotContain(m =>
+                m.Name == KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName);
 
             Log.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Error);
 

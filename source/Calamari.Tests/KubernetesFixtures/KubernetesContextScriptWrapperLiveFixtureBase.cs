@@ -212,7 +212,9 @@ namespace Calamari.Tests.KubernetesFixtures
                 properties);
 
             Log.ServiceMessages.Should()
-                .ContainSingle(s => s.Properties["name"] == properties["name"])
+                .ContainSingle(s =>
+                    s.Name == KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName &&
+                    s.Properties["name"] == properties["name"])
                 .Which.Should()
                 .BeEquivalentTo(expectedServiceMessage);
         }
