@@ -18,18 +18,23 @@ namespace Calamari.Integration.Packages.Download
 {
     public class OciPackageDownloader : IPackageDownloader
     {
-        const string Extension = ".tgz";
         const string VersionPath = "v2";
         const string OciImageManifestAcceptHeader = "application/vnd.oci.image.manifest.v1+json";
+        const string ManifestImageTitleAnnotationKey = "org.opencontainers.image.title";
+        const string ManifestLayerAnnotationsPropertyName = "annotations";
+        const string ManifestLayerMediaTypePropertyName = "mediaType";
 
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         readonly ICalamariFileSystem fileSystem;
+        readonly ICombinedPackageExtractor combinedPackageExtractor;
         readonly HttpClient client;
 
         public OciPackageDownloader(
-            ICalamariFileSystem fileSystem)
+            ICalamariFileSystem fileSystem,
+            ICombinedPackageExtractor combinedPackageExtractor)
         {
             this.fileSystem = fileSystem;
+            this.combinedPackageExtractor = combinedPackageExtractor;
             client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None });
         }
 
@@ -72,14 +77,15 @@ namespace Calamari.Integration.Packages.Download
                     Directory.CreateDirectory(stagingDir);
                 }
 
-                var cachedFileName = PackageName.ToCachedFileName(packageId, version, Extension);
-                var downloadPath = Path.Combine(Path.Combine(stagingDir, cachedFileName));
-
                 var versionString = FixVersion(version);
 
                 var feedUrl = GetApiUri(ociUri);
-                var (digest, size) = GetPackageDetails(feedUrl, packageId, versionString, feedUsername, feedPassword);
+                var (digest, size, extension) = GetPackageDetails(feedUrl, packageId, versionString, feedUsername, feedPassword);
                 var hash = GetPackageHashFromDigest(digest);
+
+                var cachedFileName = PackageName.ToCachedFileName(packageId, version, extension);
+                var downloadPath = Path.Combine(Path.Combine(stagingDir, cachedFileName));
+
                 DownloadPackage(feedUrl, packageId, digest, feedUsername, feedPassword, downloadPath);
 
                 var localDownloadName = Path.Combine(cacheDirectory, cachedFileName);
@@ -108,7 +114,7 @@ namespace Calamari.Integration.Packages.Download
             return matches.Groups["hash"]?.Value;
         }
 
-        private (string digest, int size) GetPackageDetails(
+        private (string digest, int size, string extension) GetPackageDetails(
             Uri url,
             string packageId,
             string version,
@@ -125,10 +131,22 @@ namespace Calamari.Integration.Packages.Download
             var layer = manifest.Value<JArray>("layers")[0];
             var digest = layer.Value<string>("digest");
             var size = layer.Value<int>("size");
+            var extension = GetExtensionFromManifest(layer);
 
-            return (digest, size);
+            return (digest, size, extension);
         }
-        
+
+        string GetExtensionFromManifest(JToken layer)
+        {
+            var artifactTitle = layer.Value<JObject>(ManifestLayerAnnotationsPropertyName)?[ManifestImageTitleAnnotationKey]?.Value<string>() ?? "";
+            var extension = combinedPackageExtractor
+                .Extensions
+                .FirstOrDefault(ext => 
+                    Path.GetExtension(artifactTitle).Equals(ext, StringComparison.OrdinalIgnoreCase));
+
+            return extension ?? (layer.Value<string>(ManifestLayerMediaTypePropertyName).EndsWith("tar+gzip") ? ".tgz" : ".tar");
+        }
+
         void DownloadPackage(
             Uri url,
             string packageId,
@@ -194,7 +212,7 @@ namespace Calamari.Integration.Packages.Download
         {
             Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
 
-            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, new[] { Extension }));
+            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, combinedPackageExtractor.Extensions));
 
             foreach (var file in files)
             {
