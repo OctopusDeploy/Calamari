@@ -60,9 +60,8 @@ namespace Calamari.Kubernetes.ResourceStatus
                 defaultNamespace = "default";
             }
 
-            var definedResources = new List<ResourceIdentifier>();
             var manifests = ReadManifestFiles(workingDirectory).ToList();
-            definedResources.AddRange(KubernetesYaml.GetDefinedResources(manifests, defaultNamespace));
+            var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
 
             var secret = GetSecret(defaultNamespace);
             if (secret != null)

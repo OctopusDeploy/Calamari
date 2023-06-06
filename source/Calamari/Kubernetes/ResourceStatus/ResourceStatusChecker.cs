@@ -14,8 +14,6 @@ namespace Calamari.Kubernetes.ResourceStatus
     /// </summary>
     public interface IResourceStatusChecker
     {
-        bool IsCheckingStatus { get; }
-
         /// <summary>
         /// Polls the resource status in a cluster and sends the update to the server
         /// until the deployment timeout is met, or the deployment has succeeded or failed.
@@ -42,6 +40,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         private ITimer timer;
         private readonly List<ResourceIdentifier> resources = new List<ResourceIdentifier>();
         private readonly object resourceLock = new object();
+        private bool isCheckingStatus;
 
         public ResourceStatusChecker(
             IResourceRetriever resourceRetriever,
@@ -53,19 +52,17 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
         }
 
-        public bool IsCheckingStatus { get; private set; }
-
         public async Task<bool> CheckStatusUntilCompletionOrTimeout(
             IKubectl kubectl,
             IEnumerable<ResourceIdentifier> initialResources,
             ITimer timer,
             Options options)
         {
-            if (IsCheckingStatus)
+            if (isCheckingStatus)
                 throw new InvalidOperationException(
                     "method CheckStatusUntilCompletionOrTimeout must only be called once.");
 
-            IsCheckingStatus = true;
+            isCheckingStatus = true;
 
             lock (resourceLock)
             {
@@ -119,7 +116,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 } while (!timer.HasCompleted() && deploymentStatus == DeploymentStatus.InProgress);
             });
 
-            IsCheckingStatus = false;
+            isCheckingStatus = false;
 
             switch (deploymentStatus)
             {

@@ -228,7 +228,6 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     {
         public List<ResourceIdentifier> CheckedResources { get; private set; }
 
-        public bool IsCheckingStatus => false;
         public async Task<bool> CheckStatusUntilCompletionOrTimeout(IKubectl kubectl, IEnumerable<ResourceIdentifier> initialResources, ITimer timer, Options options)
         {
             await Task.CompletedTask;
