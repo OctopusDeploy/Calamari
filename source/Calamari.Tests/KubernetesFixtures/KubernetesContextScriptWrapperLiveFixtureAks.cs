@@ -63,7 +63,9 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void AuthorisingWithPodServiceAccountToken()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithPodServiceAccountToken(bool runAsScript)
         {
             variables.Set(SpecialVariables.ClusterUrl, aksClusterHost);
 
@@ -75,13 +77,23 @@ namespace Calamari.Tests.KubernetesFixtures
                 File.WriteAllText(certificateAuthority.FilePath, aksClusterCaCertificate);
                 variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
                 variables.Set("Octopus.Action.Kubernetes.CertificateAuthorityPath", certificateAuthority.FilePath);
-                var wrapper = CreateWrapper();
-                TestScriptAndVerifyCluster(wrapper, "Test-Script");
+
+                if (runAsScript)
+                {
+                    var wrapper = CreateWrapper();
+                    TestScriptAndVerifyCluster(wrapper, "Test-Script");
+                }
+                else
+                {
+                    ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
+                }
             }
         }
 
         [Test]
-        public void AuthorisingWithAzureServicePrincipal()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithAzureServicePrincipal(bool runAsScript)
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", azurermResourceGroup);
@@ -91,12 +103,21 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Azure.TenantId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
             variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
             variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
-            var wrapper = CreateWrapper();
-            TestScriptAndVerifyCluster(wrapper, "Test-Script");
+            if (runAsScript)
+            {
+                var wrapper = CreateWrapper();
+                TestScriptAndVerifyCluster(wrapper, "Test-Script");
+            }
+            else
+            {
+                ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
+            }
         }
 
         [Test]
-        public void AuthorisingWithClientCertificate()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithClientCertificate(bool runAsScript)
         {
             variables.Set(SpecialVariables.ClusterUrl, aksClusterHost);
             var certificateAuthority = "myauthority";
@@ -106,8 +127,15 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.ClientCertificate", clientCert);
             variables.Set($"{clientCert}.CertificatePem", aksClusterClientCertificate);
             variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
-            var wrapper = CreateWrapper();
-            TestScriptAndVerifyCluster(wrapper, "Test-Script");
+            if (runAsScript)
+            {
+                var wrapper = CreateWrapper();
+                TestScriptAndVerifyCluster(wrapper, "Test-Script");
+            }
+            else
+            {
+                ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
+            }
         }
 
         [Test]
