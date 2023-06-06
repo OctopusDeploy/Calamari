@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Calamari.Common.Plumbing.FileSystem
 {
@@ -25,6 +26,11 @@ namespace Calamari.Common.Plumbing.FileSystem
         string[] GetFileSystemEntries(string path);
         IEnumerable<string> EnumerateDirectories(string path);
         IEnumerable<string> EnumerateDirectoriesRecursively(string path);
+        IEnumerable<string> EnumerateFiles(string parentDirectoryPath,
+            params string[] searchPatterns);
+        IEnumerable<string> EnumerateFilesRecursively(
+            string parentDirectoryPath,
+            params string[] searchPatterns);
         IEnumerable<string> GetFiles(string sourceDirectory, string s);
         IEnumerable<string> GetDirectories(string path);
         string GetCurrentDirectory();
@@ -108,6 +114,31 @@ namespace Calamari.Common.Plumbing.FileSystem
         public IEnumerable<string> EnumerateDirectoriesRecursively(string path)
         {
             return Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories);
+        }
+
+        public virtual IEnumerable<string> EnumerateFiles(
+            string parentDirectoryPath,
+            params string[] searchPatterns)
+        {
+            return EnumerateFiles(parentDirectoryPath, SearchOption.TopDirectoryOnly, searchPatterns);
+        }
+
+        public virtual IEnumerable<string> EnumerateFilesRecursively(
+            string parentDirectoryPath,
+            params string[] searchPatterns)
+        {
+            return EnumerateFiles(parentDirectoryPath, SearchOption.AllDirectories, searchPatterns);
+        }
+
+        private IEnumerable<string> EnumerateFiles(
+            string parentDirectoryPath,
+            SearchOption searchOption,
+            IReadOnlyCollection<string> searchPatterns)
+        {
+            return searchPatterns.Count == 0
+                ? Directory.EnumerateFiles(parentDirectoryPath, "*", searchOption)
+                : searchPatterns.SelectMany(pattern =>
+                    Directory.EnumerateFiles(parentDirectoryPath, pattern, searchOption));
         }
 
         public IEnumerable<string> GetFiles(string path, string searchPattern)
