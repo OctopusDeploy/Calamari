@@ -6,15 +6,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Assent;
 using Calamari.Aws.Kubernetes.Discovery;
-using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Deployment;
 using Calamari.FeatureToggles;
-using Calamari.Kubernetes.ResourceStatus;
+using Calamari.Kubernetes.Commands;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.AWS;
-using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
@@ -86,7 +84,9 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void DeployRawYaml_WithRawYamlDeploymentScript_OutputShouldIndicateSuccessfulDeployment()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void DeployRawYaml_WithRawYamlDeploymentScriptOrCommand_OutputShouldIndicateSuccessfulDeployment(bool runAsScript)
         {
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
@@ -110,11 +110,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "180");
             variables.Set("Octopus.Action.Kubernetes.StabilizationTimeout", "10");
 
-            variables.SetFeatureToggles(
-                FeatureToggle.KubernetesDeploymentStatusFeatureToggle,
-                FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
-
-            var fileSystem = new TestCalamariPhysicalFileSystem();
+            variables.SetFeatureToggles(FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
 
             void AddCustomResourceFile(TemporaryDirectory dir)
             {
@@ -123,9 +119,15 @@ namespace Calamari.Tests.KubernetesFixtures
                 variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", customResourceFileName);
             }
 
-            var wrapper = new[] { CreateWrapper(fileSystem), CreateK8sResourceStatusReporterScriptWrapper(fileSystem) };
+            if (runAsScript)
+            {
+                DeployWithScriptAndVerifySuccess(AddCustomResourceFile);
+            }
+            else
+            {
+                ExecuteCommandAndVerifySuccess(KubernetesApplyRawYamlCommand.Name, AddCustomResourceFile);
+            }
 
-            DeployWithScriptAndVerifySuccess(wrapper, fileSystem, AddCustomResourceFile);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
@@ -142,7 +144,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 p.Name == "annotations" ||
                 p.Name == "uid" ||
                 p.Name == "conditions" ||
-                p.Name == "resourceVersion");
+                p.Name == "resourceVersion" ||
+                p.Name == "status");
 
             this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
 
@@ -157,16 +160,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
         }
 
-        private IScriptWrapper CreateK8sResourceStatusReporterScriptWrapper(ICalamariFileSystem fileSystem)
-        {
-            return new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, Log,
-                fileSystem,
-                new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
-                    new ResourceUpdateReporter(variables, Log), Log)));
-        }
-
         [Test]
-        public void AuthorisingWithAmazonAccount()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithAmazonAccount(bool runAsScript)
         {
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
@@ -180,15 +177,23 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{account}.SecretKey", eksSecretKey);
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
-            var wrapper = CreateWrapper();
 
-            // When authorising via AWS, We need to make sure we are using the correct version of
-            // kubectl for the test script as newer versions may cause kubectl to fail with an error like:
-            // 'error: exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"'
-            var kubectlExecutable = variables.Get(KubeCtlExecutableVariableName) ??
-                throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
+            if (runAsScript)
+            {
+                var wrapper = CreateWrapper();
 
-            TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
+                // When authorising via AWS, We need to make sure we are using the correct version of
+                // kubectl for the test script as newer versions may cause kubectl to fail with an error like:
+                // 'error: exec plugin: invalid apiVersion "client.authentication.k8s.io/v1alpha1"'
+                var kubectlExecutable = variables.Get(KubeCtlExecutableVariableName) ??
+                    throw new Exception($"Unable to find required kubectl executable in variable '{KubeCtlExecutableVariableName}'");
+
+                TestScriptAndVerifyCluster(wrapper, "Test-Script", kubectlExecutable);
+            }
+            else
+            {
+                ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
+            }
         }
 
         [Test]
@@ -198,7 +203,7 @@ namespace Calamari.Tests.KubernetesFixtures
             const string certificateAuthority = "myauthority";
             const string unreachableClusterEndpoint = "https://example.kubernetes.com";
 
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
             variables.Set(KubernetesSpecialVariables.ClusterUrl, unreachableClusterEndpoint);
             variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
             variables.Set("Octopus.Action.Aws.Region", region);
@@ -230,7 +235,7 @@ namespace Calamari.Tests.KubernetesFixtures
             RunTerraformInternal(terraformWorkingFolder, env, "init");
             try
             {
-                // This actual tests are run via EC2/test.sh which executes the tests in
+                // The actual tests are run via EC2/test.sh which executes the tests in
                 // KubernetesContextScriptWrapperLiveFixtureForAmazon.cs
                 RunTerraformInternal(terraformWorkingFolder, env, "apply", "-auto-approve");
             }

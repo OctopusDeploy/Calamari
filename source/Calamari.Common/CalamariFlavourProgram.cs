@@ -116,7 +116,6 @@ namespace Calamari.Common
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
-            builder.RegisterType<RunningDeployment>().AsSelf();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 

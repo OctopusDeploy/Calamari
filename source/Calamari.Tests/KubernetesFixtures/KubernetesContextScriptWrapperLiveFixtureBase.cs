@@ -2,21 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Calamari.Aws.Integration;
 using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Commands;
-using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.Features.StructuredVariables;
-using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
-using Calamari.Common.Plumbing.Deployment.Journal;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
@@ -71,7 +65,7 @@ namespace Calamari.Tests.KubernetesFixtures
         CalamariResult ExecuteScript(IScriptWrapper wrapper, string scriptName) =>
             ExecuteScript(new[] { wrapper }, scriptName);
 
-        CalamariResult ExecuteScript(IReadOnlyList<IScriptWrapper> additionalWrappers, string scriptName, ICalamariFileSystem fileSystem = null)
+        CalamariResult ExecuteScript(IReadOnlyList<IScriptWrapper> additionalWrappers, string scriptName)
         {
             var wrappers = new List<IScriptWrapper>(additionalWrappers);
             if (variables.Get(SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
@@ -79,59 +73,11 @@ namespace Calamari.Tests.KubernetesFixtures
                 wrappers.Add(new AwsScriptWrapper(Log, variables));
             }
 
-            var result = fileSystem != null
-                ? ExecuteWithRunScriptCommand(fileSystem, wrappers)
-                : ExecuteDirectlyWithScriptEngine(wrappers, scriptName);
+            var result = ExecuteDirectlyWithScriptEngine(wrappers, scriptName);
 
             WriteLogMessagesToTestOutput();
 
             return result;
-        }
-
-        CalamariResult ExecuteWithRunScriptCommand(ICalamariFileSystem fileSystem, IEnumerable<IScriptWrapper> scriptWrappers)
-        {
-            var command = new RunScriptCommand(Log,
-                new DeploymentJournalWriter(fileSystem),
-                variables,
-                new ScriptEngine(scriptWrappers),
-                fileSystem,
-                CreateCommandLineRunner(),
-                CreateSubstituteInFiles(fileSystem),
-                CreateStructuredConfigVariablesService(fileSystem),
-                CreateRunningDeployment());
-
-            var result = command.Execute(Array.Empty<string>());
-
-            return new CalamariResult(result, new CaptureCommandInvocationOutputSink());
-        }
-
-        private RunningDeployment.Factory CreateRunningDeployment()
-        {
-            return (p, e) => new RunningDeployment(p, variables,
-                GetEnvironments().Concat(e ?? new Dictionary<string, string>())
-                                 .ToDictionary(x => x.Key, x => x.Value));
-        }
-
-        private ISubstituteInFiles CreateSubstituteInFiles(ICalamariFileSystem fileSystem)
-        {
-            return new SubstituteInFiles(Log, fileSystem, new FileSubstituter(Log, fileSystem), variables);
-        }
-
-        CommandLineRunner CreateCommandLineRunner()
-        {
-            return new CommandLineRunner(Log, variables);
-        }
-
-        StructuredConfigVariablesService CreateStructuredConfigVariablesService(ICalamariFileSystem fileSystem)
-        {
-            return new StructuredConfigVariablesService(
-                new PrioritisedList<IFileFormatVariableReplacer>(new IFileFormatVariableReplacer[]
-                {
-                    new JsonFormatVariableReplacer(fileSystem, Log),
-                    new XmlFormatVariableReplacer(fileSystem, Log),
-                    new YamlFormatVariableReplacer(fileSystem, Log),
-                    new PropertiesFormatVariableReplacer(fileSystem, Log)
-                }), variables, fileSystem, Log);
         }
 
         CalamariResult ExecuteDirectlyWithScriptEngine(IReadOnlyList<IScriptWrapper> wrappers, string scriptName)
@@ -141,6 +87,59 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = engine.Execute(new Script(scriptName), variables, commandLineRunner, GetEnvironments());
 
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
+        }
+
+        protected void DeployWithScriptAndVerifySuccess(Action<TemporaryDirectory> addFilesAction = null)
+        {
+            SetupTempDirectoryAndVerifyResult(addFilesAction, d =>
+            {
+                var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts");
+                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash),
+                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.sh")));
+                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell),
+                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1")));
+
+                return ExecuteCommand(RunScriptCommand.Name, d);
+            });
+        }
+
+        protected void ExecuteCommandAndVerifySuccess(string commandName,
+            Action<TemporaryDirectory> addFilesAction = null)
+        {
+            SetupTempDirectoryAndVerifyResult(addFilesAction, d => ExecuteCommand(commandName, d));
+        }
+
+        private void SetupTempDirectoryAndVerifyResult(Action<TemporaryDirectory> addFilesAction, Func<string, CalamariResult> func)
+        {
+            using (var dir = TemporaryDirectory.Create())
+            {
+                var folderPath = Path.Combine(dir.DirectoryPath, "TestFolder");
+                Directory.CreateDirectory(folderPath);
+
+                addFilesAction?.Invoke(dir);
+
+                var output = func(folderPath);
+
+                output.AssertSuccess();
+
+                WriteLogMessagesToTestOutput();
+            }
+        }
+
+        CalamariResult ExecuteCommand(string command, string workingDirectory)
+        {
+            using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
+            {
+                variables.Save(variablesFile.FilePath);
+
+                var calamariCommand = Calamari().Action(command)
+                                                .Argument("variables", variablesFile.FilePath)
+                                                .WithEnvironmentVariables(GetEnvironments())
+                                                .WithWorkingDirectory(workingDirectory)
+                                                .OutputToLog(true);
+
+                return Invoke(calamariCommand, variables, Log);
+            }
         }
 
         protected virtual Dictionary<string, string> GetEnvironments()
@@ -162,39 +161,6 @@ namespace Calamari.Tests.KubernetesFixtures
                     var output = ExecuteScript(wrapper, temp.FilePath);
                     output.AssertSuccess();
                 }
-            }
-        }
-
-        protected void DeployWithScriptAndVerifySuccess(IReadOnlyList<IScriptWrapper> wrappers,
-            ICalamariFileSystem fileSystem, Action<TemporaryDirectory> addFilesAction = null)
-        {
-            SetupTempDirectoryAndVerifyResult(addFilesAction, () =>
-            {
-                var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts");
-                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash),
-                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.sh")));
-                variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell),
-                    File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1")));
-
-                return ExecuteScript(wrappers, null, fileSystem);
-            });
-        }
-
-        private void SetupTempDirectoryAndVerifyResult(Action<TemporaryDirectory> addFilesAction, Func<CalamariResult> func)
-        {
-            using (var dir = TemporaryDirectory.Create())
-            {
-                var folderPath = Path.Combine(dir.DirectoryPath, "TestFolder");
-                Directory.CreateDirectory(folderPath);
-                variables.Add(KnownVariables.OriginalPackageDirectoryPath, folderPath);
-
-                addFilesAction?.Invoke(dir);
-
-                var output = func();
-
-                output.AssertSuccess();
-
-                WriteLogMessagesToTestOutput();
             }
         }
 

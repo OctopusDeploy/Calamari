@@ -5,6 +5,7 @@ using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities;
 using Octopus.Versioning.Semver;
@@ -14,15 +15,32 @@ namespace Calamari.Kubernetes.Integration
     public class Kubectl : CommandLineTool
     {
         readonly string customKubectlExecutable;
+        private bool isSet;
 
-        public Kubectl(string customKubectlExecutable, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
-            : base(log, commandLineRunner, workingDirectory, environmentVars)
+        public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner)
+            : this(variables, log, commandLineRunner, Environment.CurrentDirectory, new Dictionary<string, string>())
         {
-            this.customKubectlExecutable = customKubectlExecutable;
+        }
+
+        public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory,
+            Dictionary<string, string> environmentVariables) : base(log, commandLineRunner, workingDirectory, environmentVariables)
+        {
+            customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
+        }
+        public void SetWorkingDirectory(string directory)
+        {
+            workingDirectory = directory;
+        }
+
+        public void SetEnvironmentVariables(Dictionary<string, string> variables)
+        {
+            environmentVars = variables;
         }
 
         public bool TrySetKubectl()
         {
+            if (isSet) return true;
+
             if (string.IsNullOrEmpty(customKubectlExecutable))
             {
                 var result = CalamariEnvironment.IsRunningOnWindows
@@ -53,6 +71,7 @@ namespace Calamari.Kubernetes.Integration
             if (TryExecuteKubectlCommand("version", "--client", "--output=yaml"))
             {
                 log.Verbose($"Found kubectl and successfully verified it can be executed.");
+                isSet = true;
                 return true;
             }
 

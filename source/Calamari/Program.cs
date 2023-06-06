@@ -19,6 +19,7 @@ using Calamari.Deployment.PackageRetention;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.Kubernetes.Commands.Discovery;
+using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
@@ -70,6 +71,7 @@ namespace Calamari
             builder.RegisterType<ResourceStatusChecker>().As<IResourceStatusChecker>().SingleInstance();
             builder.RegisterType<ResourceUpdateReporter>().As<IResourceUpdateReporter>().SingleInstance();
             builder.RegisterType<ResourceStatusReportExecutor>().AsSelf();
+            builder.RegisterType<Kubectl>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<KubectlGet>().As<IKubectlGet>().SingleInstance();
 
             builder.RegisterType<KubernetesDiscovererFactory>()

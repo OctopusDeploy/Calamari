@@ -6,7 +6,6 @@ using System.Text;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
@@ -24,16 +23,16 @@ namespace Calamari.Kubernetes
         readonly ILog log;
         readonly ScriptSyntax scriptSyntax;
         readonly ICommandLineRunner commandLineRunner;
+        private readonly Kubectl kubectl;
         readonly Dictionary<string, string> environmentVars;
         readonly string workingDirectory;
         string aws;
-
-        Kubectl kubectlCli;
 
         public SetupKubectlAuthentication(IVariables variables,
             ILog log,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
+            Kubectl kubectl,
             Dictionary<string, string> environmentVars,
             string workingDirectory)
         {
@@ -41,6 +40,7 @@ namespace Calamari.Kubernetes
             this.log = log;
             this.scriptSyntax = scriptSyntax;
             this.commandLineRunner = commandLineRunner;
+            this.kubectl = kubectl;
             this.environmentVars = environmentVars;
             this.workingDirectory = workingDirectory;
         }
@@ -55,10 +55,7 @@ namespace Calamari.Kubernetes
             }
 
             var kubeConfig = CreateKubectlConfig();
-
-            var customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
-            kubectlCli = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars);
-            if (!kubectlCli.TrySetKubectl())
+            if (!kubectl.TrySetKubectl())
             {
                 return errorResult;
             }
@@ -83,7 +80,7 @@ namespace Calamari.Kubernetes
             var outputKubeConfig = variables.GetFlag(SpecialVariables.OutputKubeConfig);
             if (outputKubeConfig)
             {
-                kubectlCli.ExecuteCommandAndAssertSuccess("config", "view");
+                kubectl.ExecuteCommandAndAssertSuccess("config", "view");
             }
 
             return new CommandResult(string.Empty, 0);
@@ -156,7 +153,7 @@ namespace Calamari.Kubernetes
             if (isUsingAzureServicePrincipalAuth)
             {
                 var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
-                var azureAuth = new AzureKubernetesServicesAuth(azureCli, kubectlCli, variables);
+                var azureAuth = new AzureKubernetesServicesAuth(azureCli, kubectl, variables);
 
                 if (!azureAuth.TryConfigure(@namespace, kubeConfig))
                     return false;
@@ -165,7 +162,7 @@ namespace Calamari.Kubernetes
             {
                 var gcloudCli = new GCloud(log, commandLineRunner, workingDirectory, environmentVars);
                 var gkeGcloudAuthPlugin = new GkeGcloudAuthPlugin(log, commandLineRunner, workingDirectory, environmentVars);
-                var gcloudAuth = new GoogleKubernetesEngineAuth(gcloudCli, gkeGcloudAuthPlugin, kubectlCli, variables, log);
+                var gcloudAuth = new GoogleKubernetesEngineAuth(gcloudCli, gkeGcloudAuthPlugin, kubectl, variables, log);
 
                 if (!gcloudAuth.TryConfigure(useVmServiceAccount, @namespace))
                     return false;
@@ -186,9 +183,9 @@ namespace Calamari.Kubernetes
                 }
                 else
                 {
-                    kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
-                    kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
-                    kubectlCli.ExecuteCommandAndAssertSuccess("config", "use-context", context);
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
 
                     var clientCertPem = variables.Get($"{clientCert}.CertificatePem");
                     var clientCertKey = variables.Get($"{clientCert}.PrivateKeyPem");
@@ -218,8 +215,8 @@ namespace Calamari.Kubernetes
                         log.SetOutputVariable($"{clientCert}.PrivateKeyPemBase64", clientCertKeyEncoded, variables, true);
                         log.AddValueToRedact(clientCertKeyEncoded, "<data>");
                         log.AddValueToRedact(clientCertPemEncoded, "<data>");
-                        kubectlCli.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-certificate-data", clientCertPemEncoded);
-                        kubectlCli.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-key-data", clientCertKeyEncoded);
+                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-certificate-data", clientCertPemEncoded);
+                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-key-data", clientCertKeyEncoded);
                     }
 
                     if (!string.IsNullOrEmpty(certificateAuthority))
@@ -232,11 +229,11 @@ namespace Calamari.Kubernetes
 
                         var authorityData = Convert.ToBase64String(Encoding.ASCII.GetBytes(serverCertPem));
                         log.AddValueToRedact(authorityData, "<data>");
-                        kubectlCli.ExecuteCommandAndAssertSuccess("config", "set", $"clusters.{cluster}.certificate-authority-data", authorityData);
+                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"clusters.{cluster}.certificate-authority-data", authorityData);
                     }
                     else
                     {
-                        kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
+                        kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
                     }
 
                     switch (accountType)
@@ -283,7 +280,7 @@ namespace Calamari.Kubernetes
         {
             log.AddValueToRedact(token, "<token>");
             log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Token");
-            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={token}");
+            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={token}");
         }
 
         void SetupContextForUsernamePassword(string user)
@@ -294,7 +291,7 @@ namespace Calamari.Kubernetes
             {
                 log.AddValueToRedact(password, "<password>");
             }
-            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--username={username}", $"--password={password}");
+            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--username={username}", $"--password={password}");
         }
 
         void SetupContextForAmazonServiceAccount(string @namespace, string clusterUrl, string user)
@@ -370,17 +367,17 @@ namespace Calamari.Kubernetes
 
         void SetKubeConfigAuthenticationToAwsCli(string user, string clusterName, string region, string apiVersion)
         {
-            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws", "--exec-arg=eks", "--exec-arg=get-token", $"--exec-arg=--cluster-name={clusterName}", $"--exec-arg=--region={region}", $"--exec-api-version={apiVersion}");
+            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws", "--exec-arg=eks", "--exec-arg=get-token", $"--exec-arg=--cluster-name={clusterName}", $"--exec-arg=--region={region}", $"--exec-api-version={apiVersion}");
         }
 
         void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
         {
-            var kubectlVersion = kubectlCli.GetVersion();
+            var kubectlVersion = kubectl.GetVersion();
             var apiVersion = kubectlVersion.Some() && kubectlVersion.Value > new SemanticVersion("1.23.6")
                 ? "client.authentication.k8s.io/v1beta1"
                 : "client.authentication.k8s.io/v1alpha1";
 
-            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws-iam-authenticator", $"--exec-api-version={apiVersion}", "--exec-arg=token", "--exec-arg=-i", $"--exec-arg={clusterName}");
+            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws-iam-authenticator", $"--exec-api-version={apiVersion}", "--exec-arg=token", "--exec-arg=-i", $"--exec-arg={clusterName}");
         }
 
         void SetupContextUsingPodServiceAccount(string @namespace,
@@ -393,23 +390,23 @@ namespace Calamari.Kubernetes
             string user,
             string podServiceAccountToken)
         {
-            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
+            kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
 
             if (string.IsNullOrEmpty(serverCert))
             {
-                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
+                kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
             }
             else
             {
-                kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
+                kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
             }
 
-            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
-            kubectlCli.ExecuteCommandAndAssertSuccess("config", "use-context", context);
+            kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
+            kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
 
             log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
             log.AddValueToRedact(podServiceAccountToken, "<token>");
-            kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
+            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
         }
 
         bool TrySetAws()
@@ -467,7 +464,7 @@ namespace Calamari.Kubernetes
 
         bool TryExecuteCommandWithVerboseLoggingOnly(params string[] arguments)
         {
-            return ExecuteCommandWithVerboseLoggingOnly(new CommandLineInvocation(kubectlCli.ExecutableLocation, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
+            return ExecuteCommandWithVerboseLoggingOnly(new CommandLineInvocation(kubectl.ExecutableLocation, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
         }
 
         CommandResult ExecuteCommand(CommandLineInvocation invocation)

@@ -9,6 +9,7 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes
 {
@@ -52,11 +53,13 @@ namespace Calamari.Kubernetes
             {
                 environmentVars = new Dictionary<string, string>();
             }
-            
+
+            var kubectl = new Kubectl(variables, log, commandLineRunner, workingDirectory, environmentVars);
             var setupKubectlAuthentication = new SetupKubectlAuthentication(variables,
                                                                             log,
                                                                             scriptSyntax,
                                                                             commandLineRunner,
+                                                                            kubectl,
                                                                             environmentVars,
                                                                             workingDirectory);
             var accountType = variables.Get("Octopus.Account.AccountType");
