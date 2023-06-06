@@ -238,6 +238,27 @@ namespace Calamari.Common.Plumbing.FileSystem
             return Alphaleonis.Win32.Filesystem.Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories);
         }
 
+        public IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns)
+        {
+            return EnumerateFiles(parentDirectoryPath, SearchOption.TopDirectoryOnly, searchPatterns);
+        }
+
+        public IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns)
+        {
+            return EnumerateFiles(parentDirectoryPath, SearchOption.AllDirectories, searchPatterns);
+        }
+
+        private IEnumerable<string> EnumerateFiles(
+            string parentDirectoryPath,
+            SearchOption searchOption,
+            IReadOnlyCollection<string> searchPatterns)
+        {
+            return searchPatterns.Count == 0
+                ? Alphaleonis.Win32.Filesystem.EnumerateFiles(parentDirectoryPath, "*", searchOption)
+                : searchPatterns.SelectMany(pattern =>
+                    Alphaleonis.Win32.Filesystem.EnumerateFiles(parentDirectoryPath, pattern, searchOption));
+        }
+
         public IEnumerable<string> GetFiles(string path, string searchPattern)
         {
             return Alphaleonis.Win32.Filesystem.Directory.GetFiles(path, searchPattern);
