@@ -59,6 +59,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             if (!definedResources.Any())
             {
                 log.Verbose("No defined resources are found, skipping resource status check");
+                return;
             }
 
             log.Verbose("Performing resource status checks on the following resources:");
