@@ -254,9 +254,9 @@ namespace Calamari.Common.Plumbing.FileSystem
             string[] searchPatterns)
         {
             return searchPatterns.Length == 0
-                ? Alphaleonis.Win32.Filesystem.EnumerateFiles(parentDirectoryPath, "*", searchOption)
+                ? Alphaleonis.Win32.Filesystem.Directory.EnumerateFiles(parentDirectoryPath, "*", searchOption)
                 : searchPatterns.SelectMany(pattern =>
-                    Alphaleonis.Win32.Filesystem.EnumerateFiles(parentDirectoryPath, pattern, searchOption));
+                    Alphaleonis.Win32.Filesystem.Directory.EnumerateFiles(parentDirectoryPath, pattern, searchOption));
         }
 
         public IEnumerable<string> GetFiles(string path, string searchPattern)
