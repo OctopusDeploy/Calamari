@@ -36,11 +36,6 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         public bool IsEnabled(ScriptSyntax syntax)
         {
-            if (!FeatureToggle.KubernetesDeploymentStatusFeatureToggle.IsEnabled(variables))
-            {
-                return false;
-            }
-
             var resourceStatusEnabled = variables.GetFlag(SpecialVariables.ResourceStatusCheck);
             var isBlueGreen = variables.Get(SpecialVariables.DeploymentStyle) == "bluegreen";
             var isWaitDeployment = variables.Get(SpecialVariables.DeploymentWait) == "wait";

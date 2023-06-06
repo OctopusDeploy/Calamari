@@ -110,9 +110,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", "180");
             variables.Set("Octopus.Action.Kubernetes.StabilizationTimeout", "10");
 
-            variables.SetFeatureToggles(
-                FeatureToggle.KubernetesDeploymentStatusFeatureToggle,
-                FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
+            variables.SetFeatureToggles(FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
 
             void AddCustomResourceFile(TemporaryDirectory dir)
             {
