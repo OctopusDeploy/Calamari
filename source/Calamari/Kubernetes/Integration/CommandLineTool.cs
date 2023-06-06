@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Logging;
 
@@ -9,12 +8,16 @@ namespace Calamari.Kubernetes.Integration
     public class CommandLineTool
     {
         protected readonly ILog log;
-        protected readonly string workingDirectory;
-        protected readonly Dictionary<string, string> environmentVars;
+        protected string workingDirectory;
+        protected Dictionary<string, string> environmentVars;
 
         readonly ICommandLineRunner commandLineRunner;
 
-        protected CommandLineTool(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
+        protected CommandLineTool(
+            ILog log,
+            ICommandLineRunner commandLineRunner,
+            string workingDirectory,
+            Dictionary<string, string> environmentVars)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;

@@ -7,9 +7,6 @@ namespace Calamari.Common.Commands
 {
     public class RunningDeployment
     {
-        public delegate RunningDeployment Factory(string? packageFilePath,
-            Dictionary<string, string>? environmentVariables = null);
-
         public RunningDeployment(IVariables variables, Dictionary<string, string>? environmentVariables = null) : this(
             null, variables, environmentVariables)
         {

@@ -1,6 +1,8 @@
+#if !NET40
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Aws.Integration;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -20,6 +22,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Conventions;
+using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 
 namespace Calamari.Kubernetes.Commands
@@ -27,18 +30,18 @@ namespace Calamari.Kubernetes.Commands
     [Command(Name, Description = "Apply Raw Yaml to Kubernetes Cluster")]
     public class KubernetesApplyRawYamlCommand : Command
     {
-        private const string Name = "kubernetes-apply-raw-yaml";
+        public const string Name = "kubernetes-apply-raw-yaml";
 
         private readonly ILog log;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         private readonly IVariables variables;
-        private readonly ICommandLineRunner commandLineRunner;
+
         private readonly ICalamariFileSystem fileSystem;
         private readonly IExtractPackage extractPackage;
         private readonly ISubstituteInFiles substituteInFiles;
         private readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         private readonly ResourceStatusReportExecutor statusReportExecutor;
-        private readonly IAwsAuthConventionFactory awsAuthConventionFactory;
+        private readonly Kubectl kubectl;
 
         private PathToPackage pathToPackage;
 
@@ -46,26 +49,26 @@ namespace Calamari.Kubernetes.Commands
             ILog log,
             IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
-            ICommandLineRunner commandLineRunner,
             ICalamariFileSystem fileSystem,
             IExtractPackage extractPackage,
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
             ResourceStatusReportExecutor statusReportExecutor,
-            IAwsAuthConventionFactory awsAuthConventionFactory)
+            Kubectl kubectl)
         {
             this.log = log;
             this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
-            this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
             this.extractPackage = extractPackage;
             this.substituteInFiles = substituteInFiles;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
             this.statusReportExecutor = statusReportExecutor;
-            this.awsAuthConventionFactory = awsAuthConventionFactory;
+            this.kubectl = kubectl;
+
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         }
+
         public override int Execute(string[] commandLineArguments)
         {
             if (!FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle.IsEnabled(variables))
@@ -73,52 +76,65 @@ namespace Calamari.Kubernetes.Commands
                     "Unable to execute the Kubernetes Apply Raw YAML Command because the appropriate feature has not been enabled.");
 
             Options.Parse(commandLineArguments);
-            var deployment = new RunningDeployment(pathToPackage, variables);
-            var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
-            var transformFileLocator = new TransformFileLocator(fileSystem, log);
-            var replacer = new ConfigurationVariablesReplacer(variables, log);
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d =>
                 {
-                    extractPackage.ExtractToStagingDirectory(pathToPackage);
-                    //If using the inline yaml, copy it to the staging directory.
-                    var inlineFile = Path.Combine(Environment.CurrentDirectory, "customresource.yml");
-                    var stagingDirectory = Path.Combine(Environment.CurrentDirectory, "staging");
-                    if (fileSystem.FileExists(inlineFile))
+                    if (pathToPackage != null)
                     {
-                        fileSystem.CopyFile(inlineFile, Path.Combine(stagingDirectory, "customresource.yml"));
+                        extractPackage.ExtractToStagingDirectory(pathToPackage);
                     }
-                    d.StagingDirectory = stagingDirectory;
-                    d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+                    else
+                    {
+                        //If using the inline yaml, copy it to the staging directory.
+                        var inlineFile = Path.Combine(d.CurrentDirectory, "customresource.yml");
+                        var stagingDirectory = Path.Combine(d.CurrentDirectory, "staging");
+                        fileSystem.EnsureDirectoryExists(stagingDirectory);
+                        if (fileSystem.FileExists(inlineFile))
+                        {
+                            fileSystem.MoveFile(inlineFile, Path.Combine(stagingDirectory, "customresource.yml"));
+                        }
+
+                        d.StagingDirectory = stagingDirectory;
+                        d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+                    }
+
+                    kubectl.SetWorkingDirectory(d.CurrentDirectory);
+                    kubectl.SetEnvironmentVariables(d.EnvironmentVariables);
                 }),
                 new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
-                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, configurationTransformer, transformFileLocator, log)),
-                new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
-                new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
+                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables,
+                    ConfigurationTransformer.FromVariables(variables, log),
+                    new TransformFileLocator(fileSystem, log), log)),
+                new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables,
+                    new ConfigurationVariablesReplacer(variables, log), log)),
+                new StructuredConfigurationVariablesConvention(
+                    new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService))
             };
 
             if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
             {
-                conventions.Add(awsAuthConventionFactory.Create());
+                conventions.Add(new AwsAuthConvention(log, variables));
             }
 
             conventions.AddRange(new IInstallConvention[]
             {
-                new KubernetesAuthContextConvention(log, commandLineRunner),
-                new GatherAndApplyRawYamlConvention(log, fileSystem, commandLineRunner),
-                new ResourceStatusReportConvention(statusReportExecutor, commandLineRunner)
+                new KubernetesAuthContextConvention(log, new CommandLineRunner(log, variables), kubectl),
+                new GatherAndApplyRawYamlConvention(log, fileSystem, kubectl),
+                new ResourceStatusReportConvention(statusReportExecutor)
             });
 
-            var conventionRunner = new ConventionProcessor(deployment, conventions, log);
+            var runningDeployment = new RunningDeployment(pathToPackage, variables);
+
+            var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
             try
             {
                 conventionRunner.RunConventions();
-                deploymentJournalWriter.AddJournalEntry(deployment, true, pathToPackage);
+                deploymentJournalWriter.AddJournalEntry(runningDeployment, true, pathToPackage);
             }
             catch (Exception)
             {
-                deploymentJournalWriter.AddJournalEntry(deployment, false, pathToPackage);
+                deploymentJournalWriter.AddJournalEntry(runningDeployment, false, pathToPackage);
                 throw;
             }
 
@@ -126,3 +142,4 @@ namespace Calamari.Kubernetes.Commands
         }
     }
 }
+#endif

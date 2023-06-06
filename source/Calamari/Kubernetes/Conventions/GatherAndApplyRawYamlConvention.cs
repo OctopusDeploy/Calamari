@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes.Integration;
@@ -19,16 +19,16 @@ namespace Calamari.Kubernetes.Conventions
     {
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly ICommandLineRunner commandLineRunner;
+        private readonly Kubectl kubectl;
 
         public GatherAndApplyRawYamlConvention(
             ILog log,
             ICalamariFileSystem fileSystem,
-            ICommandLineRunner commandLineRunner)
+            Kubectl kubectl)
         {
             this.log = log;
             this.fileSystem = fileSystem;
-            this.commandLineRunner = commandLineRunner;
+            this.kubectl = kubectl;
         }
 
         public void Install(RunningDeployment deployment)
@@ -40,31 +40,16 @@ namespace Calamari.Kubernetes.Conventions
 
             var directories = GroupFilesIntoDirectories(deployment, globs, variables);
 
-            var kubectl = GetAndInitialiseKubectl(deployment, variables);
-
             var resources = new List<Resource>();
             foreach (var (directory, index) in directories.Select((d,i) => (d,i)))
             {
-                resources.AddRange(ApplyBatchAndReturnResources(index, globs[index], kubectl, directory));
+                resources.AddRange(ApplyBatchAndReturnResources(index, globs[index], directory));
             }
 
-            SaveResourcesToOutputVariables(resources, kubectl, variables);
+            WriteResourcesToOutputVariables(resources);
         }
 
-        private Kubectl GetAndInitialiseKubectl(RunningDeployment deployment, IVariables variables)
-        {
-            var kubectl = new Kubectl(variables.Get(SpecialVariables.CustomKubectlExecutable), log,
-                commandLineRunner, deployment.CurrentDirectory, deployment.EnvironmentVariables);
-
-            if (!kubectl.TrySetKubectl())
-            {
-                throw new Exception("Could not set kubectl");
-            }
-
-            return kubectl;
-        }
-
-        private void SaveResourcesToOutputVariables(List<Resource> resources, Kubectl kubectl, IVariables variables)
+        private void WriteResourcesToOutputVariables(List<Resource> resources)
         {
             foreach (var resource in resources)
             {
@@ -72,8 +57,12 @@ namespace Calamari.Kubernetes.Conventions
                 {
                     var result = kubectl.ExecuteCommandAndReturnOutput("get", resource.Kind, resource.Metadata.Name,
                         "-o", "json");
-                    variables.SetOutputVariable($"CustomResources({resource.Metadata.Name})",
-                        result.Output.InfoLogs.Join("\n"));
+
+                    log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.SetVariable.Name, new Dictionary<string, string>
+                    {
+                        {ServiceMessageNames.SetVariable.NameAttribute, $"CustomResources({resource.Metadata.Name})"},
+                        {ServiceMessageNames.SetVariable.ValueAttribute, result.Output.InfoLogs.Join("\n")}
+                    }));
                 }
                 catch
                 {
@@ -103,9 +92,14 @@ namespace Calamari.Kubernetes.Conventions
             return directories;
         }
 
-        private IEnumerable<Resource> ApplyBatchAndReturnResources(int index, string glob, Kubectl kubectl, string directory)
+        private IEnumerable<Resource> ApplyBatchAndReturnResources(int index, string glob, string directory)
         {
             log.Info($"Applying Batch #{index+1} for YAML matching '{glob}'");
+            foreach (var file in Directory.EnumerateFiles(directory))
+            {
+                log.Verbose($"{Path.GetFileName(file)} Contents:");
+                log.Verbose(File.ReadAllText(file));
+            }
             var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "-o", "json");
 
             foreach (var message in result.Output.Messages)
@@ -135,11 +129,7 @@ namespace Calamari.Kubernetes.Conventions
                 var token = JToken.Parse(outputJson);
 
                 List<Resource> lastResources;
-                if (token.Type == JTokenType.Array)
-                {
-                    lastResources = token.ToObject<List<Resource>>();
-                }
-                else if (token["kind"]?.ToString() != "List" ||
+                if (token["kind"]?.ToString() != "List" ||
                     (lastResources = token["items"]?.ToObject<List<Resource>>()) == null)
                 {
                     lastResources = new List<Resource> { token.ToObject<Resource>() };
@@ -147,7 +137,7 @@ namespace Calamari.Kubernetes.Conventions
 
                 foreach (var resource in lastResources)
                 {
-                    log.Info($"'{resource.Kind}/{resource.Metadata.Name}' created.");
+                    log.Info($"{resource.Kind}/{resource.Metadata.Name} created");
                 }
 
                 return lastResources;

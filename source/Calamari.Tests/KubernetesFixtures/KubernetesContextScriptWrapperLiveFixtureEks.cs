@@ -6,15 +6,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Assent;
 using Calamari.Aws.Kubernetes.Discovery;
-using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Deployment;
 using Calamari.FeatureToggles;
-using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.AWS;
-using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
@@ -86,7 +83,9 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void DeployRawYaml_WithRawYamlDeploymentScript_OutputShouldIndicateSuccessfulDeployment()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void DeployRawYaml_WithRawYamlDeploymentScriptOrCommand_OutputShouldIndicateSuccessfulDeployment(bool runAsScript)
         {
             const string account = "eks_account";
             const string certificateAuthority = "myauthority";
@@ -114,8 +113,6 @@ namespace Calamari.Tests.KubernetesFixtures
                 FeatureToggle.KubernetesDeploymentStatusFeatureToggle,
                 FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
 
-            var fileSystem = new TestCalamariPhysicalFileSystem();
-
             void AddCustomResourceFile(TemporaryDirectory dir)
             {
                 var pathToCustomResource = Path.Combine(dir.DirectoryPath, "TestFolder", customResourceFileName);
@@ -123,9 +120,15 @@ namespace Calamari.Tests.KubernetesFixtures
                 variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", customResourceFileName);
             }
 
-            var wrapper = new[] { CreateWrapper(fileSystem), CreateK8sResourceStatusReporterScriptWrapper(fileSystem) };
+            if (runAsScript)
+            {
+                DeployWithScriptAndVerifySuccess(AddCustomResourceFile);
+            }
+            else
+            {
+                DeployWithRawYamlCommandAndVerifySuccess(AddCustomResourceFile);
+            }
 
-            DeployWithScriptAndVerifySuccess(wrapper, fileSystem, AddCustomResourceFile);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
@@ -142,7 +145,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 p.Name == "annotations" ||
                 p.Name == "uid" ||
                 p.Name == "conditions" ||
-                p.Name == "resourceVersion");
+                p.Name == "resourceVersion" ||
+                p.Name == "status");
 
             this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
 
@@ -155,14 +159,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
             rawLogs.Should().ContainSingle(m =>
                 m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
-        }
-
-        private IScriptWrapper CreateK8sResourceStatusReporterScriptWrapper(ICalamariFileSystem fileSystem)
-        {
-            return new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, Log,
-                fileSystem,
-                new ResourceStatusChecker(new ResourceRetriever(new KubectlGet()),
-                    new ResourceUpdateReporter(variables, Log), Log)));
         }
 
         [Test]

@@ -10,10 +10,12 @@ namespace Calamari.Testing.Helpers
 {
     public class TestCommandLineRunner : CommandLineRunner
     {
+        private readonly ILog log;
         readonly IVariables variables;
 
         public TestCommandLineRunner(ILog log, IVariables variables) : base(log, variables)
         {
+            this.log = log;
             this.variables = variables;
             Output = new CaptureCommandInvocationOutputSink();
         }
@@ -21,10 +23,19 @@ namespace Calamari.Testing.Helpers
         public CaptureCommandInvocationOutputSink Output { get; }
 
         protected override List<ICommandInvocationOutputSink> GetCommandOutputs(CommandLineInvocation invocation)
-            => new List<ICommandInvocationOutputSink>()
+        {
+            var outputSinks = new List<ICommandInvocationOutputSink>()
             {
                 Output,
                 new ServiceMessageCommandInvocationOutputSink(variables)
             };
+
+            if (invocation.OutputToLog)
+            {
+                outputSinks.Add(new LogCommandInvocationOutputSink(log, invocation.OutputAsVerbose));
+            }
+
+            return outputSinks;
+        }
     }
 }

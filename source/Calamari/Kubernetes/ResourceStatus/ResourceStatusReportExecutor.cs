@@ -1,9 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -20,18 +18,24 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly IResourceStatusChecker statusChecker;
+        private readonly Kubectl kubectl;
 
-        public ResourceStatusReportExecutor(IVariables variables, ILog log, ICalamariFileSystem fileSystem, IResourceStatusChecker statusChecker)
+        public ResourceStatusReportExecutor(
+            IVariables variables,
+            ILog log,
+            ICalamariFileSystem fileSystem,
+            IResourceStatusChecker statusChecker,
+            Kubectl kubectl)
         {
             this.variables = variables;
             this.log = log;
             this.fileSystem = fileSystem;
             this.statusChecker = statusChecker;
+            this.kubectl = kubectl;
         }
 
-        public void ReportStatus(string workingDirectory, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars)
+        public void ReportStatus(string workingDirectory)
         {
-            var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
             // When the namespace on a target was set and then cleared, it's going to be "" instead of null
             if (string.IsNullOrEmpty(defaultNamespace))
@@ -68,7 +72,6 @@ namespace Calamari.Kubernetes.ResourceStatus
                 log.Verbose($" - {resourceIdentifier.Kind}/{resourceIdentifier.Name} in namespace {resourceIdentifier.Namespace}");
             }
 
-            var kubectl = new Kubectl(customKubectlExecutable, log, commandLineRunner, workingDirectory, environmentVars);
             if (!kubectl.TrySetKubectl())
             {
                 throw new Exception("Unable to set KubeCtl");
@@ -88,19 +91,20 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private IEnumerable<string> ReadManifestFiles(string workingDirectory)
         {
-            foreach (var file in GetManifestFileNames())
+            var groupedFiles = GetGroupedYamlDirectories(workingDirectory).ToList();
+            if (groupedFiles.Any())
             {
-                var filePath = Path.Combine(workingDirectory, file);
-                if (fileSystem.FileExists(filePath)) yield return fileSystem.ReadFile(filePath);
+                return from file in groupedFiles
+                       where fileSystem.FileExists(file)
+                       select fileSystem.ReadFile(file);
             }
 
-            foreach (var file in GetGroupedYamlDirectories(workingDirectory))
-            {
-                if (fileSystem.FileExists(file)) yield return fileSystem.ReadFile(file);
-            }
+            return from file in GetManifestFileNames(workingDirectory)
+                   where fileSystem.FileExists(file)
+                   select fileSystem.ReadFile(file);
         }
 
-        private IEnumerable<string> GetManifestFileNames()
+        private IEnumerable<string> GetManifestFileNames(string workingDirectory)
         {
             var customResourceFileName =
                 variables.Get(SpecialVariables.CustomResourceYamlFileName) ?? "customresource.yml";
@@ -108,7 +112,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             return new[]
             {
                 "secret.yml", customResourceFileName, "deployment.yml", "service.yml", "ingress.yml",
-            };
+            }.Select(p => Path.Combine(workingDirectory, p));
         }
 
         private IEnumerable<string> GetGroupedYamlDirectories(string workingDirectory)
