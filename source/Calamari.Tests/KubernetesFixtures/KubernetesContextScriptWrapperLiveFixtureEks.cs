@@ -176,7 +176,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                          {
                                              // This log line is slightly different in the new command because
                                              // we apply the yaml in batches (even if there is only one file).
-                                             return l.Replace("\"kubectl apply -o json\" returned invalid JSON.",
+                                             return l.Replace("\"kubectl apply -o json\" returned invalid JSON:",
                                                  "\"kubectl apply -o json\" returned invalid JSON for Batch #0:");
                                          })
                                          .Select(l =>
@@ -543,15 +543,14 @@ namespace Calamari.Tests.KubernetesFixtures
             Log.ServiceMessages.Should().NotContain(m =>
                 m.Name == KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName);
 
-            Log.Messages.Should().NotContain(m => m.Level == InMemoryLog.Level.Error);
-
+            Log.MessagesErrorFormatted.Should().BeEmpty();
             Log.StandardError.Should().BeEmpty();
 
             Log.Messages.Should()
-                .ContainSingle(m =>
-                    m.Level == InMemoryLog.Level.Warn &&
-                    m.FormattedMessage ==
-                    "Unable to authorise credentials, see verbose log for details.");
+               .ContainSingle(m =>
+                   m.Level == InMemoryLog.Level.Warn &&
+                   m.FormattedMessage ==
+                   "Unable to authorise credentials, see verbose log for details.");
         }
 
         private void SetupAndRunKubernetesRawYamlDeployment(bool runAsScript, bool usePackage, string resource, bool shouldSucceed = true)

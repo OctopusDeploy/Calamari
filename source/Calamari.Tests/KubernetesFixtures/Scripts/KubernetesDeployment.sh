@@ -226,7 +226,7 @@ function deploy_customresources {
                     fi
                 done
             else
-                write_plainerror "\"kubectl apply -o json\" returned invalid JSON."
+                write_plainerror "\"kubectl apply -o json\" returned invalid JSON:"
                 write_plainerror "---------------------------"
                 write_plainerror "$newCustomResources"
                 write_plainerror "---------------------------"
