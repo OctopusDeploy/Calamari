@@ -21,9 +21,13 @@ namespace Calamari.Integration.Packages.Download
         const string VersionPath = "v2";
         const string OciImageManifestAcceptHeader = "application/vnd.oci.image.manifest.v1+json";
         const string ManifestImageTitleAnnotationKey = "org.opencontainers.image.title";
+        const string ManifestLayerPropertyName = "layers";
+        const string ManifestLayerDigestPropertyName = "digest";
+        const string ManifestLayerSizePropertyName = "size";
         const string ManifestLayerAnnotationsPropertyName = "annotations";
         const string ManifestLayerMediaTypePropertyName = "mediaType";
 
+        static Regex PackageDigestHashRegex = new Regex(@"[A-Za-z0-9_+.-]+:(?<hash>[A-Fa-f0-9]+)", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         readonly ICalamariFileSystem fileSystem;
         readonly ICombinedPackageExtractor combinedPackageExtractor;
@@ -102,17 +106,13 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
+        // oci registries don't support the '+' tagging
+        // https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-changes-with-v380
         static string FixVersion(IVersion version)
-        {
-            // oci registries don't support the '+' tagging
-            // https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-changes-with-v380
-            return version.ToString().Replace("+", "_");
-        }
+            => version.ToString().Replace("+", "_");
+
         static string? GetPackageHashFromDigest(string digest)
-        {
-            var matches = Regex.Match(digest, @"[A-Za-z0-9_+.-]+:(?<hash>[A-Fa-f0-9]+)"); 
-            return matches.Groups["hash"]?.Value;
-        }
+            => PackageDigestHashRegex.Match(digest).Groups["hash"]?.Value;
 
         private (string digest, int size, string extension) GetPackageDetails(
             Uri url,
@@ -128,9 +128,9 @@ namespace Calamari.Integration.Packages.Download
             using var response = client.SendAsync(request).Result;
             var manifest = JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
 
-            var layer = manifest.Value<JArray>("layers")[0];
-            var digest = layer.Value<string>("digest");
-            var size = layer.Value<int>("size");
+            var layer = manifest.Value<JArray>(ManifestLayerPropertyName)[0];
+            var digest = layer.Value<string>(ManifestLayerDigestPropertyName);
+            var size = layer.Value<int>(ManifestLayerSizePropertyName);
             var extension = GetExtensionFromManifest(layer);
 
             return (digest, size, extension);
@@ -174,9 +174,7 @@ namespace Calamari.Integration.Packages.Download
         }
 
         private static void ApplyAccept(HttpRequestMessage request)
-        {
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(OciImageManifestAcceptHeader));
-        }
+            => request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(OciImageManifestAcceptHeader));
 
         private static void ApplyAuthorization(
             HttpRequestMessage request, 
