@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Common.Features.Processes;
@@ -56,9 +57,16 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return result;
             }
 
-            var successful = statusReportExecutor.ReportStatus(workingDirectory, commandLineRunner, environmentVars);
+            try
+            {
+                statusReportExecutor.ReportStatus(workingDirectory, commandLineRunner, environmentVars);
+            }
+            catch (Exception e)
+            {
+                return new CommandResult("K8s Resource Status Reporting", 1, e.Message, workingDirectory);
+            }
 
-            return successful ? result : new CommandResult("K8s Resource Status Reporting", 1);
+            return result;
         }
     }
 }

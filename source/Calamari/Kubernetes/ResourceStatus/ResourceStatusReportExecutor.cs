@@ -29,13 +29,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.statusChecker = statusChecker;
         }
 
-        /// <summary>
-        /// Report Kubernetes object status periodically until the deployment succeeded, failed or timed out.
-        /// The status check will be omitted if no resources have been defined in this deployment.
-        /// </summary>
-        /// <returns>True if the status check has completed successfully or skipped. False if it timed out or failed.</returns>
-        /// <throws>Exception if failed to set up `kubectl` tool.</throws>
-        public bool ReportStatus(string workingDirectory, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars)
+        public void ReportStatus(string workingDirectory, ICommandLineRunner commandLineRunner, Dictionary<string, string> environmentVars)
         {
             var customKubectlExecutable = variables.Get(SpecialVariables.CustomKubectlExecutable);
             var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
@@ -65,7 +59,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             if (!definedResources.Any())
             {
                 log.Verbose("No defined resources are found, skipping resource status check");
-                return true;
             }
 
             log.Verbose("Performing resource status checks on the following resources:");
@@ -84,7 +77,12 @@ namespace Calamari.Kubernetes.ResourceStatus
                 ? new InfiniteTimer(TimeSpan.FromSeconds(PollingIntervalSeconds)) as ITimer
                 : new Timer(TimeSpan.FromSeconds(timeoutSeconds), TimeSpan.FromSeconds(PollingIntervalSeconds));
 
-            return statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, timer, kubectl, new Options() {  WaitForJobs = waitForJobs });
+            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, timer, kubectl, new Options() {  WaitForJobs = waitForJobs });
+
+            if (!completedSuccessfully)
+            {
+                throw new TimeoutException("Not all resources have deployed successfully within timeout");
+            }
         }
 
         private IEnumerable<string> ReadManifestFiles(string workingDirectory)
