@@ -1,3 +1,4 @@
+using System;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Deployment.Conventions;
@@ -18,7 +19,11 @@ namespace Calamari.Kubernetes.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            statusReportExecutor.ReportStatus(deployment.CurrentDirectory, commandLineRunner, deployment.EnvironmentVariables);
+            var successful = statusReportExecutor.ReportStatus(deployment.CurrentDirectory, commandLineRunner, deployment.EnvironmentVariables);
+            if (!successful)
+            {
+                throw new TimeoutException("Not all resources have deployed successfully within timeout");
+            }
         }
     }
 }

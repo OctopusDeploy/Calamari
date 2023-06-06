@@ -239,13 +239,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     {
         public List<ResourceIdentifier> CheckedResources { get; private set; }
 
-        public void CheckStatusUntilCompletionOrTimeout(
+        public bool CheckStatusUntilCompletionOrTimeout(
             IEnumerable<ResourceIdentifier> resourceIdentifiers,
             ITimer timer,
             Kubectl kubectl,
             Options options)
         {
             CheckedResources = resourceIdentifiers.ToList();
+            return true;
         }
     }
 

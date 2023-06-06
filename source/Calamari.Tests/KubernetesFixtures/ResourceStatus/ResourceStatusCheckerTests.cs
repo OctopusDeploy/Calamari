@@ -53,12 +53,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) }
             );
             
-            resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
+            var result = resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
                 new ResourceIdentifier[]
                 {
                     new ResourceIdentifier("Pod", "my-pod", "default")
                 }, timer, null, new Options());
 
+            result.Should().BeTrue();
             log.StandardError.Should().BeEmpty();
             log.StandardOut.Should().Contain(ResourceStatusChecker.MessageDeploymentSucceeded);
         }
@@ -77,12 +78,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed) }
             );
             
-            resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
+            var result = resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
                 new ResourceIdentifier[]
                 {
                     new ResourceIdentifier("Pod", "my-pod", "default")
                 }, timer, null, new Options());
 
+            result.Should().BeFalse();
             log.StandardError
                 .Should().ContainSingle().Which
                 .Should().Be(ResourceStatusChecker.MessageDeploymentFailed);
@@ -103,12 +105,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress) }
             );
             
-            resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
+            var result = resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
                 new ResourceIdentifier[]
                 {
                     new ResourceIdentifier("Pod", "my-pod", "default")
                 }, timer, null, new Options());
 
+            result.Should().BeFalse();
             log.StandardError
                 .Should().ContainSingle().Which
                 .Should().Be(ResourceStatusChecker.MessageInProgressAtTheEndOfTimeout);
@@ -132,12 +135,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                         new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress)
                     })});
             
-            resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
+            var result = resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
                 new ResourceIdentifier[]
                 {
                     new ResourceIdentifier("ReplicaSet", "my-rs", "default")
                 }, timer, null, new Options());
 
+            result.Should().BeTrue();
             log.StandardError.Should().BeEmpty();
             log.StandardOut.Should().Contain(ResourceStatusChecker.MessageDeploymentSucceeded);
         }
@@ -157,13 +161,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) }
             );
             
-            resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
+            var result = resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
                 new ResourceIdentifier[]
                 {
                     new ResourceIdentifier("Pod", "my-pod", "default"),
                     new ResourceIdentifier("Service", "my-service", "default")
                 }, timer, null, new Options());
 
+            result.Should().BeFalse();
             log.StandardError
                 .Should().ContainSingle().Which
                 .Should().Be(ResourceStatusChecker.MessageInProgressAtTheEndOfTimeout);
