@@ -32,7 +32,7 @@ namespace Calamari.Testing.Helpers
 
             if (invocation.OutputToLog)
             {
-                outputSinks.Add(new LogCommandInvocationOutputSink(log, invocation.OutputAsVerbose));
+                outputSinks.Add(new CalamariInvocationToLogOutputSink(log));
             }
 
             return outputSinks;
