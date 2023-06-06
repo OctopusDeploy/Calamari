@@ -133,9 +133,9 @@ namespace Calamari.Common.Plumbing.FileSystem
         private IEnumerable<string> EnumerateFiles(
             string parentDirectoryPath,
             SearchOption searchOption,
-            IReadOnlyCollection<string> searchPatterns)
+            string[] searchPatterns)
         {
-            return searchPatterns.Count == 0
+            return searchPatterns.Length == 0
                 ? Directory.EnumerateFiles(parentDirectoryPath, "*", searchOption)
                 : searchPatterns.SelectMany(pattern =>
                     Directory.EnumerateFiles(parentDirectoryPath, pattern, searchOption));
@@ -251,9 +251,9 @@ namespace Calamari.Common.Plumbing.FileSystem
         private IEnumerable<string> EnumerateFiles(
             string parentDirectoryPath,
             SearchOption searchOption,
-            IReadOnlyCollection<string> searchPatterns)
+            string[] searchPatterns)
         {
-            return searchPatterns.Count == 0
+            return searchPatterns.Length == 0
                 ? Alphaleonis.Win32.Filesystem.EnumerateFiles(parentDirectoryPath, "*", searchOption)
                 : searchPatterns.SelectMany(pattern =>
                     Alphaleonis.Win32.Filesystem.EnumerateFiles(parentDirectoryPath, pattern, searchOption));
