@@ -229,7 +229,6 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
          private static void AddKubernetesStatusCheckVariables(IVariables variables)
          {
-             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
              variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
              variables.Set(SpecialVariables.ResourceStatusCheck, "True");
          }
