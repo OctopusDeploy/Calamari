@@ -308,6 +308,7 @@ This function acts similarly to Write-Host in that it simply calls
 .ToString() on its input; to get the default output format, invoke
 it via a pipeline and precede with Out-String.
 
+taken from https://stackoverflow.com/a/15669365/19177210
 #>
 function Write-StdErr {
 	param ([PSObject] $InputObject)
