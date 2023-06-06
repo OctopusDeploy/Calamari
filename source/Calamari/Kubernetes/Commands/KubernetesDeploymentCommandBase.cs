@@ -70,8 +70,8 @@ namespace Calamari.Kubernetes.Commands
         /// Task.CompletedTask because Task.CompletedTask was only added in .NET 4.6.1
         /// so it is not compatible with Calamari.
         /// </remarks>
-        protected virtual async Task ExecuteCommand(RunningDeployment runningDeployment) =>
-            await Task.FromResult(new object());
+        protected virtual async Task<bool> ExecuteCommand(RunningDeployment runningDeployment) =>
+            await Task.FromResult(true);
 
         public override int Execute(string[] commandLineArguments)
         {
@@ -127,22 +127,15 @@ namespace Calamari.Kubernetes.Commands
             try
             {
                 conventionRunner.RunConventions(logExceptions: false);
-                ExecuteCommand(runningDeployment).GetAwaiter().GetResult();
-                deploymentJournalWriter.AddJournalEntry(runningDeployment, true, pathToPackage);
+                var result = ExecuteCommand(runningDeployment).GetAwaiter().GetResult();
+                deploymentJournalWriter.AddJournalEntry(runningDeployment, result, pathToPackage);
+                return result ? 0 : -1;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 deploymentJournalWriter.AddJournalEntry(runningDeployment, false, pathToPackage);
-
-                if (e is KubernetesDeploymentFailedException || e is TimeoutException)
-                {
-                    return -1;
-                }
-
                 throw;
             }
-
-            return 0;
         }
     }
 }

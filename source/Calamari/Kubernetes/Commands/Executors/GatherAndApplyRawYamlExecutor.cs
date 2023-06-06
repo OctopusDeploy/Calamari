@@ -34,23 +34,34 @@ namespace Calamari.Kubernetes.Commands.Executors
             this.kubectl = kubectl;
         }
 
-        public void Execute(RunningDeployment deployment, Action<ResourceIdentifier[]> appliedResourcesCallback)
+        public bool Execute(RunningDeployment deployment, Action<ResourceIdentifier[]> appliedResourcesCallback)
         {
-            var variables = deployment.Variables;
-            var globs = variables.Get(SpecialVariables.CustomResourceYamlFileName)?.Split(';');
-            if (globs == null || globs.All(g => g.IsNullOrEmpty()))
-                return;
-
-            var directories = GroupFilesIntoDirectories(deployment, globs, variables);
-
-            var resources = directories.SelectMany(d =>
+            try
             {
-                var res = ApplyBatchAndReturnResources(d).ToList();
-                appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
-				return res;
-			});
+                var variables = deployment.Variables;
+                var globs = variables.Get(SpecialVariables.CustomResourceYamlFileName)?.Split(';');
+                if (globs == null || globs.All(g => g.IsNullOrEmpty()))
+                    return true;
+                var directories = GroupFilesIntoDirectories(deployment, globs, variables);
+                var resources = directories.SelectMany(d =>
+                {
+                    var res = ApplyBatchAndReturnResources(d).ToList();
+                    appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
+                    return res;
+                });
 
-            WriteResourcesToOutputVariables(resources);
+                WriteResourcesToOutputVariables(resources);
+                return true;
+            }
+            catch (GatherAndApplyRawYamlException)
+            {
+                return false;
+            }
+            catch (Exception e)
+            {
+                log.Error($"Deployment Failed due to exception: {e.Message}");
+                return false;
+            }
         }
 
         private void WriteResourcesToOutputVariables(IEnumerable<Resource> resources)
@@ -185,7 +196,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
             log.Error("Custom resources will not be saved as output variables.");
 
-            throw new KubernetesDeploymentFailedException();
+            throw new GatherAndApplyRawYamlException();
         }
 
         private class ResourceMetadata
@@ -204,6 +215,10 @@ namespace Calamari.Kubernetes.Commands.Executors
                 return new ResourceIdentifier(Kind, Metadata.Name, Metadata.Namespace);
             }
         }
+
+        private class GatherAndApplyRawYamlException : Exception
+        {
+		}
 
         private class GlobDirectory
         {

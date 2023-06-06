@@ -22,7 +22,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly ICalamariFileSystem fileSystem;
         private readonly IResourceStatusChecker statusChecker;
         private readonly Kubectl kubectl;
-        private Task resourceCheckTask;
+        private Task<bool> resourceCheckTask;
 
         public ResourceStatusReportExecutor(
             IVariables variables,
@@ -97,12 +97,12 @@ namespace Calamari.Kubernetes.ResourceStatus
             return true;
         }
 
-        public async Task WaitForStatusReportingToComplete()
+        public async Task<bool> WaitForStatusReportingToComplete()
         {
             if (resourceCheckTask == null)
                 throw new InvalidOperationException(
                     "Please call `StartReportingStatus` before `WaitForStatusReportingToComplete`");
-            await resourceCheckTask;
+            return await resourceCheckTask;
         }
 
         public void AddResources(ResourceIdentifier[] resources)
@@ -110,7 +110,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             statusChecker.AddResources(resources);
         }
 
-        private async Task DoResourceCheck(List<ResourceIdentifier> initialResources)
+        private async Task<bool> DoResourceCheck(List<ResourceIdentifier> initialResources)
         {
             var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
             var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
@@ -119,12 +119,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 ? new InfiniteTimer(TimeSpan.FromSeconds(PollingIntervalSeconds)) as ITimer
                 : new Timer(TimeSpan.FromSeconds(timeoutSeconds), TimeSpan.FromSeconds(PollingIntervalSeconds));
 
-            var completedSuccessfully = await statusChecker.CheckStatusUntilCompletionOrTimeout(kubectl, initialResources, timer, new Options {  WaitForJobs = waitForJobs});
-
-            if (!completedSuccessfully)
-            {
-                throw new TimeoutException("Not all resources have deployed successfully within timeout");
-            }
+            return await statusChecker.CheckStatusUntilCompletionOrTimeout(kubectl, initialResources, timer, new Options {  WaitForJobs = waitForJobs});
         }
 
         private IEnumerable<string> ReadManifestFiles(string workingDirectory)

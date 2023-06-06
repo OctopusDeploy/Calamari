@@ -56,7 +56,7 @@ namespace Calamari.Kubernetes.Commands
             return base.Execute(commandLineArguments);
         }
 
-        protected override async Task ExecuteCommand(RunningDeployment runningDeployment)
+        protected override async Task<bool> ExecuteCommand(RunningDeployment runningDeployment)
         {
             var statusReportExecutor = new ResourceStatusReportExecutor(variables, log, fileSystem,
                 resourceStatusChecker, kubectl);
@@ -66,9 +66,8 @@ namespace Calamari.Kubernetes.Commands
 
             statusReportExecutor.StartReportingStatus(runningDeployment.CurrentDirectory);
 
-            gatherAndApplyRawYamlExecutor.Execute(runningDeployment, statusReportExecutor.AddResources);
-
-            await statusReportExecutor.WaitForStatusReportingToComplete();
+            return gatherAndApplyRawYamlExecutor.Execute(runningDeployment, statusReportExecutor.AddResources) &&
+                await statusReportExecutor.WaitForStatusReportingToComplete();
         }
     }
 }
