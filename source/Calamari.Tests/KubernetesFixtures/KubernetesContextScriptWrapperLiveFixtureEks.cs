@@ -161,7 +161,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).Where(m => !m.StartsWith("##octopus") && m != string.Empty).ToArray();
 
-            var fileName = usePackage ? $"deployments/{ResourceFileName}" : ResourceFileName;
+            var fileName = usePackage ? $"deployments{Path.DirectorySeparatorChar}{ResourceFileName}" : ResourceFileName;
             var initialErrorMessage =
                 $"error: error parsing {fileName}: error converting YAML to JSON: yaml: line 7: could not find expected ':'";
             rawLogs.Should()
