@@ -44,16 +44,12 @@ namespace Calamari.Kubernetes.Conventions
 
             var directories = GroupFilesIntoDirectories(deployment, globs, variables);
 
-            var resources = new List<Resource>();
-            foreach (var (directory, index) in directories.Select((d, i) => (d, i)))
-            {
-                resources.AddRange(ApplyBatchAndReturnResources(index, globs[index], directory));
-            }
+            var resources = directories.SelectMany(ApplyBatchAndReturnResources);
 
             WriteResourcesToOutputVariables(resources);
         }
 
-        private void WriteResourcesToOutputVariables(List<Resource> resources)
+        private void WriteResourcesToOutputVariables(IEnumerable<Resource> resources)
         {
             foreach (var resource in resources)
             {
@@ -76,13 +72,15 @@ namespace Calamari.Kubernetes.Conventions
             }
         }
 
-        private List<string> GroupFilesIntoDirectories(RunningDeployment deployment, string[] globs, IVariables variables)
+        private IEnumerable<GlobDirectory> GroupFilesIntoDirectories(RunningDeployment deployment, string[] globs, IVariables variables)
         {
-            var directories = new List<string>();
-            foreach (var (glob, idx) in globs.Select((g, i) => (g, i)))
+            var directories = new List<GlobDirectory>();
+            for (var i = 0; i < globs.Length; i ++)
             {
-                var directory = Path.Combine(deployment.CurrentDirectory, "grouped", idx.ToString());
-                fileSystem.CreateDirectory(directory);
+                var glob = globs[i];
+                var directoryPath = Path.Combine(deployment.CurrentDirectory, "grouped", i.ToString());
+                var directory = new GlobDirectory(i, glob, directoryPath);
+                fileSystem.CreateDirectory(directoryPath);
 
                 var matcher = new Matcher();
                 matcher.AddInclude(glob);
@@ -91,7 +89,7 @@ namespace Calamari.Kubernetes.Conventions
                 {
                     var relativeFilePath = file.Path ?? file.Stem;
                     var fullPath = Path.Combine(deployment.CurrentDirectory, relativeFilePath);
-                    var targetPath = Path.Combine(directory, relativeFilePath);
+                    var targetPath = Path.Combine(directoryPath, relativeFilePath);
                     var targetDirectory = Path.GetDirectoryName(targetPath);
                     if (targetDirectory != null)
                     {
@@ -103,14 +101,17 @@ namespace Calamari.Kubernetes.Conventions
                 directories.Add(directory);
             }
 
-            variables.Set(SpecialVariables.GroupedYamlDirectories, string.Join(";", directories));
+            variables.Set(SpecialVariables.GroupedYamlDirectories,
+                string.Join(";", directories.Select(d => d.Directory)));
             return directories;
         }
 
-        private IEnumerable<Resource> ApplyBatchAndReturnResources(int index, string glob, string directory)
+        private IEnumerable<Resource> ApplyBatchAndReturnResources(GlobDirectory globDirectory)
         {
-            log.Info($"Applying Batch #{index+1} for YAML matching '{glob}'");
-            foreach (var file in fileSystem.EnumerateFilesRecursively(directory))
+            var index = globDirectory.Index;
+            var directory = globDirectory.Directory;
+            log.Info($"Applying Batch #{index+1} for YAML matching '{globDirectory.Glob}'");
+            foreach (var file in fileSystem.EnumerateFilesRecursively(globDirectory.Directory))
             {
                 // TODO: Once we have moved to a higher .net Framework version, update fileSystem.GetRelativePath to use
                 // Path.GetRelativePath() instead of our own implementation, and update the code below to remove the
@@ -192,6 +193,20 @@ namespace Calamari.Kubernetes.Conventions
         {
             public string Kind { get; set; }
             public ResourceMetadata Metadata { get; set; }
+        }
+
+        private class GlobDirectory
+        {
+            public GlobDirectory(int index, string glob, string directory)
+            {
+                Index = index;
+                Glob = glob;
+                Directory = directory;
+            }
+
+            public int Index { get; }
+            public string Glob { get; }
+            public string Directory { get; }
         }
     }
 }
