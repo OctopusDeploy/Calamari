@@ -12,7 +12,6 @@ using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Commands;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
-using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
@@ -286,8 +285,13 @@ namespace Calamari.Tests.KubernetesFixtures
             // to when the last k8s resource is created and compare them in an assent test.
             var startIndex = Array.FindIndex(rawLogs, l => l.StartsWith("Applying Batch #1"));
             var endIndex = Array.FindLastIndex(rawLogs, l => l.EndsWith("created"));
-            var assentFiles = string.Join('\n', rawLogs.Skip(startIndex).Take(endIndex + 1 - startIndex));
-            this.Assent(assentFiles, configuration: AssentConfiguration.DefaultWithPostfix("ApplyingBatches"));
+            var assentLogs = rawLogs.Skip(startIndex)
+                                    .Take(endIndex + 1 - startIndex)
+                                    .Where(l => !l.StartsWith("##octopus"));
+            // We need to replace the backslash with forward slash because
+            // the slash comes out differently on windows machines.
+            var assentString = string.Join('\n', assentLogs).Replace("\\", "/");
+            this.Assent(assentString, configuration: AssentConfiguration.DefaultWithPostfix("ApplyingBatches"));
 
             var resources = new[]
             {

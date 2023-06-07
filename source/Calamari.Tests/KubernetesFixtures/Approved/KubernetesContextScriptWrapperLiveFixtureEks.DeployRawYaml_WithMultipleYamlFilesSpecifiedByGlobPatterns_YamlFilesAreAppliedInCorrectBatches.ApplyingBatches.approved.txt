@@ -1,5 +1,4 @@
 Applying Batch #1 for YAML matching 'deployments/**/*'
-##octopus[stdout-verbose]
 deployments/customresource.yml Contents:
 apiVersion: apps/v1
 kind: Deployment
@@ -41,11 +40,9 @@ spec:
         ports:
         - containerPort: 81
 
-##octopus[stdout-default]
 Deployment/nginx-deployment created
 Deployment/nginx-deployment2 created
 Applying Batch #2 for YAML matching 'services/myapp-service.yml'
-##octopus[stdout-verbose]
 services/myapp-service.yml Contents:
 apiVersion: v1
 kind: Service
@@ -58,10 +55,8 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 9376
-##octopus[stdout-default]
 Service/nginx-service created
 Applying Batch #3 for YAML matching 'configmaps/*.yml'
-##octopus[stdout-verbose]
 configmaps/myapp-configmap1.yml Contents:
 apiVersion: v1
 kind: ConfigMap
@@ -92,6 +87,5 @@ data:
     color.good=orange
     color.bad=pink
     allow.textmode=false
-##octopus[stdout-default]
 ConfigMap/game-demo created
 ConfigMap/game-demo2 created
