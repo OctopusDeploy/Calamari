@@ -221,7 +221,7 @@ function Deploy-CustomResources() {
 			$applyResult = Execute-CommandAndReturn {& $Kubectl_Exe apply -f "#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}" -o json}
 			$retValue = $LASTEXITCODE -eq 0
 			if(!$retValue) {
-				Write-StdErr "$applyResult"
+				Write-Warning "$applyResult"
 				Write-CustomResourceErrorMessage
 				return
 			}
