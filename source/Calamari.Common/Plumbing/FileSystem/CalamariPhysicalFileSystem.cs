@@ -392,7 +392,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         public string CreateTemporaryDirectory()
         {
             var path = Path.Combine(GetTempBasePath(), Guid.NewGuid().ToString());
-            CreateDirectory(path);
+            Directory.CreateDirectory(path);
             return path;
         }
 
