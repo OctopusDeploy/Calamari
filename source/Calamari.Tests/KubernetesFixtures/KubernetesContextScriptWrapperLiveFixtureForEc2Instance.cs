@@ -49,12 +49,11 @@ namespace Calamari.Tests.KubernetesFixtures
 
             if (runAsScript)
             {
-                var wrapper = CreateWrapper();
-                TestScriptAndVerifyCluster(wrapper, "Test-Script");
+                DeployWithKubectlTestScriptAndVerifyResult();
             }
             else
             {
-                ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
             }
         }
 

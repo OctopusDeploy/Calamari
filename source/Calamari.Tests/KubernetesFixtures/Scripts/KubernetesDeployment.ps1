@@ -220,16 +220,15 @@ function Deploy-CustomResources() {
 			Write-Verbose $(Get-Content -Raw "#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}")
 			$applyResult = Execute-CommandAndReturn {& $Kubectl_Exe apply -f "#{Octopus.Action.KubernetesContainers.CustomResourceYamlFileName}" -o json}
 			$retValue = $LASTEXITCODE -eq 0
+			if(!$retValue) {
+				Write-Warning "$applyResult"
+				Write-CustomResourceErrorMessage
+				return
+			}
 			try {
 				$json = $applyResult | ConvertFrom-Json -ErrorAction Stop
 			} catch {
-				Write-PlainError "`"kubectl apply -o json`" returned invalid JSON:"
-				Write-PlainError "---------------------------"
-				Write-PlainError $applyResult
-				Write-PlainError "---------------------------"
-				Write-PlainError "This can happen with older versions of kubectl. Please update to a recent version of kubectl."
-				Write-PlainError "See https://github.com/kubernetes/kubernetes/issues/58834 for more details."
-				Write-PlainError "Custom resources will not be saved as output variables, and will not be automatically cleaned up."
+				Write-CustomResourceErrorMessage $applyResult
 			}
 			if ($null -ne $json) {
 				# kubectl apply will return a list if multiple resources were applied, or a single object.
@@ -261,6 +260,22 @@ function Deploy-CustomResources() {
 	}
 
 	return $DeploymentSuccess
+}
+
+function Write-CustomResourceErrorMessage() {
+	Param
+	(
+		[Parameter(ValueFromPipeline=$True, Position=0)]
+		[string] $json
+	)
+
+	Write-PlainError "`"kubectl apply -o json`" returned invalid JSON:"
+	Write-PlainError "---------------------------"
+	Write-PlainError "$json"
+	Write-PlainError "---------------------------"
+	Write-PlainError "This can happen with older versions of kubectl. Please update to a recent version of kubectl."
+	Write-PlainError "See https://github.com/kubernetes/kubernetes/issues/58834 for more details."
+	Write-PlainError "Custom resources will not be saved as output variables, and will not be automatically cleaned up."
 }
 
 function Deploy-Deployment() {

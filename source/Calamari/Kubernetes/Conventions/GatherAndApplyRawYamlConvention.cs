@@ -1,3 +1,4 @@
+#if !NET40
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,7 +10,10 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Calamari.Kubernetes.Commands;
 using Calamari.Kubernetes.Integration;
+using Microsoft.Extensions.FileSystemGlobbing;
+using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 
@@ -40,16 +44,12 @@ namespace Calamari.Kubernetes.Conventions
 
             var directories = GroupFilesIntoDirectories(deployment, globs, variables);
 
-            var resources = new List<Resource>();
-            foreach (var (directory, index) in directories.Select((d,i) => (d,i)))
-            {
-                resources.AddRange(ApplyBatchAndReturnResources(index, globs[index], directory));
-            }
+            var resources = directories.SelectMany(ApplyBatchAndReturnResources);
 
             WriteResourcesToOutputVariables(resources);
         }
 
-        private void WriteResourcesToOutputVariables(List<Resource> resources)
+        private void WriteResourcesToOutputVariables(IEnumerable<Resource> resources)
         {
             foreach (var resource in resources)
             {
@@ -72,35 +72,54 @@ namespace Calamari.Kubernetes.Conventions
             }
         }
 
-        private List<string> GroupFilesIntoDirectories(RunningDeployment deployment, string[] globs, IVariables variables)
+        private IEnumerable<GlobDirectory> GroupFilesIntoDirectories(RunningDeployment deployment, string[] globs, IVariables variables)
         {
-            var directories = new List<string>();
-            foreach (var (glob, idx) in globs.Select((g, i) => (g, i)))
+            var directories = new List<GlobDirectory>();
+            for (var i = 0; i < globs.Length; i ++)
             {
-                var files = Directory.GetFiles(deployment.CurrentDirectory, glob);
-                var directory = Path.Combine(deployment.CurrentDirectory, "grouped", idx.ToString());
-                Directory.CreateDirectory(directory);
-                foreach (var file in files)
+                var glob = globs[i];
+                var directoryPath = Path.Combine(deployment.CurrentDirectory, "grouped", i.ToString());
+                var directory = new GlobDirectory(i, glob, directoryPath);
+                fileSystem.CreateDirectory(directoryPath);
+
+                var matcher = new Matcher();
+                matcher.AddInclude(glob);
+                var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(deployment.CurrentDirectory)));
+                foreach (var file in result.Files)
                 {
-                    fileSystem.CopyFile(file, Path.Combine(directory, Path.GetFileName(file)));
+                    var relativeFilePath = file.Path ?? file.Stem;
+                    var fullPath = Path.Combine(deployment.CurrentDirectory, relativeFilePath);
+                    var targetPath = Path.Combine(directoryPath, relativeFilePath);
+                    var targetDirectory = Path.GetDirectoryName(targetPath);
+                    if (targetDirectory != null)
+                    {
+                        fileSystem.CreateDirectory(targetDirectory);
+                    }
+                    fileSystem.CopyFile(fullPath, targetPath);
                 }
 
                 directories.Add(directory);
             }
 
-            variables.Set(SpecialVariables.GroupedYamlDirectories, string.Join(";", directories));
+            variables.Set(SpecialVariables.GroupedYamlDirectories,
+                string.Join(";", directories.Select(d => d.Directory)));
             return directories;
         }
 
-        private IEnumerable<Resource> ApplyBatchAndReturnResources(int index, string glob, string directory)
+        private IEnumerable<Resource> ApplyBatchAndReturnResources(GlobDirectory globDirectory)
         {
-            log.Info($"Applying Batch #{index+1} for YAML matching '{glob}'");
-            foreach (var file in Directory.EnumerateFiles(directory))
+            var index = globDirectory.Index;
+            var directory = globDirectory.Directory;
+            log.Info($"Applying Batch #{index+1} for YAML matching '{globDirectory.Glob}'");
+            foreach (var file in fileSystem.EnumerateFilesRecursively(globDirectory.Directory))
             {
-                log.Verbose($"{Path.GetFileName(file)} Contents:");
-                log.Verbose(File.ReadAllText(file));
+                // TODO: Once we have moved to a higher .net Framework version, update fileSystem.GetRelativePath to use
+                // Path.GetRelativePath() instead of our own implementation, and update the code below to remove the
+                // usage of Path.DirectorySeparatorChar.
+                log.Verbose($"{fileSystem.GetRelativePath($"{directory}{Path.DirectorySeparatorChar}", file)} Contents:");
+                log.Verbose(fileSystem.ReadFile(file));
             }
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "-o", "json");
+            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "--recursive", "-o", "json");
 
             foreach (var message in result.Output.Messages)
             {
@@ -110,7 +129,9 @@ namespace Calamari.Kubernetes.Conventions
                         //No need to log as it's the output json from above.
                         break;
                     case Level.Error:
-                        log.Error(message.Text);
+                        //Files in the error are shown with the full path in their batch directory,
+                        //so we'll remove that for the user.
+                        log.Error(message.Text.Replace($"{directory}{Path.DirectorySeparatorChar}", ""));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -119,7 +140,7 @@ namespace Calamari.Kubernetes.Conventions
 
             if (result.Result.ExitCode != 0)
             {
-                throw new Exception(result.Result.Errors);
+                LogParsingError(null, index);
             }
 
             // If it did not error, the output should be valid json.
@@ -144,16 +165,23 @@ namespace Calamari.Kubernetes.Conventions
             }
             catch
             {
-                log.Error($"\"kubectl apply -o json\" returned invalid JSON for Batch #{index}:");
-                log.Error("---------------------------");
-                log.Error(outputJson);
-                log.Error("---------------------------");
-                log.Error("This can happen with older versions of kubectl. Please update to a recent version of kubectl.");
-                log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
-                log.Error("Custom resources will not be saved as output variables.");
+                LogParsingError(outputJson, index);
             }
 
             return Enumerable.Empty<Resource>();
+        }
+
+        private void LogParsingError(string outputJson, int index)
+        {
+            log.Error($"\"kubectl apply -o json\" returned invalid JSON for Batch #{index}:");
+            log.Error("---------------------------");
+            log.Error(outputJson);
+            log.Error("---------------------------");
+            log.Error("This can happen with older versions of kubectl. Please update to a recent version of kubectl.");
+            log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
+            log.Error("Custom resources will not be saved as output variables.");
+
+            throw new KubernetesDeploymentFailedException();
         }
 
         private class ResourceMetadata
@@ -166,5 +194,20 @@ namespace Calamari.Kubernetes.Conventions
             public string Kind { get; set; }
             public ResourceMetadata Metadata { get; set; }
         }
+
+        private class GlobDirectory
+        {
+            public GlobDirectory(int index, string glob, string directory)
+            {
+                Index = index;
+                Glob = glob;
+                Directory = directory;
+            }
+
+            public int Index { get; }
+            public string Glob { get; }
+            public string Directory { get; }
+        }
     }
 }
+#endif

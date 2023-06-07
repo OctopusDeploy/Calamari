@@ -226,7 +226,10 @@ function deploy_customresources {
                     fi
                 done
             else
-                write_plainerror "\"kubectl apply -o json\" returned invalid JSON."
+                write_plainerror "\"kubectl apply -o json\" returned invalid JSON:"
+                write_plainerror "---------------------------"
+                write_plainerror "$newCustomResources"
+                write_plainerror "---------------------------"
                 write_plainerror "This can happen with older versions of kubectl. Please update to a recent version of kubectl."
                 write_plainerror "See https://github.com/kubernetes/kubernetes/issues/58834 for more details."
                 write_plainerror "Custom resources will not be saved as output variables, and will not be automatically cleaned up."

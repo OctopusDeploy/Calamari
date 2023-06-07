@@ -80,12 +80,11 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 if (runAsScript)
                 {
-                    var wrapper = CreateWrapper();
-                    TestScriptAndVerifyCluster(wrapper, "Test-Script");
+                    DeployWithKubectlTestScriptAndVerifyResult();
                 }
                 else
                 {
-                    ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
+                    ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
                 }
             }
         }
@@ -105,12 +104,11 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
             if (runAsScript)
             {
-                var wrapper = CreateWrapper();
-                TestScriptAndVerifyCluster(wrapper, "Test-Script");
+                DeployWithKubectlTestScriptAndVerifyResult();
             }
             else
             {
-                ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
             }
         }
 
@@ -129,12 +127,11 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
             if (runAsScript)
             {
-                var wrapper = CreateWrapper();
-                TestScriptAndVerifyCluster(wrapper, "Test-Script");
+                DeployWithKubectlTestScriptAndVerifyResult();
             }
             else
             {
-                ExecuteCommandAndVerifySuccess(TestableKubernetesDeploymentCommand.Name);
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
             }
         }
 
@@ -152,9 +149,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{clientCert}.CertificatePem", aksClusterClientCertificate);
             variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
 
-            var wrapper = CreateWrapper();
-
-            TestScript(wrapper, "Test-Script");
+            DeployWithNonKubectlTestScriptAndVerifyResult();
         }
 
         [Test]
@@ -189,12 +184,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 new TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(scope,
                     authenticationDetails);
 
-            var result =
-                ExecuteDiscoveryCommand(targetDiscoveryContext,
-                    new[]{"Calamari.Azure"}
-                );
-
-            result.AssertSuccess();
+            ExecuteDiscoveryCommandAndVerifyResult(targetDiscoveryContext);
 
             var targetName = $"aks/{azureSubscriptionId}/{azurermResourceGroup}/{aksClusterName}";
             var serviceMessageProperties = new Dictionary<string, string>

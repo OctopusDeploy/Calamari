@@ -33,6 +33,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         Stream OpenFile(string path, FileMode mode = FileMode.OpenOrCreate, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.Read);
         Stream CreateTemporaryFile(string extension, out string path);
         string CreateTemporaryDirectory();
+        void CreateDirectory(string directory);
         int CopyDirectory(string sourceDirectory, string targetDirectory);
         int CopyDirectory(string sourceDirectory, string targetDirectory, CancellationToken cancel);
         void CopyFile(string sourceFile, string destinationFile);
