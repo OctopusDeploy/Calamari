@@ -12,6 +12,7 @@ using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Commands;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
+using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
