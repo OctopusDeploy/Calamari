@@ -81,7 +81,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 ? new InfiniteTimer(TimeSpan.FromSeconds(PollingIntervalSeconds)) as ITimer
                 : new Timer(TimeSpan.FromSeconds(timeoutSeconds), TimeSpan.FromSeconds(PollingIntervalSeconds));
 
-            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, timer, kubectl, new Options() {  WaitForJobs = waitForJobs});
+            var completedSuccessfully = statusChecker.CheckStatusUntilCompletionOrTimeout(definedResources, timer, kubectl, new Options() {  WaitForJobs = waitForJobs });
 
             if (!completedSuccessfully)
             {
