@@ -272,8 +272,8 @@ namespace Calamari.Tests.KubernetesFixtures
                     (Path.Combine("deployments", "subfolder"), DeploymentFileName2, SimpleDeploymentResource2),
                     ("services", ServiceFileName, SimpleService),
                     ("services", "EmptyYamlFile.yml", ""),
-                    ("configmaps", ConfigMapFileName, SimpleConfigMap),
                     ("configmaps", ConfigMapFileName2, SimpleConfigMap2),
+                    ("configmaps", ConfigMapFileName, SimpleConfigMap),
                     (Path.Combine("configmaps","subfolder"), "InvalidJSONNotUsed.yml", InvalidDeploymentResource));
                 variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", $"deployments/**/*;services/{ServiceFileName};configmaps/*.yml");
                 return packageToPackage;
