@@ -6,10 +6,6 @@
     "namespace": "calamari-testing"
   },
   "spec": {
-    "clusterIP": "172.20.214.169",
-    "clusterIPs": [
-      "172.20.214.169"
-    ],
     "internalTrafficPolicy": "Cluster",
     "ipFamilies": [
       "IPv4"

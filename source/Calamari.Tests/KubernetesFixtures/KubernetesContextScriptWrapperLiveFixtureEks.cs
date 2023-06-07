@@ -173,7 +173,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 p.Name == "conditions" ||
                 p.Name == "resourceVersion" ||
                 p.Name == "status" ||
-                p.Name == "generation");
+                p.Name == "generation" ||
+                p.Name.StartsWith("clusterIP"));
         }
 
         [Test]
