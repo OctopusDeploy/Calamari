@@ -12,6 +12,12 @@ namespace Calamari.Tests.Helpers
                                                            : new SubdirectoryNamer("Approved"))
                                                        .SetInteractive(!TestEnvironment.IsCI);
 
+        public static Configuration DefaultWithPostfix(string postfix) => new Configuration()
+                                                                          .UsingNamer(TestEnvironment.IsCI
+                                                                              ? (INamer)new CIAssentNamer(postfix)
+                                                                              : new SubdirectoryNamer("Approved", postfix))
+                                                                          .SetInteractive(!TestEnvironment.IsCI);
+
         public static readonly Configuration Json = new Configuration()
                                                     .UsingNamer(TestEnvironment.IsCI
                                                         ? (INamer)new CIAssentNamer()
