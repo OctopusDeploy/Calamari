@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Calamari.Aws.Integration;
 using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Commands;
 using Calamari.Common.Features.Discovery;
@@ -89,6 +91,41 @@ namespace Calamari.Tests.KubernetesFixtures
                 else
                 {
                     output.AssertFailure();
+                }
+            }
+        }
+
+        protected void TestKubectlCommand(IScriptWrapper wrapper, string command)
+        {
+            using (var dir = TemporaryDirectory.Create())
+            {
+                var folderPath = Path.Combine(dir.DirectoryPath, "Folder with spaces");
+
+                using (var temp = new TemporaryFile(Path.Combine(folderPath, $"kubectl-script.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
+                {
+                    Directory.CreateDirectory(folderPath);
+                    File.WriteAllText(temp.FilePath, $"kubectl {command}");
+
+                    var output = ExecuteScript(wrapper, temp.FilePath);
+                    output.AssertSuccess();
+                }
+            }
+        }
+        
+        protected void TestKubectlCommands(IScriptWrapper wrapper, params string[] commands)
+        {
+            using (var dir = TemporaryDirectory.Create())
+            {
+                var folderPath = Path.Combine(dir.DirectoryPath, "Folder with spaces");
+
+                using (var temp = new TemporaryFile(Path.Combine(folderPath, $"kubectl-script.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
+                {
+                    Directory.CreateDirectory(folderPath);
+                    var lines = commands.Select(c => $"kubectl {c}").ToArray();
+                    File.WriteAllText(temp.FilePath, string.Join("\n", lines));
+
+                    var output = ExecuteScript(wrapper, temp.FilePath);
+                    output.AssertSuccess();
                 }
             }
         }
