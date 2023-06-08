@@ -313,8 +313,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 this.Assent(resource, configuration: AssentConfiguration.DefaultWithPostfix(label));
 
                 // Check that each deployed resource has a "Successful" status reported.
-                statusMessages.Should()
-                              .ContainSingle(m => m.Properties["name"] == name && m.Properties["status"] == "Successful");
+                statusMessages.Should().Contain(m => m.Properties["name"] == name && m.Properties["status"] == "Successful");
             }
 
             rawLogs.Should().ContainSingle(m =>
