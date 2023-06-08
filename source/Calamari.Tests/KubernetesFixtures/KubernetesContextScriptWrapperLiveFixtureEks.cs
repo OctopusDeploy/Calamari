@@ -60,7 +60,7 @@ namespace Calamari.Tests.KubernetesFixtures
         private const string SimpleConfigMapResourceType = "ConfigMap";
         private const string SimpleConfigMapResourceName = "game-demo";
         private const string SimpleConfigMap =
-            "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: game-demo\ndata:\n  player_initial_lives: '3'\n  ui_properties_file_name: 'user-interface.properties'\n  game.properties: |\n    enemy.types=aliens,monsters\n    player.maximum-lives=5    \n  user-interface.properties: |\n    color.good=purple\n    color.bad=yellow\n    allow.textmode=true";
+            "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: game-demo\ndata:\n  player_initial_lives: '3'\n  ui_properties_file_name: 'user-interface.properties'\n  game.properties: |\n    enemy.types=aliens,monsters\n    player.maximum-lives=5\n  user-interface.properties: |\n    color.good=purple\n    color.bad=yellow\n    allow.textmode=true";
 
         private const string SimpleConfigMap2ResourceType = "ConfigMap";
         private const string SimpleConfigMap2ResourceName = "game-demo2";
@@ -281,7 +281,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             ExecuteCommandAndVerifyResult(KubernetesApplyRawYamlCommand.Name, CreatePackageWithMultipleYamlFiles);
 
-            var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
+            var rawLogs = Log.Messages.Select(m => m.FormattedMessage).Where(l => !l.StartsWith("##octopus")).ToArray();
 
             // We take the logs starting from when Calamari starts applying batches
             // to when the last k8s resource is created and compare them in an assent test.
@@ -289,7 +289,23 @@ namespace Calamari.Tests.KubernetesFixtures
             var endIndex = Array.FindLastIndex(rawLogs, l => l.EndsWith("created"));
             var assentLogs = rawLogs.Skip(startIndex)
                                     .Take(endIndex + 1 - startIndex)
-                                    .Where(l => !l.StartsWith("##octopus"));
+                                    .Where(l => !l.StartsWith("##octopus")).ToArray();
+            var batch3Index = Array.FindIndex(assentLogs, l => l.StartsWith("Applying Batch #3"));
+
+            // In this case the two config maps have been loaded in reverse order
+            // This can happen as Directory.EnumerateFiles() does not behave the
+            // same on all platforms.
+            // We'll flip them back the right way before performing the Assent Test.
+            if (assentLogs[batch3Index + 1].Contains("myapp-configmap1.yml"))
+            {
+                var configMap2Idx = batch3Index + 1;
+                var configMap1Idx = Array.FindIndex(assentLogs, l => l.Contains("myapp-configmap2.yml"));
+                var configMap2CreatedIdx = Array.FindIndex(assentLogs, l => l.Contains("game-demo created"));
+                var configMap1CreatedIdx = Array.FindIndex(assentLogs, l => l.Contains("game-demo2 created"));
+                InPlaceSwap(assentLogs, configMap2Idx, configMap1Idx, configMap2CreatedIdx - 1);
+                (assentLogs[configMap2CreatedIdx], assentLogs[configMap1CreatedIdx]) = (assentLogs[configMap1CreatedIdx], assentLogs[configMap2CreatedIdx]);
+            }
+
             // We need to replace the backslash with forward slash because
             // the slash comes out differently on windows machines.
             var assentString = string.Join('\n', assentLogs).Replace("\\", "/");
@@ -756,6 +772,16 @@ namespace Calamari.Tests.KubernetesFixtures
             }
 
             return pathToPackage;
+        }
+
+        private void InPlaceSwap(string[] array, int section1StartIndex, int section2StartIndex, int endIndex)
+        {
+            var length = endIndex + 1 - section1StartIndex;
+            var section2TempIndex = section2StartIndex - section1StartIndex;
+            var temp = new string[length];
+            Array.Copy(array, section1StartIndex, temp, 0, length);
+            Array.Copy(temp, section2TempIndex, array, section1StartIndex, temp.Length - section2TempIndex);
+            Array.Copy(temp, 0, array, section1StartIndex + temp.Length - section2TempIndex, section2TempIndex);
         }
     }
 }
