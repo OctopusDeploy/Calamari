@@ -298,12 +298,10 @@ namespace Calamari.Tests.KubernetesFixtures
             // We'll flip them back the right way before performing the Assent Test.
             if (assentLogs[batch3Index + 1].Contains("myapp-configmap1.yml"))
             {
-                var configMap2Idx = batch3Index + 1;
-                var configMap1Idx = Array.FindIndex(assentLogs, l => l.Contains("myapp-configmap2.yml"));
-                var configMap2CreatedIdx = Array.FindIndex(assentLogs, l => l.Contains("game-demo created"));
-                var configMap1CreatedIdx = Array.FindIndex(assentLogs, l => l.Contains("game-demo2 created"));
-                InPlaceSwap(assentLogs, configMap2Idx, configMap1Idx, configMap2CreatedIdx - 1);
-                (assentLogs[configMap2CreatedIdx], assentLogs[configMap1CreatedIdx]) = (assentLogs[configMap1CreatedIdx], assentLogs[configMap2CreatedIdx]);
+                var configMap1Idx = batch3Index + 1;
+                var configMap2Idx = Array.FindIndex(assentLogs, l => l.Contains("myapp-configmap2.yml"));
+                var endIdx = Array.FindIndex(assentLogs, l => l.Contains("game-demo created")) - 1;
+                InPlaceSwap(assentLogs, configMap1Idx, configMap2Idx, endIdx);
             }
 
             // We need to replace the backslash with forward slash because
