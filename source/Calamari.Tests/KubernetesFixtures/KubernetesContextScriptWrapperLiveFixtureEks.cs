@@ -286,7 +286,7 @@ namespace Calamari.Tests.KubernetesFixtures
             // We take the logs starting from when Calamari starts applying batches
             // to when the last k8s resource is created and compare them in an assent test.
             var startIndex = Array.FindIndex(rawLogs, l => l.StartsWith("Applying Batch #1"));
-            var endIndex = Array.FindLastIndex(rawLogs, l => l.EndsWith("created"));
+            var endIndex = Array.FindLastIndex(rawLogs, l => l == "Resource Status Check: 2 new resources have been added.");
             var assentLogs = rawLogs.Skip(startIndex)
                                     .Take(endIndex + 1 - startIndex)
                                     .Where(l => !l.StartsWith("##octopus")).ToArray();
