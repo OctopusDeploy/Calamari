@@ -8,7 +8,6 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.ResourceStatus
@@ -70,13 +69,20 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return result;
             }
 
+            CommandResult GetStatusResult(string errorMessage) =>
+                new CommandResult("K8s Resource Status Reporting", 1, errorMessage, workingDirectory);
+
             try
             {
-                statusReportExecutor.ReportStatus(workingDirectory);
+                var statusResult = statusReportExecutor.ReportStatus(workingDirectory);
+                if (!statusResult)
+                {
+                    return GetStatusResult("Unable to complete Report Status, see log for details.");
+                }
             }
             catch (Exception e)
             {
-                return new CommandResult("K8s Resource Status Reporting", 1, e.Message, workingDirectory);
+                return GetStatusResult(e.Message);
             }
 
             return result;

@@ -235,6 +235,16 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             return true;
         }
 
+        public void StartCheckingStatus(IKubectl kubectl, IEnumerable<ResourceIdentifier> initialResources, ITimer timer, Options options)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<bool> CompleteCheckingStatus()
+        {
+            throw new System.NotImplementedException();
+        }
+
         public void AddResources(IEnumerable<ResourceIdentifier> newResources)
         {
         }
