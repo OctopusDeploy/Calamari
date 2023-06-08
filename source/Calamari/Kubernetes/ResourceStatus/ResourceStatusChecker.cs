@@ -254,8 +254,8 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             public ResourceStatusTaskResult()
                 : this(
-                    Array.Empty<ResourceIdentifier>(),
-                    Array.Empty<Resource>(),
+                    new ResourceIdentifier[0],
+                    new Resource[0],
                     new Dictionary<string, Resource>(),
                     DeploymentStatus.InProgress)
             {

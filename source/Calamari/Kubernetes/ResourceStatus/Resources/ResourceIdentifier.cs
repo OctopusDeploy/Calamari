@@ -5,7 +5,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
    /// <summary>
    /// Identifies a unique resource in a kubernetes cluster
    /// </summary>
-   public class ResourceIdentifier
+   public class ResourceIdentifier : IEquatable<ResourceIdentifier>
    {
        // API version is irrelevant for identifying a resource,
        // since the resource name must be unique across all api versions.
@@ -21,8 +21,10 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
            Namespace = @namespace;
        }
 
-       protected bool Equals(ResourceIdentifier other)
+       public bool Equals(ResourceIdentifier other)
        {
+           if (ReferenceEquals(null, other)) return false;
+           if (ReferenceEquals(this, other)) return true;
            return Kind == other.Kind && Name == other.Name && Namespace == other.Namespace;
        }
 
@@ -36,7 +38,13 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
        public override int GetHashCode()
        {
-           return HashCode.Combine(Kind, Name, Namespace);
+           unchecked
+           {
+               var hashCode = (Kind != null ? Kind.GetHashCode() : 0);
+               hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
+               hashCode = (hashCode * 397) ^ (Namespace != null ? Namespace.GetHashCode() : 0);
+               return hashCode;
+           }
        }
 
        public static bool operator ==(ResourceIdentifier left, ResourceIdentifier right)
@@ -47,20 +55,6 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
        public static bool operator !=(ResourceIdentifier left, ResourceIdentifier right)
        {
            return !Equals(left, right);
-       }
-
-       public static bool Equals(ResourceIdentifier x, ResourceIdentifier y)
-       {
-           if (ReferenceEquals(x, y)) return true;
-           if (ReferenceEquals(x, null)) return false;
-           if (ReferenceEquals(y, null)) return false;
-           if (x.GetType() != y.GetType()) return false;
-           return x.Kind == y.Kind && x.Name == y.Name && x.Namespace == y.Namespace;
-       }
-
-       public int GetHashCode(ResourceIdentifier obj)
-       {
-           return HashCode.Combine(obj.Kind, obj.Name, obj.Namespace);
        }
    }
 }
