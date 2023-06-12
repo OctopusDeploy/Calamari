@@ -40,11 +40,7 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             try
             {
-                var originalVariables = variables
-                    .Where(v => !OctopusReservedVariablePattern.IsMatch(v.Key))
-                    .ToDictionary(v => v.Key, v => v.Value);
-
-                var variablesByKey = GetMappings(originalVariables, new Dictionary<string, string>());
+                var variablesByKey = GetMappings(variables, new Dictionary<string, string>());
 
                 // Read and transform the input file
                 var fileText = fileSystem.ReadFile(filePath, out var encoding);
@@ -72,8 +68,8 @@ namespace Calamari.Common.Features.StructuredVariables
                                 var varName = GetCommentVariable(c.Value);
                                 if (!string.IsNullOrWhiteSpace(varName))
                                 {
-                                    var patchVariables = GetPatchVariables(originalVariables, varName);
-                                    variablesByKey = GetMappings(originalVariables, patchVariables);
+                                    var patchVariables = GetPatchVariables(variables, varName);
+                                    variablesByKey = GetMappings(variables, patchVariables);
                                 }
                             }
                             ev = c.RestoreLeadingSpaces();
@@ -90,7 +86,7 @@ namespace Calamari.Common.Features.StructuredVariables
 
                         if (ev is DocumentEnd)
                         {
-                            variablesByKey = GetMappings(originalVariables, new Dictionary<string, string>());
+                            variablesByKey = GetMappings(variables, new Dictionary<string, string>());
                         }
                         
                         if (ev == null)
@@ -190,9 +186,9 @@ namespace Calamari.Common.Features.StructuredVariables
             return string.Empty;
         }
 
-        Dictionary<string, string> GetPatchVariables(Dictionary<string, string> variables, string variableName)
+        Dictionary<string, string> GetPatchVariables(IVariables variables, string variableName)
         {
-            variables.TryGetValue(variableName, out var patch);
+            var patch = variables.Get(variableName);
             if (string.IsNullOrEmpty(patch))
             {
                 return new Dictionary<string, string>();
@@ -200,32 +196,31 @@ namespace Calamari.Common.Features.StructuredVariables
             
             var deserializer = new Deserializer();
             var yamlObject = deserializer.Deserialize(new StringReader(patch)) ?? new object();
-
+            
             return new FlattenedProperties(yamlObject);
         }
 
         Dictionary<string, Func<string?>> GetMappings(
-            Dictionary<string, string> originalVariables,
+            IVariables variables,
             Dictionary<string, string> patchVariables)
         {
-            var keys = originalVariables.Keys.ToList();
+            var keys = variables.Select(v => v.Key).ToList();
             keys.AddRange(patchVariables.Keys.ToList());
-            keys = keys.Distinct().ToList();
+            keys = keys.Distinct().Where(k => !OctopusReservedVariablePattern.IsMatch(k)).ToList();
 
+            var merged = variables.Clone();
+            foreach (var (k, v) in patchVariables)
+            {
+                merged.Add(k, v);
+            }
+            
             return keys
                 .ToDictionary<string, string, Func<string?>>(k => k,
                     k => () =>
                     {
                         LogReplacement(k);
                         replaced++;
-
-                        originalVariables.TryGetValue(k, out var v);
-                        if (v == null)
-                        {
-                            patchVariables.TryGetValue(k, out v);
-                        }
-
-                        return v;
+                        return merged.Get(k);
                     },
                     StringComparer.OrdinalIgnoreCase);
         }
