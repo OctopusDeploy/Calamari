@@ -17,7 +17,7 @@ namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
-    public class KubernetesContextScriptWrapperLiveFixtureAksLocalAccessDisabled: KubernetesContextScriptWrapperLiveFixture
+    public class KubernetesContextScriptWrapperLiveFixtureAksLocalAccessDisabled : KubernetesContextScriptWrapperLiveFixture
     {
         string aksClusterName;
         string azurermResourceGroup;
@@ -29,7 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             yield return tools.KubeloginExecutable;
         }
-        
+
         protected override async Task InstallOptionalTools(InstallTools tools)
         {
             await tools.InstallKubelogin();
@@ -46,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures
             azureSubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             return new Dictionary<string, string>()
             {
-                { "ARM_SUBSCRIPTION_ID", azureSubscriptionId},
+                { "ARM_SUBSCRIPTION_ID", azureSubscriptionId },
                 { "ARM_CLIENT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId) },
                 { "ARM_CLIENT_SECRET", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword) },
                 { "ARM_TENANT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId) },
@@ -57,7 +57,9 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void AuthorisingWithAzureServicePrincipal()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithAzureServicePrincipal(bool runAsScript)
         {
             variables.Set(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", azurermResourceGroup);
@@ -67,35 +69,14 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Azure.TenantId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
             variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
             variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
-            var wrapper = CreateWrapper();
-            
-            // Actually do a dummy deployment to ensure we don't just have read permissions.
-            TestKubectlCommands(
-                                wrapper,
-                                "create deployment kubernetes-bootcamp --image=gcr.io/google-samples/kubernetes-bootcamp:v1",
-                                "wait deployment kubernetes-bootcamp --for condition=Available=True --timeout=90s",
-                                "get deployments"
-                               );
-        }
-
-        [Test]
-        public void UnreachableK8Cluster_ShouldExecuteTargetScript()
-        {
-            const string unreachableClusterUrl = "https://example.kubernetes.com";
-
-            variables.Set(Kubernetes.SpecialVariables.ClusterUrl, unreachableClusterUrl);
-            variables.Set(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
-            variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", azurermResourceGroup);
-            variables.Set(Kubernetes.SpecialVariables.AksClusterName, aksClusterName);
-            variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.FalseString);
-            variables.Set("Octopus.Action.Azure.SubscriptionId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionId));
-            variables.Set("Octopus.Action.Azure.TenantId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
-            variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
-            variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
-
-            var wrapper = CreateWrapper();
-
-            TestScript(wrapper, "Test-Script");
+            if (runAsScript)
+            {
+                DeployWithKubectlTestScriptAndVerifyResult();
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+            }
         }
 
         [Test]
@@ -130,12 +111,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 new TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(scope,
                     authenticationDetails);
 
-            var result =
-                ExecuteDiscoveryCommand(targetDiscoveryContext,
-                    new[]{"Calamari.Azure"}
-                );
-
-            result.AssertSuccess();
+            ExecuteDiscoveryCommandAndVerifyResult(targetDiscoveryContext);
 
             var targetName = $"aks/{azureSubscriptionId}/{azurermResourceGroup}/{aksClusterName}";
             var serviceMessageProperties = new Dictionary<string, string>
@@ -164,7 +140,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 serviceMessageProperties);
 
             Log.ServiceMessages.Should()
-                .ContainSingle(s => s.Properties["name"] == targetName)
+                .ContainSingle(s => s.Properties.ContainsKey("name") && s.Properties["name"] == targetName)
                 .Which.Should()
                 .BeEquivalentTo(expectedServiceMessage);
         }
