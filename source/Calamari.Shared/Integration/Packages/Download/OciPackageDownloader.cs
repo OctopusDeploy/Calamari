@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.Extensions;
@@ -45,7 +48,7 @@ namespace Calamari.Integration.Packages.Download
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
             IVersion version,
             string feedId,
-            Uri ociUri,
+            Uri feedUri,
             string? feedUsername,
             string? feedPassword,
             bool forcePackageDownload,
@@ -83,14 +86,14 @@ namespace Calamari.Integration.Packages.Download
 
                 var versionString = FixVersion(version);
 
-                var feedUrl = GetApiUri(ociUri);
-                var (digest, size, extension) = GetPackageDetails(feedUrl, packageId, versionString, feedUsername, feedPassword);
+                var apiUrl = GetApiUri(feedUri);
+                var (digest, size, extension) = GetPackageDetails(apiUrl, packageId, versionString, feedUsername, feedPassword);
                 var hash = GetPackageHashFromDigest(digest);
 
                 var cachedFileName = PackageName.ToCachedFileName(packageId, version, extension);
                 var downloadPath = Path.Combine(Path.Combine(stagingDir, cachedFileName));
 
-                DownloadPackage(feedUrl, packageId, digest, feedUsername, feedPassword, downloadPath);
+                DownloadPackage(apiUrl, packageId, digest, feedUsername, feedPassword, downloadPath);
 
                 var localDownloadName = Path.Combine(cacheDirectory, cachedFileName);
                 fileSystem.MoveFile(downloadPath, localDownloadName);
@@ -114,18 +117,14 @@ namespace Calamari.Integration.Packages.Download
         static string? GetPackageHashFromDigest(string digest)
             => PackageDigestHashRegex.Match(digest).Groups["hash"]?.Value;
 
-        private (string digest, int size, string extension) GetPackageDetails(
+        (string digest, int size, string extension) GetPackageDetails(
             Uri url,
             string packageId,
             string version,
             string? feedUserName, 
             string? feedPassword)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"{url}/{packageId}/manifests/{version}");
-            ApplyAuthorization(request, feedUserName, feedPassword);
-            ApplyAccept(request);
-
-            using var response = client.SendAsync(request).Result;
+            using var response = Get(new Uri($"{url}/{packageId}/manifests/{version}"), new NetworkCredential(feedUserName, feedPassword), ApplyAccept);
             var manifest = JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
 
             var layer = manifest.Value<JArray>(ManifestLayerPropertyName)[0];
@@ -155,11 +154,8 @@ namespace Calamari.Integration.Packages.Download
             string? feedPassword,
             string downloadPath)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{url}/{packageId}/blobs/{digest}");
-            ApplyAuthorization(request, feedUsername, feedPassword);
-
             using var fileStream = fileSystem.OpenFile(downloadPath, FileAccess.Write);
-            using var response = client.SendAsync(request).Result;
+            using var response = Get(new Uri($"{url}/{packageId}/blobs/{digest}"), new NetworkCredential(feedUsername, feedPassword));
             if (!response.IsSuccessStatusCode)
             {
                 throw new CommandException(
@@ -173,21 +169,10 @@ namespace Calamari.Integration.Packages.Download
 #endif
         }
 
-        private static void ApplyAccept(HttpRequestMessage request)
+        static void ApplyAccept(HttpRequestMessage request)
             => request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(OciImageManifestAcceptHeader));
 
-        private static void ApplyAuthorization(
-            HttpRequestMessage request, 
-            string? feedUserName,
-            string? feedPassword)
-        {
-            if (!string.IsNullOrEmpty(feedUserName))
-            {
-                request.Headers.AddAuthenticationHeader(feedUserName, feedPassword);
-            }
-        }
-
-        private static Uri GetApiUri(Uri feedUri)
+        static Uri GetApiUri(Uri feedUri)
         {
             var httpScheme = BuildScheme(IsPlainHttp(feedUri));
             var r = feedUri.ToString().Replace($"oci{Uri.SchemeDelimiter}", $"{httpScheme}{Uri.SchemeDelimiter}").TrimEnd('/');
@@ -198,13 +183,13 @@ namespace Calamari.Integration.Packages.Download
             }
 
             return uri;
+
+            static bool IsPlainHttp(Uri uri) 
+                => uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+
+            static string BuildScheme(bool isPlainHttp)
+                => isPlainHttp ? Uri.UriSchemeHttp : Uri.UriSchemeHttps;
         }
-
-        static bool IsPlainHttp(Uri uri) 
-            => uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
-
-        static string BuildScheme(bool isPlainHttp)
-            => isPlainHttp ? Uri.UriSchemeHttp : Uri.UriSchemeHttps;
 
         PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
@@ -220,13 +205,152 @@ namespace Calamari.Integration.Packages.Download
 
                 if (string.Equals(package.PackageId, packageId, StringComparison.OrdinalIgnoreCase) && package.Version.Equals(version))
                 {
-                    var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(file, package);
-                    return packagePhysicalFileMetadata
-                           ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
+                    var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(file, package)
+                                                      ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
+                    return packagePhysicalFileMetadata;
                 }
             }
 
             return null;
+        }
+        
+        HttpResponseMessage Get(Uri url, ICredentials credentials, Action<HttpRequestMessage>? customAcceptHeader = null)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            try
+            {
+                var networkCredential = credentials.GetCredential(url, "Basic");
+
+                if (!string.IsNullOrWhiteSpace(networkCredential?.UserName) || !string.IsNullOrWhiteSpace(networkCredential?.Password))
+                {
+                    request.Headers.Authorization = CreateAuthenticationHeader(networkCredential);
+                }
+
+                customAcceptHeader?.Invoke(request);
+
+                var response = client.SendAsync(request).GetAwaiter().GetResult();
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    var tokenFromAuthService = GetAuthRequestHeader(response, networkCredential);
+                    request = new HttpRequestMessage(HttpMethod.Get, url);
+                    request.Headers.Authorization = tokenFromAuthService;
+                    customAcceptHeader?.Invoke(request);
+                    response = client.SendAsync(request).GetAwaiter().GetResult();
+
+                    if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    {
+                        throw new CommandException($"Authorization to `{url}` failed.");
+                    }
+                }
+
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // Some registries do not support the Docker HTTP APIs
+                    // For example GitHub: https://github.community/t/ghcr-io-docker-http-api/130121
+                    throw new CommandException($"Docker registry located at `{url}` does not support this action.");
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMessage = $"Request to Docker registry located at `{url}` failed with {response.StatusCode}:{response.ReasonPhrase}.";
+
+                    var responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    if (!string.IsNullOrWhiteSpace(responseBody)) errorMessage += $" {responseBody}";
+
+                    throw new CommandException(errorMessage);
+                }
+
+                return response;
+            }
+            finally
+            {
+                request.Dispose();
+            }
+        }
+
+        string RetrieveAuthenticationToken(string authUrl, NetworkCredential credential)
+        {
+            HttpResponseMessage? response = null;
+
+            try
+            {
+                using (var msg = new HttpRequestMessage(HttpMethod.Get, authUrl))
+                {
+                    if (credential?.UserName != null)
+                    {
+                        msg.Headers.Authorization = CreateAuthenticationHeader(credential);
+                    }
+
+                    response = client.SendAsync(msg).GetAwaiter().GetResult();
+                }
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return ExtractTokenFromResponse(response);
+                }
+            }
+            finally
+            {
+                response?.Dispose();
+            }
+
+            throw new CommandException("Unable to retrieve authentication token required to perform operation.");
+        }
+
+        AuthenticationHeaderValue GetAuthRequestHeader(HttpResponseMessage response, NetworkCredential credential)
+        {
+            var auth = response.Headers.WwwAuthenticate.FirstOrDefault(a => a.Scheme == "Bearer");
+            if (auth != null)
+            {
+                var authToken = RetrieveAuthenticationToken(GetOAuthServiceUrl(auth), credential);
+                return new AuthenticationHeaderValue("Bearer", authToken);
+            }
+
+            if (response.Headers.WwwAuthenticate.Any(a => a.Scheme == "Basic"))
+            {
+                return CreateAuthenticationHeader(credential);
+            }
+
+            throw new CommandException($"Unknown Authentication scheme for Uri `{response.RequestMessage.RequestUri}`");
+        }
+
+        static string GetOAuthServiceUrl(AuthenticationHeaderValue auth)
+        {
+            var details = auth.Parameter.Split(',').ToDictionary(x => x.Substring(0, x.IndexOf('=')), y => y.Substring(y.IndexOf('=') + 1, y.Length - y.IndexOf('=') - 1).Trim('"'));
+            var oathUrl = new UriBuilder(details["realm"]);
+            var queryStringValues = new Dictionary<string, string>();
+            if (details.TryGetValue("service", out var service))
+            {
+                queryStringValues.Add("service", HttpUtility.UrlEncode(service));
+            }
+
+            if (details.TryGetValue("scope", out var scope))
+            {
+                queryStringValues.Add("scope", HttpUtility.UrlEncode(scope));
+            }
+
+            oathUrl.Query = "?" + string.Join("&", queryStringValues.Select(kvp => $"{kvp.Key}={kvp.Value}").ToArray());
+            return oathUrl.ToString();
+        }
+
+        static string ExtractTokenFromResponse(HttpResponseMessage response)
+        {
+            var token = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+            var lastItem = (string) JObject.Parse(token).SelectToken("token");
+            if (lastItem != null)
+            {
+                return lastItem;
+            }
+
+            throw new CommandException("Unable to retrieve authentication token required to perform operation.");
+        }
+
+        private AuthenticationHeaderValue CreateAuthenticationHeader(NetworkCredential credential)
+        {
+            var byteArray = Encoding.ASCII.GetBytes($"{credential.UserName}:{credential.Password}");
+            return new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
         }
     }
 }
