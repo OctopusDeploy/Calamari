@@ -18,6 +18,28 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
         }
 
         [Test]
+        public void CommentReplacement()
+        {
+            var patch1 = @"
+favourite:
+  food: pear
+";
+            var patch2 = @"
+favourite:
+  food: bun
+  color: blue
+";
+            this.Assent(Replace(new CalamariVariables{
+            {
+                "My.Variable.Alice", patch1
+            },
+            {
+                "My.Variable.Bob", patch2
+            }}, "comment-replacement.yaml"),
+                AssentConfiguration.Yaml);
+        }
+
+        [Test]
         public void DoesNothingIfThereAreNoVariables()
         {
             this.Assent(Replace(new CalamariVariables(), "application.yaml"),

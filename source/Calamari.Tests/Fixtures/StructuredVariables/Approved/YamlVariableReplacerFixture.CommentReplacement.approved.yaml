@@ -1,0 +1,11 @@
+# patch: My.Variable.Alice
+name: Alice
+favourite:
+  food: pear
+  drink: cider
+---
+# patch: My.Variable.Bob
+name: Bob
+favourite:
+  food: bun
+  color: blue
