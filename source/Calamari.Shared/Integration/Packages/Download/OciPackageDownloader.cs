@@ -10,7 +10,6 @@ using System.Text.RegularExpressions;
 using System.Web;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
@@ -227,8 +226,7 @@ namespace Calamari.Integration.Packages.Download
                 }
 
                 customAcceptHeader?.Invoke(request);
-
-                var response = client.SendAsync(request).GetAwaiter().GetResult();
+                var response = SendRequest(request);
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
@@ -236,7 +234,7 @@ namespace Calamari.Integration.Packages.Download
                     request = new HttpRequestMessage(HttpMethod.Get, url);
                     request.Headers.Authorization = tokenFromAuthService;
                     customAcceptHeader?.Invoke(request);
-                    response = client.SendAsync(request).GetAwaiter().GetResult();
+                    response = SendRequest(request);
 
                     if (response.StatusCode == HttpStatusCode.Unauthorized)
                     {
@@ -255,7 +253,7 @@ namespace Calamari.Integration.Packages.Download
                 {
                     var errorMessage = $"Request to Docker registry located at `{url}` failed with {response.StatusCode}:{response.ReasonPhrase}.";
 
-                    var responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    var responseBody = GetContent(response);
                     if (!string.IsNullOrWhiteSpace(responseBody)) errorMessage += $" {responseBody}";
 
                     throw new CommandException(errorMessage);
@@ -282,7 +280,7 @@ namespace Calamari.Integration.Packages.Download
                         msg.Headers.Authorization = CreateAuthenticationHeader(credential);
                     }
 
-                    response = client.SendAsync(msg).GetAwaiter().GetResult();
+                    response = SendRequest(msg);
                 }
 
                 if (response.IsSuccessStatusCode)
@@ -336,7 +334,7 @@ namespace Calamari.Integration.Packages.Download
 
         static string ExtractTokenFromResponse(HttpResponseMessage response)
         {
-            var token = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var token = GetContent(response);
 
             var lastItem = (string) JObject.Parse(token).SelectToken("token");
             if (lastItem != null)
@@ -347,10 +345,28 @@ namespace Calamari.Integration.Packages.Download
             throw new CommandException("Unable to retrieve authentication token required to perform operation.");
         }
 
-        private AuthenticationHeaderValue CreateAuthenticationHeader(NetworkCredential credential)
+        AuthenticationHeaderValue CreateAuthenticationHeader(NetworkCredential credential)
         {
             var byteArray = Encoding.ASCII.GetBytes($"{credential.UserName}:{credential.Password}");
             return new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+        }
+
+        HttpResponseMessage SendRequest(HttpRequestMessage request)
+        {
+#if NET40
+            return client.SendAsync(request).Wait();
+#else
+            return client.SendAsync(request).GetAwaiter().GetResult();
+#endif
+        }
+
+        static string? GetContent(HttpResponseMessage response)
+        {
+#if NET40
+            return response.Content.ReadAsStringAsync().Wait();
+#else
+            return response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+#endif
         }
     }
 }
