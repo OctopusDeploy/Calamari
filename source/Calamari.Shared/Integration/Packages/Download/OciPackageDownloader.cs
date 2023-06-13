@@ -320,12 +320,26 @@ namespace Calamari.Integration.Packages.Download
             var queryStringValues = new Dictionary<string, string>();
             if (details.TryGetValue("service", out var service))
             {
-                queryStringValues.Add("service", HttpUtility.UrlEncode(service));
+                queryStringValues.Add("service",
+#if NET40
+                    System.Web.HttpUtility
+#else
+                    HttpUtility
+#endif
+                    .UrlEncode(service)
+                );
             }
 
             if (details.TryGetValue("scope", out var scope))
             {
-                queryStringValues.Add("scope", HttpUtility.UrlEncode(scope));
+                queryStringValues.Add("scope",
+#if NET40
+                    System.Web.HttpUtility
+#else
+                    HttpUtility
+#endif
+                    .UrlEncode(service)
+                );
             }
 
             oathUrl.Query = "?" + string.Join("&", queryStringValues.Select(kvp => $"{kvp.Key}={kvp.Value}").ToArray());
@@ -354,7 +368,7 @@ namespace Calamari.Integration.Packages.Download
         HttpResponseMessage SendRequest(HttpRequestMessage request)
         {
 #if NET40
-            return client.SendAsync(request).Wait();
+            return client.SendAsync(request).Result;
 #else
             return client.SendAsync(request).GetAwaiter().GetResult();
 #endif
@@ -363,7 +377,7 @@ namespace Calamari.Integration.Packages.Download
         static string? GetContent(HttpResponseMessage response)
         {
 #if NET40
-            return response.Content.ReadAsStringAsync().Wait();
+            return response.Content.ReadAsStringAsync().Result;
 #else
             return response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 #endif
