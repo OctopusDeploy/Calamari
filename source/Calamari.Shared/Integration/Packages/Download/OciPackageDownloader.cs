@@ -320,26 +320,22 @@ namespace Calamari.Integration.Packages.Download
             var queryStringValues = new Dictionary<string, string>();
             if (details.TryGetValue("service", out var service))
             {
-                queryStringValues.Add("service",
 #if NET40
-                    System.Web.HttpUtility
+                var encodedService = System.Web.HttpUtility.UrlEncode(service);
 #else
-                    HttpUtility
+                var encodedService = WebUtility.UrlEncode(service);
 #endif
-                    .UrlEncode(service)
-                );
+                queryStringValues.Add("service", encodedService);
             }
 
             if (details.TryGetValue("scope", out var scope))
             {
-                queryStringValues.Add("scope",
 #if NET40
-                    System.Web.HttpUtility
+                var encodedScope = System.Web.HttpUtility.UrlEncode(scope);
 #else
-                    HttpUtility
+                var encodedScope = WebUtility.UrlEncode(scope);
 #endif
-                    .UrlEncode(service)
-                );
+                queryStringValues.Add("scope", encodedScope);
             }
 
             oathUrl.Query = "?" + string.Join("&", queryStringValues.Select(kvp => $"{kvp.Key}={kvp.Value}").ToArray());
