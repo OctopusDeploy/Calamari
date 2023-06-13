@@ -7,6 +7,7 @@
     /// </summary>
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
-        MultiGlobPathsForRawYamlFeatureToggle
+        MultiGlobPathsForRawYamlFeatureToggle,
+        KubernetesAksKubeloginFeatureToggle
     }
 }

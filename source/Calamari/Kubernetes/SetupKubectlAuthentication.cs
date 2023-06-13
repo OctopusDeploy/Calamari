@@ -153,7 +153,8 @@ namespace Calamari.Kubernetes
             if (isUsingAzureServicePrincipalAuth)
             {
                 var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
-                var azureAuth = new AzureKubernetesServicesAuth(azureCli, kubectl, variables);
+                var kubeloginCli = new KubeLogin(log, commandLineRunner, workingDirectory, environmentVars);
+                var azureAuth = new AzureKubernetesServicesAuth(azureCli, kubectl, kubeloginCli, variables);
 
                 if (!azureAuth.TryConfigure(@namespace, kubeConfig))
                     return false;
