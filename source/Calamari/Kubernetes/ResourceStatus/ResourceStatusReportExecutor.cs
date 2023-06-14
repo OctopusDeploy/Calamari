@@ -114,7 +114,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             // Skip it if the user did not input configmap data
-            if (string.IsNullOrEmpty(variables.Get("Octopus.Action.KubernetesContainers.ConfigMapName")))
+            if (!variables.GetIndexes("Octopus.Action.KubernetesContainers.ConfigMapData").Any())
             {
                 return null;
             }
@@ -131,7 +131,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
             
             // Skip it if the user did not input secret data
-            if (string.IsNullOrEmpty(variables.Get("Octopus.Action.KubernetesContainers.SecretName")))
+            if (!variables.GetIndexes("Octopus.Action.KubernetesContainers.SecretData").Any())
             {
                 return null;
             }
