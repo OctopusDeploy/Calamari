@@ -129,6 +129,13 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 return null;
             }
+
+            // Skip it if the user did not input configmap data
+            if (string.IsNullOrEmpty(variables.Get("Octopus.Action.KubernetesContainers.ConfigMapName")))
+            {
+                return null;
+            }
+            
             var configMapName = variables.Get("Octopus.Action.KubernetesContainers.ComputedConfigMapName");
             return string.IsNullOrEmpty(configMapName) ? null : new ResourceIdentifier("ConfigMap", configMapName, defaultNamespace);
         }
@@ -139,6 +146,13 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 return null;
             }
+            
+            // Skip it if the user did not input secret data
+            if (string.IsNullOrEmpty(variables.Get("Octopus.Action.KubernetesContainers.SecretName")))
+            {
+                return null;
+            }
+
             var secretName = variables.Get("Octopus.Action.KubernetesContainers.ComputedSecretName");
             return string.IsNullOrEmpty(secretName) ? null : new ResourceIdentifier("Secret", secretName, defaultNamespace);
         }
