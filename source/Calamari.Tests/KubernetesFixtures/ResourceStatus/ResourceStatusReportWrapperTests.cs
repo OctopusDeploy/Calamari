@@ -176,7 +176,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              {
                  fileSystem.SetFileBasePath(tempDirectory);
 
-                 var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+                 var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
                  wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
                  wrapper.ExecuteScript(
@@ -212,7 +212,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              {
                  fileSystem.SetFileBasePath(tempDirectory);
 
-                 var wrapper = new ResourceStatusReportWrapper(variables, new ResourceStatusReportExecutor(variables, log, fileSystem, statusChecker));
+                 var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
                  wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
                  wrapper.ExecuteScript(
