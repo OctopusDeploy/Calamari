@@ -1,42 +1,35 @@
 #if NETCORE
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using Calamari.Azure;
 using Calamari.Common.Features.Discovery;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;
+using Calamari.Deployment;
 using Calamari.Kubernetes.Commands;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using SpecialVariables = Calamari.Kubernetes.SpecialVariables;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
-    public class KubernetesContextScriptWrapperLiveFixtureAks: KubernetesContextScriptWrapperLiveFixture
+    public class KubernetesContextScriptWrapperLiveFixtureAksLocalAccessDisabled : KubernetesContextScriptWrapperLiveFixture
     {
-        string aksClusterHost;
-        string aksClusterClientCertificate;
-        string aksClusterClientKey;
-        string aksClusterCaCertificate;
         string aksClusterName;
         string azurermResourceGroup;
-        string aksPodServiceAccountToken;
         string azureSubscriptionId;
 
-        protected override string KubernetesCloudProvider => "AKS";
+        protected override string KubernetesCloudProvider => "AKS-local-access-disabled";
 
         protected override IEnumerable<string> ToolsToAddToPath(InstallTools tools)
         {
             yield return tools.KubeloginExecutable;
         }
-        
+
         protected override async Task InstallOptionalTools(InstallTools tools)
         {
             await tools.InstallKubelogin();
@@ -44,12 +37,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected override void ExtractVariablesFromTerraformOutput(JObject jsonOutput)
         {
-            aksClusterHost = jsonOutput.Get<string>("aks_cluster_host", "value");
-            aksClusterClientCertificate = jsonOutput.Get<string>("aks_cluster_client_certificate", "value");
-            aksClusterClientKey = jsonOutput.Get<string>("aks_cluster_client_key", "value");
-            aksClusterCaCertificate = jsonOutput.Get<string>("aks_cluster_ca_certificate", "value");
             aksClusterName = jsonOutput.Get<string>("aks_cluster_name", "value");
-            aksPodServiceAccountToken = jsonOutput.Get<string>("aks_service_account_token", "value");
             azurermResourceGroup = jsonOutput.Get<string>("aks_rg_name", "value");
         }
 
@@ -58,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures
             azureSubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             return new Dictionary<string, string>()
             {
-                { "ARM_SUBSCRIPTION_ID", azureSubscriptionId},
+                { "ARM_SUBSCRIPTION_ID", azureSubscriptionId },
                 { "ARM_CLIENT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId) },
                 { "ARM_CLIENT_SECRET", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword) },
                 { "ARM_TENANT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId) },
@@ -71,38 +59,11 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
-        public void AuthorisingWithPodServiceAccountToken(bool runAsScript)
-        {
-            variables.Set(SpecialVariables.ClusterUrl, aksClusterHost);
-
-            using (var dir = TemporaryDirectory.Create())
-            using (var podServiceAccountToken = new TemporaryFile(Path.Combine(dir.DirectoryPath, "podServiceAccountToken")))
-            using (var certificateAuthority = new TemporaryFile(Path.Combine(dir.DirectoryPath, "certificateAuthority")))
-            {
-                File.WriteAllText(podServiceAccountToken.FilePath, aksPodServiceAccountToken);
-                File.WriteAllText(certificateAuthority.FilePath, aksClusterCaCertificate);
-                variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
-                variables.Set("Octopus.Action.Kubernetes.CertificateAuthorityPath", certificateAuthority.FilePath);
-
-                if (runAsScript)
-                {
-                    DeployWithKubectlTestScriptAndVerifyResult();
-                }
-                else
-                {
-                    ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
-                }
-            }
-        }
-
-        [Test]
-        [TestCase(true)]
-        [TestCase(false)]
         public void AuthorisingWithAzureServicePrincipal(bool runAsScript)
         {
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
+            variables.Set(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", azurermResourceGroup);
-            variables.Set(SpecialVariables.AksClusterName, aksClusterName);
+            variables.Set(Kubernetes.SpecialVariables.AksClusterName, aksClusterName);
             variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.FalseString);
             variables.Set("Octopus.Action.Azure.SubscriptionId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionId));
             variables.Set("Octopus.Action.Azure.TenantId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
@@ -116,46 +77,6 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
             }
-        }
-
-        [Test]
-        [TestCase(true)]
-        [TestCase(false)]
-        public void AuthorisingWithClientCertificate(bool runAsScript)
-        {
-            variables.Set(SpecialVariables.ClusterUrl, aksClusterHost);
-            var certificateAuthority = "myauthority";
-            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
-            variables.Set($"{certificateAuthority}.CertificatePem", aksClusterCaCertificate);
-            var clientCert = "myclientcert";
-            variables.Set("Octopus.Action.Kubernetes.ClientCertificate", clientCert);
-            variables.Set($"{clientCert}.CertificatePem", aksClusterClientCertificate);
-            variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
-            if (runAsScript)
-            {
-                DeployWithKubectlTestScriptAndVerifyResult();
-            }
-            else
-            {
-                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
-            }
-        }
-
-        [Test]
-        public void UnreachableK8Cluster_ShouldExecuteTargetScript()
-        {
-            const string certificateAuthority = "myauthority";
-            const string unreachableClusterUrl = "https://example.kubernetes.com";
-            const string clientCert = "myclientcert";
-
-            variables.Set(SpecialVariables.ClusterUrl, unreachableClusterUrl);
-            variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
-            variables.Set($"{certificateAuthority}.CertificatePem", aksClusterCaCertificate);
-            variables.Set("Octopus.Action.Kubernetes.ClientCertificate", clientCert);
-            variables.Set($"{clientCert}.CertificatePem", aksClusterClientCertificate);
-            variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
-
-            DeployWithNonKubectlTestScriptAndVerifyResult();
         }
 
         [Test]

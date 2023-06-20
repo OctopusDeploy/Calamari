@@ -119,7 +119,43 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
          }
 
          [Test]
-         public void FindsConfigMapsDeployedInADeployContainerStep()
+         public void FindsConfigMapsDeployedInADeployContainerStepWhenConfigMapDataIsNotEmpty()
+         {
+             var variables = new CalamariVariables();
+             var log = new SilentLog();
+             var fileSystem = new TestCalamariPhysicalFileSystem();
+             var statusChecker = new MockResourceStatusChecker();
+
+             const string configMapName = "ConfigMap-Deployment-01";
+             AddKubernetesStatusCheckVariables(variables);
+             variables.Set("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled", "True");
+             variables.Set("Octopus.Action.KubernetesContainers.ComputedConfigMapName", configMapName);
+             variables.Set("Octopus.Action.KubernetesContainers.ConfigMapData[1].FileName", "1");
+
+             var tempDirectory = fileSystem.CreateTemporaryDirectory();
+             try
+             {
+                 fileSystem.SetFileBasePath(tempDirectory);
+
+                 var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
+                 wrapper.NextWrapper = new StubScriptWrapper().Enable();
+
+                 wrapper.ExecuteScript(
+                     new Script("stub"),
+                     Syntax,
+                     new CommandLineRunner(log, variables),
+                     new Dictionary<string, string>());
+
+                 statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier("ConfigMap", configMapName, "default"));
+             }
+             finally
+             {
+                 fileSystem.DeleteDirectory(tempDirectory);
+             }
+         }
+         
+         [Test]
+         public void SkipsConfigMapsInADeployContainerStepWhenConfigMapDataIsNotSet()
          {
              var variables = new CalamariVariables();
              var log = new SilentLog();
@@ -145,7 +181,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                      new CommandLineRunner(log, variables),
                      new Dictionary<string, string>());
 
-                 statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier("ConfigMap", configMapName, "default"));
+                 statusChecker.CheckedResources.Should().BeEmpty();
              }
              finally
              {
@@ -154,7 +190,46 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
          }
 
          [Test]
-         public void FindsSecretsDeployedInADeployContainerStep()
+         public void FindsSecretsDeployedInADeployContainerStepWhenSecretDataIsSet()
+         {
+             var variables = new CalamariVariables();
+             var log = new SilentLog();
+             var fileSystem = new TestCalamariPhysicalFileSystem();
+             var statusChecker = new MockResourceStatusChecker();
+
+             const string secret = "Secret-Deployment-01";
+             AddKubernetesStatusCheckVariables(variables);
+             variables.Set("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled", "True");
+             variables.Set("Octopus.Action.KubernetesContainers.ComputedSecretName", secret);             
+             variables.Set("Octopus.Action.KubernetesContainers.SecretData[1].FileName", "1");
+
+             var tempDirectory = fileSystem.CreateTemporaryDirectory();
+             try
+             {
+                 fileSystem.SetFileBasePath(tempDirectory);
+
+                 var wrapper = new ResourceStatusReportWrapper(log, variables, fileSystem, statusChecker);
+                 wrapper.NextWrapper = new StubScriptWrapper().Enable();
+
+                 wrapper.ExecuteScript(
+                     new Script("stub"),
+                     Syntax,
+                     new CommandLineRunner(log, variables),
+                     new Dictionary<string, string>());
+
+                 statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
+                 {
+                     new ResourceIdentifier("Secret", secret, "default")
+                 });
+             }
+             finally
+             {
+                 fileSystem.DeleteDirectory(tempDirectory);
+             }
+         }
+         
+         [Test]
+         public void SkipsSecretsInADeployContainerStepWhenSecretDataIsNotSet()
          {
              var variables = new CalamariVariables();
              var log = new SilentLog();
@@ -180,7 +255,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                      new CommandLineRunner(log, variables),
                      new Dictionary<string, string>());
 
-                 statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier("Secret", secret, "default"));
+                 statusChecker.CheckedResources.Should().BeEmpty();
              }
              finally
              {
@@ -226,7 +301,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
     internal class MockResourceStatusChecker : IResourceStatusChecker
     {
-        public List<ResourceIdentifier> CheckedResources { get; private set; }
+        public List<ResourceIdentifier> CheckedResources { get; private set; } = new List<ResourceIdentifier>();
 
         public async Task<bool> CheckStatusUntilCompletionOrTimeout(IKubectl kubectl, IEnumerable<ResourceIdentifier> initialResources, ITimer timer, Options options)
         {
