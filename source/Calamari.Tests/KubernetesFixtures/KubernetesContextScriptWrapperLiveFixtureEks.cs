@@ -41,7 +41,6 @@ namespace Calamari.Tests.KubernetesFixtures
         private const string SimpleDeploymentResource =
             "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80";
 
-        private const string SimpleDeployment2ResourceType = "Deployment";
         private const string SimpleDeployment2ResourceName = "nginx-deployment";
         private const string SimpleDeploymentResource2 =
             "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment2\nspec:\n  selector:\n    matchLabels:\n      app: nginx2\n  replicas: 1\n  template:\n    metadata:\n      labels:\n        app: nginx2\n    spec:\n      containers:\n      - name: nginx2\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 81\n";
@@ -52,17 +51,14 @@ namespace Calamari.Tests.KubernetesFixtures
         private const string FailToDeploymentResource =
             "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx-bad-container-name:1.14.2\n        ports:\n        - containerPort: 80\n";
 
-        private const string SimpleServiceResourceType = "Service";
         private const string SimpleServiceResourceName = "nginx-service";
         private const string SimpleService =
             "apiVersion: v1\nkind: Service\nmetadata:\n  name: nginx-service\nspec:\n  selector:\n    app.kubernetes.io/name: nginx\n  ports:\n    - protocol: TCP\n      port: 80\n      targetPort: 9376";
 
-        private const string SimpleConfigMapResourceType = "ConfigMap";
         private const string SimpleConfigMapResourceName = "game-demo";
         private const string SimpleConfigMap =
             "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: game-demo\ndata:\n  player_initial_lives: '3'\n  ui_properties_file_name: 'user-interface.properties'\n  game.properties: |\n    enemy.types=aliens,monsters\n    player.maximum-lives=5\n  user-interface.properties: |\n    color.good=purple\n    color.bad=yellow\n    allow.textmode=true";
 
-        private const string SimpleConfigMap2ResourceType = "ConfigMap";
         private const string SimpleConfigMap2ResourceName = "game-demo2";
         private const string SimpleConfigMap2 =
             "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: game-demo2\ndata:\n  player_initial_lives: '1'\n  ui_properties_file_name: 'user-interface.properties'\n  game.properties: |\n    enemy.types=blobs,foxes\n    player.maximum-lives=10\n  user-interface.properties: |\n    color.good=orange\n    color.bad=pink\n    allow.textmode=false";
@@ -133,33 +129,34 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
-            var scrubbedJson = AssertResourceCreatedAndGetJson(rawLogs, SimpleDeploymentResourceType, SimpleDeploymentResourceName);
+            var scrubbedJson = AssertResourceCreatedAndGetJson(SimpleDeploymentResourceName);
 
             this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
 
-            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
+            AssertObjectStatusMonitoringStarted(runAsScript, rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
 
             var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
 
-            objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(5);
+            objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(6);
 
             rawLogs.Should().ContainSingle(m =>
                 m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
         }
 
-        private static void AssertObjectStatusMonitoringStarted(string[] rawLogs, params (string Type, string Name)[] resources)
+        private static void AssertObjectStatusMonitoringStarted(bool runAsScript, string[] rawLogs, params (string Type, string Name)[] resources)
         {
-            var idx = Array.IndexOf(rawLogs, "Performing resource status checks on the following resources:");
+            var resourceStatusCheckLog = runAsScript
+                ? "Resource Status Check: Performing resource status checks on the following resources:"
+                : "Resource Status Check: 1 new resources have been added:";
+            var idx = Array.IndexOf(rawLogs, resourceStatusCheckLog);
             foreach (var (i, type, name) in resources.Select((t, i) => (i, t.Type, t.Name)))
             {
                 rawLogs[idx + i + 1].Should().Be($" - {type}/{name} in namespace calamari-testing");
             }
         }
 
-        private string AssertResourceCreatedAndGetJson(string[] rawLogs, string resourceType, string resourceName)
+        private string AssertResourceCreatedAndGetJson(string resourceName)
         {
-            rawLogs.Should().ContainSingle(m => m.Contains($"{resourceType}/{resourceName} created"));
-
             var variableMessages = Log.Messages.GetServiceMessagesOfType("setVariable");
 
             var variableMessage =
@@ -245,11 +242,11 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
-            var scrubbedJson = AssertResourceCreatedAndGetJson(rawLogs, SimpleDeploymentResourceType, SimpleDeploymentResourceName);
+            var scrubbedJson = AssertResourceCreatedAndGetJson(SimpleDeploymentResourceName);
 
             this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
 
-            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
+            AssertObjectStatusMonitoringStarted(runAsScript, rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
 
             rawLogs.Should().ContainSingle(l =>
                 l ==
@@ -286,7 +283,8 @@ namespace Calamari.Tests.KubernetesFixtures
             // We take the logs starting from when Calamari starts applying batches
             // to when the last k8s resource is created and compare them in an assent test.
             var startIndex = Array.FindIndex(rawLogs, l => l.StartsWith("Applying Batch #1"));
-            var endIndex = Array.FindLastIndex(rawLogs, l => l == "Resource Status Check: 2 new resources have been added.");
+            var endIndex =
+                Array.FindLastIndex(rawLogs, l => l == "Resource Status Check: 2 new resources have been added:") + 2;
             var assentLogs = rawLogs.Skip(startIndex)
                                     .Take(endIndex + 1 - startIndex)
                                     .Where(l => !l.StartsWith("##octopus")).ToArray();
@@ -300,7 +298,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 var configMap1Idx = batch3Index + 1;
                 var configMap2Idx = Array.FindIndex(assentLogs, l => l.Contains("myapp-configmap2.yml"));
-                var endIdx = Array.FindIndex(assentLogs, l => l.Contains("game-demo created")) - 1;
+                var endIdx = Array.FindLastIndex(assentLogs, l => l == "Resource Status Check: 2 new resources have been added:") - 1;
                 InPlaceSwap(assentLogs, configMap1Idx, configMap2Idx, endIdx);
             }
 
@@ -311,19 +309,19 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var resources = new[]
             {
-                (Name: SimpleDeploymentResourceName, Type: SimpleDeploymentResourceType, Label: "Deployment1"),
-                (Name: SimpleDeployment2ResourceName, Type: SimpleDeployment2ResourceType, Label: "Deployment2"),
-                (Name: SimpleServiceResourceName, Type: SimpleServiceResourceType, Label: "Service1"),
-                (Name: SimpleConfigMapResourceName, Type: SimpleConfigMapResourceType, Label: "ConfigMap1"),
-                (Name: SimpleConfigMap2ResourceName, Type: SimpleConfigMap2ResourceType, Label: "ConfigMap3")
+                (Name: SimpleDeploymentResourceName, Label: "Deployment1"),
+                (Name: SimpleDeployment2ResourceName,Label: "Deployment2"),
+                (Name: SimpleServiceResourceName, Label: "Service1"),
+                (Name: SimpleConfigMapResourceName, Label: "ConfigMap1"),
+                (Name: SimpleConfigMap2ResourceName, Label: "ConfigMap3")
             };
 
             var statusMessages = Log.Messages.GetServiceMessagesOfType("k8s-status");
 
-            foreach (var (name, type, label) in resources)
+            foreach (var (name, label) in resources)
             {
                 // Check that each resource was created and the appropriate setvariable service message was created.
-                var resource = AssertResourceCreatedAndGetJson(rawLogs, type, name);
+                var resource = AssertResourceCreatedAndGetJson(name);
                 this.Assent(resource, configuration: AssentConfiguration.DefaultWithPostfix(label));
 
                 // Check that each deployed resource has a "Successful" status reported.

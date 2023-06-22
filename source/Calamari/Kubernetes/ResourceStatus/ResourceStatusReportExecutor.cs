@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 
@@ -12,16 +11,13 @@ namespace Calamari.Kubernetes.ResourceStatus
     public class ResourceStatusReportExecutor
     {
         private readonly IVariables variables;
-        private readonly ILog log;
         private readonly RunningResourceStatusCheck.Factory runningResourceStatusCheckFactory;
 
         public ResourceStatusReportExecutor(
             IVariables variables,
-            ILog log,
             RunningResourceStatusCheck.Factory runningResourceStatusCheckFactory)
         {
             this.variables = variables;
-            this.log = log;
             this.runningResourceStatusCheckFactory = runningResourceStatusCheckFactory;
         }
 

@@ -29,7 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var fileSystem = new TestCalamariPhysicalFileSystem();
             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
             var reportExecutor =
-                new ResourceStatusReportExecutor(variables, log, (_, __, rs) => new MockResourceStatusChecker(rs));
+                new ResourceStatusReportExecutor(variables, (_, __, rs) => new MockResourceStatusChecker(rs));
 
             AddKubernetesStatusCheckVariables(variables);
 
@@ -46,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var fileSystem = new TestCalamariPhysicalFileSystem();
             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
             var reportExecutor =
-                new ResourceStatusReportExecutor(variables, log, (_, __, rs) => new MockResourceStatusChecker(rs));
+                new ResourceStatusReportExecutor(variables, (_, __, rs) => new MockResourceStatusChecker(rs));
 
             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
@@ -64,7 +64,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var fileSystem = new TestCalamariPhysicalFileSystem();
             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
             var reportExecutor =
-                new ResourceStatusReportExecutor(variables, log, (_, __, rs) => new MockResourceStatusChecker(rs));
+                new ResourceStatusReportExecutor(variables, (_, __, rs) => new MockResourceStatusChecker(rs));
 
             AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentStyle, "bluegreen");
@@ -82,7 +82,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var fileSystem = new TestCalamariPhysicalFileSystem();
             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
             var reportExecutor =
-                new ResourceStatusReportExecutor(variables, log, (_, __, rs) => new MockResourceStatusChecker(rs));
+                new ResourceStatusReportExecutor(variables, (_, __, rs) => new MockResourceStatusChecker(rs));
 
             AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentWait, "wait");
@@ -101,7 +101,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
 
              AddKubernetesStatusCheckVariables(variables);
              variables.Set(SpecialVariables.CustomResourceYamlFileName, "custom.yml");
@@ -138,7 +138,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
 
              const string configMapName = "ConfigMap-Deployment-01";
              AddKubernetesStatusCheckVariables(variables);
@@ -178,7 +178,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
 
              const string configMapName = "ConfigMap-Deployment-01";
              AddKubernetesStatusCheckVariables(variables);
@@ -217,7 +217,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
 
              const string secret = "Secret-Deployment-01";
              AddKubernetesStatusCheckVariables(variables);
@@ -260,7 +260,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
 
              const string secret = "Secret-Deployment-01";
              AddKubernetesStatusCheckVariables(variables);
@@ -300,7 +300,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
 
              AddKubernetesStatusCheckVariables(variables);
              variables.Set(SpecialVariables.Namespace, @namespace);

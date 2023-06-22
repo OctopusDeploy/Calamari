@@ -55,7 +55,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             if (initialResources.Any())
             {
                 log.Verbose("Resource Status Check: Performing resource status checks on the following resources:");
-                LogResources(initialResources);
+                log.LogResources(initialResources);
             }
             else
             {
@@ -105,7 +105,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 await statusCheckTask;
                 statusCheckTask = RunNewStatusCheck(newResources);
                 log.Verbose($"Resource Status Check: {newResources.Length} new resources have been added:");
-                LogResources(newResources);
+                log.LogResources(newResources);
             }
             finally
             {
@@ -124,7 +124,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         private void LogFailedResources(Dictionary<string, Resource> resourceDictionary)
         {
             log.Verbose("Resource Status Check: The following resources have failed:");
-            LogResources(resourceDictionary.Values);
+            log.LogResources(resourceDictionary.Values);
         }
 
         private void LogInProgressResources(Dictionary<string, Resource> resourceStatuses)
@@ -135,7 +135,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             if (inProgress.Any())
             {
                 log.Verbose("Resource Status Check: the following resources are still in progress by the end of the timeout:");
-                LogResources(inProgress);
+                log.LogResources(inProgress);
             }
         }
 
@@ -150,15 +150,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             if (notCreated.Any())
             {
                 log.Verbose("Resource Status Check: the following resource had not been created by the of the timeout:");
-                LogResources(notCreated);
-            }
-        }
-
-        private void LogResources<T>(IEnumerable<T> resourceToLog) where T : IResourceIdentity
-        {
-            foreach (var resourceIdentifier in resourceToLog)
-            {
-                log.Verbose($" - {resourceIdentifier.Kind}/{resourceIdentifier.Name} in namespace {resourceIdentifier.Namespace}");
+                log.LogResources(notCreated);
             }
         }
     }

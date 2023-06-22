@@ -173,10 +173,14 @@ namespace Calamari.Kubernetes.Commands.Executors
                     lastResources = new List<Resource> { token.ToObject<Resource>() };
                 }
 
-                foreach (var resource in lastResources)
+                var resources = lastResources.Select(r => r.ToResourceIdentifier()).ToList();
+
+                if (resources.Any())
                 {
-                    log.Info($"{resource.Kind}/{resource.Metadata.Name} created");
+                    log.Info("Created Resources:");
+                    log.LogResources(resources);
                 }
+
 
                 return lastResources;
             }

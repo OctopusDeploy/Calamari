@@ -40,8 +40,9 @@ spec:
         ports:
         - containerPort: 81
 
-Deployment/nginx-deployment created
-Deployment/nginx-deployment2 created
+Created Resources:
+ - Deployment/nginx-deployment in namespace calamari-testing
+ - Deployment/nginx-deployment2 in namespace calamari-testing
 Resource Status Check: 2 new resources have been added:
  - Deployment/nginx-deployment in namespace calamari-testing
  - Deployment/nginx-deployment2 in namespace calamari-testing
@@ -58,8 +59,9 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 9376
-Service/nginx-service created
-Resource status reported: 8 updates, 0 removals
+Created Resources:
+ - Service/nginx-service in namespace calamari-testing
+Resource Status Check: reported 9 updates, 0 removals
 Resource Status Check: 1 new resources have been added:
  - Service/nginx-service in namespace calamari-testing
 Applying Batch #3 for YAML matching 'configmaps/*.yml'
@@ -78,6 +80,10 @@ data:
     color.good=orange
     color.bad=pink
     allow.textmode=false
+Created Resources:
+ - ConfigMap/game-demo in namespace calamari-testing
+ - ConfigMap/game-demo2 in namespace calamari-testing
+Resource Status Check: reported 11 updates, 0 removals
 configmaps/myapp-configmap1.yml Contents:
 apiVersion: v1
 kind: ConfigMap
@@ -93,7 +99,6 @@ data:
     color.good=purple
     color.bad=yellow
     allow.textmode=true
-ConfigMap/game-demo created
-ConfigMap/game-demo2 created
-Resource status reported: 10 updates, 0 removals
 Resource Status Check: 2 new resources have been added:
+ - ConfigMap/game-demo in namespace calamari-testing
+ - ConfigMap/game-demo2 in namespace calamari-testing
