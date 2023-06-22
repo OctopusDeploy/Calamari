@@ -11,8 +11,6 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public class ResourceStatusReportExecutor
     {
-        private const int PollingIntervalSeconds = 2;
-
         private readonly IVariables variables;
         private readonly ILog log;
         private readonly RunningResourceStatusCheck.Factory runningResourceStatusCheckFactory;

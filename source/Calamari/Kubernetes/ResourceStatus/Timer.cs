@@ -1,3 +1,4 @@
+#if !NET40
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -28,3 +29,4 @@ namespace Calamari.Kubernetes.ResourceStatus
         public void WaitForInterval() => Thread.Sleep(Interval);
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if !NET40
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -147,3 +148,4 @@ namespace Calamari.Kubernetes.ResourceStatus
         }
     }
 }
+#endif
