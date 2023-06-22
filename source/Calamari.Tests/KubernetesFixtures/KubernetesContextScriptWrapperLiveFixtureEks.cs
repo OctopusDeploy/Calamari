@@ -298,7 +298,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 var configMap1Idx = batch3Index + 1;
                 var configMap2Idx = Array.FindIndex(assentLogs, l => l.Contains("myapp-configmap2.yml"));
-                var endIdx = Array.FindLastIndex(assentLogs, l => l == "Resource Status Check: 2 new resources have been added:") - 1;
+                var endIdx = Array.FindLastIndex(assentLogs, l => l == "Created Resources:") - 1;
                 InPlaceSwap(assentLogs, configMap1Idx, configMap2Idx, endIdx);
             }
 
