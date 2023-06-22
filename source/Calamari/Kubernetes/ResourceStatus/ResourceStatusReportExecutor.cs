@@ -21,17 +21,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.runningResourceStatusCheckFactory = runningResourceStatusCheckFactory;
         }
 
-        public IRunningResourceStatusCheck Start(IEnumerable<ResourceIdentifier> resources)
-        {
-            return DoResourceCheck(resources);
-        }
-
-        public IRunningResourceStatusCheck Start()
-        {
-            return DoResourceCheck();
-        }
-
-        private IRunningResourceStatusCheck DoResourceCheck(IEnumerable<ResourceIdentifier> initialResources = null)
+        public IRunningResourceStatusCheck Start(IEnumerable<ResourceIdentifier> initialResources = null)
         {
             initialResources = initialResources ?? Enumerable.Empty<ResourceIdentifier>();
             var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
