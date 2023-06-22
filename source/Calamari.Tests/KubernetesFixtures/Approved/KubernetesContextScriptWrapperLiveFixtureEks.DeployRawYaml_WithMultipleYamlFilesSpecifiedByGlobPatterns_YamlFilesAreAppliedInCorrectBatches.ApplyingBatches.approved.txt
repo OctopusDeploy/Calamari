@@ -80,10 +80,6 @@ data:
     color.good=orange
     color.bad=pink
     allow.textmode=false
-Created Resources:
- - ConfigMap/game-demo in namespace calamari-testing
- - ConfigMap/game-demo2 in namespace calamari-testing
-Resource Status Check: reported 11 updates, 0 removals
 configmaps/myapp-configmap1.yml Contents:
 apiVersion: v1
 kind: ConfigMap
@@ -99,6 +95,10 @@ data:
     color.good=purple
     color.bad=yellow
     allow.textmode=true
+Created Resources:
+ - ConfigMap/game-demo in namespace calamari-testing
+ - ConfigMap/game-demo2 in namespace calamari-testing
+Resource Status Check: reported 11 updates, 0 removals
 Resource Status Check: 2 new resources have been added:
  - ConfigMap/game-demo in namespace calamari-testing
  - ConfigMap/game-demo2 in namespace calamari-testing
