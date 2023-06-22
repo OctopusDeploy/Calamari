@@ -15,7 +15,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 {
 
     [TestFixture]
-    public class ResourceStatusCheckerTests
+    public class RunningResourceStatusCheckTests
     {
         [Test]
         public async Task ShouldReportStatusesWithIncrementingCheckCount()
@@ -23,21 +23,20 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
             var kubectl = GetKubectl();
-            var resourceStatusChecker = new ResourceStatusChecker(retriever, reporter, new InMemoryLog());
-
-            var timer = new TestTimer(5);
+            var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
+            var log = new InMemoryLog();
 
             for (var i = 0; i < 5; i++)
             {
                 retriever.SetResponses(new List<Resource>{ new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress) });
             }
 
-            await resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
-                kubectl,
-                new[]
-                {
-                    new ResourceIdentifier("Pod", "my-pod", "default")
-                }, timer, new Options());
+            var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
+            {
+                new ResourceIdentifier("Pod", "my-pod", "default")
+            });
+
+            await resourceStatusChecker.WaitForCompletionOrTimeout();
 
             reporter.CheckCounts().Should().BeEquivalentTo(new List<int> { 1, 2, 3, 4, 5 });
         }
@@ -47,26 +46,24 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
-			var kubectl = GetKubectl();
+            var kubectl = GetKubectl();
+            var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
             var log = new InMemoryLog();
-            var resourceStatusChecker = new ResourceStatusChecker(retriever, reporter, log);
-
-            var timer = new TestTimer(2);
 
             retriever.SetResponses(
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) }
             );
 
-            var result = await resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
-                kubectl,
-                new[]
-                {
-                    new ResourceIdentifier("Pod", "my-pod", "default")
-                }, timer, new Options());
+            var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
+            {
+                new ResourceIdentifier("Pod", "my-pod", "default")
+            });
+
+            var result = await resourceStatusChecker.WaitForCompletionOrTimeout();
 
             result.Should().BeTrue();
             log.StandardError.Should().BeEmpty();
-            log.StandardOut.Should().Contain(ResourceStatusChecker.MessageDeploymentSucceeded);
+            log.StandardOut.Should().Contain(RunningResourceStatusCheck.MessageDeploymentSucceeded);
         }
 
         [Test]
@@ -74,27 +71,25 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
-			var kubectl = GetKubectl();
+            var kubectl = GetKubectl();
+            var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
             var log = new InMemoryLog();
-            var resourceStatusChecker = new ResourceStatusChecker(retriever, reporter, log);
-
-            var timer = new TestTimer(2);
 
             retriever.SetResponses(
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed) }
             );
 
-            var result = await resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
-                kubectl,
-                new[]
-                {
-                    new ResourceIdentifier("Pod", "my-pod", "default")
-                }, timer, new Options());
+            var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
+            {
+                new ResourceIdentifier("Pod", "my-pod", "default")
+            });
+
+            var result = await resourceStatusChecker.WaitForCompletionOrTimeout();
 
             result.Should().BeFalse();
             log.StandardError
                 .Should().ContainSingle().Which
-                .Should().Be(ResourceStatusChecker.MessageDeploymentFailed);
+                .Should().Be(RunningResourceStatusCheck.MessageDeploymentFailed);
         }
 
         [Test]
@@ -103,27 +98,25 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
             var kubectl = GetKubectl();
+            var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
             var log = new InMemoryLog();
-            var resourceStatusChecker = new ResourceStatusChecker(retriever, reporter, log);
-
-            var timer = new TestTimer(2);
 
             retriever.SetResponses(
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress) },
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress) }
             );
 
-            var result = await resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
-                kubectl,
-                new[]
-                {
-                    new ResourceIdentifier("Pod", "my-pod", "default")
-                }, timer, new Options());
+            var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
+            {
+                new ResourceIdentifier("Pod", "my-pod", "default")
+            });
+
+            var result = await resourceStatusChecker.WaitForCompletionOrTimeout();
 
             result.Should().BeFalse();
             log.StandardError
                 .Should().ContainSingle().Which
-                .Should().Be(ResourceStatusChecker.MessageInProgressAtTheEndOfTimeout);
+                .Should().Be(RunningResourceStatusCheck.MessageInProgressAtTheEndOfTimeout);
         }
 
         [Test]
@@ -132,10 +125,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
             var kubectl = GetKubectl();
+            var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
             var log = new InMemoryLog();
-            var resourceStatusChecker = new ResourceStatusChecker(retriever, reporter, log);
-
-            var timer = new TestTimer(2);
 
             retriever.SetResponses(
                 new List<Resource>
@@ -145,16 +136,16 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                         new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress))
                 });
 
-            var result = await resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
-                kubectl,
-                new[]
-                {
-                    new ResourceIdentifier("ReplicaSet", "my-rs", "default")
-                }, timer, new Options());
+            var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
+            {
+                new ResourceIdentifier("ReplicaSet", "my-rs", "default")
+            });
+
+            var result = await resourceStatusChecker.WaitForCompletionOrTimeout();
 
             result.Should().BeTrue();
             log.StandardError.Should().BeEmpty();
-            log.StandardOut.Should().Contain(ResourceStatusChecker.MessageDeploymentSucceeded);
+            log.StandardOut.Should().Contain(RunningResourceStatusCheck.MessageDeploymentSucceeded);
         }
 
         [Test]
@@ -163,28 +154,26 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
             var kubectl = GetKubectl();
-			var log = new InMemoryLog();
-            var resourceStatusChecker = new ResourceStatusChecker(retriever, reporter, log);
-
-            var timer = new TestTimer(2);
+            var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
+            var log = new InMemoryLog();
 
             retriever.SetResponses(
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) },
                 new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) }
             );
 
-            var result = await resourceStatusChecker.CheckStatusUntilCompletionOrTimeout(
-                kubectl,
-                new[]
-                {
-                    new ResourceIdentifier("Pod", "my-pod", "default"),
-                    new ResourceIdentifier("Service", "my-service", "default")
-                }, timer, new Options());
+            var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
+            {
+                new ResourceIdentifier("Pod", "my-pod", "default"),
+                new ResourceIdentifier("Service", "my-service", "default")
+            });
+
+            var result = await resourceStatusChecker.WaitForCompletionOrTimeout();
 
             result.Should().BeFalse();
             log.StandardError
                 .Should().ContainSingle().Which
-                .Should().Be(ResourceStatusChecker.MessageInProgressAtTheEndOfTimeout);
+                .Should().Be(RunningResourceStatusCheck.MessageInProgressAtTheEndOfTimeout);
         }
 
         private IKubectl GetKubectl()
@@ -192,6 +181,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var kubectl = Substitute.For<IKubectl>();
             kubectl.TrySetKubectl().Returns(true);
             return kubectl;
+        }
+
+        private Func<ResourceStatusCheckTask> GetStatusCheckTaskFactory(IResourceRetriever retriever,
+            IResourceUpdateReporter reporter, IKubectl kubectl, int maxChecks)
+        {
+            return () => new ResourceStatusCheckTask(retriever, reporter, kubectl, () => new TestTimer(maxChecks));
         }
     }
 
@@ -232,6 +227,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         private int checks;
 
         public TestTimer(int maxChecks) => this.maxChecks = maxChecks;
+        public TimeSpan Interval { get; set; }
+        public TimeSpan Duration { get; set; }
         public void Start() { }
         public void Restart() { }
 

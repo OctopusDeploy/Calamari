@@ -27,15 +27,15 @@ namespace Calamari.Kubernetes.ResourceStatus
                 while (!parser.Accept<StreamEnd>(out _))
                 {
                     var definedResource = GetDefinedResource(parser, defaultNamespace);
-                    if (definedResource == null)
+                    if (!definedResource.HasValue)
                         break;
 
-                    yield return definedResource;
+                    yield return definedResource.Value;
                 }
             }
         }
 
-        private static ResourceIdentifier GetDefinedResource(IParser parser, string defaultNamespace)
+        private static ResourceIdentifier? GetDefinedResource(IParser parser, string defaultNamespace)
         {
             try
             {

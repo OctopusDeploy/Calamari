@@ -11,7 +11,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         [Test]
         public void ZeroDurationTimer_ShouldNotCompleteBeforeItIsStarted()
         {
-            var timer = new Timer(TimeSpan.Zero, TimeSpan.FromSeconds(1));
+            var timer = new Timer()
+            {
+                Duration = TimeSpan.Zero,
+                Interval = TimeSpan.FromSeconds(1)
+            };
             timer.HasCompleted().Should().BeFalse();
         }
     }

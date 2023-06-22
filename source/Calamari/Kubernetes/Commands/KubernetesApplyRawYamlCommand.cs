@@ -24,7 +24,7 @@ namespace Calamari.Kubernetes.Commands
         private readonly ILog log;
         private readonly IVariables variables;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly IResourceStatusChecker resourceStatusChecker;
+        private readonly ResourceStatusReportExecutor statusReporter;
         private readonly Kubectl kubectl;
 
         public KubernetesApplyRawYamlCommand(
@@ -35,7 +35,7 @@ namespace Calamari.Kubernetes.Commands
             IExtractPackage extractPackage,
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
-            IResourceStatusChecker resourceStatusChecker,
+            ResourceStatusReportExecutor statusReporter,
             Kubectl kubectl)
             : base(log, deploymentJournalWriter, variables, fileSystem, extractPackage,
             substituteInFiles, structuredConfigVariablesService, kubectl)
@@ -43,7 +43,7 @@ namespace Calamari.Kubernetes.Commands
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
-            this.resourceStatusChecker = resourceStatusChecker;
+            this.statusReporter = statusReporter;
             this.kubectl = kubectl;
         }
 
@@ -58,16 +58,13 @@ namespace Calamari.Kubernetes.Commands
 
         protected override async Task<bool> ExecuteCommand(RunningDeployment runningDeployment)
         {
-            var statusReportExecutor = new ResourceStatusReportExecutor(variables, log, fileSystem,
-                resourceStatusChecker, kubectl);
-
             var gatherAndApplyRawYamlExecutor =
                 new GatherAndApplyRawYamlExecutor(log, fileSystem, kubectl);
 
-            statusReportExecutor.StartReportingStatus(runningDeployment.CurrentDirectory);
+            var statusCheck = statusReporter.Start();
 
-            return gatherAndApplyRawYamlExecutor.Execute(runningDeployment, statusReportExecutor.AddResources) &&
-                await statusReportExecutor.WaitForStatusReportingToComplete();
+            return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment, statusCheck.AddResources) &&
+                await statusCheck.WaitForCompletionOrTimeout();
         }
     }
 }

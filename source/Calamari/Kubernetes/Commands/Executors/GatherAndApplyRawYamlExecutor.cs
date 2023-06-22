@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -34,7 +35,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             this.kubectl = kubectl;
         }
 
-        public bool Execute(RunningDeployment deployment, Action<ResourceIdentifier[]> appliedResourcesCallback)
+        public async Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback)
         {
             try
             {
@@ -43,12 +44,13 @@ namespace Calamari.Kubernetes.Commands.Executors
                 if (globs == null || globs.All(g => g.IsNullOrEmpty()))
                     return true;
                 var directories = GroupFilesIntoDirectories(deployment, globs, variables);
-                var resources = directories.SelectMany(d =>
+                var resources = new HashSet<Resource>();
+                foreach (var directory in directories)
                 {
-                    var res = ApplyBatchAndReturnResources(d).ToList();
-                    appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
-                    return res;
-                });
+                    var res = ApplyBatchAndReturnResources(directory).ToList();
+                    await appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
+                    resources.UnionWith(res);
+                }
 
                 WriteResourcesToOutputVariables(resources);
                 return true;
