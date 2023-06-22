@@ -32,7 +32,6 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         public IRunningResourceStatusCheck Start()
         {
-            log.Info("Resource Status Check Started: Waiting for resources to be applied.");
             return DoResourceCheck();
         }
 

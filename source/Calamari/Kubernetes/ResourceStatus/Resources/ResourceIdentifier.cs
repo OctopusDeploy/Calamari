@@ -3,7 +3,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
    /// <summary>
    /// Identifies a unique resource in a kubernetes cluster
    /// </summary>
-   public struct ResourceIdentifier
+   public struct ResourceIdentifier : IResourceIdentity
    {
        // API version is irrelevant for identifying a resource,
        // since the resource name must be unique across all api versions.

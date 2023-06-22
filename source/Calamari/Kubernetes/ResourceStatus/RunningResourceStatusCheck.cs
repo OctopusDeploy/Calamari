@@ -51,6 +51,16 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.log = log;
             this.timeout = timeout;
             this.options = options;
+            initialResources = initialResources.ToList();
+            if (initialResources.Any())
+            {
+                log.Verbose("Resource Status Check: Performing resource status checks on the following resources:");
+                LogResources(initialResources);
+            }
+            else
+            {
+                log.Verbose("Resource Status Check: Waiting for resources to be applied.");
+            }
             statusCheckTask = RunNewStatusCheck(initialResources);
         }
 
@@ -67,7 +77,8 @@ namespace Calamari.Kubernetes.ResourceStatus
                         log.Info(MessageDeploymentSucceeded);
                         return true;
                     case DeploymentStatus.InProgress:
-                        LogInProgressResources(result.DefinedResourceStatuses, result.ResourceStatuses, result.DefiniedResources);
+                        LogInProgressResources(result.ResourceStatuses);
+                        LogNotCreatedResources(result.DefinedResourceStatuses, result.DefiniedResources);
                         log.Error(MessageInProgressAtTheEndOfTimeout);
                         return false;
                     case DeploymentStatus.Failed:
@@ -93,7 +104,8 @@ namespace Calamari.Kubernetes.ResourceStatus
                 taskCancellationTokenSource.Cancel();
                 await statusCheckTask;
                 statusCheckTask = RunNewStatusCheck(newResources);
-                log.Verbose($"Resource Status Check: {newResources.Length} new resources have been added.");
+                log.Verbose($"Resource Status Check: {newResources.Length} new resources have been added:");
+                LogResources(newResources);
             }
             finally
             {
@@ -111,36 +123,42 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private void LogFailedResources(Dictionary<string, Resource> resourceDictionary)
         {
-            log.Verbose("The following resources have failed:");
-            foreach (var resource in resourceDictionary.Values)
-            {
-                log.Verbose($" - {resource.Kind}/{resource.Name} in namespace {resource.Namespace}");
-            }
+            log.Verbose("Resource Status Check: The following resources have failed:");
+            LogResources(resourceDictionary.Values);
         }
 
-        private void LogInProgressResources(Resource[] definedResourceStatuses, Dictionary<string, Resource> resourceStatuses, IEnumerable<ResourceIdentifier> definedResources)
+        private void LogInProgressResources(Dictionary<string, Resource> resourceStatuses)
         {
             var inProgress = resourceStatuses.Values
                                              .Where(resource => resource.ResourceStatus == Resources.ResourceStatus.InProgress)
                                              .ToList();
             if (inProgress.Any())
             {
-                log.Verbose("The following resources are still in progress by the end of timeout:");
-                foreach (var resource in inProgress)
-                {
-                    log.Verbose($" - {resource.Kind}/{resource.Name} in namespace {resource.Namespace}");
-                }
+                log.Verbose("Resource Status Check: the following resources are still in progress by the end of the timeout:");
+                LogResources(inProgress);
             }
+        }
 
-            foreach (var definedResource in definedResources)
-            {
-                if (!definedResourceStatuses.Any(resource =>
+        private void LogNotCreatedResources(Resource[] definedResourceStatuses, IEnumerable<ResourceIdentifier> definedResources)
+        {
+            var notCreated = definedResources.Where(definedResource =>
+                !definedResourceStatuses.Any(resource =>
                     resource.Kind == definedResource.Kind
                     && resource.Name == definedResource.Name
-                    && resource.Namespace == definedResource.Namespace))
-                {
-                    log.Verbose($"Resource {definedResource.Kind}/{definedResource.Name} in namespace {definedResource.Namespace} is not created by the end of timeout");
-                }
+                    && resource.Namespace == definedResource.Namespace)).ToList();
+
+            if (notCreated.Any())
+            {
+                log.Verbose("Resource Status Check: the following resource had not been created by the of the timeout:");
+                LogResources(notCreated);
+            }
+        }
+
+        private void LogResources<T>(IEnumerable<T> resourceToLog) where T : IResourceIdentity
+        {
+            foreach (var resourceIdentifier in resourceToLog)
+            {
+                log.Verbose($" - {resourceIdentifier.Kind}/{resourceIdentifier.Name} in namespace {resourceIdentifier.Namespace}");
             }
         }
     }

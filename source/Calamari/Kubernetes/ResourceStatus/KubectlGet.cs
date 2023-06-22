@@ -14,18 +14,20 @@ namespace Calamari.Kubernetes.ResourceStatus
     {
         public string Resource(string kind, string name, string @namespace, IKubectl kubectl)
         {
-            return kubectl.ExecuteCommandAndReturnOutput(new[]
+            var result = kubectl.ExecuteCommandAndReturnOutput(new[]
             {
                 "get", kind, name, "-o json", $"-n {@namespace}"
-            }).Output.InfoLogs.Join(string.Empty);
+            });
+            return result.Output.InfoLogs.Join(string.Empty);
         }
 
         public string AllResources(string kind, string @namespace, IKubectl kubectl)
         {
-            return kubectl.ExecuteCommandAndReturnOutput(new[]
+            var result = kubectl.ExecuteCommandAndReturnOutput(new[]
             {
                 "get", kind, "-o json", $"-n {@namespace}"
-            }).Output.InfoLogs.Join(string.Empty);
+            });
+            return result.Output.InfoLogs.Join(string.Empty);
         }
     }
 }

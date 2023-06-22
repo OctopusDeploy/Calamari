@@ -42,7 +42,9 @@ spec:
 
 Deployment/nginx-deployment created
 Deployment/nginx-deployment2 created
-Resource Status Check: 2 new resources have been added.
+Resource Status Check: 2 new resources have been added:
+ - Deployment/nginx-deployment in namespace calamari-testing
+ - Deployment/nginx-deployment2 in namespace calamari-testing
 Applying Batch #2 for YAML matching 'services/myapp-service.yml'
 services/myapp-service.yml Contents:
 apiVersion: v1
@@ -58,7 +60,8 @@ spec:
       targetPort: 9376
 Service/nginx-service created
 Resource status reported: 8 updates, 0 removals
-Resource Status Check: 1 new resources have been added.
+Resource Status Check: 1 new resources have been added:
+ - Service/nginx-service in namespace calamari-testing
 Applying Batch #3 for YAML matching 'configmaps/*.yml'
 configmaps/myapp-configmap2.yml Contents:
 apiVersion: v1
@@ -93,4 +96,4 @@ data:
 ConfigMap/game-demo created
 ConfigMap/game-demo2 created
 Resource status reported: 10 updates, 0 removals
-Resource Status Check: 2 new resources have been added.
+Resource Status Check: 2 new resources have been added:
