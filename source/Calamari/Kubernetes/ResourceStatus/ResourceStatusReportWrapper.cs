@@ -13,14 +13,18 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public class ResourceStatusReportWrapper : IScriptWrapper
     {
+        private readonly Kubectl kubectl;
         private readonly IVariables variables;
         private readonly ICalamariFileSystem fileSystem;
         private readonly ResourceStatusReportExecutor statusReportExecutor;
 
-        public ResourceStatusReportWrapper(IVariables variables,
+        public ResourceStatusReportWrapper(
+            Kubectl kubectl,
+            IVariables variables,
             ICalamariFileSystem fileSystem,
             ResourceStatusReportExecutor statusReportExecutor)
         {
+            this.kubectl = kubectl;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.statusReportExecutor = statusReportExecutor;
@@ -53,7 +57,8 @@ namespace Calamari.Kubernetes.ResourceStatus
             Dictionary<string, string> environmentVars)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
-
+            kubectl.SetWorkingDirectory(workingDirectory);
+            kubectl.SetEnvironmentVariables(environmentVars);
             var resourceFinder = new ResourceFinder(variables, fileSystem);
 
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);

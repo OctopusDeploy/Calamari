@@ -5,6 +5,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
+using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Testing.Helpers;
@@ -26,12 +27,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var variables = new CalamariVariables();
             var log = new SilentLog();
             var fileSystem = new TestCalamariPhysicalFileSystem();
+            var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
             var reportExecutor =
                 new ResourceStatusReportExecutor(variables, log, (_, __, rs) => new MockResourceStatusChecker(rs));
 
             AddKubernetesStatusCheckVariables(variables);
 
-            var wrapper = new ResourceStatusReportWrapper(variables, fileSystem, reportExecutor);
+            var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
 
             wrapper.IsEnabled(Syntax).Should().BeTrue();
         }
@@ -42,13 +44,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var variables = new CalamariVariables();
             var log = new SilentLog();
             var fileSystem = new TestCalamariPhysicalFileSystem();
+            var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
             var reportExecutor =
                 new ResourceStatusReportExecutor(variables, log, (_, __, rs) => new MockResourceStatusChecker(rs));
 
             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
 
-            var wrapper = new ResourceStatusReportWrapper(variables, fileSystem, reportExecutor);
+            var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
@@ -59,13 +62,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var variables = new CalamariVariables();
             var log = new SilentLog();
             var fileSystem = new TestCalamariPhysicalFileSystem();
+            var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
             var reportExecutor =
                 new ResourceStatusReportExecutor(variables, log, (_, __, rs) => new MockResourceStatusChecker(rs));
 
             AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentStyle, "bluegreen");
 
-            var wrapper = new ResourceStatusReportWrapper(variables, fileSystem, reportExecutor);
+            var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
@@ -76,13 +80,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var variables = new CalamariVariables();
             var log = new SilentLog();
             var fileSystem = new TestCalamariPhysicalFileSystem();
+            var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
             var reportExecutor =
                 new ResourceStatusReportExecutor(variables, log, (_, __, rs) => new MockResourceStatusChecker(rs));
 
             AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentWait, "wait");
 
-            var wrapper = new ResourceStatusReportWrapper(variables, fileSystem, reportExecutor);
+            var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
@@ -93,6 +98,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var variables = new CalamariVariables();
              var log = new SilentLog();
              var fileSystem = new TestCalamariPhysicalFileSystem();
+             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
                  new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
@@ -105,7 +111,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
              fileSystem.SetFileBasePath(testDirectory);
 
-             var wrapper = new ResourceStatusReportWrapper(variables, fileSystem, reportExecutor);
+             var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
              wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
              wrapper.ExecuteScript(
@@ -129,6 +135,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var variables = new CalamariVariables();
              var log = new SilentLog();
              var fileSystem = new TestCalamariPhysicalFileSystem();
+             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
                  new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
@@ -144,7 +151,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              {
                  fileSystem.SetFileBasePath(tempDirectory);
 
-                 var wrapper = new ResourceStatusReportWrapper(variables, fileSystem, reportExecutor);
+                 var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
                  wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
                  wrapper.ExecuteScript(
@@ -168,6 +175,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var variables = new CalamariVariables();
              var log = new SilentLog();
              var fileSystem = new TestCalamariPhysicalFileSystem();
+             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
                  new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
@@ -182,7 +190,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              {
                  fileSystem.SetFileBasePath(tempDirectory);
 
-                 var wrapper = new ResourceStatusReportWrapper(variables, fileSystem, reportExecutor);
+                 var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
                  wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
                  wrapper.ExecuteScript(
@@ -206,6 +214,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var variables = new CalamariVariables();
              var log = new SilentLog();
              var fileSystem = new TestCalamariPhysicalFileSystem();
+             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
                  new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
@@ -221,7 +230,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              {
                  fileSystem.SetFileBasePath(tempDirectory);
 
-                 var wrapper = new ResourceStatusReportWrapper(variables, fileSystem, reportExecutor);
+                 var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
                  wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
                  wrapper.ExecuteScript(
@@ -248,6 +257,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var variables = new CalamariVariables();
              var log = new SilentLog();
              var fileSystem = new TestCalamariPhysicalFileSystem();
+             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
                  new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
@@ -262,7 +272,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              {
                  fileSystem.SetFileBasePath(tempDirectory);
 
-                 var wrapper = new ResourceStatusReportWrapper(variables, fileSystem, reportExecutor);
+                 var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
                  wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
                  wrapper.ExecuteScript(
@@ -287,6 +297,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              var variables = new CalamariVariables();
              var log = new SilentLog();
              var fileSystem = new TestCalamariPhysicalFileSystem();
+             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
              MockResourceStatusChecker statusChecker = null;
              var reportExecutor =
                  new ResourceStatusReportExecutor(variables, log, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
@@ -299,7 +310,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
              fileSystem.SetFileBasePath(testDirectory);
 
-             var wrapper = new ResourceStatusReportWrapper(variables, fileSystem, reportExecutor);
+             var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
              wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
              wrapper.ExecuteScript(

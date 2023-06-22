@@ -57,6 +57,7 @@ spec:
       port: 80
       targetPort: 9376
 Service/nginx-service created
+Resource status reported: 8 updates, 0 removals
 Resource Status Check: 1 new resources have been added.
 Applying Batch #3 for YAML matching 'configmaps/*.yml'
 configmaps/myapp-configmap2.yml Contents:
@@ -91,4 +92,5 @@ data:
     allow.textmode=true
 ConfigMap/game-demo created
 ConfigMap/game-demo2 created
+Resource status reported: 10 updates, 0 removals
 Resource Status Check: 2 new resources have been added.

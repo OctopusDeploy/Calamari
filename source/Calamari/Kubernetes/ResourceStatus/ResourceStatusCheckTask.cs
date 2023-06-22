@@ -47,6 +47,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             var checkCount = 0;
             return await Task.Run(() =>
             {
+                timer.Start();
                 var result = new Result();
                 do
                 {

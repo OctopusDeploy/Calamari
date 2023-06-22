@@ -93,6 +93,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 taskCancellationTokenSource.Cancel();
                 await statusCheckTask;
                 statusCheckTask = RunNewStatusCheck(newResources);
+                log.Verbose($"Resource Status Check: {newResources.Length} new resources have been added.");
             }
             finally
             {
