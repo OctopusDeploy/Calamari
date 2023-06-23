@@ -8,7 +8,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
     /// <summary>
     /// Represents a kubernetes resource in a cluster, including its status
     /// </summary>
-    public class Resource
+    public class Resource : IResourceIdentity
     {
         [JsonIgnore] protected JObject data;
 
@@ -23,12 +23,12 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         [JsonIgnore]
         public virtual string ChildKind => "";
-    
+
         [JsonIgnore]
         public IEnumerable<Resource> Children { get; internal set; }
-    
+
         internal Resource() { }
-        
+
         public Resource(JObject json, Options options)
         {
             data = json;
@@ -38,13 +38,13 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             Name = Field("$.metadata.name");
             Namespace = Field("$.metadata.namespace");
         }
-    
+
         public virtual bool HasUpdate(Resource lastStatus) => false;
 
         public virtual void UpdateChildren(IEnumerable<Resource> children) => Children = children;
-        
+
         protected string Field(string jsonPath) => FieldOrDefault(jsonPath, "");
-        
+
         protected T FieldOrDefault<T>(string jsonPath, T defaultValue)
         {
             var result = data.SelectToken(jsonPath);
@@ -61,7 +61,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 return defaultValue;
             }
         }
-    
+
         protected static T CastOrThrow<T>(Resource resource) where T: Resource
         {
             if (resource is T subType)

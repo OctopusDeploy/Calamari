@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Aws.Integration;
 using Calamari.Commands;
 using Calamari.Commands.Support;
@@ -60,7 +62,16 @@ namespace Calamari.Kubernetes.Commands
                 v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
         }
 
-        protected abstract IEnumerable<IInstallConvention> CommandSpecificConventions();
+        protected virtual IEnumerable<IInstallConvention> CommandSpecificInstallConventions() =>
+            Enumerable.Empty<IInstallConvention>();
+
+        /// <remarks>
+        /// This empty implementation uses Task.FromResult(new object()); instead of
+        /// Task.CompletedTask because Task.CompletedTask was only added in .NET 4.6.1
+        /// so it is not compatible with Calamari.
+        /// </remarks>
+        protected virtual async Task<bool> ExecuteCommand(RunningDeployment runningDeployment) =>
+            await Task.FromResult(true);
 
         public override int Execute(string[] commandLineArguments)
         {
@@ -108,7 +119,7 @@ namespace Calamari.Kubernetes.Commands
 
             conventions.Add(new KubernetesAuthContextConvention(log, new CommandLineRunner(log, variables), kubectl));
 
-            conventions.AddRange(CommandSpecificConventions());
+            conventions.AddRange(CommandSpecificInstallConventions());
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
 
@@ -116,21 +127,15 @@ namespace Calamari.Kubernetes.Commands
             try
             {
                 conventionRunner.RunConventions(logExceptions: false);
-                deploymentJournalWriter.AddJournalEntry(runningDeployment, true, pathToPackage);
+                var result = ExecuteCommand(runningDeployment).GetAwaiter().GetResult();
+                deploymentJournalWriter.AddJournalEntry(runningDeployment, result, pathToPackage);
+                return result ? 0 : -1;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 deploymentJournalWriter.AddJournalEntry(runningDeployment, false, pathToPackage);
-
-                if (e is KubernetesDeploymentFailedException || e is TimeoutException)
-                {
-                    return -1;
-                }
-
                 throw;
             }
-
-            return 0;
         }
     }
 }

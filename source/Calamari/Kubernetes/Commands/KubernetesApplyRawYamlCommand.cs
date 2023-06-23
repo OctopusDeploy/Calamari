@@ -1,6 +1,6 @@
 #if !NET40
 using System;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.StructuredVariables;
@@ -9,9 +9,8 @@ using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.Conventions;
 using Calamari.FeatureToggles;
-using Calamari.Kubernetes.Conventions;
+using Calamari.Kubernetes.Commands.Executors;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 
@@ -25,7 +24,7 @@ namespace Calamari.Kubernetes.Commands
         private readonly ILog log;
         private readonly IVariables variables;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly ResourceStatusReportExecutor statusReportExecutor;
+        private readonly ResourceStatusReportExecutor statusReporter;
         private readonly Kubectl kubectl;
 
         public KubernetesApplyRawYamlCommand(
@@ -36,7 +35,7 @@ namespace Calamari.Kubernetes.Commands
             IExtractPackage extractPackage,
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
-            ResourceStatusReportExecutor statusReportExecutor,
+            ResourceStatusReportExecutor statusReporter,
             Kubectl kubectl)
             : base(log, deploymentJournalWriter, variables, fileSystem, extractPackage,
             substituteInFiles, structuredConfigVariablesService, kubectl)
@@ -44,7 +43,7 @@ namespace Calamari.Kubernetes.Commands
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
-            this.statusReportExecutor = statusReportExecutor;
+            this.statusReporter = statusReporter;
             this.kubectl = kubectl;
         }
 
@@ -57,10 +56,15 @@ namespace Calamari.Kubernetes.Commands
             return base.Execute(commandLineArguments);
         }
 
-        protected override IEnumerable<IInstallConvention> CommandSpecificConventions()
+        protected override async Task<bool> ExecuteCommand(RunningDeployment runningDeployment)
         {
-            yield return new GatherAndApplyRawYamlConvention(log, fileSystem, kubectl);
-            yield return new ResourceStatusReportConvention(statusReportExecutor);
+            var gatherAndApplyRawYamlExecutor =
+                new GatherAndApplyRawYamlExecutor(log, fileSystem, kubectl);
+
+            var statusCheck = statusReporter.Start();
+
+            return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment, statusCheck.AddResources) &&
+                await statusCheck.WaitForCompletionOrTimeout();
         }
     }
 }

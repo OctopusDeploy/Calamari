@@ -35,7 +35,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .WithName("nginx-pod-1")
                 .WithOwnerUid(replicaSetUid)
                 .Build();
-            
+
             var pod2 = new ResourceResponseBuilder()
                 .WithKind("Pod")
                 .WithName("nginx-pod-2")
@@ -44,19 +44,19 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var kubectlGet = new MockKubectlGet();
             var resourceRetriever = new ResourceRetriever(kubectlGet);
-            
+
             kubectlGet.SetResource("nginx", nginxDeployment);
             kubectlGet.SetAllResources("ReplicaSet", nginxReplicaSet);
             kubectlGet.SetAllResources("Pod", pod1, pod2);
-            
-            
+
+
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
                     new ResourceIdentifier("Deployment", "nginx", "octopus")
                 },
                 null, new Options());
-            
+
             got.Should().BeEquivalentTo(new object[]
             {
                 new
@@ -91,19 +91,19 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .WithName("deployment-1")
                 .WithUid(deployment1Uid)
                 .Build();
-            
+
             var replicaSet1 = new ResourceResponseBuilder()
                 .WithKind("ReplicaSet")
                 .WithName("replicaset-1")
                 .WithOwnerUid(deployment1Uid)
                 .Build();
-            
+
             var deployment2 = new ResourceResponseBuilder()
                 .WithKind("Deployment")
                 .WithName("deployment-2")
                 .WithUid(deployment2Uid)
                 .Build();
-            
+
             var replicaSet2 = new ResourceResponseBuilder()
                 .WithKind("ReplicaSet")
                 .WithName("replicaset-2")
@@ -112,12 +112,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var kubectlGet = new MockKubectlGet();
             var resourceRetriever = new ResourceRetriever(kubectlGet);
-            
+
             kubectlGet.SetResource("deployment-1", deployment1);
             kubectlGet.SetResource("deployment-2", deployment2);
             kubectlGet.SetAllResources("ReplicaSet", replicaSet1, replicaSet2);
             kubectlGet.SetAllResources("Pod");
-            
+
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
@@ -125,7 +125,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                     new ResourceIdentifier("Deployment", "deployment-2", "octopus")
                 },
                 null, new Options());
-            
+
             got.Should().BeEquivalentTo(new object[]
             {
                 new
@@ -181,7 +181,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var kubectlGet = new MockKubectlGet();
             var resourceRetriever = new ResourceRetriever(kubectlGet);
-            
+
             kubectlGet.SetResource("rs", replicaSet);
             kubectlGet.SetAllResources("Pod", childPod, irrelevantPod);
 
@@ -192,7 +192,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                     new ResourceIdentifier("ReplicaSet", "rs", "octopus"),
                 },
                 null, new Options());
-            
+
             got.Should().BeEquivalentTo(new object[]
             {
                 new
@@ -224,12 +224,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         }
 
 
-        public string Resource(string kind, string name, string @namespace, Kubectl kubectl)
+        public string Resource(string kind, string name, string @namespace, IKubectl kubectl)
         {
             return resourceEntries[name];
         }
 
-        public string AllResources(string kind, string @namespace, Kubectl kubectl)
+        public string AllResources(string kind, string @namespace, IKubectl kubectl)
         {
             return resourcesByKind[kind];
         }

@@ -35,7 +35,7 @@ namespace Calamari.Tests.KubernetesFixtures
             this.kubectl = kubectl;
         }
 
-        protected override IEnumerable<IInstallConvention> CommandSpecificConventions()
+        protected override IEnumerable<IInstallConvention> CommandSpecificInstallConventions()
         {
             yield return new TestKubectlAuthConvention(kubectl);
         }
