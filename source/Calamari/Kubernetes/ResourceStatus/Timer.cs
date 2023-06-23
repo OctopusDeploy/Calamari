@@ -10,8 +10,6 @@ namespace Calamari.Kubernetes.ResourceStatus
     /// </summary>
     public interface ITimer
     {
-        TimeSpan Interval { get; set; }
-        TimeSpan Duration { get; set; }
         void Start();
         void Restart();
         bool HasCompleted();
@@ -20,13 +18,21 @@ namespace Calamari.Kubernetes.ResourceStatus
 
     public class Timer : ITimer
     {
+        public delegate ITimer Factory(TimeSpan interval, TimeSpan duration);
+
         private readonly Stopwatch stopwatch = new Stopwatch();
-        public TimeSpan Interval { get; set; } = TimeSpan.FromSeconds(1);
-        public TimeSpan Duration { get; set; } = Timeout.InfiniteTimeSpan;
+        private readonly TimeSpan interval;
+        private readonly TimeSpan duration;
+
+        public Timer(TimeSpan interval, TimeSpan duration)
+        {
+            this.interval = interval;
+            this.duration = duration;
+        }
         public void Start() => stopwatch.Start();
         public void Restart() => stopwatch.Restart();
-        public bool HasCompleted() => Duration != Timeout.InfiniteTimeSpan && stopwatch.IsRunning && stopwatch.Elapsed >= Duration;
-        public void WaitForInterval() => Thread.Sleep(Interval);
+        public bool HasCompleted() => duration != Timeout.InfiniteTimeSpan && stopwatch.IsRunning && stopwatch.Elapsed >= duration;
+        public void WaitForInterval() => Thread.Sleep(interval);
     }
 }
 #endif

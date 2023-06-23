@@ -186,7 +186,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         private Func<ResourceStatusCheckTask> GetStatusCheckTaskFactory(IResourceRetriever retriever,
             IResourceUpdateReporter reporter, IKubectl kubectl, int maxChecks)
         {
-            return () => new ResourceStatusCheckTask(retriever, reporter, kubectl, () => new TestTimer(maxChecks));
+            return () => new ResourceStatusCheckTask(retriever, reporter, kubectl, (_, __) => new TestTimer(maxChecks));
         }
     }
 

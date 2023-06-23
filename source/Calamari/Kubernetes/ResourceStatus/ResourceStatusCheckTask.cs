@@ -17,13 +17,13 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly IResourceRetriever resourceRetriever;
         private readonly IResourceUpdateReporter reporter;
         private readonly IKubectl kubectl;
-        private readonly Func<ITimer> timerFactory;
+        private readonly Timer.Factory timerFactory;
 
         public ResourceStatusCheckTask(
             IResourceRetriever resourceRetriever,
             IResourceUpdateReporter reporter,
             IKubectl kubectl,
-            Func<ITimer> timerFactory)
+            Timer.Factory timerFactory)
         {
             this.resourceRetriever = resourceRetriever;
             this.reporter = reporter;
@@ -39,9 +39,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 throw new Exception("Unable to set KubeCtl");
             }
 
-            var timer = timerFactory();
-            timer.Duration = timeout;
-            timer.Interval = TimeSpan.FromSeconds(PollingIntervalSeconds);
+            var timer = timerFactory(TimeSpan.FromSeconds(PollingIntervalSeconds), timeout);
 
             var definedResources = resources.ToArray();
             var checkCount = 0;
