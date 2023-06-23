@@ -225,15 +225,16 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     {
         private readonly int maxChecks;
         private int checks;
-
         public TestTimer(int maxChecks) => this.maxChecks = maxChecks;
-        public TimeSpan Interval { get; set; }
-        public TimeSpan Duration { get; set; }
+
         public void Start() { }
-        public void Restart() { }
 
         public bool HasCompleted() => checks >= maxChecks;
-        public void WaitForInterval() => checks++;
+        public async Task WaitForInterval()
+        {
+            await Task.CompletedTask;
+            checks++;
+        }
     }
 
     public sealed class TestResource : Resource

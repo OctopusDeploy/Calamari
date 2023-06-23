@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
@@ -11,9 +12,8 @@ namespace Calamari.Kubernetes.ResourceStatus
     public interface ITimer
     {
         void Start();
-        void Restart();
         bool HasCompleted();
-        void WaitForInterval();
+        Task WaitForInterval();
     }
 
     public class Timer : ITimer
@@ -30,9 +30,8 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.duration = duration;
         }
         public void Start() => stopwatch.Start();
-        public void Restart() => stopwatch.Restart();
         public bool HasCompleted() => duration != Timeout.InfiniteTimeSpan && stopwatch.IsRunning && stopwatch.Elapsed >= duration;
-        public void WaitForInterval() => Thread.Sleep(interval);
+        public async Task WaitForInterval() => await Task.Delay(interval);
     }
 }
 #endif

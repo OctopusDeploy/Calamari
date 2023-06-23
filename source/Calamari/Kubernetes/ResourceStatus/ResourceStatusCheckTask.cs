@@ -43,7 +43,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var definedResources = resources.ToArray();
             var checkCount = 0;
-            return await Task.Run(() =>
+            return await Task.Run(async () =>
             {
                 timer.Start();
                 var result = new Result();
@@ -76,7 +76,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                         definedResourceStatuses,
                         resourceStatuses);
 
-                    timer.WaitForInterval();
+                    await timer.WaitForInterval();
                 } while (!timer.HasCompleted() && result.DeploymentStatus == DeploymentStatus.InProgress);
 
                 return result;
