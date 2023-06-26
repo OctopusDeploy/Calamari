@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Calamari.Azure;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.FileSystem;
@@ -33,20 +34,25 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected override IEnumerable<string> ToolsToAddToPath(InstallTools tools)
         {
-            yield break;
+            yield return tools.KubeloginExecutable;
+        }
+        
+        protected override async Task InstallOptionalTools(InstallTools tools)
+        {
+            await tools.InstallKubelogin();
         }
 
         protected override void ExtractVariablesFromTerraformOutput(JObject jsonOutput)
         {
-            aksClusterHost = jsonOutput["aks_cluster_host"]["value"].Value<string>();
-            aksClusterClientCertificate = jsonOutput["aks_cluster_client_certificate"]["value"].Value<string>();
-            aksClusterClientKey = jsonOutput["aks_cluster_client_key"]["value"].Value<string>();
-            aksClusterCaCertificate = jsonOutput["aks_cluster_ca_certificate"]["value"].Value<string>();
-            aksClusterName = jsonOutput["aks_cluster_name"]["value"].Value<string>();
-            aksPodServiceAccountToken = jsonOutput["aks_service_account_token"]["value"].Value<string>();
-            azurermResourceGroup = jsonOutput["aks_rg_name"]["value"].Value<string>();
+            aksClusterHost = jsonOutput.Get<string>("aks_cluster_host", "value");
+            aksClusterClientCertificate = jsonOutput.Get<string>("aks_cluster_client_certificate", "value");
+            aksClusterClientKey = jsonOutput.Get<string>("aks_cluster_client_key", "value");
+            aksClusterCaCertificate = jsonOutput.Get<string>("aks_cluster_ca_certificate", "value");
+            aksClusterName = jsonOutput.Get<string>("aks_cluster_name", "value");
+            aksPodServiceAccountToken = jsonOutput.Get<string>("aks_service_account_token", "value");
+            azurermResourceGroup = jsonOutput.Get<string>("aks_rg_name", "value");
         }
-        
+
         protected override Dictionary<string, string> GetEnvironmentVars()
         {
             azureSubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
@@ -63,10 +69,12 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void AuthorisingWithPodServiceAccountToken()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithPodServiceAccountToken(bool runAsScript)
         {
             variables.Set(SpecialVariables.ClusterUrl, aksClusterHost);
-            
+
             using (var dir = TemporaryDirectory.Create())
             using (var podServiceAccountToken = new TemporaryFile(Path.Combine(dir.DirectoryPath, "podServiceAccountToken")))
             using (var certificateAuthority = new TemporaryFile(Path.Combine(dir.DirectoryPath, "certificateAuthority")))
@@ -75,13 +83,22 @@ namespace Calamari.Tests.KubernetesFixtures
                 File.WriteAllText(certificateAuthority.FilePath, aksClusterCaCertificate);
                 variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
                 variables.Set("Octopus.Action.Kubernetes.CertificateAuthorityPath", certificateAuthority.FilePath);
-                var wrapper = CreateWrapper();
-                TestScriptAndVerifyCluster(wrapper, "Test-Script");
+
+                if (runAsScript)
+                {
+                    DeployWithKubectlTestScriptAndVerifyResult();
+                }
+                else
+                {
+                    ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+                }
             }
         }
-        
+
         [Test]
-        public void AuthorisingWithAzureServicePrincipal()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithAzureServicePrincipal(bool runAsScript)
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", azurermResourceGroup);
@@ -91,12 +108,20 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Azure.TenantId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
             variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
             variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
-            var wrapper = CreateWrapper();
-            TestScriptAndVerifyCluster(wrapper, "Test-Script");
+            if (runAsScript)
+            {
+                DeployWithKubectlTestScriptAndVerifyResult();
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+            }
         }
 
         [Test]
-        public void AuthorisingWithClientCertificate()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithClientCertificate(bool runAsScript)
         {
             variables.Set(SpecialVariables.ClusterUrl, aksClusterHost);
             var certificateAuthority = "myauthority";
@@ -106,8 +131,14 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.ClientCertificate", clientCert);
             variables.Set($"{clientCert}.CertificatePem", aksClusterClientCertificate);
             variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
-            var wrapper = CreateWrapper();
-            TestScriptAndVerifyCluster(wrapper, "Test-Script");
+            if (runAsScript)
+            {
+                DeployWithKubectlTestScriptAndVerifyResult();
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+            }
         }
 
         [Test]
@@ -116,7 +147,7 @@ namespace Calamari.Tests.KubernetesFixtures
             const string certificateAuthority = "myauthority";
             const string unreachableClusterUrl = "https://example.kubernetes.com";
             const string clientCert = "myclientcert";
-            
+
             variables.Set(SpecialVariables.ClusterUrl, unreachableClusterUrl);
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", aksClusterCaCertificate);
@@ -124,24 +155,22 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{clientCert}.CertificatePem", aksClusterClientCertificate);
             variables.Set($"{clientCert}.PrivateKeyPem", aksClusterClientKey);
 
-            var wrapper = CreateWrapper();
-
-            TestScript(wrapper, "Test-Script");
+            DeployWithNonKubectlTestScriptAndVerifyResult();
         }
 
         [Test]
-        public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount(bool setHealthCheckContainer)
         {
-            var serviceMessageCollectorLog = new ServiceMessageCollectorLog();
-            Log = serviceMessageCollectorLog;
-        
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
                 "testProject",
                 null,
                 new[] { "discovery-role" },
-                "WorkerPool-1");
-        
+                "WorkerPool-1",
+                setHealthCheckContainer ? new FeedImage("MyImage:with-tag", "Feeds-123") : null);
+
             var account = new ServicePrincipalAccount(
                 ExternalVariables.Get(ExternalVariable.AzureSubscriptionId),
                 ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId),
@@ -150,46 +179,49 @@ namespace Calamari.Tests.KubernetesFixtures
                 null,
                 null,
                 null);
-        
+
             var authenticationDetails =
                 new AccountAuthenticationDetails<ServicePrincipalAccount>(
                     "Azure",
                     "Accounts-1",
                     account);
-        
+
             var targetDiscoveryContext =
                 new TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(scope,
                     authenticationDetails);
-        
-            var result =
-                ExecuteDiscoveryCommand(targetDiscoveryContext,
-                    new[]{"Calamari.Azure"}
-                );
-            
-            result.AssertSuccess();
+
+            ExecuteDiscoveryCommandAndVerifyResult(targetDiscoveryContext);
 
             var targetName = $"aks/{azureSubscriptionId}/{azurermResourceGroup}/{aksClusterName}";
+            var serviceMessageProperties = new Dictionary<string, string>
+            {
+                { "name", targetName },
+                { "clusterName", aksClusterName },
+                { "clusterResourceGroup", azurermResourceGroup },
+                { "skipTlsVerification", bool.TrueString },
+                { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
+                { "octopusAccountIdOrName", "Accounts-1" },
+                { "octopusRoles", "discovery-role" },
+                { "updateIfExisting", bool.TrueString },
+                { "isDynamic", bool.TrueString },
+                { "awsUseWorkerCredentials", bool.FalseString },
+                { "awsAssumeRole", bool.FalseString }
+            };
+
+            if (scope.HealthCheckContainer != null)
+            {
+                serviceMessageProperties.Add("healthCheckContainerImageFeedIdOrName", scope.HealthCheckContainer.FeedIdOrName);
+                serviceMessageProperties.Add("healthCheckContainerImage", scope.HealthCheckContainer.ImageNameAndTag);
+            }
+
             var expectedServiceMessage = new ServiceMessage(
                 KubernetesDiscoveryCommand.CreateKubernetesTargetServiceMessageName,
-                new Dictionary<string, string>
-                {
-                    { "name", targetName },
-                    { "clusterName", aksClusterName },
-                    { "clusterResourceGroup", azurermResourceGroup },
-                    { "skipTlsVerification", bool.TrueString },
-                    { "octopusDefaultWorkerPoolIdOrName", scope.WorkerPoolId },
-                    { "octopusAccountIdOrName", "Accounts-1" },
-                    { "octopusRoles", "discovery-role" },
-                    { "updateIfExisting", bool.TrueString },
-                    { "isDynamic", bool.TrueString },
-                    { "awsUseWorkerCredentials", bool.FalseString },
-                    { "awsAssumeRole", bool.FalseString },
-                });
-        
-            serviceMessageCollectorLog.ServiceMessages.Should()
-                                      .ContainSingle(s => s.Properties["name"] == targetName)
-                                      .Which.Should()
-                                      .BeEquivalentTo(expectedServiceMessage);
+                serviceMessageProperties);
+
+            Log.ServiceMessages.Should()
+                .ContainSingle(s => s.Properties.ContainsKey("name") && s.Properties["name"] == targetName)
+                .Which.Should()
+                .BeEquivalentTo(expectedServiceMessage);
         }
     }
 }

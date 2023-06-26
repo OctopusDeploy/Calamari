@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Net;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -62,6 +60,9 @@ namespace Calamari.Integration.Packages.Download
                     break;
                 case FeedType.Helm:
                     downloader = new HelmChartPackageDownloader(fileSystem);
+                    break;
+                case FeedType.OciRegistry:
+                    downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner));
                     break;
                 case FeedType.Docker:
                 case FeedType.AwsElasticContainerRegistry:

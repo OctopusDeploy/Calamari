@@ -563,7 +563,9 @@ namespace Calamari.Terraform.Tests
             }
         }
 
+        //TODO: #team-modern-deployments-requests-and-discussion
         [Test]
+        [Ignore("Test needs to be updated because s3 bucket doesn't seem to support ACLs anymore.")]
         public async Task AWSIntegration()
         {
             var bucketName = $"cfe2e-tf-{Guid.NewGuid().ToString("N").Substring(0, 6)}";

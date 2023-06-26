@@ -19,22 +19,31 @@ using Calamari.Deployment.PackageRetention;
 using Calamari.Integration.Certificates;
 using Calamari.Integration.FileSystem;
 using Calamari.Kubernetes.Commands.Discovery;
+using Calamari.Kubernetes.Integration;
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
+#if !NET40
+using Calamari.Aws.Deployment;
+using Calamari.Azure;
+#endif
 
 namespace Calamari
 {
     public class Program : CalamariFlavourProgram
     {
-        List<string> extensions;
-
         protected Program(ILog log) : base(log)
         {
         }
 
         public static int Main(string[] args)
         {
-            return new Program(ConsoleLog.Instance).Run(args);
+            return new Program(ConsoleLog.Instance).Execute(args);
+        }
+
+        public int Execute(params string[] args)
+        {
+            return Run(args);
         }
 
         protected override int ResolveAndExecuteCommand(IContainer container, CommonOptions options)
@@ -53,15 +62,17 @@ namespace Calamari
 
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
-            // Setting extensions here as in the new Modularity world we don't register extensions
-            // and GetAllAssembliesToRegister doesn't get passed CommonOptions
-            extensions = options.Extensions;
-
             base.ConfigureContainer(builder, options);
 
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
+            builder.RegisterType<ResourceRetriever>().As<IResourceRetriever>().SingleInstance();
+            builder.RegisterType<ResourceStatusChecker>().As<IResourceStatusChecker>().SingleInstance();
+            builder.RegisterType<ResourceUpdateReporter>().As<IResourceUpdateReporter>().SingleInstance();
+            builder.RegisterType<ResourceStatusReportExecutor>().AsSelf();
+            builder.RegisterType<Kubectl>().AsSelf().InstancePerLifetimeScope();
+            builder.RegisterType<KubectlGet>().As<IKubectlGet>().SingleInstance();
 
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()
@@ -75,6 +86,8 @@ namespace Calamari
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.
             var assembliesToRegister = GetAllAssembliesToRegister().ToArray();
+
+            builder.RegisterAssemblyModules(assembliesToRegister);
 
             builder.RegisterAssemblyTypes(assembliesToRegister)
                    .AssignableTo<IKubernetesDiscoverer>()
@@ -99,8 +112,14 @@ namespace Calamari
 
         IEnumerable<Assembly> GetExtensionAssemblies()
         {
-            foreach (var extension in extensions)
-                yield return Assembly.Load(extension) ?? throw new CommandException($"Could not find the extension {extension}");
+#if !NET40
+            //Calamari.Aws
+            yield return typeof(AwsSpecialVariables).Assembly;
+            //Calamari.Azure
+            yield return typeof(ServicePrincipalAccount).Assembly;
+#else
+                return Enumerable.Empty<Assembly>();
+#endif
         }
 
         protected override IEnumerable<Assembly> GetAllAssembliesToRegister()
@@ -118,14 +137,6 @@ namespace Calamari
             {
                 yield return extensionAssembly;
             }
-        }
-    }
-
-    static class ExtensionMethods
-    {
-        public static bool HasAttribute<T>(this Type type) where T : Attribute
-        {
-            return type.GetCustomAttributes(false).Any(a => a is T);
         }
     }
 }

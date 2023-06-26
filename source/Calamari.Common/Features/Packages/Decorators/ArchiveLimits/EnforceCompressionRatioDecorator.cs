@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using SharpCompress.Archives;
 
 namespace Calamari.Common.Features.Packages.Decorators.ArchiveLimits
@@ -30,11 +31,12 @@ namespace Calamari.Common.Features.Packages.Decorators.ArchiveLimits
             {
                 if (maximumCompressionRatio >= 1)
                 {
+                    var archiveInfo = new FileInfo(packageFile);
                     using (var archive = ArchiveFactory.Open(packageFile))
                     {
+                        var compressedSize = archiveInfo.Length;
                         var uncompressedSize = archive.TotalUncompressSize;
-                        var compressedSize = archive.TotalSize;
-                        var compressionRatio = uncompressedSize == 0 ? 0 : uncompressedSize / compressedSize;
+                        var compressionRatio = compressedSize == 0 ? 0 : (double)uncompressedSize / compressedSize;
 
                         if (compressionRatio > maximumCompressionRatio)
                         {

@@ -14,6 +14,7 @@ using Microsoft.Rest;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 
@@ -114,12 +115,16 @@ namespace Calamari.AzureAppService.Tests
 
             await CreateOrUpdateTestWebApp(tags);
 
-            // Act
-            await sut.Execute(context);
+            await Eventually.ShouldEventually(async () =>
+            {
+                // Act
+                await sut.Execute(context);
 
-            // Assert
-            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
-            log.StandardOut.Should().Contain(serviceMessageToCreateWebAppTarget.ToString());
+                // Assert
+                var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
+                var serviceMessageString = serviceMessageToCreateWebAppTarget.ToString();
+                log.StandardOut.Should().Contain(serviceMessageString);
+            }, log, CancellationToken.None);
         }
 
         [Test]
@@ -136,7 +141,7 @@ namespace Calamari.AzureAppService.Tests
             var tags = new Dictionary<string, string>
             {
                 { TargetTags.EnvironmentTagName, EnvironmentName },
-                { TargetTags.RoleTagName, "a-different-role" },
+                { TargetTags.RoleTagName, Role },
             };
 
             await CreateOrUpdateTestWebApp(tags);
@@ -145,7 +150,7 @@ namespace Calamari.AzureAppService.Tests
             await sut.Execute(context);
 
             // Assert
-            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
+            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, "a-different-role", null, null);
             log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "The web app target should not be created as the role tag did not match");
         }
 
@@ -168,18 +173,21 @@ namespace Calamari.AzureAppService.Tests
 
             await CreateOrUpdateTestWebAppSlots(tags);
 
-            // Act
-            await sut.Execute(context);
-
-            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
-            log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "A target should not be created for the web app itself, only for slots within the web app");
-
-            // Assert
-            foreach (var slotName in slotNames)
+            await Eventually.ShouldEventually(async () =>
             {
-                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
-                log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
-            }
+                // Act
+                await sut.Execute(context);
+
+                var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
+                log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "A target should not be created for the web app itself, only for slots within the web app");
+
+                // Assert
+                foreach (var slotName in slotNames)
+                {
+                    var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
+                    log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
+                }
+            }, log, CancellationToken.None);
         }
 
         [Test]
@@ -202,18 +210,21 @@ namespace Calamari.AzureAppService.Tests
             await CreateOrUpdateTestWebApp(tags);
             await CreateOrUpdateTestWebAppSlots(tags);
 
-            // Act
-            await sut.Execute(context);
-
-            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
-            log.StandardOut.Should().Contain(serviceMessageToCreateWebAppTarget.ToString(), "A target should be created for the web app itself as well as for the slots");
-
-            // Assert
-            foreach (var slotName in slotNames)
+            await Eventually.ShouldEventually(async () =>
             {
-                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
-                log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
-            }
+                // Act
+                await sut.Execute(context);
+
+                var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
+                log.StandardOut.Should().Contain(serviceMessageToCreateWebAppTarget.ToString(), "A target should be created for the web app itself as well as for the slots");
+
+                // Assert
+                foreach (var slotName in slotNames)
+                {
+                    var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
+                    log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
+                }
+            }, log, CancellationToken.None);
         }
 
         [Test]
@@ -240,18 +251,27 @@ namespace Calamari.AzureAppService.Tests
             await CreateOrUpdateTestWebApp(webAppTags);
             await CreateOrUpdateTestWebAppSlots(slotTags);
 
-            // Act
-            await sut.Execute(context);
-
-            var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
-            log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "A target should not be created for the web app as the tags directly on the web app do not match, even though when combined with the slot tags they do");
-
-            // Assert
-            foreach (var slotName in slotNames)
+            await Eventually.ShouldEventually(async () =>
             {
-                var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
-                log.StandardOut.Should().NotContain(serviceMessageToCreateTargetForSlot.ToString(), "A target should not be created for the web app slot as the tags directly on the slot do not match, even though when combined with the web app tags they do");
-            }
+                // Act
+                await sut.Execute(context);
+
+                var serviceMessageToCreateWebAppTarget =
+                    TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName,
+                        AccountId, Role, null, null);
+                log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(),
+                    "A target should not be created for the web app as the tags directly on the web app do not match, even though when combined with the slot tags they do");
+
+                // Assert
+                foreach (var slotName in slotNames)
+                {
+                    var serviceMessageToCreateTargetForSlot =
+                        TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName,
+                            AccountId, Role, null, slotName);
+                    log.StandardOut.Should().NotContain(serviceMessageToCreateTargetForSlot.ToString(),
+                        "A target should not be created for the web app slot as the tags directly on the slot do not match, even though when combined with the web app tags they do");
+                }
+            }, log, CancellationToken.None);
         }
 
         private async Task CreateOrUpdateTestWebApp(Dictionary<string, string> tags = null)

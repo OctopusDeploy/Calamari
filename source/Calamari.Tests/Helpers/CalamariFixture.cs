@@ -36,7 +36,7 @@ namespace Calamari.Tests.Helpers
 
             if (!File.Exists(calamariFullPath))
                 throw new Exception($"Could not find Calamari test wrapper at {calamariFullPath}");
-            return new CommandLine(calamariFullPath).UseDotnet();
+            return new CommandLine(calamariFullPath).UseDotnet().OutputToLog(false);
 #endif
         }
 
@@ -74,9 +74,9 @@ namespace Calamari.Tests.Helpers
             return new CalamariResult(exitCode, capture);
         }
 
-        protected CalamariResult Invoke(CommandLine command, IVariables variables = null)
+        protected CalamariResult Invoke(CommandLine command, IVariables variables = null, ILog log = null)
         {
-            var runner = new TestCommandLineRunner(ConsoleLog.Instance, variables ?? new CalamariVariables());
+            var runner = new TestCommandLineRunner(log ?? ConsoleLog.Instance, variables ?? new CalamariVariables());
             var result = runner.Execute(command.Build());
             return new CalamariResult(result.ExitCode, runner.Output);
         }

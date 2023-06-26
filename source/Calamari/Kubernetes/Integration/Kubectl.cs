@@ -15,20 +15,39 @@ namespace Calamari.Kubernetes.Integration
     public class Kubectl : CommandLineTool
     {
         readonly string customKubectlExecutable;
+        private bool isSet;
 
-        public Kubectl(string customKubectlExecutable, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
-            : base(log, commandLineRunner, workingDirectory, environmentVars)
+        public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner)
+            : this(variables, log, commandLineRunner, Environment.CurrentDirectory, new Dictionary<string, string>())
         {
-            this.customKubectlExecutable = customKubectlExecutable;
+        }
+
+        public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory,
+            Dictionary<string, string> environmentVariables) : base(log, commandLineRunner, workingDirectory, environmentVariables)
+        {
+            customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
+        }
+        public void SetWorkingDirectory(string directory)
+        {
+            workingDirectory = directory;
+        }
+
+        public void SetEnvironmentVariables(Dictionary<string, string> variables)
+        {
+            environmentVars = variables;
         }
 
         public bool TrySetKubectl()
         {
+            if (isSet) return true;
+
             if (string.IsNullOrEmpty(customKubectlExecutable))
             {
-                var foundExecutable = CalamariEnvironment.IsRunningOnWindows
-                    ? ExecuteCommandAndReturnOutput("where", "kubectl.exe").FirstOrDefault()
-                    : ExecuteCommandAndReturnOutput("which", "kubectl").FirstOrDefault();
+                var result = CalamariEnvironment.IsRunningOnWindows
+                    ? base.ExecuteCommandAndReturnOutput("where", "kubectl.exe")
+                    : base.ExecuteCommandAndReturnOutput("which", "kubectl");
+
+                var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
 
                 if (string.IsNullOrEmpty(foundExecutable))
                 {
@@ -49,9 +68,10 @@ namespace Calamari.Kubernetes.Integration
                 ExecutableLocation = customKubectlExecutable;
             }
 
-            if (TryExecuteKubectlCommand("version", "--client", "--short"))
+            if (TryExecuteKubectlCommand("version", "--client", "--output=yaml"))
             {
                 log.Verbose($"Found kubectl and successfully verified it can be executed.");
+                isSet = true;
                 return true;
             }
 
@@ -70,16 +90,19 @@ namespace Calamari.Kubernetes.Integration
             var commandInvocation = new CommandLineInvocation(ExecutableLocation, kubectlArguments);
             return ExecuteCommandAndLogOutput(commandInvocation);
         }
-        
+
         public void ExecuteCommandAndAssertSuccess(params string[] arguments)
         {
             var result = ExecuteCommand(arguments);
             result.VerifySuccess();
         }
 
+        public CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments) =>
+            base.ExecuteCommandAndReturnOutput(ExecutableLocation, arguments);
+
         public Maybe<SemanticVersion> GetVersion()
         {
-            var kubectlVersionOutput = ExecuteCommandAndReturnOutput(ExecutableLocation, "version", "--client", "--output=json");
+            var kubectlVersionOutput = ExecuteCommandAndReturnOutput("version", "--client", "--output=json").Output.InfoLogs;
             var kubeCtlVersionJson = string.Join(" ", kubectlVersionOutput);
             try
             {

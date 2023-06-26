@@ -15,10 +15,11 @@ namespace Calamari.Kubernetes.Integration
 
         public bool ExistsOnPath()
         {
-            var foundExecutable = CalamariEnvironment.IsRunningOnWindows
-                ? ExecuteCommandAndReturnOutput("where", "gke-gcloud-auth-plugin.exe").FirstOrDefault()
-                : ExecuteCommandAndReturnOutput("which", "gke-gcloud-auth-plugin").FirstOrDefault();
+            var result = CalamariEnvironment.IsRunningOnWindows
+                ? ExecuteCommandAndReturnOutput("where", "gke-gcloud-auth-plugin.exe")
+                : ExecuteCommandAndReturnOutput("which", "gke-gcloud-auth-plugin");
 
+            var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
             return !string.IsNullOrEmpty(foundExecutable);
         }
     }

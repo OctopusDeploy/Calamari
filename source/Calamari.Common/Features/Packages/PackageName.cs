@@ -157,10 +157,11 @@ namespace Calamari.Common.Features.Packages
         {
             var fileName = Path.GetFileName(path) ?? "";
 
-            if (!TryParseEncodedFileName(fileName, out var packageId, out var version, out var extension) &&
-                !TryParseUnsafeFileName(fileName, out packageId, out version, out extension))
+            if (!TryParseEncodedFileName(fileName, out var packageId, out var fileVersion, out var extension) &&
+                !TryParseUnsafeFileName(fileName, out packageId, out fileVersion, out extension))
                 throw new Exception($"Unexpected file format in {fileName}.\nExpected Octopus cached file format: `<PackageId>{SectionDelimiter}<Version>{SectionDelimiter}<CacheBuster>.<Extension>` or `<PackageId>.<SemverVersion>.<Extension>`");
 
+            var version = fileVersion;
             //TODO: Extract... Obviously _could_ be an issue for .net core
             if (extension.Equals(".nupkg", StringComparison.OrdinalIgnoreCase) && File.Exists(path))
             {
@@ -172,12 +173,12 @@ namespace Calamari.Common.Features.Packages
                 packageId = metaData.Id;
             }
 
-            return new PackageFileNameMetadata(packageId, version, extension);
+            return new PackageFileNameMetadata(packageId, version, fileVersion, extension);
         }
-        
+
         public static bool TryMatchTarExtensions(string fileName, out string strippedFileName, out string extension)
         {
-            // At the moment we only have one use case for this: files ending in ".tar.xyz" 
+            // At the moment we only have one use case for this: files ending in ".tar.xyz"
             // As that is the only format of multiple part extensions we currently supported: https://octopus.com/docs/packaging-applications
             // But if in the future we have more, we can modify this method to accomodate more cases.
             var knownExtensionPatterns = @"\.tar((\.[a-zA-Z0-9]+)?)";
@@ -234,6 +235,8 @@ namespace Calamari.Common.Features.Packages
                     return VersionFactory.CreateSemanticVersion(Decode(input.Substring(1)), true);
                 case 'M':
                     return VersionFactory.CreateMavenVersion(Decode(input.Substring(1)));
+                case 'O':
+                    return VersionFactory.CreateOctopusVersion(Decode(input.Substring(1)));
             }
 
             throw new Exception($"Unrecognised Version format `{input}`");

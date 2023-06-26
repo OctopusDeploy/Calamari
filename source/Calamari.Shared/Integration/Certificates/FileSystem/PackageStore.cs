@@ -46,8 +46,10 @@ namespace Calamari.Integration.FileSystem
                 if (packageNameMetadata == null)
                     continue;
 
-                if (!string.Equals(packageNameMetadata.PackageId, packageId, StringComparison.OrdinalIgnoreCase) ||
-                    !packageNameMetadata.Version.Equals(version))
+                if (!string.Equals(packageNameMetadata.PackageId, packageId, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                
+                if (!packageNameMetadata.Version.Equals(version) && !packageNameMetadata.FileVersion.Equals(version))
                     continue;
 
                 var physicalPackageMetadata = PackagePhysicalFileMetadata.Build(file, packageNameMetadata);

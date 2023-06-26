@@ -33,7 +33,7 @@ namespace Calamari.Common.Features.Scripting.Python
         {
             var encryptionKey = ToHex(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
-            commandArguments.Append($"\"{bootstrapFile}\" {scriptParameters} \"{encryptionKey}\"");
+            commandArguments.Append($"\"-u\" \"{bootstrapFile}\" {scriptParameters} \"{encryptionKey}\"");
             return commandArguments.ToString();
         }
 

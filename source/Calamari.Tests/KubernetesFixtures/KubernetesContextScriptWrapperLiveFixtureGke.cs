@@ -28,7 +28,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             yield return tools.GcloudExecutable;
         }
-        
+
         protected override async Task InstallOptionalTools(InstallTools tools)
         {
             await tools.InstallGCloud();
@@ -53,7 +53,9 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void AuthorisingWithToken()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithToken(bool runAsScript)
         {
             variables.Set(SpecialVariables.ClusterUrl, $"https://{gkeClusterEndpoint}");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
@@ -61,12 +63,20 @@ namespace Calamari.Tests.KubernetesFixtures
             var certificateAuthority = "myauthority";
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", gkeClusterCaCertificate);
-            var wrapper = CreateWrapper();
-            TestScriptAndVerifyCluster(wrapper, "Test-Script");
+            if (runAsScript)
+            {
+                DeployWithKubectlTestScriptAndVerifyResult();
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+            }
         }
 
         [Test]
-        public void AuthorisingWithGoogleCloudAccount()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithGoogleCloudAccount(bool runAsScript)
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, gkeClusterName);
@@ -76,8 +86,14 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", gkeProject);
             variables.Set("Octopus.Action.GoogleCloud.Zone", gkeLocation);
-            var wrapper = CreateWrapper();
-            TestScriptAndVerifyCluster(wrapper, "Test-Script");
+            if (runAsScript)
+            {
+                DeployWithKubectlTestScriptAndVerifyResult();
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+            }
         }
 
         [Test]
@@ -92,9 +108,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", gkeClusterCaCertificate);
 
-            var wrapper = CreateWrapper();
-
-            TestScript(wrapper, "Test-Script");
+            DeployWithNonKubectlTestScriptAndVerifyResult();
         }
     }
 }
