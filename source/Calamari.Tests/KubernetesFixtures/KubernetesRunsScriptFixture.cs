@@ -36,7 +36,7 @@ namespace Calamari.Tests.KubernetesFixtures
         IVariables variables;
         InMemoryLog log;
         Dictionary<string, string> redactMap;
-        static InstallTools installTools;
+        InstallTools installTools;
 
         [SetUp]
         public void Setup()
@@ -50,11 +50,13 @@ namespace Calamari.Tests.KubernetesFixtures
 
         [Test]
         [TestCase("Url", "", "", true)]
-        [TestCase("", "Name", "" , true)]
+        [TestCase("", "Name", "", true)]
         [TestCase("", "", "Name", true)]
         [TestCase("", "", "", false)]
-        public void ShouldBeEnabledIfAnyVariablesAreProvided(string clusterUrl, string aksClusterName,
-            string eksClusterName, bool expected)
+        public void ShouldBeEnabledIfAnyVariablesAreProvided(string clusterUrl,
+                                                             string aksClusterName,
+                                                             string eksClusterName,
+                                                             bool expected)
         {
             variables.Set(SpecialVariables.ClusterUrl, clusterUrl);
             variables.Set(SpecialVariables.AksClusterName, aksClusterName);
@@ -223,9 +225,9 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
         [RequiresNonMono]
-        public void ExecutionWithEKS_IAMAuthenticator()
+        public async Task ExecutionWithEKS_IAMAuthenticator()
         {
-            InstallTools(InstallAwsCli);
+            await InstallTools(InstallAwsCli);
 
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
@@ -243,9 +245,9 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
         [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
-        public void ExecutionWithEKS_AwsCLIAuthenticator()
+        public async Task ExecutionWithEKS_AwsCLIAuthenticator()
         {
-            InstallTools(InstallAwsCli);
+            await InstallTools(InstallAwsCli);
 
             // Overriding the cluster url with a valid url. This is required to hit the aws eks get-token endpoint.
             variables.Set(SpecialVariables.ClusterUrl, "https://someHash.gr7.ap-southeast-2.eks.amazonaws.com");
@@ -263,11 +265,12 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [WindowsTest]
-        [RequiresNonMono]
-        public void ExecutionWithGoogleCloudAccount_WhenZoneIsProvided()
+        [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
+        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
+        public async Task ExecutionWithGoogleCloudAccount_WhenZoneIsProvided()
         {
-            InstallTools(InstallGCloud);
+            await InstallTools(InstallGCloud);
+
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
@@ -281,11 +284,12 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [WindowsTest]
-        [RequiresNonMono]
-        public void ExecutionWithGoogleCloudAccount_WhenRegionIsProvided()
+        [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
+        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
+        public async Task ExecutionWithGoogleCloudAccount_WhenRegionIsProvided()
         {
-            InstallTools(InstallGCloud);
+            await InstallTools(InstallGCloud);
+
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
@@ -299,11 +303,12 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [WindowsTest]
-        [RequiresNonMono]
-        public void ExecutionWithGoogleCloudAccount_WhenBothZoneAndRegionAreProvided()
+        [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
+        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
+        public async Task ExecutionWithGoogleCloudAccount_WhenBothZoneAndRegionAreProvided()
         {
-            InstallTools(InstallGCloud);
+            await InstallTools(InstallGCloud);
+
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
@@ -386,7 +391,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         CalamariResult ExecuteScriptInRecordOnlyMode(IScriptWrapper wrapper, string scriptName)
         {
-            return ExecuteScriptInternal(new RecordOnly(variables), wrapper, scriptName);
+            return ExecuteScriptInternal(new RecordOnly(variables, installTools), wrapper, scriptName);
         }
 
         CalamariResult ExecuteScriptInternal(ICommandLineRunner runner, IScriptWrapper wrapper, string scriptName)
@@ -403,33 +408,34 @@ namespace Calamari.Tests.KubernetesFixtures
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
 
-        void InstallTools(Action<InstallTools> toolInstaller)
+        async Task InstallTools(Func<InstallTools, Task> toolInstaller)
         {
             var tools = new InstallTools(TestContext.Progress.WriteLine);
-            toolInstaller(tools);
+            
+            await toolInstaller(tools);
+            
             installTools = tools;
         }
 
-        void InstallAwsCli(InstallTools tools)
+        static async Task InstallAwsCli(InstallTools tools)
         {
-            var installAwsCliTask = tools.InstallAwsCli();
-            Task.Run(() => installAwsCliTask);
-            Task.WaitAll(installAwsCliTask);
-        }
-        
-        void InstallGCloud(InstallTools tools)
-        {
-            var installGCloud = tools.InstallGCloud();
-            Task.Run(() => installGCloud);
-            Task.WaitAll(installGCloud);
+            await tools.InstallAwsCli();
         }
 
-        class RecordOnly :  ICommandLineRunner
+        static async Task InstallGCloud(InstallTools tools)
+        {
+            await tools.InstallGCloud();
+        }
+
+        class RecordOnly : ICommandLineRunner
         {
             IVariables Variables;
-            public RecordOnly(IVariables variables)
+            readonly InstallTools installTools;
+
+            public RecordOnly(IVariables variables, InstallTools installTools)
             {
                 Variables = variables;
+                this.installTools = installTools;
             }
 
             public CommandResult Execute(CommandLineInvocation invocation)

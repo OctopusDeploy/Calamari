@@ -205,7 +205,7 @@ namespace Calamari.Tests.KubernetesFixtures
             using (var client = new HttpClient())
             {
                 GcloudExecutable = await DownloadCli("gcloud",
-                    () => Task.FromResult<(string, string)>(("412.0.0", string.Empty)),
+                    () => Task.FromResult<(string, string)>(("436.0.0", string.Empty)),
                     async (destinationDirectoryName, tuple) =>
                     {
                         var downloadUrl = GetGcloudDownloadLink(tuple.version);
@@ -254,7 +254,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             if (commandExitCode != 0)
             {
-                throw new Exception($"stdOut: {stdOut}, stdError: {stdError}");
+                throw new InvalidOperationException($"stdOut: {stdOut}, stdError: {stdError}");
             }
 
             return stdOut.ToString().Trim('\r', '\n');
