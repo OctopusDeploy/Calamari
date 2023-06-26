@@ -37,6 +37,7 @@ namespace Calamari.Tests.KubernetesFixtures
         InMemoryLog log;
         Dictionary<string, string> redactMap;
         InstallTools installTools;
+        Dictionary<string, string> environmentVariables;
 
         [SetUp]
         public void Setup()
@@ -45,6 +46,8 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, FeatureToggle.KubernetesAksKubeloginFeatureToggle.ToString());
             log = new DoNotDoubleLog();
             redactMap = new Dictionary<string, string>();
+            environmentVariables = new Dictionary<string, string>();
+            
             SetTestClusterVariables();
         }
 
@@ -403,7 +406,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
 
             var engine = new ScriptEngine(wrappers);
-            var result = engine.Execute(new Script(scriptName), variables, runner, new Dictionary<string, string>());
+            var result = engine.Execute(new Script(scriptName), variables, runner, environmentVariables);
 
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
@@ -422,9 +425,11 @@ namespace Calamari.Tests.KubernetesFixtures
             await tools.InstallAwsCli();
         }
 
-        static async Task InstallGCloud(InstallTools tools)
+        async Task InstallGCloud(InstallTools tools)
         {
             await tools.InstallGCloud();
+            
+            environmentVariables.Add("USE_GKE_GCLOUD_AUTH_PLUGIN", "True");
         }
 
         class RecordOnly : ICommandLineRunner
