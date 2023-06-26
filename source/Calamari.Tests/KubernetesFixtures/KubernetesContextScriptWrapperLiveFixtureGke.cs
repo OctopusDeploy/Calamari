@@ -13,7 +13,7 @@ namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
-    public class KubernetesContextScriptWrapperLiveFixtureGke: KubernetesContextScriptWrapperLiveFixture
+    public class KubernetesContextScriptWrapperLiveFixtureGke : KubernetesContextScriptWrapperLiveFixture
     {
         string gkeToken;
         string gkeProject;
@@ -94,6 +94,22 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
             }
+        }
+
+        [Test]
+        public void UsingInternalIpForPrivateCluster()
+        {
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
+            variables.Set(SpecialVariables.GkeClusterName, gkeClusterName);
+            variables.Set(SpecialVariables.GkeUseClusterInternalIp, bool.TrueString);
+            var account = "gke_account";
+            variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
+            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
+            variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
+            variables.Set("Octopus.Action.GoogleCloud.Project", gkeProject);
+            variables.Set("Octopus.Action.GoogleCloud.Zone", gkeLocation);
+
+            ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
         }
 
         [Test]
