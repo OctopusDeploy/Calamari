@@ -12,7 +12,7 @@ using SpecialVariables = Calamari.Kubernetes.SpecialVariables;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class KubernetesContextScriptWrapperLiveFixtureGke : KubernetesContextScriptWrapperLiveFixture
     {
         string gkeToken;
