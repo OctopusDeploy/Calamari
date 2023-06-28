@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Logging;
@@ -64,11 +65,21 @@ namespace Calamari.Kubernetes.ResourceStatus
         
         private void SendServiceMessage(Resource resource, bool removed, int checkCount)
         {
+            var actionNumber = variables.Get("Octopus.Action.Number", string.Empty);
+            var stepNumber = variables.Get("Octopus.Step.Number");
+            var stepName = variables.Get("Octopus.Step.Name");
+            
+            if (actionNumber.IndexOf(".", StringComparison.Ordinal) > 0)
+            {
+                stepNumber = actionNumber;
+                stepName = variables.Get("Octopus.Action.Name");
+            }
+            
             var parameters = new Dictionary<string, string>
             {
                 {"type", "k8s-status"},
                 {"actionId", variables.Get("Octopus.Action.Id")},
-                {"stepName", $"Step {variables.Get("Octopus.Step.Number")}: {variables.Get("Octopus.Step.Name")}"},
+                {"stepName", $"Step {stepNumber}: {stepName}"},
                 {"taskId", variables.Get(KnownVariables.ServerTask.Id)},
                 {"targetId", variables.Get("Octopus.Machine.Id")},
                 {"targetName", variables.Get("Octopus.Machine.Name")},
