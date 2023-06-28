@@ -268,7 +268,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
+        [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
         [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
         public async Task ExecutionWithGoogleCloudAccount_WhenZoneIsProvided()
         {
@@ -287,7 +287,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
+        [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
         [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
         public async Task ExecutionWithGoogleCloudAccount_WhenRegionIsProvided()
         {
@@ -306,7 +306,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
+        [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
         [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
         public async Task ExecutionWithGoogleCloudAccount_WhenBothZoneAndRegionAreProvided()
         {
@@ -430,6 +430,9 @@ namespace Calamari.Tests.KubernetesFixtures
             await tools.InstallGCloud();
             
             environmentVariables.Add("USE_GKE_GCLOUD_AUTH_PLUGIN", "True");
+            
+            
+            
         }
 
         class RecordOnly : ICommandLineRunner

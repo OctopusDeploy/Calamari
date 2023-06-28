@@ -213,7 +213,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 log("Installing GKE GCloud Auth Plugin");
                 ExecuteCommandAndReturnResult(GcloudExecutable, "components install gke-gcloud-auth-plugin --quiet", ".", variables);
-                log($"Installed GKE GCloud Auth Plugin to {GkeGCloudAuthPluginExecutable}");
+                log($"Installed GKE GCloud Auth Plugin to {Path.Combine(Path.GetDirectoryName(GcloudExecutable), "gke-gcloud-auth-plugin.exe")}");
             }
         }
 
