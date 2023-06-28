@@ -34,7 +34,6 @@ namespace Calamari.Tests.KubernetesFixtures
         public string AwsCliExecutable { get; private set; }
         public string KubeloginExecutable { get; private set; }
         public string GcloudExecutable { get; private set; }
-        public string GkeGCloudAuthPluginExecutable { get; private set; }
 
         public async Task Install()
         {
@@ -191,8 +190,8 @@ namespace Calamari.Tests.KubernetesFixtures
                                                      });
             }
 
-            InstallGkeAuthPlugin();
-        }
+                InstallGkeAuthPlugin();
+            }
 
         void InstallGkeAuthPlugin()
         {
@@ -214,12 +213,8 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 log("Installing GKE GCloud Auth Plugin");
                 ExecuteCommandAndReturnResult(GcloudExecutable, "components install gke-gcloud-auth-plugin --quiet", ".", variables);
-                
                 log($"Installed GKE GCloud Auth Plugin to {GkeGCloudAuthPluginExecutable}");
             }
-            
-            // the auth plugin is installed to the same folder as the main gcloud executable (as this is windows we know its always an exe)
-            GkeGCloudAuthPluginExecutable = Path.Combine(Path.GetDirectoryName(GcloudExecutable), "gke-gcloud-auth-plugin.exe");
         }
 
         public async Task InstallKubelogin()

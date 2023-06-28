@@ -27,7 +27,6 @@ namespace Calamari.Tests.KubernetesFixtures
         protected override IEnumerable<string> ToolsToAddToPath(InstallTools tools)
         {
             yield return tools.GcloudExecutable;
-            yield return tools.GkeGCloudAuthPluginExecutable;
         }
 
         protected override async Task InstallOptionalTools(InstallTools tools)
