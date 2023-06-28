@@ -430,9 +430,6 @@ namespace Calamari.Tests.KubernetesFixtures
             await tools.InstallGCloud();
             
             environmentVariables.Add("USE_GKE_GCLOUD_AUTH_PLUGIN", "True");
-            
-            
-            
         }
 
         class RecordOnly : ICommandLineRunner
@@ -460,8 +457,9 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
 
                 // We only want to output executable string. eg. ExecuteCommandAndReturnOutput("where", "kubectl.exe")
-                if (new[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe", "kubelogin", "kubelogin.exe" }.Contains(invocation.Arguments))
+                if (new[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe", "kubelogin", "kubelogin.exe", "gke-gcloud-auth-plugin", "gke-gcloud-auth-plugin.exe" }.Contains(invocation.Arguments))
                     invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));
+                
                 return new CommandResult(invocation.ToString(), 0);
             }
 
