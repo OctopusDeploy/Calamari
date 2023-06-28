@@ -23,9 +23,15 @@ namespace Calamari.Tests.KubernetesFixtures
     {
         readonly Action<string> log;
 
+#if NETCORE
+        readonly IHttpClientFactory httpClientFactory;
+#endif
         public InstallTools(Action<string> log)
         {
             this.log = log;
+#if NETCORE
+            httpClientFactory = new TestHttpClientFactory();
+#endif
         }
 
         public string TerraformExecutable { get; private set; }
@@ -43,7 +49,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         public async Task InstallTerraform()
         {
-            using (var client = new HttpClient())
+            using (var client = CreateHttpClient())
             {
                 TerraformExecutable = await DownloadCli("Terraform",
                                                         async () =>
@@ -69,7 +75,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         public async Task InstallKubectl()
         {
-            using (var client = new HttpClient())
+            using (var client = CreateHttpClient())
             {
                 KubectlExecutable = await DownloadCli("Kubectl",
                                                       async () =>
@@ -94,7 +100,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         public async Task InstallAwsAuthenticator()
         {
-            using (var client = new HttpClient())
+            using (var client = CreateHttpClient())
             {
                 AwsAuthenticatorExecutable = await DownloadCli("aws-iam-authenticator",
                                                                async () =>
@@ -130,7 +136,7 @@ namespace Calamari.Tests.KubernetesFixtures
         // Note this only installs and extracts for Windows
         public async Task InstallAwsCli()
         {
-            using (var client = new HttpClient())
+            using (var client = CreateHttpClient())
             {
                 AwsCliExecutable = await DownloadCli("aws",
                                                      () =>
@@ -172,7 +178,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         public async Task InstallGCloud()
         {
-            using (var client = new HttpClient())
+            using (var client = CreateHttpClient())
             {
                 GcloudExecutable = await DownloadCli("gcloud",
                                                      () => Task.FromResult<(string, string)>(("436.0.0", string.Empty)),
@@ -190,8 +196,8 @@ namespace Calamari.Tests.KubernetesFixtures
                                                      });
             }
 
-                InstallGkeAuthPlugin();
-            }
+            InstallGkeAuthPlugin();
+        }
 
         void InstallGkeAuthPlugin()
         {
@@ -199,7 +205,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 return;
 
             log("Checking if GKE GCloud Auth Plugin needs installation");
-            
+
             var variables = new Dictionary<string, string>();
             var pythonCopyPath = ExecuteCommandAndReturnResult(GcloudExecutable, "components copy-bundled-python", ".", variables);
             variables.Add("CLOUDSDK_PYTHON", pythonCopyPath);
@@ -207,7 +213,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var gkeComponent = ExecuteCommandAndReturnResult($"\"{GcloudExecutable}\"", "components list --filter=\"Name=gke-gcloud-auth-plugin\" --format=\"json\"", ".", variables);
             var gkeComponentJObject = JArray.Parse(gkeComponent).First();
             var installedState = gkeComponentJObject["state"]["name"].Value<string>();
-            
+
             log($"GKE GCloud Auth Plugin is {installedState}");
             if (installedState != "Installed")
             {
@@ -219,7 +225,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         public async Task InstallKubelogin()
         {
-            using (var client = new HttpClient())
+            using (var client = CreateHttpClient())
             {
                 KubeloginExecutable = await DownloadCli("kubelogin",
                                                         () => Task.FromResult<(string, string)>(("v0.0.25", string.Empty)),
@@ -533,6 +539,15 @@ namespace Calamari.Tests.KubernetesFixtures
             log($"Downloaded {toolName} to {executablePath}");
 
             return executablePath;
+        }
+
+        HttpClient CreateHttpClient()
+        {
+#if NETCORE
+            return httpClientFactory.CreateClient();
+#else
+            return new HttpClient();
+#endif
         }
     }
 }
