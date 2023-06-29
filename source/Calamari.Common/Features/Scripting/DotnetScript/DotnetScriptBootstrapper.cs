@@ -33,12 +33,12 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 
             var myPath = typeof(DotnetScriptExecutor).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
-            var executable = Path.GetFullPath(Path.Combine(parent, "DotnetScript", "dotnet-script.exe"));
+            var executable = Path.GetFullPath(Path.Combine(parent, "dotnet-script.dll"));
 
             if (File.Exists(executable))
                 return executable;
 
-            throw new CommandException(string.Format("dotnet-script.exe was not found at '{0}'", executable));
+            throw new CommandException(string.Format("dotnet-script.dll was not found at '{0}'", executable));
         }
 
         public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)

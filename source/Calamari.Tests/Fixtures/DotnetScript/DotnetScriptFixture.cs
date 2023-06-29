@@ -49,7 +49,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldCallHello()
         {
             var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
