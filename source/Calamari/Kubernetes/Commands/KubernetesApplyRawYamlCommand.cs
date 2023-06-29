@@ -61,6 +61,11 @@ namespace Calamari.Kubernetes.Commands
             var gatherAndApplyRawYamlExecutor =
                 new GatherAndApplyRawYamlExecutor(log, fileSystem, kubectl);
 
+            if (!variables.GetFlag(SpecialVariables.ResourceStatusCheck))
+            {
+                return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment);
+            }
+            
             var statusCheck = statusReporter.Start();
 
             return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment, statusCheck.AddResources) &&

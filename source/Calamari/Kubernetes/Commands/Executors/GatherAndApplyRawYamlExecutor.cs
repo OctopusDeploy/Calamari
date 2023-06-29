@@ -35,7 +35,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             this.kubectl = kubectl;
         }
 
-        public async Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback)
+        public async Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null)
         {
             try
             {
@@ -48,7 +48,10 @@ namespace Calamari.Kubernetes.Commands.Executors
                 foreach (var directory in directories)
                 {
                     var res = ApplyBatchAndReturnResources(directory).ToList();
-                    await appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
+                    if (appliedResourcesCallback != null)
+                    {
+                        await appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
+                    }
                     resources.UnionWith(res);
                 }
 
