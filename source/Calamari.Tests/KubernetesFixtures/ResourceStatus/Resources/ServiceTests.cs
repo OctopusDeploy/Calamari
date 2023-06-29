@@ -1,3 +1,4 @@
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using NUnit.Framework;
@@ -47,7 +48,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         }
     }
 }";
-            var service = ResourceFactory.FromJson(input);
+            var service = ResourceFactory.FromJson(input, new Options());
             
             service.Should().BeEquivalentTo(new
             {

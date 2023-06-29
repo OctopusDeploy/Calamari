@@ -15,7 +15,6 @@ namespace Calamari.Common.Plumbing.Commands
 
         public string Command { get; }
         public List<string> RemainingArguments { get; private set; } = new List<string>();
-        public List<string> Extensions { get; } = new List<string>();
         public Variables InputVariables { get; } = new Variables();
 
         public static CommonOptions Parse(string[] args)
@@ -34,9 +33,7 @@ namespace Calamari.Common.Plumbing.Commands
                 .Add("outputVariables=", "Base64 encoded encrypted JSON file containing output variables.", v => options.InputVariables.OutputVariablesFile = v)
                 .Add("outputVariablesPassword=", "Password used to decrypt output-variables", v => options.InputVariables.OutputVariablesPassword = v)
                 .Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => options.InputVariables.SensitiveVariablesFiles.Add(v))
-                .Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => options.InputVariables.SensitiveVariablesPassword = v)
-                .Add("extensions=", "List of Calamari extensions to load.", v => options.Extensions.AddRange(v.Split(',').Where(e => !string.IsNullOrWhiteSpace(e)).Select(e => e.Trim())));
-
+                .Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => options.InputVariables.SensitiveVariablesPassword = v);
             options.RemainingArguments = set.Parse(args.Skip(1));
 
             return options;

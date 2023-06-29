@@ -1,4 +1,5 @@
 using System.Linq;
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using Newtonsoft.Json;
@@ -31,7 +32,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 })
                 .Build();
                 
-            var pod = ResourceFactory.FromJson(podResponse);
+            var pod = ResourceFactory.FromJson(podResponse, new Options());
             
             pod.Should().BeEquivalentTo(new
             {
@@ -40,7 +41,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 Namespace = "test",
                 Ready = "1/2",
                 Restarts = 3,
-                ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed
+                ResourceStatus = Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress
             });
         }
         
@@ -51,7 +52,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 .WithPhase("Pending")
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("Pending");
             pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
@@ -69,7 +70,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 })
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("Init:1/2");
             pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
@@ -86,10 +87,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 })
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("Init:ImagePullBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
         }
         
         [Test]
@@ -103,10 +104,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 })
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("Init:CrashLoopBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
         }
         
         [Test]
@@ -120,7 +121,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 })
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("ContainerCreating");
             pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
@@ -137,10 +138,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 })
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("ImagePullBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
         }
         
         [Test]
@@ -152,12 +153,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 {
                     new ContainerState { Waiting = new ContainerStateWaiting { Reason = "CrashLoopBackOff" } }
                 })
+                .WithReady(false)
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("CrashLoopBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
         }
         
         [Test]
@@ -171,7 +173,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 })
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("ContainerCannotRun");
             pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
@@ -188,7 +190,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 })
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("Error");
             pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
@@ -205,7 +207,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 })
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("Completed");
             pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Successful);
@@ -220,9 +222,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 {
                     new ContainerState { Running = new ContainerStateRunning() }
                 })
+                .WithReady(true)
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("Running");
             pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Successful);
@@ -240,10 +243,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
                 })
                 .Build();
     
-            var pod = (Pod)ResourceFactory.FromJson(podResponse);
+            var pod = (Pod)ResourceFactory.FromJson(podResponse, new Options());
 
             pod.Status.Should().Be("ImagePullBackOff");
-            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.Failed);
+            pod.ResourceStatus.Should().Be(KubernetesResources.ResourceStatus.InProgress);
         }
     }
     
@@ -260,17 +263,25 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
     ""status"": {{
         ""phase"": ""{0}"",
         ""initContainerStatuses"": {1},
-        ""containerStatuses"": {2}
+        ""containerStatuses"": {2},
+        ""conditions"": 
+            [
+                {{
+                    ""status"": ""{3}"",
+                    ""type"": ""Ready""
+                }}
+            ]
     }}
 }}";
     
         private string Phase { get; set; } = "Running";
         private string InitContainerStatuses { get; set; } = "[]";
         private string ContainerStatuses { get; set; } = "[]";
+        private string Ready { get; set; } = "False";
         
         public string Build()
         {
-            return string.Format(Template, Phase, InitContainerStatuses, ContainerStatuses);
+            return string.Format(Template, Phase, InitContainerStatuses, ContainerStatuses, Ready);
         }
         
         public PodResponseBuilder WithPhase(string phase)
@@ -296,6 +307,12 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         public PodResponseBuilder WithContainerStatuses(params ContainerStatus[] containerStatuses)
         {
             ContainerStatuses = JsonConvert.SerializeObject(containerStatuses);
+            return this;
+        }
+
+        public PodResponseBuilder WithReady(bool ready)
+        {
+            Ready = ready ? "True" : "False";
             return this;
         }
     }

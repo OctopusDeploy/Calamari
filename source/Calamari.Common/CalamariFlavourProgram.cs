@@ -39,7 +39,7 @@ namespace Calamari.Common
             try
             {
                 AppDomainConfiguration.SetDefaultRegexMatchTimeout();
-                
+
                 SecurityProtocols.EnableAllSecurityProtocols();
                 var options = CommonOptions.Parse(args);
 

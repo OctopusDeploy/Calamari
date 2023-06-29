@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Logging;
@@ -14,9 +13,9 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// <summary>
         /// Reports the difference of the originalStatuses and newStatuses to server.
         /// </summary>
-        void ReportUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses);
+        void ReportUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses, int checkCount);
     }
-    
+
     /// <summary>
     /// <inheritdoc />
     /// </summary>
@@ -24,26 +23,30 @@ namespace Calamari.Kubernetes.ResourceStatus
     {
         private readonly IVariables variables;
         private readonly ILog log;
-        
+
         public ResourceUpdateReporter(IVariables variables, ILog log)
         {
             this.variables = variables;
             this.log = log;
         }
-        
-        public void ReportUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses)
+
+        public void ReportUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses, int checkCount)
         {
-            foreach (var resource in GetCreatedOrUpdatedResources(originalStatuses, newStatuses))
+            var createdOrUpdatedResources = GetCreatedOrUpdatedResources(originalStatuses, newStatuses).ToList();
+            foreach (var resource in createdOrUpdatedResources)
             {
-                SendServiceMessage(resource, false);
+                SendServiceMessage(resource, false, checkCount);
             }
-            
-            foreach (var resource in GetRemovedResources(originalStatuses, newStatuses))
+
+            var removedResources = GetRemovedResources(originalStatuses, newStatuses).ToList();
+            foreach (var resource in removedResources)
             {
-                SendServiceMessage(resource, true);
+                SendServiceMessage(resource, true, checkCount);
             }
+
+            log.Verbose($"Resource Status Check: reported {createdOrUpdatedResources.Count} updates, {removedResources.Count} removals");
         }
-        
+
         private static IEnumerable<Resource> GetCreatedOrUpdatedResources(IDictionary<string, Resource> originalStatuses, IDictionary<string, Resource> newStatuses)
         {
             return newStatuses.Where(resource =>
@@ -58,8 +61,8 @@ namespace Calamari.Kubernetes.ResourceStatus
                 .Where(resource => !newStatuses.ContainsKey(resource.Key))
                 .Select(resource => resource.Value);
         }
-        
-        private void SendServiceMessage(Resource resource, bool removed)
+
+        private void SendServiceMessage(Resource resource, bool removed, int checkCount)
         {
             var parameters = new Dictionary<string, string>
             {
@@ -70,15 +73,16 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {"targetId", variables.Get("Octopus.Machine.Id")},
                 {"targetName", variables.Get("Octopus.Machine.Name")},
                 {"spaceId", variables.Get("Octopus.Space.Id")},
-                {"uuid", resource.Uid},         
+                {"uuid", resource.Uid},
                 {"kind", resource.Kind},
                 {"name", resource.Name},
                 {"namespace", resource.Namespace},
                 {"status", resource.ResourceStatus.ToString()},
                 {"data", JsonConvert.SerializeObject(resource)},
-                {"removed", removed.ToString()}
+                {"removed", removed.ToString()},
+                {"checkCount", checkCount.ToString()}
             };
-    
+
             var message = new ServiceMessage(SpecialVariables.KubernetesResourceStatusServiceMessageName, parameters);
             log.WriteServiceMessage(message);
         }

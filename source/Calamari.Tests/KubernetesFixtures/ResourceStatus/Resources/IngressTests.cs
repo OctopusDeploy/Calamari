@@ -1,3 +1,4 @@
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using NUnit.Framework;
@@ -50,7 +51,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         }
     }
 }";
-            var ingress = ResourceFactory.FromJson(input);
+            var ingress = ResourceFactory.FromJson(input, new Options());
             
             ingress.Should().BeEquivalentTo(new
             {

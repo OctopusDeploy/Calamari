@@ -1,0 +1,14 @@
+{
+  "apiVersion": "v1",
+  "data": {
+    "game.properties": "enemy.types=blobs,foxes\nplayer.maximum-lives=10\n",
+    "player_initial_lives": "1",
+    "ui_properties_file_name": "user-interface.properties",
+    "user-interface.properties": "color.good=orange\ncolor.bad=pink\nallow.textmode=false\n"
+  },
+  "kind": "ConfigMap",
+  "metadata": {
+    "name": "game-demo2",
+    "namespace": "calamari-testing"
+  }
+}

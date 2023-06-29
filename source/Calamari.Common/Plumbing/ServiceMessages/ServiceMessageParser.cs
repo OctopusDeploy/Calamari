@@ -16,7 +16,7 @@ namespace Calamari.Common.Plumbing.ServiceMessages
             this.serviceMessage = serviceMessage;
         }
 
-        public void Parse(string line)
+        public bool Parse(string line)
         {
             foreach (var c in line)
                 switch (state)
@@ -49,9 +49,10 @@ namespace Calamari.Common.Plumbing.ServiceMessages
                     case State.InMessage:
                         if (c == ']')
                         {
-                            ProcessMessage(buffer.ToString());
+                            var result = ProcessMessage(buffer.ToString());
                             state = State.Default;
                             buffer.Clear();
+                            return result;
                         }
                         else
                         {
@@ -63,9 +64,11 @@ namespace Calamari.Common.Plumbing.ServiceMessages
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+
+            return false;
         }
 
-        void ProcessMessage(string message)
+        bool ProcessMessage(string message)
         {
             try
             {
@@ -75,10 +78,11 @@ namespace Calamari.Common.Plumbing.ServiceMessages
                 var name = element.Name.LocalName;
                 var values = element.Attributes().ToDictionary(s => s.Name.LocalName, s => Encoding.UTF8.GetString(Convert.FromBase64String(s.Value)), StringComparer.OrdinalIgnoreCase);
                 serviceMessage(new ServiceMessage(name, values));
+                return true;
             }
             catch
             {
-                // Ignore
+                return false;
             }
         }
 

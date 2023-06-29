@@ -1,0 +1,104 @@
+Applying Batch #1 for YAML matching 'deployments/**/*'
+deployments/customresource.yml Contents:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+deployments/subfolder/myapp-deployment.yml Contents:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment2
+spec:
+  selector:
+    matchLabels:
+      app: nginx2
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx2
+    spec:
+      containers:
+      - name: nginx2
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 81
+
+Created Resources:
+ - Deployment/nginx-deployment in namespace calamari-testing
+ - Deployment/nginx-deployment2 in namespace calamari-testing
+Resource Status Check: 2 new resources have been added:
+ - Deployment/nginx-deployment in namespace calamari-testing
+ - Deployment/nginx-deployment2 in namespace calamari-testing
+Applying Batch #2 for YAML matching 'services/myapp-service.yml'
+services/myapp-service.yml Contents:
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app.kubernetes.io/name: nginx
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+Created Resources:
+ - Service/nginx-service in namespace calamari-testing
+Resource Status Check: reported 8 updates, 0 removals
+Resource Status Check: 1 new resources have been added:
+ - Service/nginx-service in namespace calamari-testing
+Applying Batch #3 for YAML matching 'configmaps/*.yml'
+configmaps/myapp-configmap2.yml Contents:
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: game-demo2
+data:
+  player_initial_lives: '1'
+  ui_properties_file_name: 'user-interface.properties'
+  game.properties: |
+    enemy.types=blobs,foxes
+    player.maximum-lives=10
+  user-interface.properties: |
+    color.good=orange
+    color.bad=pink
+    allow.textmode=false
+configmaps/myapp-configmap1.yml Contents:
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: game-demo
+data:
+  player_initial_lives: '3'
+  ui_properties_file_name: 'user-interface.properties'
+  game.properties: |
+    enemy.types=aliens,monsters
+    player.maximum-lives=5
+  user-interface.properties: |
+    color.good=purple
+    color.bad=yellow
+    allow.textmode=true
+Created Resources:
+ - ConfigMap/game-demo in namespace calamari-testing
+ - ConfigMap/game-demo2 in namespace calamari-testing
+Resource Status Check: reported 10 updates, 0 removals
+Resource Status Check: 2 new resources have been added:
+ - ConfigMap/game-demo in namespace calamari-testing
+ - ConfigMap/game-demo2 in namespace calamari-testing

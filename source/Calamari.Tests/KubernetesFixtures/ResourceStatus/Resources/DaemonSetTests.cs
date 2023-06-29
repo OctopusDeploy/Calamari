@@ -1,3 +1,4 @@
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using NUnit.Framework;
@@ -35,7 +36,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         ""updatedNumberScheduled"": 1
     }
 }";
-            var daemonSet = ResourceFactory.FromJson(input);
+            var daemonSet = ResourceFactory.FromJson(input, new Options());
             
             daemonSet.Should().BeEquivalentTo(new
             {

@@ -69,7 +69,7 @@ namespace Calamari.Commands
             log.VerboseFormat("Package {0} {1} hash {2} has already been uploaded", package.PackageId, package.Version, package.Hash);
             LogPackageFound(
                 package.PackageId,
-                package.Version,
+                package.FileVersion,
                 package.Hash,
                 package.Extension,
                 package.FullFilePath,
@@ -94,7 +94,7 @@ namespace Calamari.Commands
                 log.VerboseFormat("  - {0}: {1}", nearestPackage.Version, nearestPackage.FullFilePath);
                 LogPackageFound(
                     nearestPackage.PackageId,
-                    nearestPackage.Version,
+                    nearestPackage.FileVersion,
                     nearestPackage.Hash,
                     nearestPackage.Extension,
                     nearestPackage.FullFilePath,

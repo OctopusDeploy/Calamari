@@ -8,15 +8,13 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public string Completions { get; }
         public string Duration { get; }
 
-        public override ResourceStatus ResourceStatus { get; }
-
-        public Job(JObject json) : base(json)
+        public Job(JObject json, Options options) : base(json, options)
         {
             var succeeded = FieldOrDefault("$.status.succeeded", 0);
             var desired = FieldOrDefault("$.spec.completions", 0);
             Completions = $"{succeeded}/{desired}";
 
-            var defaultTime = DateTime.Now;
+            var defaultTime = DateTime.UtcNow;
             var completionTime = FieldOrDefault("$.status.completionTime", defaultTime);
             var startTime = FieldOrDefault("$.status.startTime", defaultTime);
 
@@ -25,6 +23,12 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             var backoffLimit = FieldOrDefault("$.spec.backoffLimit", 0);
             var failed = FieldOrDefault("$.status.failed", 0);
 
+            if (!options.WaitForJobs)
+            {
+                ResourceStatus = ResourceStatus.Successful;
+                return;
+            }
+            
             if (backoffLimit != 0 && failed == backoffLimit)
             {
                 ResourceStatus = ResourceStatus.Failed;

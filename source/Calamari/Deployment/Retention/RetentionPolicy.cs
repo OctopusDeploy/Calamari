@@ -65,25 +65,11 @@ namespace Calamari.Deployment.Retention
             {
                 DeleteExtractionDestination(deployment, preservedEntries);
 
-                foreach (var package in deployment.Packages)
-                {
-                    DeleteExtractionSource(package, preservedEntries);
-                }
+                // Deleting packages is now handled by package retention
             }
             deploymentJournal.RemoveJournalEntries(deploymentsToDelete.Select(x => x.Id));
 
             RemovedFailedPackageDownloads();
-        }
-
-        void DeleteExtractionSource(DeployedPackage deployedPackage, List<JournalEntry> preservedEntries)
-        {
-            if (string.IsNullOrWhiteSpace(deployedPackage.DeployedFrom)
-                || !fileSystem.FileExists(deployedPackage.DeployedFrom)
-                || preservedEntries.Any(entry => entry.Packages.Any(p => deployedPackage.DeployedFrom.Equals(p.DeployedFrom, StringComparison.Ordinal))))
-                return;
-
-            Log.Info($"Removing package file '{deployedPackage.DeployedFrom}'");
-            fileSystem.DeleteFile(deployedPackage.DeployedFrom, FailureOptions.IgnoreFailure);
         }
 
         void DeleteExtractionDestination(JournalEntry deployment, List<JournalEntry> preservedEntries)

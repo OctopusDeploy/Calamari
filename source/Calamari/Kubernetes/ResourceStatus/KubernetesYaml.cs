@@ -20,22 +20,22 @@ namespace Calamari.Kubernetes.ResourceStatus
             foreach (var manifest in manifests)
             {
                 var input = new StringReader(manifest);
-    
+
                 var parser = new Parser(input);
                 parser.Consume<StreamStart>();
-                
+
                 while (!parser.Accept<StreamEnd>(out _))
                 {
                     var definedResource = GetDefinedResource(parser, defaultNamespace);
-                    if (definedResource != null)
-                    {
-                        yield return definedResource;
-                    }
+                    if (!definedResource.HasValue)
+                        break;
+
+                    yield return definedResource.Value;
                 }
             }
         }
 
-        private static ResourceIdentifier GetDefinedResource(IParser parser, string defaultNamespace)
+        private static ResourceIdentifier? GetDefinedResource(IParser parser, string defaultNamespace)
         {
             try
             {

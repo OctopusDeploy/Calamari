@@ -13,9 +13,6 @@ namespace Calamari.Testing
         [EnvironmentVariable("AWS_OctopusAPITester_Secret", "AWS - OctopusAPITester")]
         AwsSecretKey,
 
-        [EnvironmentVariable("SSH_OctopusAPITester_PrivateKey", "SSH - OctopusAPITester")]
-        SshPrivateKey,
-
         [EnvironmentVariable("Azure_OctopusAPITester_SubscriptionId", "Azure - OctopusAPITester")]
         AzureSubscriptionId,
 

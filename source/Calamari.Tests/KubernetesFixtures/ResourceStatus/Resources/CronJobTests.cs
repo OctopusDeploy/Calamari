@@ -1,3 +1,4 @@
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using NUnit.Framework;
@@ -22,7 +23,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         ""suspend"": false
     }
 }";
-            var cronJob = ResourceFactory.FromJson(input);
+            var cronJob = ResourceFactory.FromJson(input, new Options());
             
             cronJob.Should().BeEquivalentTo(new
             {

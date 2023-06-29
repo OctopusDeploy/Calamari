@@ -14,9 +14,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public int UpToDate { get; }
         public int Available { get; }
         public string NodeSelector { get; }
-        public override ResourceStatus ResourceStatus { get; }
 
-        public DaemonSet(JObject json) : base(json)
+        public DaemonSet(JObject json, Options options) : base(json, options)
         {
             Desired = FieldOrDefault("$.status.desiredNumberScheduled", 0);
             Current = FieldOrDefault("$.status.currentNumberScheduled", 0);

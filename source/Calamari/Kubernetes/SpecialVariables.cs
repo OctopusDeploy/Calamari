@@ -14,11 +14,13 @@
         public const string ResourceStatusCheck = "Octopus.Action.Kubernetes.ResourceStatusCheck";
         public const string DeploymentStyle = "Octopus.Action.KubernetesContainers.DeploymentStyle";
         public const string DeploymentWait = "Octopus.Action.KubernetesContainers.DeploymentWait";
-        public const string DeploymentTimeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
-        public const string StabilizationTimeout = "Octopus.Action.Kubernetes.StabilizationTimeout";
+        public const string CustomResourceYamlFileName = "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName";
+        public const string GroupedYamlDirectories = "Octopus.Action.KubernetesContainers.YamlDirectories";
+        public const string Timeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
+        public const string WaitForJobs = "Octopus.Action.Kubernetes.WaitForJobs";
 
         public const string KubernetesResourceStatusServiceMessageName = "k8s-status";
-        
+
         public static class Helm
         {
             public const string ReleaseName = "Octopus.Action.Helm.ReleaseName";

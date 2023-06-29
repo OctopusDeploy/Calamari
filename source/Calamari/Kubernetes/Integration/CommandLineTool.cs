@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Logging;
 
@@ -9,12 +8,16 @@ namespace Calamari.Kubernetes.Integration
     public class CommandLineTool
     {
         protected readonly ILog log;
-        protected readonly string workingDirectory;
-        protected readonly Dictionary<string, string> environmentVars;
+        protected string workingDirectory;
+        protected Dictionary<string, string> environmentVars;
 
         readonly ICommandLineRunner commandLineRunner;
 
-        protected CommandLineTool(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
+        protected CommandLineTool(
+            ILog log,
+            ICommandLineRunner commandLineRunner,
+            string workingDirectory,
+            Dictionary<string, string> environmentVars)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;
@@ -76,7 +79,7 @@ namespace Calamari.Kubernetes.Integration
             }
         }
 
-        protected IEnumerable<string> ExecuteCommandAndReturnOutput(string exe, params string[] arguments)
+        protected CommandResultWithOutput ExecuteCommandAndReturnOutput(string exe, params string[] arguments)
         {
             var captureCommandOutput = new CaptureCommandOutput();
             var invocation = new CommandLineInvocation(exe, arguments)
@@ -90,9 +93,20 @@ namespace Calamari.Kubernetes.Integration
 
             var result = commandLineRunner.Execute(invocation);
 
-            return result.ExitCode == 0
-                ? captureCommandOutput.Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray()
-                : Enumerable.Empty<string>();
+            return new CommandResultWithOutput(result, captureCommandOutput);
         }
+    }
+
+    public class CommandResultWithOutput
+    {
+        public CommandResultWithOutput(CommandResult result, ICommandOutput output)
+        {
+            Result = result;
+            Output = output;
+        }
+
+        public CommandResult Result { get; }
+
+        public ICommandOutput Output { get; set; }
     }
 }

@@ -20,13 +20,13 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.PackageRetention;
 
 namespace Calamari.Commands
 {
-    [Command("run-script", Description = "Invokes a script")]
+    [Command(Name, Description = "Invokes a script")]
     public class RunScriptCommand : Command
     {
+        public const string Name = "run-script";
         string scriptFileArg;
         string packageFile;
         string scriptParametersArg;
@@ -72,7 +72,8 @@ namespace Calamari.Commands
             var replacer = new ConfigurationVariablesReplacer(variables, log);
 
             ValidateArguments();
-            WriteVariableScriptToFile();
+            var deployment = new RunningDeployment(packageFile, variables);
+            WriteVariableScriptToFile(deployment);
 
             var conventions = new List<IConvention>
             {
@@ -87,7 +88,6 @@ namespace Calamari.Commands
                 new ExecuteScriptConvention(scriptEngine, commandLineRunner)
             };
 
-            var deployment = new RunningDeployment(packageFile, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             conventionRunner.RunConventions();
@@ -96,7 +96,7 @@ namespace Calamari.Commands
             return exitCode.Value;
         }
 
-        void WriteVariableScriptToFile()
+        void WriteVariableScriptToFile(RunningDeployment deployment)
         {
             if (!TryGetScriptFromVariables(out var scriptBody, out var relativeScriptFile, out var scriptSyntax) &&
                 !WasProvided(variables.Get(ScriptVariables.ScriptFileName)))
@@ -107,7 +107,7 @@ namespace Calamari.Commands
 
             if (WasProvided(scriptBody))
             {
-                var scriptFile = Path.GetFullPath(relativeScriptFile);
+                var scriptFile = Path.Combine(deployment.CurrentDirectory, relativeScriptFile);
 
                 //Set the name of the script we are about to create to the variables collection for replacement later on
                 variables.Set(ScriptVariables.ScriptFileName, relativeScriptFile);

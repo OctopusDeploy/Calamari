@@ -1,3 +1,4 @@
+using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
 using NUnit.Framework;
@@ -23,7 +24,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         ""a"": ""b""
     }
 }";
-            var secret = ResourceFactory.FromJson(input);
+            var secret = ResourceFactory.FromJson(input, new Options());
             
             secret.Should().BeEquivalentTo(new
             {

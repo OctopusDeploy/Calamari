@@ -7,9 +7,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public override string ChildKind => "Pod";
 
         public string Ready { get; }
-        public override ResourceStatus ResourceStatus { get; }
 
-        public StatefulSet(JObject json) : base(json)
+        public StatefulSet(JObject json, Options options) : base(json, options)
         {
             var readyReplicas = FieldOrDefault("$.status.readyReplicas", 0);
             var replicas = FieldOrDefault("$.status.replicas", 0);

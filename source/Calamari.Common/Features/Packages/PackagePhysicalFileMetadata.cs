@@ -7,7 +7,7 @@ namespace Calamari.Common.Features.Packages
     public class PackagePhysicalFileMetadata : PackageFileNameMetadata
     {
         public PackagePhysicalFileMetadata(PackageFileNameMetadata identity, string fullFilePath, string hash, long size)
-            : base(identity.PackageId, identity.Version, identity.Extension)
+            : base(identity.PackageId, identity.Version, identity.FileVersion, identity.Extension)
         {
             FullFilePath = fullFilePath;
             Hash = hash;

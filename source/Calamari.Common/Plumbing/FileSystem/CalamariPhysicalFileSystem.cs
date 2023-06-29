@@ -201,22 +201,18 @@ namespace Calamari.Common.Plumbing.FileSystem
                 .Select(g => g.First());
         }
 
-        public virtual IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns)
+        public virtual IEnumerable<string> EnumerateFiles(
+            string parentDirectoryPath,
+            params string[] searchPatterns)
         {
-            var parentDirectoryInfo = new DirectoryInfo(parentDirectoryPath);
-
-            return searchPatterns.Length == 0
-                ? parentDirectoryInfo.GetFiles("*", SearchOption.TopDirectoryOnly).Select(fi => fi.FullName)
-                : searchPatterns.SelectMany(pattern => parentDirectoryInfo.GetFiles(pattern, SearchOption.TopDirectoryOnly).Select(fi => fi.FullName));
+            return Directory.EnumerateFiles(parentDirectoryPath, searchPatterns);
         }
 
-        public virtual IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns)
+        public virtual IEnumerable<string> EnumerateFilesRecursively(
+            string parentDirectoryPath,
+            params string[] searchPatterns)
         {
-            var parentDirectoryInfo = new DirectoryInfo(parentDirectoryPath);
-
-            return searchPatterns.Length == 0
-                ? parentDirectoryInfo.GetFiles("*", SearchOption.AllDirectories).Select(fi => fi.FullName)
-                : searchPatterns.SelectMany(pattern => parentDirectoryInfo.GetFiles(pattern, SearchOption.AllDirectories).Select(fi => fi.FullName));
+            return Directory.EnumerateFilesRecursively(parentDirectoryPath, searchPatterns);
         }
 
         public IEnumerable<string> EnumerateDirectories(string parentDirectoryPath)
@@ -389,17 +385,20 @@ namespace Calamari.Common.Plumbing.FileSystem
             path1 = Path.Combine(path1, Assembly.GetEntryAssembly()?.GetName().Name ?? "Octopus.Calamari");
             path1 = Path.Combine(path1, "Temp");
             var path = path1;
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
+            Directory.CreateDirectory(path);
             return Path.GetFullPath(path);
         }
 
         public string CreateTemporaryDirectory()
         {
             var path = Path.Combine(GetTempBasePath(), Guid.NewGuid().ToString());
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
+            Directory.CreateDirectory(path);
             return path;
+        }
+
+        public void CreateDirectory(string directory)
+        {
+            Directory.CreateDirectory(directory);
         }
 
         public void PurgeDirectory(string targetDirectory, FailureOptions options)
@@ -516,7 +515,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 LogFileAccess(originalFile);
                 LogFileAccess(temporaryReplacement);
                 LogFileAccess(backup);
-    
+
                 throw unauthorizedAccessException;
             }
 

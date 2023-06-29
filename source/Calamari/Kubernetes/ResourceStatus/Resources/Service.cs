@@ -13,7 +13,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public string ExternalIp { get; }
         public IEnumerable<string> Ports { get; }
 
-        public Service(JObject json) : base(json)
+        public Service(JObject json, Options options) : base(json, options)
         {
             Type = Field("$.spec.type");
             ClusterIp = Field("$.spec.clusterIP");

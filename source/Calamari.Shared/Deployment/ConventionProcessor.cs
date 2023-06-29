@@ -21,54 +21,63 @@ namespace Calamari.Deployment
             this.log = log;
         }
 
-        public void RunConventions()
+        public void RunConventions(bool logExceptions = true)
         {
+            var installConventions = conventions.OfType<IInstallConvention>();
+            var rollbackConventions = conventions.OfType<IRollbackConvention>().ToList();
             try
             {
                 // Now run the "conventions", for example: Deploy.ps1 scripts, XML configuration, and so on
-                RunInstallConventions();
+                RunInstallConventions(installConventions);
 
                 // Run cleanup for rollback conventions, for example: delete DeployFailed.ps1 script
-                RunRollbackCleanup();
+                RunRollbackCleanup(rollbackConventions);
             }
             catch (Exception installException)
             {
-                if (installException is CommandException || installException is RecursiveDefinitionException)
-                    log.Verbose(installException.ToString());
-                else
-                    Console.Error.WriteLine(installException);
-
-                Console.Error.WriteLine("Running rollback conventions...");
+                if (logExceptions)
+                {
+                    if (installException is CommandException || installException is RecursiveDefinitionException)
+                        log.Verbose(installException.ToString());
+                    else
+                        Console.Error.WriteLine(installException);
+                }
 
                 deployment.Error(installException);
 
-                try
+                if (rollbackConventions.Any())
                 {
-                    // Rollback conventions include tasks like DeployFailed.ps1
-                    RunRollbackConventions();
+                    Console.Error.WriteLine("Running rollback conventions...");
 
-                    // Run cleanup for rollback conventions, for example: delete DeployFailed.ps1 script
-                    RunRollbackCleanup();
-                }
-                catch (Exception rollbackException)
-                {
-                    //if the "rollback" exception message is identical to the exception we got during "install", dont log it
-                    if (rollbackException.Message != installException.Message)
+                    try
                     {
-                        if (rollbackException is CommandException || rollbackException is RecursiveDefinitionException)
-                            log.Verbose(installException.ToString());
-                        else
-                            Console.Error.WriteLine(rollbackException);
+                        // Rollback conventions include tasks like DeployFailed.ps1
+                        RunRollbackConventions(rollbackConventions);
+
+                        // Run cleanup for rollback conventions, for example: delete DeployFailed.ps1 script
+                        RunRollbackCleanup(rollbackConventions);
+                    }
+                    catch (Exception rollbackException)
+                    {
+                        //if the "rollback" exception message is identical to the exception we got during "install", dont log it
+                        if (rollbackException.Message != installException.Message)
+                        {
+                            if (rollbackException is CommandException || rollbackException is RecursiveDefinitionException)
+                                log.Verbose(installException.ToString());
+                            else
+                                Console.Error.WriteLine(rollbackException);
+                        }
                     }
                 }
+
                 throw;
             }
         }
 
 
-        void RunInstallConventions()
+        void RunInstallConventions(IEnumerable<IInstallConvention> installConventions)
         {
-            foreach (var convention in conventions.OfType<IInstallConvention>())
+            foreach (var convention in installConventions)
             {
                 convention.Install(deployment);
 
@@ -79,17 +88,17 @@ namespace Calamari.Deployment
             }
         }
 
-        void RunRollbackConventions()
+        void RunRollbackConventions(IEnumerable<IRollbackConvention> rollbackConventions)
         {
-            foreach (var convention in conventions.OfType<IRollbackConvention>())
+            foreach (var convention in rollbackConventions)
             {
                 convention.Rollback(deployment);
             }
         }
 
-        void RunRollbackCleanup()
+        void RunRollbackCleanup(IEnumerable<IRollbackConvention> rollbackConventions)
         {
-            foreach (var convention in conventions.OfType<IRollbackConvention>())
+            foreach (var convention in rollbackConventions)
             {
                 if (deployment.Variables.GetFlag(Common.Plumbing.Variables.KnownVariables.Action.SkipRemainingConventions))
                 {
