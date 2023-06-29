@@ -1,6 +1,7 @@
 ﻿#if !NET40
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -121,13 +122,27 @@ namespace Calamari.Common
 
                 var builder = new ContainerBuilder();
                 ConfigureContainer(builder, options);
-                using (var container = builder.Build())
-                {
-                    container.Resolve<VariableLogger>().LogVariables();
+                
+                using var container = builder.Build();
+                container.Resolve<VariableLogger>().LogVariables();
+                
+#if DEBUG
+                var waitForDebugger = container.Resolve<IVariables>().Get(KnownVariables.Calamari.WaitForDebugger);
 
-                    await ResolveAndExecuteCommand(container, options);
-                    return 0;
+                if (string.Equals(waitForDebugger, "true", StringComparison.OrdinalIgnoreCase))
+                {
+                    using var proc = Process.GetCurrentProcess();
+                    Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
+
+                    while (!Debugger.IsAttached)
+                    {
+                        await Task.Delay(1000);
+                    }
                 }
+#endif
+
+                await ResolveAndExecuteCommand(container, options);
+                return 0;
             }
             catch (Exception ex)
             {
