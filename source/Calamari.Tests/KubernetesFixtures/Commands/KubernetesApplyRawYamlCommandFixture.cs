@@ -37,7 +37,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands
         }
         
         [Test]
-        public void WhenResourceStatusIsEnabled_ShouldNotRunStatusChecks()
+        public void WhenResourceStatusIsEnabled_ShouldRunStatusChecks()
         {
             var variables = new CalamariVariables()
             {
