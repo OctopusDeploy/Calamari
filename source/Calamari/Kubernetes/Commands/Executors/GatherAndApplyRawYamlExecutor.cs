@@ -177,7 +177,7 @@ namespace Calamari.Kubernetes.Commands.Executors
 
                 if (resources.Any())
                 {
-                    log.Info("Created Resources:");
+                    log.Verbose("Created Resources:");
                     log.LogResources(resources);
                 }
 
