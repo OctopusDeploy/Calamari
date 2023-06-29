@@ -19,7 +19,12 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.Commands.Executors
 {
-    public class GatherAndApplyRawYamlExecutor
+    public interface IGatherAndApplyRawYamlExecutor
+    {
+        Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
+    }
+    
+    public class GatherAndApplyRawYamlExecutor : IGatherAndApplyRawYamlExecutor
     {
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
@@ -35,7 +40,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             this.kubectl = kubectl;
         }
 
-        public async Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null)
+        public async Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback)
         {
             try
             {

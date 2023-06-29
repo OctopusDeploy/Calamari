@@ -8,7 +8,12 @@ using Calamari.Kubernetes.ResourceStatus.Resources;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
-    public class ResourceStatusReportExecutor
+    public interface IResourceStatusReportExecutor
+    {
+        IRunningResourceStatusCheck Start(IEnumerable<ResourceIdentifier> initialResources = null);
+    }
+    
+    public class ResourceStatusReportExecutor : IResourceStatusReportExecutor
     {
         private readonly IVariables variables;
         private readonly RunningResourceStatusCheck.Factory runningResourceStatusCheckFactory;
@@ -21,7 +26,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.runningResourceStatusCheckFactory = runningResourceStatusCheckFactory;
         }
 
-        public IRunningResourceStatusCheck Start(IEnumerable<ResourceIdentifier> initialResources = null)
+        public IRunningResourceStatusCheck Start(IEnumerable<ResourceIdentifier> initialResources)
         {
             initialResources = initialResources ?? Enumerable.Empty<ResourceIdentifier>();
             var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
