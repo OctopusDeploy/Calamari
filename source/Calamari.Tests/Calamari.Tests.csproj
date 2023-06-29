@@ -268,7 +268,9 @@
   -->
   <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="CopyTools" AfterTargets="Build" DependsOnTargets="RunResolvePackageDependencies">
-    <Exec Command="dotnet tool update dotnet-script --version 1.4.0 --framework net6.0 --tool-path $(OutDir)/DotnetScript/" Condition="'$(TargetFramework)' == 'net6.0'" />
+    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'DotnetScript'">
+      <Output TaskParameter="Include" ItemName="DotnetScriptRef" />
+    </CreateItem>
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
     </CreateItem>
@@ -278,21 +280,25 @@
     <PropertyGroup>
       <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
       <FSharpCompilerToolsExe Condition="'$(TargetFramework)' == 'net6.0'">@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.exe</FSharpCompilerToolsExe>
+      <DotnetScriptTools>@(DotnetScriptRef->'%(ResolvedPath)')/tools/*.*</DotnetScriptTools>
+      <DotnetScriptExe Condition="'$(TargetFramework)' == 'net6.0'">@(DotnetScriptRef->'%(ResolvedPath)')/tools/*.exe</DotnetScriptExe>
       <NuGetCommandLine>@(NuGetCommandLineRef->'%(ResolvedPath)')/tools/*.*</NuGetCommandLine>
     </PropertyGroup>
     <ItemGroup>
       <FSharpFiles Include="$(FSharpCompilerTools)" />
       <FSharpFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(FSharpCompilerToolsExe)" />
-      <DotnetScriptFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(OutDir)/DotnetScript/**/*.*" />
-      <DotnetScriptFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(OutDir)/DotnetScript/*.exe" />
+      <DotnetScriptFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(DotnetScriptTools)" />
+      <DotnetScriptFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(DotnetScriptExe)" />
       <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net461'" />
     </ItemGroup>
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutDir)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net461'" />
     <Exec Command="chmod +x %(FSharpFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" Condition="'$(PublishDir)' != ''" />
-    <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/DotnetScript/%(RecursiveDir)" Condition="'$(PublishDir)' != '' And $(TargetFramework) == 'net6.0'" />
-    <Exec Command="chmod +x %(DotnetScriptFiles.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
+    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+      <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/DotnetScript/" SkipUnchangedFiles="true" />
+      <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" />
+      <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/DotnetScript/" Condition="'$(PublishDir)' != ''" />
+    </ItemGroup>
   </Target>
 </Project>

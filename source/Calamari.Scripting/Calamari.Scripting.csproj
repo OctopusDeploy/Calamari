@@ -42,6 +42,14 @@
             <PackageFlatten>false</PackageFlatten>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+      <PackageReference Include="Dotnet.Script" Version="1.4.0" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
         <Content Include="DotnetScript/*.*">
             <LinkBase>DotnetScript</LinkBase>
             <Pack>true</Pack>
@@ -51,11 +59,5 @@
             <PackageFlatten>false</PackageFlatten>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-    </ItemGroup>
-    <Target Name="Restore Local Tools" AfterTargets="Restore">
-        <Exec Command="dotnet tool update dotnet-script --version 1.4.0 --framework net6.0 --tool-path $(MSBuildProjectDirectory)/DotnetScript/" />
-    </Target>
-    <ItemGroup>
-      <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     </ItemGroup>
 </Project>
