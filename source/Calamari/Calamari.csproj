@@ -124,7 +124,7 @@
   <Target Name="Restore Local Tools" AfterTargets="Build">
     <Exec Command="dotnet tool update dotnet-script --version 1.4.0 --framework net6.0 --tool-path $(OutDir)/DotnetScript/" />
   </Target>
-  <Target Name="Restore Local Tools" AfterTargets="Publish">
+  <Target Name="Restore Local Tools" AfterTargets="Build">
     <Exec Command="dotnet tool update dotnet-script --version 1.4.0 --framework net6.0 --tool-path $(PublishDir)/DotnetScript/" />
   </Target>
 </Project>
