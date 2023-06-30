@@ -16,13 +16,13 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly Kubectl kubectl;
         private readonly IVariables variables;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly ResourceStatusReportExecutor statusReportExecutor;
+        private readonly IResourceStatusReportExecutor statusReportExecutor;
 
         public ResourceStatusReportWrapper(
             Kubectl kubectl,
             IVariables variables,
             ICalamariFileSystem fileSystem,
-            ResourceStatusReportExecutor statusReportExecutor)
+            IResourceStatusReportExecutor statusReportExecutor)
         {
             this.kubectl = kubectl;
             this.variables = variables;

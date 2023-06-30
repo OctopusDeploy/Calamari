@@ -19,7 +19,12 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.Commands.Executors
 {
-    public class GatherAndApplyRawYamlExecutor
+    public interface IGatherAndApplyRawYamlExecutor
+    {
+        Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
+    }
+    
+    public class GatherAndApplyRawYamlExecutor : IGatherAndApplyRawYamlExecutor
     {
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
@@ -48,7 +53,10 @@ namespace Calamari.Kubernetes.Commands.Executors
                 foreach (var directory in directories)
                 {
                     var res = ApplyBatchAndReturnResources(directory).ToList();
-                    await appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
+                    if (appliedResourcesCallback != null)
+                    {
+                        await appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
+                    }
                     resources.UnionWith(res);
                 }
 
