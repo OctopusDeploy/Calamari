@@ -12,7 +12,7 @@ using SpecialVariables = Calamari.Kubernetes.SpecialVariables;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class KubernetesContextScriptWrapperLiveFixtureGke : KubernetesContextScriptWrapperLiveFixture
     {
         string gkeToken;
@@ -48,7 +48,8 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             return new Dictionary<string, string>
             {
-                { "GOOGLE_CLOUD_KEYFILE_JSON", ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile) }
+                { "GOOGLE_CLOUD_KEYFILE_JSON", ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile) },
+                { "USE_GKE_GCLOUD_AUTH_PLUGIN", "True" }
             };
         }
 

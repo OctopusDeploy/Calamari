@@ -3,29 +3,34 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.Conventions;
-using Calamari.Kubernetes.Commands;
 using Calamari.Kubernetes.Integration;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.Kubernetes.Conventions
+namespace Calamari.Kubernetes.Commands.Executors
 {
-    public class GatherAndApplyRawYamlConvention: IInstallConvention
+    public interface IGatherAndApplyRawYamlExecutor
+    {
+        Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
+    }
+    
+    public class GatherAndApplyRawYamlExecutor : IGatherAndApplyRawYamlExecutor
     {
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly Kubectl kubectl;
 
-        public GatherAndApplyRawYamlConvention(
+        public GatherAndApplyRawYamlExecutor(
             ILog log,
             ICalamariFileSystem fileSystem,
             Kubectl kubectl)
@@ -35,18 +40,38 @@ namespace Calamari.Kubernetes.Conventions
             this.kubectl = kubectl;
         }
 
-        public void Install(RunningDeployment deployment)
+        public async Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback)
         {
-            var variables = deployment.Variables;
-            var globs = variables.Get(SpecialVariables.CustomResourceYamlFileName)?.Split(';');
-            if (globs == null || globs.All(g => g.IsNullOrEmpty()))
-                return;
+            try
+            {
+                var variables = deployment.Variables;
+                var globs = variables.Get(SpecialVariables.CustomResourceYamlFileName)?.Split(';');
+                if (globs == null || globs.All(g => g.IsNullOrEmpty()))
+                    return true;
+                var directories = GroupFilesIntoDirectories(deployment, globs, variables);
+                var resources = new HashSet<Resource>();
+                foreach (var directory in directories)
+                {
+                    var res = ApplyBatchAndReturnResources(directory).ToList();
+                    if (appliedResourcesCallback != null)
+                    {
+                        await appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
+                    }
+                    resources.UnionWith(res);
+                }
 
-            var directories = GroupFilesIntoDirectories(deployment, globs, variables);
-
-            var resources = directories.SelectMany(ApplyBatchAndReturnResources);
-
-            WriteResourcesToOutputVariables(resources);
+                WriteResourcesToOutputVariables(resources);
+                return true;
+            }
+            catch (GatherAndApplyRawYamlException)
+            {
+                return false;
+            }
+            catch (Exception e)
+            {
+                log.Error($"Deployment Failed due to exception: {e.Message}");
+                return false;
+            }
         }
 
         private void WriteResourcesToOutputVariables(IEnumerable<Resource> resources)
@@ -156,10 +181,14 @@ namespace Calamari.Kubernetes.Conventions
                     lastResources = new List<Resource> { token.ToObject<Resource>() };
                 }
 
-                foreach (var resource in lastResources)
+                var resources = lastResources.Select(r => r.ToResourceIdentifier()).ToList();
+
+                if (resources.Any())
                 {
-                    log.Info($"{resource.Kind}/{resource.Metadata.Name} created");
+                    log.Verbose("Created Resources:");
+                    log.LogResources(resources);
                 }
+
 
                 return lastResources;
             }
@@ -181,11 +210,12 @@ namespace Calamari.Kubernetes.Conventions
             log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
             log.Error("Custom resources will not be saved as output variables.");
 
-            throw new KubernetesDeploymentFailedException();
+            throw new GatherAndApplyRawYamlException();
         }
 
         private class ResourceMetadata
         {
+            public string Namespace { get; set; }
             public string Name { get; set; }
         }
 
@@ -193,7 +223,16 @@ namespace Calamari.Kubernetes.Conventions
         {
             public string Kind { get; set; }
             public ResourceMetadata Metadata { get; set; }
+
+            public ResourceIdentifier ToResourceIdentifier()
+            {
+                return new ResourceIdentifier(Kind, Metadata.Name, Metadata.Namespace);
+            }
         }
+
+        private class GatherAndApplyRawYamlException : Exception
+        {
+		}
 
         private class GlobDirectory
         {

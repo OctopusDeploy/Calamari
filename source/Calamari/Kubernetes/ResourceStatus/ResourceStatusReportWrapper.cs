@@ -1,3 +1,4 @@
+#if !NET40
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -5,30 +6,28 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
     public class ResourceStatusReportWrapper : IScriptWrapper
     {
-        private readonly ILog log;
+        private readonly Kubectl kubectl;
         private readonly IVariables variables;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly IResourceStatusChecker resourceStatusChecker;
+        private readonly IResourceStatusReportExecutor statusReportExecutor;
 
         public ResourceStatusReportWrapper(
-            ILog log,
+            Kubectl kubectl,
             IVariables variables,
             ICalamariFileSystem fileSystem,
-            IResourceStatusChecker resourceStatusChecker)
+            IResourceStatusReportExecutor statusReportExecutor)
         {
-            this.log = log;
+            this.kubectl = kubectl;
             this.variables = variables;
             this.fileSystem = fileSystem;
-            this.resourceStatusChecker = resourceStatusChecker;
+            this.statusReportExecutor = statusReportExecutor;
         }
 
         public int Priority => ScriptWrapperPriorities.KubernetesStatusCheckPriority;
@@ -51,16 +50,16 @@ namespace Calamari.Kubernetes.ResourceStatus
             return hasClusterUrl || hasClusterName;
         }
 
-        public CommandResult ExecuteScript(Script script, ScriptSyntax scriptSyntax,
+        public CommandResult ExecuteScript(
+            Script script,
+            ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Dictionary<string, string> environmentVars)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
-            var kubectl = new Kubectl(variables, log, commandLineRunner, workingDirectory, environmentVars);
-
-            var resourceStatusReportExecutor =
-                new ResourceStatusReportExecutor(variables, log, fileSystem, resourceStatusChecker, kubectl);
-
+            kubectl.SetWorkingDirectory(workingDirectory);
+            kubectl.SetEnvironmentVariables(environmentVars);
+            var resourceFinder = new ResourceFinder(variables, fileSystem);
 
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
             if (result.ExitCode != 0)
@@ -68,16 +67,26 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return result;
             }
 
+            CommandResult GetStatusResult(string errorMessage) =>
+                new CommandResult("K8s Resource Status Reporting", 1, errorMessage, workingDirectory);
+
             try
             {
-                resourceStatusReportExecutor.ReportStatus(workingDirectory);
+                var resources = resourceFinder.FindResources(workingDirectory);
+                var statusResult = statusReportExecutor.Start(resources).WaitForCompletionOrTimeout()
+                                                       .GetAwaiter().GetResult();
+                if (!statusResult)
+                {
+                    return GetStatusResult("Unable to complete Report Status, see log for details.");
+                }
             }
             catch (Exception e)
             {
-                return new CommandResult("K8s Resource Status Reporting", 1, e.Message, workingDirectory);
+                return GetStatusResult(e.Message);
             }
 
             return result;
         }
     }
 }
+#endif

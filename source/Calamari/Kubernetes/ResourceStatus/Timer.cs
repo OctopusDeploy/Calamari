@@ -1,6 +1,8 @@
+#if !NET40
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
@@ -11,41 +13,25 @@ namespace Calamari.Kubernetes.ResourceStatus
     {
         void Start();
         bool HasCompleted();
-        void WaitForInterval();
+        Task WaitForInterval();
     }
-    
-    /// <summary>
-    /// <inheritdoc />
-    /// </summary>
+
     public class Timer : ITimer
     {
+        public delegate ITimer Factory(TimeSpan interval, TimeSpan duration);
+
+        private readonly Stopwatch stopwatch = new Stopwatch();
+        private readonly TimeSpan interval;
         private readonly TimeSpan duration;
-        private readonly TimeSpan interval;
-        private readonly Stopwatch stopwatch;
-        
-        public Timer(TimeSpan duration, TimeSpan interval)
+
+        public Timer(TimeSpan interval, TimeSpan duration)
         {
-            this.duration = duration;
             this.interval = interval;
-            stopwatch = new Stopwatch();
+            this.duration = duration;
         }
-
         public void Start() => stopwatch.Start();
-        public bool HasCompleted() => stopwatch.IsRunning && stopwatch.Elapsed >= duration;
-        public void WaitForInterval() => Thread.Sleep(interval);
-    }
-
-    /// <summary>
-    /// Represents a CountdownTimer that never completes
-    /// </summary>
-    public class InfiniteTimer : ITimer
-    {
-        private readonly TimeSpan interval;
-        
-        public InfiniteTimer(TimeSpan interval) => this.interval = interval;
-        
-        public void Start() { }
-        public bool HasCompleted() => false;
-        public void WaitForInterval() => Thread.Sleep(interval);
+        public bool HasCompleted() => duration != Timeout.InfiniteTimeSpan && stopwatch.IsRunning && stopwatch.Elapsed >= duration;
+        public async Task WaitForInterval() => await Task.Delay(interval);
     }
 }
+#endif

@@ -26,6 +26,7 @@ using IContainer = Autofac.IContainer;
 #if !NET40
 using Calamari.Aws.Deployment;
 using Calamari.Azure;
+using Calamari.Kubernetes.Commands.Executors;
 #endif
 
 namespace Calamari
@@ -67,11 +68,16 @@ namespace Calamari
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
+#if !NET40
             builder.RegisterType<ResourceRetriever>().As<IResourceRetriever>().SingleInstance();
-            builder.RegisterType<ResourceStatusChecker>().As<IResourceStatusChecker>().SingleInstance();
+            builder.RegisterType<RunningResourceStatusCheck>().As<IRunningResourceStatusCheck>().SingleInstance();
+            builder.RegisterType<ResourceStatusCheckTask>().AsSelf();
             builder.RegisterType<ResourceUpdateReporter>().As<IResourceUpdateReporter>().SingleInstance();
-            builder.RegisterType<ResourceStatusReportExecutor>().AsSelf();
-            builder.RegisterType<Kubectl>().AsSelf().InstancePerLifetimeScope();
+            builder.RegisterType<ResourceStatusReportExecutor>().As<IResourceStatusReportExecutor>();
+            builder.RegisterType<GatherAndApplyRawYamlExecutor>().As<IGatherAndApplyRawYamlExecutor>();
+            builder.RegisterType<Timer>().As<ITimer>();
+#endif
+            builder.RegisterType<Kubectl>().AsSelf().As<IKubectl>().InstancePerLifetimeScope();
             builder.RegisterType<KubectlGet>().As<IKubectlGet>().SingleInstance();
 
             builder.RegisterType<KubernetesDiscovererFactory>()

@@ -13,9 +13,9 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// <summary>
         /// Gets the resources identified by the resourceIdentifiers and all their owned resources
         /// </summary>
-        IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, Kubectl kubectl, Options options);
+        IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, IKubectl kubectl, Options options);
     }
-    
+
     public class ResourceRetriever : IResourceRetriever
     {
         private readonly IKubectlGet kubectlGet;
@@ -24,9 +24,9 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             this.kubectlGet = kubectlGet;
         }
-        
+
         /// <inheritdoc />
-        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, Kubectl kubectl, Options options)
+        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, IKubectl kubectl, Options options)
         {
             var resources = resourceIdentifiers
                 .Select(identifier => GetResource(identifier, kubectl, options))
@@ -41,13 +41,13 @@ namespace Calamari.Kubernetes.ResourceStatus
             return resources;
         }
 
-        private Resource GetResource(ResourceIdentifier resourceIdentifier, Kubectl kubectl, Options options)
+        private Resource GetResource(ResourceIdentifier resourceIdentifier, IKubectl kubectl, Options options)
         {
             var result = kubectlGet.Resource(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, kubectl);
             return string.IsNullOrEmpty(result) ? null : ResourceFactory.FromJson(result, options);
         }
-    
-        private IEnumerable<Resource> GetChildrenResources(Resource parentResource, Kubectl kubectl, Options options)
+
+        private IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options)
         {
             var childKind = parentResource.ChildKind;
             if (string.IsNullOrEmpty(childKind))

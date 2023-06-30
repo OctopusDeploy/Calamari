@@ -65,7 +65,7 @@ namespace Calamari.Common
 #if DEBUG
                 var waitForDebugger = container.Resolve<IVariables>().Get(KnownVariables.Calamari.WaitForDebugger);
 
-                if (string.Equals(waitForDebugger, "true", StringComparison.CurrentCultureIgnoreCase))
+                if (string.Equals(waitForDebugger, "true", StringComparison.OrdinalIgnoreCase))
                 {
                     using var proc = Process.GetCurrentProcess();
                     Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
