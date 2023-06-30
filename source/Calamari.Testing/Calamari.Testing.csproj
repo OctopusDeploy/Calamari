@@ -12,6 +12,10 @@
     <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
         <TargetFramework>netstandard2.1</TargetFramework>
     </PropertyGroup>
+    
+    <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+        <DefineConstants>$(DefineConstants);NETCORE</DefineConstants>
+    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Assent" Version="1.6.1" />
