@@ -114,6 +114,9 @@
     <ItemGroup>
       <FSharpFiles Include="$(FSharpCompilerTools)" />
     </ItemGroup>
+    <ItemGroup>
+      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/**/*.*" />
+    </ItemGroup>
   </Target>
   <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
@@ -121,10 +124,10 @@
   <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
   </Target>
-  <Target Name="Restore Local Tools" AfterTargets="Build">
-    <Exec Command="dotnet tool update dotnet-script --version 1.4.0 --framework net6.0 --tool-path $(OutDir)/DotnetScript/" />
+  <Target Name="Copy DotnetScript Files" AfterTargets="Build">
+      <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/DotnetScript/" />
   </Target>
   <Target Name="Restore Local Tools" AfterTargets="Publish">
-    <Exec Command="dotnet tool update dotnet-script --version 1.4.0 --framework net6.0 --tool-path $(PublishDir)/DotnetScript/" />
+    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/DotnetScript/" />
   </Target>
 </Project>

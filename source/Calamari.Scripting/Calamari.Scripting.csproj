@@ -52,9 +52,9 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
-    <Target Name="Restore Local Tools" AfterTargets="Restore">
-        <Exec Command="dotnet tool update dotnet-script --version 1.4.0 --framework net6.0 --tool-path $(MSBuildProjectDirectory)/DotnetScript/" />
-    </Target>
+<!--    <Target Name="Restore Local Tools" AfterTargets="Restore">-->
+<!--        <Exec Command="dotnet tool update dotnet-script &#45;&#45;version 1.4.0 &#45;&#45;framework net6.0 &#45;&#45;tool-path $(MSBuildProjectDirectory)/DotnetScript/" />-->
+<!--    </Target>-->
     <ItemGroup>
       <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     </ItemGroup>
