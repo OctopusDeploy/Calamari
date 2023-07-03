@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
@@ -31,9 +32,10 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             // if (ScriptingEnvironment.IsNetFramework())
             //     throw new CommandException("dotnet-script requires dotnet core 2.1 or dotnet 5 and later");
 
+            var exeName = $"dotnet-script.{(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "exe" : "sh")}";
             var myPath = typeof(DotnetScriptExecutor).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
-            var executable = Path.GetFullPath(Path.Combine(parent, "DotnetScript", "dotnet-script"));
+            var executable = Path.GetFullPath(Path.Combine(parent, "DotnetScript", exeName));
 
             if (File.Exists(executable))
                 return executable;
