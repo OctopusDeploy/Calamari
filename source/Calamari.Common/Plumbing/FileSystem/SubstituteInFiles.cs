@@ -51,14 +51,14 @@ namespace Calamari.Common.Plumbing.FileSystem
         List<string> MatchingFiles(string currentDirectory, string target)
         {
             var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target)
-                                  .Select(p => Path.GetFullPath(p, currentDirectory))
+                                  .Select(p => Path.Combine(currentDirectory, p))
                                   .ToList();
 
             foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths)
-                .Where(s => !string.IsNullOrWhiteSpace(s)))
+                                          .Where(s => !string.IsNullOrWhiteSpace(s)))
             {
                 var pathFiles = fileSystem.EnumerateFilesWithGlob(path, target)
-                                          .Select(p => Path.GetFullPath(p, currentDirectory));
+                                          .Select(p => Path.Combine(currentDirectory, p));
                 files.AddRange(pathFiles);
             }
 
