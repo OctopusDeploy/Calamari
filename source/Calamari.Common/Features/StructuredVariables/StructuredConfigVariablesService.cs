@@ -98,11 +98,14 @@ namespace Calamari.Common.Features.StructuredVariables
 
         List<string> MatchingFiles(string currentDirectory, string target)
         {
-            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target).Select(Path.GetFullPath).ToList();
+            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target)
+                                  .Select(f => Path.GetFullPath(f, currentDirectory))
+                                  .ToList();
 
             foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
             {
-                var pathFiles = fileSystem.EnumerateFilesWithGlob(path, target).Select(Path.GetFullPath);
+                var pathFiles = fileSystem.EnumerateFilesWithGlob(path, target)
+                                          .Select(f => Path.GetFullPath(f, currentDirectory));
                 files.AddRange(pathFiles);
             }
 

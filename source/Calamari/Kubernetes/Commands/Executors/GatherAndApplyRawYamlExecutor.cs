@@ -12,8 +12,6 @@ using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
-using Microsoft.Extensions.FileSystemGlobbing;
-using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 
@@ -107,14 +105,11 @@ namespace Calamari.Kubernetes.Commands.Executors
                 var directory = new GlobDirectory(i, glob, directoryPath);
                 fileSystem.CreateDirectory(directoryPath);
 
-                var matcher = new Matcher();
-                matcher.AddInclude(glob);
-                var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(deployment.CurrentDirectory)));
-                foreach (var file in result.Files)
+                var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, glob);
+                foreach (var file in files)
                 {
-                    var relativeFilePath = file.Path ?? file.Stem;
-                    var fullPath = Path.Combine(deployment.CurrentDirectory, relativeFilePath);
-                    var targetPath = Path.Combine(directoryPath, relativeFilePath);
+                    var fullPath = Path.Combine(deployment.CurrentDirectory, file);
+                    var targetPath = Path.Combine(directoryPath, file);
                     var targetDirectory = Path.GetDirectoryName(targetPath);
                     if (targetDirectory != null)
                     {
