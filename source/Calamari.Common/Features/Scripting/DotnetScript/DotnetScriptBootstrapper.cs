@@ -8,6 +8,7 @@ using System.Text;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -32,7 +33,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             // if (ScriptingEnvironment.IsNetFramework())
             //     throw new CommandException("dotnet-script requires dotnet core 2.1 or dotnet 5 and later");
 
-            var exeName = $"dotnet-script.{(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "exe" : "sh")}";
+            var exeName = $"dotnet-script.{(CalamariEnvironment.IsRunningOnWindows ? "exe" : "sh")}";
             var myPath = typeof(DotnetScriptExecutor).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
             var executable = Path.GetFullPath(Path.Combine(parent, "DotnetScript", exeName));
