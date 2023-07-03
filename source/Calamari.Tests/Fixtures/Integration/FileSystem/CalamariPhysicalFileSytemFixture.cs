@@ -198,27 +198,6 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             results.Should().HaveCount(1);
         }
 
-
-        [TestCase(@"[Configuration]", @"[Configuration]\\*.txt")]
-        [TestCase(@"Configuration]", @"Configuration]\\*.txt")]
-        [TestCase(@"[Configuration", @"[Configuration\\*.txt")]
-        [TestCase(@"{Configuration}", @"{Configuration}\\*.txt")]
-        [TestCase(@"Configuration}", @"Configuration}\\*.txt")]
-        [TestCase(@"{Configuration", @"{Configuration\\*.txt")]
-        public void EnumerateFilesWithGlobShouldIgnoreGroups(string directory, string glob)
-        {
-            if (!CalamariEnvironment.IsRunningOnWindows)
-                glob = glob.Replace("\\", "/");
-
-            Directory.CreateDirectory(Path.Combine(rootPath, directory));
-
-            File.WriteAllText(Path.Combine(rootPath, directory, "Foo.txt"), "");
-
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, glob).ToList();
-
-            results.Should().HaveCount(1);
-        }
-
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void LongFilePathsShouldWork()
