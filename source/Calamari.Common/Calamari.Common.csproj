@@ -58,7 +58,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Glob" Version="1.2.0-alpha0032" />
+        <PackageReference Include="Glob" Version="1.1.9" />
         <PackageReference Include="JavaPropertiesParser" Version="0.2.1" />
         <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
         <PackageReference Include="Octopus.Versioning" Version="5.1.155" />
