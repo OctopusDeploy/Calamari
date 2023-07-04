@@ -188,13 +188,13 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public virtual IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, params string[] globPatterns)
         {
-            return EnumerateWithGlobInternal(parentDirectoryPath, globPatterns,  p => File.Exists(p),
+            return EnumerateWithGlobInternal(parentDirectoryPath, globPatterns,  File.Exists,
                 (d, g) => Glob.Files(d, g, GlobOptions.CaseInsensitive));
         }
 
         private IEnumerable<string> EnumerateDirectoriesWithGlob(string parentDirectoryPath, params string[] globPatterns)
         {
-            return EnumerateWithGlobInternal(parentDirectoryPath, globPatterns, p => Directory.Exists(p),
+            return EnumerateWithGlobInternal(parentDirectoryPath, globPatterns, Directory.Exists,
                 (d, g) => Glob.Directories(d, g, GlobOptions.CaseInsensitive));
         }
 
