@@ -50,9 +50,17 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         List<string> MatchingFiles(string currentDirectory, string target)
         {
-            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target)
+            List<string> files;
+            if (fileSystem.FileExists(target))
+            {
+                files = new List<string> { fileSystem.GetFullPath(target) };
+            }
+            else
+            {
+                files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target)
                                   .Select(p => Path.Combine(currentDirectory, p))
                                   .ToList();
+            }
 
             foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths)
                                           .Where(s => !string.IsNullOrWhiteSpace(s)))
