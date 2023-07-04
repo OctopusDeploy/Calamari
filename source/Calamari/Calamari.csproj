@@ -123,9 +123,9 @@
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build">
-    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/DotnetScript/" />
+    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/DotnetScript/%(DotnetScriptFiles.RecursiveDir)" />
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish">
-    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/DotnetScript/" />
+    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/DotnetScript/%(DotnetScriptFiles.RecursiveDir)" />
   </Target>
 </Project>
