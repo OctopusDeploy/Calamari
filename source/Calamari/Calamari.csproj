@@ -122,10 +122,10 @@
   <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
   </Target>
-  <Target Name="Copy DotnetScript Files" AfterTargets="Build">
-      <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/DotnetScript/" />
+  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build">
+    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/DotnetScript/" />
   </Target>
-  <Target Name="Restore Local Tools" AfterTargets="Publish">
+  <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish">
     <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/DotnetScript/" />
   </Target>
 </Project>
