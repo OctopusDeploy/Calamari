@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Logging;
@@ -33,7 +32,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         {
             foreach (var target in filesToTarget)
             {
-                var matchingFiles = MatchingFiles(currentDirectory, target);
+                var matchingFiles = MatchingFiles(currentDirectory, target).ToList();
 
                 if (!matchingFiles.Any())
                 {
@@ -48,26 +47,14 @@ namespace Calamari.Common.Plumbing.FileSystem
             }
         }
 
-        List<string> MatchingFiles(string currentDirectory, string target)
+        IEnumerable<string> MatchingFiles(string currentDirectory, string target)
         {
-            List<string> files;
-            if (fileSystem.FileExists(target))
-            {
-                files = new List<string> { fileSystem.GetFullPath(target) };
-            }
-            else
-            {
-                files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target)
-                                  .Select(p => Path.Combine(currentDirectory, p))
-                                  .ToList();
-            }
+            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target);
 
             foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths)
                                           .Where(s => !string.IsNullOrWhiteSpace(s)))
             {
-                var pathFiles = fileSystem.EnumerateFilesWithGlob(path, target)
-                                          .Select(p => Path.Combine(currentDirectory, p));
-                files.AddRange(pathFiles);
+                files = files.Concat(fileSystem.EnumerateFilesWithGlob(path, target));
             }
 
             return files;
