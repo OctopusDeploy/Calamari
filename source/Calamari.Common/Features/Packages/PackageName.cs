@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Calamari.Common.Features.Packages.NuGet;
 using Octopus.Versioning;
 using Octopus.Versioning.Maven;
+using Octopus.Versioning.Octopus;
 using Octopus.Versioning.Semver;
 
 /// These classes are shared with Octopus.Server. Ideally should be moved to a common location.
@@ -218,13 +219,15 @@ namespace Calamari.Common.Features.Packages
         {
             switch (version)
             {
-                case MavenVersion mavenVersion:
+                case MavenVersion _:
                     return "M" + Encode(version.ToString());
-                case SemanticVersion semver:
+                case SemanticVersion _:
                     return "S" + Encode(version.ToString());
+                case OctopusVersion _:
+                    return "O" + Encode(version.ToString());
             }
 
-            throw new Exception($"Unrecognised Version format `{typeof(Version).Name}`");
+            throw new Exception($"Unrecognised Version format `{version.GetType().Name}`");
         }
 
         static IVersion DecodeVersion(string input)

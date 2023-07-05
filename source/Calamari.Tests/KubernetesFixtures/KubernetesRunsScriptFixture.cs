@@ -36,7 +36,8 @@ namespace Calamari.Tests.KubernetesFixtures
         IVariables variables;
         InMemoryLog log;
         Dictionary<string, string> redactMap;
-        static InstallTools installTools;
+        InstallTools installTools;
+        Dictionary<string, string> environmentVariables;
 
         [SetUp]
         public void Setup()
@@ -45,16 +46,20 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, FeatureToggle.KubernetesAksKubeloginFeatureToggle.ToString());
             log = new DoNotDoubleLog();
             redactMap = new Dictionary<string, string>();
+            environmentVariables = new Dictionary<string, string>();
+            
             SetTestClusterVariables();
         }
 
         [Test]
         [TestCase("Url", "", "", true)]
-        [TestCase("", "Name", "" , true)]
+        [TestCase("", "Name", "", true)]
         [TestCase("", "", "Name", true)]
         [TestCase("", "", "", false)]
-        public void ShouldBeEnabledIfAnyVariablesAreProvided(string clusterUrl, string aksClusterName,
-            string eksClusterName, bool expected)
+        public void ShouldBeEnabledIfAnyVariablesAreProvided(string clusterUrl,
+                                                             string aksClusterName,
+                                                             string eksClusterName,
+                                                             bool expected)
         {
             variables.Set(SpecialVariables.ClusterUrl, clusterUrl);
             variables.Set(SpecialVariables.AksClusterName, aksClusterName);
@@ -223,9 +228,9 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
         [RequiresNonMono]
-        public void ExecutionWithEKS_IAMAuthenticator()
+        public async Task ExecutionWithEKS_IAMAuthenticator()
         {
-            InstallTools(InstallAwsCli);
+            await InstallTools(InstallAwsCli);
 
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
@@ -243,9 +248,9 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
         [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
-        public void ExecutionWithEKS_AwsCLIAuthenticator()
+        public async Task ExecutionWithEKS_AwsCLIAuthenticator()
         {
-            InstallTools(InstallAwsCli);
+            await InstallTools(InstallAwsCli);
 
             // Overriding the cluster url with a valid url. This is required to hit the aws eks get-token endpoint.
             variables.Set(SpecialVariables.ClusterUrl, "https://someHash.gr7.ap-southeast-2.eks.amazonaws.com");
@@ -263,8 +268,12 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void ExecutionWithGoogleCloudAccount_WhenZoneIsProvided()
+        [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
+        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
+        public async Task ExecutionWithGoogleCloudAccount_WhenZoneIsProvided()
         {
+            await InstallTools(InstallGCloud);
+
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
@@ -278,8 +287,12 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void ExecutionWithGoogleCloudAccount_WhenRegionIsProvided()
+        [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
+        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
+        public async Task ExecutionWithGoogleCloudAccount_WhenRegionIsProvided()
         {
+            await InstallTools(InstallGCloud);
+
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
@@ -293,8 +306,12 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void ExecutionWithGoogleCloudAccount_WhenBothZoneAndRegionAreProvided()
+        [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
+        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
+        public async Task ExecutionWithGoogleCloudAccount_WhenBothZoneAndRegionAreProvided()
         {
+            await InstallTools(InstallGCloud);
+
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
@@ -377,7 +394,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         CalamariResult ExecuteScriptInRecordOnlyMode(IScriptWrapper wrapper, string scriptName)
         {
-            return ExecuteScriptInternal(new RecordOnly(variables), wrapper, scriptName);
+            return ExecuteScriptInternal(new RecordOnly(variables, installTools), wrapper, scriptName);
         }
 
         CalamariResult ExecuteScriptInternal(ICommandLineRunner runner, IScriptWrapper wrapper, string scriptName)
@@ -389,31 +406,41 @@ namespace Calamari.Tests.KubernetesFixtures
             }
 
             var engine = new ScriptEngine(wrappers);
-            var result = engine.Execute(new Script(scriptName), variables, runner, new Dictionary<string, string>());
+            var result = engine.Execute(new Script(scriptName), variables, runner, environmentVariables);
 
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
         }
 
-        void InstallTools(Action<InstallTools> toolInstaller)
+        async Task InstallTools(Func<InstallTools, Task> toolInstaller)
         {
             var tools = new InstallTools(TestContext.Progress.WriteLine);
-            toolInstaller(tools);
+            
+            await toolInstaller(tools);
+            
             installTools = tools;
         }
 
-        void InstallAwsCli(InstallTools tools)
+        static async Task InstallAwsCli(InstallTools tools)
         {
-            var installAwsCliTask = tools.InstallAwsCli();
-            Task.Run(() => installAwsCliTask);
-            Task.WaitAll(installAwsCliTask);
+            await tools.InstallAwsCli();
         }
 
-        class RecordOnly :  ICommandLineRunner
+        async Task InstallGCloud(InstallTools tools)
+        {
+            await tools.InstallGCloud();
+            
+            environmentVariables.Add("USE_GKE_GCLOUD_AUTH_PLUGIN", "True");
+        }
+
+        class RecordOnly : ICommandLineRunner
         {
             IVariables Variables;
-            public RecordOnly(IVariables variables)
+            readonly InstallTools installTools;
+
+            public RecordOnly(IVariables variables, InstallTools installTools)
             {
                 Variables = variables;
+                this.installTools = installTools;
             }
 
             public CommandResult Execute(CommandLineInvocation invocation)
@@ -430,8 +457,9 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
 
                 // We only want to output executable string. eg. ExecuteCommandAndReturnOutput("where", "kubectl.exe")
-                if (new[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe", "kubelogin", "kubelogin.exe" }.Contains(invocation.Arguments))
+                if (new[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe", "kubelogin", "kubelogin.exe", "gke-gcloud-auth-plugin", "gke-gcloud-auth-plugin.exe" }.Contains(invocation.Arguments))
                     invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));
+                
                 return new CommandResult(invocation.ToString(), 0);
             }
 

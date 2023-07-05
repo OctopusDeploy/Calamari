@@ -26,6 +26,7 @@ using IContainer = Autofac.IContainer;
 #if !NET40
 using Calamari.Aws.Deployment;
 using Calamari.Azure;
+using Calamari.Kubernetes.Commands.Executors;
 #endif
 
 namespace Calamari
@@ -72,7 +73,8 @@ namespace Calamari
             builder.RegisterType<RunningResourceStatusCheck>().As<IRunningResourceStatusCheck>().SingleInstance();
             builder.RegisterType<ResourceStatusCheckTask>().AsSelf();
             builder.RegisterType<ResourceUpdateReporter>().As<IResourceUpdateReporter>().SingleInstance();
-            builder.RegisterType<ResourceStatusReportExecutor>().AsSelf();
+            builder.RegisterType<ResourceStatusReportExecutor>().As<IResourceStatusReportExecutor>();
+            builder.RegisterType<GatherAndApplyRawYamlExecutor>().As<IGatherAndApplyRawYamlExecutor>();
             builder.RegisterType<Timer>().As<ITimer>();
 #endif
             builder.RegisterType<Kubectl>().AsSelf().As<IKubectl>().InstancePerLifetimeScope();

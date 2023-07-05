@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace Calamari.Common.Features.Processes
 {
@@ -19,7 +20,7 @@ namespace Calamari.Common.Features.Processes
 
         public string? Errors { get; }
 
-        public bool HasErrors => !string.IsNullOrWhiteSpace(Errors);
+        public bool HasErrors => !string.IsNullOrWhiteSpace(Errors) && ErrorsExcludeServiceMessages(Errors);
 
         public void VerifySuccess()
         {
@@ -30,5 +31,10 @@ namespace Calamari.Common.Features.Processes
                     Errors,
                     workingDirectory);
         }
+
+        static bool ErrorsExcludeServiceMessages(string s) =>
+            s.Split(new[] {Environment.NewLine}, StringSplitOptions.None)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Any(s => !s.StartsWith("##octopus"));
     }
 }

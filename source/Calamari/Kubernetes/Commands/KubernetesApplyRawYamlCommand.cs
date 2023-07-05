@@ -24,7 +24,8 @@ namespace Calamari.Kubernetes.Commands
         private readonly ILog log;
         private readonly IVariables variables;
         private readonly ICalamariFileSystem fileSystem;
-        private readonly ResourceStatusReportExecutor statusReporter;
+        private readonly IResourceStatusReportExecutor statusReporter;
+        private readonly IGatherAndApplyRawYamlExecutor gatherAndApplyRawYamlExecutor;
         private readonly Kubectl kubectl;
 
         public KubernetesApplyRawYamlCommand(
@@ -35,7 +36,8 @@ namespace Calamari.Kubernetes.Commands
             IExtractPackage extractPackage,
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
-            ResourceStatusReportExecutor statusReporter,
+            IGatherAndApplyRawYamlExecutor gatherAndApplyRawYamlExecutor,
+            IResourceStatusReportExecutor statusReporter,
             Kubectl kubectl)
             : base(log, deploymentJournalWriter, variables, fileSystem, extractPackage,
             substituteInFiles, structuredConfigVariablesService, kubectl)
@@ -44,6 +46,7 @@ namespace Calamari.Kubernetes.Commands
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.statusReporter = statusReporter;
+            this.gatherAndApplyRawYamlExecutor = gatherAndApplyRawYamlExecutor;
             this.kubectl = kubectl;
         }
 
@@ -58,9 +61,11 @@ namespace Calamari.Kubernetes.Commands
 
         protected override async Task<bool> ExecuteCommand(RunningDeployment runningDeployment)
         {
-            var gatherAndApplyRawYamlExecutor =
-                new GatherAndApplyRawYamlExecutor(log, fileSystem, kubectl);
-
+            if (!variables.GetFlag(SpecialVariables.ResourceStatusCheck))
+            {
+                return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment);
+            }
+            
             var statusCheck = statusReporter.Start();
 
             return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment, statusCheck.AddResources) &&

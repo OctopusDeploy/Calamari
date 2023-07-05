@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Calamari.Deployment;
-using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -143,6 +141,16 @@ namespace Calamari.Tests.Fixtures.Bash
 
             output.AssertFailure();
             output.AssertErrorOutput("hello");
+        }
+
+        [Test]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldNotFailOnStdErrFromServiceMessagesWithTreatScriptWarningsAsErrors()
+        {
+            var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
+            {[SpecialVariables.Action.FailScriptOnErrorOutput] = "True"});
+
+            output.AssertSuccess();
         }
 
         [Test]
