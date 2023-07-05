@@ -200,10 +200,10 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         private static IEnumerable<string> EnumerateWithGlobInternal(
             string parentDirectoryPath,
-            IReadOnlyCollection<string> globPatterns,
+            string[] globPatterns,
             Func<string, string, IEnumerable<string>> globSearch)
         {
-            var results = globPatterns.Count == 0
+            var results = globPatterns.Length == 0
                 ? globSearch(parentDirectoryPath, "*")
                 : globPatterns.SelectMany(g => globSearch(parentDirectoryPath, g));
 
