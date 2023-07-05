@@ -188,46 +188,24 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public virtual IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, params string[] globPatterns)
         {
-            return EnumerateWithGlobInternal(parentDirectoryPath, globPatterns,  File.Exists,
+            return EnumerateWithGlobInternal(parentDirectoryPath, globPatterns,
                 (d, g) => Glob.Files(d, g, GlobOptions.CaseInsensitive));
         }
 
         private IEnumerable<string> EnumerateDirectoriesWithGlob(string parentDirectoryPath, params string[] globPatterns)
         {
-            return EnumerateWithGlobInternal(parentDirectoryPath, globPatterns, Directory.Exists,
+            return EnumerateWithGlobInternal(parentDirectoryPath, globPatterns,
                 (d, g) => Glob.Directories(d, g, GlobOptions.CaseInsensitive));
         }
 
-        private static IEnumerable<string> EnumerateWithGlobInternal(string parentDirectoryPath, string[] globPatterns,
-            Predicate<string> exists, Func<string, string, IEnumerable<string>> globSearch)
+        private static IEnumerable<string> EnumerateWithGlobInternal(
+            string parentDirectoryPath,
+            IReadOnlyCollection<string> globPatterns,
+            Func<string, string, IEnumerable<string>> globSearch)
         {
-            var results = new List<string>();
-            var globs = new List<string>(globPatterns);
-            foreach (var glob in globPatterns)
-            {
-                var path = glob;
-                if (exists(path))
-                {
-                    globs.Remove(glob);
-                    results.Add(path);
-                    continue;
-                }
-
-                path = Path.Combine(parentDirectoryPath, path);
-                if (!exists(path)) continue;
-
-                globs.Remove(glob);
-                results.Add(path);
-            }
-
-            if (globs.Count == 0 && results.Count == 0)
-            {
-                results.AddRange(globSearch(parentDirectoryPath, "*"));
-            }
-            else
-            {
-                results.AddRange(globPatterns.SelectMany(g => globSearch(parentDirectoryPath, g)));
-            }
+            var results = globPatterns.Count == 0
+                ? globSearch(parentDirectoryPath, "*")
+                : globPatterns.SelectMany(g => globSearch(parentDirectoryPath, g));
 
             return results.Distinct().Select(p => Path.Combine(parentDirectoryPath, p));
         }
