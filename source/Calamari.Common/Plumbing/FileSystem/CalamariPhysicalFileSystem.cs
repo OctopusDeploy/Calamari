@@ -10,6 +10,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Retry;
 using GlobExpressions;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Common.Plumbing.FileSystem
 {
@@ -203,11 +204,49 @@ namespace Calamari.Common.Plumbing.FileSystem
             string[] globPatterns,
             Func<string, string, IEnumerable<string>> globSearch)
         {
-            var results = globPatterns.Length == 0
-                ? globSearch(parentDirectoryPath, "*")
-                : globPatterns.SelectMany(g => globSearch(parentDirectoryPath, g));
+            var results = new List<string>();
+            var globs = new List<string>(globPatterns);
+            globs.RemoveWhere(g => AddPathToGlobsIfFullPath(parentDirectoryPath, g, results, globSearch));
 
-            return results.Distinct().Select(p => Path.Combine(parentDirectoryPath, p));
+            results.AddRange((globs.Count == 0 && results.Count == 0
+                    ? globSearch(parentDirectoryPath, "*")
+                    : globs.SelectMany(g => globSearch(parentDirectoryPath, g)))
+                .Select(p => Path.Combine(parentDirectoryPath, p)));
+
+            return results.Distinct();
+        }
+
+        static bool AddPathToGlobsIfFullPath(
+            string parentDirectoryPath,
+            string glob,
+            List<string> results,
+            Func<string, string, IEnumerable<string>> globSearch)
+        {
+            int GetIndexOrMaxInt(char separator)
+            {
+                var index = glob.IndexOf(separator);
+                return index == -1 ? int.MaxValue : index;
+            }
+
+            // This means the glob is a full path, not relative to parentDirectoryPath.
+            // In this case we get the last element in the path eg: C:\ or /
+            // and store that as the basePath and the rest of the path as endPath.
+            // We then do glob search using the two elements and put the basePath
+            // on any results from the glob search.
+            if (Path.Combine(parentDirectoryPath, glob) == glob)
+            {
+                var dirSeparatorIndex = GetIndexOrMaxInt(Path.DirectorySeparatorChar);
+                var altSeparatorIndex = GetIndexOrMaxInt(Path.AltDirectorySeparatorChar);
+                var separatorIndex = dirSeparatorIndex < altSeparatorIndex
+                    ? dirSeparatorIndex
+                    : altSeparatorIndex;
+                var basePath = glob.Substring(0, separatorIndex + 1);
+                var endPath = glob.Substring(separatorIndex + 1);
+                results.AddRange(globSearch(basePath, endPath).Select(p => Path.Combine(basePath, p)));
+                return true;
+            }
+
+            return false;
         }
 
         public virtual IEnumerable<string> EnumerateFiles(
