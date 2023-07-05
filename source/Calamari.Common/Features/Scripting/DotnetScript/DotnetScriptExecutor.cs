@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting.DotnetScript;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting.DotnetScript
@@ -19,13 +20,14 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
+            var cli = CalamariEnvironment.IsRunningOnWindows 
+                ? new CommandLineInvocation(executable, arguments) 
+                : new CommandLineInvocation("dotnet", executable, arguments);
+            cli.WorkingDirectory = workingDirectory;
+            cli.EnvironmentVars = environmentVars;
 
             yield return new ScriptExecution(
-                new CommandLineInvocation(executable, arguments)
-                {
-                    WorkingDirectory = workingDirectory,
-                    EnvironmentVars = environmentVars
-                },
+                cli,
                 otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile })
             );
         }
