@@ -23,15 +23,15 @@ namespace Calamari.Tests.Helpers
             }
 
             var clr = new CommandLineRunner(ConsoleLog.Instance, new CalamariVariables());
-            var result = clr.Execute(CreateCommandLineInvocation("dotnet", "new console -f net6.0"));
-            result.VerifySuccess();
             File.WriteAllText(Path.Combine(projectPath.FullName, "global.json"),
-                              @"{
+                @"{
     ""sdk"": {
             ""version"": ""6.0.10"",
             ""rollForward"": ""latestFeature""
         }
     }");
+            var result = clr.Execute(CreateCommandLineInvocation("dotnet", "new console -f net6.0"));
+            result.VerifySuccess();
             var programCS = Path.Combine(projectPath.FullName, "Program.cs");
             var newProgram = $@"using System;
 class Program
