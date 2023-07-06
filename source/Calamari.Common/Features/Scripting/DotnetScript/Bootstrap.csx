@@ -1,4 +1,6 @@
-﻿#r "System.Security, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+﻿#!/usr/bin/env dotnet-script
+
+#r "System.Security, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
 
 using System;
 using System.Collections.Generic;
@@ -214,7 +216,7 @@ public static class Octopus
         int.TryParse(proxyPortText, out var proxyPort);
 
 		var useDefaultProxyText = Environment.GetEnvironmentVariable("TentacleUseDefaultProxy");
-		bool.TryParse(useDefaultProxyText, out var useDefaultProxy)
+		bool.TryParse(useDefaultProxyText, out var useDefaultProxy);
 
         var useCustomProxy = !string.IsNullOrWhiteSpace(proxyHost);
         var bypassProxy = !useCustomProxy && !useDefaultProxy;
