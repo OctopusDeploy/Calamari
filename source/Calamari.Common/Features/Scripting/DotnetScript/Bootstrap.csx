@@ -211,13 +211,10 @@ public static class Octopus
         var proxyPassword = Environment.GetEnvironmentVariable("TentacleProxyPassword");
         var proxyHost = Environment.GetEnvironmentVariable("TentacleProxyHost");
         var proxyPortText = Environment.GetEnvironmentVariable("TentacleProxyPort");
-        int proxyPort;
-        int.TryParse(proxyPortText, out proxyPort);
+        int.TryParse(proxyPortText, out var proxyPort);
 
 		var useDefaultProxyText = Environment.GetEnvironmentVariable("TentacleUseDefaultProxy");
-		bool useDefaultProxy;
-		if (!bool.TryParse(useDefaultProxyText, out useDefaultProxy))
-		    useDefaultProxy = true; 
+		bool.TryParse(useDefaultProxyText, out var useDefaultProxy)
 
         var useCustomProxy = !string.IsNullOrWhiteSpace(proxyHost);
         var bypassProxy = !useCustomProxy && !useDefaultProxy;
