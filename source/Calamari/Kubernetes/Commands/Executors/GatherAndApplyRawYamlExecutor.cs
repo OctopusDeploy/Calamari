@@ -23,7 +23,7 @@ namespace Calamari.Kubernetes.Commands.Executors
     {
         Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
     }
-    
+
     public class GatherAndApplyRawYamlExecutor : IGatherAndApplyRawYamlExecutor
     {
         private readonly ILog log;
@@ -107,12 +107,10 @@ namespace Calamari.Kubernetes.Commands.Executors
                 var directory = new GlobDirectory(i, glob, directoryPath);
                 fileSystem.CreateDirectory(directoryPath);
 
-                var matcher = new Matcher();
-                matcher.AddInclude(glob);
-                var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(deployment.CurrentDirectory)));
-                foreach (var file in result.Files)
+                var results = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, glob);
+                foreach (var file in results)
                 {
-                    var relativeFilePath = file.Path ?? file.Stem;
+                    var relativeFilePath = fileSystem.GetRelativePath(deployment.CurrentDirectory, file);
                     var fullPath = Path.Combine(deployment.CurrentDirectory, relativeFilePath);
                     var targetPath = Path.Combine(directoryPath, relativeFilePath);
                     var targetDirectory = Path.GetDirectoryName(targetPath);
