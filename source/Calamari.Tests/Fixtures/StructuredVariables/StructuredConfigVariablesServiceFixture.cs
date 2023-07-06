@@ -32,9 +32,9 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             var fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.FileExists(ConfigFileInCurrentPath).Returns(fileExistsInPath);
             fileSystem.FileExists(ConfigFileInAdditionalPath).Returns(fileExistsInAdditionalPath);
-            fileSystem.EnumerateFilesWithGlob(CurrentPath, FileName)
+            fileSystem.EnumerateFullPathFilesWithGlob(CurrentPath, FileName)
                       .Returns(fileExistsInPath ? new[]{ ConfigFileInCurrentPath } : new string[0]);
-            fileSystem.EnumerateFilesWithGlob(AdditionalPath, FileName)
+            fileSystem.EnumerateFullPathFilesWithGlob(AdditionalPath, FileName)
                       .Returns(fileExistsInAdditionalPath ? new[]{ ConfigFileInAdditionalPath } : new string[0]);
 
             var replacer = Substitute.For<IFileFormatVariableReplacer>();

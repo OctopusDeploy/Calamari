@@ -65,7 +65,7 @@ namespace Calamari.Kubernetes.Conventions
             var customHelmExecutable = CustomHelmExecutableFullPath(deployment.Variables, deployment.CurrentDirectory);
             var helmVersion = GetVersion(deployment.Variables);
             CheckHelmToolVersion(customHelmExecutable, helmVersion);
-            
+
             var sb = new StringBuilder();
 
             SetExecutable(sb, syntax, customHelmExecutable);
@@ -191,9 +191,9 @@ namespace Calamari.Kubernetes.Conventions
         static void SetTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
         {
             if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout)) return;
-            
+
             var timeout = deployment.Variables.Get(SpecialVariables.Helm.Timeout);
-            
+
             if (!GoDurationParser.ValidateTimeout(timeout))
             {
                 throw new CommandException($"Timeout period is not a valid duration: {timeout}");
@@ -205,7 +205,7 @@ namespace Calamari.Kubernetes.Conventions
         static void SetTillerTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
         {
             if (!deployment.Variables.IsSet(SpecialVariables.Helm.TillerTimeout)) return;
-            
+
             var tillerTimeout = deployment.Variables.Get(SpecialVariables.Helm.TillerTimeout);
             if (!int.TryParse(tillerTimeout, out _))
             {
@@ -243,27 +243,27 @@ namespace Calamari.Kubernetes.Conventions
             {
                 var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
                 var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
-                
+
                 foreach (var providedPath in paths)
                 {
                     var packageId = variables.Get(PackageVariables.IndexedPackageId(packageReferenceName));
                     var version = variables.Get(PackageVariables.IndexedPackageVersion(packageReferenceName));
                     var relativePath = Path.Combine(sanitizedPackageReferenceName, providedPath);
-                    var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
+                    var files = fileSystem.EnumerateFullPathFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
 
-                    if (!files.Any() && string.IsNullOrEmpty(packageReferenceName)) // Chart archives have chart name root directory 
+                    if (!files.Any() && string.IsNullOrEmpty(packageReferenceName)) // Chart archives have chart name root directory
                     {
                         log.Verbose($"Unable to find values files at path `{providedPath}`. " +
                                     $"Chart package contains root directory with chart name, so looking for values in there.");
                         var chartRelativePath = Path.Combine(fileSystem.RemoveInvalidFileNameChars(packageId), relativePath);
-                        files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, chartRelativePath).ToList();
+                        files = fileSystem.EnumerateFullPathFilesWithGlob(deployment.CurrentDirectory, chartRelativePath).ToList();
                     }
 
                     if (!files.Any())
                     {
                         throw new CommandException($"Unable to find file `{providedPath}` for package {packageId} v{version}");
                     }
-                    
+
                     foreach (var file in files)
                     {
                         var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
@@ -291,9 +291,9 @@ namespace Calamari.Kubernetes.Conventions
             if (fileSystem.DirectoryExists(packageIdPath) && fileSystem.FileExists(Path.Combine(packageIdPath, "Chart.yaml")))
             {
                 return packageIdPath;
-                
+
             }
-            
+
             /*
              * Although conventions suggests that the directory inside the helm archive matches the package ID, this
              * can not be assumed. If the standard locations above failed to locate the Chart.yaml file, loop over
@@ -306,7 +306,7 @@ namespace Calamari.Kubernetes.Conventions
                     return dir;
                 }
             }
-            
+
             // Nothing worked
             throw new CommandException($"Unexpected error. Chart.yaml was not found in {packageIdPath}");
         }
@@ -335,12 +335,12 @@ namespace Calamari.Kubernetes.Conventions
             {
                 return false;
             }
-            
+
             fileName = Path.Combine(deployment.CurrentDirectory, "explicitVariableValues.yaml");
             File.WriteAllText(fileName, RawValuesToYamlConverter.Convert(values));
             return true;
         }
-        
+
         void CheckHelmToolVersion(string customHelmExecutable, HelmVersion selectedVersion)
         {
             log.Verbose($"Helm version selected: {selectedVersion}");
@@ -354,7 +354,7 @@ namespace Calamari.Kubernetes.Conventions
             var toolVersion = HelmVersionParser.ParseVersion(stdout.ToString());
             if (!toolVersion.HasValue)
                 log.Warn("Unable to parse the Helm tool version text: " + stdout);
-            
+
             if (toolVersion.Value != selectedVersion)
                 log.Warn($"The Helm tool version '{toolVersion.Value}' ('{stdout}') doesn't match the Helm version selected '{selectedVersion}'");
         }

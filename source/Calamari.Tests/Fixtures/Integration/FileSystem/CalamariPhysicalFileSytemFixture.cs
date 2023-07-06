@@ -161,7 +161,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             writeFile(configPath, "Feature1", "f1-b.config");
             writeFile(configPath, "Feature2", "f2.config");
 
-            var result = fileSystem.EnumerateFilesWithGlob(rootPath, pattern).ToList();
+            var result = fileSystem.EnumerateFullPathFilesWithGlob(rootPath, pattern).ToList();
 
             result.Should()
                 .HaveCount(expectedQty, $"{pattern} should have found {expectedQty}, but found {result.Count}");
@@ -182,7 +182,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             File.WriteAllText(Path.Combine(rootPath, "Dir", "File"), "");
             File.WriteAllText(Path.Combine(rootPath, "Dir", "Sub", "File"), "");
 
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, pattern).ToArray();
+            var results = fileSystem.EnumerateFullPathFilesWithGlob(rootPath, pattern).ToArray();
 
             if (results.Length > 0)
                 results.Should().OnlyContain(f => f.EndsWith("File"));
@@ -193,7 +193,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         {
             File.WriteAllText(Path.Combine(rootPath, "File"), "");
 
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, "*", "**").ToList();
+            var results = fileSystem.EnumerateFullPathFilesWithGlob(rootPath, "*", "**").ToList();
 
             results.Should().HaveCount(1);
         }

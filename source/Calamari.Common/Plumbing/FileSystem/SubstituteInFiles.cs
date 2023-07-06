@@ -49,12 +49,12 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         IEnumerable<string> MatchingFiles(string currentDirectory, string target)
         {
-            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target);
+            var files = fileSystem.EnumerateFullPathFilesWithGlob(currentDirectory, target);
 
             foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths)
                                           .Where(s => !string.IsNullOrWhiteSpace(s)))
             {
-                files = files.Concat(fileSystem.EnumerateFilesWithGlob(path, target));
+                files = files.Concat(fileSystem.EnumerateFullPathFilesWithGlob(path, target));
             }
 
             return files;

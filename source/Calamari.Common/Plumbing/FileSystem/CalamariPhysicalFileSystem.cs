@@ -187,16 +187,36 @@ namespace Calamari.Common.Plumbing.FileSystem
             Log.Verbose(message);
         }
 
-        public virtual IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, params string[] globPatterns)
+        public IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, params string[] globPatterns)
         {
             return EnumerateWithGlobInternal(parentDirectoryPath, globPatterns,
                 (d, g) => Glob.Files(d, g, GlobOptions.CaseInsensitive));
         }
 
-        private IEnumerable<string> EnumerateDirectoriesWithGlob(string parentDirectoryPath, params string[] globPatterns)
+        public virtual IEnumerable<string> EnumerateFullPathFilesWithGlob(string parentDirectoryPath, params string[] globPatterns)
         {
-            return EnumerateWithGlobInternal(parentDirectoryPath, globPatterns,
-                (d, g) => Glob.Directories(d, g, GlobOptions.CaseInsensitive));
+            var results = new List<string>();
+            var globs = new List<string>(globPatterns);
+            globs.RemoveWhere(glob => AddPathToGlobsIfFullPath(parentDirectoryPath, glob, results,
+                (d, g) => Glob.Files(d, g, GlobOptions.CaseInsensitive)));
+
+            results.AddRange(EnumerateFilesWithGlob(parentDirectoryPath, globPatterns)
+                .Select(p => Path.Combine(parentDirectoryPath, p)));
+
+            return results;
+        }
+
+        private IEnumerable<string> EnumerateFullPathDirectoriesWithGlob(string parentDirectoryPath, params string[] globPatterns)
+        {
+            var results = new List<string>();
+            var globs = new List<string>(globPatterns);
+            globs.RemoveWhere(glob => AddPathToGlobsIfFullPath(parentDirectoryPath, glob, results,
+                (d, g) => Glob.Directories(d, g, GlobOptions.CaseInsensitive)));
+
+            results.AddRange(EnumerateWithGlobInternal(parentDirectoryPath, globPatterns,
+                (d, g) => Glob.Directories(d, g, GlobOptions.CaseInsensitive)));
+
+            return results;
         }
 
         private static IEnumerable<string> EnumerateWithGlobInternal(
@@ -204,16 +224,10 @@ namespace Calamari.Common.Plumbing.FileSystem
             string[] globPatterns,
             Func<string, string, IEnumerable<string>> globSearch)
         {
-            var results = new List<string>();
-            var globs = new List<string>(globPatterns);
-            globs.RemoveWhere(g => AddPathToGlobsIfFullPath(parentDirectoryPath, g, results, globSearch));
-
-            results.AddRange((globs.Count == 0 && results.Count == 0
-                    ? globSearch(parentDirectoryPath, "*")
-                    : globs.SelectMany(g => globSearch(parentDirectoryPath, g)))
-                .Select(p => Path.Combine(parentDirectoryPath, p)));
-
-            return results.Distinct();
+            return (globPatterns.Length == 0
+                ? globSearch(parentDirectoryPath, "*")
+                : globPatterns.SelectMany(g => globSearch(parentDirectoryPath, g)))
+                .Distinct();
         }
 
         static bool AddPathToGlobsIfFullPath(
@@ -469,8 +483,8 @@ namespace Calamari.Common.Plumbing.FileSystem
             Predicate<FileSystemInfo>? check = null;
             if (globs.Any())
             {
-                var keep = EnumerateDirectoriesWithGlob(targetDirectory, globs)
-                    .Concat(EnumerateFilesWithGlob(targetDirectory, globs));
+                var keep = EnumerateFullPathDirectoriesWithGlob(targetDirectory, globs)
+                    .Concat(EnumerateFullPathFilesWithGlob(targetDirectory, globs));
                 check = fsi =>
                 {
                     return keep.Any(k => fsi.FullName.IsChildOf(k) || k == fsi.FullName);

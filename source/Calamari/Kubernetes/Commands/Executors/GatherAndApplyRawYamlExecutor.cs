@@ -21,7 +21,7 @@ namespace Calamari.Kubernetes.Commands.Executors
     {
         Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
     }
-    
+
     public class GatherAndApplyRawYamlExecutor : IGatherAndApplyRawYamlExecutor
     {
         private readonly ILog log;
