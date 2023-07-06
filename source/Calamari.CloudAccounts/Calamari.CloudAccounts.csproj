@@ -22,7 +22,7 @@
     <ItemGroup>
       <PackageReference Include="AWSSDK.Core" Version="3.3.104.14" />
       <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.4.34" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+      <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
     </ItemGroup>
 
 </Project>
