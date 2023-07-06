@@ -17,7 +17,29 @@ namespace Calamari.Common.Plumbing.FileSystem
         void DeleteDirectory(string path, FailureOptions options);
         IEnumerable<string> EnumerateDirectories(string parentDirectoryPath);
         IEnumerable<string> EnumerateDirectoriesRecursively(string parentDirectoryPath);
+
+        /// <summary>
+        /// Enumerates files on a given path with the given glob patterns.
+        /// </summary>
+        /// <returns>An enumeration of the relative paths of the files found.</returns>
+        /// <remarks>
+        /// Note that unlike <see cref="EnumerateFullPathFilesWithGlob"/>, <see cref="globPatterns"/> must be relative to
+        /// <see cref="parentDirectoryPath"/>.
+        /// <br/>
+        /// Results are RELATIVE paths, not full paths.
+        /// </remarks>
         IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, params string[] globPatterns);
+
+        /// <summary>
+        /// Enumerates files on a given path with the given glob patterns.
+        /// </summary>
+        /// <returns>An enumeration of the full paths of the files found.</returns>
+        /// <remarks>
+        /// <see cref="globPatterns"/> can be full paths to files or full paths with glob patterns (as well as relative paths).
+        /// If they are full paths, the parentDirectoryPath is ignored for that glob pattern.
+        /// <br/>
+        /// Results are FULL paths, not relative paths.
+        /// </remarks>
         IEnumerable<string> EnumerateFullPathFilesWithGlob(string parentDirectoryPath, params string[] globPatterns);
         IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns);
         IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns);
