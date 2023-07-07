@@ -138,6 +138,10 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"Config/Feature1/*.config", "f1-a.config", 2)]
         [TestCase(@"Config/Feature1/*.config", "f1-b.config", 2)]
         [TestCase(@"Config/Feature2/*.config", "f2.config")]
+        [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-a.config", 2)]
+        [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-b.config", 2)]
+        [TestCase(@"Config/Feature1/f1-{a,b}.config", "f1-a.config", 2)]
+        [TestCase(@"Config/Feature1/f1-{a,b}.config", "f1-b.config", 2)]
         public void EnumerateFilesWithGlob(string pattern, string expectedFileMatchName, int expectedQty = 1)
         {
             var content = "file-content" + Environment.NewLine;
@@ -202,9 +206,6 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"[Configuration]", @"[Configuration]\\*.txt")]
         [TestCase(@"Configuration]", @"Configuration]\\*.txt")]
         [TestCase(@"[Configuration", @"[Configuration\\*.txt")]
-        [TestCase(@"{Configuration}", @"{Configuration}\\*.txt")]
-        [TestCase(@"Configuration}", @"Configuration}\\*.txt")]
-        [TestCase(@"{Configuration", @"{Configuration\\*.txt")]
         public void EnumerateFilesWithGlobShouldIgnoreGroups(string directory, string glob)
         {
             if (!CalamariEnvironment.IsRunningOnWindows)

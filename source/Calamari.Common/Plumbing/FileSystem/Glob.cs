@@ -18,7 +18,7 @@ namespace Calamari.Common.Plumbing.FileSystem
     {
         static readonly ConcurrentDictionary<string, RegexOrString> RegexOrStringCache = new ConcurrentDictionary<string, RegexOrString>();
 
-        static readonly char[] GlobCharacters = "*?".ToCharArray();
+        static readonly char[] GlobCharacters = "*?{}".ToCharArray();
 
         static readonly HashSet<char> RegexSpecialChars = new HashSet<char>(new[] { '[', '\\', '^', '$', '.', '|', '?', '*', '+', '(', ')' });
 
@@ -58,15 +58,19 @@ namespace Calamari.Common.Plumbing.FileSystem
         ///         <description>Matches zero or more recursive directories.</description>
         ///     </item>
         ///     <item>
-        ///         <term>[...]</term>
-        ///         <description>Matches a set of characters in a name. Syntax is equivalent to character groups in <see cref="System.Text.RegularExpressions.Regex" />.</description>
-        ///     </item>
-        ///     <item>
         ///         <term>{group1,group2,...}</term>
         ///         <description>Matches any of the pattern groups. Groups can contain groups and patterns.</description>
         ///     </item>
+        ///     <item>
+        ///         <term>[...]</term>
+        ///         <description>Matches a set of characters in a name. Syntax is equivalent to character groups in <see cref="System.Text.RegularExpressions.Regex" />.</description>
+        ///     </item>
         /// </list>
         /// </summary>
+        /// <remarks>
+        /// Note: [...] is currently unsupported because customers reported issues when they had square brackets in their directory names.
+        /// See: https://github.com/OctopusDeploy/Issues/issues/3320
+        /// </remarks>
         public string? Pattern { get; }
 
         /// <summary>
