@@ -98,32 +98,31 @@ namespace Calamari.Kubernetes.Commands.Executors
 
         private IEnumerable<GlobDirectory> GroupFilesIntoDirectories(RunningDeployment deployment, string[] globs, IVariables variables)
         {
+            var stagingDirectory = deployment.CurrentDirectory;
+            var packageDirectory =
+                Path.Combine(stagingDirectory, KubernetesDeploymentCommandBase.PackageDirectoryPath) +
+                Path.DirectorySeparatorChar;
+
             var directories = new List<GlobDirectory>();
             for (var i = 0; i < globs.Length; i ++)
             {
                 var glob = globs[i];
-                var directoryPath = Path.Combine(deployment.CurrentDirectory, "grouped", i.ToString());
+                var directoryPath = Path.Combine(stagingDirectory, "grouped", i.ToString());
                 var directory = new GlobDirectory(i, glob, directoryPath);
                 fileSystem.CreateDirectory(directoryPath);
 
                 var globMode = GlobModeRetriever.GetFromVariables(variables);
-                var results = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, glob);
+                var results = fileSystem.EnumerateFilesWithGlob(packageDirectory, globMode, glob);
                 foreach (var file in results)
                 {
-                    // This is required because the current implementation of fileSystem.GetRelativePath
-                    // will not recognise the last part of a path as a directory unless the path ends with
-                    // Path.DirectorySeparatorChar.
-                    var currentDirectory = deployment.CurrentDirectory.TrimEnd(Path.DirectorySeparatorChar) +
-                        Path.DirectorySeparatorChar;
-                    var relativeFilePath = fileSystem.GetRelativePath(currentDirectory, file);
-                    var fullPath = Path.Combine(deployment.CurrentDirectory, relativeFilePath);
+                    var relativeFilePath = fileSystem.GetRelativePath(packageDirectory, file);
                     var targetPath = Path.Combine(directoryPath, relativeFilePath);
                     var targetDirectory = Path.GetDirectoryName(targetPath);
                     if (targetDirectory != null)
                     {
                         fileSystem.CreateDirectory(targetDirectory);
                     }
-                    fileSystem.CopyFile(fullPath, targetPath);
+                    fileSystem.CopyFile(file, targetPath);
                 }
 
                 directories.Add(directory);
@@ -137,16 +136,22 @@ namespace Calamari.Kubernetes.Commands.Executors
         private IEnumerable<Resource> ApplyBatchAndReturnResources(GlobDirectory globDirectory)
         {
             var index = globDirectory.Index;
-            var directory = globDirectory.Directory;
+            var directory = globDirectory.Directory + Path.DirectorySeparatorChar;
             log.Info($"Applying Batch #{index+1} for YAML matching '{globDirectory.Glob}'");
-            foreach (var file in fileSystem.EnumerateFilesRecursively(globDirectory.Directory))
+
+            var files = fileSystem.EnumerateFilesRecursively(globDirectory.Directory).ToArray();
+            if (!files.Any())
             {
-                // TODO: Once we have moved to a higher .net Framework version, update fileSystem.GetRelativePath to use
-                // Path.GetRelativePath() instead of our own implementation, and update the code below to remove the
-                // usage of Path.DirectorySeparatorChar.
-                log.Verbose($"{fileSystem.GetRelativePath($"{directory}{Path.DirectorySeparatorChar}", file)} Contents:");
+                log.Warn($"No files found matching '{globDirectory.Glob}");
+                return Enumerable.Empty<Resource>();
+            }
+
+            foreach (var file in files)
+            {
+                log.Verbose($"{fileSystem.GetRelativePath(directory, file)} Contents:");
                 log.Verbose(fileSystem.ReadFile(file));
             }
+
             var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "--recursive", "-o", "json");
 
             foreach (var message in result.Output.Messages)
