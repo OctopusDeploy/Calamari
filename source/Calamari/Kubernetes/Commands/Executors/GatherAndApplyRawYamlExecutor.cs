@@ -108,7 +108,12 @@ namespace Calamari.Kubernetes.Commands.Executors
                 var results = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, glob);
                 foreach (var file in results)
                 {
-                    var relativeFilePath = fileSystem.GetRelativePath(deployment.CurrentDirectory, file);
+                    // This is required because the current implementation of fileSystem.GetRelativePath
+                    // will not recognise the last part of a path as a directory unless the path ends with
+                    // Path.DirectorySeparatorChar.
+                    var currentDirectory = deployment.CurrentDirectory.TrimEnd(Path.DirectorySeparatorChar) +
+                        Path.DirectorySeparatorChar;
+                    var relativeFilePath = fileSystem.GetRelativePath(currentDirectory, file);
                     var fullPath = Path.Combine(deployment.CurrentDirectory, relativeFilePath);
                     var targetPath = Path.Combine(directoryPath, relativeFilePath);
                     var targetDirectory = Path.GetDirectoryName(targetPath);
