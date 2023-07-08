@@ -132,16 +132,26 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"**/*.txt", "f1.txt", 2)]
         [TestCase(@"**/*.txt", "r.txt", 2)]
         [TestCase(@"*.txt", "r.txt")]
-        [TestCase(@"**/*.config", "root.config", 5)]
+        [TestCase(@"**/*.config", "root.config", 6)]
         [TestCase(@"*.config", "root.config")]
         [TestCase(@"Config/*.config", "c.config")]
-        [TestCase(@"Config/Feature1/*.config", "f1-a.config", 2)]
-        [TestCase(@"Config/Feature1/*.config", "f1-b.config", 2)]
+        [TestCase(@"Config/Feature1/*.config", "f1-a.config", 3)]
+        [TestCase(@"Config/Feature1/*.config", "f1-b.config", 3)]
+        [TestCase(@"Config/Feature1/*.config", "f1-c.config", 3)]
         [TestCase(@"Config/Feature2/*.config", "f2.config")]
         [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-a.config", 2)]
         [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-b.config", 2)]
         [TestCase(@"Config/Feature1/f1-{a,b}.config", "f1-a.config", 2)]
         [TestCase(@"Config/Feature1/f1-{a,b}.config", "f1-b.config", 2)]
+        [TestCase(@"Config/Feature{1,2}/f{1,2}.{config,txt}", "f1.txt", 2)]
+        [TestCase(@"Config/Feature{1,2}/f{1,2}.{config,txt}", "f2.config", 2)]
+        [TestCase(@"Config/Feature1/*-[ab].config", "f1-a.config", 2)]
+        [TestCase(@"Config/Feature1/*-[ab].config", "f1-b.config", 2)]
+        [TestCase(@"Config/Feature1/f1-[ab].config", "f1-a.config", 2)]
+        [TestCase(@"Config/Feature1/f1-[ab].config", "f1-b.config", 2)]
+        [TestCase(@"Config/Feature[12]/f[12].{config,txt}", "f1.txt", 2)]
+        [TestCase(@"Config/Feature[12]/f[12].{config,txt}", "f2.config", 2)]
+        [TestCase(@"Config/Feature1/f1-[a-c].{config,txt}", "f1-b.config", 3)]
         public void EnumerateFilesWithGlob(string pattern, string expectedFileMatchName, int expectedQty = 1)
         {
             var content = "file-content" + Environment.NewLine;
@@ -163,6 +173,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             writeFile(configPath, "Feature1", "f1.txt");
             writeFile(configPath, "Feature1", "f1-a.config");
             writeFile(configPath, "Feature1", "f1-b.config");
+            writeFile(configPath, "Feature1", "f1-c.config");
             writeFile(configPath, "Feature2", "f2.config");
 
             var result = fileSystem.EnumerateFilesWithGlob(rootPath, pattern).ToList();
@@ -206,6 +217,9 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"[Configuration]", @"[Configuration]\\*.txt")]
         [TestCase(@"Configuration]", @"Configuration]\\*.txt")]
         [TestCase(@"[Configuration", @"[Configuration\\*.txt")]
+        [TestCase(@"{Configuration}", @"{Configuration}\\*.txt")]
+        [TestCase(@"Configuration}", @"Configuration}\\*.txt")]
+        [TestCase(@"{Configuration", @"{Configuration\\*.txt")]
         public void EnumerateFilesWithGlobShouldIgnoreGroups(string directory, string glob)
         {
             if (!CalamariEnvironment.IsRunningOnWindows)
