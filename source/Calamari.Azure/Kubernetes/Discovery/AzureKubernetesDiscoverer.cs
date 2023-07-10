@@ -34,7 +34,8 @@ namespace Calamari.Azure.Kubernetes.Discovery
             Log.Verbose($"  Client ID: {account.ClientId}");
             var azureClient = account.CreateAzureClient();
 
-            return azureClient.KubernetesClusters.List()
+            return azureClient.KubernetesClusters
+                              .List()
                               .Select(c => KubernetesCluster.CreateForAks(
                                   $"aks/{account.SubscriptionNumber}/{c.ResourceGroupName}/{c.Name}",
                                   c.Name,
