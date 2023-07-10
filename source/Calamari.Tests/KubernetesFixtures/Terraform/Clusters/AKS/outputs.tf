@@ -40,7 +40,7 @@ output "aks_rg_name" {
   value       = azurerm_resource_group.default.name
 }
 
-output "ak_rg_id" {
+output "aks_rg_id" {
   description = "Resource group Id"
   value       = azurerm_resource_group.default.id
 }
