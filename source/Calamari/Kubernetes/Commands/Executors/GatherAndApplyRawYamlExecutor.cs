@@ -164,7 +164,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                     case Level.Error:
                         //Files in the error are shown with the full path in their batch directory,
                         //so we'll remove that for the user.
-                        log.Error(message.Text.Replace($"{directory}{Path.DirectorySeparatorChar}", ""));
+                        log.Error(message.Text.Replace($"{directory}", ""));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
