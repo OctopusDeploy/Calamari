@@ -78,7 +78,12 @@ namespace Calamari.Kubernetes.Integration
                 environmentVars.Add("CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT", impersonationEmails);
         }
 
-        public void ConfigureGkeKubeCtlAuthentication(Kubectl kubectlCli, string gkeClusterName, string region, string zone, string @namespace)
+        public void ConfigureGkeKubeCtlAuthentication(Kubectl kubectlCli,
+                                                      string gkeClusterName,
+                                                      string region,
+                                                      string zone,
+                                                      string @namespace,
+                                                      bool useClusterInternalIp)
         {
             log.Info($"Creating kubectl context to GKE Cluster called {gkeClusterName} (namespace {@namespace}) using a Google Cloud Account");
 
@@ -89,6 +94,11 @@ namespace Calamari.Kubernetes.Integration
                 "get-credentials",
                 gkeClusterName
             });
+
+            if (useClusterInternalIp)
+            {
+                arguments.Add("--internal-ip");
+            }
 
             if (!string.IsNullOrWhiteSpace(zone))
             {
