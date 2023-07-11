@@ -7,7 +7,6 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
-using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -32,9 +31,9 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             var fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.FileExists(ConfigFileInCurrentPath).Returns(fileExistsInPath);
             fileSystem.FileExists(ConfigFileInAdditionalPath).Returns(fileExistsInAdditionalPath);
-            fileSystem.EnumerateFilesWithGlob(CurrentPath, FileName)
+            fileSystem.EnumerateFilesWithGlob(CurrentPath, true, FileName)
                       .Returns(fileExistsInPath ? new[]{ ConfigFileInCurrentPath } : new string[0]);
-            fileSystem.EnumerateFilesWithGlob(AdditionalPath, FileName)
+            fileSystem.EnumerateFilesWithGlob(AdditionalPath, true, FileName)
                       .Returns(fileExistsInAdditionalPath ? new[]{ ConfigFileInAdditionalPath } : new string[0]);
 
             var replacer = Substitute.For<IFileFormatVariableReplacer>();

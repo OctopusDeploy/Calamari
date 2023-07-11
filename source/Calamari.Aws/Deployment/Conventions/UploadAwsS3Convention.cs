@@ -16,6 +16,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -125,7 +126,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     if (targetMode == S3TargetMode.EntirePackage && results.FirstOrDefault() != null)
                     {
                         SetOutputVariables(deployment, results.FirstOrDefault());
-                    } 
+                    }
                     else if (targetMode == S3TargetMode.FileSelections)
                     {
                         foreach (var result in results)
@@ -161,28 +162,28 @@ namespace Calamari.Aws.Deployment.Conventions
             var actionName = deployment.Variables["Octopus.Action.Name"];
             log.Info($"Saving object version id to variable \"Octopus.Action[{actionName}].Output.Files[{result.BucketKey}]\"");
             log.SetOutputVariableButDoNotAddToVariables($"Files[{result.BucketKey}]", result.Version);
-            
+
             var packageKeyVariableName = index.IsNullOrEmpty() ? "Package.Key" : $"Package.Key[{index}]";
             var packageKeyVariableValue = result.BucketKey;
             log.Info($"Saving bucket key to variable \"Octopus.Action[{actionName}].Output.{packageKeyVariableName}\"");
             log.SetOutputVariableButDoNotAddToVariables(packageKeyVariableName, packageKeyVariableValue);
-            
+
             var packageS3UriVariableName = index.IsNullOrEmpty() ? "Package.S3Uri" : $"Package.S3Uri[{index}]";
             var packageS3UriVariableValue = $"s3://{result.BucketName}/{result.BucketKey}";
             log.Info($"Saving object S3 URI to variable \"Octopus.Action[{actionName}].Output.{packageS3UriVariableName}\"");
             log.SetOutputVariableButDoNotAddToVariables(packageS3UriVariableName, packageS3UriVariableValue);
-            
+
             var packageUriVariableName = index.IsNullOrEmpty() ? "Package.Uri" : $"Package.Uri[{index}]";
             var packageUriVariableValue = $"https://{result.BucketName}.s3.{awsEnvironmentGeneration.AwsRegion.SystemName}.amazonaws.com/{bucketKeyProvider.EncodeBucketKeyForUrl(result.BucketKey)}";
             log.Info($"Saving object URI to variable \"Octopus.Action[{actionName}].Output.{packageUriVariableName}\"");
             log.SetOutputVariableButDoNotAddToVariables(packageUriVariableName, packageUriVariableValue);
-            
+
             //  ARN format: `arn:aws:s3:::bucket-name/key` (Note: China (Beijing region (cn-north-1) uses `aws-cn` instead of `aws`)
             var packageArnVariableName = index.IsNullOrEmpty() ? "Package.Arn" : $"Package.Arn[{index}]";
             var packageArnVariableValue = $"arn:{(awsEnvironmentGeneration.AwsRegion.SystemName.Equals("cn-north-1") ? "aws-cn" : "aws")}:s3:::{result.BucketName}/{result.BucketKey}";
             log.Info($"Saving object ARN to variable \"Octopus.Action[{actionName}].Output.{packageArnVariableName}\"");
             log.SetOutputVariableButDoNotAddToVariables(packageArnVariableName, packageArnVariableValue);
-            
+
             var packageObjectVersionVariableName = index.IsNullOrEmpty() ? "Package.ObjectVersion" : $"Package.ObjectVersion[{index}]";
             var packageObjectVersionVariableValue = result.Version;
             log.Info($"Saving object version id to variable \"Octopus.Action[{actionName}].Output.{packageObjectVersionVariableName}\"");
@@ -234,7 +235,8 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(clientFactory, "Client factory must not be null");
             var results = new List<S3UploadResult>();
 
-            var files = new RelativeGlobber((@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, pattern), deployment.StagingDirectory).EnumerateFilesWithGlob(selection.Pattern).ToList();
+            var enableGlobGroupSupport = FeatureToggle.GlobPathsGroupSupportFeatureToggle.IsEnabled(deployment.Variables);
+            var files = new RelativeGlobber((@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, enableGlobGroupSupport, pattern), deployment.StagingDirectory).EnumerateFilesWithGlob(selection.Pattern).ToList();
 
             if (!files.Any())
             {
@@ -353,7 +355,7 @@ namespace Calamari.Aws.Deployment.Conventions
                         archive.AddAllFromDirectory(stagingDirectory);
                         archive.SaveTo(targetArchive, CompressionType.Deflate);
                     }
-                } 
+                }
                 else if (supportedTarExtensions.Any(lowercasedFileName.EndsWith))
                 {
                     using (var archive = TarArchive.Create())
@@ -369,7 +371,7 @@ namespace Calamari.Aws.Deployment.Conventions
                         archive.AddAllFromDirectory(stagingDirectory);
                         archive.SaveTo(targetArchive, CompressionType.GZip);
                     }
-                } 
+                }
                 else if (supportedTarBZip2Extensions.Any(lowercasedFileName.EndsWith))
                 {
                     using (var archive = TarArchive.Create())
@@ -397,8 +399,8 @@ namespace Calamari.Aws.Deployment.Conventions
 
         static string GetPackageExtension(RunningDeployment deployment)
         {
-            return PackageName.TryMatchTarExtensions(Path.GetFileName(deployment.PackageFilePath) ?? "", out _, out var extension) 
-                ? extension 
+            return PackageName.TryMatchTarExtensions(Path.GetFileName(deployment.PackageFilePath) ?? "", out _, out var extension)
+                ? extension
                 : Path.GetExtension(deployment.PackageFilePath);
         }
 

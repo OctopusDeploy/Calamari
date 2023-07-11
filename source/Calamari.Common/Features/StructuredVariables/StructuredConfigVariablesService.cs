@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Autofac;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -98,11 +99,12 @@ namespace Calamari.Common.Features.StructuredVariables
 
         List<string> MatchingFiles(string currentDirectory, string target)
         {
-            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target).Select(Path.GetFullPath).ToList();
+            var enableGlobGroupSupport = FeatureToggle.GlobPathsGroupSupportFeatureToggle.IsEnabled(variables);
+            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, enableGlobGroupSupport, target).Select(Path.GetFullPath).ToList();
 
             foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths).Where(s => !string.IsNullOrWhiteSpace(s)))
             {
-                var pathFiles = fileSystem.EnumerateFilesWithGlob(path, target).Select(Path.GetFullPath);
+                var pathFiles = fileSystem.EnumerateFilesWithGlob(path, enableGlobGroupSupport, target).Select(Path.GetFullPath);
                 files.AddRange(pathFiles);
             }
 

@@ -6,7 +6,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
-using Calamari.Tests.Helpers;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -56,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             CreateConvention().Install(deployment);
 
             // Assert directory was purged
-            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>(), new string[0]);
+            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>(), new string[0], true);
         }
 
         [Test]
@@ -70,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             CreateConvention().Install(deployment);
 
             // Assert we handed in the exclusion globs
-            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>(), Arg.Is<string[]>(a => a[0] == "firstglob" && a[1] == "secondglob"));
+            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>(), Arg.Is<string[]>(a => a[0] == "firstglob" && a[1] == "secondglob"), true);
         }
 
         [Test]
@@ -140,7 +139,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
         private CopyPackageToCustomInstallationDirectoryConvention CreateConvention()
         {
-           return new CopyPackageToCustomInstallationDirectoryConvention(fileSystem); 
+           return new CopyPackageToCustomInstallationDirectoryConvention(fileSystem);
         }
     }
 }

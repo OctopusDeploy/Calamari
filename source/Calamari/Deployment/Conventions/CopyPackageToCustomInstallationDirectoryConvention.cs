@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Extensions;
@@ -22,16 +23,17 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            var variables = deployment.Variables;
             string errorString;
-            var customInstallationDirectory = deployment.Variables.Get(PackageVariables.CustomInstallationDirectory, out errorString);
-            var sourceDirectory = deployment.Variables.Get(KnownVariables.OriginalPackageDirectoryPath);
+            var customInstallationDirectory = variables.Get(PackageVariables.CustomInstallationDirectory, out errorString);
+            var sourceDirectory = variables.Get(KnownVariables.OriginalPackageDirectoryPath);
 
             if (string.IsNullOrWhiteSpace(customInstallationDirectory))
             {
                 Log.Verbose("The package has been installed to: " + sourceDirectory);
                 Log.Verbose("If you would like the package to be installed to an alternative location, please use the 'Custom installation directory' feature");
                 // If the variable was not set then we set it, as it makes it simpler for anything to depend on it from this point on
-                deployment.Variables.Set(PackageVariables.CustomInstallationDirectory,
+                variables.Set(PackageVariables.CustomInstallationDirectory,
                     sourceDirectory);
 
                 return;
@@ -60,16 +62,18 @@ namespace Calamari.Deployment.Conventions
             try
             {
                 // Purge if requested
-                if (deployment.Variables.GetFlag(
+                if (variables.GetFlag(
                     PackageVariables.CustomInstallationDirectoryShouldBePurgedBeforeDeployment))
                 {
                     Log.Info("Purging the directory '{0}'", customInstallationDirectory);
-                    var purgeExlusions = deployment.Variables.GetPaths(PackageVariables.CustomInstallationDirectoryPurgeExclusions).ToArray();
+                    var purgeExlusions = variables.GetPaths(PackageVariables.CustomInstallationDirectoryPurgeExclusions).ToArray();
                     if (purgeExlusions.Any())
                     {
                         Log.Info("Leaving files and directories that match any of: '{0}'", string.Join(", ", purgeExlusions));
                     }
-                    fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure, purgeExlusions);
+
+                    var globGroupSupport = FeatureToggle.GlobPathsGroupSupportFeatureToggle.IsEnabled(variables);
+                    fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure, purgeExlusions, globGroupSupport);
                 }
 
                 // Copy files from staging area to custom directory
@@ -80,9 +84,9 @@ namespace Calamari.Deployment.Conventions
                 // From this point on, the current directory will be the custom-directory
                 deployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory;
 
-                Log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
-                Log.SetOutputVariable(PackageVariables.Output.DeprecatedInstallationDirectoryPath, deployment.CustomDirectory, deployment.Variables);
-                Log.SetOutputVariable(PackageVariables.Output.CopiedFileCount, count.ToString(), deployment.Variables);
+                Log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, deployment.CustomDirectory, variables);
+                Log.SetOutputVariable(PackageVariables.Output.DeprecatedInstallationDirectoryPath, deployment.CustomDirectory, variables);
+                Log.SetOutputVariable(PackageVariables.Output.CopiedFileCount, count.ToString(), variables);
             }
             catch (UnauthorizedAccessException uae) when (uae.Message.StartsWith("Access to the path"))
             {

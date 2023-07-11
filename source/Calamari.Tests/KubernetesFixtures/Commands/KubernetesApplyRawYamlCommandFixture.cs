@@ -25,28 +25,28 @@ namespace Calamari.Tests.KubernetesFixtures.Commands
         {
             var variables = new CalamariVariables()
             {
-                [Deployment.SpecialVariables.EnabledFeatureToggles] = "MultiGlobPathsForRawYamlFeatureToggle",
+                [KnownVariables.EnabledFeatureToggles] = "MultiGlobPathsForRawYamlFeatureToggle",
                 [SpecialVariables.ResourceStatusCheck] = "False"
             };
             var resourceStatusCheck = Substitute.For<IResourceStatusReportExecutor>();
             var command = CreateCommand(variables, resourceStatusCheck);
-            
+
             command.Execute(new string[]{ });
 
             resourceStatusCheck.ReceivedCalls().Should().BeEmpty();
         }
-        
+
         [Test]
         public void WhenResourceStatusIsEnabled_ShouldRunStatusChecks()
         {
             var variables = new CalamariVariables()
             {
-                [Deployment.SpecialVariables.EnabledFeatureToggles] = "MultiGlobPathsForRawYamlFeatureToggle",
+                [KnownVariables.EnabledFeatureToggles] = "MultiGlobPathsForRawYamlFeatureToggle",
                 [SpecialVariables.ResourceStatusCheck] = "True"
             };
             var resourceStatusCheck = Substitute.For<IResourceStatusReportExecutor>();
             var command = CreateCommand(variables, resourceStatusCheck);
-            
+
             command.Execute(new string[]{ });
 
             resourceStatusCheck.ReceivedCalls().Should().HaveCount(1);
