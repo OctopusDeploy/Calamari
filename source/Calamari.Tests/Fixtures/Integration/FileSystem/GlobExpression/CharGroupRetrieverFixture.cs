@@ -1,36 +1,38 @@
 using System;
-using System.Linq;
 using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using FluentAssertions;
-using Newtonsoft.Json;
 using NUnit.Framework;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Tests.Fixtures.Integration.FileSystem.GlobExpression
 {
     [TestFixture]
     public class CharGroupRetrieverFixture
     {
+        private static object[] _getCharGroupsCases = {
+            // Returns no groups
+            new object[] { "hello.txt", Array.Empty<Group>() }, // No [] groups
+            new object[] { "Here/[hello.txt", Array.Empty<Group>() }, // Single dangling [
+            new object[] { "Her[e/h]ello.txt", Array.Empty<Group>() }, // [] separated by directory separator
+            new object[] { "Here/[te{s]t,mp}.txt", Array.Empty<Group>() }, // [] intersects with {}
+
+            // Returns groups
+            new object[] { "Here/[hi].txt", new[] { new Group(5, 4, new[] { "h", "i" , "[hi]"}) } }, // Basic char group, will also return literal expression.
+            new object[] { "Here/[a-c].txt", new[] { new Group(5, 5, new[] { "a", "b", "c"}) } }, // Range char Group
+            new object[] { "This/I[st]/Fi[rn]e.png",
+                new[]
+                {
+                    new Group(6, 4, new[] { "s", "t", "[st]" }),
+                    new Group(13, 4, new[] { "r", "n", "[rn]" })
+                }
+            }, // Two char groups
+            new object[] { "Here/[?*.].txt", new[] { new Group(5, 5, new[] { "?", "*", ".", "[?*.]" })} } // Other characters
+        };
+
+
         [Test]
-        // Returns no groups
-        [TestCase("hello.txt", "")] // No {} groups
-        [TestCase("Here/[hello.txt", "")] // dangling [
-        [TestCase("Her[e/h]ello.txt", "")] // [] separated by directory separator
-        [TestCase("Here/[te{s]t,mp}.txt", "")] // [] intersects with {}
-
-        // Returns groups
-        [TestCase("Here/[hi].txt", "{startIndex:5,length:4,options:['h','i','[hi]']}")] // Basic char group, will also return literal expression.
-        [TestCase("Here/[a-c].txt", "{startIndex:5,length:5,options:['a','b','c']}")] // Range char Group
-        [TestCase("This/I[st]/Fi[rn]e.png",
-            "{startIndex:6,length:4,options:['s','t','[st]']};" +
-            "{startIndex:13,length:4,options:['r','n','[rn]']}")] // Two char groups
-        [TestCase("Here/[?*.].txt", "{startIndex:5,length:5,options:['?','*','.','[?*.]']}")] // Other characters
-        public void GetCharGroups_ForGivenPath_ReturnsExpectedGroups(string path, string groupJsonStrings)
+        [TestCaseSource(nameof(_getCharGroupsCases))]
+        public void GetCharGroups_ForGivenPath_ReturnsExpectedGroups(string path, Group[] expectedGroups)
         {
-            var expectedGroups = groupJsonStrings.IsNullOrEmpty()
-                ? Enumerable.Empty<Group>()
-                : groupJsonStrings.Split(';').Select(JsonConvert.DeserializeObject<Group>);
-
             var resultGroups = CharGroupRetriever.GetCharGroups(path);
 
             resultGroups.Should().BeEquivalentTo(expectedGroups);
