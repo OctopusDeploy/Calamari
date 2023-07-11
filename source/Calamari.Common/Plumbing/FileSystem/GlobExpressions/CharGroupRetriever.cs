@@ -114,7 +114,7 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
         {
             var groupOptions = options.Select(o => o.ToString());
             // The next line is the workaround
-            groupOptions = groupOptions.Concat(new[] { $"[{new string(options.ToArray())}]" });
+            groupOptions = groupOptions.Concat(new[] { $"[{string.Concat(options)}]" });
 
             return groupOptions.ToArray();
         }
