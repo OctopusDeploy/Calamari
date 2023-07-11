@@ -15,7 +15,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Integration.FileSystem
 {
     [TestFixture]
-    public class CalamariPhysicalFileSytemFixture
+    public class CalamariPhysicalFileSystemFixture
     {
         static readonly string PurgeTestDirectory = TestEnvironment.GetTestPath("PurgeTestDirectory");
         private CalamariPhysicalFileSystem fileSystem;
