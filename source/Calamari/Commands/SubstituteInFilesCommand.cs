@@ -1,8 +1,5 @@
-﻿using System;
-using Calamari.Commands.Support;
-using Calamari.Common.Commands;
+﻿using Calamari.Common.Commands;
 using Calamari.Common.Features.Substitutions;
-using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Commands

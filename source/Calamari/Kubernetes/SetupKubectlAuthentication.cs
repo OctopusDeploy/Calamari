@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
@@ -21,7 +20,6 @@ namespace Calamari.Kubernetes
     {
         readonly IVariables variables;
         readonly ILog log;
-        readonly ScriptSyntax scriptSyntax;
         readonly ICommandLineRunner commandLineRunner;
         private readonly Kubectl kubectl;
         readonly Dictionary<string, string> environmentVars;
@@ -30,7 +28,6 @@ namespace Calamari.Kubernetes
 
         public SetupKubectlAuthentication(IVariables variables,
             ILog log,
-            ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
             Kubectl kubectl,
             Dictionary<string, string> environmentVars,
@@ -38,7 +35,6 @@ namespace Calamari.Kubernetes
         {
             this.variables = variables;
             this.log = log;
-            this.scriptSyntax = scriptSyntax;
             this.commandLineRunner = commandLineRunner;
             this.kubectl = kubectl;
             this.environmentVars = environmentVars;
@@ -443,7 +439,7 @@ namespace Calamari.Kubernetes
 
             environmentVars.Add("KUBECONFIG", kubeConfig);
 
-            if (scriptSyntax == ScriptSyntax.Bash)
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
             {
                 ExecuteCommand("chmod", "u=rw,g=,o=", $"\"{kubeConfig}\"");
             }
