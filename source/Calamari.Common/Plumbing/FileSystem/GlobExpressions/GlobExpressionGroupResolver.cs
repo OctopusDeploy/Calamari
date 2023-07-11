@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
 {
-    public static class Ungrouper
+    public static class GlobExpressionGroupResolver
     {
         public static IEnumerable<string> UngroupPath(string path)
         {
