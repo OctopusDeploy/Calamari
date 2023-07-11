@@ -40,6 +40,11 @@ output "aks_rg_name" {
   value       = azurerm_resource_group.default.name
 }
 
+output "aks_rg_id" {
+  description = "Resource group Id"
+  value       = azurerm_resource_group.default.id
+}
+
 output "aks_service_account_token" {
   value     = kubernetes_secret.default.data.token
   sensitive = true

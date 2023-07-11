@@ -55,7 +55,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         ///     </item>
         ///     <item>
         ///         <term>**</term>
-        ///         <description>Matches zero or more recursve directories.</description>
+        ///         <description>Matches zero or more recursive directories.</description>
         ///     </item>
         ///     <item>
         ///         <term>[...]</term>
