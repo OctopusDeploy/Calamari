@@ -111,7 +111,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            fileSystem.PurgeDirectory(PurgeTestDirectory, FailureOptions.IgnoreFailure, glob);
+            fileSystem.PurgeDirectory(PurgeTestDirectory, FailureOptions.IgnoreFailure, new [] {glob}, true);
 
             return File.Exists(testFile);
         }
@@ -176,7 +176,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             writeFile(configPath, "Feature1", "f1-c.config");
             writeFile(configPath, "Feature2", "f2.config");
 
-            var result = fileSystem.EnumerateFilesWithGlob(rootPath, pattern).ToList();
+            var result = fileSystem.EnumerateFilesWithGlob(rootPath, true, pattern).ToList();
 
             result.Should()
                 .HaveCount(expectedQty, $"{pattern} should have found {expectedQty}, but found {result.Count}");
@@ -197,7 +197,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             File.WriteAllText(Path.Combine(rootPath, "Dir", "File"), "");
             File.WriteAllText(Path.Combine(rootPath, "Dir", "Sub", "File"), "");
 
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, pattern).ToArray();
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, true, pattern).ToArray();
 
             if (results.Length > 0)
                 results.Should().OnlyContain(f => f.EndsWith("File"));
@@ -208,7 +208,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         {
             File.WriteAllText(Path.Combine(rootPath, "File"), "");
 
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, "*", "**").ToList();
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, true, "*", "**").ToList();
 
             results.Should().HaveCount(1);
         }
@@ -229,7 +229,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
             File.WriteAllText(Path.Combine(rootPath, directory, "Foo.txt"), "");
 
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, glob).ToList();
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, true, glob).ToList();
 
             results.Should().HaveCount(1);
         }
