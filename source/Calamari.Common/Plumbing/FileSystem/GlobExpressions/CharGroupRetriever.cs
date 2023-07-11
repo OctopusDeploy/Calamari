@@ -26,7 +26,8 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
             for (var index = path.Length - 1; index >= 0; index--)
             {
                 var c = path[index];
-                if (c == Path.DirectorySeparatorChar)
+                if (c == Path.DirectorySeparatorChar ||
+                    c == Path.AltDirectorySeparatorChar)
                 {
                     Reset();
                     continue;
