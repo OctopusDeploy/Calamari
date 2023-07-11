@@ -2,6 +2,7 @@
 using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
@@ -24,6 +25,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
 
             var variables = new CalamariVariables();
+            variables.AddFeatureToggles(FeatureToggle.GlobPathsGroupSupportFeatureToggle);
             variables.Set(PackageVariables.SubstituteInFilesTargets, glob);
             variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
 

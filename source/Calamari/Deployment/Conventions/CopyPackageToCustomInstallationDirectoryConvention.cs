@@ -73,7 +73,7 @@ namespace Calamari.Deployment.Conventions
                     }
 
                     var globGroupSupport = FeatureToggle.GlobPathsGroupSupportFeatureToggle.IsEnabled(variables);
-                    fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure, purgeExlusions, globGroupSupport);
+                    fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure, globGroupSupport, purgeExlusions);
                 }
 
                 // Copy files from staging area to custom directory
