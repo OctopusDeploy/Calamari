@@ -12,7 +12,7 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
             var inGroup = false;
             var isRange = false;
             var groupEndIndex = 0;
-            var options = new List<char>();
+            var options = new Stack<char>();
             var groups = new List<Group>();
 
             void Reset()
@@ -44,37 +44,48 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
                         if (options.Count < 2) break;
                         if (isRange)
                         {
-                            // Note: options are collected in reverse order so the
-                            // left-hand side of [a-b] is last in the options list.
-                            if (options.Count == 2 &&
-                                options[1] < options[0])
-                            {
-                                var opts = new List<string>();
-                                for (var character = options[1]; character <= options[0]; character++)
-                                {
-                                    opts.Add(character.ToString());
-                                }
-
-                                groups.Add(new CharGroup(index, groupEndIndex + 1 - index, opts.ToArray(), true));
-                            }
-                            else
+                            void ThrowException()
                             {
                                 throw new InvalidOperationException(
                                     "A [a-b] Glob Expression group must contain two chars separated by a '-' " +
                                     "where the first char's value is less than the second char.");
                             }
+
+                            if (options.Count != 3)
+                                ThrowException();
+
+                            var lower = options.First();
+                            var higher = options.Last();
+
+                            if (lower < higher &&
+                                lower != '-' &&
+                                higher != '-')
+                            {
+                                var opts = new List<string>();
+                                for (var character = options.First(); character <= options.Last(); character++)
+                                {
+                                    opts.Add(character.ToString());
+                                }
+
+                                groups.Add(new Group(index, groupEndIndex + 1 - index, opts.ToArray()));
+
+                                Reset();
+                                break;
+                            }
+
+                            ThrowException();
                         }
-                        else
-                        {
-                            groups.Add(new CharGroup(index, groupEndIndex + 1 - index,
-                                options.Select(o => o.ToString()).ToArray(), false));
-                        }
+
+                        var groupOptions = GetGroupOptions(options);
+                        groups.Add(new Group(index, groupEndIndex + 1 - index, groupOptions));
+
                         Reset();
                         break;
                     case '-':
                         if (inGroup)
                         {
                             isRange = true;
+                            options.Push('-');
                         }
                         break;
                     case '{':
@@ -84,12 +95,27 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
                     default:
                         if (inGroup)
                         {
-                            options.Add(c);
+                            options.Push(c);
                         }
                         break;
                 }
             }
             return groups;
+        }
+
+        /// <remarks>
+        /// To allow us to have Glob Expression group support and maintain backward compatibility
+        /// we return all options found within a group (eg: [abc] => 'a','b','c') as well as the group
+        /// itself as a literal (eg: [abc] => '[abc]') this means users targeting a path with square
+        /// brackets in it, will continue to work correctly.
+        /// </remarks>
+        private static string[] GetGroupOptions(Stack<char> options)
+        {
+            var groupOptions = options.Select(o => o.ToString());
+            // The next line is the workaround
+            groupOptions = groupOptions.Concat(new[] { $"[{new string(options.ToArray())}]" });
+
+            return groupOptions.ToArray();
         }
     }
 }

@@ -33,11 +33,6 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
                     {
                         newPaths.Add(newPath.Insert(group.StartIndex, option));
                     }
-
-                    if (group is CharGroup { IsRange: false })
-                    {
-                        newPaths.Add(p);
-                    }
                 }
 
                 expandedPaths = newPaths;

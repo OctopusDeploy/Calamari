@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Integration.FileSystem;
 using Calamari.Testing.Helpers;
-using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -139,21 +136,22 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"Config/Feature1/*.config", "f1-b.config", 3)]
         [TestCase(@"Config/Feature1/*.config", "f1-c.config", 3)]
         [TestCase(@"Config/Feature2/*.config", "f2.config")]
-        [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-a.config", 2)]
-        [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-b.config", 2)]
-        [TestCase(@"Config/Feature1/f1-{a,b}.config", "f1-a.config", 2)]
-        [TestCase(@"Config/Feature1/f1-{a,b}.config", "f1-b.config", 2)]
-        [TestCase(@"Config/Feature{1,2}/f{1,2}.{config,txt}", "f1.txt", 2)]
-        [TestCase(@"Config/Feature{1,2}/f{1,2}.{config,txt}", "f2.config", 2)]
-        [TestCase(@"Config/Feature1/*-[ab].config", "f1-a.config", 2)]
-        [TestCase(@"Config/Feature1/*-[ab].config", "f1-b.config", 2)]
-        [TestCase(@"Config/Feature1/f1-[ab].config", "f1-a.config", 2)]
-        [TestCase(@"Config/Feature1/f1-[ab].config", "f1-b.config", 2)]
-        [TestCase(@"Config/Feature[12]/f[12].{config,txt}", "f1.txt", 2)]
-        [TestCase(@"Config/Feature[12]/f[12].{config,txt}", "f2.config", 2)]
-        [TestCase(@"Config/Feature1/f1-[a-c].{config,txt}", "f1-b.config", 3)]
-        public void EnumerateFilesWithGlob(string pattern, string expectedFileMatchName, int expectedQty = 1)
+        [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-a.config", 2, 0)]
+        [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-b.config", 2, 0)]
+        [TestCase(@"Config/Feature1/f1-{a,b}.config", "f1-a.config", 2, 0)]
+        [TestCase(@"Config/Feature1/f1-{a,b}.config", "f1-b.config", 2, 0)]
+        [TestCase(@"Config/Feature{1,2}/f{1,2}.{config,txt}", "f1.txt", 2, 0)]
+        [TestCase(@"Config/Feature{1,2}/f{1,2}.{config,txt}", "f2.config", 2, 0)]
+        [TestCase(@"Config/Feature1/*-[ab].config", "f1-a.config", 2, 0)]
+        [TestCase(@"Config/Feature1/*-[ab].config", "f1-b.config", 2, 0)]
+        [TestCase(@"Config/Feature1/f1-[ab].config", "f1-a.config", 2, 0)]
+        [TestCase(@"Config/Feature1/f1-[ab].config", "f1-b.config", 2, 0)]
+        [TestCase(@"Config/Feature[12]/f[12].{config,txt}", "f1.txt", 2, 0)]
+        [TestCase(@"Config/Feature[12]/f[12].{config,txt}", "f2.config", 2, 0)]
+        [TestCase(@"Config/Feature1/f1-[a-c].{config,txt}", "f1-b.config", 3, 0)]
+        public void EnumerateFilesWithGlob(string pattern, string expectedFileMatchName, int expectedQty = 1, int? expectedQtyWithNoGrouping = null)
         {
+            expectedQtyWithNoGrouping = expectedQtyWithNoGrouping ?? expectedQty;
             var content = "file-content" + Environment.NewLine;
 
             var configPath = Path.Combine(rootPath, "Config");
@@ -178,8 +176,14 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
             var result = fileSystem.EnumerateFilesWithGlob(rootPath, true, pattern).ToList();
 
+            var resultNoGrouping = fileSystem.EnumerateFilesWithGlob(rootPath, false, pattern).ToList();
+
+            resultNoGrouping.Should()
+                            .HaveCount(expectedQtyWithNoGrouping.Value,
+                $"{pattern} should have found {expectedQtyWithNoGrouping}, but found {result.Count}");
+
             result.Should()
-                .HaveCount(expectedQty, $"{pattern} should have found {expectedQty}, but found {result.Count}");
+                  .HaveCount(expectedQty, $"{pattern} should have found {expectedQty}, but found {result.Count}");
             result.Should()
                 .Contain(r => Path.GetFileName(r) == expectedFileMatchName, $"{pattern} should have found {expectedFileMatchName}, but didn't");
         }
@@ -230,8 +234,11 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             File.WriteAllText(Path.Combine(rootPath, directory, "Foo.txt"), "");
 
             var results = fileSystem.EnumerateFilesWithGlob(rootPath, true, glob).ToList();
+            var resultsWithNoGrouping = fileSystem.EnumerateFilesWithGlob(rootPath, false, glob).ToList();
 
-            results.Should().HaveCount(1);
+            results.Should().ContainSingle();
+            resultsWithNoGrouping.Should().ContainSingle();
+
         }
 
         [Test]

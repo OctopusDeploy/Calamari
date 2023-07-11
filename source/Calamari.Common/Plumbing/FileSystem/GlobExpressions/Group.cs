@@ -15,19 +15,4 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
 
         public string[] Options { get; }
     }
-
-    public class CharGroup : Group
-    {
-        public CharGroup(
-            int startIndex,
-            int length,
-            string[] options,
-            bool isRange) : base(
-            startIndex, length, options)
-        {
-            IsRange = isRange;
-        }
-
-        public bool IsRange { get; }
-    }
 }
