@@ -1,4 +1,4 @@
-﻿namespace Calamari.FeatureToggles
+﻿namespace Calamari.Common.FeatureToggles
 {
 
     /// <summary>

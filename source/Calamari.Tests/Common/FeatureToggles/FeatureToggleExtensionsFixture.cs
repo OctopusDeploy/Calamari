@@ -1,10 +1,10 @@
-﻿using Calamari.Common.Plumbing.Variables;
+﻿using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
-using Calamari.FeatureToggles;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Shared.FeatureToggles
+namespace Calamari.Tests.Common.FeatureToggles
 {
     [TestFixture]
     public class FeatureToggleExtensionsFixture
@@ -12,10 +12,10 @@ namespace Calamari.Tests.Shared.FeatureToggles
         [Test]
         public void IsEnabled_GivenFeatureToggleNotInVariable_EvaluatesToFalsee()
         {
-            var variables = GenerateVariableSet($"FooFeatureToggle,BarFeatureToggle");
+            var variables = GenerateVariableSet("FooFeatureToggle,BarFeatureToggle");
             FeatureToggle.SkunkworksFeatureToggle.IsEnabled(variables).Should().BeFalse();
         }
-        
+
         [Test]
         public void IsEnabled_GivenFeatureToggleInVariable_EvaluatesToTrue()
         {
@@ -26,8 +26,8 @@ namespace Calamari.Tests.Shared.FeatureToggles
         IVariables GenerateVariableSet(string variableValue)
         {
             var variables = new CalamariVariables();
-            
-            variables.Set(SpecialVariables.EnabledFeatureToggles, variableValue);
+
+            variables.Set(KnownVariables.EnabledFeatureToggles, variableValue);
             return variables;
         }
     }
