@@ -18,27 +18,23 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
     {
         static readonly ConcurrentDictionary<string, RegexOrString> RegexOrStringCache = new ConcurrentDictionary<string, RegexOrString>();
 
-        static readonly char[] GlobCharacters = "*?{}[]".ToCharArray();
+        static readonly char[] AllGlobCharacters = "*?{}[]".ToCharArray();
+
+        static readonly char[] BasicGlobCharacters = "*?".ToCharArray();
 
         static readonly HashSet<char> RegexSpecialChars = new HashSet<char>(new[] { '[', '\\', '^', '$', '.', '|', '?', '*', '+', '(', ')' });
 
         /// <summary>
         /// Creates a new instance.
         /// </summary>
-        public Glob()
-        {
-            IgnoreCase = true;
-            CacheRegexes = true;
-        }
-
-        /// <summary>
-        /// Creates a new instance.
-        /// </summary>
         /// <param name="pattern">The pattern to be matched. See <see cref="Pattern" /> for syntax.</param>
-        public Glob(string pattern)
-            : this()
+        /// <param name="groupSupport">Groups should be expanded. eg: [...] and {...}</param>
+        public Glob(string pattern, bool enableGroupSupport)
         {
             Pattern = pattern;
+            GroupSupportEnabled = enableGroupSupport;
+            IgnoreCase = true;
+            CacheRegexes = true;
         }
 
         /// <summary>
@@ -81,6 +77,11 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
         /// See: https://github.com/OctopusDeploy/Issues/issues/3320
         /// </remarks>
         public string? Pattern { get; }
+
+        /// <summary>
+        /// Indicates if support for [...] and {...} type expressions is enabled.
+        /// </summary>
+        public bool GroupSupportEnabled { get; }
 
         /// <summary>
         /// Gets or sets a value indicating an action to be performed when an error occurs during pattern matching.
@@ -129,38 +130,14 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
         /// <summary>
         /// Performs a pattern match.
         /// </summary>
-        /// <param name="pattern">The pattern to be matched.</param>
-        /// <param name="ignoreCase">true if case should be ignored; false, otherwise.</param>
-        /// <param name="dirOnly">true if only directories should be matched; false, otherwise.</param>
-        /// <returns>The matched path names</returns>
-        public static IEnumerable<string> ExpandNames(string pattern, bool ignoreCase = true, bool dirOnly = false)
+        public static IEnumerable<FileSystemInfo> ExpandPattern(string pattern, bool enableGlobGroupSupport)
         {
-            return new Glob(pattern) { IgnoreCase = ignoreCase, DirectoriesOnly = dirOnly }.ExpandNames();
+            return new Glob(pattern, enableGlobGroupSupport) { IgnoreCase = true, DirectoriesOnly = false }.Expand();
         }
 
         /// <summary>
         /// Performs a pattern match.
         /// </summary>
-        /// <param name="pattern">The pattern to be matched.</param>
-        /// <returns>The matched <see cref="FileSystemInfo" /> objects</returns>
-        public static IEnumerable<FileSystemInfo> Expand(string pattern)
-        {
-            return new Glob(pattern) { IgnoreCase = true, DirectoriesOnly = false }.Expand();
-        }
-
-        /// <summary>
-        /// Performs a pattern match.
-        /// </summary>
-        /// <returns>The matched path names</returns>
-        public IEnumerable<string> ExpandNames()
-        {
-            return Expand(Pattern, DirectoriesOnly).Select(f => f.FullName);
-        }
-
-        /// <summary>
-        /// Performs a pattern match.
-        /// </summary>
-        /// <returns>The matched <see cref="FileSystemInfo" /> objects</returns>
         public IEnumerable<FileSystemInfo> Expand()
         {
             return Expand(Pattern, DirectoriesOnly);
@@ -190,9 +167,11 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
             if (string.IsNullOrEmpty(path))
                 yield break;
 
+            var globCharacters = GroupSupportEnabled ? AllGlobCharacters : BasicGlobCharacters;
+
             // stop looking if there are no more glob characters in the path.
             // but only if ignoring case because FileSystemInfo.Exists always ignores case.
-            if (IgnoreCase && path.IndexOfAny(GlobCharacters) < 0)
+            if (IgnoreCase && path.IndexOfAny(globCharacters) < 0)
             {
                 FileSystemInfo? fsi = null;
                 var exists = false;
@@ -214,12 +193,15 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
                 yield break;
             }
 
-            var ungroupedPaths = Ungrouper.UngroupPath(path).ToArray();
-            if (ungroupedPaths.Any())
+            if (GroupSupportEnabled)
             {
-                foreach (var f in ExpandInternal(dirOnly, ungroupedPaths))
+                var ungroupedPaths = GlobExpressionGroupResolver.UngroupPath(path).ToArray();
+                if (ungroupedPaths.Any())
                 {
-                    yield return f;
+                    foreach (var f in ExpandInternal(dirOnly, ungroupedPaths))
+                    {
+                        yield return f;
+                    }
                 }
             }
 
