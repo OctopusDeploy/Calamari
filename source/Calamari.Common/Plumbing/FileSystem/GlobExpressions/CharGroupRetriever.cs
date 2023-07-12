@@ -15,7 +15,9 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
             var inGroup = false;
             var isRange = false;
             var groupEndIndex = 0;
-            var options = new Stack<char>();
+            // TODO: change options type to Stack<char>
+            // when Mono Support is dropped in Octopus v2024.1
+            var options = new List<char>();
             var groups = new List<Group>();
 
             void Reset()
@@ -58,15 +60,17 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
                             if (options.Count != 3)
                                 ThrowException();
 
-                            var lower = options.First();
-                            var higher = options.Last();
+                            // TODO: change options type to Stack<char> and swap .First() and
+                            // .Last() here when Mono support is dropped in Octopus v2024.1
+                            var lower = options.Last();
+                            var higher = options.First();
 
                             if (lower < higher &&
                                 lower != RangeIdentifier &&
                                 higher != RangeIdentifier)
                             {
                                 var opts = new List<string>();
-                                for (var character = options.First(); character <= options.Last(); character++)
+                                for (var character = lower; character <= higher; character++)
                                 {
                                     opts.Add(character.ToString());
                                 }
@@ -89,7 +93,7 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
                         if (inGroup)
                         {
                             isRange = true;
-                            options.Push('-');
+                            options.Add(c);
                         }
                         break;
                     case StringGroupRetriever.GroupStart:
@@ -99,7 +103,7 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
                     default:
                         if (inGroup)
                         {
-                            options.Push(c);
+                            options.Add(c);
                         }
                         break;
                 }
@@ -113,11 +117,13 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
         /// itself as a literal (eg: [abc] => '[abc]') this means users targeting a path with square
         /// brackets in it, will continue to work correctly.
         /// </remarks>
-        private static string[] GetGroupOptions(Stack<char> options)
+        private static string[] GetGroupOptions(IReadOnlyCollection<char> options)
         {
+            // TODO: change options type to Stack<char> and remove the
+            // .Reverse() call on options when Mono Support is dropped in Octopus v2024.1
             var groupOptions = options.Select(o => o.ToString());
             // The next line is the workaround
-            groupOptions = groupOptions.Concat(new[] { $"{GroupStart}{string.Concat(options)}{GroupEnd}" });
+            groupOptions = groupOptions.Concat(new[] { $"{GroupStart}{string.Concat(options.Reverse())}{GroupEnd}" });
 
             return groupOptions.ToArray();
         }
