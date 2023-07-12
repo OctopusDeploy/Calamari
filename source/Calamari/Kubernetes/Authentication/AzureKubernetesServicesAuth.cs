@@ -1,6 +1,4 @@
-﻿using System;
-using Calamari.Common.FeatureToggles;
-using Calamari.Common.Plumbing.Logging;
+﻿using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 
