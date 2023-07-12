@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
+using Polly.Retry;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -39,10 +40,13 @@ namespace Calamari.AzureAppService.Tests
         private static readonly string AccountId = "Accounts-1";
         private static readonly string Role = "my-azure-app-role";
         private static readonly string EnvironmentName = "dev";
+        private RetryPolicy retryPolicy;
 
         [OneTimeSetUp]
         public async Task Setup()
         {
+            retryPolicy = RetryPolicyFactory.CreateForHttp429();
+            
             var resourceManagementEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ??
                 DefaultVariables.ResourceManagementEndpoint;
@@ -74,10 +78,10 @@ namespace Calamari.AzureAppService.Tests
                 HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint), Timeout = TimeSpan.FromMinutes(5) },
             };
 
-            svcPlan = await webMgmtClient.AppServicePlans.CreateOrUpdateAsync(resourceGroup.Name,
-                resourceGroup.Name,
-                new AppServicePlan(resourceGroup.Location) { Sku = new SkuDescription("S1", "Standard") }
-            );
+            svcPlan = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.CreateOrUpdateAsync(resourceGroup.Name,
+                                                                                                                         resourceGroup.Name,
+                                                                                                                         new AppServicePlan(resourceGroup.Location) { Sku = new SkuDescription("S1", "Standard") }
+                                                                                                                        ));
         }
 
         [OneTimeTearDown]
@@ -276,21 +280,21 @@ namespace Calamari.AzureAppService.Tests
 
         private async Task CreateOrUpdateTestWebApp(Dictionary<string, string> tags = null)
         {
-            await webMgmtClient.WebApps.CreateOrUpdateAsync(
-                resourceGroupName,
-                appName,
-                new Site(resourceGroup.Location, tags: tags) { ServerFarmId = svcPlan.Id });
+            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateAsync(
+                                                                                                       resourceGroupName,
+                                                                                                       appName,
+                                                                                                       new Site(resourceGroup.Location, tags: tags) { ServerFarmId = svcPlan.Id }));
         }
 
         private async Task CreateOrUpdateTestWebAppSlots(Dictionary<string, string> tags = null)
         {
             foreach (var slotName in slotNames)
             {
-                await webMgmtClient.WebApps.CreateOrUpdateSlotAsync(
-                    resourceGroup.Name,
-                    appName,
-                    new Site(resourceGroup.Location, tags: tags) { ServerFarmId = svcPlan.Id },
-                    slotName);
+                await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateSlotAsync(
+                                                                                                               resourceGroup.Name,
+                                                                                                               appName,
+                                                                                                               new Site(resourceGroup.Location, tags: tags) { ServerFarmId = svcPlan.Id },
+                                                                                                               slotName));
             }
         }
 

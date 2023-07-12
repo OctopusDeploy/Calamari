@@ -19,6 +19,7 @@ using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using Polly.Retry;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -38,19 +39,20 @@ namespace Calamari.AzureAppService.Tests
         private string authToken;
         private WebSiteManagementClient webMgmtClient;
         private Site site;
+        private RetryPolicy retryPolicy;
 
         [OneTimeSetUp]
         public async Task Setup()
         {
+            retryPolicy = RetryPolicyFactory.CreateForHttp429();
+            
             var resourceManagementEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ??
-                DefaultVariables.ResourceManagementEndpoint;
+                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
             var activeDirectoryEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
-                DefaultVariables.ActiveDirectoryEndpoint;
+                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
             resourceGroupName = Guid.NewGuid().ToString();
-            
+
             clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
             clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
@@ -58,31 +60,38 @@ namespace Calamari.AzureAppService.Tests
 
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
-            authToken = await Auth.GetAuthTokenAsync(tenantId, clientId, clientSecret, resourceManagementEndpointBaseUri, activeDirectoryEndpointBaseUri);
+            authToken = await Auth.GetAuthTokenAsync(tenantId,
+                                                     clientId,
+                                                     clientSecret,
+                                                     resourceManagementEndpointBaseUri,
+                                                     activeDirectoryEndpointBaseUri);
 
             var resourcesClient = new ResourcesManagementClient(subscriptionId,
-                new ClientSecretCredential(tenantId, clientId, clientSecret));
+                                                                new ClientSecretCredential(tenantId, clientId, clientSecret));
 
             resourceGroupClient = resourcesClient.ResourceGroups;
 
             var resourceGroup = new ResourceGroup(resourceGroupLocation);
             resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
 
+
             webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
             {
                 SubscriptionId = subscriptionId,
-                HttpClient = {BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint)},
+                HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
             };
 
-            var svcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
-                new AppServicePlan(resourceGroup.Location));
+            var svcPlan = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
+                                                                                                                                  resourceGroup.Name,
+                                                                                                                                  new AppServicePlan(resourceGroup.Location)));
 
-            site = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
-                new Site(resourceGroup.Location) {ServerFarmId = svcPlan.Id});
-            
+            site = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name,
+                                                                                                                   resourceGroup.Name,
+                                                                                                                   new Site(resourceGroup.Location) { ServerFarmId = svcPlan.Id }));
+
             existingSettings = new StringDictionary
             {
-                Properties = new Dictionary<string, string> { { "ExistingSetting", "Foo" },{"ReplaceSetting","Foo"} }
+                Properties = new Dictionary<string, string> { { "ExistingSetting", "Foo" }, { "ReplaceSetting", "Foo" } }
             };
 
             existingConnectionStrings = new ConnectionStringDictionary
@@ -100,7 +109,7 @@ namespace Calamari.AzureAppService.Tests
                 }
             };
 
-            await webMgmtClient.WebApps.UpdateConnectionStringsAsync(resourceGroupName, site.Name, existingConnectionStrings);
+            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.UpdateConnectionStringsAsync(resourceGroupName, site.Name, existingConnectionStrings));
 
             webappName = site.Name;
         }
@@ -110,20 +119,22 @@ namespace Calamari.AzureAppService.Tests
         {
             await resourceGroupClient.StartDeleteAsync(resourceGroupName);
         }
-        
+
         [Test]
         public async Task TestSiteAppSettings()
         {
-            await webMgmtClient.WebApps.UpdateApplicationSettingsWithHttpMessagesAsync(resourceGroupName, site.Name,
-                existingSettings);
-            await webMgmtClient.WebApps.UpdateConnectionStringsAsync(resourceGroupName, site.Name,
-                existingConnectionStrings);
-            
+            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.UpdateApplicationSettingsWithHttpMessagesAsync(resourceGroupName,
+                                                                                                                                  site.Name,
+                                                                                                                                  existingSettings));
+            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.UpdateConnectionStringsAsync(resourceGroupName,
+                                                                                                                site.Name,
+                                                                                                                existingConnectionStrings));
+
             var iVars = new CalamariVariables();
             AddVariables(iVars);
             var runningContext = new RunningDeployment("", iVars);
             iVars.Add("Greeting", "Calamari");
-            
+
             var appSettings = BuildAppSettingsJson(new[]
             {
                 ("MyFirstAppSetting", "Foo", true),
@@ -132,7 +143,7 @@ namespace Calamari.AzureAppService.Tests
             });
 
             iVars.Add(SpecialVariables.Action.Azure.AppSettings, appSettings.json);
-            
+
             await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
 
             await AssertAppSettings(appSettings.setting, new ConnectionStringDictionary());
@@ -141,10 +152,12 @@ namespace Calamari.AzureAppService.Tests
         [Test]
         public async Task TestSiteConnectionStrings()
         {
-            await webMgmtClient.WebApps.UpdateApplicationSettingsWithHttpMessagesAsync(resourceGroupName, site.Name,
-                existingSettings);
-            await webMgmtClient.WebApps.UpdateConnectionStringsAsync(resourceGroupName, site.Name,
-                existingConnectionStrings);
+            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.UpdateApplicationSettingsWithHttpMessagesAsync(resourceGroupName,
+                                                                                                                                  site.Name,
+                                                                                                                                  existingSettings));
+            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.UpdateConnectionStringsAsync(resourceGroupName,
+                                                                                                                site.Name,
+                                                                                                                existingConnectionStrings));
 
             var iVars = new CalamariVariables();
             AddVariables(iVars);
@@ -158,12 +171,11 @@ namespace Calamari.AzureAppService.Tests
                 ("ReplaceSlotConnectionString", "replacedSlotConnectionStringValue", ConnectionStringType.MySql, true)
             });
 
-
             iVars.Add(SpecialVariables.Action.Azure.ConnectionStrings, connectionStrings.json);
 
             await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
 
-            await AssertAppSettings(new AppSetting[]{}, connectionStrings.connStrings);
+            await AssertAppSettings(new AppSetting[] { }, connectionStrings.connStrings);
         }
 
         [Test]
@@ -172,11 +184,15 @@ namespace Calamari.AzureAppService.Tests
             var slotName = "stage";
             this.slotName = slotName;
 
-            await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName, resourceGroupName, site,
-                slotName);
-            
-            var existingSettingsTask = webMgmtClient.WebApps.UpdateApplicationSettingsSlotWithHttpMessagesAsync(resourceGroupName,
-                site.Name, existingSettings, slotName);
+            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName,
+                                                                                                                resourceGroupName,
+                                                                                                                site,
+                                                                                                                slotName));
+
+            var existingSettingsTask = retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.UpdateApplicationSettingsSlotWithHttpMessagesAsync(resourceGroupName,
+                                                                                                                                                           site.Name,
+                                                                                                                                                           existingSettings,
+                                                                                                                                                           slotName));
 
             var iVars = new CalamariVariables();
             AddVariables(iVars);
@@ -191,7 +207,7 @@ namespace Calamari.AzureAppService.Tests
                 ("MyDeploySlotSetting", slotName, false),
                 ("ReplaceSetting", "Foo", false)
             });
-            
+
             var connectionStrings = BuildConnectionStringJson(new[]
             {
                 ("NewKey", "newConnStringValue", ConnectionStringType.Custom, false),
@@ -199,7 +215,7 @@ namespace Calamari.AzureAppService.Tests
                 ("newSlotConnectionString", "ChangedConnectionStringValue", ConnectionStringType.SQLServer, true),
                 ("ReplaceSlotConnectionString", "ChangedSlotConnectionStringValue", ConnectionStringType.Custom, true)
             });
-            
+
             iVars.Add(SpecialVariables.Action.Azure.AppSettings, settings.json);
             iVars.Add(SpecialVariables.Action.Azure.ConnectionStrings, connectionStrings.json);
 
@@ -222,8 +238,8 @@ namespace Calamari.AzureAppService.Tests
         private (string json, IEnumerable<AppSetting> setting) BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)
         {
             var appSettings = settings.Select(setting => new AppSetting
-                {Name = setting.name, Value = setting.value, SlotSetting = setting.isSlotSetting});
-            
+                                                  { Name = setting.name, Value = setting.value, SlotSetting = setting.isSlotSetting });
+
             return (JsonConvert.SerializeObject(appSettings), appSettings);
         }
 
@@ -236,13 +252,13 @@ namespace Calamari.AzureAppService.Tests
                 SlotSetting = connstring.isSlotSetting
             });
             var connectionsDict = new ConnectionStringDictionary
-                {Properties = new Dictionary<string, ConnStringValueTypePair>()};
+                { Properties = new Dictionary<string, ConnStringValueTypePair>() };
 
             foreach (var item in connStrings)
             {
                 connectionsDict.Properties[item.name] = new ConnStringValueTypePair(item.value, item.type);
             }
-            
+
             return (JsonConvert.SerializeObject(connections), connectionsDict);
         }
 
@@ -251,7 +267,7 @@ namespace Calamari.AzureAppService.Tests
             // Update existing settings with new replacement values
             var expectedSettingsArray = expectedAppSettings as AppSetting[] ?? expectedAppSettings.ToArray();
             foreach (var (name, value, _) in expectedSettingsArray.Where(x =>
-                existingSettings.Properties.ContainsKey(x.Name)))
+                                                                             existingSettings.Properties.ContainsKey(x.Name)))
             {
                 existingSettings.Properties[name] = value;
             }
@@ -266,11 +282,12 @@ namespace Calamari.AzureAppService.Tests
 
             // for each existing setting that isn't defined in the expected settings object, add it
             var expectedSettingsList = expectedSettingsArray.ToList();
-            
+
             expectedSettingsList.AddRange(existingSettings.Properties
-                .Where(x => expectedSettingsArray.All(y => y.Name != x.Key)).Select(kvp =>
-                    new AppSetting {Name = kvp.Key, Value = kvp.Value, SlotSetting = false}));
-            
+                                                          .Where(x => expectedSettingsArray.All(y => y.Name != x.Key))
+                                                          .Select(kvp =>
+                                                                      new AppSetting { Name = kvp.Key, Value = kvp.Value, SlotSetting = false }));
+
             // Get the settings from the webapp
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webappName, slotName, resourceGroupName);
 

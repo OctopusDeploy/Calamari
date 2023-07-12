@@ -23,6 +23,7 @@ using Microsoft.Rest;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
+using Polly.Retry;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -41,25 +42,26 @@ namespace Calamari.AzureAppService.Tests
         private CalamariVariables newVariables;
         readonly HttpClient client = new HttpClient();
         private Site site;
-
-
+        private RetryPolicy retryPolicy;
 
         [OneTimeSetUp]
         public async Task Setup()
         {
+            retryPolicy = RetryPolicyFactory.CreateForHttp429();
+
             resourceGroupName = Guid.NewGuid().ToString();
-        
+
             clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
             clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
 
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
-            
+
             authToken = await GetAuthToken(tenantId, clientId, clientSecret);
 
             var resourcesClient = new ResourcesManagementClient(subscriptionId,
-                new ClientSecretCredential(tenantId, clientId, clientSecret));
+                                                                new ClientSecretCredential(tenantId, clientId, clientSecret));
 
             resourceGroupClient = resourcesClient.ResourceGroups;
 
@@ -72,34 +74,36 @@ namespace Calamari.AzureAppService.Tests
                 HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
             };
 
-            var svcPlan = await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
-                resourceGroup.Name, new AppServicePlan(resourceGroup.Location)
-                {
-                    Kind = "linux",
-                    Reserved = true,
-                    Sku = new SkuDescription
-                    {
-                        Name = "S1",
-                        Tier = "Standard"
-                    }
-                });
+            var svcPlan = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
+                                                                                                                                  resourceGroup.Name,
+                                                                                                                                  new AppServicePlan(resourceGroup.Location)
+                                                                                                                                  {
+                                                                                                                                      Kind = "linux",
+                                                                                                                                      Reserved = true,
+                                                                                                                                      Sku = new SkuDescription
+                                                                                                                                      {
+                                                                                                                                          Name = "S1",
+                                                                                                                                          Tier = "Standard"
+                                                                                                                                      }
+                                                                                                                                  }));
 
-            site = await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name, resourceGroup.Name,
-                new Site(resourceGroup.Location)
-                {
-                    ServerFarmId = svcPlan.Id,
-                    SiteConfig = new SiteConfig
-                    {
-                        LinuxFxVersion = @"DOCKER|mcr.microsoft.com/azuredocs/aci-helloworld",
-                        AppSettings = new List<NameValuePair>
-                        {
-                            new NameValuePair("DOCKER_REGISTRY_SERVER_URL", "https://index.docker.io"),
-                            new NameValuePair("WEBSITES_ENABLE_APP_SERVICE_STORAGE", "false")
-                        },
-                        AlwaysOn = true
-                    }
-                });
-            
+            site = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name,
+                                                                                                                   resourceGroup.Name,
+                                                                                                                   new Site(resourceGroup.Location)
+                                                                                                                   {
+                                                                                                                       ServerFarmId = svcPlan.Id,
+                                                                                                                       SiteConfig = new SiteConfig
+                                                                                                                       {
+                                                                                                                           LinuxFxVersion = @"DOCKER|mcr.microsoft.com/azuredocs/aci-helloworld",
+                                                                                                                           AppSettings = new List<NameValuePair>
+                                                                                                                           {
+                                                                                                                               new NameValuePair("DOCKER_REGISTRY_SERVER_URL", "https://index.docker.io"),
+                                                                                                                               new NameValuePair("WEBSITES_ENABLE_APP_SERVICE_STORAGE", "false")
+                                                                                                                           },
+                                                                                                                           AlwaysOn = true
+                                                                                                                       }
+                                                                                                                   }));
+
             webappName = site.Name;
 
             await AssertSetupSuccessAsync();
@@ -108,7 +112,7 @@ namespace Calamari.AzureAppService.Tests
         [OneTimeTearDown]
         public async Task CleanupCode()
         {
-            if(resourceGroupClient != null)
+            if (resourceGroupClient != null)
                 await resourceGroupClient.StartDeleteAsync(resourceGroupName);
 
             //foreach (var tempDir in _tempDirs)
@@ -135,12 +139,14 @@ namespace Calamari.AzureAppService.Tests
         public async Task AzureLinuxContainerSlotDeploy()
         {
             var slotName = "stage";
-            
+
             newVariables = new CalamariVariables();
             AddVariables(newVariables);
             newVariables.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
-            var slot = await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName, webappName, site,
-                slotName);
+            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName,
+                                                                                                                webappName,
+                                                                                                                site,
+                                                                                                                slotName));
 
             var runningContext = new RunningDeployment("", newVariables);
 
@@ -152,9 +158,9 @@ namespace Calamari.AzureAppService.Tests
         async Task AssertSetupSuccessAsync()
         {
             var result = await client.GetAsync($@"https://{webappName}.azurewebsites.net");
-            var recievedContent = await result.Content.ReadAsStringAsync();
+            var receivedContent = await result.Content.ReadAsStringAsync();
 
-            recievedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>"); 
+            receivedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>");
             Assert.IsTrue(result.IsSuccessStatusCode);
         }
 
@@ -186,17 +192,14 @@ namespace Calamari.AzureAppService.Tests
             vars.Add(SpecialVariables.Action.Package.PackageVersion, "latest");
             vars.Add(SpecialVariables.Action.Azure.DeploymentType, "Container");
             //vars.Add(SpecialVariables.Action.Azure.ContainerSettings, BuildContainerConfigJson());
-
         }
 
         private async Task<string> GetAuthToken(string tenantId, string applicationId, string password)
         {
             var resourceManagementEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ??
-                DefaultVariables.ResourceManagementEndpoint;
+                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
             var activeDirectoryEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
-                DefaultVariables.ActiveDirectoryEndpoint;
+                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
             return await Auth.GetAuthTokenAsync(tenantId,
                                                 applicationId,

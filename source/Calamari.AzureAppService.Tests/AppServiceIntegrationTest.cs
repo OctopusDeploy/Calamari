@@ -73,29 +73,9 @@ namespace Calamari.AzureAppService.Tests
             };
             
             //Create a retry policy that retries on 429 errors. This is because we've been getting a number of flaky test failures
-            RetryPolicy = Policy
-                          .Handle<DefaultErrorResponseException>(ex => (int)ex.Response.StatusCode == 429)
-                          .WaitAndRetryAsync(5,
-                                             CalculateRetryDelay,
-                                             (ex, ts, i, ctx) => Task.CompletedTask);
-
+            RetryPolicy = RetryPolicyFactory.CreateForHttp429();
+            
             await ConfigureTestResources(resourceGroup);
-        }
-
-        static TimeSpan CalculateRetryDelay(int retryAttempt, Exception ex, Context ctx)
-        {
-            //the azure API returns a Retry-After header that contains the number of seconds because you should try again
-            //so we try and read that header
-            if (ex is DefaultErrorResponseException responseException && responseException.Response.Headers.TryGetValue("Retry-After", out var values))
-            {
-                var retryAfterValue = values.FirstOrDefault();
-
-                if (int.TryParse(retryAfterValue, out var secondsToRetryAfter))
-                    return TimeSpan.FromSeconds(secondsToRetryAfter);
-            }
-
-            //fall back on just an exponential increase  based on the retry attempt
-            return TimeSpan.FromSeconds(Math.Pow(2, retryAttempt));
         }
 
         protected abstract Task ConfigureTestResources(ResourceGroup resourceGroup);
