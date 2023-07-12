@@ -8,8 +8,8 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
@@ -250,15 +250,15 @@ namespace Calamari.Kubernetes.Conventions
                     var packageId = variables.Get(PackageVariables.IndexedPackageId(packageReferenceName));
                     var version = variables.Get(PackageVariables.IndexedPackageVersion(packageReferenceName));
                     var relativePath = Path.Combine(sanitizedPackageReferenceName, providedPath);
-                    var enableGlobGroupSupport = FeatureToggle.GlobPathsGroupSupportFeatureToggle.IsEnabled(variables);
-                    var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, enableGlobGroupSupport, relativePath).ToList();
+                    var globMode = GlobModeRetriever.GetFromVariables(variables);
+                    var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, relativePath).ToList();
 
                     if (!files.Any() && string.IsNullOrEmpty(packageReferenceName)) // Chart archives have chart name root directory
                     {
                         log.Verbose($"Unable to find values files at path `{providedPath}`. " +
                                     $"Chart package contains root directory with chart name, so looking for values in there.");
                         var chartRelativePath = Path.Combine(fileSystem.RemoveInvalidFileNameChars(packageId), relativePath);
-                        files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, enableGlobGroupSupport, chartRelativePath).ToList();
+                        files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, chartRelativePath).ToList();
                     }
 
                     if (!files.Any())

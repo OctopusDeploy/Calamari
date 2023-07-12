@@ -20,6 +20,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
@@ -235,8 +236,10 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(clientFactory, "Client factory must not be null");
             var results = new List<S3UploadResult>();
 
-            var enableGlobGroupSupport = FeatureToggle.GlobPathsGroupSupportFeatureToggle.IsEnabled(deployment.Variables);
-            var files = new RelativeGlobber((@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, enableGlobGroupSupport, pattern), deployment.StagingDirectory).EnumerateFilesWithGlob(selection.Pattern).ToList();
+            var globMode = GlobModeRetriever.GetFromVariables(deployment.Variables);
+            var files = new RelativeGlobber(
+                (@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, globMode, pattern),
+                deployment.StagingDirectory).EnumerateFilesWithGlob(selection.Pattern).ToList();
 
             if (!files.Any())
             {

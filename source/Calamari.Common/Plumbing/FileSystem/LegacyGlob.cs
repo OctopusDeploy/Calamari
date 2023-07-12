@@ -10,28 +10,36 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Common.Plumbing.Extensions;
 
-namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
+namespace Calamari.Common.Plumbing.FileSystem
 {
     /// <summary>
     /// Finds files and directories by matching their path names against a pattern.
     /// </summary>
-    public class Glob
+    public class LegacyGlob
     {
         static readonly ConcurrentDictionary<string, RegexOrString> RegexOrStringCache = new ConcurrentDictionary<string, RegexOrString>();
 
-        static readonly char[] GlobCharacters = "*?{}[]".ToCharArray();
+        static readonly char[] GlobCharacters = "*?".ToCharArray();
 
         static readonly HashSet<char> RegexSpecialChars = new HashSet<char>(new[] { '[', '\\', '^', '$', '.', '|', '?', '*', '+', '(', ')' });
 
         /// <summary>
         /// Creates a new instance.
         /// </summary>
-        /// <param name="pattern">The pattern to be matched. See <see cref="Pattern" /> for syntax.</param>
-        public Glob(string pattern)
+        public LegacyGlob()
         {
-            Pattern = pattern;
             IgnoreCase = true;
             CacheRegexes = true;
+        }
+
+        /// <summary>
+        /// Creates a new instance.
+        /// </summary>
+        /// <param name="pattern">The pattern to be matched. See <see cref="Pattern" /> for syntax.</param>
+        public LegacyGlob(string pattern)
+            : this()
+        {
+            Pattern = pattern;
         }
 
         /// <summary>
@@ -52,27 +60,14 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
         ///     </item>
         ///     <item>
         ///         <term>{group1,group2,...}</term>
-        ///         <description>Matches any of the pattern groups. Groups can contain groups and patterns.</description>
-        ///     </item>
-        ///     <item>
-        ///         <term>[abc]</term>
-        ///         <description>Matches a set of characters in a name. Syntax is equivalent to character groups in <see cref="System.Text.RegularExpressions.Regex" />.</description>
-        ///     </item>
-        ///     <item>
-        ///         <term>[a-c]</term>
-        ///         <description>Matches a range of characters in a name. Syntax is equivalent to character groups in <see cref="System.Text.RegularExpressions.Regex" />.</description>
+        ///         <description>
+        ///             Matches any of the pattern groups. Groups can contain groups and patterns.
+        ///             <br/>
+        ///             <b>Note:</b> this can only be used after a <see langword="*"/>.
+        ///         </description>
         ///     </item>
         /// </list>
         /// </summary>
-        /// <remarks>
-        /// When using non-range character groups [abc], this implementation will also look for the literal form including the square brackets.
-        /// <br/>
-        /// <b>Eg:</b> <i>[abc].txt => a.txt, b.txt, c.txt, [abc].txt</i>
-        /// <br/>
-        /// This is to maintain compatibility for customers who have square brackets in their directory names.
-        /// <br/>
-        /// See: https://github.com/OctopusDeploy/Issues/issues/3320
-        /// </remarks>
         public string? Pattern { get; }
 
         /// <summary>
@@ -122,14 +117,38 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
         /// <summary>
         /// Performs a pattern match.
         /// </summary>
-        public static IEnumerable<FileSystemInfo> ExpandPattern(string pattern)
+        /// <param name="pattern">The pattern to be matched.</param>
+        /// <param name="ignoreCase">true if case should be ignored; false, otherwise.</param>
+        /// <param name="dirOnly">true if only directories shoud be matched; false, otherwise.</param>
+        /// <returns>The matched path names</returns>
+        public static IEnumerable<string> ExpandNames(string pattern, bool ignoreCase = true, bool dirOnly = false)
         {
-            return new Glob(pattern) { IgnoreCase = true, DirectoriesOnly = false }.Expand();
+            return new LegacyGlob(pattern) { IgnoreCase = ignoreCase, DirectoriesOnly = dirOnly }.ExpandNames();
         }
 
         /// <summary>
         /// Performs a pattern match.
         /// </summary>
+        /// <param name="pattern">The pattern to be matched.</param>
+        /// <returns>The matched <see cref="FileSystemInfo" /> objects</returns>
+        public static IEnumerable<FileSystemInfo> Expand(string pattern)
+        {
+            return new LegacyGlob(pattern) { IgnoreCase = true, DirectoriesOnly = false }.Expand();
+        }
+
+        /// <summary>
+        /// Performs a pattern match.
+        /// </summary>
+        /// <returns>The matched path names</returns>
+        public IEnumerable<string> ExpandNames()
+        {
+            return Expand(Pattern, DirectoriesOnly).Select(f => f.FullName);
+        }
+
+        /// <summary>
+        /// Performs a pattern match.
+        /// </summary>
+        /// <returns>The matched <see cref="FileSystemInfo" /> objects</returns>
         public IEnumerable<FileSystemInfo> Expand()
         {
             return Expand(Pattern, DirectoriesOnly);
@@ -183,129 +202,120 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
                 yield break;
             }
 
-            var ungroupedPaths = GlobExpressionGroupResolver.UngroupPath(path).ToArray();
-            if (ungroupedPaths.Any())
+            string? parent;
+
+            try
             {
-                foreach (var f in ExpandInternal(dirOnly, ungroupedPaths))
-                {
-                    yield return f;
-                }
+                parent = Path.GetDirectoryName(path);
+            }
+            catch (Exception ex)
+            {
+                Log("Error getting directory name for '{0}': {1}", path, ex);
+                if (ThrowOnError)
+                    throw;
+                yield break;
             }
 
-            foreach (var p in ExpandInternal(dirOnly, path))
+            if (parent == null)
             {
-                yield return p;
-            }
-        }
-
-        private IEnumerable<FileSystemInfo> ExpandInternal(bool dirOnly, params string[] paths)
-        {
-            foreach (var path in paths)
-            {
-                string? parent;
+                DirectoryInfo? dir = null;
 
                 try
                 {
-                    parent = Path.GetDirectoryName(path);
+                    dir = new DirectoryInfo(path);
                 }
                 catch (Exception ex)
                 {
-                    Log("Error getting directory name for '{0}': {1}", path, ex);
+                    Log("Error getting DirectoryInfo for '{0}': {1}", path, ex);
                     if (ThrowOnError)
                         throw;
-                    yield break;
                 }
 
-                if (parent == null)
+                if (dir != null)
+                    yield return dir;
+                yield break;
+            }
+
+            if (parent == "")
+                try
                 {
-                    DirectoryInfo? dir = null;
+                    parent = Directory.GetCurrentDirectory();
+                }
+                catch (Exception ex)
+                {
+                    Log("Error getting current working directory: {1}", ex);
+                    if (ThrowOnError)
+                        throw;
+                }
+
+            var child = Path.GetFileName(path);
+
+            // handle groups that contain folders
+            // child will contain unmatched closing brace
+            if (child.Count(c => c == '}') > child.Count(c => c == '{'))
+            {
+                foreach (var group in Ungroup(path))
+                foreach (var item in Expand(group, dirOnly))
+                    yield return item;
+
+                yield break;
+            }
+
+            if (child == "**")
+            {
+                foreach (var fileSystemInfo in Expand(parent, true).DistinctBy(d => d.FullName))
+                {
+                    var dir = (DirectoryInfo)fileSystemInfo;
+                    DirectoryInfo[] recursiveDirectories;
 
                     try
                     {
-                        dir = new DirectoryInfo(path);
+                        recursiveDirectories = GetDirectories(dir).ToArray();
                     }
                     catch (Exception ex)
                     {
-                        Log("Error getting DirectoryInfo for '{0}': {1}", path, ex);
-                        if (ThrowOnError)
-                            throw;
-                    }
-
-                    if (dir != null)
-                        yield return dir;
-                    yield break;
-                }
-
-                if (parent == "")
-                    try
-                    {
-                        parent = Directory.GetCurrentDirectory();
-                    }
-                    catch (Exception ex)
-                    {
-                        Log("Error getting current working directory: {1}", ex);
-                        if (ThrowOnError)
-                            throw;
-                    }
-
-                var child = Path.GetFileName(path);
-
-                if (child == "**")
-                {
-                    foreach (var fileSystemInfo in ExpandInternal(true, parent).DistinctBy(d => d.FullName))
-                    {
-                        var dir = (DirectoryInfo)fileSystemInfo;
-                        DirectoryInfo[] recursiveDirectories;
-
-                        try
-                        {
-                            recursiveDirectories = GetDirectories(dir).ToArray();
-                        }
-                        catch (Exception ex)
-                        {
-                            Log("Error finding recursive directory in {0}: {1}.", dir, ex);
-                            if (ThrowOnError)
-                                throw;
-                            continue;
-                        }
-
-                        yield return dir;
-
-                        foreach (var subDir in recursiveDirectories)
-                            yield return subDir;
-                    }
-
-                    yield break;
-                }
-
-                var childRegex = CreateRegexOrString(child);
-
-                foreach (var fileSystemInfo in ExpandInternal(true, parent).DistinctBy(d => d.FullName))
-                {
-                    var parentDir = (DirectoryInfo)fileSystemInfo;
-                    IEnumerable<FileSystemInfo> fileSystemEntries;
-
-                    try
-                    {
-                        fileSystemEntries = dirOnly ? parentDir.GetDirectories() : parentDir.GetFileSystemInfos();
-                    }
-                    catch (Exception ex)
-                    {
-                        Log("Error finding file system entries in {0}: {1}.", parentDir, ex);
+                        Log("Error finding recursive directory in {0}: {1}.", dir, ex);
                         if (ThrowOnError)
                             throw;
                         continue;
                     }
 
-                    foreach (var fileSystemEntry in fileSystemEntries)
-                        if (childRegex.IsMatch(fileSystemEntry.Name))
-                            yield return fileSystemEntry;
+                    yield return dir;
 
-                    if (childRegex.Pattern == @"^\.\.$")
-                        yield return parentDir.Parent ?? parentDir;
-                    if (childRegex.Pattern == @"^\.$")
-                        yield return parentDir;
+                    foreach (var subDir in recursiveDirectories)
+                        yield return subDir;
                 }
+
+                yield break;
+            }
+
+            var childRegexes = Ungroup(child).Select(CreateRegexOrString).ToList();
+
+            foreach (var fileSystemInfo in Expand(parent, true).DistinctBy(d => d.FullName))
+            {
+                var parentDir = (DirectoryInfo)fileSystemInfo;
+                IEnumerable<FileSystemInfo> fileSystemEntries;
+
+                try
+                {
+                    fileSystemEntries = dirOnly ? parentDir.GetDirectories() : parentDir.GetFileSystemInfos();
+                }
+                catch (Exception ex)
+                {
+                    Log("Error finding file system entries in {0}: {1}.", parentDir, ex);
+                    if (ThrowOnError)
+                        throw;
+                    continue;
+                }
+
+                foreach (var fileSystemEntry in fileSystemEntries)
+                    if (childRegexes.Any(r => r.IsMatch(fileSystemEntry.Name)))
+                        yield return fileSystemEntry;
+
+                if (childRegexes.Any(r => r.Pattern == @"^\.\.$"))
+                    yield return parentDir.Parent ?? parentDir;
+                if (childRegexes.Any(r => r.Pattern == @"^\.$"))
+                    yield return parentDir;
             }
         }
 
@@ -334,6 +344,87 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
             regex.Append("$");
 
             return regex.ToString();
+        }
+
+        static IEnumerable<string> Ungroup(string path)
+        {
+            if (!path.Contains('{'))
+            {
+                yield return path;
+                yield break;
+            }
+
+            var level = 0;
+            var option = "";
+            var prefix = "";
+            var postfix = "";
+            var options = new List<string>();
+
+            for (var i = 0; i < path.Length; i++)
+            {
+                var c = path[i];
+
+                switch (c)
+                {
+                    case '{':
+                        level++;
+                        if (level == 1)
+                        {
+                            prefix = option;
+                            option = "";
+                        }
+                        else
+                        {
+                            option += c;
+                        }
+
+                        break;
+                    case ',':
+                        if (level == 1)
+                        {
+                            options.Add(option);
+                            option = "";
+                        }
+                        else
+                        {
+                            option += c;
+                        }
+
+                        break;
+                    case '}':
+                        level--;
+                        if (level == 0)
+                            options.Add(option);
+                        else
+                            option += c;
+
+                        break;
+                    default:
+                        option += c;
+                        break;
+                }
+
+                if (level == 0 && c == '}' && i + 1 < path.Length)
+                {
+                    postfix = path.Substring(i + 1);
+                    break;
+                }
+            }
+
+            if (level > 0) // invalid grouping
+            {
+                yield return path;
+                yield break;
+            }
+
+            var postGroups = Ungroup(postfix);
+
+            foreach (var opt in options.SelectMany(o => Ungroup(o)))
+            foreach (var postGroup in postGroups)
+            {
+                var s = prefix + opt + postGroup;
+                yield return s;
+            }
         }
 
         /// <summary>
@@ -371,7 +462,7 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
             if (obj == null || GetType() != obj.GetType())
                 return false;
 
-            var g = (Glob)obj;
+            var g = (LegacyGlob)obj;
             return Pattern == g.Pattern;
         }
 

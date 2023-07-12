@@ -186,16 +186,25 @@ namespace Calamari.Common.Plumbing.FileSystem
             Log.Verbose(message);
         }
 
-        public virtual IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, bool enableGroupSupport, params string[] globPattern)
+        public virtual IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, GlobMode globMode, params string[] globPattern)
         {
-            return EnumerateWithGlob(parentDirectoryPath, enableGroupSupport, globPattern).Select(fi => fi.FullName).Where(FileExists);
+            return EnumerateWithGlob(parentDirectoryPath, globMode, globPattern).Select(fi => fi.FullName).Where(FileExists);
         }
 
-        IEnumerable<FileSystemInfo> EnumerateWithGlob(string parentDirectoryPath, bool enableGroupSupport, params string[] globPattern)
+        IEnumerable<FileSystemInfo> EnumerateWithGlob(string parentDirectoryPath, GlobMode globMode, params string[] globPattern)
         {
+            IEnumerable<FileSystemInfo> Expand(string path)
+            {
+                return globMode switch
+                {
+                    GlobMode.GroupExpansionMode => Glob.ExpandPattern(path),
+                    _ => LegacyGlob.Expand(path)
+                };
+            }
+
             var results = globPattern.Length == 0
-                ? Glob.ExpandPattern(Path.Combine(parentDirectoryPath, "*"), enableGroupSupport)
-                : globPattern.SelectMany(pattern => Glob.ExpandPattern(Path.Combine(parentDirectoryPath, pattern), enableGroupSupport));
+                ? Expand(Path.Combine(parentDirectoryPath, "*"))
+                : globPattern.SelectMany(pattern => Expand(Path.Combine(parentDirectoryPath, pattern)));
 
             return results
                 .GroupBy(fi => fi.FullName) // use groupby + first to do .Distinct using fullname
@@ -417,12 +426,12 @@ namespace Calamari.Common.Plumbing.FileSystem
             PurgeDirectory(targetDirectory, exclude, options, CancellationToken.None);
         }
 
-        public void PurgeDirectory(string targetDirectory, FailureOptions options, bool enableGlobGroupSupport, params string[] globs)
+        public void PurgeDirectory(string targetDirectory, FailureOptions options, GlobMode globMode, params string[] globs)
         {
             Predicate<FileSystemInfo>? check = null;
             if (globs.Any())
             {
-                var keep = EnumerateWithGlob(targetDirectory, enableGlobGroupSupport, globs);
+                var keep = EnumerateWithGlob(targetDirectory, globMode, globs);
                 check = fsi =>
                 {
                     return keep.Any(k => k is DirectoryInfo && fsi.FullName.IsChildOf(k.FullName) ||

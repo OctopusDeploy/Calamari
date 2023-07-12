@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -108,7 +109,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            fileSystem.PurgeDirectory(PurgeTestDirectory, FailureOptions.IgnoreFailure, true, glob);
+            fileSystem.PurgeDirectory(PurgeTestDirectory, FailureOptions.IgnoreFailure, GlobMode.GroupExpansionMode, glob);
 
             return File.Exists(testFile);
         }
@@ -136,8 +137,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"Config/Feature1/*.config", "f1-b.config", 3)]
         [TestCase(@"Config/Feature1/*.config", "f1-c.config", 3)]
         [TestCase(@"Config/Feature2/*.config", "f2.config")]
-        [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-a.config", 2, 0)]
-        [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-b.config", 2, 0)]
+        [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-a.config", 2, 2)]
+        [TestCase(@"Config/Feature1/*-{a,b}.config", "f1-b.config", 2, 2)]
         [TestCase(@"Config/Feature1/f1-{a,b}.config", "f1-a.config", 2, 0)]
         [TestCase(@"Config/Feature1/f1-{a,b}.config", "f1-b.config", 2, 0)]
         [TestCase(@"Config/Feature{1,2}/f{1,2}.{config,txt}", "f1.txt", 2, 0)]
@@ -174,9 +175,9 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             writeFile(configPath, "Feature1", "f1-c.config");
             writeFile(configPath, "Feature2", "f2.config");
 
-            var result = fileSystem.EnumerateFilesWithGlob(rootPath, true, pattern).ToList();
+            var result = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.GroupExpansionMode, pattern).ToList();
 
-            var resultNoGrouping = fileSystem.EnumerateFilesWithGlob(rootPath, false, pattern).ToList();
+            var resultNoGrouping = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.LegacyMode, pattern).ToList();
 
             resultNoGrouping.Should()
                             .HaveCount(expectedQtyWithNoGrouping.Value,
@@ -201,7 +202,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             File.WriteAllText(Path.Combine(rootPath, "Dir", "File"), "");
             File.WriteAllText(Path.Combine(rootPath, "Dir", "Sub", "File"), "");
 
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, true, pattern).ToArray();
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.GroupExpansionMode, pattern).ToArray();
 
             if (results.Length > 0)
                 results.Should().OnlyContain(f => f.EndsWith("File"));
@@ -212,7 +213,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         {
             File.WriteAllText(Path.Combine(rootPath, "File"), "");
 
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, true, "*", "**").ToList();
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.GroupExpansionMode, "*", "**").ToList();
 
             results.Should().HaveCount(1);
         }
@@ -233,8 +234,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
             File.WriteAllText(Path.Combine(rootPath, directory, "Foo.txt"), "");
 
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, true, glob).ToList();
-            var resultsWithNoGrouping = fileSystem.EnumerateFilesWithGlob(rootPath, false, glob).ToList();
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.GroupExpansionMode, glob).ToList();
+            var resultsWithNoGrouping = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.LegacyMode, glob).ToList();
 
             results.Should().ContainSingle();
             resultsWithNoGrouping.Should().ContainSingle();

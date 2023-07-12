@@ -2,11 +2,11 @@
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -72,8 +72,8 @@ namespace Calamari.Deployment.Conventions
                         Log.Info("Leaving files and directories that match any of: '{0}'", string.Join(", ", purgeExlusions));
                     }
 
-                    var globGroupSupport = FeatureToggle.GlobPathsGroupSupportFeatureToggle.IsEnabled(variables);
-                    fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure, globGroupSupport, purgeExlusions);
+                    var globMode = GlobModeRetriever.GetFromVariables(variables);
+                    fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure, globMode, purgeExlusions);
                 }
 
                 // Copy files from staging area to custom directory

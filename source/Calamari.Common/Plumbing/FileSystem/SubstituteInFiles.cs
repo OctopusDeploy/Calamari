@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Substitutions;
-using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -51,13 +51,13 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         List<string> MatchingFiles(string currentDirectory, string target)
         {
-            var enableGlobGroupSupport = FeatureToggle.GlobPathsGroupSupportFeatureToggle.IsEnabled(variables);
-            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, enableGlobGroupSupport, target).Select(Path.GetFullPath).ToList();
+            var globMode = GlobModeRetriever.GetFromVariables(variables);
+            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, globMode, target).Select(Path.GetFullPath).ToList();
 
             foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths)
                 .Where(s => !string.IsNullOrWhiteSpace(s)))
             {
-                var pathFiles = fileSystem.EnumerateFilesWithGlob(path, enableGlobGroupSupport, target).Select(Path.GetFullPath);
+                var pathFiles = fileSystem.EnumerateFilesWithGlob(path, globMode, target).Select(Path.GetFullPath);
                 files.AddRange(pathFiles);
             }
 
