@@ -117,7 +117,7 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
         /// itself as a literal (eg: [abc] => '[abc]') this means users targeting a path with square
         /// brackets in it, will continue to work correctly.
         /// </remarks>
-        private static string[] GetGroupOptions(IReadOnlyCollection<char> options)
+        private static string[] GetGroupOptions(IList<char> options)
         {
             // TODO: change options type to Stack<char> and remove the
             // .Reverse() call on options when Mono Support is dropped in Octopus v2024.1
