@@ -7,6 +7,9 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
 {
     public static class CharGroupRetriever
     {
+        private const char RangeIdentifier = '-';
+        public const char GroupStart = '[';
+        public const char GroupEnd = ']';
         public static IEnumerable<Group> GetCharGroups(string path)
         {
             var inGroup = false;
@@ -35,12 +38,12 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
 
                 switch (c)
                 {
-                    case ']':
+                    case GroupEnd:
                         options.Clear();
                         inGroup = true;
                         groupEndIndex = index;
                         break;
-                    case '[':
+                    case GroupStart:
                         if (!inGroup) break;
                         if (options.Count < 2) break;
                         if (isRange)
@@ -48,8 +51,8 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
                             void ThrowException()
                             {
                                 throw new InvalidOperationException(
-                                    "A [a-b] Glob Expression group must contain two chars separated by a '-' " +
-                                    "where the first char's value is less than the second char.");
+                                    "A [a-b] Glob Expression group must contain two chars separated by a " +
+                                    $"'{RangeIdentifier}' where the first char's value is less than the second char.");
                             }
 
                             if (options.Count != 3)
@@ -59,8 +62,8 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
                             var higher = options.Last();
 
                             if (lower < higher &&
-                                lower != '-' &&
-                                higher != '-')
+                                lower != RangeIdentifier &&
+                                higher != RangeIdentifier)
                             {
                                 var opts = new List<string>();
                                 for (var character = options.First(); character <= options.Last(); character++)
@@ -82,15 +85,15 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
 
                         Reset();
                         break;
-                    case '-':
+                    case RangeIdentifier:
                         if (inGroup)
                         {
                             isRange = true;
                             options.Push('-');
                         }
                         break;
-                    case '{':
-                    case '}':
+                    case StringGroupRetriever.GroupStart:
+                    case StringGroupRetriever.GroupEnd:
                         Reset();
                         break;
                     default:
@@ -114,7 +117,7 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
         {
             var groupOptions = options.Select(o => o.ToString());
             // The next line is the workaround
-            groupOptions = groupOptions.Concat(new[] { $"[{string.Concat(options)}]" });
+            groupOptions = groupOptions.Concat(new[] { $"{GroupStart}{string.Concat(options)}{GroupEnd}" });
 
             return groupOptions.ToArray();
         }

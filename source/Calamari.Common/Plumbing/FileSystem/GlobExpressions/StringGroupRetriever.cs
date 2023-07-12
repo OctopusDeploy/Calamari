@@ -5,6 +5,10 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
 {
     public static class StringGroupRetriever
     {
+        private const char OptionSeparator = ',';
+        public const char GroupStart = '{';
+        public const char GroupEnd = '}';
+
         public static IEnumerable<Group> GetStringGroups(string path)
         {
             var inGroup = false;
@@ -33,12 +37,12 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
 
                 switch (c)
                 {
-                    case '}':
+                    case GroupEnd:
                         Reset();
                         inGroup = true;
                         groupEndIndex = index;
                         break;
-                    case '{':
+                    case GroupStart:
                         if (!inGroup) break;
                         if (option.Count > 0)
                             options.Add(new string(option.ToArray()));
@@ -47,15 +51,15 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
                         groups.Add(new Group(index, groupEndIndex + 1 - index, options.ToArray()));
                         Reset();
                         break;
-                    case ',':
+                    case OptionSeparator:
                         if (inGroup)
                         {
                             options.Add(new string(option.ToArray()));
                             option.Clear();
                         }
                         break;
-                    case '[':
-                    case ']':
+                    case CharGroupRetriever.GroupStart:
+                    case CharGroupRetriever.GroupEnd:
                         Reset();
                         break;
                     default:
