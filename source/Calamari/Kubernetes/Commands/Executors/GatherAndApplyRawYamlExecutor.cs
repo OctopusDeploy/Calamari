@@ -25,6 +25,8 @@ namespace Calamari.Kubernetes.Commands.Executors
 
     public class GatherAndApplyRawYamlExecutor : IGatherAndApplyRawYamlExecutor
     {
+        private const string GroupedDirectoryName = "grouped";
+
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly Kubectl kubectl;
@@ -100,14 +102,14 @@ namespace Calamari.Kubernetes.Commands.Executors
         {
             var stagingDirectory = deployment.CurrentDirectory;
             var packageDirectory =
-                Path.Combine(stagingDirectory, KubernetesDeploymentCommandBase.PackageDirectoryPath) +
+                Path.Combine(stagingDirectory, KubernetesDeploymentCommandBase.PackageDirectoryName) +
                 Path.DirectorySeparatorChar;
 
             var directories = new List<GlobDirectory>();
             for (var i = 0; i < globs.Length; i ++)
             {
                 var glob = globs[i];
-                var directoryPath = Path.Combine(stagingDirectory, "grouped", i.ToString());
+                var directoryPath = Path.Combine(stagingDirectory, GroupedDirectoryName, i.ToString());
                 var directory = new GlobDirectory(i, glob, directoryPath);
                 fileSystem.CreateDirectory(directoryPath);
 

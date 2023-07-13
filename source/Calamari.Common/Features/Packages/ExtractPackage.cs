@@ -10,6 +10,7 @@ namespace Calamari.Common.Features.Packages
 {
     public class ExtractPackage : IExtractPackage
     {
+        public const string StagingDirectoryName = "staging";
         readonly ICombinedPackageExtractor combinedPackageExtractor;
         readonly ICalamariFileSystem fileSystem;
         readonly IVariables variables;
@@ -31,7 +32,7 @@ namespace Calamari.Common.Features.Packages
         public void ExtractToStagingDirectory(PathToPackage? pathToPackage, IPackageExtractor? customPackageExtractor = null)
         {
             ExtractToCustomSubDirectory(pathToPackage,
-                Path.Combine(Environment.CurrentDirectory, "staging"),
+                Path.Combine(Environment.CurrentDirectory, StagingDirectoryName),
                 customPackageExtractor, null);
         }
 
@@ -39,7 +40,7 @@ namespace Calamari.Common.Features.Packages
         {
             ExtractToCustomSubDirectory(
                 pathToPackage,
-                Path.Combine(Environment.CurrentDirectory, "staging"),
+                Path.Combine(Environment.CurrentDirectory, StagingDirectoryName),
                 null,
                 extractedToPathOutputVariableName);
         }
