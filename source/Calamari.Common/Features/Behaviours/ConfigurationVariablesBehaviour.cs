@@ -25,7 +25,7 @@ namespace Calamari.Common.Features.Behaviours
             IVariables variables,
             IConfigurationVariablesReplacer replacer,
             ILog log,
-            string? subdirectory = "")
+            string subdirectory = "")
         {
             this.fileSystem = fileSystem;
             this.variables = variables;
