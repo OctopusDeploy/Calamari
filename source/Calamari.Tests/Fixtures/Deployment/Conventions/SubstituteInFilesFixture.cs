@@ -1,8 +1,9 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
@@ -24,6 +25,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
 
             var variables = new CalamariVariables();
+            variables.AddFeatureToggles(FeatureToggle.GlobPathsGroupSupportFeatureToggle);
             variables.Set(PackageVariables.SubstituteInFilesTargets, glob);
             variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
 
@@ -33,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             };
 
             var fileSystem = Substitute.For<ICalamariFileSystem>();
-            fileSystem.EnumerateFilesWithGlob(StagingDirectory, glob).Returns(new[] { Path.Combine(StagingDirectory, actualMatch) });
+            fileSystem.EnumerateFilesWithGlob(StagingDirectory, GlobMode.GroupExpansionMode, glob).Returns(new[] { Path.Combine(StagingDirectory, actualMatch) });
 
             var substituter = Substitute.For<IFileSubstituter>();
             new SubstituteInFiles(new InMemoryLog(), fileSystem, substituter, variables)

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
@@ -105,7 +106,8 @@ namespace Calamari.Kubernetes.Commands.Executors
                 var directory = new GlobDirectory(i, glob, directoryPath);
                 fileSystem.CreateDirectory(directoryPath);
 
-                var results = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, glob);
+                var globMode = GlobModeRetriever.GetFromVariables(variables);
+                var results = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, glob);
                 foreach (var file in results)
                 {
                     // This is required because the current implementation of fileSystem.GetRelativePath

@@ -5,11 +5,11 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Commands.Executors;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
@@ -21,12 +21,9 @@ namespace Calamari.Kubernetes.Commands
     {
         public const string Name = "kubernetes-apply-raw-yaml";
 
-        private readonly ILog log;
         private readonly IVariables variables;
-        private readonly ICalamariFileSystem fileSystem;
         private readonly IResourceStatusReportExecutor statusReporter;
         private readonly IGatherAndApplyRawYamlExecutor gatherAndApplyRawYamlExecutor;
-        private readonly Kubectl kubectl;
 
         public KubernetesApplyRawYamlCommand(
             ILog log,
@@ -42,12 +39,9 @@ namespace Calamari.Kubernetes.Commands
             : base(log, deploymentJournalWriter, variables, fileSystem, extractPackage,
             substituteInFiles, structuredConfigVariablesService, kubectl)
         {
-            this.log = log;
             this.variables = variables;
-            this.fileSystem = fileSystem;
             this.statusReporter = statusReporter;
             this.gatherAndApplyRawYamlExecutor = gatherAndApplyRawYamlExecutor;
-            this.kubectl = kubectl;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -65,7 +59,7 @@ namespace Calamari.Kubernetes.Commands
             {
                 return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment);
             }
-            
+
             var statusCheck = statusReporter.Start();
 
             return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment, statusCheck.AddResources) &&

@@ -8,13 +8,14 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Calamari.Common.Plumbing.Extensions;
 
 namespace Calamari.Common.Plumbing.FileSystem
 {
     /// <summary>
     /// Finds files and directories by matching their path names against a pattern.
     /// </summary>
-    public class Glob
+    public class LegacyGlob
     {
         static readonly ConcurrentDictionary<string, RegexOrString> RegexOrStringCache = new ConcurrentDictionary<string, RegexOrString>();
 
@@ -25,7 +26,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         /// <summary>
         /// Creates a new instance.
         /// </summary>
-        public Glob()
+        public LegacyGlob()
         {
             IgnoreCase = true;
             CacheRegexes = true;
@@ -35,7 +36,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         /// Creates a new instance.
         /// </summary>
         /// <param name="pattern">The pattern to be matched. See <see cref="Pattern" /> for syntax.</param>
-        public Glob(string pattern)
+        public LegacyGlob(string pattern)
             : this()
         {
             Pattern = pattern;
@@ -58,12 +59,12 @@ namespace Calamari.Common.Plumbing.FileSystem
         ///         <description>Matches zero or more recursive directories.</description>
         ///     </item>
         ///     <item>
-        ///         <term>[...]</term>
-        ///         <description>Matches a set of characters in a name. Syntax is equivalent to character groups in <see cref="System.Text.RegularExpressions.Regex" />.</description>
-        ///     </item>
-        ///     <item>
         ///         <term>{group1,group2,...}</term>
-        ///         <description>Matches any of the pattern groups. Groups can contain groups and patterns.</description>
+        ///         <description>
+        ///             Matches any of the pattern groups. Groups can contain groups and patterns.
+        ///             <br/>
+        ///             <b>Note:</b> this can only be used after a <see langword="*"/>.
+        ///         </description>
         ///     </item>
         /// </list>
         /// </summary>
@@ -122,7 +123,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         /// <returns>The matched path names</returns>
         public static IEnumerable<string> ExpandNames(string pattern, bool ignoreCase = true, bool dirOnly = false)
         {
-            return new Glob(pattern) { IgnoreCase = ignoreCase, DirectoriesOnly = dirOnly }.ExpandNames();
+            return new LegacyGlob(pattern) { IgnoreCase = ignoreCase, DirectoriesOnly = dirOnly }.ExpandNames();
         }
 
         /// <summary>
@@ -132,7 +133,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         /// <returns>The matched <see cref="FileSystemInfo" /> objects</returns>
         public static IEnumerable<FileSystemInfo> Expand(string pattern)
         {
-            return new Glob(pattern) { IgnoreCase = true, DirectoriesOnly = false }.Expand();
+            return new LegacyGlob(pattern) { IgnoreCase = true, DirectoriesOnly = false }.Expand();
         }
 
         /// <summary>
@@ -461,7 +462,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             if (obj == null || GetType() != obj.GetType())
                 return false;
 
-            var g = (Glob)obj;
+            var g = (LegacyGlob)obj;
             return Pattern == g.Pattern;
         }
 
@@ -512,18 +513,6 @@ namespace Calamari.Common.Plumbing.FileSystem
             {
                 return Regex?.IsMatch(input) ?? Pattern.Equals(input, IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
             }
-        }
-    }
-
-    static class Extensions
-    {
-        internal static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source,
-            Func<TSource, TKey> keySelector)
-        {
-            var knownKeys = new HashSet<TKey>();
-            foreach (var element in source)
-                if (knownKeys.Add(keySelector(element)))
-                    yield return element;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Calamari.FeatureToggles
+﻿namespace Calamari.Common.FeatureToggles
 {
 
     /// <summary>
@@ -8,6 +8,7 @@
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
         MultiGlobPathsForRawYamlFeatureToggle,
-        KubernetesAksKubeloginFeatureToggle
+        KubernetesAksKubeloginFeatureToggle,
+        GlobPathsGroupSupportFeatureToggle
     }
 }

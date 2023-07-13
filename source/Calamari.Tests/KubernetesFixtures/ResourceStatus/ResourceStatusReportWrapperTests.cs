@@ -48,7 +48,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var reportExecutor =
                 new ResourceStatusReportExecutor(variables, (_, __, rs) => new MockResourceStatusChecker(rs));
 
-            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
+            variables.Set(KnownVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
 
             var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);

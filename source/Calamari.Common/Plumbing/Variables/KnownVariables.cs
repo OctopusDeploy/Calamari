@@ -14,7 +14,9 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string AppliedXmlConfigTransforms = "OctopusAppliedXmlConfigTransforms";
 
         public static readonly string NugetHttpTimeout = "OctopusNugetHttpTimeout";
-        
+
+        public const string EnabledFeatureToggles = "OctopusEnabledFeatureToggles";
+
         public static class Action
         {
             public const string SkipJournal = "Octopus.Action.SkipJournal";
@@ -49,7 +51,7 @@ namespace Calamari.Common.Plumbing.Variables
         {
             public static readonly string Id = "Octopus.Task.Id";
         }
-        
+
         public static class Features
         {
             public const string CustomScripts = "Octopus.Features.CustomScripts";

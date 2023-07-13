@@ -11,11 +11,9 @@ using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.Plumbing;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.FeatureToggles;
 using Calamari.Kubernetes;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
@@ -43,11 +41,11 @@ namespace Calamari.Tests.KubernetesFixtures
         public void Setup()
         {
             variables = new CalamariVariables();
-            variables.Set(Deployment.SpecialVariables.EnabledFeatureToggles, FeatureToggle.KubernetesAksKubeloginFeatureToggle.ToString());
+            variables.Set(KnownVariables.EnabledFeatureToggles, FeatureToggle.KubernetesAksKubeloginFeatureToggle.ToString());
             log = new DoNotDoubleLog();
             redactMap = new Dictionary<string, string>();
             environmentVariables = new Dictionary<string, string>();
-            
+
             SetTestClusterVariables();
         }
 
@@ -414,9 +412,9 @@ namespace Calamari.Tests.KubernetesFixtures
         async Task InstallTools(Func<InstallTools, Task> toolInstaller)
         {
             var tools = new InstallTools(TestContext.Progress.WriteLine);
-            
+
             await toolInstaller(tools);
-            
+
             installTools = tools;
         }
 
@@ -428,7 +426,7 @@ namespace Calamari.Tests.KubernetesFixtures
         async Task InstallGCloud(InstallTools tools)
         {
             await tools.InstallGCloud();
-            
+
             environmentVariables.Add("USE_GKE_GCLOUD_AUTH_PLUGIN", "True");
         }
 
@@ -459,7 +457,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 // We only want to output executable string. eg. ExecuteCommandAndReturnOutput("where", "kubectl.exe")
                 if (new[] { "kubectl", "az", "gcloud", "kubectl.exe", "az.cmd", "gcloud.cmd", "aws", "aws.exe", "aws-iam-authenticator", "aws-iam-authenticator.exe", "kubelogin", "kubelogin.exe", "gke-gcloud-auth-plugin", "gke-gcloud-auth-plugin.exe" }.Contains(invocation.Arguments))
                     invocation.AdditionalInvocationOutputSink?.WriteInfo(Path.GetFileNameWithoutExtension(invocation.Arguments));
-                
+
                 return new CommandResult(invocation.ToString(), 0);
             }
 
