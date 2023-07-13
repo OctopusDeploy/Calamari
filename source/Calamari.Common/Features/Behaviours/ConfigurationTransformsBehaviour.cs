@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Common.Features.Behaviours
 {
@@ -21,14 +22,22 @@ namespace Calamari.Common.Features.Behaviours
         readonly IConfigurationTransformer configurationTransformer;
         readonly ITransformFileLocator transformFileLocator;
         readonly ILog log;
+        private readonly string subdirectory;
 
-        public ConfigurationTransformsBehaviour(ICalamariFileSystem fileSystem, IVariables variables, IConfigurationTransformer configurationTransformer, ITransformFileLocator transformFileLocator, ILog log)
+        public ConfigurationTransformsBehaviour(
+            ICalamariFileSystem fileSystem,
+            IVariables variables,
+            IConfigurationTransformer configurationTransformer,
+            ITransformFileLocator transformFileLocator,
+            ILog log,
+            string subdirectory = "")
         {
             this.fileSystem = fileSystem;
             this.variables = variables;
             this.configurationTransformer = configurationTransformer;
             this.transformFileLocator = transformFileLocator;
             this.log = log;
+            this.subdirectory = subdirectory;
         }
 
         public bool IsEnabled(RunningDeployment deployment)
@@ -38,7 +47,7 @@ namespace Calamari.Common.Features.Behaviours
 
         public Task Execute(RunningDeployment deployment)
         {
-            DoTransforms(deployment.CurrentDirectory);
+            DoTransforms(Path.Combine(deployment.CurrentDirectory, subdirectory));
 
             return this.CompletedTask();
         }

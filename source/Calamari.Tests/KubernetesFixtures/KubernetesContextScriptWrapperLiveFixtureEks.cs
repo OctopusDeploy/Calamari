@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Assent;
 using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Kubernetes.Commands;
 using Calamari.Testing;
@@ -260,7 +261,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             SetVariablesForKubernetesResourceStatusCheck(30);
 
-            SetVariablesForRawYamlCommand();
+            SetVariablesForRawYamlCommand($"deployments/**/*;services/{ServiceFileName};configmaps/*.yml");
 
             string CreatePackageWithMultipleYamlFiles(string directory)
             {
@@ -272,7 +273,6 @@ namespace Calamari.Tests.KubernetesFixtures
                     ("configmaps", ConfigMapFileName, SimpleConfigMap),
                     ("configmaps", ConfigMapFileName2, SimpleConfigMap2),
                     (Path.Combine("configmaps","subfolder"), "InvalidJSONNotUsed.yml", InvalidDeploymentResource));
-                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", $"deployments/**/*;services/{ServiceFileName};configmaps/*.yml");
                 return packageToPackage;
             }
 
@@ -662,7 +662,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             SetVariablesForKubernetesResourceStatusCheck(shouldSucceed ? 30 : 5);
 
-            SetVariablesForRawYamlCommand();
+            SetVariablesForRawYamlCommand(runAsScript ? null : "**/*.{yml,yaml}");
 
             if (runAsScript)
             {
@@ -697,12 +697,15 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
         }
 
-        private void SetVariablesForRawYamlCommand()
+        private void SetVariablesForRawYamlCommand(string globPaths = null)
         {
             variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx");
-            variables.Set("Octopus.Action.Package.JsonConfigurationVariablesTargets", "**/*.{yml,yaml}");
-
             variables.AddFeatureToggles(FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
+            variables.Set(KnownVariables.Package.JsonConfigurationVariablesTargets, globPaths ?? "**/*.{yml,yaml}");
+            if (globPaths != null)
+            {
+                variables.Set(KubernetesSpecialVariables.CustomResourceYamlFileName, globPaths);
+            }
         }
 
         private void SetVariablesForKubernetesResourceStatusCheck(int timeout)
@@ -724,7 +727,10 @@ namespace Calamari.Tests.KubernetesFixtures
             return directory =>
             {
                 CreateResourceYamlFile(directory, DeploymentFileName, yamlContent);
-                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", DeploymentFileName);
+                if (!variables.IsSet(KubernetesSpecialVariables.CustomResourceYamlFileName))
+                {
+                    variables.Set(KubernetesSpecialVariables.CustomResourceYamlFileName, DeploymentFileName);
+                }
                 return null;
             };
         }
@@ -736,7 +742,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 var pathInPackage = Path.Combine("deployments", DeploymentFileName);
                 var pathToPackage = CreatePackageWithFiles(ResourcePackageFileName, directory,
                     ("deployments", DeploymentFileName, yamlContent));
-                variables.Set("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", pathInPackage);
+                if (!variables.IsSet(KubernetesSpecialVariables.CustomResourceYamlFileName))
+                {
+                    variables.Set(KubernetesSpecialVariables.CustomResourceYamlFileName, pathInPackage);
+                }
                 return pathToPackage;
             };
         }

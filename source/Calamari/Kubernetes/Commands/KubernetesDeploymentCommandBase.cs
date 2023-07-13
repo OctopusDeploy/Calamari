@@ -29,6 +29,9 @@ namespace Calamari.Kubernetes.Commands
 {
     public abstract class KubernetesDeploymentCommandBase  : Command
     {
+        public const string PackageDirectoryName = "package";
+        private const string InlineYamlFileName = "customresource.yml";
+
         private readonly ILog log;
         private readonly IDeploymentJournalWriter deploymentJournalWriter;
         private readonly IVariables variables;
@@ -80,36 +83,36 @@ namespace Calamari.Kubernetes.Commands
             {
                 new DelegateInstallConvention(d =>
                 {
+                    var workingDirectory = d.CurrentDirectory;
+                    var stagingDirectory = Path.Combine(workingDirectory, ExtractPackage.StagingDirectoryName);
+                    var packageDirectory = Path.Combine(stagingDirectory, PackageDirectoryName);
+                    fileSystem.EnsureDirectoryExists(packageDirectory);
                     if (pathToPackage != null)
                     {
-                        extractPackage.ExtractToStagingDirectory(pathToPackage);
+                        extractPackage.ExtractToCustomDirectory(pathToPackage, packageDirectory);
                     }
                     else
                     {
                         //If using the inline yaml, copy it to the staging directory.
-                        var inlineFile = Path.Combine(d.CurrentDirectory, "customresource.yml");
-                        var stagingDirectory = Path.Combine(d.CurrentDirectory, "staging");
-                        fileSystem.EnsureDirectoryExists(stagingDirectory);
+                        var inlineFile = Path.Combine(workingDirectory, InlineYamlFileName);
                         if (fileSystem.FileExists(inlineFile))
                         {
-                            fileSystem.MoveFile(inlineFile, Path.Combine(stagingDirectory, "customresource.yml"));
+                            fileSystem.MoveFile(inlineFile, Path.Combine(packageDirectory, InlineYamlFileName));
                         }
-
-                        d.StagingDirectory = stagingDirectory;
-                        d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                     }
-
-                    kubectl.SetWorkingDirectory(d.CurrentDirectory);
+                    d.StagingDirectory = stagingDirectory;
+                    d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+                    kubectl.SetWorkingDirectory(stagingDirectory);
                     kubectl.SetEnvironmentVariables(d.EnvironmentVariables);
                 }),
-                new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
+                new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
                 new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables,
                     ConfigurationTransformer.FromVariables(variables, log),
-                    new TransformFileLocator(fileSystem, log), log)),
+                    new TransformFileLocator(fileSystem, log), log, PackageDirectoryName)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables,
-                    new ConfigurationVariablesReplacer(variables, log), log)),
+                    new ConfigurationVariablesReplacer(variables, log), log, PackageDirectoryName)),
                 new StructuredConfigurationVariablesConvention(
-                    new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService))
+                    new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService, PackageDirectoryName))
             };
 
             if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
