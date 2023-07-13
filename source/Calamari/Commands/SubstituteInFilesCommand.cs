@@ -18,10 +18,18 @@ namespace Calamari.Commands
 
         protected override void Execute(SubstituteInFilesCommandInputs inputs)
         {
-            var targetPath = variables.GetRaw(inputs.TargetPathVariable);
-            if (targetPath == null)
+            var runningDeployment = new RunningDeployment(variables);
+            var targetPath = runningDeployment.CurrentDirectory;
+            
+            if (!string.IsNullOrEmpty(inputs.TargetPathVariable))
             {
-                throw new CommandException($"Could not locate target path from variable {inputs.TargetPathVariable} for {nameof(SubstituteInFilesCommand)}");
+                targetPath = variables.GetRaw(inputs.TargetPathVariable);
+
+                if (targetPath == null)
+                {
+                    throw new CommandException(
+                        $"Could not locate target path from variable {inputs.TargetPathVariable} for {nameof(SubstituteInFilesCommand)}");
+                }
             }
 
             substituteInFiles.Substitute(targetPath, inputs.FilesToTarget);

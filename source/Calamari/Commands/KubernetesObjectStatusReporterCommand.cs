@@ -62,7 +62,7 @@ namespace Calamari.Commands
                 
                 ConfigureKubectl();
 
-                var manifestPath = variables.Get("Octopus.Manifest.Path");
+                var manifestPath = variables.Get("Octopus.Kustomize.Manifest.Path");
                 var resources = KubernetesYaml.GetDefinedResources(new[] {manifestPath}, "default");
                 var statusResult = statusReportExecutor.Start(resources).WaitForCompletionOrTimeout()
                     .GetAwaiter().GetResult();
