@@ -8,7 +8,7 @@ if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 {
     var testUri = new Uri("http://octopustesturl.com");
     var octopusProxyUri = System.Net.WebRequest.DefaultWebProxy.GetProxy(testUri);
-    if (octopusProxyUri?.Host != "octopustesturl.com")
+    if (octopusProxyUri != null && octopusProxyUri.Host != "octopustesturl.com")
     {
         Console.WriteLine("WebRequest.DefaultProxy:" + octopusProxyUri);
     }
