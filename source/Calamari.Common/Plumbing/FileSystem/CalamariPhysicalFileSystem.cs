@@ -10,6 +10,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Retry;
+using Globfish;
 
 namespace Calamari.Common.Plumbing.FileSystem
 {
@@ -197,7 +198,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             {
                 return globMode switch
                 {
-                    GlobMode.GroupExpansionMode => Glob.ExpandPattern(path),
+                    GlobMode.GroupExpansionMode => Glob.Expand(path),
                     _ => LegacyGlob.Expand(path)
                 };
             }
