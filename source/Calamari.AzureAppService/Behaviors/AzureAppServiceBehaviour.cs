@@ -8,6 +8,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Azure;
+using Azure.Core;
+using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
@@ -65,8 +67,9 @@ namespace Calamari.AzureAppService.Behaviors
             var armClient = servicePrincipal.CreateArmClient();
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
 
-            var subscriptionResource = armClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(servicePrincipal.SubscriptionNumber));
-            var resourceGroups = subscriptionResource.GetResourceGroups();
+            var resourceGroups = armClient
+                                 .GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(servicePrincipal.SubscriptionNumber))
+                                 .GetResourceGroups();
 
             Log.Verbose($"Checking existence of Resource Group '{resourceGroupName}'.");
             if (!await resourceGroups.ExistsAsync(resourceGroupName))
@@ -75,17 +78,20 @@ namespace Calamari.AzureAppService.Behaviors
                 throw new Exception("Resource Group not found.");
             }
 
-            ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(resourceGroupName);
+            //get a reference to the resource group resource
+            //this does not actually load the resource group, but we can use it later
+            var resourceGroupResource = armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(servicePrincipal.SubscriptionNumber, resourceGroupName));
+
             Log.Verbose($"Resource Group '{resourceGroupName}' found.");
 
             Log.Verbose($"Checking existence of App Service '{targetSite.Site}'.");
-            if (!await resourceGroup.GetWebSites().ExistsAsync(targetSite.Site))
+            if (!await resourceGroupResource.GetWebSites().ExistsAsync(targetSite.Site))
             {
                 Log.Error($"Azure App Service '{targetSite.Site}' could not be found in resource group '{resourceGroupName}'. Either it does not exist, or the Azure Account in use may not have permissions to access it.");
                 throw new Exception($"App Service not found.");
             }
 
-            WebSiteResource webSiteResource = await resourceGroup.GetWebSiteAsync(targetSite.Site);
+            var webSiteResource = armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(servicePrincipal.SubscriptionNumber, resourceGroupName, targetSite.Site));
             Log.Verbose($"App Service '{targetSite.Site}' found, with Azure Resource Manager Id '{webSiteResource.Id.ToString()}'.");
 
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
@@ -108,7 +114,7 @@ namespace Calamari.AzureAppService.Behaviors
             // Let's process our archive while the slot is spun up. We will await it later before we try to upload to it.
             Task<WebSiteSlotResource>? slotCreateTask = null;
             if (targetSite.HasSlot)
-                slotCreateTask = FindOrCreateSlot(webSiteResource, targetSite);
+                slotCreateTask = FindOrCreateSlot(armClient, webSiteResource, targetSite);
 
             string[]? substitutionFeatures =
             {
@@ -147,7 +153,7 @@ namespace Calamari.AzureAppService.Behaviors
             await UploadZipAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot);
         }
 
-        private async Task<WebSiteSlotResource> FindOrCreateSlot(WebSiteResource webSiteResource, TargetSite site)
+        private async Task<WebSiteSlotResource> FindOrCreateSlot(ArmClient armClient, WebSiteResource webSiteResource, TargetSite site)
         {
             Log.Verbose($"Checking if deployment slot '{site.Slot}' exists.");
             var slots = webSiteResource.GetWebSiteSlots();
@@ -155,7 +161,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (await slots.ExistsAsync(site.Slot))
             {
                 Log.Verbose($"Found existing slot {site.Slot}");
-                return await slots.GetAsync(site.Slot);
+                return armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(webSiteResource.Id.SubscriptionId, site.ResourceGroupName, site.Site, site.Slot));
             }
 
             Log.Verbose($"Slot '{site.Slot}' not found.");
@@ -190,7 +196,7 @@ namespace Calamari.AzureAppService.Behaviors
                 // The HttpClient default timeout is 100 seconds: https://docs.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.timeout?view=net-5.0#remarks
                 // This timeouts with even relatively small packages: https://octopus.zendesk.com/agent/tickets/69928
                 // We'll set this to an hour for now, but we should probably implement some more advanced retry logic, similar to https://github.com/OctopusDeploy/Sashimi.AzureWebApp/blob/bbea36152b2fb531c2893efedf0330a06ae0cef0/source/Calamari/AzureWebAppBehaviour.cs#L70
-                Timeout =  TimeSpan.FromHours(1)
+                Timeout = TimeSpan.FromHours(1)
             };
 
             var request = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
