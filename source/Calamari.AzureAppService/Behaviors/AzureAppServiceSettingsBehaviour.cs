@@ -4,14 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.ResourceManager;
+using Azure.ResourceManager.AppService.Models;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Json;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
-using Microsoft.Azure.Management.WebSites;
-using Microsoft.Azure.Management.WebSites.Models;
-using Microsoft.Rest;
 using Newtonsoft.Json;
 
 namespace Calamari.AzureAppService.Behaviors
@@ -52,15 +51,9 @@ namespace Calamari.AzureAppService.Behaviors
                 throw new Exception("resource group name must be specified");
 
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
-
-            string token = await Auth.GetAuthTokenAsync(principalAccount);
-
-            var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri),
-                new TokenCredentials(token))
-            {
-                SubscriptionId = principalAccount.SubscriptionNumber,
-                HttpClient = {BaseAddress = new Uri(principalAccount.ResourceManagementEndpointBaseUri)}
-            };
+            
+            var armClient = principalAccount.CreateArmClient();
+            
 
             // If app settings are specified
             if (variables.GetNames().Contains(SpecialVariables.Action.Azure.AppSettings) &&
@@ -69,7 +62,7 @@ namespace Calamari.AzureAppService.Behaviors
                 var appSettingsJson = variables.Get(SpecialVariables.Action.Azure.AppSettings, ""); 
                 Log.Verbose($"Updating application settings:\n{appSettingsJson}");
                 var appSettings = JsonConvert.DeserializeObject<AppSetting[]>(appSettingsJson);
-                await PublishAppSettings(webAppClient, targetSite, appSettings, token);
+                await PublishAppSettings(armClient, principalAccount, targetSite, appSettings);
                 Log.Info("Updated application settings");
             }
             
@@ -80,7 +73,7 @@ namespace Calamari.AzureAppService.Behaviors
                 var connectionStringsJson = variables.Get(SpecialVariables.Action.Azure.ConnectionStrings, "");
                 Log.Verbose($"Updating connection strings:\n{connectionStringsJson}");
                 var connectionStrings = JsonConvert.DeserializeObject<ConnectionStringSetting[]>(connectionStringsJson);
-                await PublishConnectionStrings(webAppClient, targetSite, connectionStrings);
+                await PublishConnectionStrings(armClient, principalAccount, targetSite, connectionStrings);
                 Log.Info("Updated connection strings");
             }
         }
@@ -88,23 +81,19 @@ namespace Calamari.AzureAppService.Behaviors
         /// <summary>
         /// combines and publishes app and slot settings
         /// </summary>
-        /// <param name="webAppClient"></param>
+        /// <param name="armClient"></param>
         /// <param name="targetSite"></param>
         /// <param name="appSettings"></param>
         /// <param name="authToken"></param>
         /// <returns></returns>
-        private async Task PublishAppSettings(WebSiteManagementClient webAppClient, TargetSite targetSite,
-            AppSetting[] appSettings, string authToken)
+        private async Task PublishAppSettings(ArmClient armClient, ServicePrincipalAccount principalAccount, TargetSite targetSite, AppSetting[] appSettings)
         {
-            var settingsDict = new StringDictionary
-            {
-                Properties = new Dictionary<string, string>()
-            };
+            var settingsDict = new AppServiceConfigurationDictionary();
 
             var existingSlotSettings = new List<string>();
             // for each app setting found on the web app (existing app setting) update it value and add if is a slot setting, add
-            foreach (var (name, value, SlotSetting) in (await AppSettingsManagement.GetAppSettingsAsync(webAppClient,
-                authToken, targetSite)).ToList())
+            foreach (var (name, value, SlotSetting) in (await AppSettingsManagement.GetAppSettingsAsync(armClient,
+                                                                                                        principalAccount, targetSite)).ToList())
             {
                 settingsDict.Properties[name] = value;
 
@@ -126,7 +115,7 @@ namespace Calamari.AzureAppService.Behaviors
                 }
             }
 
-            await AppSettingsManagement.PutAppSettingsAsync(webAppClient, settingsDict, targetSite);
+            await AppSettingsManagement.PutAppSettingsAsync(armClient, principalAccount, settingsDict, targetSite);
             var slotSettings = appSettings
                 .Where(setting => setting.SlotSetting)
                 .Select(setting => setting.Name).ToArray();
@@ -134,14 +123,13 @@ namespace Calamari.AzureAppService.Behaviors
             if (!slotSettings.Any())
                 return;
 
-            await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient, targetSite,
-                slotSettings.Union(existingSlotSettings), authToken);
+            await AppSettingsManagement.PutSlotSettingsListAsync(armClient, principalAccount, targetSite, slotSettings.Union(existingSlotSettings));
         }
 
-        private async Task PublishConnectionStrings(WebSiteManagementClient webAppClient, TargetSite targetSite,
+        private async Task PublishConnectionStrings(ArmClient armClient, ServicePrincipalAccount servicePrincipalAccount, TargetSite targetSite,
             ConnectionStringSetting[] newConStrings)
         {
-            var conStrings = await AppSettingsManagement.GetConnectionStringsAsync(webAppClient, targetSite);
+            var conStrings = await AppSettingsManagement.GetConnectionStringsAsync(armClient, servicePrincipalAccount, targetSite);
             
             foreach (var connectionStringSetting in newConStrings)
             {
@@ -149,7 +137,7 @@ namespace Calamari.AzureAppService.Behaviors
                     new ConnStringValueTypePair(connectionStringSetting.Value, connectionStringSetting.Type);
             }
 
-            await webAppClient.WebApps.UpdateConnectionStringsAsync(targetSite, conStrings);
+            await AppSettingsManagement.PutConnectionStringsAsync(armClient, servicePrincipalAccount, conStrings, targetSite);
         }
     }
 }

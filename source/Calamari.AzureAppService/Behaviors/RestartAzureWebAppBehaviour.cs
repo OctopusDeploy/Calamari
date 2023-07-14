@@ -1,11 +1,10 @@
 using System;
 using System.Threading.Tasks;
+using Azure.ResourceManager.AppService;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
-using Microsoft.Azure.Management.WebSites;
-using Microsoft.Rest;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -32,13 +31,20 @@ namespace Calamari.AzureAppService.Behaviors
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
             
             var principalAccount = ServicePrincipalAccount.CreateFromKnownVariables(variables);
-            var token = await Auth.GetAuthTokenAsync(principalAccount);
-            var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri), new TokenCredentials(token))
-                {SubscriptionId = principalAccount.SubscriptionNumber};
-            
-            Log.Info("Performing soft restart of web app");
-            await webAppClient.WebApps.RestartAsync(targetSite, true);
-        }
+            var armClient = principalAccount.CreateArmClient();
 
+            Log.Info("Performing soft restart of web app");
+            switch (targetSite.HasSlot)
+            {
+                case true:
+                    await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
+                                   .RestartSlotAsync();
+                    break;
+                case false:
+                    await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+                                   .RestartAsync();
+                    break;
+            }
+        }
     }
 }

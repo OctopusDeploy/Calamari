@@ -5,30 +5,11 @@ using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Identity;
 using Azure.ResourceManager;
-using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
 
 namespace Calamari.AzureAppService.Azure
 {
     internal static class AzureClient
     {
-        public static IAzure CreateAzureClient(this ServicePrincipalAccount servicePrincipal)
-        {
-            var environment = new AzureKnownEnvironment(servicePrincipal.AzureEnvironment).AsAzureSDKEnvironment();
-            var credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(servicePrincipal.ClientId,
-                servicePrincipal.Password, servicePrincipal.TenantId, environment
-            );
-
-            // Note: This is a tactical fix to ensure this Sashimi uses the appropriate web proxy
-            #pragma warning disable
-            var client = new HttpClient(new HttpClientHandler {Proxy = WebRequest.DefaultWebProxy});
-
-            return Microsoft.Azure.Management.Fluent.Azure.Configure()
-                .WithHttpClient(client)
-                .Authenticate(credentials)
-                .WithSubscription(servicePrincipal.SubscriptionNumber);
-        }
-
         /// <summary>
         /// Creates an ArmClient for the new Azure SDK, which replaces the older fluent libraries.
         /// We should migrate to this SDK once it stabilises.
@@ -47,7 +28,9 @@ namespace Calamari.AzureAppService.Azure
             var azureKnownEnvironment = new AzureKnownEnvironment(servicePrincipalAccount.AzureEnvironment);
 
             // Configure a specific transport that will pick up the proxy settings set by Calamari
+#pragma warning disable DE0003
             var httpClientTransport = new HttpClientTransport(new HttpClientHandler { Proxy = WebRequest.DefaultWebProxy });
+#pragma warning restore DE0003
 
             // Specifically tell the new Azure SDK which authentication endpoint to use
             var authorityHost = azureKnownEnvironment.GetAzureAuthorityHost();

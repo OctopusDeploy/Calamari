@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Azure.Management.WebSites.Models;
-using Newtonsoft.Json;
+using Azure.ResourceManager.AppService.Models;
 
 namespace Calamari.AzureAppService.Json
 {

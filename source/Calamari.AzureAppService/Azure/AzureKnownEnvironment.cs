@@ -1,7 +1,6 @@
 ﻿using System;
 using Azure.Identity;
 using Azure.ResourceManager;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
 
 namespace Calamari.AzureAppService.Azure
 {
@@ -17,11 +16,13 @@ namespace Calamari.AzureAppService.Azure
             if (string.IsNullOrEmpty(environment) || environment == "AzureCloud") // This environment name is defined in Sashimi.Azure.Accounts.AzureEnvironmentsListAction
                 Value = Global.Value;                                             // We interpret it as the normal Azure environment for historical reasons)
 
-            azureSdkEnvironment = AzureEnvironment.FromName(Value) ??
-                               throw new InvalidOperationException($"Unknown environment name {Value}");
+            if (Enum.TryParse<ArmEnvironment>(Value, true, out var parsedEnum))
+                azureSdkEnvironment = parsedEnum;
+            else
+                throw new InvalidOperationException($"Unknown environment name {Value}");
         }
 
-        private readonly AzureEnvironment azureSdkEnvironment;
+        private readonly ArmEnvironment azureSdkEnvironment;
         public string Value { get; }
 
         public static readonly AzureKnownEnvironment Global = new AzureKnownEnvironment("AzureGlobalCloud");
@@ -29,7 +30,7 @@ namespace Calamari.AzureAppService.Azure
         public static readonly AzureKnownEnvironment AzureUSGovernment = new AzureKnownEnvironment("AzureUSGovernment");
         public static readonly AzureKnownEnvironment AzureGermanCloud = new AzureKnownEnvironment("AzureGermanCloud");
 
-        public AzureEnvironment AsAzureSDKEnvironment()
+        public ArmEnvironment AsArmEnvironment()
         {
             return azureSdkEnvironment;
         }

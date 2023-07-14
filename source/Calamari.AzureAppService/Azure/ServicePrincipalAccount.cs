@@ -1,4 +1,6 @@
 ﻿using System;
+using Azure.Core;
+using Azure.Identity;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 
@@ -27,15 +29,15 @@ namespace Calamari.AzureAppService.Azure
 
         public static ServicePrincipalAccount CreateFromKnownVariables(IVariables variables) =>
             new ServicePrincipalAccount(
-                subscriptionNumber:  variables.Get(AccountVariables.SubscriptionId),
-                clientId: variables.Get(AccountVariables.ClientId),
-                tenantId: variables.Get(AccountVariables.TenantId),
-                password: variables.Get(AccountVariables.Password),
-                azureEnvironment: variables.Get(AccountVariables.Environment),
-                resourceManagementEndpointBaseUri: variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint),
-                activeDirectoryEndpointBaseUri: variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint));
+                                        subscriptionNumber: variables.Get(AccountVariables.SubscriptionId),
+                                        clientId: variables.Get(AccountVariables.ClientId),
+                                        tenantId: variables.Get(AccountVariables.TenantId),
+                                        password: variables.Get(AccountVariables.Password),
+                                        azureEnvironment: variables.Get(AccountVariables.Environment),
+                                        resourceManagementEndpointBaseUri: variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint),
+                                        activeDirectoryEndpointBaseUri: variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint));
 
-        public string SubscriptionNumber { get;  }
+        public string SubscriptionNumber { get; }
 
         public string ClientId { get; }
 
@@ -44,7 +46,9 @@ namespace Calamari.AzureAppService.Azure
         public string Password { get; }
 
         public string AzureEnvironment { get; }
+
         public string ResourceManagementEndpointBaseUri { get; }
+
         public string ActiveDirectoryEndpointBaseUri { get; }
     }
 }

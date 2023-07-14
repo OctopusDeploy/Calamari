@@ -1,27 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Runtime.ExceptionServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
+using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.AppService.Models;
 using Calamari.AzureAppService.Azure;
-using Calamari.AzureAppService.Json;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
-using Microsoft.Azure.Management.WebSites;
-using Microsoft.Rest;
-using Newtonsoft.Json;
 
 namespace Calamari.AzureAppService.Behaviors
 {
     class AzureAppServiceDeployContainerBehavior : IDeployBehaviour
     {
         private ILog Log { get; }
+
         public AzureAppServiceDeployContainerBehavior(ILog log)
         {
             Log = log;
@@ -47,31 +38,58 @@ namespace Calamari.AzureAppService.Behaviors
             var regUsername = variables.Get(SpecialVariables.Action.Package.Feed.Username);
             var regPwd = variables.Get(SpecialVariables.Action.Package.Feed.Password);
 
-            var token = await Auth.GetAuthTokenAsync(principalAccount);
-
-            var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri),
-                    new TokenCredentials(token))
-                {SubscriptionId = principalAccount.SubscriptionNumber};
+            var armClient = principalAccount.CreateArmClient();
 
             Log.Info($"Updating web app to use image {image} from registry {registryHost}");
 
             Log.Verbose("Retrieving config (this is required to update image)");
-            var config = await webAppClient.WebApps.GetConfigurationAsync(targetSite);
+            var config = targetSite.HasSlot switch
+                         {
+                             true => armClient.GetWebSiteSlotConfigResource(WebSiteSlotConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot)).Data,
+                             false => armClient.GetWebSiteConfigResource(WebSiteConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site)).Data
+                         };
             config.LinuxFxVersion = $@"DOCKER|{image}";
             
-
             Log.Verbose("Retrieving app settings");
-            var appSettings = await webAppClient.WebApps.ListApplicationSettingsAsync(targetSite);
+            AppServiceConfigurationDictionary appSettings = targetSite.HasSlot switch
+                              {
+                                  true => await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
+                                                         .GetApplicationSettingsSlotAsync(),
+                                  false => await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+                                                          .GetApplicationSettingsAsync(),
+                              };
 
             appSettings.Properties["DOCKER_REGISTRY_SERVER_URL"] = "https://" + registryHost;
             appSettings.Properties["DOCKER_REGISTRY_SERVER_USERNAME"] = regUsername;
             appSettings.Properties["DOCKER_REGISTRY_SERVER_PASSWORD"] = regPwd;
 
             Log.Info("Updating app settings with container registry");
-            await webAppClient.WebApps.UpdateApplicationSettingsAsync(targetSite, appSettings);
+            switch (targetSite.HasSlot)
+            {
+                case true:
+                    await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
+                                   .UpdateApplicationSettingsSlotAsync(appSettings);
+                    break;
+                case false:
+                    await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+                                   .UpdateApplicationSettingsAsync(appSettings);
+                    break;
+            }
 
             Log.Info("Updating configuration with container image");
-            await webAppClient.WebApps.UpdateConfigurationAsync(targetSite, config);
+            switch (targetSite.HasSlot)
+            {
+                case true:
+                    await armClient.GetWebSiteSlotConfigResource(WebSiteSlotConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
+                                   .UpdateAsync(config);
+                    break;
+                case false:
+                    await armClient.GetWebSiteConfigResource(WebSiteConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+                                   .UpdateAsync(config);
+                    break;
+            }
         }
+        
+        
     }
 }
