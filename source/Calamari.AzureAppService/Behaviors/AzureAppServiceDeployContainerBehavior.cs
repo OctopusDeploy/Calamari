@@ -45,19 +45,21 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Retrieving config (this is required to update image)");
             var config = targetSite.HasSlot switch
                          {
-                             true => armClient.GetWebSiteSlotConfigResource(WebSiteSlotConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot)).Data,
-                             false => armClient.GetWebSiteConfigResource(WebSiteConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site)).Data
+                             true => (await armClient.GetWebSiteSlotConfigResource(WebSiteSlotConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
+                                                     .GetAsync()).Value.Data,
+                             false => (await armClient.GetWebSiteConfigResource(WebSiteConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+                                                      .GetAsync()).Value.Data
                          };
             config.LinuxFxVersion = $@"DOCKER|{image}";
-            
+
             Log.Verbose("Retrieving app settings");
             AppServiceConfigurationDictionary appSettings = targetSite.HasSlot switch
-                              {
-                                  true => await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
-                                                         .GetApplicationSettingsSlotAsync(),
-                                  false => await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
-                                                          .GetApplicationSettingsAsync(),
-                              };
+                                                            {
+                                                                true => await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
+                                                                                       .GetApplicationSettingsSlotAsync(),
+                                                                false => await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+                                                                                        .GetApplicationSettingsAsync(),
+                                                            };
 
             appSettings.Properties["DOCKER_REGISTRY_SERVER_URL"] = "https://" + registryHost;
             appSettings.Properties["DOCKER_REGISTRY_SERVER_USERNAME"] = regUsername;
@@ -89,7 +91,5 @@ namespace Calamari.AzureAppService.Behaviors
                     break;
             }
         }
-        
-        
     }
 }

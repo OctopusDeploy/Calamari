@@ -2,7 +2,10 @@
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Azure;
+using Azure.Core;
 using Azure.Identity;
+using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.AzureAppService;
@@ -21,6 +24,7 @@ namespace Calamari.AzureAppService.Tests
 {
     public abstract class AppServiceIntegrationTest
     {
+        SubscriptionResource subscriptionResource;
         protected string clientId;
         protected string clientSecret;
         protected string tenantId;
@@ -29,23 +33,19 @@ namespace Calamari.AzureAppService.Tests
         protected string resourceGroupLocation;
         protected string greeting = "Calamari";
         protected string authToken;
-        protected WebSiteManagementClient webMgmtClient;
-        protected Site site;
+        protected ArmClient ArmClient { get; private set; }
 
-        private ResourceGroupsOperations resourceGroupClient;
         private readonly HttpClient client = new HttpClient();
-        
+
         protected RetryPolicy RetryPolicy { get; private set; }
 
         [OneTimeSetUp]
         public async Task Setup()
         {
             var resourceManagementEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ??
-                DefaultVariables.ResourceManagementEndpoint;
+                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
             var activeDirectoryEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
-                DefaultVariables.ActiveDirectoryEndpoint;
+                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
             resourceGroupName = Randomizer.CreateRandomizer().GetString(34, "abcdefghijklmnopqrstuvwxyz1234567890");
 
@@ -55,36 +55,50 @@ namespace Calamari.AzureAppService.Tests
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
-            authToken = await Auth.GetAuthTokenAsync(tenantId, clientId, clientSecret, resourceManagementEndpointBaseUri, activeDirectoryEndpointBaseUri);
+            authToken = await Auth.GetAuthTokenAsync(tenantId,
+                                                     clientId,
+                                                     clientSecret,
+                                                     resourceManagementEndpointBaseUri,
+                                                     activeDirectoryEndpointBaseUri);
+
+            var servicePrincipalAccount = new ServicePrincipalAccount(
+                                                                      subscriptionId,
+                                                                      clientId,
+                                                                      tenantId,
+                                                                      clientSecret,
+                                                                      ArmEnvironment.AzurePublicCloud.ToString(),
+                                                                      resourceManagementEndpointBaseUri,
+                                                                      activeDirectoryEndpointBaseUri);
+
+            ArmClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
+                                                                {
+                                                                    retryOptions.MaxRetries = 5;
+                                                                    retryOptions.Mode = RetryMode.Exponential;
+                                                                    retryOptions.Delay = TimeSpan.FromSeconds(2);
+                                                                });
+
+            //create the resource group
+            subscriptionResource = ArmClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(subscriptionId));
+            var response = await subscriptionResource
+                                 .GetResourceGroups()
+                                 .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                      resourceGroupName,
+                                                      new ResourceGroupData(new AzureLocation(resourceGroupLocation)));
 
 
-            var resourcesClient = new ResourcesManagementClient(subscriptionId,
-                new ClientSecretCredential(tenantId, clientId, clientSecret));
-
-            resourceGroupClient = resourcesClient.ResourceGroups;
-
-            var resourceGroup = new ResourceGroup(resourceGroupLocation);
-            resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
-
-            webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
-            {
-                SubscriptionId = subscriptionId,
-                HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
-            };
-            
             //Create a retry policy that retries on 429 errors. This is because we've been getting a number of flaky test failures
             RetryPolicy = RetryPolicyFactory.CreateForHttp429();
-            
-            await ConfigureTestResources(resourceGroup);
+
+            await ConfigureTestResources(response.Value);
         }
 
-        protected abstract Task ConfigureTestResources(ResourceGroup resourceGroup);
+        protected abstract Task ConfigureTestResources(ResourceGroupResource resourceGroup);
 
         [OneTimeTearDown]
         public async Task Cleanup()
         {
-            if (resourceGroupClient != null)
-                await resourceGroupClient.StartDeleteAsync(resourceGroupName);
+            await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(subscriptionId, resourceGroupName))
+                     .DeleteAsync(WaitUntil.Started);
         }
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)

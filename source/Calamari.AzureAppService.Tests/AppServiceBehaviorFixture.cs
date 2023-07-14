@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Plumbing.FileSystem;
@@ -35,9 +37,16 @@ namespace Calamari.AzureAppService.Tests
         public class WhenUsingAWindowsDotNetAppService : AppServiceIntegrationTest
         {
             private string servicePlanId;
+            
+            over
 
-            protected override async Task ConfigureTestResources(ResourceGroup resourceGroup)
+            protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
+                await resourceGroup.GetAppServicePlans()
+                                   .CreateOrUpdateAsync()
+                
+                
+                
                 var svcPlan = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(
                                                                                                                                       resourceGroupName: resourceGroup.Name,
                                                                                                                                       name: resourceGroup.Name,
@@ -307,7 +316,7 @@ namespace Calamari.AzureAppService.Tests
         [TestFixture]
         public class WhenUsingALinuxAppService : AppServiceIntegrationTest
         {
-            protected override async Task ConfigureTestResources(ResourceGroup resourceGroup)
+            protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
                 var storageClient = new StorageManagementClient(new TokenCredentials(authToken))
                 {
