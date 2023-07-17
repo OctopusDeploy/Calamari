@@ -65,8 +65,10 @@ namespace Calamari.Common.Plumbing.Proxies
                 proxyUri =
                     $"http://{System.Web.HttpUtility.UrlEncode(proxyUsername)}:{System.Web.HttpUtility.UrlEncode(proxyPassword)}@{host}:{port}";
 #else
+                var encodedProxyUsername = WebUtility.UrlEncode(proxyUsername);
+                var encodedProxyPassword = WebUtility.UrlEncode(proxyPassword);
                 proxyUri =
-                    $"http://{WebUtility.UrlEncode(proxyUsername)}:{WebUtility.UrlEncode(proxyPassword)}@{host}:{port}";
+                    $"http://{encodedProxyUsername}:{encodedProxyPassword}@{host}:{port}";
 #endif
             }
             else

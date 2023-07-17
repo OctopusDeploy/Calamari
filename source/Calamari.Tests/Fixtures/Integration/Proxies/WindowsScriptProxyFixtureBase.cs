@@ -51,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         {
             var proxyException = "octopustestbypassurl.com";
             var proxyExceptionUrl = $"http://{proxyException}/";
-            //ProxyRoutines.SetProxy(proxyUrl, proxyException).Should().BeTrue();
+            ProxyRoutines.SetProxy(proxyUrl, proxyException).Should().BeTrue();
             var result = RunWith(true, "", 80, "", "", proxyExceptionUrl);
 
             AssertUnauthenticatedSystemProxyUsedWithException(result, proxyExceptionUrl);
@@ -61,7 +61,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public virtual void Initialize_HasSystemProxy_UseSystemProxyWithCredentials()
         {
-            //ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
+            ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
             var result = RunWith(true, "", 80, ProxyUserName, ProxyPassword);
 
             AssertAuthenticatedSystemProxyUsed(result);
