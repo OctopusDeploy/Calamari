@@ -8,7 +8,7 @@ if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 {
     var testUri = new Uri("http://octopustesturl.com");
     var octopusProxyUri = System.Net.Http.HttpClient.DefaultProxy.GetProxy(testUri);
-    if (octopusProxyUri != null && octopusProxyUri.Host != "octopustesturl.com")
+    if (octopusProxyUri is not null && octopusProxyUri.Host != "octopustesturl.com")
     {
         Console.WriteLine("WebRequest.DefaultProxy:" + octopusProxyUri);
     }
@@ -21,7 +21,9 @@ if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 var bypassUri = Environment.GetEnvironmentVariable("TEST_ONLY_PROXY_EXCEPTION_URI");
 if (!string.IsNullOrEmpty(bypassUri))
 {
-    if(System.Net.Http.HttpClient.DefaultProxy.IsBypassed(new Uri(bypassUri)))
+    var bypass = new Uri(bypassUri);
+    if (System.Net.Http.HttpClient.DefaultProxy.IsBypassed(bypass) || 
+        System.Net.Http.HttpClient.DefaultProxy.GetProxy(bypass) is null)
     {
         Console.WriteLine("ProxyBypassed:" + bypassUri);
     }
