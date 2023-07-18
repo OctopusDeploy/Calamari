@@ -13,6 +13,10 @@ namespace Calamari.Tests.Fixtures.DotnetScript
     {
         protected override CalamariResult RunScript()
         {
+            ProxyUserName = "some@/user";
+            ProxyPassword = "some@/password";
+            UrlEncodedProxyUserName = "some%40%2Fuser";
+            UrlEncodedProxyPassword = "some%40%2Fpassword";
             return RunScript("Proxy.csx").result;
         }
 

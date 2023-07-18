@@ -23,7 +23,7 @@ if (!string.IsNullOrEmpty(bypassUri))
 {
     var bypass = new Uri(bypassUri);
     if (System.Net.Http.HttpClient.DefaultProxy.IsBypassed(bypass) || 
-        System.Net.Http.HttpClient.DefaultProxy.GetProxy(bypass) is null)
+        System.Net.Http.HttpClient.DefaultProxy.GetProxy(bypass) == null)
     {
         Console.WriteLine("ProxyBypassed:" + bypassUri);
     }

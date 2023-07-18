@@ -12,15 +12,15 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
     public abstract class ScriptProxyFixtureBase : CalamariFixture
     {
         protected const string BadproxyUrl = "http://proxy-initializer-fixture-bad-proxy:1234";
-        protected const string ProxyUserName = "some@:/user";
-        protected const string ProxyPassword = "some@:/password";
+        protected string ProxyUserName = "some@:/user";
+        protected string ProxyPassword = "some@:/password";
 
 #if NET40
         const string UrlEncodedProxyUserName = "some%40%3a%2fuser";
         const string UrlEncodedProxyPassword = "some%40%3a%2fpassword";
 #else
-        const string UrlEncodedProxyUserName = "some%40%3A%2Fuser";
-        const string UrlEncodedProxyPassword = "some%40%3A%2Fpassword";
+        protected static string UrlEncodedProxyUserName = "some%40%3A%2Fuser";
+        protected static string UrlEncodedProxyPassword = "some%40%3A%2Fpassword";
 #endif
         
         protected const string proxyHost = "proxy-initializer-fixture-good-proxy";
