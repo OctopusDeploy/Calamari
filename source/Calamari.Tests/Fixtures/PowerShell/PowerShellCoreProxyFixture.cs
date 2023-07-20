@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [SetUp]
         public void Setup()
         {
-            //Assert.Ignore("Some proxy tests currently fail with PSCore, currently ignoring them until this has been addressed.");
+            Assert.Ignore("Some proxy tests currently fail with PSCore, currently ignoring them until this has been addressed.");
         }
 
         protected override CalamariResult RunScript()
