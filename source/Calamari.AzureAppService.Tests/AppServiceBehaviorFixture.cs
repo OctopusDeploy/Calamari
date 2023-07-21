@@ -53,7 +53,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{WebSiteResource.Data.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -70,13 +70,13 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{WebSiteResource.Data.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
             public async Task CanDeployWebAppZip_ToDeploymentSlot()
             {
-                var slotName = "stage";
+                const string slotName = "stage";
                 greeting = "stage";
 
                 (string packagePath, string packageName, string packageVersion) packageinfo;
@@ -93,7 +93,8 @@ namespace Calamari.AzureAppService.Tests
                 packageinfo.packageName = "AzureZipDeployPackage";
                 ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
 
-                await slotTask;
+                var slotResponse = await slotTask;
+                var slotResource = slotResponse.Value;
 
                 await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
                                         .WithArrange(context =>
@@ -104,7 +105,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{WebSiteResource.Data.Name}-{slotName}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(slotResource.Data.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -152,7 +153,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
-                await AssertContent($"{WebSiteResource.Data.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -191,7 +192,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{javaSite.Value.Data.Name}.azurewebsites.net", $"Hello! {greeting}", "test.jsp");
+                await AssertContent(javaSite.Value.Data.DefaultHostName, $"Hello! {greeting}", "test.jsp");
             }
 
             [Test]
@@ -364,7 +365,7 @@ namespace Calamari.AzureAppService.Tests
                 await DoWithRetries(10,
                                     async () =>
                                     {
-                                        await AssertContent($"{WebSiteResource.Data.Name}.azurewebsites.net",
+                                        await AssertContent(WebSiteResource.Data.DefaultHostName,
                                                             rootPath: $"api/HttpExample?name={greeting}",
                                                             actualText: $"Hello, {greeting}");
                                     },
@@ -394,7 +395,7 @@ namespace Calamari.AzureAppService.Tests
                 await DoWithRetries(10,
                                     async () =>
                                     {
-                                        await AssertContent($"{WebSiteResource.Data.Name}.azurewebsites.net",
+                                        await AssertContent(WebSiteResource.Data.DefaultHostName,
                                                             rootPath: $"api/HttpExample?name={greeting}",
                                                             actualText: $"Hello, {greeting}");
                                     },
