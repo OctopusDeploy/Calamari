@@ -16,6 +16,8 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             return RunScript("Proxy.csx").result;
         }
 
+        [Test]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public override void Initialize_HasSystemProxy_UseSystemProxyWithExceptions()
         {
             // If the HTTP_PROXY environment variable have been set .NET Core will only take entries in the NO_PROXY environment variable into account,
