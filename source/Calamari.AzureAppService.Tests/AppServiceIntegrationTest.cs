@@ -42,10 +42,9 @@ namespace Calamari.AzureAppService.Tests
                 Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
             var activeDirectoryEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
-
-            //todo prefix with date for easy cleanup
+            
             //ask lawrence for the sandbox auto-cleanup tags
-            ResourceGroupName = Randomizer.CreateRandomizer().GetString(34, "abcdefghijklmnopqrstuvwxyz1234567890");
+            ResourceGroupName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
 
             ClientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
             ClientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
@@ -58,7 +57,7 @@ namespace Calamari.AzureAppService.Tests
                                                                   ClientId,
                                                                   TenantId,
                                                                   ClientSecret,
-                                                                  ArmEnvironment.AzurePublicCloud.ToString(),
+                                                                  "AzurePublicCloud",
                                                                   resourceManagementEndpointBaseUri,
                                                                   activeDirectoryEndpointBaseUri);
 

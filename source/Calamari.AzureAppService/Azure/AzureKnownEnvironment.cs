@@ -14,18 +14,15 @@ namespace Calamari.AzureAppService.Azure
             Value = environment;
             
             if (string.IsNullOrEmpty(environment) || environment == "AzureCloud") // This environment name is defined in Sashimi.Azure.Accounts.AzureEnvironmentsListAction
-                Value = Global.Value;                                             // We interpret it as the normal Azure environment for historical reasons)
+                Value = Public.Value;                                             // We interpret it as the normal Azure environment for historical reasons)
 
-            if (Enum.TryParse<ArmEnvironment>(Value, true, out var parsedEnum))
-                azureSdkEnvironment = parsedEnum;
-            else
-                throw new InvalidOperationException($"Unknown environment name {Value}");
+            azureSdkEnvironment = ToArmEnvironment(Value);
         }
 
         private readonly ArmEnvironment azureSdkEnvironment;
         public string Value { get; }
 
-        public static readonly AzureKnownEnvironment Global = new AzureKnownEnvironment("AzureGlobalCloud");
+        public static readonly AzureKnownEnvironment Public = new AzureKnownEnvironment("AzurePublicCloud");
         public static readonly AzureKnownEnvironment AzureChinaCloud = new AzureKnownEnvironment("AzureChinaCloud");
         public static readonly AzureKnownEnvironment AzureUSGovernment = new AzureKnownEnvironment("AzureUSGovernment");
         public static readonly AzureKnownEnvironment AzureGermanCloud = new AzureKnownEnvironment("AzureGermanCloud");
@@ -40,6 +37,7 @@ namespace Calamari.AzureAppService.Azure
         private static ArmEnvironment ToArmEnvironment(string name) => name switch
         {
             "AzureGlobalCloud" => ArmEnvironment.AzurePublicCloud,
+            "AzurePublicCloud" => ArmEnvironment.AzurePublicCloud,
             "AzureChinaCloud" => ArmEnvironment.AzureChina,
             "AzureGermanCloud" => ArmEnvironment.AzureGermany,
             "AzureUSGovernment" => ArmEnvironment.AzureGovernment,
@@ -51,6 +49,7 @@ namespace Calamari.AzureAppService.Azure
         private static Uri ToAzureAuthorityHost(string name) => name switch
         {
             "AzureGlobalCloud" => AzureAuthorityHosts.AzurePublicCloud,
+            "AzurePublicCloud" => AzureAuthorityHosts.AzurePublicCloud,
             "AzureChinaCloud" => AzureAuthorityHosts.AzureChina,
             "AzureGermanCloud" => AzureAuthorityHosts.AzureGermany,
             "AzureUSGovernment" => AzureAuthorityHosts.AzureGovernment,
