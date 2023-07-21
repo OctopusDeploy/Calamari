@@ -235,7 +235,7 @@ namespace Calamari.Tests
             if (!string.IsNullOrEmpty(ProxyExceptions))
             {
                 options[optionCurrent].m_Option = PerConnOption.INTERNET_PER_CONN_PROXY_BYPASS;
-                options[optionCurrent].m_Value.m_StringPtr = Marshal.StringToHGlobalUni($"local;{ProxyExceptions}"); 
+                options[optionCurrent].m_Value.m_StringPtr = Marshal.StringToHGlobalUni(ProxyExceptions); 
                 optionCurrent++;
             }
 
