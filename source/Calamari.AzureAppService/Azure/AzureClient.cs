@@ -48,6 +48,10 @@ namespace Calamari.AzureAppService.Azure
                 Environment = armEnvironment
             };
             retryOptionsSetter?.Invoke(armClientOptions.Retry);
+            
+            // there is a bug in the slotconfignames call due to it not passing back an ID, so this is needed to fix that
+            // see https://github.com/Azure/azure-sdk-for-net/issues/33384
+            armClientOptions.AddPolicy(new SlotConfigNamesInvalidIdFilterPolicy(), HttpPipelinePosition.PerRetry);
 
             return (armClientOptions, tokenCredentialOptions);
         }
