@@ -19,8 +19,8 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         const string UrlEncodedProxyUserName = "some%40%3a%2fuser";
         const string UrlEncodedProxyPassword = "some%40%3a%2fpassword";
 #else
-        const string UrlEncodedProxyUserName = "some%40%2Fuser";
-        const string UrlEncodedProxyPassword = "some%40%2Fpassword";
+        const string UrlEncodedProxyUserName = "some%40%3A%2Fuser";
+        const string UrlEncodedProxyPassword = "some%40%3A%2Fpassword";
 #endif
         
         protected const string proxyHost = "proxy-initializer-fixture-good-proxy";
