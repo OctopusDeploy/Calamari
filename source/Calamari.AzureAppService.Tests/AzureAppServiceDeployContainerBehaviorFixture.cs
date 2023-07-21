@@ -1,125 +1,60 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using Azure.Identity;
+using Azure;
+using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
-using Azure.ResourceManager.Resources.Models;
-using Calamari.AzureAppService;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Behaviors;
-using Calamari.AzureAppService.Json;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
-using Microsoft.Azure.Management.WebSites;
-using Microsoft.Azure.Management.WebSites.Models;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using Microsoft.Rest;
-using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
-using Polly.Retry;
 
 namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
-    public class AzureAppServiceDeployContainerBehaviorFixture
+    public class AzureAppServiceDeployContainerBehaviorFixture: AppServiceIntegrationTest
     {
-        private string clientId;
-        private string clientSecret;
-        private string tenantId;
-        private string subscriptionId;
-        private string webappName;
-        private string resourceGroupName;
-        private ResourceGroupsOperations resourceGroupClient;
-        private string authToken;
-        private WebSiteManagementClient webMgmtClient;
-        private CalamariVariables newVariables;
+        CalamariVariables newVariables;
         readonly HttpClient client = new HttpClient();
-        private Site site;
-        private RetryPolicy retryPolicy;
 
-        [OneTimeSetUp]
-        public async Task Setup()
+        protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
         {
-            retryPolicy = RetryPolicyFactory.CreateForHttp429();
+            var (_, webSite) = await CreateAppServicePlanAndWebApp(
+                                                                                resourceGroup,
+                                                                                new AppServicePlanData(resourceGroup.Data.Location)
+                                                                                {
+                                                                                    Kind = "linux",
+                                                                                    IsReserved = true,
+                                                                                    Sku = new AppServiceSkuDescription
+                                                                                    {
+                                                                                        Family = "S1",
+                                                                                        Name = "Standard"
+                                                                                    }
+                                                                                },
+                                                                                new WebSiteData(resourceGroup.Data.Location)
+                                                                                {
+                                                                                    SiteConfig = new SiteConfigProperties
+                                                                                    {
+                                                                                        LinuxFxVersion = @"DOCKER|mcr.microsoft.com/azuredocs/aci-helloworld",
+                                                                                        IsAlwaysOn = true,
+                                                                                        AppSettings = new List<AppServiceNameValuePair>
+                                                                                        {
+                                                                                            new AppServiceNameValuePair { Name = "DOCKER_REGISTRY_SERVER_URL", Value = "https://index.docker.io" },
+                                                                                            new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" }
+                                                                                        }
+                                                                                    }
+                                                                                });
 
-            resourceGroupName = Guid.NewGuid().ToString();
-
-            clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
-            clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
-            tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
-            subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-
-            var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
-
-            authToken = await GetAuthToken(tenantId, clientId, clientSecret);
-
-            var resourcesClient = new ResourcesManagementClient(subscriptionId,
-                                                                new ClientSecretCredential(tenantId, clientId, clientSecret));
-
-            resourceGroupClient = resourcesClient.ResourceGroups;
-
-            var resourceGroup = new ResourceGroup(resourceGroupLocation);
-            resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
-
-            webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
-            {
-                SubscriptionId = subscriptionId,
-                HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
-            };
-
-            var svcPlan = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
-                                                                                                                                  resourceGroup.Name,
-                                                                                                                                  new AppServicePlan(resourceGroup.Location)
-                                                                                                                                  {
-                                                                                                                                      Kind = "linux",
-                                                                                                                                      Reserved = true,
-                                                                                                                                      Sku = new SkuDescription
-                                                                                                                                      {
-                                                                                                                                          Name = "S1",
-                                                                                                                                          Tier = "Standard"
-                                                                                                                                      }
-                                                                                                                                  }));
-
-            site = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name,
-                                                                                                                   resourceGroup.Name,
-                                                                                                                   new Site(resourceGroup.Location)
-                                                                                                                   {
-                                                                                                                       ServerFarmId = svcPlan.Id,
-                                                                                                                       SiteConfig = new SiteConfig
-                                                                                                                       {
-                                                                                                                           LinuxFxVersion = @"DOCKER|mcr.microsoft.com/azuredocs/aci-helloworld",
-                                                                                                                           AppSettings = new List<NameValuePair>
-                                                                                                                           {
-                                                                                                                               new NameValuePair("DOCKER_REGISTRY_SERVER_URL", "https://index.docker.io"),
-                                                                                                                               new NameValuePair("WEBSITES_ENABLE_APP_SERVICE_STORAGE", "false")
-                                                                                                                           },
-                                                                                                                           AlwaysOn = true
-                                                                                                                       }
-                                                                                                                   }));
-
-            webappName = site.Name;
+            WebSiteResource = webSite;
 
             await AssertSetupSuccessAsync();
-        }
-
-        [OneTimeTearDown]
-        public async Task CleanupCode()
-        {
-            if (resourceGroupClient != null)
-                await resourceGroupClient.StartDeleteAsync(resourceGroupName);
-
-            //foreach (var tempDir in _tempDirs)
-            //{
-            //    if(tempDir.Exists)
-            //        tempDir.Delete(true);
-            //}
         }
 
         [Test]
@@ -132,7 +67,9 @@ namespace Calamari.AzureAppService.Tests
 
             await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
-            await AssertDeploySuccessAsync(AzureWebAppHelper.GetAzureTargetSite(site.Name, "", resourceGroupName));
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(WebSiteResource.Data.Name, string.Empty, ResourceGroupName);
+
+            await AssertDeploySuccessAsync(targetSite);
         }
 
         [Test]
@@ -143,21 +80,23 @@ namespace Calamari.AzureAppService.Tests
             newVariables = new CalamariVariables();
             AddVariables(newVariables);
             newVariables.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
-            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName,
-                                                                                                                webappName,
-                                                                                                                site,
-                                                                                                                slotName));
+            await WebSiteResource.GetWebSiteSlots()
+                                 .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                      slotName,
+                                                      WebSiteResource.Data);
 
             var runningContext = new RunningDeployment("", newVariables);
 
             await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
-            await AssertDeploySuccessAsync(AzureWebAppHelper.GetAzureTargetSite(site.Name, slotName, resourceGroupName));
+            var targetSite = AzureWebAppHelper.GetAzureTargetSite(WebSiteResource.Data.Name, slotName, ResourceGroupName);
+            
+            await AssertDeploySuccessAsync(targetSite);
         }
 
         async Task AssertSetupSuccessAsync()
         {
-            var result = await client.GetAsync($@"https://{webappName}.azurewebsites.net");
+            var result = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
             var receivedContent = await result.Content.ReadAsStringAsync();
 
             receivedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>");
@@ -170,21 +109,16 @@ namespace Calamari.AzureAppService.Tests
             var registryUrl = newVariables.Get(SpecialVariables.Action.Package.Registry);
             var imageVersion = newVariables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
 
-            var config = await webMgmtClient.WebApps.GetConfigurationAsync(targetSite);
-            Assert.AreEqual($@"DOCKER|{imageName}:{imageVersion}", config.LinuxFxVersion);
+            var config = await WebSiteResource.GetWebSiteConfig().GetAsync();
+            Assert.AreEqual($@"DOCKER|{imageName}:{imageVersion}", config.Value.Data.LinuxFxVersion);
 
-            var appSettings = await webMgmtClient.WebApps.ListApplicationSettingsAsync(targetSite);
-            Assert.AreEqual("https://" + registryUrl, appSettings.Properties["DOCKER_REGISTRY_SERVER_URL"]);
+            var appSettings = await AppSettingsManagement.GetAppSettingsAsync(ArmClient, SubscriptionId, targetSite);
+            Assert.AreEqual("https://" + registryUrl, appSettings.FirstOrDefault(app => app.Name == "DOCKER_REGISTRY_SERVER_URL")?.Value);
         }
 
-        void AddVariables(CalamariVariables vars)
+        void AddVariables(VariableDictionary vars)
         {
-            vars.Add(AccountVariables.ClientId, clientId);
-            vars.Add(AccountVariables.Password, clientSecret);
-            vars.Add(AccountVariables.TenantId, tenantId);
-            vars.Add(AccountVariables.SubscriptionId, subscriptionId);
-            vars.Add("Octopus.Action.Azure.ResourceGroupName", resourceGroupName);
-            vars.Add("Octopus.Action.Azure.WebAppName", webappName);
+            AddAzureVariables(vars);
             vars.Add(SpecialVariables.Action.Package.FeedId, "Feeds-42");
             vars.Add(SpecialVariables.Action.Package.Registry, "index.docker.io");
             vars.Add(SpecialVariables.Action.Package.PackageId, "nginx");
@@ -192,20 +126,6 @@ namespace Calamari.AzureAppService.Tests
             vars.Add(SpecialVariables.Action.Package.PackageVersion, "latest");
             vars.Add(SpecialVariables.Action.Azure.DeploymentType, "Container");
             //vars.Add(SpecialVariables.Action.Azure.ContainerSettings, BuildContainerConfigJson());
-        }
-
-        private async Task<string> GetAuthToken(string tenantId, string applicationId, string password)
-        {
-            var resourceManagementEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
-            var activeDirectoryEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
-
-            return await Auth.GetAuthTokenAsync(tenantId,
-                                                applicationId,
-                                                password,
-                                                resourceManagementEndpointBaseUri,
-                                                activeDirectoryEndpointBaseUri);
         }
     }
 }

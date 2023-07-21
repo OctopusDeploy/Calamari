@@ -14,19 +14,19 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureAppService
 {
-    internal static class AppSettingsManagement
+    static class AppSettingsManagement
     {
-        public static async Task<IEnumerable<AppSetting>> GetAppSettingsAsync(ArmClient armClient, ServicePrincipalAccount servicePrincipalAccount, TargetSite targetSite)
+        public static async Task<IEnumerable<AppSetting>> GetAppSettingsAsync(ArmClient armClient, string subscriptionId, TargetSite targetSite)
         {
             AppServiceConfigurationDictionary appSettings = targetSite.HasSlot switch
                                                             {
-                                                                true => await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(servicePrincipalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
+                                                                true => await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
                                                                                        .GetApplicationSettingsSlotAsync(),
-                                                                false => await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(servicePrincipalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+                                                                false => await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site))
                                                                                         .GetApplicationSettingsAsync()
                                                             };
 
-            var slotSettings = (await GetSlotSettingsListAsync(armClient, servicePrincipalAccount, targetSite)).ToArray();
+            var slotSettings = (await GetSlotSettingsListAsync(armClient, subscriptionId, targetSite)).ToArray();
 
             return appSettings.Properties.Select(
                                                  setting =>
@@ -47,16 +47,16 @@ namespace Calamari.AzureAppService
         /// <param name="targetSite">The target site containing the resource group name, site and (optional) site name</param>
         /// <param name="appSettings">A <see cref="StringDictionary"/> containing the app settings to set</param>
         /// <returns>Awaitable <see cref="Task"/></returns>
-        public static async Task PutAppSettingsAsync(ArmClient armClient, ServicePrincipalAccount servicePrincipalAccount, AppServiceConfigurationDictionary appSettings, TargetSite targetSite)
+        public static async Task PutAppSettingsAsync(ArmClient armClient, string subscriptionId, AppServiceConfigurationDictionary appSettings, TargetSite targetSite)
         {
             switch (targetSite.HasSlot)
             {
                 case true:
-                    await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(servicePrincipalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
+                    await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
                                    .UpdateApplicationSettingsSlotAsync(appSettings);
                     break;
                 case false:
-                    await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(servicePrincipalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+                    await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site))
                                    .UpdateApplicationSettingsAsync(appSettings);
                     break;
             }
@@ -71,14 +71,14 @@ namespace Calamari.AzureAppService
         /// <param name="authToken">The authorization token used to authenticate the request</param>
         /// <returns>Awaitable <see cref="Task"/></returns>
         public static async Task PutSlotSettingsListAsync(ArmClient armClient,
-                                                          ServicePrincipalAccount servicePrincipalAccount,
+                                                          string subscriptionId,
                                                           TargetSite targetSite,
                                                           IEnumerable<string> slotConfigNames)
         {
             var data = new SlotConfigNamesResourceData();
             data.AppSettingNames.AddRange(slotConfigNames);
 
-            await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(servicePrincipalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+            await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site))
                            .GetSlotConfigNamesResource()
                            .CreateOrUpdateAsync(WaitUntil.Completed, data);
         }
@@ -89,36 +89,36 @@ namespace Calamari.AzureAppService
         /// <param name="webAppClient">The <see cref="WebSiteManagementClient"/> that will be used to submit the get request</param>
         /// <param name="targetSite">The <see cref="TargetSite"/> that will represents the web app's resource group, name and (optionally) slot that is being deployed to</param>
         /// <returns>Collection of setting names that are sticky (slot setting)</returns>
-        public static async Task<IEnumerable<string>> GetSlotSettingsListAsync(ArmClient armClient, ServicePrincipalAccount servicePrincipalAccount, TargetSite targetSite)
+        public static async Task<IEnumerable<string>> GetSlotSettingsListAsync(ArmClient armClient, string subscriptionId, TargetSite targetSite)
         {
-            SlotConfigNamesResource configNamesResource = await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(servicePrincipalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+            SlotConfigNamesResource configNamesResource = await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site))
                                                                          .GetSlotConfigNamesResource()
                                                                          .GetAsync();
 
             return configNamesResource.Data.AppSettingNames;
         }
 
-        public static async Task<ConnectionStringDictionary> GetConnectionStringsAsync(ArmClient armClient, ServicePrincipalAccount servicePrincipalAccount, TargetSite targetSite)
+        public static async Task<ConnectionStringDictionary> GetConnectionStringsAsync(ArmClient armClient, string subscriptionId, TargetSite targetSite)
         {
             return targetSite.HasSlot switch
                    {
-                       true => await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(servicePrincipalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
+                       true => await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
                                               .GetConnectionStringsSlotAsync(),
-                       false => await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(servicePrincipalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+                       false => await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site))
                                                .GetConnectionStringsAsync()
                    };
         }
         
-        public static async Task PutConnectionStringsAsync(ArmClient armClient, ServicePrincipalAccount servicePrincipalAccount, ConnectionStringDictionary connectionStrings, TargetSite targetSite)
+        public static async Task PutConnectionStringsAsync(ArmClient armClient, string subscriptionId, ConnectionStringDictionary connectionStrings, TargetSite targetSite)
         {
             switch (targetSite.HasSlot)
             {
                 case true:
-                    await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(servicePrincipalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
+                    await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
                                    .UpdateConnectionStringsSlotAsync(connectionStrings);
                     break;
                 case false:
-                    await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(servicePrincipalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
+                    await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site))
                                    .UpdateConnectionStringsAsync(connectionStrings);
                     break;
             }
