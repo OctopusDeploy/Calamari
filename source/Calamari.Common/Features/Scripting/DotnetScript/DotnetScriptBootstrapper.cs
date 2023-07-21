@@ -30,8 +30,8 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 
         public static string FindExecutable()
         {
-            // if (ScriptingEnvironment.IsNetFramework())
-            //     throw new CommandException("dotnet-script requires dotnet core 2.1 or dotnet 5 and later");
+            if (ScriptingEnvironment.IsNetFramework())
+                throw new CommandException("dotnet-script requires .NET Core 6 or later");
 
             var exeName = $"dotnet-script.{(CalamariEnvironment.IsRunningOnWindows ? "exe" : "dll")}";
             var myPath = typeof(DotnetScriptExecutor).Assembly.Location;
