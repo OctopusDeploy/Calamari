@@ -141,8 +141,8 @@ namespace Calamari.AzureAppService.Tests
             {
                 Sku = new AppServiceSkuDescription
                 {
-                    Family = "S1",
-                    Name = "Standard"
+                    Name = "S1",
+                    Tier = "Standard"
                 }
             };
 

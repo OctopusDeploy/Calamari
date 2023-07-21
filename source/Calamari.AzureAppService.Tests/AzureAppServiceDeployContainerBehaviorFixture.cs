@@ -34,8 +34,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                     IsReserved = true,
                                                                                     Sku = new AppServiceSkuDescription
                                                                                     {
-                                                                                        Family = "S1",
-                                                                                        Name = "Standard"
+                                                                                        Name = "S1",
+                                                                                        Tier = "Standard"
                                                                                     }
                                                                                 },
                                                                                 new WebSiteData(resourceGroup.Data.Location)

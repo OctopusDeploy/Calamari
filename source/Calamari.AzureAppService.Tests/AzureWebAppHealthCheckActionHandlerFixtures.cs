@@ -30,8 +30,8 @@ namespace Calamari.AzureAppService.Tests
                                                                            {
                                                                                Sku = new AppServiceSkuDescription
                                                                                {
-                                                                                   Family = "B1",
-                                                                                   Name = "Basic"
+                                                                                   Name = "B1",
+                                                                                   Tier = "Basic"
                                                                                }
                                                                            },
                                                                            new WebSiteData(resourceGroup.Data.Location)
