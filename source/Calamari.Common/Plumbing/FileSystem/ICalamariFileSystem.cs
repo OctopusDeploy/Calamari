@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading;
+using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 
 namespace Calamari.Common.Plumbing.FileSystem
 {
@@ -17,7 +18,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         void DeleteDirectory(string path, FailureOptions options);
         IEnumerable<string> EnumerateDirectories(string parentDirectoryPath);
         IEnumerable<string> EnumerateDirectoriesRecursively(string parentDirectoryPath);
-        IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, params string[] globPatterns);
+        IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, GlobMode globMode, params string[] globPatterns);
         IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns);
         IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns);
         long GetFileSize(string path);
@@ -40,7 +41,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         void PurgeDirectory(string targetDirectory, FailureOptions options);
         void PurgeDirectory(string targetDirectory, FailureOptions options, CancellationToken cancel);
         void PurgeDirectory(string targetDirectory, Predicate<FileSystemInfo> exclude, FailureOptions options);
-        void PurgeDirectory(string targetDirectory, FailureOptions options, params string[] globs);
+        void PurgeDirectory(string targetDirectory, FailureOptions options, GlobMode globMode, params string[] globs);
         void EnsureDirectoryExists(string directoryPath);
         bool GetDiskFreeSpace(string directoryPath, out ulong totalNumberOfFreeBytes);
         bool GetDiskTotalSpace(string directoryPath, out ulong totalNumberOfBytes);

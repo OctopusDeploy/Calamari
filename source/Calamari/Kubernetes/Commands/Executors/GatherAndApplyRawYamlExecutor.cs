@@ -7,13 +7,12 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
-using Microsoft.Extensions.FileSystemGlobbing;
-using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 
@@ -23,9 +22,11 @@ namespace Calamari.Kubernetes.Commands.Executors
     {
         Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
     }
-    
+
     public class GatherAndApplyRawYamlExecutor : IGatherAndApplyRawYamlExecutor
     {
+        private const string GroupedDirectoryName = "grouped";
+
         private readonly ILog log;
         private readonly ICalamariFileSystem fileSystem;
         private readonly Kubectl kubectl;
@@ -99,28 +100,31 @@ namespace Calamari.Kubernetes.Commands.Executors
 
         private IEnumerable<GlobDirectory> GroupFilesIntoDirectories(RunningDeployment deployment, string[] globs, IVariables variables)
         {
+            var stagingDirectory = deployment.CurrentDirectory;
+            var packageDirectory =
+                Path.Combine(stagingDirectory, KubernetesDeploymentCommandBase.PackageDirectoryName) +
+                Path.DirectorySeparatorChar;
+
             var directories = new List<GlobDirectory>();
             for (var i = 0; i < globs.Length; i ++)
             {
                 var glob = globs[i];
-                var directoryPath = Path.Combine(deployment.CurrentDirectory, "grouped", i.ToString());
+                var directoryPath = Path.Combine(stagingDirectory, GroupedDirectoryName, i.ToString());
                 var directory = new GlobDirectory(i, glob, directoryPath);
                 fileSystem.CreateDirectory(directoryPath);
 
-                var matcher = new Matcher();
-                matcher.AddInclude(glob);
-                var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(deployment.CurrentDirectory)));
-                foreach (var file in result.Files)
+                var globMode = GlobModeRetriever.GetFromVariables(variables);
+                var results = fileSystem.EnumerateFilesWithGlob(packageDirectory, globMode, glob);
+                foreach (var file in results)
                 {
-                    var relativeFilePath = file.Path ?? file.Stem;
-                    var fullPath = Path.Combine(deployment.CurrentDirectory, relativeFilePath);
+                    var relativeFilePath = fileSystem.GetRelativePath(packageDirectory, file);
                     var targetPath = Path.Combine(directoryPath, relativeFilePath);
                     var targetDirectory = Path.GetDirectoryName(targetPath);
                     if (targetDirectory != null)
                     {
                         fileSystem.CreateDirectory(targetDirectory);
                     }
-                    fileSystem.CopyFile(fullPath, targetPath);
+                    fileSystem.CopyFile(file, targetPath);
                 }
 
                 directories.Add(directory);
@@ -134,16 +138,22 @@ namespace Calamari.Kubernetes.Commands.Executors
         private IEnumerable<Resource> ApplyBatchAndReturnResources(GlobDirectory globDirectory)
         {
             var index = globDirectory.Index;
-            var directory = globDirectory.Directory;
+            var directory = globDirectory.Directory + Path.DirectorySeparatorChar;
             log.Info($"Applying Batch #{index+1} for YAML matching '{globDirectory.Glob}'");
-            foreach (var file in fileSystem.EnumerateFilesRecursively(globDirectory.Directory))
+
+            var files = fileSystem.EnumerateFilesRecursively(globDirectory.Directory).ToArray();
+            if (!files.Any())
             {
-                // TODO: Once we have moved to a higher .net Framework version, update fileSystem.GetRelativePath to use
-                // Path.GetRelativePath() instead of our own implementation, and update the code below to remove the
-                // usage of Path.DirectorySeparatorChar.
-                log.Verbose($"{fileSystem.GetRelativePath($"{directory}{Path.DirectorySeparatorChar}", file)} Contents:");
+                log.Warn($"No files found matching '{globDirectory.Glob}");
+                return Enumerable.Empty<Resource>();
+            }
+
+            foreach (var file in files)
+            {
+                log.Verbose($"{fileSystem.GetRelativePath(directory, file)} Contents:");
                 log.Verbose(fileSystem.ReadFile(file));
             }
+
             var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "--recursive", "-o", "json");
 
             foreach (var message in result.Output.Messages)
@@ -156,7 +166,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                     case Level.Error:
                         //Files in the error are shown with the full path in their batch directory,
                         //so we'll remove that for the user.
-                        log.Error(message.Text.Replace($"{directory}{Path.DirectorySeparatorChar}", ""));
+                        log.Error(message.Text.Replace($"{directory}", ""));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();

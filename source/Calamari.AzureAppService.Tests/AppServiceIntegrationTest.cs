@@ -14,6 +14,8 @@ using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
+using Polly;
+using Polly.Retry;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -32,6 +34,8 @@ namespace Calamari.AzureAppService.Tests
 
         private ResourceGroupsOperations resourceGroupClient;
         private readonly HttpClient client = new HttpClient();
+        
+        protected RetryPolicy RetryPolicy { get; private set; }
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -67,7 +71,10 @@ namespace Calamari.AzureAppService.Tests
                 SubscriptionId = subscriptionId,
                 HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
             };
-
+            
+            //Create a retry policy that retries on 429 errors. This is because we've been getting a number of flaky test failures
+            RetryPolicy = RetryPolicyFactory.CreateForHttp429();
+            
             await ConfigureTestResources(resourceGroup);
         }
 

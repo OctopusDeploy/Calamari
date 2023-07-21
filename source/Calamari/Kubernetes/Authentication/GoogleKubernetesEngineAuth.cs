@@ -56,7 +56,8 @@ namespace Calamari.Kubernetes.Authentication
 
             WarnCustomersAboutAuthToolingRequirements();
             var gkeClusterName = deploymentVariables.Get(SpecialVariables.GkeClusterName);
-            gcloudCli.ConfigureGkeKubeCtlAuthentication(kubectlCli, gkeClusterName, region, zone, @namespace);
+            var useClusterInternalIp = deploymentVariables.GetFlag(SpecialVariables.GkeUseClusterInternalIp);
+            gcloudCli.ConfigureGkeKubeCtlAuthentication(kubectlCli, gkeClusterName, region, zone, @namespace, useClusterInternalIp);
 
             return true;
         }

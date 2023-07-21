@@ -98,6 +98,22 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        public void UsingInternalIpForPrivateCluster()
+        {
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
+            variables.Set(SpecialVariables.GkeClusterName, gkeClusterName);
+            variables.Set(SpecialVariables.GkeUseClusterInternalIp, bool.TrueString);
+            var account = "gke_account";
+            variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
+            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
+            variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
+            variables.Set("Octopus.Action.GoogleCloud.Project", gkeProject);
+            variables.Set("Octopus.Action.GoogleCloud.Zone", gkeLocation);
+
+            ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+        }
+
+        [Test]
         public void UnreachableK8Cluster_ShouldExecuteTargetScript()
         {
             const string unreachableClusterUrl = "https://example.kubernetes.com";

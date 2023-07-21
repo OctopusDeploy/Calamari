@@ -10,6 +10,7 @@ namespace Calamari.Common.Features.Packages
 {
     public class ExtractPackage : IExtractPackage
     {
+        public const string StagingDirectoryName = "staging";
         readonly ICombinedPackageExtractor combinedPackageExtractor;
         readonly ICalamariFileSystem fileSystem;
         readonly IVariables variables;
@@ -23,18 +24,25 @@ namespace Calamari.Common.Features.Packages
             this.log = log;
         }
 
+        public void ExtractToCustomDirectory(PathToPackage? pathToPackage, string directory)
+        {
+            ExtractToCustomSubDirectory(pathToPackage, directory, null, null);
+        }
+
         public void ExtractToStagingDirectory(PathToPackage? pathToPackage, IPackageExtractor? customPackageExtractor = null)
         {
-            var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
-            fileSystem.EnsureDirectoryExists(targetPath);
-            Extract(pathToPackage, targetPath, PackageVariables.Output.InstallationDirectoryPath, customPackageExtractor);
+            ExtractToCustomSubDirectory(pathToPackage,
+                Path.Combine(Environment.CurrentDirectory, StagingDirectoryName),
+                customPackageExtractor, null);
         }
 
         public void ExtractToStagingDirectory(PathToPackage? pathToPackage, string extractedToPathOutputVariableName)
         {
-            var targetPath = Path.Combine(Environment.CurrentDirectory, "staging");
-            fileSystem.EnsureDirectoryExists(targetPath);
-            Extract(pathToPackage, targetPath, extractedToPathOutputVariableName, null);
+            ExtractToCustomSubDirectory(
+                pathToPackage,
+                Path.Combine(Environment.CurrentDirectory, StagingDirectoryName),
+                null,
+                extractedToPathOutputVariableName);
         }
 
         public void ExtractToEnvironmentCurrentDirectory(PathToPackage pathToPackage)
@@ -48,6 +56,12 @@ namespace Calamari.Common.Features.Packages
             var metadata = PackageName.FromFile(pathToPackage);
             var targetPath = ApplicationDirectory.GetApplicationDirectory(metadata, variables, fileSystem);
             Extract(pathToPackage, targetPath, PackageVariables.Output.InstallationDirectoryPath, customPackageExtractor);
+        }
+
+        void ExtractToCustomSubDirectory(PathToPackage? pathToPackage, string directory, IPackageExtractor? customPackageExtractor, string? extractedToPathOutputVariableName)
+        {
+            fileSystem.EnsureDirectoryExists(directory);
+            Extract(pathToPackage, directory, extractedToPathOutputVariableName ?? PackageVariables.Output.InstallationDirectoryPath, customPackageExtractor);
         }
 
         void Extract(PathToPackage? pathToPackage, string targetPath, string extractedToPathOutputVariableName,  IPackageExtractor? customPackageExtractor)

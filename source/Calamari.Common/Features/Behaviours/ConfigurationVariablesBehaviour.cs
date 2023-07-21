@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Common.Features.Behaviours
 {
@@ -17,13 +18,20 @@ namespace Calamari.Common.Features.Behaviours
         readonly IVariables variables;
         readonly IConfigurationVariablesReplacer replacer;
         readonly ILog log;
+        private readonly string subdirectory;
 
-        public ConfigurationVariablesBehaviour(ICalamariFileSystem fileSystem, IVariables variables, IConfigurationVariablesReplacer replacer, ILog log)
+        public ConfigurationVariablesBehaviour(
+            ICalamariFileSystem fileSystem,
+            IVariables variables,
+            IConfigurationVariablesReplacer replacer,
+            ILog log,
+            string subdirectory = "")
         {
             this.fileSystem = fileSystem;
             this.variables = variables;
             this.replacer = replacer;
             this.log = log;
+            this.subdirectory = subdirectory;
         }
 
         public bool IsEnabled(RunningDeployment context)
@@ -34,7 +42,7 @@ namespace Calamari.Common.Features.Behaviours
 
         public Task Execute(RunningDeployment context)
         {
-            DoTransforms(context.CurrentDirectory);
+            DoTransforms(Path.Combine(context.CurrentDirectory, subdirectory));
 
             return this.CompletedTask();
         }

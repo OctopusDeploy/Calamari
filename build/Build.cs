@@ -213,7 +213,7 @@ namespace Calamari.Build
         Target PublishCalamariFlavourProjects =>
             _ => _
                  .DependsOn(Compile)
-                 .Executes(() =>
+                 .Executes(async () =>
                  {
                      var migratedCalamariFlavoursTests = MigratedCalamariFlavours.Flavours.Select(f => $"{f}.Tests");
                      var calamariFlavourProjects = Solution.Projects
@@ -229,10 +229,10 @@ namespace Calamari.Build
                                             .Concat(calamariScriptingProjectAndTest)
                                             .ToList();
 
-                     PublishCalamariProjects(calamariProjects);
+                     await PublishCalamariProjects(calamariProjects);
                  });
 
-        void PublishCalamariProjects(List<Project> projects)
+        async Task PublishCalamariProjects(List<Project> projects)
         {
             // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
             // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
@@ -273,10 +273,10 @@ namespace Calamari.Build
             var packagesToPublish = crossPlatformPackages.Concat(netFxPackages);
 
             packagesToPublish.ForEach(PublishPackage);
-            Task.WhenAll(SignDirectoriesTasks);
+            await Task.WhenAll(SignDirectoriesTasks);
             
             projects.ForEach(CompressCalamariProject);
-            Task.WhenAll(ProjectCompressionTasks);
+            await Task.WhenAll(ProjectCompressionTasks);
         }
 
         void PublishPackage(CalamariPackageMetadata calamariPackageMetadata)
@@ -304,8 +304,7 @@ namespace Calamari.Build
             
             if (!project.Name.Contains("Tests"))
             {
-                var signDirectoryTask = new Task(() => SignDirectory(outputDirectory));
-                signDirectoryTask.Start();
+                var signDirectoryTask = Task.Run(() => SignDirectory(outputDirectory));
                 SignDirectoriesTasks.Add(signDirectoryTask);
             }
 
@@ -322,8 +321,8 @@ namespace Calamari.Build
                 Log.Verbose($"Skipping compression for {project.Name} since nothing was built");
                 return;
             }
-            var compressionTask = new Task(() => CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / project.Name}.zip"));
-            compressionTask.Start();
+            
+            var compressionTask = Task.Run(() => CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / project.Name}.zip"));
             ProjectCompressionTasks.Add(compressionTask);
         }
 

@@ -1,7 +1,5 @@
-﻿using System;
-using Calamari.Common.Plumbing.Logging;
+﻿using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.FeatureToggles;
 using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.Authentication
