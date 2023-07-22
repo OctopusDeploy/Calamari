@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Azure;
@@ -9,31 +10,32 @@ using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using FluentAssertions;
 using NUnit.Framework;
-using NUnit.Framework.Internal;
 using Octostache;
+using Polly;
+using Polly.Retry;
 
 namespace Calamari.AzureAppService.Tests
 {
     public abstract class AppServiceIntegrationTest
     {
         protected string ClientId { get; private set; }
-        protected string ClientSecret{ get; private set; }
+        protected string ClientSecret { get; private set; }
         protected string TenantId { get; private set; }
         protected string SubscriptionId { get; private set; }
         protected string ResourceGroupName { get; private set; }
         protected string ResourceGroupLocation { get; private set; }
         protected string greeting = "Calamari";
         protected ArmClient ArmClient { get; private set; }
-        
+
         protected SubscriptionResource SubscriptionResource { get; private set; }
         protected ResourceGroupResource ResourceGroupResource { get; private set; }
         protected WebSiteResource WebSiteResource { get; private protected set; }
 
         private readonly HttpClient client = new HttpClient();
+        RetryPolicy<HttpResponseMessage> retryPolicy;
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -42,7 +44,7 @@ namespace Calamari.AzureAppService.Tests
                 Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
             var activeDirectoryEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
-            
+
             //ask lawrence for the sandbox auto-cleanup tags
             ResourceGroupName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
 
@@ -53,13 +55,13 @@ namespace Calamari.AzureAppService.Tests
             ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
             var servicePrincipalAccount = new ServicePrincipalAccount(
-                                                                  SubscriptionId,
-                                                                  ClientId,
-                                                                  TenantId,
-                                                                  ClientSecret,
-                                                                  "AzurePublicCloud",
-                                                                  resourceManagementEndpointBaseUri,
-                                                                  activeDirectoryEndpointBaseUri);
+                                                                      SubscriptionId,
+                                                                      ClientId,
+                                                                      TenantId,
+                                                                      ClientSecret,
+                                                                      "AzurePublicCloud",
+                                                                      resourceManagementEndpointBaseUri,
+                                                                      activeDirectoryEndpointBaseUri);
 
             ArmClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
                                                                 {
@@ -77,8 +79,12 @@ namespace Calamari.AzureAppService.Tests
                                                       new ResourceGroupData(new AzureLocation(ResourceGroupLocation)));
 
             ResourceGroupResource = response.Value;
-            
+
             await ConfigureTestResources(ResourceGroupResource);
+
+            retryPolicy = Policy.Handle<HttpRequestException>()
+                                .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == HttpStatusCode.RequestTimeout)
+                                .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         }
 
         protected abstract Task ConfigureTestResources(ResourceGroupResource resourceGroup);
@@ -87,13 +93,19 @@ namespace Calamari.AzureAppService.Tests
         public virtual async Task Cleanup()
         {
             await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(SubscriptionId, ResourceGroupName))
-                     .DeleteAsync(WaitUntil.Started);
+                           .DeleteAsync(WaitUntil.Started);
         }
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
-            var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
-
+            var response = await retryPolicy.ExecuteAsync(async () =>
+                                                          {
+                                                              var r = await client.GetAsync($"https://{hostName}/{rootPath}");
+                                                              r.EnsureSuccessStatusCode();
+                                                              return r;
+                                                          });
+            
+            var result = await response.Content.ReadAsStringAsync();
             result.Should().Contain(actualText);
         }
 
@@ -120,7 +132,7 @@ namespace Calamari.AzureAppService.Tests
         {
             AddAzureVariables(context.Variables);
         }
-        
+
         protected void AddAzureVariables(VariableDictionary variables)
         {
             variables.Add(AccountVariables.ClientId, ClientId);
@@ -132,8 +144,8 @@ namespace Calamari.AzureAppService.Tests
         }
 
         protected async Task<(AppServicePlanResource, WebSiteResource)> CreateAppServicePlanAndWebApp(
-            ResourceGroupResource resourceGroup, 
-            AppServicePlanData appServicePlanData = null, 
+            ResourceGroupResource resourceGroup,
+            AppServicePlanData appServicePlanData = null,
             WebSiteData webSiteData = null)
         {
             appServicePlanData ??= new AppServicePlanData(resourceGroup.Data.Location)

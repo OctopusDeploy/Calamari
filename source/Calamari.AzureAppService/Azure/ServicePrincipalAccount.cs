@@ -1,6 +1,4 @@
 ﻿using System;
-using Azure.Core;
-using Azure.Identity;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 
