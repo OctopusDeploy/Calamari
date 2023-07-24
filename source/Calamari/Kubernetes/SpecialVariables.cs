@@ -11,9 +11,9 @@
         public const string Namespace = "Octopus.Action.Kubernetes.Namespace";
         public const string SkipTlsVerification = "Octopus.Action.Kubernetes.SkipTlsVerification";
         public const string OutputKubeConfig = "Octopus.Action.Kubernetes.OutputKubeConfig";
-        public const string CustomKubectlExecutable = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
+        public const string CustomKubectlExecutable = "Octopus.Action.Kubernetes.CustomKubectlExecutable"; 
         public const string ResourceStatusCheck = "Octopus.Action.Kubernetes.ResourceStatusCheck";
-        public const string DeploymentStyle = "Octopus.Action.KubernetesContainers.DeploymentStyle";
+        public const string DeploymentStyle = "Octopus.Action.KubernetesContainers.DeploymentStyle"; 
         public const string DeploymentWait = "Octopus.Action.KubernetesContainers.DeploymentWait";
         public const string CustomResourceYamlFileName = "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName";
         public const string GroupedYamlDirectories = "Octopus.Action.KubernetesContainers.YamlDirectories";

@@ -1,5 +1,8 @@
-﻿using Calamari.Common.Commands;
+﻿using System;
+using Calamari.Commands.Support;
+using Calamari.Common.Commands;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Commands
@@ -18,18 +21,10 @@ namespace Calamari.Commands
 
         protected override void Execute(SubstituteInFilesCommandInputs inputs)
         {
-            var runningDeployment = new RunningDeployment(variables);
-            var targetPath = runningDeployment.CurrentDirectory;
-            
-            if (!string.IsNullOrEmpty(inputs.TargetPathVariable))
+            var targetPath = variables.GetRaw(inputs.TargetPathVariable);
+            if (targetPath == null)
             {
-                targetPath = variables.GetRaw(inputs.TargetPathVariable);
-
-                if (targetPath == null)
-                {
-                    throw new CommandException(
-                        $"Could not locate target path from variable {inputs.TargetPathVariable} for {nameof(SubstituteInFilesCommand)}");
-                }
+                throw new CommandException($"Could not locate target path from variable {inputs.TargetPathVariable} for {nameof(SubstituteInFilesCommand)}");
             }
 
             substituteInFiles.Substitute(targetPath, inputs.FilesToTarget);

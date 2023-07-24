@@ -5,7 +5,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Kubernetes;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 
@@ -30,27 +29,10 @@ namespace Calamari.Commands
             this.statusReportExecutor = statusReportExecutor;
             this.kubectl = kubectl;
         }
-
-        private bool IsEnabled()
-        {
-            var resourceStatusEnabled = variables.GetFlag(SpecialVariables.ResourceStatusCheck);
-            var isBlueGreen = variables.Get(SpecialVariables.DeploymentStyle) == "bluegreen";
-            var isWaitDeployment = variables.Get(SpecialVariables.DeploymentWait) == "wait";
-            if (!resourceStatusEnabled || isBlueGreen || isWaitDeployment)
-            {
-                return false;
-            }
-
-            var hasClusterUrl = !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl));
-            var hasClusterName = !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) ||
-                                 !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName)) ||
-                                 !string.IsNullOrEmpty(variables.Get(SpecialVariables.GkeClusterName));
-            return hasClusterUrl || hasClusterName;
-        }
         
         protected override void Execute(KubernetesObjectStatusReporterCommandInput inputs)
         {
-            if (!IsEnabled())
+            if (!inputs.Enabled)
             {
                 log.Info("Kubernetes Object Status reporting has been skipped.");
                 return;
@@ -64,7 +46,7 @@ namespace Calamari.Commands
 
                 var manifestPath = variables.Get("Octopus.Kustomize.Manifest.Path");
                 var resources = KubernetesYaml.GetDefinedResources(new[] {manifestPath}, "default");
-                var statusResult = statusReportExecutor.Start(resources).WaitForCompletionOrTimeout()
+                var statusResult = statusReportExecutor.Start(inputs.DeploymentTimeout, inputs.WaitForJobs, resources).WaitForCompletionOrTimeout()
                     .GetAwaiter().GetResult();
                 if (!statusResult)
                 {
@@ -89,7 +71,12 @@ namespace Calamari.Commands
             kubectl.SetEnvironmentVariables(environmentVars);
         }
     }
-    
-    public class KubernetesObjectStatusReporterCommandInput { }
+
+    public class KubernetesObjectStatusReporterCommandInput
+    {
+        public bool WaitForJobs { get; set; }
+        public int DeploymentTimeout { get; set; }
+        public bool Enabled { get; set; }
+    }
 }
 #endif

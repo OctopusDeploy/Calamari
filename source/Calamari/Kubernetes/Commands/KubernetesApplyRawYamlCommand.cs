@@ -60,7 +60,10 @@ namespace Calamari.Kubernetes.Commands
                 return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment);
             }
 
-            var statusCheck = statusReporter.Start();
+            var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
+            var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
+            
+            var statusCheck = statusReporter.Start(timeoutSeconds, waitForJobs);
 
             return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment, statusCheck.AddResources) &&
                 await statusCheck.WaitForCompletionOrTimeout();
