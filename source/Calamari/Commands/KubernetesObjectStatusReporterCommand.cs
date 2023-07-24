@@ -1,10 +1,12 @@
 #if !NET40
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 
@@ -45,8 +47,17 @@ namespace Calamari.Commands
                 ConfigureKubectl();
 
                 var manifestPath = variables.Get("Octopus.Kustomize.Manifest.Path");
-                var resources = KubernetesYaml.GetDefinedResources(new[] {manifestPath}, "default");
-                var statusResult = statusReportExecutor.Start(inputs.DeploymentTimeout, inputs.WaitForJobs, resources).WaitForCompletionOrTimeout()
+                var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
+                // When the namespace on a target was set and then cleared, it's going to be "" instead of null
+                if (string.IsNullOrEmpty(defaultNamespace))
+                {
+                    defaultNamespace = "default";
+                }
+
+                var resources =
+                    KubernetesYaml.GetDefinedResources(new[] {File.ReadAllText(manifestPath)}, defaultNamespace);
+                
+                var statusResult = statusReportExecutor.Start(inputs.Timeout, inputs.WaitForJobs, resources).WaitForCompletionOrTimeout()
                     .GetAwaiter().GetResult();
                 if (!statusResult)
                 {
@@ -75,7 +86,7 @@ namespace Calamari.Commands
     public class KubernetesObjectStatusReporterCommandInput
     {
         public bool WaitForJobs { get; set; }
-        public int DeploymentTimeout { get; set; }
+        public int Timeout { get; set; }
         public bool Enabled { get; set; }
     }
 }
