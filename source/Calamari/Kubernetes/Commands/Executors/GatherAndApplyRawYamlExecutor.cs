@@ -144,7 +144,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             var files = fileSystem.EnumerateFilesRecursively(globDirectory.Directory).ToArray();
             if (!files.Any())
             {
-                log.Warn($"No files found matching '{globDirectory.Glob}");
+                log.Warn($"No files found matching '{globDirectory.Glob}'");
                 return Enumerable.Empty<Resource>();
             }
 
