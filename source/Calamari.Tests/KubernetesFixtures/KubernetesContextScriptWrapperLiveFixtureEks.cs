@@ -261,7 +261,9 @@ namespace Calamari.Tests.KubernetesFixtures
 
             SetVariablesForKubernetesResourceStatusCheck(30);
 
-            SetVariablesForRawYamlCommand($"deployments/**/*;services/{ServiceFileName};configmaps/*.yml");
+            SetVariablesForRawYamlCommand($@"deployments/**/*
+                                             services/{ServiceFileName}
+                                             configmaps/*.yml");
 
             string CreatePackageWithMultipleYamlFiles(string directory)
             {
