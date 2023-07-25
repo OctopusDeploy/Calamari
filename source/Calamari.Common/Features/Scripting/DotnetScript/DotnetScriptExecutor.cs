@@ -22,7 +22,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
             var cli = CalamariEnvironment.IsRunningOnWindows 
                 ? new CommandLineInvocation(executable, arguments) 
-                : new CommandLineInvocation("dotnet", executable, arguments);
+                : new CommandLineInvocation("dotnet", $"\"{executable}\"", arguments);
             cli.WorkingDirectory = workingDirectory;
             cli.EnvironmentVars = environmentVars;
 
