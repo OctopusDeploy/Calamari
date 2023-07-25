@@ -19,7 +19,10 @@
         public const string GroupedYamlDirectories = "Octopus.Action.KubernetesContainers.YamlDirectories";
         public const string Timeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string WaitForJobs = "Octopus.Action.Kubernetes.WaitForJobs";
-
+        
+        public const string KubeConfig = "Octopus.KubeConfig.Path";
+        public const string KustomizeManifest = "Octopus.Kustomize.Manifest.Path";
+            
         public const string KubernetesResourceStatusServiceMessageName = "k8s-status";
 
         public static class Helm

@@ -46,7 +46,7 @@ namespace Calamari.Commands
                 
                 ConfigureKubectl();
 
-                var manifestPath = variables.Get("Octopus.Kustomize.Manifest.Path");
+                var manifestPath = variables.Get(SpecialVariables.KustomizeManifest);
                 var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
                 // When the namespace on a target was set and then cleared, it's going to be "" instead of null
                 if (string.IsNullOrEmpty(defaultNamespace))
@@ -72,7 +72,7 @@ namespace Calamari.Commands
 
         private void ConfigureKubectl()
         {
-            var kubeConfig = variables.Get("Octopus.KubeConfig.Path");
+            var kubeConfig = variables.Get(SpecialVariables.KubeConfig);
             var environmentVars = new Dictionary<string, string> {{"KUBECONFIG", kubeConfig}};
             foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
             {

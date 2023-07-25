@@ -61,7 +61,7 @@ namespace Calamari.Commands
                 throw new CommandException(ex.Message);
             }
             
-            variables.Set("Octopus.KubeConfig.Path", fileSystem.GetFullPath(environmentVars["KUBECONFIG"]));
+            variables.Set(SpecialVariables.KubeConfig, fileSystem.GetFullPath(environmentVars["KUBECONFIG"]));
         }
     }
     
