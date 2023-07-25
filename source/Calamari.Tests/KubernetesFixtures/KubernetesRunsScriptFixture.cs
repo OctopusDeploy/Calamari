@@ -69,6 +69,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionShouldFailWhenAccountTypeNotValid()
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "not valid");
@@ -79,9 +80,9 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionShouldApplyChmodInBash()
         {
-            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "Token");
             variables.Set(Deployment.SpecialVariables.Account.Token, ClusterToken);
@@ -90,6 +91,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionShouldUseGivenNamespace()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -102,6 +104,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionShouldOutputKubeConfig()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -114,6 +117,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionWithCustomKubectlExecutable_FileDoesNotExist()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
@@ -126,6 +130,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionWithAzureServicePrincipal()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
@@ -143,6 +148,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionWithAzureServicePrincipalWithAdmin()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -160,6 +166,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionUsingPodServiceAccount_WithoutServerCert()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -176,6 +183,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionUsingPodServiceAccount_WithServerCert()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -196,6 +204,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionWithClientAndCertificateAuthority()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
@@ -212,6 +221,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionWithUsernamePassword()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
@@ -338,6 +348,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [NonWindowsTest]
         public void ExecutionWithCustomKubectlExecutable_FileExists()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());

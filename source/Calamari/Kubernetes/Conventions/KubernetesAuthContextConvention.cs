@@ -28,7 +28,6 @@ namespace Calamari.Kubernetes.Conventions
         {
             var setupKubectlAuthentication = new SetupKubectlAuthentication(deployment.Variables,
                 log,
-                ScriptSyntax.PowerShell,
                 commandLineRunner,
                 kubectl,
                 deployment.EnvironmentVariables,

@@ -10,7 +10,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IResourceStatusReportExecutor
     {
-        IRunningResourceStatusCheck Start(IEnumerable<ResourceIdentifier> initialResources = null);
+        IRunningResourceStatusCheck Start(int timeoutSeconds, bool waitForJobs, IEnumerable<ResourceIdentifier> initialResources = null);
     }
     
     public class ResourceStatusReportExecutor : IResourceStatusReportExecutor
@@ -26,12 +26,10 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.runningResourceStatusCheckFactory = runningResourceStatusCheckFactory;
         }
 
-        public IRunningResourceStatusCheck Start(IEnumerable<ResourceIdentifier> initialResources)
+        public IRunningResourceStatusCheck Start(int timeoutSeconds, bool waitForJobs, IEnumerable<ResourceIdentifier> initialResources = null)
         {
             initialResources = initialResources ?? Enumerable.Empty<ResourceIdentifier>();
-            var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
-            var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
-
+            
             var timeout = timeoutSeconds == 0
                 ? Timeout.InfiniteTimeSpan
                 : TimeSpan.FromSeconds(timeoutSeconds);
