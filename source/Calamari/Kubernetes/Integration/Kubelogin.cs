@@ -23,13 +23,17 @@ namespace Calamari.Kubernetes.Integration
             var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
             if (string.IsNullOrEmpty(foundExecutable))
             {
-                log.Error("Could not find kubelogin. Make sure kubelogin is on the PATH.");
+                log.Warn("Could not find kubelogin. Make sure kubelogin is on the PATH.");
+                IsConfigured = false;
                 return false;
             }
 
             ExecutableLocation = foundExecutable.Trim();
+            IsConfigured = true;
             return true;
         }
+
+        public bool IsConfigured { get; set; }
 
         public void ConfigureAksKubeLogin(string kubeConfigPath)
         {
