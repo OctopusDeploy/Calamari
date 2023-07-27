@@ -211,10 +211,16 @@ namespace Calamari.AzureAppService.Behaviors
                 }
             };
 
-            var response = await httpClient.SendAsync(request);
+            //we add some retry just in case the web app's Kudu/SCM is not running just yet
+            var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
+                                                                                      {
+                                                                                          var r = await httpClient.SendAsync(request);
+                                                                                          r.EnsureSuccessStatusCode();
+                                                                                          return r;
+                                                                                      });
 
             if (!response.IsSuccessStatusCode)
-                throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status '{response.StatusCode} {response.ReasonPhrase}'.");
+                throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status {(int)response.StatusCode} '{response.ReasonPhrase}'.");
 
             Log.Verbose("Finished deploying");
         }

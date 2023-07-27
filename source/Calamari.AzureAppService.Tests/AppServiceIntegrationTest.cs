@@ -35,7 +35,6 @@ namespace Calamari.AzureAppService.Tests
         protected WebSiteResource WebSiteResource { get; private protected set; }
 
         private readonly HttpClient client = new HttpClient();
-        RetryPolicy<HttpResponseMessage> retryPolicy;
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -81,10 +80,6 @@ namespace Calamari.AzureAppService.Tests
             ResourceGroupResource = response.Value;
 
             await ConfigureTestResources(ResourceGroupResource);
-
-            retryPolicy = Policy.Handle<HttpRequestException>()
-                                .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == HttpStatusCode.RequestTimeout)
-                                .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         }
 
         protected abstract Task ConfigureTestResources(ResourceGroupResource resourceGroup);
@@ -98,7 +93,7 @@ namespace Calamari.AzureAppService.Tests
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
-            var response = await retryPolicy.ExecuteAsync(async () =>
+            var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                           {
                                                               var r = await client.GetAsync($"https://{hostName}/{rootPath}");
                                                               r.EnsureSuccessStatusCode();
