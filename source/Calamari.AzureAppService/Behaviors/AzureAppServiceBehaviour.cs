@@ -199,21 +199,23 @@ namespace Calamari.AzureAppService.Behaviors
                 Timeout = TimeSpan.FromHours(1)
             };
 
-            var request = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
-            {
-                Headers =
-                {
-                    Authorization = new AuthenticationHeaderValue("Basic", publishingProfile.GetBasicAuthCredentials())
-                },
-                Content = new StreamContent(new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
-                }
-            };
 
             //we add some retry just in case the web app's Kudu/SCM is not running just yet
             var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                       {
+                                                                                          //we have to create a new request message each time
+                                                                                          var request = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
+                                                                                          {
+                                                                                              Headers =
+                                                                                              {
+                                                                                                  Authorization = new AuthenticationHeaderValue("Basic", publishingProfile.GetBasicAuthCredentials())
+                                                                                              },
+                                                                                              Content = new StreamContent(new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                                                                                              {
+                                                                                                  Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
+                                                                                              }
+                                                                                          };
+
                                                                                           var r = await httpClient.SendAsync(request);
                                                                                           r.EnsureSuccessStatusCode();
                                                                                           return r;
