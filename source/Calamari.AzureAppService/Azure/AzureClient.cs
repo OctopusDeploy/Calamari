@@ -33,22 +33,30 @@ namespace Calamari.AzureAppService.Azure
 #pragma warning restore DE0003
 
             // Specifically tell the new Azure SDK which authentication endpoint to use
-            var authorityHost = azureKnownEnvironment.GetAzureAuthorityHost();
+            var authorityHost = string.IsNullOrEmpty(servicePrincipalAccount.ActiveDirectoryEndpointBaseUri)
+                ? azureKnownEnvironment.GetAzureAuthorityHost()
+                // if the user has specified a custom authentication endpoint, use that value
+                : new Uri(servicePrincipalAccount.ActiveDirectoryEndpointBaseUri);
+            
             var tokenCredentialOptions = new TokenCredentialOptions
             {
                 Transport = httpClientTransport,
                 AuthorityHost = authorityHost
             };
 
-            // The new Azure SDK uses a different representation of Environments
-            var armEnvironment = azureKnownEnvironment.AsAzureArmEnvironment();
+            var armEnvironment = string.IsNullOrEmpty(servicePrincipalAccount.ResourceManagementEndpointBaseUri)
+                // The new Azure SDK uses a different representation of Environments
+                ? azureKnownEnvironment.AsAzureArmEnvironment()
+                // if the user has specified a custom resource management endpoint, define a custom environment using that value
+                : new ArmEnvironment(new Uri(servicePrincipalAccount.ResourceManagementEndpointBaseUri, UriKind.Absolute), servicePrincipalAccount.ResourceManagementEndpointBaseUri);
+
             var armClientOptions = new ArmClientOptions
             {
                 Transport = httpClientTransport,
                 Environment = armEnvironment
             };
             retryOptionsSetter?.Invoke(armClientOptions.Retry);
-            
+
             // there is a bug in the slotconfignames call due to it not passing back an ID, so this is needed to fix that
             // see https://github.com/Azure/azure-sdk-for-net/issues/33384
             armClientOptions.AddPolicy(new SlotConfigNamesInvalidIdFilterPolicy(), HttpPipelinePosition.PerRetry);
