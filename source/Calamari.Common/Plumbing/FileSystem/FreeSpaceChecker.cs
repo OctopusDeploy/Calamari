@@ -74,7 +74,6 @@ namespace Calamari.Common.Plumbing.FileSystem
             {
                 //After upgrading to macOS 10.15.2, and mono 5.14.0, drive.TotalFreeSpace and drive.AvailableFreeSpace both started returning 0.
                 //see https://github.com/mono/mono/issues/17151, which was fixed in mono 6.4.xx
-                //If we upgrade mono past 5.14.x, scriptcs stops working.
                 //Rock and a hard place.
                 Log.Verbose("Unable to determine disk free space under Mono on macOS. Assuming there's enough.");
                 return;

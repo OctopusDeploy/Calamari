@@ -88,7 +88,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                     var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
                     var moduleFileName = $"{name}.csx";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
-                    Log.VerboseFormat("Writing script module '{0}' as c# module {1}. Import this module via `#load {1}`.", libraryScriptModuleName, moduleFileName, name);
+                    Log.VerboseFormat("Writing script module '{0}' as c# module {1}. Import this module via `#load \"{1}\"`.", libraryScriptModuleName, moduleFileName, name);
                     var contents = variables.Get(variableName);
                     if (contents == null)
                         throw new InvalidOperationException($"Value for variable {variableName} could not be found.");
