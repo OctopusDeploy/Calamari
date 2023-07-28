@@ -436,6 +436,11 @@ if ($deployAsWebSite)
 	}
 
 	ForEach($binding in $bindingArray){
+		if(![Bool]::Parse($binding.enabled)) {
+    		Write-IISBinding "Ignore binding: " $binding
+    		return
+    	}
+
 		$sslFlagPart = @{$true=1;$false=0}[[Bool]::Parse($binding.requireSni)]  
 		$bindingIpAddress =  @{$true="*";$false=$binding.ipAddress}[[string]::IsNullOrEmpty($binding.ipAddress)]
 		$bindingInformation = $bindingIpAddress+":"+$binding.port+":"+$binding.host
@@ -457,12 +462,8 @@ if ($deployAsWebSite)
 		if ([Bool]::Parse($supportsSNI)) {
 			$bindingObj.sslFlags=$sslFlagPart;
 		}
-			
-		if([Bool]::Parse($binding.enabled)) {
-			$wsbindings.Add($bindingObj) | Out-Null
-		} else {
-			Write-IISBinding "Ignore binding: " $binding
-		}
+
+		$wsbindings.Add($bindingObj) | Out-Null
 	}
 
 	# For any HTTPS bindings, ensure the certificate is configured for the IP/port combination
