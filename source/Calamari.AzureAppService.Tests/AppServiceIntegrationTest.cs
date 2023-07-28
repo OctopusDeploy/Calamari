@@ -75,7 +75,16 @@ namespace Calamari.AzureAppService.Tests
                                  .GetResourceGroups()
                                  .CreateOrUpdateAsync(WaitUntil.Completed,
                                                       ResourceGroupName,
-                                                      new ResourceGroupData(new AzureLocation(ResourceGroupLocation)));
+                                                      new ResourceGroupData(new AzureLocation(ResourceGroupLocation))
+                                                      {
+                                                          Tags =
+                                                          {
+                                                              // give them an expiry of 14 days so if the tests fail to clean them up
+                                                              // they will be automatically cleaned up by the Sandbox cleanup process
+                                                              // We keep them for 14 days just in case we need to do debugging/investigation
+                                                              ["LifetimeInDays"] = "14"
+                                                          }
+                                                      });
 
             ResourceGroupResource = response.Value;
 
