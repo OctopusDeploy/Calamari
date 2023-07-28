@@ -19,38 +19,37 @@ using Octostache;
 namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
-    public class AzureAppServiceDeployContainerBehaviorFixture: AppServiceIntegrationTest
+    public class AzureAppServiceDeployContainerBehaviorFixture : AppServiceIntegrationTest
     {
         CalamariVariables newVariables;
         readonly HttpClient client = new HttpClient();
 
         protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
         {
-            var (_, webSite) = await CreateAppServicePlanAndWebApp(
-                                                                                resourceGroup,
-                                                                                new AppServicePlanData(resourceGroup.Data.Location)
-                                                                                {
-                                                                                    Kind = "linux",
-                                                                                    IsReserved = true,
-                                                                                    Sku = new AppServiceSkuDescription
-                                                                                    {
-                                                                                        Name = "S1",
-                                                                                        Tier = "Standard"
-                                                                                    }
-                                                                                },
-                                                                                new WebSiteData(resourceGroup.Data.Location)
-                                                                                {
-                                                                                    SiteConfig = new SiteConfigProperties
-                                                                                    {
-                                                                                        LinuxFxVersion = @"DOCKER|mcr.microsoft.com/azuredocs/aci-helloworld",
-                                                                                        IsAlwaysOn = true,
-                                                                                        AppSettings = new List<AppServiceNameValuePair>
-                                                                                        {
-                                                                                            new AppServiceNameValuePair { Name = "DOCKER_REGISTRY_SERVER_URL", Value = "https://index.docker.io" },
-                                                                                            new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" }
-                                                                                        }
-                                                                                    }
-                                                                                });
+            var (_, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup,
+                                                                   new AppServicePlanData(resourceGroup.Data.Location)
+                                                                   {
+                                                                       Kind = "linux",
+                                                                       IsReserved = true,
+                                                                       Sku = new AppServiceSkuDescription
+                                                                       {
+                                                                           Name = "S1",
+                                                                           Tier = "Standard"
+                                                                       }
+                                                                   },
+                                                                   new WebSiteData(resourceGroup.Data.Location)
+                                                                   {
+                                                                       SiteConfig = new SiteConfigProperties
+                                                                       {
+                                                                           LinuxFxVersion = @"DOCKER|mcr.microsoft.com/azuredocs/aci-helloworld",
+                                                                           IsAlwaysOn = true,
+                                                                           AppSettings = new List<AppServiceNameValuePair>
+                                                                           {
+                                                                               new AppServiceNameValuePair { Name = "DOCKER_REGISTRY_SERVER_URL", Value = "https://index.docker.io" },
+                                                                               new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" }
+                                                                           }
+                                                                       }
+                                                                   });
 
             WebSiteResource = webSite;
 
@@ -67,7 +66,9 @@ namespace Calamari.AzureAppService.Tests
 
             await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(WebSiteResource.Data.Name, string.Empty, ResourceGroupName);
+            var targetSite = new AzureTargetSite(SubscriptionId, 
+                                            ResourceGroupName, 
+                                            WebSiteResource.Data.Name);
 
             await AssertDeploySuccessAsync(targetSite);
         }
@@ -88,9 +89,12 @@ namespace Calamari.AzureAppService.Tests
             var runningContext = new RunningDeployment("", newVariables);
 
             await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
-
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(WebSiteResource.Data.Name, slotName, ResourceGroupName);
             
+            var targetSite = new AzureTargetSite(SubscriptionId, 
+                                            ResourceGroupName, 
+                                            WebSiteResource.Data.Name,
+                                            slotName);
+
             await AssertDeploySuccessAsync(targetSite);
         }
 
@@ -103,7 +107,7 @@ namespace Calamari.AzureAppService.Tests
             Assert.IsTrue(result.IsSuccessStatusCode);
         }
 
-        async Task AssertDeploySuccessAsync(TargetSite targetSite)
+        async Task AssertDeploySuccessAsync(AzureTargetSite targetSite)
         {
             var imageName = newVariables.Get(SpecialVariables.Action.Package.PackageId);
             var registryUrl = newVariables.Get(SpecialVariables.Action.Package.Registry);

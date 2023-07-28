@@ -16,15 +16,21 @@ namespace Calamari.AzureAppService
 {
     static class AppSettingsManagement
     {
-        public static async Task<IEnumerable<AppSetting>> GetAppSettingsAsync(ArmClient armClient, string subscriptionId, TargetSite targetSite)
+        public static async Task<AppServiceConfigurationDictionary> GetAppSettings(ArmClient armClient, string subscriptionId, AzureTargetSite targetSite)
         {
-            AppServiceConfigurationDictionary appSettings = targetSite.HasSlot switch
-                                                            {
-                                                                true => await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
-                                                                                       .GetApplicationSettingsSlotAsync(),
-                                                                false => await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site))
-                                                                                        .GetApplicationSettingsAsync()
-                                                            };
+            return targetSite.HasSlot switch
+                                                           {
+                                                               true => await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
+                                                                                      .GetApplicationSettingsSlotAsync(),
+                                                               false => await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site))
+                                                                                       .GetApplicationSettingsAsync()
+
+                                                           };
+        }
+
+        public static async Task<IEnumerable<AppSetting>> GetAppSettingsAsync(ArmClient armClient, string subscriptionId, AzureTargetSite targetSite)
+        {
+            var appSettings = await GetAppSettings(armClient, subscriptionId, targetSite);
 
             var slotSettings = (await GetSlotSettingsListAsync(armClient, subscriptionId, targetSite)).ToArray();
 
@@ -47,7 +53,7 @@ namespace Calamari.AzureAppService
         /// <param name="targetSite">The target site containing the resource group name, site and (optional) site name</param>
         /// <param name="appSettings">A <see cref="StringDictionary"/> containing the app settings to set</param>
         /// <returns>Awaitable <see cref="Task"/></returns>
-        public static async Task PutAppSettingsAsync(ArmClient armClient, string subscriptionId, AppServiceConfigurationDictionary appSettings, TargetSite targetSite)
+        public static async Task PutAppSettingsAsync(ArmClient armClient, string subscriptionId, AppServiceConfigurationDictionary appSettings, AzureTargetSite targetSite)
         {
             switch (targetSite.HasSlot)
             {
@@ -72,7 +78,7 @@ namespace Calamari.AzureAppService
         /// <returns>Awaitable <see cref="Task"/></returns>
         public static async Task PutSlotSettingsListAsync(ArmClient armClient,
                                                           string subscriptionId,
-                                                          TargetSite targetSite,
+                                                          AzureTargetSite targetSite,
                                                           IEnumerable<string> slotConfigNames)
         {
             var data = new SlotConfigNamesResourceData();
@@ -87,9 +93,9 @@ namespace Calamari.AzureAppService
         /// Gets list of existing sticky (slot settings)
         /// </summary>
         /// <param name="webAppClient">The <see cref="WebSiteManagementClient"/> that will be used to submit the get request</param>
-        /// <param name="targetSite">The <see cref="TargetSite"/> that will represents the web app's resource group, name and (optionally) slot that is being deployed to</param>
+        /// <param name="targetSite">The <see cref="AzureTargetSite"/> that will represents the web app's resource group, name and (optionally) slot that is being deployed to</param>
         /// <returns>Collection of setting names that are sticky (slot setting)</returns>
-        public static async Task<IEnumerable<string>> GetSlotSettingsListAsync(ArmClient armClient, string subscriptionId, TargetSite targetSite)
+        public static async Task<IEnumerable<string>> GetSlotSettingsListAsync(ArmClient armClient, string subscriptionId, AzureTargetSite targetSite)
         {
             SlotConfigNamesResource configNamesResource = await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(subscriptionId, targetSite.ResourceGroupName, targetSite.Site))
                                                                          .GetSlotConfigNamesResource()
@@ -98,7 +104,7 @@ namespace Calamari.AzureAppService
             return configNamesResource.Data.AppSettingNames;
         }
 
-        public static async Task<ConnectionStringDictionary> GetConnectionStringsAsync(ArmClient armClient, string subscriptionId, TargetSite targetSite)
+        public static async Task<ConnectionStringDictionary> GetConnectionStringsAsync(ArmClient armClient, string subscriptionId, AzureTargetSite targetSite)
         {
             return targetSite.HasSlot switch
                    {
@@ -109,7 +115,7 @@ namespace Calamari.AzureAppService
                    };
         }
         
-        public static async Task PutConnectionStringsAsync(ArmClient armClient, string subscriptionId, ConnectionStringDictionary connectionStrings, TargetSite targetSite)
+        public static async Task PutConnectionStringsAsync(ArmClient armClient, string subscriptionId, ConnectionStringDictionary connectionStrings, AzureTargetSite targetSite)
         {
             switch (targetSite.HasSlot)
             {

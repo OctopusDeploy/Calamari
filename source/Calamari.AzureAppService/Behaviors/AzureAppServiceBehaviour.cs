@@ -65,7 +65,7 @@ namespace Calamari.AzureAppService.Behaviors
                             : $"Using Deployment Slot '{slotName}'");
 
             var armClient = servicePrincipal.CreateArmClient();
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
+            var targetSite = new AzureTargetSite(servicePrincipal.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
             var resourceGroups = armClient
                                  .GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(servicePrincipal.SubscriptionNumber))
@@ -153,7 +153,7 @@ namespace Calamari.AzureAppService.Behaviors
             await UploadZipAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot);
         }
 
-        private async Task<WebSiteSlotResource> FindOrCreateSlot(ArmClient armClient, WebSiteResource webSiteResource, TargetSite site)
+        private async Task<WebSiteSlotResource> FindOrCreateSlot(ArmClient armClient, WebSiteResource webSiteResource, AzureTargetSite site)
         {
             Log.Verbose($"Checking if deployment slot '{site.Slot}' exists.");
             var slots = webSiteResource.GetWebSiteSlots();

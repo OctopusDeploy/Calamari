@@ -14,8 +14,6 @@ using Calamari.Testing;
 using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
-using Polly;
-using Polly.Retry;
 
 namespace Calamari.AzureAppService.Tests
 {

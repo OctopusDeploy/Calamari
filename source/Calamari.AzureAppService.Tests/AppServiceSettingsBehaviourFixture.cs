@@ -208,10 +208,10 @@ namespace Calamari.AzureAppService.Tests
                                                                       new AppSetting { Name = kvp.Key, Value = kvp.Value, SlotSetting = false }));
 
             // Get the settings from the webapp
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(
-                                                                  WebSiteResource.Data.Name,
-                                                                  slotName,
-                                                                  ResourceGroupName);
+            var targetSite = new AzureTargetSite(SubscriptionId, 
+                                            ResourceGroupName, 
+                                            WebSiteResource.Data.Name,
+                                            slotName);
 
 
             var settings = await AppSettingsManagement.GetAppSettingsAsync(ArmClient, SubscriptionId, targetSite);
