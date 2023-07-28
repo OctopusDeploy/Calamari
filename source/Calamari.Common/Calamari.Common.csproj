@@ -58,7 +58,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Globfish" Version="0.0.1-scme-test-branch-52" />
+        <PackageReference Include="Globfish" Version="0.0.1-scme0-add-github-action-62" />
         <PackageReference Include="JavaPropertiesParser" Version="0.2.1" />
         <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
         <PackageReference Include="Octopus.Versioning" Version="5.1.155" />
