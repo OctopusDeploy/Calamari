@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Azure.ResourceManager.AppService;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
@@ -35,17 +34,7 @@ namespace Calamari.AzureAppService.Behaviors
             var armClient = principalAccount.CreateArmClient();
 
             Log.Info("Performing soft restart of web app");
-            switch (targetSite.HasSlot)
-            {
-                case true:
-                    await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
-                                   .RestartSlotAsync();
-                    break;
-                case false:
-                    await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
-                                   .RestartAsync();
-                    break;
-            }
+            await armClient.RestartWebSiteAsync(targetSite);
         }
     }
 }

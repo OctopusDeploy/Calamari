@@ -160,5 +160,20 @@ namespace Calamari.AzureAppService
                     break;
             }
         }
+
+        public static async Task RestartWebSiteAsync(this ArmClient armClient, AzureTargetSite targetSite)
+        {
+            switch (targetSite.HasSlot)
+            {
+                case true:
+                    await armClient.GetWebSiteSlotResource(targetSite.CreateResourceIdentifier())
+                                   .RestartSlotAsync();
+                    break;
+                case false:
+                    await armClient.GetWebSiteResource(targetSite.CreateResourceIdentifier())
+                                   .RestartAsync();
+                    break;
+            }
+        }
     }
 }
