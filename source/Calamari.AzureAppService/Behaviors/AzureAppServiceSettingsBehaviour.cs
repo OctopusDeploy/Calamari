@@ -88,13 +88,11 @@ namespace Calamari.AzureAppService.Behaviors
 
             var existingSlotSettings = new List<string>();
             // for each app setting found on the web app (existing app setting) update it value and add if is a slot setting, add
-            foreach (var (name, value, SlotSetting) in (await AppSettingsManagement.GetAppSettingsAsync(armClient,
-                                                                                                        principalAccount.SubscriptionNumber,
-                                                                                                        targetSite)).ToList())
+            foreach (var (name, value, slotSetting) in await armClient.GetAppSettingsListAsync(targetSite))
             {
                 settingsDict.Properties[name] = value;
 
-                if (SlotSetting)
+                if (slotSetting)
                     existingSlotSettings.Add(name);
             }
 
@@ -112,7 +110,7 @@ namespace Calamari.AzureAppService.Behaviors
                 }
             }
 
-            await AppSettingsManagement.PutAppSettingsAsync(armClient, principalAccount.SubscriptionNumber, settingsDict, targetSite);
+            await armClient.UpdateAppSettingsAsync(targetSite, settingsDict);
             var slotSettings = appSettings
                                .Where(setting => setting.SlotSetting)
                                .Select(setting => setting.Name)
@@ -121,7 +119,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (!slotSettings.Any())
                 return;
 
-            await AppSettingsManagement.PutSlotSettingsListAsync(armClient, principalAccount.SubscriptionNumber, targetSite, slotSettings.Union(existingSlotSettings));
+            await armClient.UpdateSlotSettingsAsync(targetSite, slotSettings.Union(existingSlotSettings));
         }
 
         private async Task PublishConnectionStrings(ArmClient armClient,
@@ -129,7 +127,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                     AzureTargetSite targetSite,
                                                     ConnectionStringSetting[] newConStrings)
         {
-            var conStrings = await AppSettingsManagement.GetConnectionStringsAsync(armClient, servicePrincipalAccount.SubscriptionNumber, targetSite);
+            var conStrings = await armClient.GetConnectionStringsAsync(targetSite);
 
             foreach (var connectionStringSetting in newConStrings)
             {
@@ -137,7 +135,7 @@ namespace Calamari.AzureAppService.Behaviors
                     new ConnStringValueTypePair(connectionStringSetting.Value, connectionStringSetting.Type);
             }
 
-            await AppSettingsManagement.PutConnectionStringsAsync(armClient, servicePrincipalAccount.SubscriptionNumber, conStrings, targetSite);
+            await armClient.UpdateConnectionStringsAsync(targetSite, conStrings);
         }
     }
 }

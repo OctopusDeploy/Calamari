@@ -4,15 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Azure.ResourceManager.AppService;
-using Azure.ResourceManager.AppService.Models;
 
 namespace Calamari.AzureAppService
 {
     internal class PublishingProfile
     {
-        static readonly CsmPublishingProfile Options = new CsmPublishingProfile { Format = PublishingProfileFormat.WebDeploy };
-
         public string Site { get; set; }
 
         public string Password { get; set; }
@@ -23,20 +19,8 @@ namespace Calamari.AzureAppService
 
         public string GetBasicAuthCredentials()
             => Convert.ToBase64String(Encoding.ASCII.GetBytes($"{Username}:{Password}"));
-
-        public static async Task<PublishingProfile> GetPublishingProfile(WebSiteResource webSiteResource)
-        {
-            using Stream stream = await webSiteResource.GetPublishingProfileXmlWithSecretsAsync(Options);
-            return await ParseXml(stream);
-        }
-
-        public static async Task<PublishingProfile> GetPublishingProfile(WebSiteSlotResource webSiteSlotResource)
-        {
-            using Stream stream = await webSiteSlotResource.GetPublishingProfileXmlWithSecretsSlotAsync(Options);
-            return await ParseXml(stream);
-        }
-
-        static async Task<PublishingProfile> ParseXml(Stream publishingProfileXmlStream)
+        
+        public static async Task<PublishingProfile> ParseXml(Stream publishingProfileXmlStream)
         {
             using var streamReader = new StreamReader(publishingProfileXmlStream);
             var document = XDocument.Parse(await streamReader.ReadToEndAsync());

@@ -214,8 +214,8 @@ namespace Calamari.AzureAppService.Tests
                                             slotName);
 
 
-            var settings = await AppSettingsManagement.GetAppSettingsAsync(ArmClient, SubscriptionId, targetSite);
-            var connStrings = await AppSettingsManagement.GetConnectionStringsAsync(ArmClient, SubscriptionId, targetSite);
+            var settings = await ArmClient.GetAppSettingsListAsync(targetSite);
+            var connStrings = await ArmClient.GetConnectionStringsAsync(targetSite);
 
             CollectionAssert.AreEquivalent(expectedSettingsList, settings);
 

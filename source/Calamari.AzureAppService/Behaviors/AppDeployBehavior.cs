@@ -1,11 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
-using Calamari.AzureAppService.Json;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
-using Newtonsoft.Json;
 
 namespace Calamari.AzureAppService.Behaviors
 {

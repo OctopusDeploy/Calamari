@@ -44,37 +44,21 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Info($"Updating web app to use image {image} from registry {registryHost}");
 
             Log.Verbose("Retrieving config (this is required to update image)");
-            var config = targetSite.HasSlot switch
-                         {
-                             true => (await armClient.GetWebSiteSlotConfigResource(WebSiteSlotConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
-                                                     .GetAsync()).Value.Data,
-                             false => (await armClient.GetWebSiteConfigResource(WebSiteConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
-                                                      .GetAsync()).Value.Data
-                         };
+            var config = await armClient.GetSiteConfigDataAsync(targetSite);
             config.LinuxFxVersion = $@"DOCKER|{image}";
 
             Log.Verbose("Retrieving app settings");
-            var appSettings = await AppSettingsManagement.GetAppSettings(armClient, principalAccount.SubscriptionNumber, targetSite);
+            var appSettings = await armClient.GetAppSettingsAsync(targetSite);
 
             appSettings.Properties["DOCKER_REGISTRY_SERVER_URL"] = "https://" + registryHost;
             appSettings.Properties["DOCKER_REGISTRY_SERVER_USERNAME"] = regUsername;
             appSettings.Properties["DOCKER_REGISTRY_SERVER_PASSWORD"] = regPwd;
 
             Log.Info("Updating app settings with container registry");
-            await AppSettingsManagement.PutAppSettingsAsync(armClient, principalAccount.SubscriptionNumber, appSettings, targetSite);
+            await armClient.UpdateAppSettingsAsync(targetSite, appSettings);
 
             Log.Info("Updating configuration with container image");
-            switch (targetSite.HasSlot)
-            {
-                case true:
-                    await armClient.GetWebSiteSlotConfigResource(WebSiteSlotConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site, targetSite.Slot))
-                                   .UpdateAsync(config);
-                    break;
-                case false:
-                    await armClient.GetWebSiteConfigResource(WebSiteConfigResource.CreateResourceIdentifier(principalAccount.SubscriptionNumber, targetSite.ResourceGroupName, targetSite.Site))
-                                   .UpdateAsync(config);
-                    break;
-            }
+            await armClient.UpdateSiteConfigDataAsync(targetSite, config);
         }
     }
 }

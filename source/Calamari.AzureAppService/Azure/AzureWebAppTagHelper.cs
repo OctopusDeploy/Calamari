@@ -6,7 +6,7 @@ using Calamari.Common.Features.Discovery;
 #nullable enable
 namespace Calamari.AzureAppService.Azure
 {
-    static class AzureWebAppHelper
+    static class AzureWebAppTagHelper
     {
         public static TargetTags GetOctopusTags(IReadOnlyDictionary<string, string> tags)
         {

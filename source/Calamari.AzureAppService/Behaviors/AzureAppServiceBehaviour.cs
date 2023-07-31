@@ -8,7 +8,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Azure;
-using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.Resources;
@@ -68,7 +67,7 @@ namespace Calamari.AzureAppService.Behaviors
             var targetSite = new AzureTargetSite(servicePrincipal.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
             var resourceGroups = armClient
-                                 .GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(servicePrincipal.SubscriptionNumber))
+                                 .GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(targetSite.SubscriptionId))
                                  .GetResourceGroups();
 
             Log.Verbose($"Checking existence of Resource Group '{resourceGroupName}'.");
@@ -80,7 +79,7 @@ namespace Calamari.AzureAppService.Behaviors
 
             //get a reference to the resource group resource
             //this does not actually load the resource group, but we can use it later
-            var resourceGroupResource = armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(servicePrincipal.SubscriptionNumber, resourceGroupName));
+            var resourceGroupResource = armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(targetSite.SubscriptionId, resourceGroupName));
 
             Log.Verbose($"Resource Group '{resourceGroupName}' found.");
 
@@ -91,7 +90,7 @@ namespace Calamari.AzureAppService.Behaviors
                 throw new Exception($"App Service not found.");
             }
 
-            var webSiteResource = armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(servicePrincipal.SubscriptionNumber, resourceGroupName, targetSite.Site));
+            var webSiteResource = armClient.GetWebSiteResource(targetSite.CreateWebSiteResourceIdentifier());
             Log.Verbose($"App Service '{targetSite.Site}' found, with Azure Resource Manager Id '{webSiteResource.Id.ToString()}'.");
 
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
@@ -137,16 +136,13 @@ namespace Calamari.AzureAppService.Behaviors
                 throw new Exception("Package File Path must be specified");
 
             // need to ensure slot is created as slot creds may be used
-            WebSiteSlotResource? webSiteSlotResource = null;
             if (targetSite.HasSlot && slotCreateTask != null)
-                webSiteSlotResource = await slotCreateTask;
+                await slotCreateTask;
 
             Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
-            var publishingProfile = targetSite.HasSlot switch
-                                    {
-                                        true => await PublishingProfile.GetPublishingProfile(webSiteSlotResource),
-                                        false => await PublishingProfile.GetPublishingProfile(webSiteResource)
-                                    };
+            using var publishingProfileXmlStream = await armClient.GetPublishingProfileXmlWithSecrets(targetSite);
+            var publishingProfile = await PublishingProfile.ParseXml(publishingProfileXmlStream);
+            
             Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 
             Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
@@ -161,7 +157,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (await slots.ExistsAsync(site.Slot))
             {
                 Log.Verbose($"Found existing slot {site.Slot}");
-                return armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(webSiteResource.Id.SubscriptionId, site.ResourceGroupName, site.Site, site.Slot));
+                return armClient.GetWebSiteSlotResource(site.CreateResourceIdentifier());
             }
 
             Log.Verbose($"Slot '{site.Slot}' not found.");
