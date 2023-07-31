@@ -22,6 +22,7 @@ using Calamari.Tests.Helpers;
 using Calamari.Util;
 using FluentAssertions;
 using NUnit.Framework;
+using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -49,6 +50,8 @@ namespace Calamari.Tests.KubernetesFixtures
         [OneTimeSetUp]
         public async Task OneTimeSetUp()
         {
+            InstallGkeCloudAuthPlugin();
+            
             if (ExplicitExeVersion != null)
             {
                 await DownloadExplicitHelmExecutable();
@@ -395,6 +398,31 @@ namespace Calamari.Tests.KubernetesFixtures
                     await stream.CopyToAsync(fileStream);
                 }
             }
+        }
+        
+        static HelmVersion InstallGkeCloudAuthPlugin()
+        {
+            StringBuilder stdout = new StringBuilder();
+            
+            var gcloudCmd = CalamariEnvironment.IsRunningOnWindows
+                ? SilentProcessRunner.ExecuteCommand("where", "gcloud.cmd", Environment.CurrentDirectory, output => stdout.AppendLine(output), error => { })
+                : SilentProcessRunner.ExecuteCommand("which", "gcloud", Environment.CurrentDirectory, output => stdout.AppendLine(output), error => { });
+            var gcloudExe = stdout.ToString();
+            if (gcloudExe.IsNullOrEmpty())
+            {
+                throw new Exception("gcloud could not be found on path");
+            }
+            
+            stdout = new StringBuilder();
+            var result = SilentProcessRunner.ExecuteCommand(gcloudExe,
+                                                            "components install gke-gcloud-auth-plugin --quiet",
+                                                            Environment.CurrentDirectory,
+                                                            output => stdout.AppendLine(output),
+                                                            error => { });
+
+            result.ExitCode.Should().Be(0);
+
+            return ParseVersion(stdout.ToString());
         }
 
         static HelmVersion GetVersion()
