@@ -46,7 +46,7 @@ namespace Calamari.AzureAppService.Azure
 
             var armEnvironment = string.IsNullOrEmpty(servicePrincipalAccount.ResourceManagementEndpointBaseUri)
                 // The new Azure SDK uses a different representation of Environments
-                ? azureKnownEnvironment.AsAzureArmEnvironment()
+                ? azureKnownEnvironment.AsArmEnvironment()
                 // if the user has specified a custom resource management endpoint, define a custom environment using that value
                 : new ArmEnvironment(new Uri(servicePrincipalAccount.ResourceManagementEndpointBaseUri, UriKind.Absolute), servicePrincipalAccount.ResourceManagementEndpointBaseUri);
 
