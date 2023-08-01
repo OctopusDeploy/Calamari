@@ -438,7 +438,7 @@ if ($deployAsWebSite)
 	ForEach($binding in $bindingArray){
 		if(![Bool]::Parse($binding.enabled)) {
     		Write-IISBinding "Ignore binding: " $binding
-    		return
+    		continue
     	}
 
 		$sslFlagPart = @{$true=1;$false=0}[[Bool]::Parse($binding.requireSni)]  
