@@ -12,6 +12,13 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureAppService
 {
+    ///<summary>
+    /// Provides a set of static methods for interacting with an <see cref="ArmClient"/> using an <see cref="AzureTargetSite"/>.
+    ///</summary>
+    /// <remarks>
+    /// These methods are suffixed with <i>Async</i> for consistency with the <see cref="ArmClient"/>.
+    /// In the <b>Azure.ResourceManager</b> SDKs, <i>Async</i>-suffixed methods indicate an API call is made to Azure.
+    /// </remarks>
     public static class ArmClientExtensions
     {
         public static async Task<SiteConfigData> GetSiteConfigDataAsync(this ArmClient armClient, AzureTargetSite targetSite)
@@ -126,8 +133,8 @@ namespace Calamari.AzureAppService
         /// <param name="slotConfigNames">collection of setting names to be marked as sticky (slot setting)</param>
         /// <returns>Awaitable <see cref="Task"/></returns>
         public static async Task UpdateSlotSettingsAsync(this ArmClient armClient,
-                                                          AzureTargetSite targetSite,
-                                                          IEnumerable<string> slotConfigNames)
+                                                         AzureTargetSite targetSite,
+                                                         IEnumerable<string> slotConfigNames)
         {
             var data = new SlotConfigNamesResourceData();
             data.AppSettingNames.AddRange(slotConfigNames);
