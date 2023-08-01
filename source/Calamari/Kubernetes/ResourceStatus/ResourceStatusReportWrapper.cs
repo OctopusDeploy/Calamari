@@ -73,7 +73,9 @@ namespace Calamari.Kubernetes.ResourceStatus
             try
             {
                 var resources = resourceFinder.FindResources(workingDirectory);
-                var statusResult = statusReportExecutor.Start(resources).WaitForCompletionOrTimeout()
+                var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
+                var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
+                var statusResult = statusReportExecutor.Start(timeoutSeconds, waitForJobs, resources).WaitForCompletionOrTimeout()
                                                        .GetAwaiter().GetResult();
                 if (!statusResult)
                 {

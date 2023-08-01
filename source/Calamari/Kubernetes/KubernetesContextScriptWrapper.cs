@@ -57,7 +57,6 @@ namespace Calamari.Kubernetes
             var kubectl = new Kubectl(variables, log, commandLineRunner, workingDirectory, environmentVars);
             var setupKubectlAuthentication = new SetupKubectlAuthentication(variables,
                                                                             log,
-                                                                            scriptSyntax,
                                                                             commandLineRunner,
                                                                             kubectl,
                                                                             environmentVars,

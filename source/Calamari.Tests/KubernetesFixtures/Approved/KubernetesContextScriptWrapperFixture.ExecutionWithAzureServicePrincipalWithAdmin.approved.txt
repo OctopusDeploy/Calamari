@@ -1,3 +1,4 @@
+[Verbose] "chmod" u=rw,g=,o= "<path>kubectl-octo.yml"
 [Verbose] Temporary kubectl config set to <path>kubectl-octo.yml
 [Verbose] "kubectl" version --client --output=yaml --request-timeout=1m
 [Verbose] Found kubectl and successfully verified it can be executed.

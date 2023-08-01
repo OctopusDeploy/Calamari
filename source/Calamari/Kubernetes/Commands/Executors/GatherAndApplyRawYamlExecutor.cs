@@ -46,8 +46,8 @@ namespace Calamari.Kubernetes.Commands.Executors
             try
             {
                 var variables = deployment.Variables;
-                var globs = variables.Get(SpecialVariables.CustomResourceYamlFileName)?.Split(';');
-                if (globs == null || globs.All(g => g.IsNullOrEmpty()))
+                var globs = variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
+                if (globs.IsNullOrEmpty())
                     return true;
                 var directories = GroupFilesIntoDirectories(deployment, globs, variables);
                 var resources = new HashSet<Resource>();
@@ -98,7 +98,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
         }
 
-        private IEnumerable<GlobDirectory> GroupFilesIntoDirectories(RunningDeployment deployment, string[] globs, IVariables variables)
+        private IEnumerable<GlobDirectory> GroupFilesIntoDirectories(RunningDeployment deployment, List<string> globs, IVariables variables)
         {
             var stagingDirectory = deployment.CurrentDirectory;
             var packageDirectory =
@@ -106,7 +106,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                 Path.DirectorySeparatorChar;
 
             var directories = new List<GlobDirectory>();
-            for (var i = 0; i < globs.Length; i ++)
+            for (var i = 0; i < globs.Count; i ++)
             {
                 var glob = globs[i];
                 var directoryPath = Path.Combine(stagingDirectory, GroupedDirectoryName, i.ToString());
@@ -144,7 +144,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             var files = fileSystem.EnumerateFilesRecursively(globDirectory.Directory).ToArray();
             if (!files.Any())
             {
-                log.Warn($"No files found matching '{globDirectory.Glob}");
+                log.Warn($"No files found matching '{globDirectory.Glob}'");
                 return Enumerable.Empty<Resource>();
             }
 
