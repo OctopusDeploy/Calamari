@@ -99,7 +99,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase("SimilarFolder", "WhoCaresFile", "Similar*", Description = "Different file in Similar folder should be kept", ExpectedResult = true)]
         [TestCase("SimilarFolder", "SimilarFile", "Similar*", Description = "Similar file in Similar folder should still be kept", ExpectedResult = true)]
         [TestCase("WhoCaresFolder", "WhoCaresFile", "Similar*", Description = "Similar file in purgable folder should still be removed", ExpectedResult = false)]
-        [TestCase("WhoCaresFolder", "SimilarFile", "Similar*", Description = "Different file in purgable folder should be removed", ExpectedResult = false)]
+        [TestCase("WhoCaresFolder", "SimilarFile", "Similar*", Description = "Similar file in purgable folder should be removed", ExpectedResult = false)]
         [TestCase("WhoCaresFolder", "WhoCaresFile", "**/Similar*", Description = "Different file in different folder should be removed", ExpectedResult = false)]
         [TestCase("WhoCaresFolder", "SimilarFile", "**/Similar*", Description = "Similar file in different folder should be kept", ExpectedResult = true)]
         [TestCase("ExactFolder", "WhoCaresFile", "ExactFolder", Description = "Different file in exact folder should be kept", ExpectedResult = true)]
