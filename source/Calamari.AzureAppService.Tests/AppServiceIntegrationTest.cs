@@ -141,8 +141,8 @@ namespace Calamari.AzureAppService.Tests
             variables.Add(AccountVariables.Password, ClientSecret);
             variables.Add(AccountVariables.TenantId, TenantId);
             variables.Add(AccountVariables.SubscriptionId, SubscriptionId);
-            variables.Add("Octopus.Action.Azure.ResourceGroupName", ResourceGroupName);
-            variables.Add("Octopus.Action.Azure.WebAppName", WebSiteResource.Data.Name);
+            variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, ResourceGroupName);
+            variables.Add(SpecialVariables.Action.Azure.WebAppName, WebSiteResource.Data.Name);
         }
 
         protected async Task<(AppServicePlanResource, WebSiteResource)> CreateAppServicePlanAndWebApp(

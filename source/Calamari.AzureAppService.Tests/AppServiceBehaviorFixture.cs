@@ -187,7 +187,7 @@ namespace Calamari.AzureAppService.Tests
                                                      {
                                                          context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
                                                          AddVariables(context);
-                                                         context.Variables["Octopus.Action.Azure.WebAppName"] = javaSite.Value.Data.Name;
+                                                         context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
                                                          context.Variables[PackageVariables.SubstituteInFilesTargets] = "test.jsp";
                                                      })
                                         .Execute();
