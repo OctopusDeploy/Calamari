@@ -132,7 +132,8 @@ namespace Calamari.AzureAppService.Tests
 
             await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
-            await AssertDeploySuccessAsync(AzureWebAppHelper.GetAzureTargetSite(site.Name, "", resourceGroupName));
+            var targetSite = new AzureTargetSite(subscriptionId, resourceGroupName, site.Name);
+            await AssertDeploySuccessAsync(targetSite);
         }
 
         [Test]
@@ -152,7 +153,8 @@ namespace Calamari.AzureAppService.Tests
 
             await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
-            await AssertDeploySuccessAsync(AzureWebAppHelper.GetAzureTargetSite(site.Name, slotName, resourceGroupName));
+            var targetSite = new AzureTargetSite(subscriptionId, resourceGroupName, site.Name, slotName);
+            await AssertDeploySuccessAsync(targetSite);
         }
 
         async Task AssertSetupSuccessAsync()
@@ -164,7 +166,7 @@ namespace Calamari.AzureAppService.Tests
             Assert.IsTrue(result.IsSuccessStatusCode);
         }
 
-        async Task AssertDeploySuccessAsync(TargetSite targetSite)
+        async Task AssertDeploySuccessAsync(AzureTargetSite targetSite)
         {
             var imageName = newVariables.Get(SpecialVariables.Action.Package.PackageId);
             var registryUrl = newVariables.Get(SpecialVariables.Action.Package.Registry);

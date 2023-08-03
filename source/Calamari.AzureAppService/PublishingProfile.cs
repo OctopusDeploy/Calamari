@@ -22,7 +22,7 @@ namespace Calamari.AzureAppService
 
         public string PublishUrl { get; set; }
         
-        public static async Task<PublishingProfile> GetPublishingProfile(TargetSite targetSite,
+        public static async Task<PublishingProfile> GetPublishingProfile(AzureTargetSite targetSite,
             ServicePrincipalAccount account)
         {
             string mgmtEndpoint = account.ResourceManagementEndpointBaseUri;

@@ -51,7 +51,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (resourceGroupName == null)
                 throw new Exception("resource group name must be specified");
 
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
+            var targetSite = new AzureTargetSite(principalAccount.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
             string token = await Auth.GetAuthTokenAsync(principalAccount);
 
@@ -93,7 +93,7 @@ namespace Calamari.AzureAppService.Behaviors
         /// <param name="appSettings"></param>
         /// <param name="authToken"></param>
         /// <returns></returns>
-        private async Task PublishAppSettings(WebSiteManagementClient webAppClient, TargetSite targetSite,
+        private async Task PublishAppSettings(WebSiteManagementClient webAppClient, AzureTargetSite targetSite,
             AppSetting[] appSettings, string authToken)
         {
             var settingsDict = new StringDictionary
@@ -138,7 +138,7 @@ namespace Calamari.AzureAppService.Behaviors
                 slotSettings.Union(existingSlotSettings), authToken);
         }
 
-        private async Task PublishConnectionStrings(WebSiteManagementClient webAppClient, TargetSite targetSite,
+        private async Task PublishConnectionStrings(WebSiteManagementClient webAppClient, AzureTargetSite targetSite,
             ConnectionStringSetting[] newConStrings)
         {
             var conStrings = await AppSettingsManagement.GetConnectionStringsAsync(webAppClient, targetSite);

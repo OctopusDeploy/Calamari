@@ -24,7 +24,7 @@ namespace Calamari.AzureAppService.Tests
             };
 
             // Act
-            var foundTags = AzureWebAppHelper.GetOctopusTags(tags);
+            var foundTags = AzureWebAppTagHelper.GetOctopusTags(tags);
 
             // Assert
             using (new AssertionScope())

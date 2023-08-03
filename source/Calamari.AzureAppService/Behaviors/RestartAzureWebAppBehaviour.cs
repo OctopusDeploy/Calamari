@@ -29,12 +29,13 @@ namespace Calamari.AzureAppService.Behaviors
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
-            var targetSite = AzureWebAppHelper.GetAzureTargetSite(webAppName, slotName, resourceGroupName);
             
             var principalAccount = ServicePrincipalAccount.CreateFromKnownVariables(variables);
             var token = await Auth.GetAuthTokenAsync(principalAccount);
             var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri), new TokenCredentials(token))
                 {SubscriptionId = principalAccount.SubscriptionNumber};
+            
+            var targetSite = new AzureTargetSite(principalAccount.SubscriptionNumber, resourceGroupName, webAppName, slotName);
             
             Log.Info("Performing soft restart of web app");
             await webAppClient.WebApps.RestartAsync(targetSite, true);
