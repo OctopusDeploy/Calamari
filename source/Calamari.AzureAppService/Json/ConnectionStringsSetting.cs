@@ -1,6 +1,5 @@
 ﻿using System;
-using Microsoft.Azure.Management.WebSites.Models;
-using ArmConnectionStringType = Azure.ResourceManager.AppService.Models.ConnectionStringType;
+using Azure.ResourceManager.AppService.Models;
 
 namespace Calamari.AzureAppService.Json
 {
@@ -9,8 +8,6 @@ namespace Calamari.AzureAppService.Json
         public string Name { get; set; }
         public string Value { get; set; }
         public ConnectionStringType Type { get; set; }
-
-        public ArmConnectionStringType ArmType => (ArmConnectionStringType)Enum.Parse(typeof(ArmConnectionStringType), Type.ToString(), true);
 
         public bool SlotSetting { get; set; }
 

@@ -1,96 +1,113 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Azure.Identity;
+using Azure;
+using Azure.Core;
+using Azure.ResourceManager;
+using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
-using Azure.ResourceManager.Resources.Models;
-using Calamari.AzureAppService;
 using Calamari.AzureAppService.Azure;
 using Calamari.Testing;
 using FluentAssertions;
-using Microsoft.Azure.Management.WebSites;
-using Microsoft.Azure.Management.WebSites.Models;
-using Microsoft.Rest;
 using NUnit.Framework;
-using NUnit.Framework.Internal;
-using Polly;
-using Polly.Retry;
+using Octostache;
 
 namespace Calamari.AzureAppService.Tests
 {
     public abstract class AppServiceIntegrationTest
     {
-        protected string clientId;
-        protected string clientSecret;
-        protected string tenantId;
-        protected string subscriptionId;
-        protected string resourceGroupName;
-        protected string resourceGroupLocation;
+        protected string ClientId { get; private set; }
+        protected string ClientSecret { get; private set; }
+        protected string TenantId { get; private set; }
+        protected string SubscriptionId { get; private set; }
+        protected string ResourceGroupName { get; private set; }
+        protected string ResourceGroupLocation { get; private set; }
         protected string greeting = "Calamari";
-        protected string authToken;
-        protected WebSiteManagementClient webMgmtClient;
-        protected Site site;
+        protected ArmClient ArmClient { get; private set; }
 
-        private ResourceGroupsOperations resourceGroupClient;
+        protected SubscriptionResource SubscriptionResource { get; private set; }
+        protected ResourceGroupResource ResourceGroupResource { get; private set; }
+        protected WebSiteResource WebSiteResource { get; private protected set; }
+
         private readonly HttpClient client = new HttpClient();
-        
-        protected RetryPolicy RetryPolicy { get; private set; }
 
         [OneTimeSetUp]
         public async Task Setup()
         {
             var resourceManagementEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ??
-                DefaultVariables.ResourceManagementEndpoint;
+                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
             var activeDirectoryEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
-                DefaultVariables.ActiveDirectoryEndpoint;
+                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
-            resourceGroupName = Randomizer.CreateRandomizer().GetString(34, "abcdefghijklmnopqrstuvwxyz1234567890");
+            //ask lawrence for the sandbox auto-cleanup tags
+            ResourceGroupName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
 
-            clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
-            clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
-            tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
-            subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-            resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
+            ClientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
+            ClientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
+            TenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
+            SubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
+            ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
-            authToken = await Auth.GetAuthTokenAsync(tenantId, clientId, clientSecret, resourceManagementEndpointBaseUri, activeDirectoryEndpointBaseUri);
+            var servicePrincipalAccount = new ServicePrincipalAccount(
+                                                                      SubscriptionId,
+                                                                      ClientId,
+                                                                      TenantId,
+                                                                      ClientSecret,
+                                                                      "AzurePublicCloud",
+                                                                      resourceManagementEndpointBaseUri,
+                                                                      activeDirectoryEndpointBaseUri);
 
+            ArmClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
+                                                                {
+                                                                    retryOptions.MaxRetries = 5;
+                                                                    retryOptions.Mode = RetryMode.Exponential;
+                                                                    retryOptions.Delay = TimeSpan.FromSeconds(2);
+                                                                });
 
-            var resourcesClient = new ResourcesManagementClient(subscriptionId,
-                new ClientSecretCredential(tenantId, clientId, clientSecret));
+            //create the resource group
+            SubscriptionResource = ArmClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(SubscriptionId));
+            var response = await SubscriptionResource
+                                 .GetResourceGroups()
+                                 .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                      ResourceGroupName,
+                                                      new ResourceGroupData(new AzureLocation(ResourceGroupLocation))
+                                                      {
+                                                          Tags =
+                                                          {
+                                                              // give them an expiry of 14 days so if the tests fail to clean them up
+                                                              // they will be automatically cleaned up by the Sandbox cleanup process
+                                                              // We keep them for 14 days just in case we need to do debugging/investigation
+                                                              ["LifetimeInDays"] = "14"
+                                                          }
+                                                      });
 
-            resourceGroupClient = resourcesClient.ResourceGroups;
+            ResourceGroupResource = response.Value;
 
-            var resourceGroup = new ResourceGroup(resourceGroupLocation);
-            resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
-
-            webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
-            {
-                SubscriptionId = subscriptionId,
-                HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
-            };
-            
-            //Create a retry policy that retries on 429 errors. This is because we've been getting a number of flaky test failures
-            RetryPolicy = RetryPolicyFactory.CreateForHttp429();
-            
-            await ConfigureTestResources(resourceGroup);
+            await ConfigureTestResources(ResourceGroupResource);
         }
 
-        protected abstract Task ConfigureTestResources(ResourceGroup resourceGroup);
+        protected abstract Task ConfigureTestResources(ResourceGroupResource resourceGroup);
 
         [OneTimeTearDown]
-        public async Task Cleanup()
+        public virtual async Task Cleanup()
         {
-            if (resourceGroupClient != null)
-                await resourceGroupClient.StartDeleteAsync(resourceGroupName);
+            await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(SubscriptionId, ResourceGroupName))
+                           .DeleteAsync(WaitUntil.Started);
         }
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
-            var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
-
+            var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
+                                                          {
+                                                              var r = await client.GetAsync($"https://{hostName}/{rootPath}");
+                                                              r.EnsureSuccessStatusCode();
+                                                              return r;
+                                                          });
+            
+            var result = await response.Content.ReadAsStringAsync();
             result.Should().Contain(actualText);
         }
 
@@ -115,12 +132,47 @@ namespace Calamari.AzureAppService.Tests
 
         protected void AddAzureVariables(CommandTestBuilderContext context)
         {
-            context.Variables.Add(AccountVariables.ClientId, clientId);
-            context.Variables.Add(AccountVariables.Password, clientSecret);
-            context.Variables.Add(AccountVariables.TenantId, tenantId);
-            context.Variables.Add(AccountVariables.SubscriptionId, subscriptionId);
-            context.Variables.Add("Octopus.Action.Azure.ResourceGroupName", resourceGroupName);
-            context.Variables.Add("Octopus.Action.Azure.WebAppName", site.Name);
+            AddAzureVariables(context.Variables);
+        }
+
+        protected void AddAzureVariables(VariableDictionary variables)
+        {
+            variables.Add(AccountVariables.ClientId, ClientId);
+            variables.Add(AccountVariables.Password, ClientSecret);
+            variables.Add(AccountVariables.TenantId, TenantId);
+            variables.Add(AccountVariables.SubscriptionId, SubscriptionId);
+            variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, ResourceGroupName);
+            variables.Add(SpecialVariables.Action.Azure.WebAppName, WebSiteResource.Data.Name);
+        }
+
+        protected async Task<(AppServicePlanResource, WebSiteResource)> CreateAppServicePlanAndWebApp(
+            ResourceGroupResource resourceGroup,
+            AppServicePlanData appServicePlanData = null,
+            WebSiteData webSiteData = null)
+        {
+            appServicePlanData ??= new AppServicePlanData(resourceGroup.Data.Location)
+            {
+                Sku = new AppServiceSkuDescription
+                {
+                    Name = "S1",
+                    Tier = "Standard"
+                }
+            };
+
+            var servicePlanResponse = await resourceGroup.GetAppServicePlans()
+                                                         .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                              resourceGroup.Data.Name,
+                                                                              appServicePlanData);
+
+            webSiteData ??= new WebSiteData(resourceGroup.Data.Location);
+            webSiteData.AppServicePlanId = servicePlanResponse.Value.Id;
+
+            var webSiteResponse = await resourceGroup.GetWebSites()
+                                                     .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                          resourceGroup.Data.Name,
+                                                                          webSiteData);
+
+            return (servicePlanResponse.Value, webSiteResponse.Value);
         }
     }
 }

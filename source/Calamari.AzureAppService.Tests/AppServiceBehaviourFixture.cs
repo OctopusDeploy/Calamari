@@ -8,55 +8,36 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
-using Azure.ResourceManager.Resources.Models;
+using Azure;
+using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.AppService.Models;
+using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Storage;
+using Azure.ResourceManager.Storage.Models;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.LogParser;
 using FluentAssertions;
-using Microsoft.Azure.Management.Storage;
-using Microsoft.Azure.Management.Storage.Models;
-using Microsoft.Azure.Management.WebSites;
-using Microsoft.Azure.Management.WebSites.Models;
-using Microsoft.Rest;
 using NUnit.Framework;
-using Polly;
-using Polly.Retry;
 using FileShare = System.IO.FileShare;
-using Sku = Microsoft.Azure.Management.Storage.Models.Sku;
-using StorageManagementClient = Microsoft.Azure.Management.Storage.StorageManagementClient;
 
 namespace Calamari.AzureAppService.Tests
 {
-    public class LegacyAppServiceBehaviorFixture
+    public class AppServiceBehaviorFixture
     {
         [TestFixture]
         public class WhenUsingAWindowsDotNetAppService : AppServiceIntegrationTest
         {
-            private string servicePlanId;
+            private AppServicePlanResource appServicePlanResource;
 
-            protected override async Task ConfigureTestResources(ResourceGroup resourceGroup)
+            protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
-                var svcPlan = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(
-                                                                                                                                      resourceGroupName: resourceGroup.Name,
-                                                                                                                                      name: resourceGroup.Name,
-                                                                                                                                      new AppServicePlan(resourceGroup.Location)
-                                                                                                                                      {
-                                                                                                                                          Sku = new SkuDescription("S1", "Standard")
-                                                                                                                                      }
-                                                                                                                                     ));
+                var (appServicePlan, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup);
 
-                servicePlanId = svcPlan.Id;
-
-                site = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(
-                                                                                                                       resourceGroupName: resourceGroup.Name,
-                                                                                                                       name: resourceGroup.Name,
-                                                                                                                       new Site(resourceGroup.Location)
-                                                                                                                       {
-                                                                                                                           ServerFarmId = svcPlan.Id
-                                                                                                                       }
-                                                                                                                      ));
+                appServicePlanResource = appServicePlan;
+                WebSiteResource = webSite;
             }
 
             [Test]
@@ -72,7 +53,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -89,21 +70,19 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
             public async Task CanDeployWebAppZip_ToDeploymentSlot()
             {
-                var slotName = "stage";
+                const string slotName = "stage";
                 greeting = "stage";
 
                 (string packagePath, string packageName, string packageVersion) packageinfo;
 
-                var slotTask = RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName,
-                                                                                                                             resourceGroupName,
-                                                                                                                             site,
-                                                                                                                             slotName));
+                var slotTask = WebSiteResource.GetWebSiteSlots()
+                                              .CreateOrUpdateAsync(WaitUntil.Completed, slotName, WebSiteResource.Data);
 
                 var tempPath = TemporaryDirectory.Create();
                 new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
@@ -114,7 +93,8 @@ namespace Calamari.AzureAppService.Tests
                 packageinfo.packageName = "AzureZipDeployPackage";
                 ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
 
-                await slotTask;
+                var slotResponse = await slotTask;
+                var slotResource = slotResponse.Value;
 
                 await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
                                         .WithArrange(context =>
@@ -125,7 +105,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{site.Name}-{slotName}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(slotResource.Data.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -173,7 +153,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
-                await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -181,18 +161,19 @@ namespace Calamari.AzureAppService.Tests
             {
                 // Need to spin up a specific app service with Tomcat installed
                 // Need java installed on the test runner (MJH 2022-05-06: is this actually true? I don't see why we'd need java on the test runner)
-                var javaSite = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroupName,
-                                                                                                                               $"{resourceGroupName}-java",
-                                                                                                                               new Site(site.Location)
-                                                                                                                               {
-                                                                                                                                   ServerFarmId = servicePlanId,
-                                                                                                                                   SiteConfig = new SiteConfig
-                                                                                                                                   {
-                                                                                                                                       JavaVersion = "1.8",
-                                                                                                                                       JavaContainer = "TOMCAT",
-                                                                                                                                       JavaContainerVersion = "9.0"
-                                                                                                                                   }
-                                                                                                                               }));
+                var javaSite = await ResourceGroupResource.GetWebSites()
+                                                          .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                               $"{ResourceGroupName}-java",
+                                                                               new WebSiteData(ResourceGroupResource.Data.Location)
+                                                                               {
+                                                                                   AppServicePlanId = appServicePlanResource.Data.Id,
+                                                                                   SiteConfig = new SiteConfigProperties
+                                                                                   {
+                                                                                       JavaVersion = "1.8",
+                                                                                       JavaContainer = "TOMCAT",
+                                                                                       JavaContainerVersion = "9.0"
+                                                                                   }
+                                                                               });
 
                 (string packagePath, string packageName, string packageVersion) packageinfo;
                 var assemblyFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
@@ -206,12 +187,12 @@ namespace Calamari.AzureAppService.Tests
                                                      {
                                                          context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
                                                          AddVariables(context);
-                                                         context.Variables["Octopus.Action.Azure.WebAppName"] = javaSite.Name;
+                                                         context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
                                                          context.Variables[PackageVariables.SubstituteInFilesTargets] = "test.jsp";
                                                      })
                                         .Execute();
 
-                await AssertContent($"{javaSite.Name}.azurewebsites.net", $"Hello! {greeting}", "test.jsp");
+                await AssertContent(javaSite.Value.Data.DefaultHostName, $"Hello! {greeting}", "test.jsp");
             }
 
             [Test]
@@ -307,56 +288,62 @@ namespace Calamari.AzureAppService.Tests
         [TestFixture]
         public class WhenUsingALinuxAppService : AppServiceIntegrationTest
         {
-            protected override async Task ConfigureTestResources(ResourceGroup resourceGroup)
+            protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
-                var storageClient = new StorageManagementClient(new TokenCredentials(authToken))
-                {
-                    SubscriptionId = subscriptionId
-                };
-                var storageAccountName = resourceGroupName.Replace("-", "").Substring(0, 20);
-                var storageAccount = await RetryPolicy.ExecuteAsync(async () => await storageClient.StorageAccounts.CreateAsync(resourceGroupName,
-                                                                                                                                accountName: storageAccountName,
-                                                                                                                                new StorageAccountCreateParameters()
-                                                                                                                                {
-                                                                                                                                    Sku = new Sku("Standard_LRS"),
-                                                                                                                                    Kind = "Storage",
-                                                                                                                                    Location = resourceGroupLocation
-                                                                                                                                }
-                                                                                                                               ));
+                var storageAccountName = ResourceGroupName.Replace("-", "").Substring(0, 20);
 
-                var keys = await storageClient.StorageAccounts.ListKeysAsync(resourceGroupName, storageAccountName);
+                var storageAccountResponse = await ResourceGroupResource
+                                                   .GetStorageAccounts()
+                                                   .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                        storageAccountName,
+                                                                        new StorageAccountCreateOrUpdateContent(
+                                                                                                                new StorageSku(StorageSkuName.StandardLrs),
+                                                                                                                StorageKind.Storage,
+                                                                                                                ResourceGroupResource.Data.Location)
+                                                                       );
 
-                var linuxSvcPlan = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroupName,
-                                                                                                                                           $"{resourceGroupName}-linux-asp",
-                                                                                                                                           new AppServicePlan(resourceGroupLocation)
-                                                                                                                                           {
-                                                                                                                                               Sku = new SkuDescription("B1", "Basic"),
-                                                                                                                                               Kind = "linux",
-                                                                                                                                               Reserved = true
-                                                                                                                                           }
-                                                                                                                                          ));
+                var keys = await storageAccountResponse
+                                 .Value
+                                                       .GetKeysAsync()
+                                                       .ToListAsync();
+                
+                var linuxAppServicePlan = await resourceGroup.GetAppServicePlans()
+                                                             .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                                  $"{resourceGroup.Data.Name}-linux-asp",
+                                                                                  new AppServicePlanData(resourceGroup.Data.Location)
+                                                                                  {
+                                                                                      Sku = new AppServiceSkuDescription
+                                                                                      {
+                                                                                          Name = "S1",
+                                                                                          Tier = "Standard"
+                                                                                      },
+                                                                                      Kind = "linux",
+                                                                                      IsReserved = true
+                                                                                  });
 
-                site = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroupName,
-                                                                                                                       $"{resourceGroupName}-linux",
-                                                                                                                       new Site(resourceGroupLocation)
-                                                                                                                       {
-                                                                                                                           ServerFarmId = linuxSvcPlan.Id,
-                                                                                                                           Kind = "functionapp,linux",
-                                                                                                                           Reserved = true,
-                                                                                                                           SiteConfig = new SiteConfig
-                                                                                                                           {
-                                                                                                                               AlwaysOn = true,
-                                                                                                                               LinuxFxVersion = "DOTNET|6.0",
-                                                                                                                               Use32BitWorkerProcess = true,
-                                                                                                                               AppSettings = new List<NameValuePair>
-                                                                                                                               {
-                                                                                                                                   new NameValuePair("FUNCTIONS_WORKER_RUNTIME", "dotnet"),
-                                                                                                                                   new NameValuePair("FUNCTIONS_EXTENSION_VERSION", "~4"),
-                                                                                                                                   new NameValuePair("AzureWebJobsStorage", $"DefaultEndpointsProtocol=https;AccountName={storageAccount.Name};AccountKey={keys.Keys.First().Value};EndpointSuffix=core.windows.net")
-                                                                                                                               }
-                                                                                                                           }
-                                                                                                                       }
-                                                                                                                      ));
+                var linuxWebSiteResponse = await resourceGroup.GetWebSites()
+                                                         .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                              $"{resourceGroup.Data.Name}-linux",
+                                                                              new WebSiteData(resourceGroup.Data.Location)
+                                                                              {
+                                                                                  AppServicePlanId = linuxAppServicePlan.Value.Id,
+                                                                                  Kind = "functionapp,linux",
+                                                                                  IsReserved = true,
+                                                                                  SiteConfig = new SiteConfigProperties
+                                                                                  {
+                                                                                      IsAlwaysOn = true,
+                                                                                      LinuxFxVersion = "DOTNET|6.0",
+                                                                                      Use32BitWorkerProcess = true,
+                                                                                      AppSettings = new List<AppServiceNameValuePair>
+                                                                                      {
+                                                                                          new AppServiceNameValuePair{Name = "FUNCTIONS_WORKER_RUNTIME", Value = "dotnet"},
+                                                                                          new AppServiceNameValuePair{Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4"},
+                                                                                          new AppServiceNameValuePair{Name = "AzureWebJobsStorage", Value = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={keys.First().Value};EndpointSuffix=core.windows.net"},
+                                                                                          
+                                                                                      }
+                                                                                  }
+                                                                              });
+                WebSiteResource = linuxWebSiteResponse.Value;
             }
 
             [Test]
@@ -378,7 +365,7 @@ namespace Calamari.AzureAppService.Tests
                 await DoWithRetries(10,
                                     async () =>
                                     {
-                                        await AssertContent($"{site.Name}.azurewebsites.net",
+                                        await AssertContent(WebSiteResource.Data.DefaultHostName,
                                                             rootPath: $"api/HttpExample?name={greeting}",
                                                             actualText: $"Hello, {greeting}");
                                     },
@@ -389,9 +376,9 @@ namespace Calamari.AzureAppService.Tests
             public async Task CanDeployZip_ToLinuxFunctionApp_WithRunFromPackageFlag()
             {
                 // Arrange
-                var settings = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.ListApplicationSettingsAsync(resourceGroupName, site.Name));
+                AppServiceConfigurationDictionary settings = await WebSiteResource.GetApplicationSettingsAsync();
                 settings.Properties["WEBSITE_RUN_FROM_PACKAGE"] = "1";
-                await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.UpdateApplicationSettingsAsync(resourceGroupName, site.Name, settings));
+                await WebSiteResource.UpdateApplicationSettingsAsync(settings);
 
                 var packageInfo = PrepareZipPackage();
 
@@ -408,7 +395,7 @@ namespace Calamari.AzureAppService.Tests
                 await DoWithRetries(10,
                                     async () =>
                                     {
-                                        await AssertContent($"{site.Name}.azurewebsites.net",
+                                        await AssertContent(WebSiteResource.Data.DefaultHostName,
                                                             rootPath: $"api/HttpExample?name={greeting}",
                                                             actualText: $"Hello, {greeting}");
                                     },

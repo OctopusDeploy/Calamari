@@ -17,7 +17,7 @@ namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
     [NonParallelizable]
-    class AzureWebAppHealthCheckActionHandlerFixtures
+    class LegacyAzureWebAppHealthCheckActionHandlerFixtures
     {
         const string NonExistentProxyHostname = "non-existent-proxy.local";
         const int NonExistentProxyPort = 3128;
@@ -65,7 +65,7 @@ namespace Calamari.AzureAppService.Tests
         [NonParallelizable]
         public async Task WebAppIsNotFound()
         {
-            var randomName = SdkContext.RandomResourceName(nameof(AzureWebAppHealthCheckActionHandlerFixtures), 60);
+            var randomName = SdkContext.RandomResourceName(nameof(LegacyAzureWebAppHealthCheckActionHandlerFixtures), 60);
             await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
                                     .WithArrange(context => SetUpVariables(context, randomName, randomName))
                                     .WithAssert(result => result.WasSuccessful.Should().BeFalse())
@@ -97,7 +97,7 @@ namespace Calamari.AzureAppService.Tests
         
         static async Task<(IAzure azure, IResourceGroup resourceGroup, IWebApp webApp)> SetUpAzureWebApp()
         {
-            var resourceGroupName = SdkContext.RandomResourceName(nameof(AzureWebAppHealthCheckActionHandlerFixtures), 60);
+            var resourceGroupName = SdkContext.RandomResourceName(nameof(LegacyAzureWebAppHealthCheckActionHandlerFixtures), 60);
             var clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
             var clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             var tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
@@ -124,14 +124,14 @@ namespace Calamari.AzureAppService.Tests
                                            .CreateAsync();
 
                 var appServicePlan = await azure.AppServices.AppServicePlans
-                                                .Define(SdkContext.RandomResourceName(nameof(AzureWebAppHealthCheckActionHandlerFixtures), 60))
+                                                .Define(SdkContext.RandomResourceName(nameof(LegacyAzureWebAppHealthCheckActionHandlerFixtures), 60))
                                                 .WithRegion(resourceGroup.Region)
                                                 .WithExistingResourceGroup(resourceGroup)
                                                 .WithPricingTier(PricingTier.BasicB1)
                                                 .WithOperatingSystem(OperatingSystem.Windows)
                                                 .CreateAsync();
 
-                var webAppName = SdkContext.RandomResourceName(nameof(AzureWebAppHealthCheckActionHandlerFixtures), 60);
+                var webAppName = SdkContext.RandomResourceName(nameof(LegacyAzureWebAppHealthCheckActionHandlerFixtures), 60);
                 webApp = await azure.WebApps
                            .Define(webAppName)
                            .WithExistingWindowsPlan(appServicePlan)

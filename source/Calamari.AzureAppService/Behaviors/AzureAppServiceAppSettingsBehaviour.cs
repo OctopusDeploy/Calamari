@@ -69,7 +69,7 @@ namespace Calamari.AzureAppService.Behaviors
                 var connectionStringsJson = variables.Get(SpecialVariables.Action.Azure.ConnectionStrings, "");
                 Log.Verbose($"Updating connection strings:\n{connectionStringsJson}");
                 var connectionStrings = JsonConvert.DeserializeObject<ConnectionStringSetting[]>(connectionStringsJson);
-                await PublishConnectionStrings(armClient, principalAccount, targetSite, connectionStrings);
+                await PublishConnectionStrings(armClient, targetSite, connectionStrings);
                 Log.Info("Updated connection strings");
             }
         }
@@ -123,7 +123,6 @@ namespace Calamari.AzureAppService.Behaviors
         }
 
         private async Task PublishConnectionStrings(ArmClient armClient,
-                                                    ServicePrincipalAccount servicePrincipalAccount,
                                                     AzureTargetSite targetSite,
                                                     ConnectionStringSetting[] newConStrings)
         {
@@ -132,7 +131,7 @@ namespace Calamari.AzureAppService.Behaviors
             foreach (var connectionStringSetting in newConStrings)
             {
                 conStrings.Properties[connectionStringSetting.Name] =
-                    new ConnStringValueTypePair(connectionStringSetting.Value, connectionStringSetting.ArmType);
+                    new ConnStringValueTypePair(connectionStringSetting.Value, connectionStringSetting.Type);
             }
 
             await armClient.UpdateConnectionStringsAsync(targetSite, conStrings);

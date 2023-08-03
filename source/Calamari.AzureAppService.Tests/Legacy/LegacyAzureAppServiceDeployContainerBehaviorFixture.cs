@@ -28,7 +28,7 @@ using Polly.Retry;
 namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
-    public class AzureAppServiceDeployContainerBehaviorFixture
+    public class LegacyAzureAppServiceDeployContainerBehaviorFixture
     {
         private string clientId;
         private string clientSecret;
