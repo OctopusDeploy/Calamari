@@ -56,7 +56,7 @@ namespace Calamari.AzureAppService.Tests
                                                                       ClientId,
                                                                       TenantId,
                                                                       ClientSecret,
-                                                                      "AzurePublicCloud",
+                                                                      "AzureGlobalCloud",
                                                                       resourceManagementEndpointBaseUri,
                                                                       activeDirectoryEndpointBaseUri);
 
