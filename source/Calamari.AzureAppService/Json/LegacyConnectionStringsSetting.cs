@@ -10,8 +10,6 @@ namespace Calamari.AzureAppService.Json
         public string Value { get; set; }
         public ConnectionStringType Type { get; set; }
 
-        public ArmConnectionStringType ArmType => (ArmConnectionStringType)Enum.Parse(typeof(ArmConnectionStringType), Type.ToString(), true);
-
         public bool SlotSetting { get; set; }
 
         internal void Deconstruct(out string name, out string value, out ConnectionStringType type, out bool isSlotSetting)
