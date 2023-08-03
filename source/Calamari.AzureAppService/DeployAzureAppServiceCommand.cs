@@ -11,9 +11,9 @@ namespace Calamari.AzureAppService
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
-            yield return resolver.Create<AppDeployBehavior>();
-            yield return resolver.Create<AzureAppServiceSettingsBehaviour>();
-            yield return resolver.Create<RestartAzureWebAppBehaviour>();
+            yield return resolver.Create<AppDeployBehaviour>();
+            yield return resolver.Create<AzureAppServiceSettingsBehaviourFactory>();
+            yield return resolver.Create<RestartAzureWebAppBehaviourFactory>();
         }
     }
 
@@ -22,7 +22,7 @@ namespace Calamari.AzureAppService
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
-            yield return resolver.Create<AzureAppServiceDeployBehaviour>();
+            yield return resolver.Create<AzureAppServiceDeployBehaviourFactory>();
         }
     }
 }

@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Azure.Management.WebSites.Models;
-using Newtonsoft.Json;
+using ArmConnectionStringType = Azure.ResourceManager.AppService.Models.ConnectionStringType;
 
 namespace Calamari.AzureAppService.Json
 {
@@ -13,6 +9,8 @@ namespace Calamari.AzureAppService.Json
         public string Name { get; set; }
         public string Value { get; set; }
         public ConnectionStringType Type { get; set; }
+
+        public ArmConnectionStringType ArmType => (ArmConnectionStringType)Enum.Parse(typeof(ArmConnectionStringType), Type.ToString(), true);
 
         public bool SlotSetting { get; set; }
 
@@ -35,7 +33,7 @@ namespace Calamari.AzureAppService.Json
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == this.GetType() && Equals((AppSetting) obj);
+            return obj.GetType() == this.GetType() && Equals((AppSetting)obj);
         }
 
         public override int GetHashCode()

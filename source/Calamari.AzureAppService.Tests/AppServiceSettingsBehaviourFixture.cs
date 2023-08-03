@@ -144,7 +144,7 @@ namespace Calamari.AzureAppService.Tests
 
             iVars.Add(SpecialVariables.Action.Azure.AppSettings, appSettings.json);
 
-            await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
+            await new LegacyAzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
 
             await AssertAppSettings(appSettings.setting, new ConnectionStringDictionary());
         }
@@ -173,7 +173,7 @@ namespace Calamari.AzureAppService.Tests
 
             iVars.Add(SpecialVariables.Action.Azure.ConnectionStrings, connectionStrings.json);
 
-            await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
+            await new LegacyAzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
 
             await AssertAppSettings(new AppSetting[] { }, connectionStrings.connStrings);
         }
@@ -221,7 +221,7 @@ namespace Calamari.AzureAppService.Tests
 
             await existingSettingsTask;
 
-            await new AzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
+            await new LegacyAzureAppServiceSettingsBehaviour(new InMemoryLog()).Execute(runningContext);
             await AssertAppSettings(settings.setting, connectionStrings.connStrings);
         }
 

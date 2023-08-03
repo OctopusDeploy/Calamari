@@ -16,11 +16,11 @@ using Newtonsoft.Json;
 
 namespace Calamari.AzureAppService.Behaviors
 {
-    class AzureAppServiceSettingsBehaviour : IDeployBehaviour
+    class LegacyAzureAppServiceSettingsBehaviour : IDeployBehaviour
     {
         private ILog Log { get; }
 
-        public AzureAppServiceSettingsBehaviour(ILog log)
+        public LegacyAzureAppServiceSettingsBehaviour(ILog log)
         {
             Log = log;
         }

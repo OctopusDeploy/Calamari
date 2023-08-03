@@ -130,7 +130,7 @@ namespace Calamari.AzureAppService.Tests
 
             var runningContext = new RunningDeployment("", newVariables);
 
-            await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
+            await new LegacyAzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
             var targetSite = new AzureTargetSite(subscriptionId, resourceGroupName, site.Name);
             await AssertDeploySuccessAsync(targetSite);
@@ -151,7 +151,7 @@ namespace Calamari.AzureAppService.Tests
 
             var runningContext = new RunningDeployment("", newVariables);
 
-            await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
+            await new LegacyAzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
             var targetSite = new AzureTargetSite(subscriptionId, resourceGroupName, site.Name, slotName);
             await AssertDeploySuccessAsync(targetSite);
