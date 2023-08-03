@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.Azure.Management.WebSites.Models;
-using ArmConnectionStringType = Azure.ResourceManager.AppService.Models.ConnectionStringType;
 
 namespace Calamari.AzureAppService.Json
 {
