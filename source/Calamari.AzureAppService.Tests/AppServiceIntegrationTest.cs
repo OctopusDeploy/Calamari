@@ -42,7 +42,6 @@ namespace Calamari.AzureAppService.Tests
             var activeDirectoryEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
-            //ask lawrence for the sandbox auto-cleanup tags
             ResourceGroupName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
 
             ClientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);

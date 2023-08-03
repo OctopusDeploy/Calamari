@@ -34,20 +34,18 @@ namespace Calamari.AzureAppService.Tests
 
         private ResourceGroupsOperations resourceGroupClient;
         private readonly HttpClient client = new HttpClient();
-        
+
         protected RetryPolicy RetryPolicy { get; private set; }
 
         [OneTimeSetUp]
         public async Task Setup()
         {
             var resourceManagementEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ??
-                DefaultVariables.ResourceManagementEndpoint;
+                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
             var activeDirectoryEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ??
-                DefaultVariables.ActiveDirectoryEndpoint;
+                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
-            resourceGroupName = Randomizer.CreateRandomizer().GetString(34, "abcdefghijklmnopqrstuvwxyz1234567890");
+            resourceGroupName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
 
             clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
             clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
@@ -55,15 +53,27 @@ namespace Calamari.AzureAppService.Tests
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
-            authToken = await Auth.GetAuthTokenAsync(tenantId, clientId, clientSecret, resourceManagementEndpointBaseUri, activeDirectoryEndpointBaseUri);
-
+            authToken = await Auth.GetAuthTokenAsync(tenantId,
+                                                     clientId,
+                                                     clientSecret,
+                                                     resourceManagementEndpointBaseUri,
+                                                     activeDirectoryEndpointBaseUri);
 
             var resourcesClient = new ResourcesManagementClient(subscriptionId,
-                new ClientSecretCredential(tenantId, clientId, clientSecret));
+                                                                new ClientSecretCredential(tenantId, clientId, clientSecret));
 
             resourceGroupClient = resourcesClient.ResourceGroups;
 
-            var resourceGroup = new ResourceGroup(resourceGroupLocation);
+            var resourceGroup = new ResourceGroup(resourceGroupLocation)
+            {
+                Tags =
+                {
+                    // give them an expiry of 14 days so if the tests fail to clean them up
+                    // they will be automatically cleaned up by the Sandbox cleanup process
+                    // We keep them for 14 days just in case we need to do debugging/investigation
+                    ["LifetimeInDays"] = "14"
+                }
+            };
             resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
 
             webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
@@ -71,10 +81,10 @@ namespace Calamari.AzureAppService.Tests
                 SubscriptionId = subscriptionId,
                 HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
             };
-            
+
             //Create a retry policy that retries on 429 errors. This is because we've been getting a number of flaky test failures
             RetryPolicy = RetryPolicyFactory.CreateForHttp429();
-            
+
             await ConfigureTestResources(resourceGroup);
         }
 
