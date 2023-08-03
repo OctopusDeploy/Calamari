@@ -29,7 +29,7 @@ using StorageManagementClient = Microsoft.Azure.Management.Storage.StorageManage
 
 namespace Calamari.AzureAppService.Tests
 {
-    public class AppServiceBehaviorFixture
+    public class LegacyAppServiceBehaviorFixture
     {
         [TestFixture]
         public class WhenUsingAWindowsDotNetAppService : AppServiceIntegrationTest

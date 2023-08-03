@@ -18,9 +18,9 @@ using WebSiteManagementClient = Microsoft.Azure.Management.WebSites.WebSiteManag
 
 namespace Calamari.AzureAppService.Behaviors
 {
-    internal class AzureAppServiceBehaviour : IDeployBehaviour
+    internal class LegacyAzureAppServiceBehaviour : IDeployBehaviour
     {
-        public AzureAppServiceBehaviour(ILog log)
+        public LegacyAzureAppServiceBehaviour(ILog log)
         {
             Log = log;
             Archive = new ZipPackageProvider();

@@ -1,11 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
-using Calamari.AzureAppService.Json;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
-using Newtonsoft.Json;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -35,7 +34,7 @@ namespace Calamari.AzureAppService.Behaviors
 
                 // Default to zip deploy
                 default:
-                    return new AzureAppServiceBehaviour(Log).Execute(context);
+                    return new AzureAppServiceDeployBehaviour(Log).Execute(context);
             }
         }
     }
