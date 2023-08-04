@@ -330,7 +330,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                            $"{resourceGroupName}-linux-asp",
                                                                                                                                            new AppServicePlan(resourceGroupLocation)
                                                                                                                                            {
-                                                                                                                                               Sku = new SkuDescription("B1", "Basic"),
+                                                                                                                                               Sku = new SkuDescription("S1", "Standard"),
                                                                                                                                                Kind = "linux",
                                                                                                                                                Reserved = true
                                                                                                                                            }
