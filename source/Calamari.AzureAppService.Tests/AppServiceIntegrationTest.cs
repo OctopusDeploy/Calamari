@@ -50,8 +50,7 @@ namespace Calamari.AzureAppService.Tests
             SubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
-            var servicePrincipalAccount = new ServicePrincipalAccount(
-                                                                      SubscriptionId,
+            var servicePrincipalAccount = new ServicePrincipalAccount(SubscriptionId,
                                                                       ClientId,
                                                                       TenantId,
                                                                       ClientSecret,
