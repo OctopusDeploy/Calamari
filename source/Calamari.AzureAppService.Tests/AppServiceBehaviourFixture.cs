@@ -15,6 +15,7 @@ using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
 using Calamari.AzureAppService.Azure;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
@@ -282,6 +283,9 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
                 context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
+                
+                //set the feature toggle so we get the new code
+                context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.UseModernAzureAppServiceSdkFeatureToggle.ToString());
             }
         }
 
@@ -427,6 +431,9 @@ namespace Calamari.AzureAppService.Tests
             {
                 AddAzureVariables(context);
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
+                
+                //set the feature toggle so we get the new code
+                context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.UseModernAzureAppServiceSdkFeatureToggle.ToString());
             }
         }
     }
