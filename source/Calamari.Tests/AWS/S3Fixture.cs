@@ -588,7 +588,7 @@ namespace Calamari.Tests.AWS
         public S3Fixture()
         {
             region = RegionRandomiser.GetARegion();
-            bucketName = $"{DateTime.UtcNow:yyyy-MM-dd}-calamari-s3fixture-{Guid.NewGuid():N}";
+            bucketName = $"calamari-s3fixture-{Guid.NewGuid():N}";
         }
 
         [OneTimeTearDown]

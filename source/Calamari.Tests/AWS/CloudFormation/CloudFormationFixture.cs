@@ -12,7 +12,7 @@ namespace Calamari.Tests.AWS.CloudFormation
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class CloudFormationFixture
     {
-        string GenerateStackName() => $"{DateTime.UtcNow:yyyy-MM-dd}-calamari-cloudform-{Guid.NewGuid():N}";
+        string GenerateStackName() => $"calamari-cloudformationfixture-{Guid.NewGuid():N}";
 
         [Test]
         public async Task CreateOrUpdateCloudFormationTemplate()
