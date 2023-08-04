@@ -25,9 +25,16 @@ namespace Calamari.AzureAppService
         {
             return targetSite.HasSlot switch
                    {
-                       true => (await armClient.GetWebSiteSlotConfigResource(targetSite.CreateResourceIdentifier())
+                       true => (await armClient.GetWebSiteSlotConfigResource(WebSiteSlotConfigResource.CreateResourceIdentifier(
+                                                                                                                                targetSite.SubscriptionId,
+                                                                                                                                targetSite.ResourceGroupName,
+                                                                                                                                targetSite.Site,
+                                                                                                                                targetSite.Slot))
                                                .GetAsync()).Value.Data,
-                       false => (await armClient.GetWebSiteConfigResource(targetSite.CreateResourceIdentifier())
+                       false => (await armClient.GetWebSiteConfigResource(WebSiteConfigResource.CreateResourceIdentifier(
+                                                                                                                         targetSite.SubscriptionId,
+                                                                                                                         targetSite.ResourceGroupName,
+                                                                                                                         targetSite.Site))
                                                 .GetAsync()).Value.Data
                    };
         }
@@ -37,11 +44,18 @@ namespace Calamari.AzureAppService
             switch (targetSite.HasSlot)
             {
                 case true:
-                    await armClient.GetWebSiteSlotConfigResource(targetSite.CreateResourceIdentifier())
+                    await armClient.GetWebSiteSlotConfigResource(WebSiteSlotConfigResource.CreateResourceIdentifier(
+                                                                                                                    targetSite.SubscriptionId,
+                                                                                                                    targetSite.ResourceGroupName,
+                                                                                                                    targetSite.Site,
+                                                                                                                    targetSite.Slot))
                                    .UpdateAsync(siteConfigData);
                     break;
                 case false:
-                    await armClient.GetWebSiteConfigResource(targetSite.CreateResourceIdentifier())
+                    await armClient.GetWebSiteConfigResource(WebSiteConfigResource.CreateResourceIdentifier(
+                                                                                                                targetSite.SubscriptionId,
+                                                                                                                targetSite.ResourceGroupName,
+                                                                                                                targetSite.Site))
                                    .UpdateAsync(siteConfigData);
                     break;
             }
