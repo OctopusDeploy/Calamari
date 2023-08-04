@@ -39,7 +39,33 @@ namespace Calamari.Tests.AWS.CloudFormation
             ""{stackName}"": {{
                 ""Type"": ""AWS::S3::Bucket"",
                 ""Properties"": {{ 
-                    ""BucketName"": {stackName}
+                    ""BucketName"": {stackName},
+                    ""Tags"" : [
+                        {{
+                            ""Key"" : ""VantaOwner"",
+                            ""Value"" : ""modern-deployments-team@octopus.com""
+                        }},
+                        {{
+                            ""Key"" : ""VantaNonProd"",
+                            ""Value"" : ""true""
+                        }},
+                        {{
+                            ""Key"" : ""VantaNoAlert"",
+                            ""Value"" : ""Ephemeral bucket created during unit tests and not used in production""
+                        }},
+                        {{
+                            ""Key"" : ""VantaContainsUserData"",
+                            ""Value"" : ""false""
+                        }},
+                        {{
+                            ""Key"" : ""VantaUserDataStored"",
+                            ""Value"" : ""N/A""
+                        }},
+                        {{
+                            ""Key"" : ""VantaDescription"",
+                            ""Value"" : ""Ephemeral bucket created during unit tests""
+                        }}
+                    ]
                 }}
             }}
         }}
