@@ -100,11 +100,17 @@ namespace Calamari.AzureAppService.Tests
 
         async Task AssertSetupSuccessAsync()
         {
-            var result = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
-            var receivedContent = await result.Content.ReadAsStringAsync();
+            var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
+                                                                                      {
+                                                                                          var r = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
+                                                                                          r.EnsureSuccessStatusCode();
+                                                                                          return r;
+                                                                                      });
+            
+            var receivedContent = await response.Content.ReadAsStringAsync();
 
             receivedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>");
-            Assert.IsTrue(result.IsSuccessStatusCode);
+            Assert.IsTrue(response.IsSuccessStatusCode);
         }
 
         async Task AssertDeploySuccessAsync(AzureTargetSite targetSite)

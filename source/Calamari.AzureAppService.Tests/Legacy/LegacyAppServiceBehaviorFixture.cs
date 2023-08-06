@@ -72,7 +72,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(site.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -89,7 +89,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(site.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -114,7 +114,7 @@ namespace Calamari.AzureAppService.Tests
                 packageinfo.packageName = "AzureZipDeployPackage";
                 ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
 
-                await slotTask;
+                var siteSlot = await slotTask;
 
                 await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
                                         .WithArrange(context =>
@@ -125,7 +125,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{site.Name}-{slotName}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(siteSlot.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -173,7 +173,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
-                await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(site.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -211,7 +211,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{javaSite.Name}.azurewebsites.net", $"Hello! {greeting}", "test.jsp");
+                await AssertContent(javaSite.DefaultHostName, $"Hello! {greeting}", "test.jsp");
             }
 
             [Test]
@@ -378,7 +378,7 @@ namespace Calamari.AzureAppService.Tests
                 await DoWithRetries(10,
                                     async () =>
                                     {
-                                        await AssertContent($"{site.Name}.azurewebsites.net",
+                                        await AssertContent(site.DefaultHostName,
                                                             rootPath: $"api/HttpExample?name={greeting}",
                                                             actualText: $"Hello, {greeting}");
                                     },
@@ -408,7 +408,7 @@ namespace Calamari.AzureAppService.Tests
                 await DoWithRetries(10,
                                     async () =>
                                     {
-                                        await AssertContent($"{site.Name}.azurewebsites.net",
+                                        await AssertContent(site.DefaultHostName,
                                                             rootPath: $"api/HttpExample?name={greeting}",
                                                             actualText: $"Hello, {greeting}");
                                     },
