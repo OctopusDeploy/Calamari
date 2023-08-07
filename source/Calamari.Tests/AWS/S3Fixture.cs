@@ -13,6 +13,7 @@ using System.Net;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
+using Amazon.S3.Model;
 using Calamari.Aws.Commands;
 using Calamari.Aws.Deployment;
 using Calamari.Aws.Integration.S3;
@@ -21,7 +22,6 @@ using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Serialization;
 using Calamari.Tests.Fixtures.Deployment.Packages;
-using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -45,14 +45,27 @@ namespace Calamari.Tests.AWS
         [OneTimeSetUp]
         public Task SetUpInfrastructure()
         {
-            return Validate(async client => await client.PutBucketAsync(bucketName));
+            return Validate(async client =>
+                            {
+                                await client.PutBucketAsync(bucketName);
+                                await client.PutBucketTaggingAsync(bucketName,
+                                                                   new List<Tag>
+                                                                   {
+                                                                       new Tag { Key = "VantaOwner", Value = "modern-deployments-team@octopus.com" },
+                                                                       new Tag { Key = "VantaNonProd", Value = "true" },
+                                                                       new Tag { Key = "VantaNoAlert", Value = "Ephemeral bucket created during unit tests and not used in production" },
+                                                                       new Tag { Key = "VantaContainsUserData", Value = "false" },
+                                                                       new Tag { Key = "VantaUserDataStored", Value = "N/A" },
+                                                                       new Tag { Key = "VantaDescription", Value = "Ephemeral bucket created during unit tests" }
+                                                                   });
+                            });
         }
 
         [Test]
         public async Task UploadPackage1()
         {
             TestContext.WriteLine("Region: " + region);
-            
+
             var fileSelections = new List<S3TargetPropertiesBase>
             {
                 new S3MultiFileSelectionProperties
@@ -75,11 +88,11 @@ namespace Calamari.Tests.AWS
             var prefix = Upload("Package1", fileSelections);
 
             await Validate(async client =>
-            {
-                await client.GetObjectAsync(bucketName, $"{prefix}Resources/TextFile.txt");
-                await client.GetObjectAsync(bucketName, $"{prefix}root/Page.html");
-                await client.GetObjectAsync(bucketName, $"{prefix}Extra/JavaScript.js");
-            });
+                           {
+                               await client.GetObjectAsync(bucketName, $"{prefix}Resources/TextFile.txt");
+                               await client.GetObjectAsync(bucketName, $"{prefix}root/Page.html");
+                               await client.GetObjectAsync(bucketName, $"{prefix}Extra/JavaScript.js");
+                           });
         }
 
         [Test]
@@ -99,20 +112,20 @@ namespace Calamari.Tests.AWS
             var prefix = Upload("Package2", fileSelections);
 
             await Validate(async client =>
-            {
-                await client.GetObjectAsync(bucketName, $"{prefix}Wild/Things/TextFile2.txt");
-                try
-                {
-                    await client.GetObjectAsync(bucketName, $"{prefix}Wild/Ignore/TextFile1.txt");
-                }
-                catch (AmazonS3Exception e)
-                {
-                    if (e.StatusCode != HttpStatusCode.NotFound)
-                    {
-                        throw;
-                    }
-                }
-            });
+                           {
+                               await client.GetObjectAsync(bucketName, $"{prefix}Wild/Things/TextFile2.txt");
+                               try
+                               {
+                                   await client.GetObjectAsync(bucketName, $"{prefix}Wild/Ignore/TextFile1.txt");
+                               }
+                               catch (AmazonS3Exception e)
+                               {
+                                   if (e.StatusCode != HttpStatusCode.NotFound)
+                                   {
+                                       throw;
+                                   }
+                               }
+                           });
         }
 
         [Test]
@@ -171,7 +184,7 @@ namespace Calamari.Tests.AWS
                                JObject.Parse(text)["Property1"]["Property2"]["Value"].ToString().Should().Be("InjectedValue");
                            });
         }
-        
+
         [Test]
         public void UploadPackageWithContentHashAppended()
         {
@@ -224,22 +237,22 @@ namespace Calamari.Tests.AWS
 
         IDictionary<string, string> specialHeaders = new Dictionary<string, string>()
         {
-            {"Cache-Control", "max-age=123"},
-            {"Content-Disposition", "some disposition"},
-            {"Content-Encoding", "some-encoding"},
-            {"Content-Type", "application/html"},
-            {"Expires", DateTime.UtcNow.AddDays(1).ToString("r")}, // Need to use RFC1123 format to match how the request is serialized
-            {"x-amz-website-redirect-location", "/anotherPage.html"},
+            { "Cache-Control", "max-age=123" },
+            { "Content-Disposition", "some disposition" },
+            { "Content-Encoding", "some-encoding" },
+            { "Content-Type", "application/html" },
+            { "Expires", DateTime.UtcNow.AddDays(1).ToString("r") }, // Need to use RFC1123 format to match how the request is serialized
+            { "x-amz-website-redirect-location", "/anotherPage.html" },
         };
 
         IDictionary<string, string> userDefinedMetadata = new Dictionary<string, string>()
         {
-            {"Expect", "some-expect"},
-            {"Content-MD5", "somemd5"},
-            {"Content-Length", "12345"},
-            {"x-amz-tagging", "sometag"},
-            {"x-amz-storage-class", "GLACIER"},
-            {"x-amz-meta", "somemeta"}
+            { "Expect", "some-expect" },
+            { "Content-MD5", "somemd5" },
+            { "Content-Length", "12345" },
+            { "x-amz-tagging", "sometag" },
+            { "x-amz-storage-class", "GLACIER" },
+            { "x-amz-meta", "somemeta" }
         };
 
         [Test]
@@ -265,43 +278,44 @@ namespace Calamari.Tests.AWS
             var prefix = Upload("Package1", fileSelections);
 
             await Validate(async client =>
-            {
-                var response = await client.GetObjectAsync(bucketName, $"{prefix}Extra/JavaScript.js");
-                var headers = response.Headers;
-                var metadata = response.Metadata;
+                           {
+                               var response = await client.GetObjectAsync(bucketName, $"{prefix}Extra/JavaScript.js");
+                               var headers = response.Headers;
+                               var metadata = response.Metadata;
 
-                foreach (var specialHeader in specialHeaders)
-                {
-                    if (specialHeader.Key == "Expires")
-                    {
-                        //There's a serialization bug in Json.Net that ends up changing the time to local.
-                        //Fix this assertion once that's done.
-                        var expectedDate = DateTime.Parse(specialHeader.Value.TrimEnd('Z')).ToUniversalTime();
-                        response.Expires.Should().Be(expectedDate);
-                    }
-                    else if (specialHeader.Key == "x-amz-website-redirect-location")
-                    {
-                        response.WebsiteRedirectLocation.Should().Be(specialHeader.Value);
-                    }
-                    else
-                        headers[specialHeader.Key].Should().Be(specialHeader.Value);
-                }
+                               foreach (var specialHeader in specialHeaders)
+                               {
+                                   if (specialHeader.Key == "Expires")
+                                   {
+                                       //There's a serialization bug in Json.Net that ends up changing the time to local.
+                                       //Fix this assertion once that's done.
+                                       var expectedDate = DateTime.Parse(specialHeader.Value.TrimEnd('Z')).ToUniversalTime();
+                                       response.Expires.Should().Be(expectedDate);
+                                   }
+                                   else if (specialHeader.Key == "x-amz-website-redirect-location")
+                                   {
+                                       response.WebsiteRedirectLocation.Should().Be(specialHeader.Value);
+                                   }
+                                   else
+                                       headers[specialHeader.Key].Should().Be(specialHeader.Value);
+                               }
 
-                foreach (var userMetadata in userDefinedMetadata)
-                    metadata["x-amz-meta-" + userMetadata.Key.ToLowerInvariant()]
-                        .Should().Be(userMetadata.Value);
+                               foreach (var userMetadata in userDefinedMetadata)
+                                   metadata["x-amz-meta-" + userMetadata.Key.ToLowerInvariant()]
+                                       .Should()
+                                       .Be(userMetadata.Value);
 
-                response.TagCount.Should().Be(1);
-            });
+                               response.TagCount.Should().Be(1);
+                           });
         }
-        
+
         [Test]
         [TestCase("TestZipPackage", "1.0.0", "zip")]
         [TestCase("TestJarPackage", "0.0.1-beta", "jar")]
         public async Task SubstituteVariablesAndUploadZipArchives(string packageId, string packageVersion, string packageExtension)
         {
             var fileName = $"{packageId}.{packageVersion}.{packageExtension}";
-            
+
             var packageOptions = new List<S3PackageOptions>
             {
                 new S3PackageOptions
@@ -315,10 +329,14 @@ namespace Calamari.Tests.AWS
 
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
-            
+
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath, packageId, packageVersion, packageOptions, variables);
+            var prefix = UploadEntireCompressedPackage(packageFilePath,
+                                                       packageId,
+                                                       packageVersion,
+                                                       packageOptions,
+                                                       variables);
 
             await Validate(async client =>
                            {
@@ -330,7 +348,7 @@ namespace Calamari.Tests.AWS
                                memoryStream.Close();
                            });
         }
-        
+
         [Test]
         public async Task SubstituteVariablesAndUploadTarArchives()
         {
@@ -338,7 +356,7 @@ namespace Calamari.Tests.AWS
             const string packageVersion = "0.0.1";
             const string packageExtension = "tar";
             var fileName = $"{packageId}.{packageVersion}.{packageExtension}";
-            
+
             var packageOptions = new List<S3PackageOptions>
             {
                 new S3PackageOptions
@@ -352,10 +370,14 @@ namespace Calamari.Tests.AWS
 
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
-            
+
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath, packageId, packageVersion, packageOptions, variables);
+            var prefix = UploadEntireCompressedPackage(packageFilePath,
+                                                       packageId,
+                                                       packageVersion,
+                                                       packageOptions,
+                                                       variables);
 
             await Validate(async client =>
                            {
@@ -382,7 +404,7 @@ namespace Calamari.Tests.AWS
                                }
                            });
         }
-        
+
         [Test]
         public async Task SubstituteVariablesAndUploadTarGzipArchives()
         {
@@ -390,7 +412,7 @@ namespace Calamari.Tests.AWS
             const string packageVersion = "0.0.1";
             const string packageExtension = "tar.gz";
             var fileName = $"{packageId}.{packageVersion}.{packageExtension}";
-            
+
             var packageOptions = new List<S3PackageOptions>
             {
                 new S3PackageOptions
@@ -404,10 +426,14 @@ namespace Calamari.Tests.AWS
 
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
-            
+
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath, packageId, packageVersion, packageOptions, variables);
+            var prefix = UploadEntireCompressedPackage(packageFilePath,
+                                                       packageId,
+                                                       packageVersion,
+                                                       packageOptions,
+                                                       variables);
 
             await Validate(async client =>
                            {
@@ -434,7 +460,7 @@ namespace Calamari.Tests.AWS
                                }
                            });
         }
-        
+
         [Test]
         public async Task SubstituteVariablesAndUploadTarBZip2Archives()
         {
@@ -442,7 +468,7 @@ namespace Calamari.Tests.AWS
             const string packageVersion = "0.0.1";
             const string packageExtension = "tar.bz2";
             var fileName = $"{packageId}.{packageVersion}.{packageExtension}";
-            
+
             var packageOptions = new List<S3PackageOptions>
             {
                 new S3PackageOptions
@@ -456,10 +482,14 @@ namespace Calamari.Tests.AWS
 
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
-            
+
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath, packageId, packageVersion, packageOptions, variables);
+            var prefix = UploadEntireCompressedPackage(packageFilePath,
+                                                       packageId,
+                                                       packageVersion,
+                                                       packageOptions,
+                                                       variables);
 
             await Validate(async client =>
                            {
@@ -496,7 +526,7 @@ namespace Calamari.Tests.AWS
         public async Task UploadPackage1()
         {
             TestContext.WriteLine("Region: " + region);
-            
+
             var fileSelections = new List<S3TargetPropertiesBase>
             {
                 new S3MultiFileSelectionProperties
@@ -518,15 +548,16 @@ namespace Calamari.Tests.AWS
 
             var prefix = Upload("Package1", fileSelections);
 
-            await DoSafelyWithRetries(async() => {
-                await Validate(async client =>
-                {
-                    await client.GetObjectAsync(bucketName, $"{prefix}Resources/TextFile.txt");
-                    await client.GetObjectAsync(bucketName, $"{prefix}root/Page.html");
-                    await client.GetObjectAsync(bucketName, $"{prefix}Extra/JavaScript.js");
-                });
-            }, 5);
-            
+            await DoSafelyWithRetries(async () =>
+                                      {
+                                          await Validate(async client =>
+                                                         {
+                                                             await client.GetObjectAsync(bucketName, $"{prefix}Resources/TextFile.txt");
+                                                             await client.GetObjectAsync(bucketName, $"{prefix}root/Page.html");
+                                                             await client.GetObjectAsync(bucketName, $"{prefix}Extra/JavaScript.js");
+                                                         });
+                                      },
+                                      5);
         }
 
         async Task DoSafelyWithRetries(Func<Task> action, int maxRetries)
@@ -557,7 +588,7 @@ namespace Calamari.Tests.AWS
         public S3Fixture()
         {
             region = RegionRandomiser.GetARegion();
-            bucketName = Guid.NewGuid().ToString("N");
+            bucketName = $"calamari-s3fixture-{Guid.NewGuid():N}";
         }
 
         [OneTimeTearDown]
@@ -570,6 +601,7 @@ namespace Calamari.Tests.AWS
                                 {
                                     await client.DeleteObjectAsync(bucketName, s3Object.Key);
                                 }
+
                                 await client.DeleteBucketAsync(bucketName);
                             });
         }
@@ -577,21 +609,21 @@ namespace Calamari.Tests.AWS
         protected static JsonSerializerSettings GetEnrichedSerializerSettings()
         {
             return JsonSerialization.GetDefaultSerializerSettings()
-                .Tee(x =>
-                {
-                    x.Converters.Add(new FileSelectionsConverter());
-                    x.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                });
+                                    .Tee(x =>
+                                         {
+                                             x.Converters.Add(new FileSelectionsConverter());
+                                             x.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                                         });
         }
 
         protected async Task Validate(Func<AmazonS3Client, Task> execute)
         {
             var credentials = new BasicAWSCredentials(
-                ExternalVariables.Get(ExternalVariable.AwsAcessKey),
-                ExternalVariables.Get(ExternalVariable.AwsSecretKey));
+                                                      ExternalVariables.Get(ExternalVariable.AwsAcessKey),
+                                                      ExternalVariables.Get(ExternalVariable.AwsSecretKey));
 
-            var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region)};
-            
+            var config = new AmazonS3Config { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
+
             using (var client = new AmazonS3Client(credentials, config))
             {
                 await execute(client);
@@ -605,25 +637,25 @@ namespace Calamari.Tests.AWS
             var variables = new CalamariVariables();
 
             propertiesList.ForEach(properties =>
-            {
-                switch (properties)
-                {
-                    case S3MultiFileSelectionProperties multiFileSelectionProperties:
-                        multiFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
-                        variables.Set(AwsSpecialVariables.S3.FileSelections, JsonConvert.SerializeObject(propertiesList, GetEnrichedSerializerSettings()));
-                        break;
-                    case S3SingleFileSelectionProperties singleFileSelectionProperties:
-                        singleFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
-                        variables.Set(AwsSpecialVariables.S3.FileSelections, JsonConvert.SerializeObject(propertiesList, GetEnrichedSerializerSettings()));
-                        break;
-                    case S3PackageOptions packageOptions:
-                        packageOptions.BucketKeyPrefix = bucketKeyPrefix;
-                        variables.Set(AwsSpecialVariables.S3.PackageOptions, JsonConvert.SerializeObject(packageOptions, GetEnrichedSerializerSettings()));
-                        variables.Set(PackageVariables.PackageId, packageName);
-                        variables.Set(PackageVariables.PackageVersion, packageVersion);
-                        break;
-                }
-            });
+                                   {
+                                       switch (properties)
+                                       {
+                                           case S3MultiFileSelectionProperties multiFileSelectionProperties:
+                                               multiFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
+                                               variables.Set(AwsSpecialVariables.S3.FileSelections, JsonConvert.SerializeObject(propertiesList, GetEnrichedSerializerSettings()));
+                                               break;
+                                           case S3SingleFileSelectionProperties singleFileSelectionProperties:
+                                               singleFileSelectionProperties.BucketKeyPrefix = bucketKeyPrefix;
+                                               variables.Set(AwsSpecialVariables.S3.FileSelections, JsonConvert.SerializeObject(propertiesList, GetEnrichedSerializerSettings()));
+                                               break;
+                                           case S3PackageOptions packageOptions:
+                                               packageOptions.BucketKeyPrefix = bucketKeyPrefix;
+                                               variables.Set(AwsSpecialVariables.S3.PackageOptions, JsonConvert.SerializeObject(packageOptions, GetEnrichedSerializerSettings()));
+                                               variables.Set(PackageVariables.PackageId, packageName);
+                                               variables.Set(PackageVariables.PackageVersion, packageVersion);
+                                               break;
+                                       }
+                                   });
 
             var variablesFile = Path.GetTempFileName();
 
@@ -633,7 +665,7 @@ namespace Calamari.Tests.AWS
             variables.Set("Octopus.Action.Aws.Region", region);
 
             if (customVariables != null) variables.Merge(customVariables);
-            
+
             variables.Save(variablesFile);
 
             var packageDirectory = TestEnvironment.GetTestPath("AWS", "S3", packageName);
@@ -644,44 +676,53 @@ namespace Calamari.Tests.AWS
                 var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
                 var command = new UploadAwsS3Command(
-                    log,
-                    variables,
-                    fileSystem,
-                    new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
-                    new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
-                    new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
-                    {
-                        new JsonFormatVariableReplacer(fileSystem, log),
-                        new XmlFormatVariableReplacer(fileSystem, log),
-                        new YamlFormatVariableReplacer(fileSystem, log),
-                        new PropertiesFormatVariableReplacer(fileSystem, log),
-                    }, variables, fileSystem, log)
-                );
+                                                     log,
+                                                     variables,
+                                                     fileSystem,
+                                                     new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
+                                                     new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
+                                                     new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
+                                                                                          {
+                                                                                              new JsonFormatVariableReplacer(fileSystem, log),
+                                                                                              new XmlFormatVariableReplacer(fileSystem, log),
+                                                                                              new YamlFormatVariableReplacer(fileSystem, log),
+                                                                                              new PropertiesFormatVariableReplacer(fileSystem, log),
+                                                                                          },
+                                                                                          variables,
+                                                                                          fileSystem,
+                                                                                          log)
+                                                    );
 
-                var result = command.Execute(new[] {
+                var result = command.Execute(new[]
+                {
                     "--package", $"{package.FilePath}",
                     "--variables", $"{variablesFile}",
                     "--bucket", bucketName,
-                    "--targetMode", s3TargetMode.ToString()});
+                    "--targetMode", s3TargetMode.ToString()
+                });
 
                 result.Should().Be(0);
             }
 
             return bucketKeyPrefix;
         }
-        
-        protected string UploadEntireCompressedPackage(string packageFilePath, string packageId, string packageVersion, List<S3PackageOptions> propertiesList, VariableDictionary customVariables = null)
+
+        protected string UploadEntireCompressedPackage(string packageFilePath,
+                                                       string packageId,
+                                                       string packageVersion,
+                                                       List<S3PackageOptions> propertiesList,
+                                                       VariableDictionary customVariables = null)
         {
             var bucketKeyPrefix = $"calamaritest/{Guid.NewGuid():N}/";
             var variables = new CalamariVariables();
 
             propertiesList.ForEach(properties =>
-            {
-                properties.BucketKeyPrefix = bucketKeyPrefix;
-                variables.Set(AwsSpecialVariables.S3.PackageOptions, JsonConvert.SerializeObject(properties, GetEnrichedSerializerSettings()));
-                variables.Set(PackageVariables.PackageId, packageId);
-                variables.Set(PackageVariables.PackageVersion, packageVersion);
-            });
+                                   {
+                                       properties.BucketKeyPrefix = bucketKeyPrefix;
+                                       variables.Set(AwsSpecialVariables.S3.PackageOptions, JsonConvert.SerializeObject(properties, GetEnrichedSerializerSettings()));
+                                       variables.Set(PackageVariables.PackageId, packageId);
+                                       variables.Set(PackageVariables.PackageVersion, packageVersion);
+                                   });
 
             var variablesFile = Path.GetTempFileName();
 
@@ -691,7 +732,7 @@ namespace Calamari.Tests.AWS
             variables.Set("Octopus.Action.Aws.Region", region);
 
             if (customVariables != null) variables.Merge(customVariables);
-            
+
             variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
@@ -700,25 +741,30 @@ namespace Calamari.Tests.AWS
                 var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
                 var command = new UploadAwsS3Command(
-                    log,
-                    variables,
-                    fileSystem,
-                    new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
-                    new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
-                    new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
-                    {
-                        new JsonFormatVariableReplacer(fileSystem, log),
-                        new XmlFormatVariableReplacer(fileSystem, log),
-                        new YamlFormatVariableReplacer(fileSystem, log),
-                        new PropertiesFormatVariableReplacer(fileSystem, log),
-                    }, variables, fileSystem, log)
-                );
+                                                     log,
+                                                     variables,
+                                                     fileSystem,
+                                                     new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
+                                                     new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
+                                                     new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
+                                                                                          {
+                                                                                              new JsonFormatVariableReplacer(fileSystem, log),
+                                                                                              new XmlFormatVariableReplacer(fileSystem, log),
+                                                                                              new YamlFormatVariableReplacer(fileSystem, log),
+                                                                                              new PropertiesFormatVariableReplacer(fileSystem, log),
+                                                                                          },
+                                                                                          variables,
+                                                                                          fileSystem,
+                                                                                          log)
+                                                    );
 
-                var result = command.Execute(new[] {
+                var result = command.Execute(new[]
+                {
                     "--package", $"{packageFilePath}",
                     "--variables", $"{variablesFile}",
                     "--bucket", bucketName,
-                    "--targetMode", S3TargetMode.EntirePackage.ToString()});
+                    "--targetMode", S3TargetMode.EntirePackage.ToString()
+                });
 
                 result.Should().Be(0);
             }
