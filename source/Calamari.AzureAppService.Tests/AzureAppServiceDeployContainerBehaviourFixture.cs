@@ -23,6 +23,9 @@ namespace Calamari.AzureAppService.Tests
     {
         CalamariVariables newVariables;
         readonly HttpClient client = new HttpClient();
+        
+        // For some reason we are having issues creating these linux resources on Standard in EastUS
+        protected override string DefaultResourceGroupLocation => "westus2";
 
         protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
         {

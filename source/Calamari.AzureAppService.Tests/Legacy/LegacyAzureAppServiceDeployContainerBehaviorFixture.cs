@@ -56,7 +56,8 @@ namespace Calamari.AzureAppService.Tests
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
 
-            var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
+            // For some reason we are having issues creating these linux resources on Standard in EastUS
+            var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "westus2";
 
             authToken = await GetAuthToken(tenantId, clientId, clientSecret);
 

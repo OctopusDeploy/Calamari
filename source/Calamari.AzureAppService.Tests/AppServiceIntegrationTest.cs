@@ -25,6 +25,7 @@ namespace Calamari.AzureAppService.Tests
         protected string SubscriptionId { get; private set; }
         protected string ResourceGroupName { get; private set; }
         protected string ResourceGroupLocation { get; private set; }
+        
         protected string greeting = "Calamari";
         protected ArmClient ArmClient { get; private set; }
 
@@ -33,6 +34,8 @@ namespace Calamari.AzureAppService.Tests
         protected WebSiteResource WebSiteResource { get; private protected set; }
 
         private readonly HttpClient client = new HttpClient();
+
+        protected virtual string DefaultResourceGroupLocation => "eastus";
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -48,7 +51,7 @@ namespace Calamari.AzureAppService.Tests
             ClientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             TenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             SubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-            ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
+            ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
 
             var servicePrincipalAccount = new ServicePrincipalAccount(SubscriptionId,
                                                                       ClientId,
