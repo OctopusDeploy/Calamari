@@ -306,7 +306,10 @@ namespace Calamari.AzureAppService.Tests
 
         [TestFixture]
         public class WhenUsingALinuxAppService : LegacyAppServiceIntegrationTest
-        {
+        {            
+            // For some reason we are having issues creating these linux resources on Standard in EastUS
+            protected override string DefaultResourceGroupLocation => "westus2";
+            
             protected override async Task ConfigureTestResources(ResourceGroup resourceGroup)
             {
                 var storageClient = new StorageManagementClient(new TokenCredentials(authToken))
@@ -316,7 +319,7 @@ namespace Calamari.AzureAppService.Tests
                 var storageAccountName = resourceGroupName.Replace("-", "").Substring(0, 20);
                 var storageAccount = await RetryPolicy.ExecuteAsync(async () => await storageClient.StorageAccounts.CreateAsync(resourceGroupName,
                                                                                                                                 accountName: storageAccountName,
-                                                                                                                                new StorageAccountCreateParameters()
+                                                                                                                                new StorageAccountCreateParameters
                                                                                                                                 {
                                                                                                                                     Sku = new Sku("Standard_LRS"),
                                                                                                                                     Kind = "Storage",

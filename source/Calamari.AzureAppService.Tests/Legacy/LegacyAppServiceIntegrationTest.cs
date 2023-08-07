@@ -36,6 +36,8 @@ namespace Calamari.AzureAppService.Tests
         private readonly HttpClient client = new HttpClient();
 
         protected RetryPolicy RetryPolicy { get; private set; }
+        
+        protected virtual string DefaultResourceGroupLocation => "eastus";
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -51,7 +53,7 @@ namespace Calamari.AzureAppService.Tests
             clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-            resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
+            resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
 
             authToken = await Auth.GetAuthTokenAsync(tenantId,
                                                      clientId,
