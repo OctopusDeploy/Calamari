@@ -291,7 +291,10 @@ namespace Calamari.AzureAppService.Tests
 
         [TestFixture]
         public class WhenUsingALinuxAppService : AppServiceIntegrationTest
-        {
+        {        
+            // For some reason we are having issues creating these linux resources on Standard in EastUS
+            protected override string DefaultResourceGroupLocation => "westus2";
+            
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
                 var storageAccountName = ResourceGroupName.Replace("-", "").Substring(0, 20);
