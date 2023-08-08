@@ -49,6 +49,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             scriptParameters = RetrieveParameterValues(scriptParameters);
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
+            commandArguments.Append("-s https://api.nuget.org/v3/index.json ");
             commandArguments.AppendFormat("\"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
             return commandArguments.ToString();
         }
