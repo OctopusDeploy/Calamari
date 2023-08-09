@@ -32,8 +32,8 @@ namespace Calamari.Tests.Fixtures.Commands
             var variables = new CalamariVariables();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AwsAccount");
             variables.Set("Octopus.Action.Aws.Region", "us-east-1");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsAccessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsSecretKey));
+            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey));
+            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
             variables.Set("Octopus.Action.Aws.AssumeRole", "False");
             variables.Set("Octopus.Action.Aws.AssumedRoleArn", "");
             variables.Set("Octopus.Action.Aws.AssumedRoleSession", "");

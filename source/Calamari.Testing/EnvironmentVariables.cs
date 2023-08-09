@@ -41,10 +41,10 @@ namespace Calamari.Testing
         DockerReaderPassword,
 
         [EnvironmentVariable("AWS_E2E_AccessKeyId", "AWS E2E Test User Keys")]
-        AwsEngineeringE2eTestsAccessKey,
+        AwsCloudFormationAndS3AccessKey,
 
         [EnvironmentVariable("AWS_E2E_SecretKeyId", "AWS E2E Test User Keys")]
-        AwsEngineeringE2eTestsSecretKey,
+        AwsCloudFormationAndS3SecretKey,
 
         [EnvironmentVariable("CALAMARI_FEEDZV2URI", "Not LastPass; Calamari TC Config Variables")]
         FeedzNuGetV2FeedUrl,

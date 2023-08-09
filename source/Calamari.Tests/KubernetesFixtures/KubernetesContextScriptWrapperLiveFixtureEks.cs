@@ -112,8 +112,8 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             return new Dictionary<string, string>
             {
-                { "AWS_ACCESS_KEY_ID", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsAccessKey) },
-                { "AWS_SECRET_ACCESS_KEY", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsSecretKey) },
+                { "AWS_ACCESS_KEY_ID", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey) },
+                { "AWS_SECRET_ACCESS_KEY", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey) },
                 { "AWS_DEFAULT_REGION", region },
                 { "TF_VAR_tests_source_dir", testFolder }
             };
