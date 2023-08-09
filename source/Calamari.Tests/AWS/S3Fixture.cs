@@ -619,8 +619,8 @@ namespace Calamari.Tests.AWS
         protected async Task Validate(Func<AmazonS3Client, Task> execute)
         {
             var credentials = new BasicAWSCredentials(
-                                                      ExternalVariables.Get(ExternalVariable.AwsAcessKey),
-                                                      ExternalVariables.Get(ExternalVariable.AwsSecretKey));
+                                                      ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsAccessKey),
+                                                      ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsSecretKey));
 
             var config = new AmazonS3Config { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
 
@@ -660,8 +660,8 @@ namespace Calamari.Tests.AWS
             var variablesFile = Path.GetTempFileName();
 
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
+            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsAccessKey));
+            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsSecretKey));
             variables.Set("Octopus.Action.Aws.Region", region);
 
             if (customVariables != null) variables.Merge(customVariables);
@@ -727,8 +727,8 @@ namespace Calamari.Tests.AWS
             var variablesFile = Path.GetTempFileName();
 
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
+            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsAccessKey));
+            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsSecretKey));
             variables.Set("Octopus.Action.Aws.Region", region);
 
             if (customVariables != null) variables.Merge(customVariables);

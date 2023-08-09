@@ -89,7 +89,9 @@ namespace Calamari.Tests.AWS.CloudFormation
 
         async Task ValidateS3(Func<AmazonS3Client, Task> execute)
         {
-            var credentials = new BasicAWSCredentials(ExternalVariables.Get(ExternalVariable.AwsAcessKey), ExternalVariables.Get(ExternalVariable.AwsSecretKey));
+            var credentials = new BasicAWSCredentials(ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsAccessKey), 
+                                                      ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsSecretKey));
+            
             var config = new AmazonS3Config { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
             using (var client = new AmazonS3Client(credentials, config))
             {
@@ -108,7 +110,9 @@ namespace Calamari.Tests.AWS.CloudFormation
         }
         async Task ValidateCloudFormation(Func<AmazonCloudFormationClient, Task> execute)
         {
-            var credentials = new BasicAWSCredentials(ExternalVariables.Get(ExternalVariable.AwsAcessKey), ExternalVariables.Get(ExternalVariable.AwsSecretKey));
+            var credentials = new BasicAWSCredentials(ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsAccessKey), 
+                                                      ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsSecretKey));
+            
             var config = new AmazonCloudFormationConfig { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
             using (var client = new AmazonCloudFormationClient(credentials, config))
             {
@@ -120,8 +124,8 @@ namespace Calamari.Tests.AWS.CloudFormation
         {
             var variablesFile = Path.GetTempFileName();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
+            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsAccessKey));
+            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsSecretKey));
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Save(variablesFile);
 
@@ -159,8 +163,8 @@ namespace Calamari.Tests.AWS.CloudFormation
         {
             var variablesFile = Path.GetTempFileName();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
+            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsAccessKey));
+            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsSecretKey));
             variables.Set("Octopus.Action.Aws.Region", "us-east-1");
             variables.Save(variablesFile);
 
@@ -210,8 +214,8 @@ namespace Calamari.Tests.AWS.CloudFormation
             var variablesFile = Path.GetTempFileName();
             var variables = new CalamariVariables();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsAcessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsSecretKey));
+            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsAccessKey));
+            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsSecretKey));
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set(AwsSpecialVariables.CloudFormation.StackName, stackName);
             variables.Save(variablesFile);

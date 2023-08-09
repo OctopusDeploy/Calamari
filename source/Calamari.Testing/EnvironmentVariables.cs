@@ -7,12 +7,6 @@ namespace Calamari.Testing
 {
     public enum ExternalVariable
     {
-        [EnvironmentVariable("AWS_OctopusAPITester_Access", "AWS - OctopusAPITester")]
-        AwsAcessKey,
-
-        [EnvironmentVariable("AWS_OctopusAPITester_Secret", "AWS - OctopusAPITester")]
-        AwsSecretKey,
-
         [EnvironmentVariable("Azure_OctopusAPITester_SubscriptionId", "Azure - OctopusAPITester")]
         AzureSubscriptionId,
 
@@ -47,10 +41,10 @@ namespace Calamari.Testing
         DockerReaderPassword,
 
         [EnvironmentVariable("AWS_E2E_AccessKeyId", "AWS E2E Test User Keys")]
-        AwsCloudFormationAndS3AccessKey,
+        AwsEngineeringE2eTestsAccessKey,
 
         [EnvironmentVariable("AWS_E2E_SecretKeyId", "AWS E2E Test User Keys")]
-        AwsCloudFormationAndS3SecretKey,
+        AwsEngineeringE2eTestsSecretKey,
 
         [EnvironmentVariable("CALAMARI_FEEDZV2URI", "Not LastPass; Calamari TC Config Variables")]
         FeedzNuGetV2FeedUrl,

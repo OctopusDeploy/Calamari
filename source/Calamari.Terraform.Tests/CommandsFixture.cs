@@ -577,8 +577,8 @@ namespace Calamari.Terraform.Tests
             void PopulateVariables(CommandTestBuilderContext _)
             {
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
-                _.Variables.Add("Octopus.Action.Amazon.AccessKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey));
-                _.Variables.Add("Octopus.Action.Amazon.SecretKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+                _.Variables.Add("Octopus.Action.Amazon.AccessKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsAccessKey));
+                _.Variables.Add("Octopus.Action.Amazon.SecretKey", ExternalVariables.Get(ExternalVariable.AwsEngineeringE2eTestsSecretKey));
                 _.Variables.Add("Octopus.Action.Aws.Region", "ap-southeast-1");
                 _.Variables.Add("Hello", "Hello World from AWS");
                 _.Variables.Add("bucket_name", bucketName);
