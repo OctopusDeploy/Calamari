@@ -39,6 +39,8 @@ namespace Calamari.Deployment.PackageRetention.Caching
             }
 
             var percentFreeDiskSpaceDesired = variables.GetInt32(PackageRetentionPercentFreeDiskSpace) ?? DefaultPercentFreeDiskSpace;
+            log.VerboseFormat("PercentFreeDiskSpaceDesired is {0}", percentFreeDiskSpaceDesired);
+
             var desiredSpaceInBytes = totalNumberOfBytes * (ulong) percentFreeDiskSpaceDesired / 100;
             if (totalNumberOfFreeBytes > desiredSpaceInBytes)
             {
