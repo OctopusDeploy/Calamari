@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public S3PackageDownloaderFixture()
         {
             region = RegionRandomiser.GetARegion();
-            bucketName = Guid.NewGuid().ToString("N");
+            bucketName = $"calamari-e2e-{Guid.NewGuid():N}";
         }
 
         [OneTimeSetUp]
