@@ -10,7 +10,7 @@ namespace Calamari.Common.Plumbing.Deployment.Journal
 {
     public class DeploymentJournalWriter : IDeploymentJournalWriter
     {
-        private readonly ICalamariFileSystem fileSystem;
+        readonly ICalamariFileSystem fileSystem;
 
         public DeploymentJournalWriter(ICalamariFileSystem fileSystem)
         {
@@ -26,16 +26,26 @@ namespace Calamari.Common.Plumbing.Deployment.Journal
         /// Can remove once we obtain all references through variables</param>
         public void AddJournalEntry(RunningDeployment deployment, bool wasSuccessful, string? packageFile = null)
         {
+            if (deployment.SkipJournal)
+                return;
             var semaphore = SemaphoreFactory.Get();
             var journal = new DeploymentJournal(fileSystem, semaphore, deployment.Variables);
 
-            var hasPackages = !string.IsNullOrWhiteSpace(packageFile) ||
-                              deployment.Variables.GetIndexes(PackageVariables.PackageCollection).Any();
+            var hasPackages = !string.IsNullOrWhiteSpace(packageFile) || deployment.Variables.GetIndexes(PackageVariables.PackageCollection).Any();
+
+            if (!hasPackages)
+                return;
 
             var canWrite = deployment.Variables.Get(TentacleVariables.Agent.JournalPath) != null;
 
-            if(canWrite && hasPackages && !deployment.SkipJournal)
-                journal.AddJournalEntry(new JournalEntry(deployment, wasSuccessful));
+            if (!canWrite)
+                return;
+
+            var journalEntry = new JournalEntry(deployment, wasSuccessful);
+            if (journalEntry.ExtractedTo == null)
+                return;
+
+            journal.AddJournalEntry(new JournalEntry(deployment, wasSuccessful));
         }
     }
 }

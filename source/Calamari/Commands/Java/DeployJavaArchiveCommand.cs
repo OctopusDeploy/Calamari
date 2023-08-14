@@ -17,6 +17,7 @@ using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -39,6 +40,7 @@ namespace Calamari.Commands.Java
         readonly ISubstituteInFiles substituteInFiles;
         readonly IExtractPackage extractPackage;
         readonly IStructuredConfigVariablesService structuredConfigVariablesService;
+        readonly IDeploymentJournalWriter deploymentJournalWriter;
 
         public DeployJavaArchiveCommand(
             ILog log,
@@ -48,8 +50,8 @@ namespace Calamari.Commands.Java
             ICommandLineRunner commandLineRunner,
             ISubstituteInFiles substituteInFiles,
             IExtractPackage extractPackage,
-            IStructuredConfigVariablesService structuredConfigVariablesService
-        )
+            IStructuredConfigVariablesService structuredConfigVariablesService,
+            IDeploymentJournalWriter deploymentJournalWriter)
         {
             Options.Add("archive=", "Path to the Java archive to deploy.", v => archiveFile = new PathToPackage(Path.GetFullPath(v)));
 
@@ -61,6 +63,7 @@ namespace Calamari.Commands.Java
             this.substituteInFiles = substituteInFiles;
             this.extractPackage = extractPackage;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
+            this.deploymentJournalWriter = deploymentJournalWriter;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -125,13 +128,11 @@ namespace Calamari.Commands.Java
             try
             {
                 conventionRunner.RunConventions();
-                if (!deployment.SkipJournal)
-                    journal.AddJournalEntry(new JournalEntry(deployment, true));
+                deploymentJournalWriter.AddJournalEntry(deployment, true);
             }
             catch (Exception)
             {
-                if (!deployment.SkipJournal)
-                    journal.AddJournalEntry(new JournalEntry(deployment, false));
+                deploymentJournalWriter.AddJournalEntry(deployment, false);
                 throw;
             }
 
