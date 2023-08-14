@@ -131,11 +131,11 @@ namespace Calamari.Commands
             try
             {
                 conventionRunner.RunConventions();
-                deploymentJournalWriter.AddJournalEntry(deployment, true);
+                deploymentJournalWriter.AddJournalEntry(deployment, true, pathToPackage);
             }
             catch (Exception)
             {
-                deploymentJournalWriter.AddJournalEntry(deployment, false);
+                deploymentJournalWriter.AddJournalEntry(deployment, false, pathToPackage);
                 throw;
             }
 

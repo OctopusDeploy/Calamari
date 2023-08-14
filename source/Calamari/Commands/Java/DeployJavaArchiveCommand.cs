@@ -128,11 +128,11 @@ namespace Calamari.Commands.Java
             try
             {
                 conventionRunner.RunConventions();
-                deploymentJournalWriter.AddJournalEntry(deployment, true);
+                deploymentJournalWriter.AddJournalEntry(deployment, true, archiveFile);
             }
             catch (Exception)
             {
-                deploymentJournalWriter.AddJournalEntry(deployment, false);
+                deploymentJournalWriter.AddJournalEntry(deployment, false, archiveFile);
                 throw;
             }
 
