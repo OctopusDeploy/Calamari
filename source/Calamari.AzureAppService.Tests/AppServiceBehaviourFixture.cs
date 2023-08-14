@@ -285,7 +285,7 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
                 
                 //set the feature toggle so we get the new code
-                context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.UseModernAzureAppServiceSdkFeatureToggle.ToString());
+                context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
             }
         }
 
@@ -436,7 +436,7 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
                 
                 //set the feature toggle so we get the new code
-                context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.UseModernAzureAppServiceSdkFeatureToggle.ToString());
+                context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
             }
         }
     }

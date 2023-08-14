@@ -19,7 +19,7 @@ namespace Calamari.AzureAppService.Behaviors
 
         public Task Execute(RunningDeployment context)
         {
-            return FeatureToggle.UseModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables) 
+            return FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables) 
                 ? new RestartAzureWebAppBehaviour(log).Execute(context)
                 : new LegacyRestartAzureWebAppBehaviour(log).Execute(context);   
         }

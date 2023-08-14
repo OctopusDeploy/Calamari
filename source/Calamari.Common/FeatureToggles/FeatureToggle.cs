@@ -10,6 +10,6 @@
         MultiGlobPathsForRawYamlFeatureToggle,
         KubernetesAksKubeloginFeatureToggle,
         GlobPathsGroupSupportFeatureToggle,
-        UseModernAzureAppServiceSdkFeatureToggle    
+        ModernAzureAppServiceSdkFeatureToggle
     }
 }
