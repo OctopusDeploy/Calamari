@@ -42,7 +42,7 @@ namespace Calamari.Common.Plumbing.Deployment.Journal
                 return;
 
             var journalEntry = new JournalEntry(deployment, wasSuccessful);
-            if (journalEntry.ExtractedTo == null)
+            if (string.IsNullOrEmpty(journalEntry.ExtractedTo))
                 return;
 
             journal.AddJournalEntry(new JournalEntry(deployment, wasSuccessful));
