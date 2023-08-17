@@ -104,7 +104,6 @@ function Initialize-AzContext {
     # Authenticate via Service Principal
     $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
     $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-    
     $tempWarningPreference = $WarningPreference
     $WarningPreference = 'SilentlyContinue'
     if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
