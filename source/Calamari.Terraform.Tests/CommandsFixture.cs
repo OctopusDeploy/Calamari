@@ -541,17 +541,23 @@ namespace Calamari.Terraform.Tests
                 }
                 catch (HttpRequestException ex)
                 {
-                    if (ex.InnerException is not SocketException socketException)
+                    switch (ex.InnerException)
                     {
-                        throw;
+                        case SocketException socketException:
+                            socketException.Message.Should()
+                                           .BeOneOf(
+                                                    "No such host is known.",
+                                                    "Name or service not known", //Some Linux distros
+                                                    "nodename nor servname provided, or not known" //Mac
+                                                   );
+                            break;
+                        case WebException webException:
+                            webException.Message.Should()
+                                        .StartWith("The remote name could not be resolved");
+                            break;
+                        default:
+                            throw;
                     }
-
-                    socketException.Message.Should()
-                                   .BeOneOf(
-                                            "No such host is known.",
-                                            "Name or service not known", //Some Linux distros
-                                            "nodename nor servname provided, or not known" //Mac
-                                           );
                 }
             }
 
