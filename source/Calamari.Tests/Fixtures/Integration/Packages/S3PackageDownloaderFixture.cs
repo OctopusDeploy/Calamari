@@ -10,17 +10,17 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
-using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Versioning;
-using InMemoryLog = Calamari.Testing.Helpers.InMemoryLog;
 using TestEnvironment = Calamari.Testing.Helpers.TestEnvironment;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
+    [RequiresNonMono]
     [TestFixture]
     public class S3PackageDownloaderFixture : CalamariFixture
     {
