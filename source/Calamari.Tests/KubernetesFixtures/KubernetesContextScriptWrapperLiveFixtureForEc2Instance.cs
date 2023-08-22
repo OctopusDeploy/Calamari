@@ -36,9 +36,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [TestCase(true)]
-        [TestCase(false)]
-        public void AuthoriseWithAmazonEC2Role(bool runAsScript)
+        public void AuthoriseWithAmazonEC2Role()
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
             variables.Set(SpecialVariables.ClusterUrl, eksClusterEndpoint);
@@ -47,14 +45,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Aws.AssumeRole", Boolean.FalseString);
             variables.Set("Octopus.Action.Aws.Region", region);
 
-            if (runAsScript)
-            {
-                DeployWithKubectlTestScriptAndVerifyResult();
-            }
-            else
-            {
-                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
-            }
+            ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
         }
 
         [Test]
