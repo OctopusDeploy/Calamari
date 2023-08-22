@@ -1,12 +1,10 @@
 ﻿using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Substitutions;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
-using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -25,7 +23,6 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
 
             var variables = new CalamariVariables();
-            variables.AddFeatureToggles(FeatureToggle.GlobPathsGroupSupportFeatureToggle);
             variables.Set(PackageVariables.SubstituteInFilesTargets, glob);
             variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
 
@@ -43,7 +40,5 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
             substituter.Received().PerformSubstitution(Path.Combine(StagingDirectory, actualMatch), variables);
         }
-
-
     }
 }

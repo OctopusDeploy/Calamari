@@ -54,9 +54,9 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         [TestCase(GlobMode.LegacyMode)]
         public void ShouldPurgeCustomInstallationDirectoryWhenFlagIsSet(GlobMode globMode)
         {
-            if (globMode == GlobMode.GroupExpansionMode)
+            if (globMode == GlobMode.LegacyMode)
             {
-                variables.AddFeatureToggles(FeatureToggle.GlobPathsGroupSupportFeatureToggle);
+                variables.AddFeatureToggles(FeatureToggle.GlobPathsGroupSupportInvertedFeatureToggle);
             }
             variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
             variables.Set(PackageVariables.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, true.ToString());
@@ -72,9 +72,9 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         [TestCase(GlobMode.LegacyMode)]
         public void ShouldPassGlobsToPurgeWhenSet(GlobMode globMode)
         {
-            if (globMode == GlobMode.GroupExpansionMode)
+            if (globMode == GlobMode.LegacyMode)
             {
-                variables.AddFeatureToggles(FeatureToggle.GlobPathsGroupSupportFeatureToggle);
+                variables.AddFeatureToggles(FeatureToggle.GlobPathsGroupSupportInvertedFeatureToggle);
             }
             variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
             variables.Set(PackageVariables.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, true.ToString());
