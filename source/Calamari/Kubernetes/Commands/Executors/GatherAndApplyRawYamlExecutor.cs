@@ -138,7 +138,7 @@ namespace Calamari.Kubernetes.Commands.Executors
         private IEnumerable<Resource> ApplyBatchAndReturnResources(GlobDirectory globDirectory)
         {
             var index = globDirectory.Index;
-            var directory = globDirectory.Directory;
+            var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
             log.Info($"Applying Batch #{index} for YAML matching '{globDirectory.Glob}'");
 
             var files = fileSystem.EnumerateFilesRecursively(globDirectory.Directory).ToArray();
@@ -150,10 +150,10 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             foreach (var file in files)
             {
-                log.Verbose($"Matched file: {fileSystem.GetRelativePath(directory, file)}");
+                log.Verbose($"Matched file: {fileSystem.GetRelativePath(directoryWithTrailingSlash, file)}");
             }
 
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{directory}""", "--recursive", "-o", "json");
+            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json");
 
             foreach (var message in result.Output.Messages)
             {
@@ -165,7 +165,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                     case Level.Error:
                         //Files in the error are shown with the full path in their batch directory,
                         //so we'll remove that for the user.
-                        log.Error(message.Text.Replace($"{directory}", ""));
+                        log.Error(message.Text.Replace($"{directoryWithTrailingSlash}", ""));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
