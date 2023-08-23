@@ -20,7 +20,7 @@ Matched file: configmaps/myapp-configmap1.yml
 Created Resources:
  - ConfigMap/game-demo in namespace calamari-testing
  - ConfigMap/game-demo2 in namespace calamari-testing
-Resource Status Check: reported 12 updates, 0 removals
+Resource Status Check: reported 10 updates, 0 removals
 Resource Status Check: 2 new resources have been added:
  - ConfigMap/game-demo in namespace calamari-testing
  - ConfigMap/game-demo2 in namespace calamari-testing
