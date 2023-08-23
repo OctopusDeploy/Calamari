@@ -11,7 +11,7 @@ Applying Batch #2 for YAML matching 'services/myapp-service.yml'
 Matched file: services/myapp-service.yml
 Created Resources:
  - Service/nginx-service in namespace calamari-testing
-Resource Status Check: reported 10 updates, 0 removals
+Resource Status Check: reported 8 updates, 0 removals
 Resource Status Check: 1 new resources have been added:
  - Service/nginx-service in namespace calamari-testing
 Applying Batch #3 for YAML matching 'configmaps/*.yml'
