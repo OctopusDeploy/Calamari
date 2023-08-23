@@ -73,7 +73,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 var directoryPath = dir.DirectoryPath;
                 // Note: the "Test Folder" has a space in it to test that working directories
-                // with spaces are handled correctly by the Raw Yaml Step.
+                // with spaces are handled correctly by Kubernetes Steps.
                 var folderPath = Path.Combine(directoryPath, "Test Folder");
                 Directory.CreateDirectory(folderPath);
 
