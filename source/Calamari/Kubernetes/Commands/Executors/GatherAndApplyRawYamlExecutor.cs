@@ -153,7 +153,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                 log.Verbose($"Matched file: {fileSystem.GetRelativePath(directory, file)}");
             }
 
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $"\"{directory}\"", "--recursive", "-o", "json");
+            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $"'{directory}'", "--recursive", "-o", "json");
 
             foreach (var message in result.Output.Messages)
             {
