@@ -106,7 +106,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                 Path.DirectorySeparatorChar;
 
             var directories = new List<GlobDirectory>();
-            for (var i = 0; i < globs.Count; i ++)
+            for (var i = 1; i <= globs.Count; i ++)
             {
                 var glob = globs[i];
                 var directoryPath = Path.Combine(stagingDirectory, GroupedDirectoryName, i.ToString());
@@ -139,7 +139,7 @@ namespace Calamari.Kubernetes.Commands.Executors
         {
             var index = globDirectory.Index;
             var directory = globDirectory.Directory + Path.DirectorySeparatorChar;
-            log.Info($"Applying Batch #{index+1} for YAML matching '{globDirectory.Glob}'");
+            log.Info($"Applying Batch #{index} for YAML matching '{globDirectory.Glob}'");
 
             var files = fileSystem.EnumerateFilesRecursively(globDirectory.Directory).ToArray();
             if (!files.Any())
@@ -150,11 +150,10 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             foreach (var file in files)
             {
-                log.Verbose($"{fileSystem.GetRelativePath(directory, file)} Contents:");
-                log.Verbose(fileSystem.ReadFile(file));
+                log.Verbose($"Matched file: {fileSystem.GetRelativePath(directory, file)}");
             }
 
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "--recursive", "-o", "json");
+            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $"\"{directory}\"", "--recursive", "-o", "json");
 
             foreach (var message in result.Output.Messages)
             {
