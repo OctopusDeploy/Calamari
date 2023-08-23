@@ -72,6 +72,8 @@ namespace Calamari.Tests.KubernetesFixtures
             using (var dir = TemporaryDirectory.Create())
             {
                 var directoryPath = dir.DirectoryPath;
+                // Note: the "Test Folder" has a space in it to test that working directories
+                // with spaces are handled correctly by the Raw Yaml Step.
                 var folderPath = Path.Combine(directoryPath, "Test Folder");
                 Directory.CreateDirectory(folderPath);
 
