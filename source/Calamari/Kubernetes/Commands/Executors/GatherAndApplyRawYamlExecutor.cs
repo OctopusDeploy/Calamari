@@ -106,9 +106,9 @@ namespace Calamari.Kubernetes.Commands.Executors
                 Path.DirectorySeparatorChar;
 
             var directories = new List<GlobDirectory>();
-            for (var i = 0; i < globs.Count; i ++)
+            for (var i = 1; i <= globs.Count; i ++)
             {
-                var glob = globs[i];
+                var glob = globs[i-1];
                 var directoryPath = Path.Combine(stagingDirectory, GroupedDirectoryName, i.ToString());
                 var directory = new GlobDirectory(i, glob, directoryPath);
                 fileSystem.CreateDirectory(directoryPath);
@@ -138,8 +138,8 @@ namespace Calamari.Kubernetes.Commands.Executors
         private IEnumerable<Resource> ApplyBatchAndReturnResources(GlobDirectory globDirectory)
         {
             var index = globDirectory.Index;
-            var directory = globDirectory.Directory + Path.DirectorySeparatorChar;
-            log.Info($"Applying Batch #{index+1} for YAML matching '{globDirectory.Glob}'");
+            var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
+            log.Info($"Applying Batch #{index} for YAML matching '{globDirectory.Glob}'");
 
             var files = fileSystem.EnumerateFilesRecursively(globDirectory.Directory).ToArray();
             if (!files.Any())
@@ -150,11 +150,10 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             foreach (var file in files)
             {
-                log.Verbose($"{fileSystem.GetRelativePath(directory, file)} Contents:");
-                log.Verbose(fileSystem.ReadFile(file));
+                log.Verbose($"Matched file: {fileSystem.GetRelativePath(directoryWithTrailingSlash, file)}");
             }
 
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", directory, "--recursive", "-o", "json");
+            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json");
 
             foreach (var message in result.Output.Messages)
             {
@@ -166,7 +165,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                     case Level.Error:
                         //Files in the error are shown with the full path in their batch directory,
                         //so we'll remove that for the user.
-                        log.Error(message.Text.Replace($"{directory}", ""));
+                        log.Error(message.Text.Replace($"{directoryWithTrailingSlash}", ""));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();

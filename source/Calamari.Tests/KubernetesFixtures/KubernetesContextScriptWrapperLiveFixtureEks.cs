@@ -202,7 +202,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                              // This log line is slightly different in the new command because
                                              // we apply the yaml in batches (even if there is only one file).
                                              return l.Replace("\"kubectl apply -o json\" returned invalid JSON:",
-                                                 "\"kubectl apply -o json\" returned invalid JSON for Batch #0:");
+                                                 "\"kubectl apply -o json\" returned invalid JSON for Batch #1:");
                                          })
                                          .Select(l =>
                                          {
