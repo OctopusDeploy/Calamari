@@ -1,4 +1,4 @@
-"kubectl apply -o json" returned invalid JSON for Batch #0:
+"kubectl apply -o json" returned invalid JSON for Batch #1:
 ---------------------------
 ---------------------------
 This can happen with older versions of kubectl. Please update to a recent version of kubectl.
