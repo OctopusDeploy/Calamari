@@ -15,5 +15,6 @@ namespace Calamari.Common.Features.Packages
         S3,
         AzureContainerRegistry,
         GoogleContainerRegistry,
+        ArtifactoryGenericFeed,
     }
 }

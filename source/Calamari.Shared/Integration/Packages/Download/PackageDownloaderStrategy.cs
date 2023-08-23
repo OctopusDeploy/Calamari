@@ -73,6 +73,9 @@ namespace Calamari.Integration.Packages.Download
                 case FeedType.S3:
                     downloader = new S3PackageDownloader(log, fileSystem);
                     break;
+                case FeedType.ArtifactoryGenericFeed:
+                    downloader = new ArtifactoryPackageDownloader(log, fileSystem);
+                    break;
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");
             }
