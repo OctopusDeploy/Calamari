@@ -72,12 +72,12 @@ namespace Calamari.Tests.KubernetesFixtures
             using (var dir = TemporaryDirectory.Create())
             {
                 var directoryPath = dir.DirectoryPath;
-                var folderPath = Path.Combine(directoryPath, "TestFolder");
+                var folderPath = Path.Combine(directoryPath, "Test Folder");
                 Directory.CreateDirectory(folderPath);
 
-                var packagePath = addFilesOrPackageFunc?.Invoke(directoryPath);
+                var packagePath = addFilesOrPackageFunc?.Invoke(folderPath);
 
-                var output = ExecuteCommand(commandName, directoryPath, packagePath);
+                var output = ExecuteCommand(commandName, folderPath, packagePath);
 
                 WriteLogMessagesToTestOutput();
 
