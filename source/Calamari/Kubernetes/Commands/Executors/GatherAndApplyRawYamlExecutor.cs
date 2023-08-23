@@ -108,7 +108,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             var directories = new List<GlobDirectory>();
             for (var i = 1; i <= globs.Count; i ++)
             {
-                var glob = globs[i];
+                var glob = globs[i-1];
                 var directoryPath = Path.Combine(stagingDirectory, GroupedDirectoryName, i.ToString());
                 var directory = new GlobDirectory(i, glob, directoryPath);
                 fileSystem.CreateDirectory(directoryPath);
