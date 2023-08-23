@@ -138,7 +138,7 @@ namespace Calamari.Kubernetes.Commands.Executors
         private IEnumerable<Resource> ApplyBatchAndReturnResources(GlobDirectory globDirectory)
         {
             var index = globDirectory.Index;
-            var directory = globDirectory.Directory + Path.DirectorySeparatorChar;
+            var directory = globDirectory.Directory;
             log.Info($"Applying Batch #{index} for YAML matching '{globDirectory.Glob}'");
 
             var files = fileSystem.EnumerateFilesRecursively(globDirectory.Directory).ToArray();
@@ -153,7 +153,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                 log.Verbose($"Matched file: {fileSystem.GetRelativePath(directory, file)}");
             }
 
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $"'{directory}'", "--recursive", "-o", "json");
+            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{directory}""", "--recursive", "-o", "json");
 
             foreach (var message in result.Output.Messages)
             {
