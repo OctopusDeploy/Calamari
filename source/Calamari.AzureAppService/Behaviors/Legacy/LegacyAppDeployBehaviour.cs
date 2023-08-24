@@ -10,11 +10,16 @@ namespace Calamari.AzureAppService.Behaviors
 {
     public class LegacyAppDeployBehaviour : IDeployBehaviour
     {
-        private ILog Log { get; }
+        readonly LegacyAzureAppServiceDeployContainerBehavior containerBehaviour;
+        readonly LegacyAzureAppServiceBehaviour appServiceBehaviour;
+
+        ILog Log { get; }
 
         public LegacyAppDeployBehaviour(ILog log)
         {
             Log = log;
+            containerBehaviour = new LegacyAzureAppServiceDeployContainerBehavior(log);
+            appServiceBehaviour = new LegacyAzureAppServiceBehaviour(log);
         }
 
         public bool IsEnabled(RunningDeployment context) => !FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
@@ -26,8 +31,8 @@ namespace Calamari.AzureAppService.Behaviors
 
             return deploymentType switch
                    {
-                       "Container" => new LegacyAzureAppServiceDeployContainerBehavior(Log).Execute(context),
-                       _ => new LegacyAzureAppServiceBehaviour(Log).Execute(context)
+                       "Container" => containerBehaviour.Execute(context),
+                       _ => appServiceBehaviour.Execute(context)
                    };
         }
     }

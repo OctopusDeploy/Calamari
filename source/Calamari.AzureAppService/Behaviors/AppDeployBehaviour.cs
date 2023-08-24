@@ -10,11 +10,16 @@ namespace Calamari.AzureAppService.Behaviors
 {
     public class AppDeployBehaviour : IDeployBehaviour
     {
-        private ILog Log { get; }
+        readonly AzureAppServiceDeployContainerBehaviour containerBehaviour;
+        readonly AzureAppServiceBehaviour appServiceBehaviour;
+
+        ILog Log { get; }
 
         public AppDeployBehaviour(ILog log)
         {
             Log = log;
+            containerBehaviour = new AzureAppServiceDeployContainerBehaviour(log);
+            appServiceBehaviour = new AzureAppServiceBehaviour(log);
         }
 
         public bool IsEnabled(RunningDeployment context) => FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
@@ -26,8 +31,8 @@ namespace Calamari.AzureAppService.Behaviors
 
             return deploymentType switch
                    {
-                       "Container" => new AzureAppServiceDeployContainerBehaviour(Log).Execute(context),
-                       _ => new AzureAppServiceBehaviour(Log).Execute(context)
+                       "Container" => containerBehaviour.Execute(context),
+                       _ => appServiceBehaviour.Execute(context)
                    };
         }
     }
