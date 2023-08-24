@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Azure.Management.WebSites.Models;
-using Newtonsoft.Json;
 
 namespace Calamari.AzureAppService.Json
 {
-    public class ConnectionStringSetting
+    public class LegacyConnectionStringSetting
     {
         public string Name { get; set; }
         public string Value { get; set; }
@@ -35,7 +30,7 @@ namespace Calamari.AzureAppService.Json
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == this.GetType() && Equals((AppSetting) obj);
+            return obj.GetType() == this.GetType() && Equals((AppSetting)obj);
         }
 
         public override int GetHashCode()

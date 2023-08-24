@@ -29,10 +29,10 @@ using StorageManagementClient = Microsoft.Azure.Management.Storage.StorageManage
 
 namespace Calamari.AzureAppService.Tests
 {
-    public class AppServiceBehaviorFixture
+    public class LegacyAppServiceBehaviorFixture
     {
         [TestFixture]
-        public class WhenUsingAWindowsDotNetAppService : AppServiceIntegrationTest
+        public class WhenUsingAWindowsDotNetAppService : LegacyAppServiceIntegrationTest
         {
             private string servicePlanId;
 
@@ -72,7 +72,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(site.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -89,7 +89,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(site.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -114,7 +114,7 @@ namespace Calamari.AzureAppService.Tests
                 packageinfo.packageName = "AzureZipDeployPackage";
                 ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
 
-                await slotTask;
+                var siteSlot = await slotTask;
 
                 await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
                                         .WithArrange(context =>
@@ -125,7 +125,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{site.Name}-{slotName}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(siteSlot.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -173,7 +173,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
-                await AssertContent($"{site.Name}.azurewebsites.net", $"Hello {greeting}");
+                await AssertContent(site.DefaultHostName, $"Hello {greeting}");
             }
 
             [Test]
@@ -211,7 +211,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent($"{javaSite.Name}.azurewebsites.net", $"Hello! {greeting}", "test.jsp");
+                await AssertContent(javaSite.DefaultHostName, $"Hello! {greeting}", "test.jsp");
             }
 
             [Test]
@@ -305,8 +305,11 @@ namespace Calamari.AzureAppService.Tests
         }
 
         [TestFixture]
-        public class WhenUsingALinuxAppService : AppServiceIntegrationTest
-        {
+        public class WhenUsingALinuxAppService : LegacyAppServiceIntegrationTest
+        {            
+            // For some reason we are having issues creating these linux resources on Standard in EastUS
+            protected override string DefaultResourceGroupLocation => "westus2";
+            
             protected override async Task ConfigureTestResources(ResourceGroup resourceGroup)
             {
                 var storageClient = new StorageManagementClient(new TokenCredentials(authToken))
@@ -316,7 +319,7 @@ namespace Calamari.AzureAppService.Tests
                 var storageAccountName = resourceGroupName.Replace("-", "").Substring(0, 20);
                 var storageAccount = await RetryPolicy.ExecuteAsync(async () => await storageClient.StorageAccounts.CreateAsync(resourceGroupName,
                                                                                                                                 accountName: storageAccountName,
-                                                                                                                                new StorageAccountCreateParameters()
+                                                                                                                                new StorageAccountCreateParameters
                                                                                                                                 {
                                                                                                                                     Sku = new Sku("Standard_LRS"),
                                                                                                                                     Kind = "Storage",
@@ -330,7 +333,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                            $"{resourceGroupName}-linux-asp",
                                                                                                                                            new AppServicePlan(resourceGroupLocation)
                                                                                                                                            {
-                                                                                                                                               Sku = new SkuDescription("B1", "Basic"),
+                                                                                                                                               Sku = new SkuDescription("S1", "Standard"),
                                                                                                                                                Kind = "linux",
                                                                                                                                                Reserved = true
                                                                                                                                            }
@@ -378,7 +381,7 @@ namespace Calamari.AzureAppService.Tests
                 await DoWithRetries(10,
                                     async () =>
                                     {
-                                        await AssertContent($"{site.Name}.azurewebsites.net",
+                                        await AssertContent(site.DefaultHostName,
                                                             rootPath: $"api/HttpExample?name={greeting}",
                                                             actualText: $"Hello, {greeting}");
                                     },
@@ -408,7 +411,7 @@ namespace Calamari.AzureAppService.Tests
                 await DoWithRetries(10,
                                     async () =>
                                     {
-                                        await AssertContent($"{site.Name}.azurewebsites.net",
+                                        await AssertContent(site.DefaultHostName,
                                                             rootPath: $"api/HttpExample?name={greeting}",
                                                             actualText: $"Hello, {greeting}");
                                     },

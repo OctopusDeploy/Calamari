@@ -8,7 +8,7 @@ using Calamari.AzureAppService.Azure;
 namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
-    public class AzureWebAppHelperFixture
+    public class AzureWebAppTagHelperFixture
     {
         [Test]
         public void GetOctopusTags_FindsMatchingTags_RegardlessOfCase()
@@ -24,7 +24,7 @@ namespace Calamari.AzureAppService.Tests
             };
 
             // Act
-            var foundTags = AzureWebAppHelper.GetOctopusTags(tags);
+            var foundTags = AzureWebAppTagHelper.GetOctopusTags(tags);
 
             // Assert
             using (new AssertionScope())

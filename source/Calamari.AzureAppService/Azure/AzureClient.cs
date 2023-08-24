@@ -20,13 +20,14 @@ namespace Calamari.AzureAppService.Azure
             );
 
             // Note: This is a tactical fix to ensure this Sashimi uses the appropriate web proxy
-            #pragma warning disable
+#pragma warning disable DE0003
             var client = new HttpClient(new HttpClientHandler {Proxy = WebRequest.DefaultWebProxy});
+#pragma warning restore DE0003
 
             return Microsoft.Azure.Management.Fluent.Azure.Configure()
-                .WithHttpClient(client)
-                .Authenticate(credentials)
-                .WithSubscription(servicePrincipal.SubscriptionNumber);
+                            .WithHttpClient(client)
+                            .Authenticate(credentials)
+                            .WithSubscription(servicePrincipal.SubscriptionNumber);
         }
 
         /// <summary>
@@ -47,10 +48,16 @@ namespace Calamari.AzureAppService.Azure
             var azureKnownEnvironment = new AzureKnownEnvironment(servicePrincipalAccount.AzureEnvironment);
 
             // Configure a specific transport that will pick up the proxy settings set by Calamari
+#pragma warning disable DE0003
             var httpClientTransport = new HttpClientTransport(new HttpClientHandler { Proxy = WebRequest.DefaultWebProxy });
+#pragma warning restore DE0003
 
             // Specifically tell the new Azure SDK which authentication endpoint to use
-            var authorityHost = azureKnownEnvironment.GetAzureAuthorityHost();
+            var authorityHost = string.IsNullOrEmpty(servicePrincipalAccount.ActiveDirectoryEndpointBaseUri)
+                ? azureKnownEnvironment.GetAzureAuthorityHost()
+                // if the user has specified a custom authentication endpoint, use that value
+                : new Uri(servicePrincipalAccount.ActiveDirectoryEndpointBaseUri);
+            
             var tokenCredentialOptions = new TokenCredentialOptions
             {
                 Transport = httpClientTransport,
@@ -58,13 +65,21 @@ namespace Calamari.AzureAppService.Azure
             };
 
             // The new Azure SDK uses a different representation of Environments
-            var armEnvironment = azureKnownEnvironment.AsAzureArmEnvironment();
+            var armEnvironment = string.IsNullOrEmpty(servicePrincipalAccount.ResourceManagementEndpointBaseUri)
+                ? azureKnownEnvironment.AsAzureArmEnvironment()
+                // if the user has specified a custom resource management endpoint, define a custom environment using that value
+                : new ArmEnvironment(new Uri(servicePrincipalAccount.ResourceManagementEndpointBaseUri, UriKind.Absolute), servicePrincipalAccount.ResourceManagementEndpointBaseUri);
+            
             var armClientOptions = new ArmClientOptions
             {
                 Transport = httpClientTransport,
                 Environment = armEnvironment
             };
             retryOptionsSetter?.Invoke(armClientOptions.Retry);
+            
+            // there is a bug in the slotconfignames call due to it not passing back an ID, so this is needed to fix that
+            // see https://github.com/Azure/azure-sdk-for-net/issues/33384
+            armClientOptions.AddPolicy(new SlotConfigNamesInvalidIdFilterPolicy(), HttpPipelinePosition.PerRetry);
 
             return (armClientOptions, tokenCredentialOptions);
         }

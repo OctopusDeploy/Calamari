@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using Calamari.AzureAppService.Behaviors;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
@@ -12,7 +11,13 @@ namespace Calamari.AzureAppService
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
-            yield return resolver.Create<AppDeployBehavior>();
+            //Legacy behaviours
+            yield return resolver.Create<LegacyAppDeployBehaviour>();
+            yield return resolver.Create<LegacyAzureAppServiceSettingsBehaviour>();
+            yield return resolver.Create<LegacyRestartAzureWebAppBehaviour>();
+
+            //Modern behaviours
+            yield return resolver.Create<AppDeployBehaviour>();
             yield return resolver.Create<AzureAppServiceSettingsBehaviour>();
             yield return resolver.Create<RestartAzureWebAppBehaviour>();
         }
@@ -23,6 +28,10 @@ namespace Calamari.AzureAppService
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
+            //Legacy behaviour
+            yield return resolver.Create<LegacyAzureAppServiceBehaviour>();
+
+            //Modern behaviour
             yield return resolver.Create<AzureAppServiceBehaviour>();
         }
     }

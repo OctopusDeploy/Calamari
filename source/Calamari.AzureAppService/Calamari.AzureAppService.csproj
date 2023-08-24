@@ -18,7 +18,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.2.3" />
-    <PackageReference Include="Azure.ResourceManager.AppService" Version="1.0.1" />
+    <PackageReference Include="Azure.ResourceManager" Version="1.7.0" />
+    <PackageReference Include="Azure.ResourceManager.AppService" Version="1.0.2" />
     <PackageReference Include="Azure.ResourceManager.ResourceGraph" Version="1.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
     <PackageReference Include="Microsoft.Azure.Management.AppService.Fluent" Version="1.37.1" />
