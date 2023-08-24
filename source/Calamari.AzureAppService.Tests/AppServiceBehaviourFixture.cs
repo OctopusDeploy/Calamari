@@ -75,6 +75,29 @@ namespace Calamari.AzureAppService.Tests
             }
 
             [Test]
+            public async Task CanDeployWebAppZip_WithAsyncDeploymentAndPolling()
+            {
+                var packageInfo = PrepareZipPackage();
+
+                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
+                                        .WithArrange(context =>
+                                                     {
+                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
+                                                         AddVariables(context);
+
+                                                         var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
+                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                                                                      existingFeatureToggles.Concat(new[]
+                                                                                      {
+                                                                                          FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.ToString()
+                                                                                      }));
+                                                     })
+                                        .Execute();
+
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
+            }
+
+            [Test]
             public async Task CanDeployWebAppZip_ToDeploymentSlot()
             {
                 const string slotName = "stage";
@@ -283,7 +306,7 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
                 context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
-                
+
                 //set the feature toggle so we get the new code
                 context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
             }
@@ -291,10 +314,10 @@ namespace Calamari.AzureAppService.Tests
 
         [TestFixture]
         public class WhenUsingALinuxAppService : AppServiceIntegrationTest
-        {        
+        {
             // For some reason we are having issues creating these linux resources on Standard in EastUS
             protected override string DefaultResourceGroupLocation => "westus2";
-            
+
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
                 var storageAccountName = ResourceGroupName.Replace("-", "").Substring(0, 20);
@@ -311,9 +334,9 @@ namespace Calamari.AzureAppService.Tests
 
                 var keys = await storageAccountResponse
                                  .Value
-                                                       .GetKeysAsync()
-                                                       .ToListAsync();
-                
+                                 .GetKeysAsync()
+                                 .ToListAsync();
+
                 var linuxAppServicePlan = await resourceGroup.GetAppServicePlans()
                                                              .CreateOrUpdateAsync(WaitUntil.Completed,
                                                                                   $"{resourceGroup.Data.Name}-linux-asp",
@@ -329,27 +352,26 @@ namespace Calamari.AzureAppService.Tests
                                                                                   });
 
                 var linuxWebSiteResponse = await resourceGroup.GetWebSites()
-                                                         .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                              $"{resourceGroup.Data.Name}-linux",
-                                                                              new WebSiteData(resourceGroup.Data.Location)
-                                                                              {
-                                                                                  AppServicePlanId = linuxAppServicePlan.Value.Id,
-                                                                                  Kind = "functionapp,linux",
-                                                                                  IsReserved = true,
-                                                                                  SiteConfig = new SiteConfigProperties
-                                                                                  {
-                                                                                      IsAlwaysOn = true,
-                                                                                      LinuxFxVersion = "DOTNET|6.0",
-                                                                                      Use32BitWorkerProcess = true,
-                                                                                      AppSettings = new List<AppServiceNameValuePair>
-                                                                                      {
-                                                                                          new AppServiceNameValuePair{Name = "FUNCTIONS_WORKER_RUNTIME", Value = "dotnet"},
-                                                                                          new AppServiceNameValuePair{Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4"},
-                                                                                          new AppServiceNameValuePair{Name = "AzureWebJobsStorage", Value = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={keys.First().Value};EndpointSuffix=core.windows.net"},
-                                                                                          
-                                                                                      }
-                                                                                  }
-                                                                              });
+                                                              .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                                   $"{resourceGroup.Data.Name}-linux",
+                                                                                   new WebSiteData(resourceGroup.Data.Location)
+                                                                                   {
+                                                                                       AppServicePlanId = linuxAppServicePlan.Value.Id,
+                                                                                       Kind = "functionapp,linux",
+                                                                                       IsReserved = true,
+                                                                                       SiteConfig = new SiteConfigProperties
+                                                                                       {
+                                                                                           IsAlwaysOn = true,
+                                                                                           LinuxFxVersion = "DOTNET|6.0",
+                                                                                           Use32BitWorkerProcess = true,
+                                                                                           AppSettings = new List<AppServiceNameValuePair>
+                                                                                           {
+                                                                                               new AppServiceNameValuePair { Name = "FUNCTIONS_WORKER_RUNTIME", Value = "dotnet" },
+                                                                                               new AppServiceNameValuePair { Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4" },
+                                                                                               new AppServiceNameValuePair { Name = "AzureWebJobsStorage", Value = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={keys.First().Value};EndpointSuffix=core.windows.net" },
+                                                                                           }
+                                                                                       }
+                                                                                   });
                 WebSiteResource = linuxWebSiteResponse.Value;
             }
 
@@ -434,7 +456,7 @@ namespace Calamari.AzureAppService.Tests
             {
                 AddAzureVariables(context);
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
-                
+
                 //set the feature toggle so we get the new code
                 context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
             }

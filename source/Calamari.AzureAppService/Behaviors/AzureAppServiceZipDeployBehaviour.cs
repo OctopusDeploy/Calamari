@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager;
@@ -18,12 +19,13 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Polly;
 
 namespace Calamari.AzureAppService.Behaviors
 {
-    internal class AzureAppServiceBehaviour : IDeployBehaviour
+    internal class AzureAppServiceZipDeployBehaviour : IDeployBehaviour
     {
-        public AzureAppServiceBehaviour(ILog log)
+        public AzureAppServiceZipDeployBehaviour(ILog log)
         {
             Log = log;
             Archive = new ZipPackageProvider();
@@ -144,7 +146,15 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 
             Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
-            await UploadZipAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot);
+
+            if (FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.IsEnabled(context.Variables))
+            {
+                await UploadZipAndPollAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot);
+            }
+            else
+            {
+                await UploadZipAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot);
+            }
         }
 
         private async Task<WebSiteSlotResource> FindOrCreateSlot(ArmClient armClient, WebSiteResource webSiteResource, AzureTargetSite site)
@@ -193,7 +203,6 @@ namespace Calamari.AzureAppService.Behaviors
                 Timeout = TimeSpan.FromHours(1)
             };
 
-
             //we add some retry just in case the web app's Kudu/SCM is not running just yet
             var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                       {
@@ -217,6 +226,101 @@ namespace Calamari.AzureAppService.Behaviors
 
             if (!response.IsSuccessStatusCode)
                 throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status {(int)response.StatusCode} '{response.ReasonPhrase}'.");
+
+            Log.Verbose("Finished deploying");
+        }
+
+        private async Task UploadZipAndPollAsync(PublishingProfile publishingProfile,
+                                                 string uploadZipPath,
+                                                 string targetSite)
+        {
+            Log.Verbose($"Path to upload: {uploadZipPath}");
+            Log.Verbose($"Target Site: {targetSite}");
+
+            if (!new FileInfo(uploadZipPath).Exists)
+                throw new FileNotFoundException(uploadZipPath);
+
+            var zipUploadUrl = $"{publishingProfile.PublishUrl}{Archive.UploadUrlPath}?isAsync=true";
+            Log.Verbose($"Publishing {uploadZipPath} to {zipUploadUrl} and checking for deployment");
+
+            using var httpClient = new HttpClient(new HttpClientHandler
+            {
+#pragma warning disable DE0003
+                Proxy = WebRequest.DefaultWebProxy
+#pragma warning restore DE0003
+            });
+
+            var authenticationHeader = new AuthenticationHeaderValue("Basic", publishingProfile.GetBasicAuthCredentials());
+
+            //we add some retry just in case the web app's Kudu/SCM is not running just yet
+            var uploadResponse = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
+                                                                                            {
+                                                                                                //we have to create a new request message each time
+                                                                                                var uploadRequest = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
+                                                                                                {
+                                                                                                    Headers =
+                                                                                                    {
+                                                                                                        Authorization = authenticationHeader
+                                                                                                    },
+                                                                                                    Content = new StreamContent(new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                                                                                                    {
+                                                                                                        Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
+                                                                                                    }
+                                                                                                };
+
+                                                                                                var r = await httpClient.SendAsync(uploadRequest);
+                                                                                                r.EnsureSuccessStatusCode();
+                                                                                                return r;
+                                                                                            });
+
+            if (!uploadResponse.IsSuccessStatusCode)
+                throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status {(int)uploadResponse.StatusCode} '{uploadResponse.ReasonPhrase}'.");
+
+            Log.Verbose("Zip upload succeeded. Checking for deployment completion");
+            var location = uploadResponse.Headers.Location;
+
+            var pollingTimeout = TimeSpan.FromMinutes(3);
+
+            //add a fixed 3 minute timeout to the polly operation
+            var timeoutCancellationToken = new CancellationTokenSource(pollingTimeout);
+
+            //the outer policy should only retry when the response is a 202
+            var result = await RetryPolicies.AsynchronousZipDeploymentOperationPolicy
+                                            .ExecuteAndCaptureAsync(async ct1 =>
+                                                                        //we nest this policy so any transient errors are handled and retried. If it just keeps falling over, then we want it to bail out of the outer operation
+                                                                        await RetryPolicies.TransientHttpErrorsPolicy
+                                                                                           .ExecuteAsync(async ct2 =>
+                                                                                                         {
+                                                                                                             //we have to create a new request message each time
+                                                                                                             var checkRequest = new HttpRequestMessage(HttpMethod.Get, location)
+                                                                                                             {
+                                                                                                                 Headers =
+                                                                                                                 {
+                                                                                                                     Authorization = authenticationHeader
+                                                                                                                 }
+                                                                                                             };
+
+                                                                                                             var r = await httpClient.SendAsync(checkRequest, ct2);
+                                                                                                             r.EnsureSuccessStatusCode();
+                                                                                                             return r;
+                                                                                                         },
+                                                                                                         ct1),
+                                                                    timeoutCancellationToken.Token);
+
+            if (result.Outcome == OutcomeType.Failure)
+            {
+                switch (result.FinalException)
+                {
+                    case OperationCanceledException oce:
+                        throw new Exception($"Zip deployment failed to complete after {pollingTimeout}.", oce);
+                    default:
+                        throw new Exception($"Zip deployment failed to complete.", result.FinalException);
+                }
+
+            }
+
+            if (!result.Result.IsSuccessStatusCode)
+                throw new Exception($"Zip deployment check failed with HTTP Status {(int)result.FinalHandledResult.StatusCode} '{result.FinalHandledResult.ReasonPhrase}'.");
 
             Log.Verbose("Finished deploying");
         }
