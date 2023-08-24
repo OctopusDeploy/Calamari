@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -30,10 +31,7 @@ namespace Calamari.AzureAppService.Behaviors
 
         private IPackageProvider Archive { get; set; }
 
-        public bool IsEnabled(RunningDeployment context)
-        {
-            return true;
-        }
+        public bool IsEnabled(RunningDeployment context) => !FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
 
         public async Task Execute(RunningDeployment context)
         {

@@ -13,6 +13,7 @@ using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -32,10 +33,7 @@ namespace Calamari.AzureAppService.Behaviors
 
         private IPackageProvider Archive { get; set; }
 
-        public bool IsEnabled(RunningDeployment context)
-        {
-            return true;
-        }
+        public bool IsEnabled(RunningDeployment context) => FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
 
         public async Task Execute(RunningDeployment context)
         {
@@ -142,7 +140,7 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
             using var publishingProfileXmlStream = await armClient.GetPublishingProfileXmlWithSecrets(targetSite);
             var publishingProfile = await PublishingProfile.ParseXml(publishingProfileXmlStream);
-            
+
             Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 
             Log.Info($"Uploading package to {targetSite.SiteAndSlot}");

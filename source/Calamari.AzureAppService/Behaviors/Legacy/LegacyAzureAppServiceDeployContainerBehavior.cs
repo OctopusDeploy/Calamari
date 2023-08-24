@@ -1,21 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Runtime.ExceptionServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
-using Calamari.AzureAppService.Json;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Rest;
-using Newtonsoft.Json;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -27,10 +18,7 @@ namespace Calamari.AzureAppService.Behaviors
             Log = log;
         }
 
-        public bool IsEnabled(RunningDeployment context)
-        {
-            return true;
-        }
+        public bool IsEnabled(RunningDeployment context) => !FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
 
         public async Task Execute(RunningDeployment context)
         {
@@ -58,7 +46,7 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Retrieving config (this is required to update image)");
             var config = await webAppClient.WebApps.GetConfigurationAsync(targetSite);
             config.LinuxFxVersion = $@"DOCKER|{image}";
-            
+
 
             Log.Verbose("Retrieving app settings");
             var appSettings = await webAppClient.WebApps.ListApplicationSettingsAsync(targetSite);

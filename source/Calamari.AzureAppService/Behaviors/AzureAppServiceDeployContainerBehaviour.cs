@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 
@@ -16,10 +17,7 @@ namespace Calamari.AzureAppService.Behaviors
             Log = log;
         }
 
-        public bool IsEnabled(RunningDeployment context)
-        {
-            return true;
-        }
+        public bool IsEnabled(RunningDeployment context) => FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
 
         public async Task Execute(RunningDeployment context)
         {
@@ -29,7 +27,7 @@ namespace Calamari.AzureAppService.Behaviors
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
-            
+
             var targetSite = new AzureTargetSite(principalAccount.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
             var image = variables.Get(SpecialVariables.Action.Package.Image);

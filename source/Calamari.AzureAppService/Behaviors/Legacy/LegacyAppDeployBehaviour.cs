@@ -8,16 +8,16 @@ using Calamari.Common.Plumbing.Pipeline;
 
 namespace Calamari.AzureAppService.Behaviors
 {
-    public class AppDeployBehaviour : IDeployBehaviour
+    public class LegacyAppDeployBehaviour : IDeployBehaviour
     {
         private ILog Log { get; }
 
-        public AppDeployBehaviour(ILog log)
+        public LegacyAppDeployBehaviour(ILog log)
         {
             Log = log;
         }
 
-        public bool IsEnabled(RunningDeployment context) => FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
+        public bool IsEnabled(RunningDeployment context) => !FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
 
         public Task Execute(RunningDeployment context)
         {
@@ -26,8 +26,8 @@ namespace Calamari.AzureAppService.Behaviors
 
             return deploymentType switch
                    {
-                       "Container" => new AzureAppServiceDeployContainerBehaviour(Log).Execute(context),
-                       _ => new AzureAppServiceBehaviour(Log).Execute(context)
+                       "Container" => new LegacyAzureAppServiceDeployContainerBehavior(Log).Execute(context),
+                       _ => new LegacyAzureAppServiceBehaviour(Log).Execute(context)
                    };
         }
     }
