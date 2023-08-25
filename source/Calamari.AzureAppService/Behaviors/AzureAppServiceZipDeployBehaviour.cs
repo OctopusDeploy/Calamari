@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -305,6 +306,11 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                                              return r;
                                                                                                          },
                                                                                                          ct1),
+                                                                    //pass the logger so we can log the retries
+                                                                    new Context(Guid.NewGuid().ToString(), new Dictionary<string, object>
+                                                                    {
+                                                                        [nameof(RetryPolicies.ContextKeys.Log)] = Log
+                                                                    }),
                                                                     timeoutCancellationToken.Token);
 
             if (result.Outcome == OutcomeType.Failure)
@@ -322,7 +328,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (!result.Result.IsSuccessStatusCode)
                 throw new Exception($"Zip deployment check failed with HTTP Status {(int)result.FinalHandledResult.StatusCode} '{result.FinalHandledResult.ReasonPhrase}'.");
 
-            Log.Verbose("Finished deploying");
+            Log.Verbose("Finished zip deployment");
         }
     }
 }
