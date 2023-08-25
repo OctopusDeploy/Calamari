@@ -431,6 +431,40 @@ namespace Calamari.AzureAppService.Tests
                                     secondsBetweenRetries: 10);
             }
 
+
+            [Test]
+            public async Task CanDeployZip_ToLinuxFunctionApp_WithAsyncDeploymentAndPolling()
+            {
+                // Arrange
+                var packageInfo = PrepareZipPackage();
+
+                // Act
+                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
+                                        .WithArrange(context =>
+                                                     {
+                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
+                                                         AddVariables(context);
+
+                                                         var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
+                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                                                                      existingFeatureToggles.Concat(new[]
+                                                                                      {
+                                                                                          FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.ToString()
+                                                                                      }));
+                                                     })
+                                        .Execute();
+
+                // Assert
+                await DoWithRetries(10,
+                                    async () =>
+                                    {
+                                        await AssertContent(WebSiteResource.Data.DefaultHostName,
+                                                            rootPath: $"api/HttpExample?name={greeting}",
+                                                            actualText: $"Hello, {greeting}");
+                                    },
+                                    secondsBetweenRetries: 10);
+            }
+
             private static (string packagePath, string packageName, string packageVersion) PrepareZipPackage()
             {
                 // Looks like there's some file locking issues if multiple tests try to copy from the same file when running in parallel.
