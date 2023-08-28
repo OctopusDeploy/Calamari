@@ -7,10 +7,6 @@ namespace Calamari.Common.Plumbing.FileSystem
     {
         public WindowsPhysicalFileSystem()
         {
-#if USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT
-            File = new LongPathsFile();
-            Directory = new LongPathsDirectory();
-#endif
         }
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
