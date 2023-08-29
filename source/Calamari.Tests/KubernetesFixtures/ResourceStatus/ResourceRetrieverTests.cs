@@ -243,9 +243,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     ""metadata"": {{
         ""name"": ""{1}"",
         ""uid"": ""{2}"",
+        ""namespace"": ""{3}"",
         ""ownerReferences"": [
             {{
-                ""uid"": ""{3}""
+                ""uid"": ""{4}""
             }}
         ]
     }}
@@ -254,6 +255,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         private string kind = "";
         private string name = "";
         private string uid = Guid.NewGuid().ToString();
+        private string @namespace = "default";
         private string ownerUid = Guid.NewGuid().ToString();
 
         public ResourceResponseBuilder WithKind(string kind)
@@ -274,12 +276,18 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             return this;
         }
 
+        public ResourceResponseBuilder WithNamespace(string @namespace)
+        {
+            this.@namespace = @namespace;
+            return this;
+        }
+        
         public ResourceResponseBuilder WithOwnerUid(string ownerUid)
         {
             this.ownerUid = ownerUid;
             return this;
         }
 
-        public string Build() => string.Format(template, kind, name, uid, ownerUid);
+        public string Build() => string.Format(template, kind, name, uid, @namespace, ownerUid);
     }
 }

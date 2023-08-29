@@ -16,9 +16,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         [JsonIgnore] public string Uid { get; set; }
         [JsonIgnore] public string Kind { get; set; }
-        [JsonIgnore] public string Name { get; }
-        [JsonIgnore] public string Namespace { get; }
-        [JsonIgnore] public bool Namespaced { get; }
+        [JsonIgnore] public string Name { get; set; }
+        [JsonIgnore] public string Namespace { get; set; }
+        [JsonIgnore] public bool Namespaced => !string.IsNullOrEmpty(Namespace);
 
         [JsonIgnore] public virtual ResourceStatus ResourceStatus { get; set; } = ResourceStatus.Successful;
 
@@ -38,7 +38,6 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             Kind = Field("$.kind");
             Name = Field("$.metadata.name");
             Namespace = Field("$.metadata.namespace");
-            Namespaced = !string.IsNullOrEmpty(Namespace);
         }
 
         public virtual bool HasUpdate(Resource lastStatus) => false;

@@ -64,8 +64,8 @@ namespace Calamari.Kubernetes.ResourceStatus
                                                   .GetAllOwnedResources(definedResources, kubectl, options)
                                                   .ToArray();
 
-                    var namespacedDefinedResources = definedResourceStatuses
-                        .Where(resourceStatus => resourceStatus.Namespaced)
+                    var nonNamespacedDefinedResources = definedResourceStatuses
+                        .Where(resourceStatus => !resourceStatus.Namespaced)
                         .Select(resourceStatus => new ResourceIdentifier(
                             resourceStatus.Kind, 
                             resourceStatus.Name,
@@ -73,7 +73,9 @@ namespace Calamari.Kubernetes.ResourceStatus
                         .ToHashSet();
 
                     // Filter out cluster-wide resources
-                    definedResources = definedResources.Where(resource => namespacedDefinedResources.Contains(resource)).ToArray();
+                    definedResources = definedResources
+                        .Where(resource => !nonNamespacedDefinedResources.Contains(new ResourceIdentifier(resource.Kind, resource.Name, string.Empty)))
+                        .ToArray();
                     
                     var resourceStatuses = definedResourceStatuses
                                            .SelectMany(IterateResourceTree)

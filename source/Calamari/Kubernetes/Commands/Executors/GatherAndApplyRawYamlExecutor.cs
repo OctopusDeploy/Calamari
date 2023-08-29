@@ -49,6 +49,12 @@ namespace Calamari.Kubernetes.Commands.Executors
                 var globs = variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
                 if (globs.IsNullOrEmpty())
                     return true;
+                var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
+                // When the namespace on a target was set and then cleared, it's going to be "" instead of null
+                if (string.IsNullOrEmpty(defaultNamespace))
+                {
+                    defaultNamespace = "default";
+                }
                 var directories = GroupFilesIntoDirectories(deployment, globs, variables);
                 var resources = new HashSet<Resource>();
                 foreach (var directory in directories)
@@ -56,7 +62,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                     var res = ApplyBatchAndReturnResources(directory).ToList();
                     if (appliedResourcesCallback != null)
                     {
-                        await appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
+                        await appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier(defaultNamespace)).ToArray());
                     }
                     resources.UnionWith(res);
                 }
@@ -233,9 +239,9 @@ namespace Calamari.Kubernetes.Commands.Executors
             public string Kind { get; set; }
             public ResourceMetadata Metadata { get; set; }
 
-            public ResourceIdentifier ToResourceIdentifier()
+            public ResourceIdentifier ToResourceIdentifier(string defaultNamespace = null)
             {
-                return new ResourceIdentifier(Kind, Metadata.Name, Metadata.Namespace);
+                return new ResourceIdentifier(Kind, Metadata.Name, Metadata.Namespace ?? defaultNamespace);
             }
         }
 

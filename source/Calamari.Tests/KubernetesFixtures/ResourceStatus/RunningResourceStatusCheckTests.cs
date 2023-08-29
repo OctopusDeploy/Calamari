@@ -28,7 +28,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             for (var i = 0; i < 5; i++)
             {
-                retriever.SetResponses(new List<Resource>{ new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress) });
+                retriever.SetResponses(new List<Resource>{ new TestResource("Pod", "my-pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress) });
             }
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
@@ -51,7 +51,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var log = new InMemoryLog();
 
             retriever.SetResponses(
-                new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) }
+                new List<Resource> { new TestResource("Pod", "my-pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) }
             );
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
@@ -76,7 +76,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var log = new InMemoryLog();
 
             retriever.SetResponses(
-                new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed) }
+                new List<Resource> { new TestResource("Pod", "my-pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed) }
             );
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
@@ -102,8 +102,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var log = new InMemoryLog();
 
             retriever.SetResponses(
-                new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress) },
-                new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress) }
+                new List<Resource> { new TestResource("Pod", "my-pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress) },
+                new List<Resource> { new TestResource("Pod", "my-pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress) }
             );
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
@@ -131,9 +131,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             retriever.SetResponses(
                 new List<Resource>
                 {
-                    new TestResource("ReplicaSet", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful,
-                        new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed),
-                        new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress))
+                    new TestResource("ReplicaSet", "my-rs", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful,
+                        new TestResource("Pod", "my-pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Failed),
+                        new TestResource("Pod", "my-pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.InProgress))
                 });
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
@@ -158,8 +158,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var log = new InMemoryLog();
 
             retriever.SetResponses(
-                new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) },
-                new List<Resource> { new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) }
+                new List<Resource> { new TestResource("Pod", "my-pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) },
+                new List<Resource> { new TestResource("Pod", "my-pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) }
             );
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
@@ -174,6 +174,29 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             log.StandardError
                 .Should().ContainSingle().Which
                 .Should().Be(RunningResourceStatusCheck.MessageInProgressAtTheEndOfTimeout);
+        }
+        
+        [Test]
+        public async Task ShouldReturnSuccessIfThereAreClusterScopedResources()
+        {
+            var retriever = new TestRetriever();
+            var reporter = new TestReporter();
+            var kubectl = GetKubectl();
+            var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
+            var log = new InMemoryLog();
+
+            retriever.SetResponses(
+                new List<Resource> { new TestResource("crd", "my-crd", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful) { Namespace = string.Empty } }
+            );
+
+            var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
+            {
+                new ResourceIdentifier("crd", "my-crd", "default"),
+            });
+
+            var result = await resourceStatusChecker.WaitForCompletionOrTimeout();
+
+            result.Should().BeTrue();
         }
 
         private IKubectl GetKubectl()
@@ -239,11 +262,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
     public sealed class TestResource : Resource
     {
-        public TestResource(string kind, Kubernetes.ResourceStatus.Resources.ResourceStatus status, params Resource[] children)
+        public TestResource(string kind, string name, Kubernetes.ResourceStatus.Resources.ResourceStatus status, params Resource[] children)
         {
+            Name = name;
             Uid = Guid.NewGuid().ToString();
             Kind = kind;
             ResourceStatus = status;
+            Namespace = "default";
             Children = children.ToList();
         }
 
