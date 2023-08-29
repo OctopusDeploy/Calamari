@@ -111,7 +111,7 @@
     </PropertyGroup>
     <ItemGroup>
       <FSharpFiles Include="$(FSharpCompilerTools)" />
-      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/**/*.*" Condition="'$(TargetFramework)' == 'net6.0'" />
+      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
     </ItemGroup>
   </Target>
   <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
@@ -121,9 +121,9 @@
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build">
-    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/DotnetScript/%(DotnetScriptFiles.RecursiveDir)" />
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)" />
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish">
-    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/DotnetScript/%(DotnetScriptFiles.RecursiveDir)" />
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)" />
   </Target>
 </Project>

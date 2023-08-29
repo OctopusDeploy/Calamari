@@ -36,7 +36,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var exeName = $"dotnet-script.{(CalamariEnvironment.IsRunningOnWindows ? "cmd" : "dll")}";
             var myPath = typeof(DotnetScriptExecutor).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
-            var executable = Path.GetFullPath(Path.Combine(parent, "DotnetScript", exeName));
+            var executable = Path.GetFullPath(Path.Combine(parent, "dotnet-script", exeName));
 
             if (File.Exists(executable))
                 return executable;
