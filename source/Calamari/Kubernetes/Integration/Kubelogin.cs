@@ -23,7 +23,7 @@ namespace Calamari.Kubernetes.Integration
             var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
             if (string.IsNullOrEmpty(foundExecutable))
             {
-                log.Warn("Could not find kubelogin. Make sure kubelogin is on the PATH.");
+                log.Verbose("Could not find kubelogin. Make sure kubelogin is on the PATH.");
                 IsConfigured = false;
                 return false;
             }
