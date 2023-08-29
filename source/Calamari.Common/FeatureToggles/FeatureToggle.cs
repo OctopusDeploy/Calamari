@@ -9,6 +9,8 @@
         SkunkworksFeatureToggle,
         MultiGlobPathsForRawYamlFeatureToggle,
         KubernetesAksKubeloginFeatureToggle,
-        GlobPathsGroupSupportFeatureToggle
+        GlobPathsGroupSupportFeatureToggle,
+        ModernAzureAppServiceSdkFeatureToggle,
+        OidcAccountsFeatureToggle
     }
 }

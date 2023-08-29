@@ -71,7 +71,7 @@ namespace Calamari.AzureAppService.Behaviors
                     if (tagValues == null)
                         continue;
 
-                    var tags = AzureWebAppHelper.GetOctopusTags(tagValues);
+                    var tags = AzureWebAppTagHelper.GetOctopusTags(tagValues);
                     var matchResult = targetDiscoveryContext.Scope.Match(tags);
                     if (matchResult.IsSuccess)
                     {

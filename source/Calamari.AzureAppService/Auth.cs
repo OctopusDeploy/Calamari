@@ -9,7 +9,7 @@ namespace Calamari.AzureAppService
     internal class Auth
     {
         public static async Task<string> GetBasicAuthCreds(ServicePrincipalAccount principalAccount,
-            TargetSite targetSite)
+            AzureTargetSite targetSite)
         {
             var publishingProfile = await PublishingProfile.GetPublishingProfile(targetSite, principalAccount);
             string credential =

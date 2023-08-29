@@ -28,7 +28,7 @@ using Polly.Retry;
 namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
-    public class AzureAppServiceDeployContainerBehaviorFixture
+    public class LegacyAzureAppServiceDeployContainerBehaviorFixture
     {
         private string clientId;
         private string clientSecret;
@@ -56,7 +56,8 @@ namespace Calamari.AzureAppService.Tests
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
 
-            var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
+            // For some reason we are having issues creating these linux resources on Standard in EastUS
+            var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "westus2";
 
             authToken = await GetAuthToken(tenantId, clientId, clientSecret);
 
@@ -130,9 +131,10 @@ namespace Calamari.AzureAppService.Tests
 
             var runningContext = new RunningDeployment("", newVariables);
 
-            await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
+            await new LegacyAzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
-            await AssertDeploySuccessAsync(AzureWebAppHelper.GetAzureTargetSite(site.Name, "", resourceGroupName));
+            var targetSite = new AzureTargetSite(subscriptionId, resourceGroupName, site.Name);
+            await AssertDeploySuccessAsync(targetSite);
         }
 
         [Test]
@@ -150,21 +152,28 @@ namespace Calamari.AzureAppService.Tests
 
             var runningContext = new RunningDeployment("", newVariables);
 
-            await new AzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
+            await new LegacyAzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
-            await AssertDeploySuccessAsync(AzureWebAppHelper.GetAzureTargetSite(site.Name, slotName, resourceGroupName));
+            var targetSite = new AzureTargetSite(subscriptionId, resourceGroupName, site.Name, slotName);
+            await AssertDeploySuccessAsync(targetSite);
         }
 
         async Task AssertSetupSuccessAsync()
         {
-            var result = await client.GetAsync($@"https://{webappName}.azurewebsites.net");
-            var receivedContent = await result.Content.ReadAsStringAsync();
+            var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
+                                                                                      {
+                                                                                          var r = await client.GetAsync($@"https://{site.DefaultHostName}");
+                                                                                          r.EnsureSuccessStatusCode();
+                                                                                          return r;
+                                                                                      });
+            
+            var receivedContent = await response.Content.ReadAsStringAsync();
 
             receivedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>");
-            Assert.IsTrue(result.IsSuccessStatusCode);
+            Assert.IsTrue(response.IsSuccessStatusCode);
         }
 
-        async Task AssertDeploySuccessAsync(TargetSite targetSite)
+        async Task AssertDeploySuccessAsync(AzureTargetSite targetSite)
         {
             var imageName = newVariables.Get(SpecialVariables.Action.Package.PackageId);
             var registryUrl = newVariables.Get(SpecialVariables.Action.Package.Registry);

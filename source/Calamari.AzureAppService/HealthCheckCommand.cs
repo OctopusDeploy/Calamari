@@ -19,7 +19,7 @@ namespace Calamari.AzureAppService
         }
     }
 
-    class HealthCheckBehaviour: IDeployBehaviour
+    class HealthCheckBehaviour : IDeployBehaviour
     {
         public bool IsEnabled(RunningDeployment context)
         {
@@ -39,18 +39,12 @@ namespace Calamari.AzureAppService
         private async Task ConfirmWebAppExists(ServicePrincipalAccount servicePrincipal, string resourceGroupName, string siteAndSlotName)
         {
             var client = servicePrincipal.CreateArmClient();
-            var subscription = await client.GetDefaultSubscriptionAsync();
-            var resourceGroups = subscription.GetResourceGroups();
 
-            try
-            {
-                ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(resourceGroupName);
-                _ = await resourceGroup.GetWebSiteAsync(siteAndSlotName);
-            }
-            catch (RequestFailedException rfe) when (rfe.Status == 404)
-            {
-                throw new Exception($"Could not find site {siteAndSlotName} in resource group {resourceGroupName}, using Service Principal with subscription {servicePrincipal.SubscriptionNumber}", rfe);
-            }
+            var resourceGroupResource = client.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(servicePrincipal.SubscriptionNumber, resourceGroupName));
+
+            //if the website doesn't exist, throw
+            if (!await resourceGroupResource.GetWebSites().ExistsAsync(siteAndSlotName))
+                throw new Exception($"Could not find site {siteAndSlotName} in resource group {resourceGroupName}, using Service Principal with subscription {servicePrincipal.SubscriptionNumber}");
         }
     }
 }
