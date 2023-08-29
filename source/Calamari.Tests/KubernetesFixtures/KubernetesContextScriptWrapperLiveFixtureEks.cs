@@ -120,13 +120,13 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [TestCase(true)]
-        [TestCase(false)]
-        [TestCase(true)]
-        [TestCase(false)]
-        public void DeployRawYaml_WithRawYamlDeploymentScriptOrCommand_OutputShouldIndicateSuccessfulDeployment(bool usePackage)
+        [TestCase(true, true)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        [TestCase(false, false)]
+        public void DeployRawYaml_WithRawYamlDeploymentScriptOrCommand_OutputShouldIndicateSuccessfulDeployment(bool runAsScript, bool usePackage)
         {
-            SetupAndRunKubernetesRawYamlDeployment(usePackage, SimpleDeploymentResource);
+            SetupAndRunKubernetesRawYamlDeployment(runAsScript, usePackage, SimpleDeploymentResource);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
@@ -134,7 +134,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
 
-            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
+            AssertObjectStatusMonitoringStarted(runAsScript, rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
 
             var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
 
@@ -144,9 +144,11 @@ namespace Calamari.Tests.KubernetesFixtures
                 m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
         }
 
-        private static void AssertObjectStatusMonitoringStarted(string[] rawLogs, params (string Type, string Name)[] resources)
+        private static void AssertObjectStatusMonitoringStarted(bool runAsScript, string[] rawLogs, params (string Type, string Name)[] resources)
         {
-            const string resourceStatusCheckLog = "Resource Status Check: 1 new resources have been added:";
+            var resourceStatusCheckLog = runAsScript
+                ? "Resource Status Check: Performing resource status checks on the following resources:"
+                : "Resource Status Check: 1 new resources have been added:";
             var idx = Array.IndexOf(rawLogs, resourceStatusCheckLog);
             foreach (var (i, type, name) in resources.Select((t, i) => (i, t.Type, t.Name)))
             {
@@ -174,13 +176,13 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [TestCase(true)]
-        [TestCase(false)]
-        [TestCase(true)]
-        [TestCase(false)]
-        public void DeployRawYaml_WithInvalidYaml_OutputShouldIndicateFailure(bool usePackage)
+        [TestCase(true, true)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        [TestCase(false, false)]
+        public void DeployRawYaml_WithInvalidYaml_OutputShouldIndicateFailure(bool runAsScript, bool usePackage)
         {
-            SetupAndRunKubernetesRawYamlDeployment(usePackage, InvalidDeploymentResource, shouldSucceed: false);
+            SetupAndRunKubernetesRawYamlDeployment(runAsScript, usePackage, InvalidDeploymentResource, shouldSucceed: false);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).Where(m => !m.StartsWith("##octopus") && m != string.Empty).ToArray();
 
@@ -231,11 +233,13 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [TestCase(true)]
-        [TestCase(false)]
-        public void DeployRawYaml_WithYamlThatWillNotSucceed_OutputShouldIndicateFailure(bool usePackage)
+        [TestCase(true, true)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        [TestCase(false, false)]
+        public void DeployRawYaml_WithYamlThatWillNotSucceed_OutputShouldIndicateFailure(bool runAsScript, bool usePackage)
         {
-            SetupAndRunKubernetesRawYamlDeployment(usePackage, FailToDeploymentResource, shouldSucceed: false);
+            SetupAndRunKubernetesRawYamlDeployment(runAsScript, usePackage, FailToDeploymentResource, shouldSucceed: false);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
@@ -243,7 +247,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
 
-            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
+            AssertObjectStatusMonitoringStarted(runAsScript, rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
 
             rawLogs.Should().ContainSingle(l =>
                 l ==
@@ -331,11 +335,20 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void AuthorisingWithAmazonAccount()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithAmazonAccount(bool runAsScript)
         {
             SetVariablesToAuthoriseWithAmazonAccount();
 
-            ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+            if (runAsScript)
+            {
+                DeployWithKubectlTestScriptAndVerifyResult();
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+            }
         }
 
         [Test]
@@ -645,19 +658,29 @@ namespace Calamari.Tests.KubernetesFixtures
                    "Unable to authorise credentials, see verbose log for details.");
         }
 
-        private void SetupAndRunKubernetesRawYamlDeployment(bool usePackage, string resource, bool shouldSucceed = true)
+        private void SetupAndRunKubernetesRawYamlDeployment(bool runAsScript, bool usePackage, string resource, bool shouldSucceed = true)
         {
             SetVariablesToAuthoriseWithAmazonAccount();
 
             SetVariablesForKubernetesResourceStatusCheck(shouldSucceed ? 30 : 5);
 
-            SetVariablesForRawYamlCommand("**/*.{yml,yaml}");
+            SetVariablesForRawYamlCommand(runAsScript ? null : "**/*.{yml,yaml}");
 
-            ExecuteCommandAndVerifyResult(KubernetesApplyRawYamlCommand.Name,
-                usePackage
-                    ? CreateAddPackageFunc(resource)
-                    : CreateAddCustomResourceFileFunc(resource),
-                shouldSucceed);
+            if (runAsScript)
+            {
+                DeployWithDeploymentScriptAndVerifyResult(usePackage
+                        ? CreateAddPackageFunc(resource)
+                        : CreateAddCustomResourceFileFunc(resource),
+                    shouldSucceed);
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(KubernetesApplyRawYamlCommand.Name,
+                    usePackage
+                        ? CreateAddPackageFunc(resource)
+                        : CreateAddCustomResourceFileFunc(resource),
+                    shouldSucceed);
+            }
         }
 
         private void SetVariablesToAuthoriseWithAmazonAccount()
