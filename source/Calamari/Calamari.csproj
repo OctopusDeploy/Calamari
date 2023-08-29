@@ -121,9 +121,9 @@
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build">
-    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)" />
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" />
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish">
-    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)" />
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
   </Target>
 </Project>
