@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Amazon.CloudFormation;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Octopus.CoreUtilities.Extensions;
@@ -74,7 +73,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
                     // Filter out cluster-wide resources
                     definedResources = definedResources
-                        .Where(resource => !nonNamespacedDefinedResources.Contains(new ResourceIdentifier(resource.Kind, resource.Name, string.Empty)))
+                        .Where(resource => !string.IsNullOrEmpty(resource.Namespace) && !nonNamespacedDefinedResources.Contains(new ResourceIdentifier(resource.Kind, resource.Name, string.Empty)))
                         .ToArray();
                     
                     var resourceStatuses = definedResourceStatuses
