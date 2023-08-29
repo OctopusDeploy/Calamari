@@ -30,7 +30,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             var resources = resourceIdentifiers
                 .Select(identifier => GetResource(identifier, kubectl, options))
-                .Where(resource => resource != null)
+                .Where(resource => resource != null && resource.Namespaced)
                 .ToList();
 
             foreach (var resource in resources)
@@ -57,7 +57,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var result = kubectlGet.AllResources(childKind, parentResource.Namespace, kubectl);
             var resources = ResourceFactory.FromListJson(result, options);
-            return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid))
+            return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid) && resource.Namespaced)
                 .Select(child =>
                 {
                     child.UpdateChildren(GetChildrenResources(child, kubectl, options));
