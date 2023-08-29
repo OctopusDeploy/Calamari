@@ -282,16 +282,16 @@
     <ItemGroup>
       <FSharpFiles Include="$(FSharpCompilerTools)" />
       <FSharpFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(FSharpCompilerToolsExe)" />
-      <DotnetScriptFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/**/*.*" />
-      <DotnetScriptFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/*.sh;$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/*.exe" />
+      <DotnetScriptFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" />
+      <DotnetScriptFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(OutDir)/dotnet-script/*.sh;$(OutDir)/dotnet-script/*.exe" />
       <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net461'" />
     </ItemGroup>
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutDir)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net461'" />
-    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/DotnetScript/%(DotnetScriptFiles.RecursiveDir)" SkipUnchangedFiles="true" />
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" SkipUnchangedFiles="true" />
     <Exec Command="chmod +x %(FSharpFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
     <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" Condition="'$(PublishDir)' != ''" />
-    <Copy SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/DotnetScript/%(DotnetScriptFiles.RecursiveDir)" Condition="'$(PublishDir)' != '' And '$(TargetFramework)' == 'net6.0'" />
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" Condition="'$(PublishDir)' != '' And '$(TargetFramework)' == 'net6.0'" />
   </Target>
 </Project>
