@@ -78,9 +78,10 @@ namespace Calamari.Kubernetes.ResourceStatus
                     
                     var resourceStatuses = definedResourceStatuses
                                            .SelectMany(IterateResourceTree)
+                                           .Where(resource => resource.Namespaced)
                                            .ToDictionary(resource => resource.Uid, resource => resource);
 
-                    var deploymentStatus = GetDeploymentStatus(definedResourceStatuses, definedResources);
+                    var deploymentStatus = GetDeploymentStatus(definedResourceStatuses.Where(resource => resource.Namespaced).ToArray(), definedResources);
 
                     reporter.ReportUpdatedResources(result.ResourceStatuses, resourceStatuses, ++checkCount);
 
