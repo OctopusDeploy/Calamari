@@ -22,7 +22,6 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
         <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
-        <PackageReference Include="scriptcs" Version="0.17.1" />
     </ItemGroup>
 
     <!-- The following is to stop incorrect nullable reference type warnings for net452 build -->
@@ -43,17 +42,16 @@
             <PackageFlatten>false</PackageFlatten>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        <Content Include="scriptcs/*.*">
-            <LinkBase>scriptcs</LinkBase>
-            <Visible>false</Visible>
+        <Content Include="DotnetScript/*.*">
+            <LinkBase>DotnetScript</LinkBase>
             <Pack>true</Pack>
-            <PackagePath>contentFiles/any/any/scriptcs/</PackagePath>
+            <Visible>false</Visible>
+            <PackagePath>contentFiles/any/any/DotnetScript/</PackagePath>
             <PackageCopyToOutput>true</PackageCopyToOutput>
             <PackageFlatten>false</PackageFlatten>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
-
     <ItemGroup>
       <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     </ItemGroup>

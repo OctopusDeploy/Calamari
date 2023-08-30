@@ -60,7 +60,6 @@
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="Octopus.Versioning" Version="5.1.155" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
-    <PackageReference Include="scriptcs" Version="0.17.1" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
     <PackageReference Include="YamlDotNet" Version="8.1.2" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
@@ -107,24 +106,24 @@
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
       <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
     </CreateItem>
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
-      <Output TaskParameter="Include" ItemName="ScriptCSRef" />
-    </CreateItem>
     <PropertyGroup>
       <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
-      <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
     </PropertyGroup>
     <ItemGroup>
       <FSharpFiles Include="$(FSharpCompilerTools)" />
-      <ScriptCSFiles Include="$(ScriptCS)" />
+      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
     </ItemGroup>
   </Target>
   <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
   </Target>
   <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
+  </Target>
+  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build">
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" />
+  </Target>
+  <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish">
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
   </Target>
 </Project>

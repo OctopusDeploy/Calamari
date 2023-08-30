@@ -10,6 +10,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -142,7 +143,8 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                     new XmlFormatVariableReplacer(fileSystem, log),
                     new YamlFormatVariableReplacer(fileSystem, log),
                     new PropertiesFormatVariableReplacer(fileSystem, log),
-                }, variables, fileSystem, log)
+                }, variables, fileSystem, log),
+                new DeploymentJournalWriter(fileSystem)
             );
             returnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }
