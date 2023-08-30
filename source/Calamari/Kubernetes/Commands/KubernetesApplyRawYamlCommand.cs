@@ -1,11 +1,9 @@
 #if !NET40
-using System;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -42,15 +40,6 @@ namespace Calamari.Kubernetes.Commands
             this.variables = variables;
             this.statusReporter = statusReporter;
             this.gatherAndApplyRawYamlExecutor = gatherAndApplyRawYamlExecutor;
-        }
-
-        public override int Execute(string[] commandLineArguments)
-        {
-            if (!FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle.IsEnabled(variables))
-                throw new InvalidOperationException(
-                    "Unable to execute the Kubernetes Apply Raw YAML Command because the appropriate feature has not been enabled.");
-
-            return base.Execute(commandLineArguments);
         }
 
         protected override async Task<bool> ExecuteCommand(RunningDeployment runningDeployment)
