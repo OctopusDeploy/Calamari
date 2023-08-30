@@ -33,7 +33,10 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         {
             // .NET Core first unescapes the username and password, then splits the auth string on ':' and finally escapes the username and password again.
             // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Net.Http/src/System/Net/Http/SocketsHttpHandler/HttpEnvironmentProxy.cs#L175C18-L175C18
-            Assert.Ignore(".NET Core currently does weird things when proxy username contains ':', currently ignoring this until this has been addressed.");
+            // According to this issue https://github.com/dotnet/runtime/issues/23132 this is expected behavior as per the
+            // HTTP Authentication: Basic and Digest Access Authentication RFC (https://datatracker.ietf.org/doc/html/rfc2617#section-2) auth does not 
+            // support ':' in domain.
+            Assert.Ignore(".NET Core currently does weird things when proxy username contains ':'.");
         }
 
         protected override bool TestWebRequestDefaultProxy => true;
