@@ -43,10 +43,10 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var definedResources = resources.ToArray();
             var checkCount = 0;
+            var result = new Result();
             return await Task.Run(async () =>
             {
                 timer.Start();
-                var result = new Result();
                 do
                 {
                     if (cancellationToken.IsCancellationRequested)
