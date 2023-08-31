@@ -1,15 +1,15 @@
-﻿using Calamari.Common.Plumbing.Variables;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.AzureWebApp
 {
-    class AzureServicePrincipalAccount : IAzureAccount
+    class AzureOidcAccount : IAzureAccount
     {
-        public AzureServicePrincipalAccount(IVariables variables)
+        public AzureOidcAccount(IVariables variables)
         {
             SubscriptionNumber = variables.Get(AzureAccountVariables.SubscriptionId);
             ClientId = variables.Get(AzureAccountVariables.ClientId);
             TenantId = variables.Get(AzureAccountVariables.TenantId);
-            Password = variables.Get(AzureAccountVariables.Password);
+            AccessToken = variables.Get(AzureAccountVariables.AccessToken);
 
             AzureEnvironment = variables.Get(AzureAccountVariables.Environment);
             ResourceManagementEndpointBaseUri = variables.Get(AzureAccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
@@ -19,13 +19,13 @@ namespace Calamari.AzureWebApp
         public string SubscriptionNumber { get; set; }
         public string ClientId { get; set; }
         public string TenantId { get; set; }
-        private string Password { get; set; }
+        private string AccessToken { get; set; }
 
         public string AzureEnvironment { get; set; }
         public string ResourceManagementEndpointBaseUri { get; set; }
         public string ActiveDirectoryEndpointBaseUri { get; set; }
 
-        public string GetCredentials => Password;
-        public AccountType AccountType => AccountType.AzureServicePrincipal;
+        public string GetCredentials => AccessToken;
+        public AccountType AccountType => AccountType.AzureOidc;
     }
 }

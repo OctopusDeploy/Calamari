@@ -21,7 +21,7 @@ namespace Calamari.AzureWebApp
 
         static Task<string> GetAuthorizationToken(AzureServicePrincipalAccount account)
         {
-            return ServicePrincipal.GetAuthorizationToken(account.TenantId, account.ClientId, account.Password,
+            return ServicePrincipal.GetAuthorizationToken(account.TenantId, account.ClientId, account.GetCredentials,
                 account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri);
         }
     }

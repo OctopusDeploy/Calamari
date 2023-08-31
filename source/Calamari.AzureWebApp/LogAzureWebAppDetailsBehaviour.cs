@@ -4,6 +4,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Microsoft.Azure.Management.WebSites;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureWebApp
 {
@@ -37,9 +38,20 @@ namespace Calamari.AzureWebApp
                 var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
                 var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
                 var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
-                var account = new AzureServicePrincipalAccount(variables);
 
-                var client = await account.CreateWebSiteManagementClient();
+                WebSiteManagementClient client;
+                var hasAccessToken = !variables.Get(AzureAccountVariables.AccessToken).IsNullOrEmpty();
+                if (hasAccessToken)
+                {
+                    var account = new AzureOidcAccount(variables);
+                    client = account.CreateWebSiteManagementClient();
+                }
+                else
+                {
+                    var account = new AzureServicePrincipalAccount(variables);
+                    client = await account.CreateWebSiteManagementClient();
+                }
+
                 var site = await client.WebApps.GetAsync(resourceGroupName, siteAndSlotName);
                 if (site != null)
                 {

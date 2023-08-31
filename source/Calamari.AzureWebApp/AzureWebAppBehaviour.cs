@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Web.Deployment;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureWebApp
 {
@@ -125,7 +126,9 @@ namespace Calamari.AzureWebApp
 
         Task<WebDeployPublishSettings> GetPublishProfile(IVariables variables)
         {
-            var account = new AzureServicePrincipalAccount(variables);
+            var hasAccessToken = !variables.Get(AzureAccountVariables.AccessToken).IsNullOrEmpty();
+            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
+
             var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(siteAndSlotName, slotName);
