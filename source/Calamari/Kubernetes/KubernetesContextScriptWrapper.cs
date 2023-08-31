@@ -77,7 +77,7 @@ namespace Calamari.Kubernetes
                 return new CommandResult(String.Empty, 1);
             }
 
-            if (scriptSyntax == ScriptSyntax.PowerShell && accountType == "AzureServicePrincipal")
+            if (scriptSyntax == ScriptSyntax.PowerShell && (accountType == "AzureServicePrincipal" || accountType == "AzureOidc"))
             {
                 variables.Set("OctopusKubernetesTargetScript", $"{script.File}");
                 variables.Set("OctopusKubernetesTargetScriptParameters", script.Parameters);

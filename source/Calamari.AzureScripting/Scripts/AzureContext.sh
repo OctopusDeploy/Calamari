@@ -49,8 +49,8 @@ function setup_context {
         then
           loginArgs+=("$Octopus_Azure_AccessToken")
           loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
-          echo az login ${loginArgs[@]}
-          az login "${loginArgs[@]}"
+          echo az login --federated-token ${loginArgs[@]}
+          az login --federated-token "${loginArgs[@]}"
         else
           loginArgs+=("--username=$Octopus_Azure_ADClientId")
           loginArgs+=("--password=$Octopus_Azure_ADPassword")

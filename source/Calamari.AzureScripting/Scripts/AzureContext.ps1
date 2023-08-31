@@ -95,7 +95,7 @@ function Initialize-AzureRmContext {
     If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
             Write-Verbose "AzureRM Modules: Authenticating with OpenID Connect Access Token"
         
-            $accessToken = ConvertTo-SecureString $$OctopusAzureAccessToken -AsPlainText -Force
+            $accessToken = ConvertTo-SecureString $OctopusAzureAccessToken -AsPlainText -Force
             # Force any output generated to be verbose in Octopus logs.
             Write-Host "##octopus[stdout-verbose]"
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -103,13 +103,13 @@ function Initialize-AzureRmContext {
             Write-Host "##octopus[stdout-default]"
     }
     else {
-    Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
+        Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
 
-    # Force any output generated to be verbose in Octopus logs.
-    Write-Host "##octopus[stdout-verbose]"
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
-    Write-Host "##octopus[stdout-default]"
+        # Force any output generated to be verbose in Octopus logs.
+        Write-Host "##octopus[stdout-verbose]"
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+        Write-Host "##octopus[stdout-default]"
     }
 }
 
@@ -146,19 +146,19 @@ function Initialize-AzContext {
 
     If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
         Write-Verbose "Az Modules: Authenticating with OpenID Connect AccessToken"
-        $accessToken = ConvertTo-SecureString $$OctopusAzureAccessToken -AsPlainText -Force
+        $accessToken = ConvertTo-SecureString $OctopusAzureAccessToken -AsPlainText -Force
         # Force any output generated to be verbose in Octopus logs.
         Write-Host "##octopus[stdout-verbose]"
         Connect-AzAccount -AccessToken $accessToken -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment
         Write-Host "##octopus[stdout-default]"
     }
     else {
-    Write-Verbose "Az Modules: Authenticating with Service Principal"
+        Write-Verbose "Az Modules: Authenticating with Service Principal"
 
-    # Force any output generated to be verbose in Octopus logs.
-    Write-Host "##octopus[stdout-verbose]"
-    Connect-AzAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
-    Write-Host "##octopus[stdout-default]"
+        # Force any output generated to be verbose in Octopus logs.
+        Write-Host "##octopus[stdout-verbose]"
+        Connect-AzAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+        Write-Host "##octopus[stdout-default]"
     }
 }
 

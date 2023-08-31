@@ -34,8 +34,9 @@ namespace Calamari.Kubernetes.Integration
         public void ConfigureAzAccount(string subscriptionId,
                                        string tenantId,
                                        string clientId,
-                                       string password,
-                                       string azEnvironment)
+                                       string credential,
+                                       string azEnvironment,
+                                       bool isOidc)
         {
             environmentVars.Add("AZURE_CONFIG_DIR", Path.Combine(workingDirectory, "azure-cli"));
 
@@ -48,12 +49,23 @@ namespace Calamari.Kubernetes.Integration
             log.Verbose("Azure CLI: Authenticating with Service Principal");
 
             // Use the full argument with an '=' because of https://github.com/Azure/azure-cli/issues/12105
-            ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation,
-                                                                 "login",
-                                                                 "--service-principal",
-                                                                 $"--username=\"{clientId}\"",
-                                                                 $"--password=\"{password}\"",
-                                                                 $"--tenant=\"{tenantId}\""));
+            if (isOidc)
+            {
+                ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation,
+                                                                     "login",
+                                                                     "--federated-token",
+                                                                     $"\"{credential}\"",
+                                                                     $"--tenant=\"{tenantId}\""));
+            }
+            else
+            {
+                ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation,
+                                                                     "login",
+                                                                     "--service-principal",
+                                                                     $"--username=\"{clientId}\"",
+                                                                     $"--password=\"{credential}\"",
+                                                                     $"--tenant=\"{tenantId}\""));
+            }
 
             log.Verbose($"Azure CLI: Setting active subscription to {subscriptionId}");
             ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation,
@@ -67,7 +79,7 @@ namespace Calamari.Kubernetes.Integration
 
         public void ConfigureAksKubeCtlAuthentication(Kubectl kubectlCli, string clusterResourceGroup, string clusterName, string clusterNamespace, string kubeConfigPath, bool adminLogin)
         {
-            log.Info($"Creating kubectl context to AKS Cluster in resource group {clusterResourceGroup} called {clusterName} (namespace {clusterNamespace}) using a AzureServicePrincipal");
+            log.Info($"Creating kubectl context to AKS Cluster in resource group {clusterResourceGroup} called {clusterName} (namespace {clusterNamespace})");
 
             var arguments = new List<string>(new[]
             {

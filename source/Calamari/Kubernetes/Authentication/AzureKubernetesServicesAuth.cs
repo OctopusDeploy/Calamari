@@ -1,6 +1,7 @@
 ﻿using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.Authentication
 {
@@ -44,7 +45,10 @@ namespace Calamari.Kubernetes.Authentication
                 var tenantId = deploymentVariables.Get("Octopus.Action.Azure.TenantId");
                 var clientId = deploymentVariables.Get("Octopus.Action.Azure.ClientId");
                 var password = deploymentVariables.Get("Octopus.Action.Azure.Password");
-                azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, password, azEnvironment);
+                var accessToken = deploymentVariables.Get("Octopus.Action.Azure.AccessToken");
+
+                var isOidc = !accessToken.IsNullOrEmpty();
+                azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, !accessToken.IsNullOrEmpty() ? accessToken : password, azEnvironment, isOidc);
 
                 var azureResourceGroup = deploymentVariables.Get("Octopus.Action.Kubernetes.AksClusterResourceGroup");
                 var azureCluster = deploymentVariables.Get(SpecialVariables.AksClusterName);
