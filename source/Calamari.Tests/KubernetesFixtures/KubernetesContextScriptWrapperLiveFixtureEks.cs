@@ -702,7 +702,6 @@ namespace Calamari.Tests.KubernetesFixtures
         private void SetVariablesForRawYamlCommand(string globPaths = null)
         {
             variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx");
-            variables.AddFeatureToggles(FeatureToggle.MultiGlobPathsForRawYamlFeatureToggle);
             variables.Set(KnownVariables.Package.JsonConfigurationVariablesTargets, globPaths ?? "**/*.{yml,yaml}");
             if (globPaths != null)
             {

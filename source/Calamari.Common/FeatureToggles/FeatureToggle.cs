@@ -7,9 +7,8 @@
     /// </summary>
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
-        MultiGlobPathsForRawYamlFeatureToggle,
         KubernetesAksKubeloginFeatureToggle,
-        GlobPathsGroupSupportFeatureToggle,
+        GlobPathsGroupSupportInvertedFeatureToggle,
         ModernAzureAppServiceSdkFeatureToggle,
         OidcAccountsFeatureToggle
     }
