@@ -13,6 +13,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Newtonsoft.Json;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -37,8 +38,9 @@ namespace Calamari.AzureAppService.Behaviors
             // Read/Validate variables
             Log.Verbose("Starting App Settings Deploy");
             var variables = context.Variables;
-
-            var principalAccount = ServicePrincipalAccount.CreateFromKnownVariables(variables);
+            
+            var hasAccessToken = !variables.Get(AccountVariables.AccessToken).IsNullOrEmpty();
+            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new ServicePrincipalAccount(variables);
 
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
@@ -51,9 +53,9 @@ namespace Calamari.AzureAppService.Behaviors
             if (resourceGroupName == null)
                 throw new Exception("resource group name must be specified");
 
-            var targetSite = new AzureTargetSite(principalAccount.SubscriptionNumber, resourceGroupName, webAppName, slotName);
+            var targetSite = new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
-            var armClient = principalAccount.CreateArmClient();
+            var armClient = account.CreateArmClient();
 
             // If app settings are specified
             if (variables.GetNames().Contains(SpecialVariables.Action.Azure.AppSettings) && !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.AppSettings]))
@@ -61,7 +63,7 @@ namespace Calamari.AzureAppService.Behaviors
                 var appSettingsJson = variables.Get(SpecialVariables.Action.Azure.AppSettings, "");
                 Log.Verbose($"Updating application settings:\n{appSettingsJson}");
                 var appSettings = JsonConvert.DeserializeObject<AppSetting[]>(appSettingsJson);
-                await PublishAppSettings(armClient, principalAccount, targetSite, appSettings);
+                await PublishAppSettings(armClient, account, targetSite, appSettings);
                 Log.Info("Updated application settings");
             }
 
@@ -84,7 +86,7 @@ namespace Calamari.AzureAppService.Behaviors
         /// <param name="appSettings"></param>
         /// <param name="authToken"></param>
         /// <returns></returns>
-        private async Task PublishAppSettings(ArmClient armClient, ServicePrincipalAccount principalAccount, AzureTargetSite targetSite, AppSetting[] appSettings)
+        private async Task PublishAppSettings(ArmClient armClient, IAzureAccount account, AzureTargetSite targetSite, AppSetting[] appSettings)
         {
             var settingsDict = new AppServiceConfigurationDictionary();
 
@@ -118,7 +120,7 @@ namespace Calamari.AzureAppService.Behaviors
                                .Select(setting => setting.Name)
                                .ToArray();
 
-            if (!slotSettings.Any())
+            if (!Enumerable.Any(slotSettings))
                 return;
 
             await armClient.UpdateSlotSettingsAsync(targetSite, slotSettings.Union(existingSlotSettings));

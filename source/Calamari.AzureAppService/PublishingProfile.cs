@@ -26,7 +26,7 @@ namespace Calamari.AzureAppService
         public string GetBasicAuthCredentials()
             => Convert.ToBase64String(Encoding.ASCII.GetBytes($"{Username}:{Password}"));
         
-        public static async Task<PublishingProfile> GetPublishingProfile(AzureTargetSite targetSite, ServicePrincipalAccount account)
+        public static async Task<PublishingProfile> GetPublishingProfile(AzureTargetSite targetSite, IAzureAccount account)
         {
             string mgmtEndpoint = account.ResourceManagementEndpointBaseUri;
             var token = new TokenCredentials(await Auth.GetAuthTokenAsync(account));

@@ -7,6 +7,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Rest;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -24,22 +25,23 @@ namespace Calamari.AzureAppService.Behaviors
         {
             var variables = context.Variables;
 
-            var principalAccount = ServicePrincipalAccount.CreateFromKnownVariables(variables);
+            var hasAccessToken = !variables.Get(AccountVariables.AccessToken).IsNullOrEmpty();
+            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new ServicePrincipalAccount(variables);
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
             var rgName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
-            var targetSite = new AzureTargetSite(principalAccount.SubscriptionNumber, rgName, webAppName, slotName);
+            var targetSite = new AzureTargetSite(account.SubscriptionNumber, rgName, webAppName, slotName);
 
             var image = variables.Get(SpecialVariables.Action.Package.Image);
             var registryHost = variables.Get(SpecialVariables.Action.Package.Registry);
             var regUsername = variables.Get(SpecialVariables.Action.Package.Feed.Username);
             var regPwd = variables.Get(SpecialVariables.Action.Package.Feed.Password);
 
-            var token = await Auth.GetAuthTokenAsync(principalAccount);
+            var token = await Auth.GetAuthTokenAsync(account);
 
-            var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri),
+            var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri),
                     new TokenCredentials(token))
-                {SubscriptionId = principalAccount.SubscriptionNumber};
+                {SubscriptionId = account.SubscriptionNumber};
 
             Log.Info($"Updating web app to use image {image} from registry {registryHost}");
 

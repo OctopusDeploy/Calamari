@@ -2,18 +2,19 @@ using System;
 using System.Net;
 using System.Net.Http;
 using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
+using Microsoft.Rest;
 using AzureEnvironmentEnum = Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment;
 
 namespace Calamari.Azure
 {
-    public class ServicePrincipalAccount : IAzureAccount
+    public class AzureOidcAccount : IAzureAccount
     {        
-        public ServicePrincipalAccount(
+        public AzureOidcAccount(
             string subscriptionNumber,
             string clientId,
             string tenantId,
-            string password,
+            string accessToken,
             string azureEnvironment,
             string resourceManagementEndpointBaseUri,
             string activeDirectoryEndpointBaseUri)
@@ -21,7 +22,7 @@ namespace Calamari.Azure
             SubscriptionNumber = subscriptionNumber;
             ClientId = clientId;
             TenantId = tenantId;
-            Password = password;
+            AccessToken = accessToken;
             AzureEnvironment = azureEnvironment;
             ResourceManagementEndpointBaseUri = resourceManagementEndpointBaseUri;
             ActiveDirectoryEndpointBaseUri = activeDirectoryEndpointBaseUri;
@@ -30,12 +31,11 @@ namespace Calamari.Azure
         public string SubscriptionNumber { get;  }
         public string ClientId { get; }
         public string TenantId { get; }
-        string Password { get; }
+        string AccessToken { get; }
         public string AzureEnvironment { get; }
         public string ResourceManagementEndpointBaseUri { get; }
         public string ActiveDirectoryEndpointBaseUri { get; }
-        
-        string IAzureAccount.GetCredentials() => Password;
+        public string GetCredentials() => AccessToken;
 
         public IAzure CreateAzureClient()
         {
@@ -44,9 +44,11 @@ namespace Calamari.Azure
                 : AzureEnvironmentEnum.FromName(AzureEnvironment) ??
                 throw new InvalidOperationException($"Unknown environment name {AzureEnvironment}");
 
-            var credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(ClientId,
-                Password, TenantId, environment
-            );
+            var credentials = new AzureCredentials(
+                                                   new TokenCredentials(AccessToken),
+                                                   new TokenCredentials(AccessToken),
+                                                   TenantId,
+                                                   environment);
 
             // to ensure the Azure API uses the appropriate web proxy
             var client = new HttpClient(new HttpClientHandler {Proxy = WebRequest.DefaultWebProxy});

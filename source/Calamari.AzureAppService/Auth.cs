@@ -8,22 +8,26 @@ namespace Calamari.AzureAppService
 {
     internal class Auth
     {
-        public static async Task<string> GetBasicAuthCreds(ServicePrincipalAccount principalAccount,
+        public static async Task<string> GetBasicAuthCreds(IAzureAccount azureAccount,
             AzureTargetSite targetSite)
         {
-            var publishingProfile = await PublishingProfile.GetPublishingProfile(targetSite, principalAccount);
+            var publishingProfile = await PublishingProfile.GetPublishingProfile(targetSite, azureAccount);
             string credential =
                 Convert.ToBase64String(
                     Encoding.ASCII.GetBytes($"{publishingProfile.Username}:{publishingProfile.Password}"));
             return credential;
         }
 
-        public static async Task<string> GetAuthTokenAsync(ServicePrincipalAccount principalAccount)
+        public static async Task<string> GetAuthTokenAsync(IAzureAccount azureAccount)
         {
-            return await GetAuthTokenAsync(principalAccount.TenantId, principalAccount.ClientId, principalAccount.Password, principalAccount.ResourceManagementEndpointBaseUri, principalAccount.ActiveDirectoryEndpointBaseUri);
+            if (azureAccount.AccountType == AccountType.AzureOidc)
+            {
+                return azureAccount.GetCredential;
+            }
+            return await GetServicePrincipalAuthTokenAsync(azureAccount.TenantId, azureAccount.ClientId, azureAccount.GetCredential, azureAccount.ResourceManagementEndpointBaseUri, azureAccount.ActiveDirectoryEndpointBaseUri);
         }
 
-        public static async Task<string> GetAuthTokenAsync(string tenantId, string applicationId, string password, string managementEndPoint, string activeDirectoryEndPoint)
+        public static async Task<string> GetServicePrincipalAuthTokenAsync(string tenantId, string applicationId, string password, string managementEndPoint, string activeDirectoryEndPoint)
         { 
             var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);
 

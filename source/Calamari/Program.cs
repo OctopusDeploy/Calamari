@@ -121,7 +121,7 @@ namespace Calamari
 #if !NET40
             //Calamari.Aws
             yield return typeof(AwsSpecialVariables).Assembly;
-            //Calamari.Azure
+            //Calamari.Azure, this includes AzureOidcAccount
             yield return typeof(ServicePrincipalAccount).Assembly;
 #else
                 return Enumerable.Empty<Assembly>();

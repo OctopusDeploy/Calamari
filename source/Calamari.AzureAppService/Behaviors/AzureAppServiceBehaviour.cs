@@ -18,6 +18,7 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -40,11 +41,14 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Starting Azure App Service deployment.");
 
             var variables = context.Variables;
-            var servicePrincipal = ServicePrincipalAccount.CreateFromKnownVariables(variables);
-            Log.Verbose($"Using Azure Tenant '{servicePrincipal.TenantId}'");
-            Log.Verbose($"Using Azure Subscription '{servicePrincipal.SubscriptionNumber}'");
-            Log.Verbose($"Using Azure ServicePrincipal AppId/ClientId '{servicePrincipal.ClientId}'");
-            Log.Verbose($"Using Azure Cloud '{servicePrincipal.AzureEnvironment}'");
+            
+            var hasAccessToken = !variables.Get(AccountVariables.AccessToken).IsNullOrEmpty();
+            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new ServicePrincipalAccount(variables);
+            
+            Log.Verbose($"Using Azure Tenant '{account.TenantId}'");
+            Log.Verbose($"Using Azure Subscription '{account.SubscriptionNumber}'");
+            Log.Verbose($"Using Azure ServicePrincipal AppId/ClientId '{account.ClientId}'");
+            Log.Verbose($"Using Azure Cloud '{account.AzureEnvironment}'");
 
             string? resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             if (resourceGroupName == null)
@@ -61,8 +65,8 @@ namespace Calamari.AzureAppService.Behaviors
                             ? "No Deployment Slot specified"
                             : $"Using Deployment Slot '{slotName}'");
 
-            var armClient = servicePrincipal.CreateArmClient();
-            var targetSite = new AzureTargetSite(servicePrincipal.SubscriptionNumber, resourceGroupName, webAppName, slotName);
+            var armClient = account.CreateArmClient();
+            var targetSite = new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
             var resourceGroups = armClient
                                  .GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(targetSite.SubscriptionId))

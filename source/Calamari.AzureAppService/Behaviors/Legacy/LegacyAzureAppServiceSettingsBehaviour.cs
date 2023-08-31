@@ -14,6 +14,7 @@ using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -39,7 +40,8 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Starting App Settings Deploy");
             var variables = context.Variables;
 
-            var principalAccount = ServicePrincipalAccount.CreateFromKnownVariables(variables);
+            var hasAccessToken = !variables.Get(AccountVariables.AccessToken).IsNullOrEmpty();
+            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new ServicePrincipalAccount(variables);
 
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
@@ -52,15 +54,15 @@ namespace Calamari.AzureAppService.Behaviors
             if (resourceGroupName == null)
                 throw new Exception("resource group name must be specified");
 
-            var targetSite = new AzureTargetSite(principalAccount.SubscriptionNumber, resourceGroupName, webAppName, slotName);
+            var targetSite = new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
-            string token = await Auth.GetAuthTokenAsync(principalAccount);
+            string token = await Auth.GetAuthTokenAsync(account);
 
-            var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri),
+            var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri),
                                                            new TokenCredentials(token))
             {
-                SubscriptionId = principalAccount.SubscriptionNumber,
-                HttpClient = { BaseAddress = new Uri(principalAccount.ResourceManagementEndpointBaseUri) }
+                SubscriptionId = account.SubscriptionNumber,
+                HttpClient = { BaseAddress = new Uri(account.ResourceManagementEndpointBaseUri) }
             };
 
             // If app settings are specified
@@ -134,7 +136,7 @@ namespace Calamari.AzureAppService.Behaviors
                                .Select(setting => setting.Name)
                                .ToArray();
 
-            if (!slotSettings.Any())
+            if (!Enumerable.Any(slotSettings))
                 return;
 
             await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient,

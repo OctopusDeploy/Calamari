@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -43,6 +44,14 @@ namespace Calamari.AzureAppService.Behaviors
 
         public async Task Execute(RunningDeployment runningDeployment)
         {
+            var proc = Process.GetCurrentProcess();
+            Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
+
+            while (!Debugger.IsAttached)
+            {
+                Thread.Sleep(1000);
+            }
+            
             var targetDiscoveryContext = GetTargetDiscoveryContext(runningDeployment.Variables);
             if (targetDiscoveryContext?.Authentication == null || targetDiscoveryContext.Scope == null)
             {

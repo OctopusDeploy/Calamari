@@ -55,11 +55,11 @@ namespace Calamari.AzureAppService.Tests
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
 
-            authToken = await Auth.GetAuthTokenAsync(tenantId,
-                                                     clientId,
-                                                     clientSecret,
-                                                     resourceManagementEndpointBaseUri,
-                                                     activeDirectoryEndpointBaseUri);
+            authToken = await Auth.GetServicePrincipalAuthTokenAsync(tenantId,
+                                                                     clientId,
+                                                                     clientSecret,
+                                                                     resourceManagementEndpointBaseUri,
+                                                                     activeDirectoryEndpointBaseUri);
 
             var resourcesClient = new ResourcesManagementClient(subscriptionId,
                                                                 new ClientSecretCredential(tenantId, clientId, clientSecret));

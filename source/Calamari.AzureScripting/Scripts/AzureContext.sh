@@ -5,6 +5,9 @@ Octopus_Azure_ADClientId=$(get_octopusvariable "Octopus.Action.Azure.ClientId")
 Octopus_Azure_ADPassword=$(get_octopusvariable "Octopus.Action.Azure.Password")
 Octopus_Azure_ADTenantId=$(get_octopusvariable "Octopus.Action.Azure.TenantId")
 Octopus_Azure_SubscriptionId=$(get_octopusvariable "Octopus.Action.Azure.SubscriptionId")
+Octopus_Azure_OctopusUseOidc=$(get_octopusvariable "OctopusUseOidc")
+Octopus_Azure_OctopusUseServicePrincipal=$(get_octopusvariable "OctopusUseServicePrincipal")
+Octopus_Azure_AccessToken=$(get_octopusvariable "OctopusAzureAccessToken")
 
 function check_app_exists {
 	command -v $1 > /dev/null 2>&1
@@ -41,14 +44,23 @@ function setup_context {
         echo "Azure CLI: Authenticating with Service Principal"
         loginArgs=()
         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
-        loginArgs+=("--username=$Octopus_Azure_ADClientId")
-        loginArgs+=("--password=$Octopus_Azure_ADPassword")
-        loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
-        echo az login --service-principal ${loginArgs[@]}
-        # Note: Need to double quote the loginArgs here to ensure that spaces aren't treated as separate arguments
-        #       It also seems like putting double quotes around each individual argument makes az cli include the "
-        #       character as part of the input causing issues...
-        az login --service-principal "${loginArgs[@]}"
+
+        if [ $Octopus_Azure_OctopusUseOidc ]
+        then
+          loginArgs+=("$Octopus_Azure_AccessToken")
+          loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
+          echo az login ${loginArgs[@]}
+          az login "${loginArgs[@]}"
+        else
+          loginArgs+=("--username=$Octopus_Azure_ADClientId")
+          loginArgs+=("--password=$Octopus_Azure_ADPassword")
+          loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
+          echo az login --service-principal ${loginArgs[@]}
+          # Note: Need to double quote the loginArgs here to ensure that spaces aren't treated as separate arguments
+          #       It also seems like putting double quotes around each individual argument makes az cli include the "
+          #       character as part of the input causing issues...
+          az login --service-principal "${loginArgs[@]}"
+        fi
 
         echo "Azure CLI: Setting active subscription to $Octopus_Azure_SubscriptionId"
         az account set --subscription $Octopus_Azure_SubscriptionId

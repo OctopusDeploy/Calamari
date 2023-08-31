@@ -210,11 +210,11 @@ namespace Calamari.AzureAppService.Tests
             var activeDirectoryEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
-            return await Auth.GetAuthTokenAsync(tenantId,
-                                                applicationId,
-                                                password,
-                                                resourceManagementEndpointBaseUri,
-                                                activeDirectoryEndpointBaseUri);
+            return await Auth.GetServicePrincipalAuthTokenAsync(tenantId,
+                                                                applicationId,
+                                                                password,
+                                                                resourceManagementEndpointBaseUri,
+                                                                activeDirectoryEndpointBaseUri);
         }
     }
 }

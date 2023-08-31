@@ -7,6 +7,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Rest;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -28,12 +29,14 @@ namespace Calamari.AzureAppService.Behaviors
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
 
-            var principalAccount = ServicePrincipalAccount.CreateFromKnownVariables(variables);
-            var token = await Auth.GetAuthTokenAsync(principalAccount);
-            var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri), new TokenCredentials(token))
-                {SubscriptionId = principalAccount.SubscriptionNumber};
+            var hasAccessToken = !variables.Get(AccountVariables.AccessToken).IsNullOrEmpty();
+            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new ServicePrincipalAccount(variables);
 
-            var targetSite = new AzureTargetSite(principalAccount.SubscriptionNumber, resourceGroupName, webAppName, slotName);
+            var token = await Auth.GetAuthTokenAsync(account);
+            var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token))
+                {SubscriptionId = account.SubscriptionNumber};
+
+            var targetSite = new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
             Log.Info("Performing soft restart of web app");
             await webAppClient.WebApps.RestartAsync(targetSite, true);
