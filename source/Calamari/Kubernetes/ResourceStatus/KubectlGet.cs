@@ -16,7 +16,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             return kubectl.ExecuteCommandAndReturnOutput(new[]
             {
-                "get", kind, name, "-o json", $"-n {@namespace}"
+                "get", kind, name, "-o json", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
             }).Output.InfoLogs.Join(string.Empty);
         }
 
@@ -24,7 +24,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             return kubectl.ExecuteCommandAndReturnOutput(new[]
             {
-                "get", kind, "-o json", $"-n {@namespace}"
+                "get", kind, "-o json", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
             }).Output.InfoLogs.Join(string.Empty);
         }
     }
