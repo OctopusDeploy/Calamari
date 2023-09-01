@@ -2,12 +2,14 @@
 using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.StructuredVariables;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -43,6 +45,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
 
             var log = new InMemoryLog();
             var variables = new CalamariVariables();
+            variables.AddFeatureToggles(FeatureToggle.GlobPathsGroupSupportFeatureToggle);
             variables.Set(ActionVariables.AdditionalPaths, AdditionalPath);
             variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.StructuredConfigurationVariables);
             variables.Set(ActionVariables.StructuredConfigurationVariablesTargets, FileName);

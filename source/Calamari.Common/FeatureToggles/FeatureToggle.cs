@@ -8,6 +8,6 @@
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
         KubernetesAksKubeloginFeatureToggle,
-        GlobPathsGroupSupportInvertedFeatureToggle
+        GlobPathsGroupSupportFeatureToggle
     }
 }
