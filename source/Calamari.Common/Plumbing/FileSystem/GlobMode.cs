@@ -13,9 +13,9 @@ namespace Calamari.Common.Plumbing.FileSystem.GlobExpressions
     {
         public static GlobMode GetFromVariables(IVariables variables)
         {
-            return FeatureToggle.GlobPathsGroupSupportInvertedFeatureToggle.IsEnabled(variables)
-                ? GlobMode.LegacyMode
-                : GlobMode.GroupExpansionMode;
+            return FeatureToggle.GlobPathsGroupSupportFeatureToggle.IsEnabled(variables)
+                ? GlobMode.GroupExpansionMode
+                : GlobMode.LegacyMode;
         }
     }
 }
