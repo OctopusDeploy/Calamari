@@ -21,11 +21,15 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Polly;
+using Polly.Timeout;
 
 namespace Calamari.AzureAppService.Behaviors
 {
     internal class AzureAppServiceZipDeployBehaviour : IDeployBehaviour
     {
+        static readonly TimeSpan PollingTimeout = TimeSpan.FromMinutes(3);
+        static readonly TimeoutPolicy<HttpResponseMessage> AsyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(PollingTimeout, TimeoutStrategy.Optimistic);
+
         public AzureAppServiceZipDeployBehaviour(ILog log)
         {
             Log = log;
@@ -277,52 +281,50 @@ namespace Calamari.AzureAppService.Behaviors
             if (!uploadResponse.IsSuccessStatusCode)
                 throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status {(int)uploadResponse.StatusCode} '{uploadResponse.ReasonPhrase}'.");
 
-            Log.Verbose("Zip upload succeeded. Checking for deployment completion");
+            Log.Verbose("Zip upload succeeded. Monitoring for deployment completion");
             var location = uploadResponse.Headers.Location;
 
-            var pollingTimeout = TimeSpan.FromMinutes(3);
+            //wrap the entire thing in a Polly Timeout policy which uses the cancellation token to raise the timout
+            var result = await AsyncZipDeployTimeoutPolicy.ExecuteAndCaptureAsync(async timeoutCancellationToken =>
+                                                                                  {
+                                                                                      //the outer policy should only retry when the response is a 202
+                                                                                      return await RetryPolicies.AsynchronousZipDeploymentOperationPolicy
+                                                                                                                .ExecuteAsync(async ct1 =>
+                                                                                                                                  //we nest this policy so any transient errors are handled and retried. If it just keeps falling over, then we want it to bail out of the outer operation
+                                                                                                                                  await RetryPolicies.TransientHttpErrorsPolicy
+                                                                                                                                                     .ExecuteAsync(async ct2 =>
+                                                                                                                                                                   {
+                                                                                                                                                                       //we have to create a new request message each time
+                                                                                                                                                                       var checkRequest = new HttpRequestMessage(HttpMethod.Get, location)
+                                                                                                                                                                       {
+                                                                                                                                                                           Headers =
+                                                                                                                                                                           {
+                                                                                                                                                                               Authorization = authenticationHeader
+                                                                                                                                                                           }
+                                                                                                                                                                       };
 
-            //add a fixed 3 minute timeout to the polly operation
-            var timeoutCancellationToken = new CancellationTokenSource(pollingTimeout);
-
-            //the outer policy should only retry when the response is a 202
-            var result = await RetryPolicies.AsynchronousZipDeploymentOperationPolicy
-                                            .ExecuteAndCaptureAsync(async ct1 =>
-                                                                        //we nest this policy so any transient errors are handled and retried. If it just keeps falling over, then we want it to bail out of the outer operation
-                                                                        await RetryPolicies.TransientHttpErrorsPolicy
-                                                                                           .ExecuteAsync(async ct2 =>
-                                                                                                         {
-                                                                                                             //we have to create a new request message each time
-                                                                                                             var checkRequest = new HttpRequestMessage(HttpMethod.Get, location)
-                                                                                                             {
-                                                                                                                 Headers =
-                                                                                                                 {
-                                                                                                                     Authorization = authenticationHeader
-                                                                                                                 }
-                                                                                                             };
-
-                                                                                                             var r = await httpClient.SendAsync(checkRequest, ct2);
-                                                                                                             r.EnsureSuccessStatusCode();
-                                                                                                             return r;
-                                                                                                         },
-                                                                                                         ct1),
-                                                                    //pass the logger so we can log the retries
-                                                                    new Context(Guid.NewGuid().ToString(), new Dictionary<string, object>
-                                                                    {
-                                                                        [nameof(RetryPolicies.ContextKeys.Log)] = Log
-                                                                    }),
-                                                                    timeoutCancellationToken.Token);
+                                                                                                                                                                       var r = await httpClient.SendAsync(checkRequest, ct2);
+                                                                                                                                                                       r.EnsureSuccessStatusCode();
+                                                                                                                                                                       return r;
+                                                                                                                                                                   },
+                                                                                                                                                                   ct1),
+                                                                                                                              //pass the logger so we can log the retries
+                                                                                                                              new Context(Guid.NewGuid().ToString(),
+                                                                                                                                          new Dictionary<string, object>
+                                                                                                                                          {
+                                                                                                                                              [nameof(RetryPolicies.ContextKeys.Log)] = Log
+                                                                                                                                          }),
+                                                                                                                              timeoutCancellationToken);
+                                                                                  },
+                                                                                  CancellationToken.None);
 
             if (result.Outcome == OutcomeType.Failure)
             {
-                switch (result.FinalException)
-                {
-                    case OperationCanceledException oce:
-                        throw new Exception($"Zip deployment failed to complete after {pollingTimeout}.", oce);
-                    default:
-                        throw new Exception($"Zip deployment failed to complete.", result.FinalException);
-                }
-
+                throw result.FinalException switch
+                      {
+                          OperationCanceledException oce => new Exception($"Zip deployment failed to complete after {PollingTimeout}.", oce),
+                          _ => new Exception($"Zip deployment failed to complete.", result.FinalException)
+                      };
             }
 
             if (!result.Result.IsSuccessStatusCode)
