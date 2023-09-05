@@ -90,11 +90,10 @@ function Initialize-AzureRmContext {
     If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
             Write-Verbose "AzureRM Modules: Authenticating with OpenID Connect Access Token"
 
-            $accessToken = ConvertTo-SecureString $OctopusAzureAccessToken -AsPlainText -Force
             # Force any output generated to be verbose in Octopus logs.
             Write-Host "##octopus[stdout-verbose]"
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $accessToken
+            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusAzureAccessToken
             Write-Host "##octopus[stdout-default]"
     }
     else {
@@ -140,10 +139,9 @@ function Initialize-AzContext {
 
     If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
         Write-Verbose "Az Modules: Authenticating with OpenID Connect AccessToken"
-        $accessToken = ConvertTo-SecureString $OctopusAzureAccessToken -AsPlainText -Force
         # Force any output generated to be verbose in Octopus logs.
         Write-Host "##octopus[stdout-verbose]"
-        Connect-AzAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $accessToken
+        Connect-AzAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusAzureAccessToken
         Write-Host "##octopus[stdout-default]"
     }
     else {

@@ -81,12 +81,12 @@ namespace Calamari.AzureScripting
 
                     if (variables.Get(SpecialVariables.Account.AccountType) == "AzureServicePrincipal")
                     {
-                        SetOutputVariable("OctopusUseServicePrincipal", bool.TrueString);
+                        variables.Set("OctopusUseServicePrincipal", bool.TrueString);
                         variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
                     }
                     else
                     {
-                        SetOutputVariable("OctopusUseOidc", variables.Get(SpecialVariables.Account.AccountType) == "AzureOidc" ? bool.TrueString : bool.FalseString);
+                        variables.Set("OctopusUseOidc", variables.Get(SpecialVariables.Account.AccountType) == "AzureOidc" ? bool.TrueString : bool.FalseString);
                         variables.Set("OctopusAzureAccessToken", variables.Get(AccountVariables.AssertionToken));
                     }
                     
