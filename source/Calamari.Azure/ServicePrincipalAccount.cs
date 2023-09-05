@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using AzureEnvironmentEnum = Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment;
@@ -39,6 +40,7 @@ namespace Calamari.Azure
 
         public IAzure CreateAzureClient()
         {
+            Task.FromResult(true);
             var environment = string.IsNullOrEmpty(AzureEnvironment) || AzureEnvironment == "AzureCloud"
                 ? AzureEnvironmentEnum.AzureGlobalCloud
                 : AzureEnvironmentEnum.FromName(AzureEnvironment) ??

@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
@@ -18,6 +19,7 @@ using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Rest;
 using Octopus.CoreUtilities.Extensions;
+using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 using WebSiteManagementClient = Microsoft.Azure.Management.WebSites.WebSiteManagementClient;
 
 namespace Calamari.AzureAppService.Behaviors
@@ -42,8 +44,8 @@ namespace Calamari.AzureAppService.Behaviors
 
             var variables = context.Variables;
             
-            var hasAccessToken = !variables.Get(AccountVariables.AccessToken).IsNullOrEmpty();
-            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new ServicePrincipalAccount(variables);
+            var hasAccessToken = !variables.Get(AccountVariables.AssertionToken).IsNullOrEmpty();
+            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
             Log.Verbose($"Using Azure Tenant '{account.TenantId}'");
             Log.Verbose($"Using Azure Subscription '{account.SubscriptionNumber}'");
             Log.Verbose($"Using Azure ServicePrincipal AppId/ClientId '{account.ClientId}'");

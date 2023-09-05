@@ -1,6 +1,8 @@
-namespace Calamari.AzureWebApp
+﻿using System;
+
+namespace Calamari.CloudAccounts
 {
-    public static class AzureAccountVariables
+    public static class AccountVariables
     {
         public static readonly string Environment = "Octopus.Action.Azure.Environment";
         public static readonly string SubscriptionId = "Octopus.Action.Azure.SubscriptionId";

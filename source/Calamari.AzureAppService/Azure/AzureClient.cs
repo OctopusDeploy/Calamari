@@ -5,6 +5,7 @@ using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Identity;
 using Azure.ResourceManager;
+using Calamari.CloudAccounts;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -18,17 +19,22 @@ namespace Calamari.AzureAppService.Azure
         {
             var environment = new AzureKnownEnvironment(azureAccount.AzureEnvironment).AsAzureSDKEnvironment();
 
-            var credentials = azureAccount.AccountType == AccountType.AzureServicePrincipal
-                ? SdkContext.AzureCredentialsFactory.FromServicePrincipal(azureAccount.ClientId,
-                                                                          azureAccount.GetCredential,
-                                                                          azureAccount.TenantId,
-                                                                          environment
-                                                                         )
-                : new AzureCredentials(new TokenCredentials(azureAccount.GetCredential),
-                                       new TokenCredentials(azureAccount.GetCredential),
-                                       azureAccount.TenantId,
-                                       environment);
-            ;
+            AzureCredentials credentials;
+            if (azureAccount.AccountType == AccountType.AzureServicePrincipal)
+            {
+                credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(azureAccount.ClientId,
+                                                                              azureAccount.GetCredentials,
+                                                                              azureAccount.TenantId,
+                                                                              environment);
+            }
+            else
+            {
+                var accessToken = ((AzureOidcAccount)azureAccount).GetAuthorizationToken().GetAwaiter().GetResult();
+                credentials = new AzureCredentials(new TokenCredentials(accessToken),
+                                                new TokenCredentials(accessToken),
+                                                azureAccount.TenantId,
+                                                environment);
+            }
 
             // Note: This is a tactical fix to ensure this Sashimi uses the appropriate web proxy
 #pragma warning disable DE0003
@@ -49,8 +55,13 @@ namespace Calamari.AzureAppService.Azure
         /// <returns></returns>
         public static ArmClient CreateArmClient(this IAzureAccount azureAccount, Action<RetryOptions> retryOptionsSetter = null)
         {
+            string clientSecret;
+            clientSecret = azureAccount.AccountType == AccountType.AzureOidc
+                ? ((AzureOidcAccount)azureAccount).GetAuthorizationToken().GetAwaiter().GetResult()
+                : azureAccount.GetCredentials;
+            
             var (armClientOptions, tokenCredentialOptions) = GetArmClientOptions(azureAccount, retryOptionsSetter);
-            var credential = new ClientSecretCredential(azureAccount.TenantId, azureAccount.ClientId, azureAccount.GetCredential, tokenCredentialOptions);
+            var credential = new ClientSecretCredential(azureAccount.TenantId, azureAccount.ClientId, clientSecret, tokenCredentialOptions);
             return new ArmClient(credential, defaultSubscriptionId: azureAccount.SubscriptionNumber, armClientOptions);
         }
 

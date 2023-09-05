@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.AzureWebApp.Util;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -126,7 +127,7 @@ namespace Calamari.AzureWebApp
 
         Task<WebDeployPublishSettings> GetPublishProfile(IVariables variables)
         {
-            var hasAccessToken = !variables.Get(AzureAccountVariables.AccessToken).IsNullOrEmpty();
+            var hasAccessToken = !variables.Get(AzureAccountVariables.AssertionToken).IsNullOrEmpty();
             var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
 
             var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);

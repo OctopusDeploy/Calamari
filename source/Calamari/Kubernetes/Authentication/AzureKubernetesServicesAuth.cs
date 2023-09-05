@@ -1,7 +1,12 @@
-﻿using Calamari.Common.FeatureToggles;
+﻿using System.Threading.Tasks;
+using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Octopus.CoreUtilities.Extensions;
+#if !NET40
+using Microsoft.Identity.Client;
+#endif
 
 namespace Calamari.Kubernetes.Authentication
 {
@@ -45,10 +50,18 @@ namespace Calamari.Kubernetes.Authentication
                 var tenantId = deploymentVariables.Get("Octopus.Action.Azure.TenantId");
                 var clientId = deploymentVariables.Get("Octopus.Action.Azure.ClientId");
                 var password = deploymentVariables.Get("Octopus.Action.Azure.Password");
-                var accessToken = deploymentVariables.Get("Octopus.Action.Azure.AccessToken");
+                var assertionToken = deploymentVariables.Get("Octopus.Action.Azure.AssertionToken");
 
-                var isOidc = !accessToken.IsNullOrEmpty();
-                azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, !accessToken.IsNullOrEmpty() ? accessToken : password, azEnvironment, isOidc);
+                var isOidc = !assertionToken.IsNullOrEmpty();
+#if !NET40
+                var resourceManagementEndpointBaseUri = deploymentVariables.Get("Octopus.Action.Azure.ResourceManagementEndPoint", "https://graph.microsoft.com/");
+                var activeDirectoryEndpointBaseUri = deploymentVariables.Get("Octopus.Action.Azure.ActiveDirectoryEndPoint", "https://login.microsoftonline.com/");
+                var token = isOidc ? GetAuthorizationToken(tenantId, clientId, assertionToken, resourceManagementEndpointBaseUri, activeDirectoryEndpointBaseUri).GetAwaiter().GetResult() : password;
+#else
+                var token = password;
+#endif
+
+                azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, token, azEnvironment, isOidc);
 
                 var azureResourceGroup = deploymentVariables.Get("Octopus.Action.Kubernetes.AksClusterResourceGroup");
                 var azureCluster = deploymentVariables.Get(SpecialVariables.AksClusterName);
@@ -62,5 +75,39 @@ namespace Calamari.Kubernetes.Authentication
 
             return true;
         }
+        
+#if !NET40
+        public static async Task<string> GetAuthorizationToken(string tenantId,
+                                                               string applicationId,
+                                                               string token,
+                                                               string managementEndPoint,
+                                                               string activeDirectoryEndPoint)
+        {
+            var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
+            Log.Verbose($"Authentication Context: {authContext}");
+
+            var app = ConfidentialClientApplicationBuilder.Create(applicationId)
+                                                          .WithClientAssertion(token)
+                                                          .WithAuthority(authContext)
+                                                          .Build();
+
+            var result = await app.AcquireTokenForClient(
+                                                         new[] { $"{managementEndPoint}/.default" })
+                                  .WithTenantId(tenantId)
+                                  .ExecuteAsync()
+                                  .ConfigureAwait(false);
+            return result.AccessToken;
+        }
+
+        static string GetOidcContextUri(string activeDirectoryEndPoint, string tenantId)
+        {
+            if (!activeDirectoryEndPoint.EndsWith("/"))
+            {
+                return $"{activeDirectoryEndPoint}/{tenantId}/v2.0";
+            }
+
+            return $"{activeDirectoryEndPoint}{tenantId}/v2.0";
+        }
+#endif
     }
 }

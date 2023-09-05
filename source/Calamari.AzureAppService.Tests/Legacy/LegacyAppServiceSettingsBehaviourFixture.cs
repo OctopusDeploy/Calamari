@@ -10,6 +10,7 @@ using Azure.ResourceManager.Resources.Models;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Behaviors;
 using Calamari.AzureAppService.Json;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
@@ -20,6 +21,7 @@ using Microsoft.Rest;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Polly.Retry;
+using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -60,7 +62,7 @@ namespace Calamari.AzureAppService.Tests
 
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
-            authToken = await Auth.GetServicePrincipalAuthTokenAsync(tenantId,
+            authToken = await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(tenantId,
                                                                      clientId,
                                                                      clientSecret,
                                                                      resourceManagementEndpointBaseUri,

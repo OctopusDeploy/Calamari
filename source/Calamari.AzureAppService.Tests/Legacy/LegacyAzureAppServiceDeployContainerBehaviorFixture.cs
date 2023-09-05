@@ -11,6 +11,7 @@ using Calamari.AzureAppService;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Behaviors;
 using Calamari.AzureAppService.Json;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
@@ -24,6 +25,7 @@ using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
 using Polly.Retry;
+using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -210,11 +212,11 @@ namespace Calamari.AzureAppService.Tests
             var activeDirectoryEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
-            return await Auth.GetServicePrincipalAuthTokenAsync(tenantId,
-                                                                applicationId,
-                                                                password,
-                                                                resourceManagementEndpointBaseUri,
-                                                                activeDirectoryEndpointBaseUri);
+            return await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(tenantId,
+                                                                                       applicationId,
+                                                                                       password,
+                                                                                       resourceManagementEndpointBaseUri,
+                                                                                       activeDirectoryEndpointBaseUri);
         }
     }
 }

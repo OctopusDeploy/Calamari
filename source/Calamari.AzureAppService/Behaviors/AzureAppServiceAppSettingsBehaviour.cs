@@ -8,12 +8,14 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.AppService.Models;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Json;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
+using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -39,8 +41,8 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Starting App Settings Deploy");
             var variables = context.Variables;
             
-            var hasAccessToken = !variables.Get(AccountVariables.AccessToken).IsNullOrEmpty();
-            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new ServicePrincipalAccount(variables);
+            var hasAssertionToken = !variables.Get(AccountVariables.AssertionToken).IsNullOrEmpty();
+            var account = hasAssertionToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
 
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);

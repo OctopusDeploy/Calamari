@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
@@ -8,6 +9,7 @@ using Calamari.Common.Plumbing.Pipeline;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Rest;
 using Octopus.CoreUtilities.Extensions;
+using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -29,8 +31,8 @@ namespace Calamari.AzureAppService.Behaviors
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
 
-            var hasAccessToken = !variables.Get(AccountVariables.AccessToken).IsNullOrEmpty();
-            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new ServicePrincipalAccount(variables);
+            var hasAccessToken = !variables.Get(AccountVariables.AssertionToken).IsNullOrEmpty();
+            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
 
             var token = await Auth.GetAuthTokenAsync(account);
             var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token))

@@ -2,7 +2,7 @@
 using System.Text;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
-using Microsoft.Identity.Client;
+using Calamari.CloudAccounts;
 
 namespace Calamari.AzureAppService
 {
@@ -22,35 +22,10 @@ namespace Calamari.AzureAppService
         {
             if (azureAccount.AccountType == AccountType.AzureOidc)
             {
-                return azureAccount.GetCredential;
+                return await ((AzureOidcAccount)azureAccount).GetAuthorizationToken();
             }
-            return await GetServicePrincipalAuthTokenAsync(azureAccount.TenantId, azureAccount.ClientId, azureAccount.GetCredential, azureAccount.ResourceManagementEndpointBaseUri, azureAccount.ActiveDirectoryEndpointBaseUri);
-        }
 
-        public static async Task<string> GetServicePrincipalAuthTokenAsync(string tenantId, string applicationId, string password, string managementEndPoint, string activeDirectoryEndPoint)
-        { 
-            var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);
-
-            var app = ConfidentialClientApplicationBuilder.Create(applicationId)
-                                                          .WithClientSecret(password)
-                                                          .WithAuthority(authContext)
-                                                          .Build();
-
-            var result = await app.AcquireTokenForClient(
-                                                         new [] { $"{managementEndPoint}/.default" })
-                                  .WithTenantId(tenantId)
-                                  .ExecuteAsync()
-                                  .ConfigureAwait(false);
-            return result.AccessToken;
-        }
-
-        static string GetContextUri(string activeDirectoryEndPoint, string tenantId)
-        {
-            if (!activeDirectoryEndPoint.EndsWith("/"))
-            {
-                return $"{activeDirectoryEndPoint}/{tenantId}";
-            }
-            return $"{activeDirectoryEndPoint}{tenantId}";
+            return await ((AzureServicePrincipalAccount)azureAccount).GetAuthorizationToken();
         }
     }
 }

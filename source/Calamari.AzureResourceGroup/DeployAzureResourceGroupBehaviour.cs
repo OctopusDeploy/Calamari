@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -42,7 +43,7 @@ namespace Calamari.AzureResourceGroup
             var tenantId = variables[AzureAccountVariables.TenantId];
             var clientId = variables[AzureAccountVariables.ClientId];
             var password = variables[AzureAccountVariables.Password];
-            var accessToken = variables[AzureAccountVariables.AccessToken];
+            var assertionToken = variables[AzureAccountVariables.AssertionToken];
 
             var templateFile = variables.Get(SpecialVariables.Action.Azure.Template, "template.json");
             var templateParametersFile = variables.Get(SpecialVariables.Action.Azure.TemplateParameters, "parameters.json");
@@ -76,7 +77,10 @@ namespace Calamari.AzureResourceGroup
             // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
             Func<Task<IResourceManagementClient>> createArmClient = async () =>
                                                               {
-                                                                  var token = !accessToken.IsNullOrEmpty() ? new TokenCredentials("accessToken") : new TokenCredentials(await ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password, resourceManagementEndpoint, activeDirectoryEndPoint));
+                                                                  var token = !assertionToken.IsNullOrEmpty()
+                                                                      ? await new AzureOidcAccount(variables).Credentials()
+                                                                      : await new AzureServicePrincipalAccount(variables).Credentials();
+                                                                  
                                                                   var resourcesClient = new ResourceManagementClient(token)
                                                                   {
                                                                       SubscriptionId = subscriptionId,

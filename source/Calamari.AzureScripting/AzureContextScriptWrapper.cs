@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using Calamari.CloudAccounts;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -45,6 +48,14 @@ namespace Calamari.AzureScripting
                                            ICommandLineRunner commandLineRunner,
                                            Dictionary<string, string>? environmentVars)
         {
+            using var proc = Process.GetCurrentProcess();
+            Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
+
+            while (!Debugger.IsAttached)
+            {
+                Thread.Sleep(1000);
+            }
+            
             var workingDirectory = Path.GetDirectoryName(script.File)!;
             variables.Set("OctopusAzureTargetScript", script.File);
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
@@ -76,7 +87,9 @@ namespace Calamari.AzureScripting
                     else
                     {
                         SetOutputVariable("OctopusUseOidc", variables.Get(SpecialVariables.Account.AccountType) == "AzureOidc" ? bool.TrueString : bool.FalseString);
-                        variables.Set("OctopusAzureAccessToken", variables.Get(SpecialVariables.Action.Azure.AccessToken));
+                        var account = new AzureOidcAccount(variables);
+                        var accessToken = account.GetAuthorizationToken().GetAwaiter().GetResult();
+                        variables.Set("OctopusAzureAccessToken", accessToken);
                     }
                     
                     return NextWrapper!.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);

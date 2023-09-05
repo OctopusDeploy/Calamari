@@ -7,6 +7,7 @@ using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.AzureAppService;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Testing;
 using FluentAssertions;
 using Microsoft.Azure.Management.WebSites;
@@ -16,6 +17,7 @@ using NUnit.Framework;
 using NUnit.Framework.Internal;
 using Polly;
 using Polly.Retry;
+using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -36,7 +38,7 @@ namespace Calamari.AzureAppService.Tests
         private readonly HttpClient client = new HttpClient();
 
         protected RetryPolicy RetryPolicy { get; private set; }
-        
+
         protected virtual string DefaultResourceGroupLocation => "eastus";
 
         [OneTimeSetUp]
@@ -54,12 +56,11 @@ namespace Calamari.AzureAppService.Tests
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
-
-            authToken = await Auth.GetServicePrincipalAuthTokenAsync(tenantId,
-                                                                     clientId,
-                                                                     clientSecret,
-                                                                     resourceManagementEndpointBaseUri,
-                                                                     activeDirectoryEndpointBaseUri);
+            authToken = await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(tenantId,
+                                                                                           clientId,
+                                                                                           clientSecret,
+                                                                                           resourceManagementEndpointBaseUri,
+                                                                                           activeDirectoryEndpointBaseUri);
 
             var resourcesClient = new ResourcesManagementClient(subscriptionId,
                                                                 new ClientSecretCredential(tenantId, clientId, clientSecret));
@@ -107,7 +108,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                           r.EnsureSuccessStatusCode();
                                                                                           return r;
                                                                                       });
-            
+
             var result = await response.Content.ReadAsStringAsync();
             result.Should().Contain(actualText);
         }

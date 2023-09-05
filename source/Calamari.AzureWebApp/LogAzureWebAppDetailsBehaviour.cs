@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -40,11 +41,11 @@ namespace Calamari.AzureWebApp
                 var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
 
                 WebSiteManagementClient client;
-                var hasAccessToken = !variables.Get(AzureAccountVariables.AccessToken).IsNullOrEmpty();
+                var hasAccessToken = !variables.Get(AzureAccountVariables.AssertionToken).IsNullOrEmpty();
                 if (hasAccessToken)
                 {
                     var account = new AzureOidcAccount(variables);
-                    client = account.CreateWebSiteManagementClient();
+                    client = await account.CreateWebSiteManagementClient();
                 }
                 else
                 {

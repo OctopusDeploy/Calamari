@@ -9,6 +9,7 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.ResourceGraph;
 using Azure.ResourceManager.ResourceGraph.Models;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
@@ -44,14 +45,6 @@ namespace Calamari.AzureAppService.Behaviors
 
         public async Task Execute(RunningDeployment runningDeployment)
         {
-            var proc = Process.GetCurrentProcess();
-            Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
-
-            while (!Debugger.IsAttached)
-            {
-                Thread.Sleep(1000);
-            }
-            
             var targetDiscoveryContext = GetTargetDiscoveryContext(runningDeployment.Variables);
             if (targetDiscoveryContext?.Authentication == null || targetDiscoveryContext.Scope == null)
             {
@@ -118,7 +111,7 @@ namespace Calamari.AzureAppService.Behaviors
 
         private void WriteTargetCreationServiceMessage(
             AzureResource resource,
-            TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
+            TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
             var resourceName = resource.Name;
@@ -139,7 +132,7 @@ namespace Calamari.AzureAppService.Behaviors
                     slotName));
         }
 
-        private TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>? GetTargetDiscoveryContext(
+        private TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>? GetTargetDiscoveryContext(
             IVariables variables)
         {
             const string contextVariableName = "Octopus.TargetDiscovery.Context";
@@ -158,7 +151,7 @@ namespace Calamari.AzureAppService.Behaviors
             try
             {
                 return JsonSerializer
-                    .Deserialize<TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>>(
+                    .Deserialize<TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>>(
                         json, options);
             }
             catch (JsonException ex)

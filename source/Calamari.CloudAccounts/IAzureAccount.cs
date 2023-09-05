@@ -1,8 +1,6 @@
 using System;
-using Calamari.Common.Plumbing.Variables;
-using Newtonsoft.Json;
 
-namespace Calamari.AzureAppService.Azure
+namespace Calamari.CloudAccounts
 {
     public interface IAzureAccount
     {
@@ -13,8 +11,8 @@ namespace Calamari.AzureAppService.Azure
         string ResourceManagementEndpointBaseUri { get; }
         string ActiveDirectoryEndpointBaseUri { get; }
 
-        public abstract AccountType AccountType { get;  }
-        public abstract string GetCredential { get; }
+        AccountType AccountType { get; }
+        string GetCredentials { get; }
     }
 
     public enum AccountType

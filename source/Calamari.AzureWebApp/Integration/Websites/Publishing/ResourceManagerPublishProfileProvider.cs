@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Calamari.AzureWebApp.Util;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Azure.Management.ResourceManager;
@@ -34,12 +35,16 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", account.ActiveDirectoryEndpointBaseUri);
 
             var token = account.AccountType == AccountType.AzureOidc
-                ? account.GetCredentials
-                : await ServicePrincipal.GetAuthorizationToken(account.TenantId,
-                                                               account.ClientId,
-                                                               account.GetCredentials,
-                                                               account.ResourceManagementEndpointBaseUri,
-                                                               account.ActiveDirectoryEndpointBaseUri);
+                ? await AzureOidcAccountExtensions.GetAuthorizationToken(account.TenantId,
+                                                                               account.ClientId,
+                                                                               account.GetCredentials,
+                                                                               account.ResourceManagementEndpointBaseUri,
+                                                                               account.ActiveDirectoryEndpointBaseUri)
+                : await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(account.TenantId,
+                                                                                     account.ClientId,
+                                                                                     account.GetCredentials,
+                                                                                     account.ResourceManagementEndpointBaseUri,
+                                                                                     account.ActiveDirectoryEndpointBaseUri);
             var baseUri = new Uri(account.ResourceManagementEndpointBaseUri);
 
             using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token)) 

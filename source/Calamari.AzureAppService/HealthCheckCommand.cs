@@ -5,9 +5,11 @@ using Azure;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 using Octopus.CoreUtilities.Extensions;
+using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService
 {
@@ -29,8 +31,8 @@ namespace Calamari.AzureAppService
 
         public Task Execute(RunningDeployment context)
         {
-            var hasAccessToken = !context.Variables.Get(AccountVariables.AccessToken).IsNullOrEmpty();
-            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(context.Variables) : new ServicePrincipalAccount(context.Variables);
+            var hasAssertionToken = !context.Variables.Get(AccountVariables.AssertionToken).IsNullOrEmpty();
+            var account = hasAssertionToken ? (IAzureAccount)new AzureOidcAccount(context.Variables) : new AzureServicePrincipalAccount(context.Variables);
 
             var resourceGroupName = context.Variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             var webAppName = context.Variables.Get(SpecialVariables.Action.Azure.WebAppName);
