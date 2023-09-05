@@ -94,7 +94,7 @@ function Initialize-AzureRmContext {
             # Force any output generated to be verbose in Octopus logs.
             Write-Host "##octopus[stdout-verbose]"
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Login-AzureRmAccount -AccessToken $accessToken -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment
+            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusAzureAccessToken
             Write-Host "##octopus[stdout-default]"
     }
     else {
@@ -143,7 +143,7 @@ function Initialize-AzContext {
         $accessToken = ConvertTo-SecureString $OctopusAzureAccessToken -AsPlainText -Force
         # Force any output generated to be verbose in Octopus logs.
         Write-Host "##octopus[stdout-verbose]"
-        Connect-AzAccount -AccessToken $accessToken -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment
+        Connect-AzAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusAzureAccessToken
         Write-Host "##octopus[stdout-default]"
     }
     else {
