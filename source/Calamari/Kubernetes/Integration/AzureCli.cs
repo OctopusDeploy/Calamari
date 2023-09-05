@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Kubernetes.Integration
@@ -37,7 +38,7 @@ namespace Calamari.Kubernetes.Integration
                                        string password,
                                        string azEnvironment)
         {
-            environmentVars.Add("AZURE_CONFIG_DIR", Path.Combine(workingDirectory, "azure-cli"));
+            SetConfigDirectoryEnvironmentVariable(environmentVars, workingDirectory);
 
             TryExecuteCommandAndLogOutput(ExecutableLocation,
                                           "cloud",
@@ -91,6 +92,11 @@ namespace Calamari.Kubernetes.Integration
             result.VerifySuccess();
 
             kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", clusterName, $"--namespace={@clusterNamespace}");
+        }
+
+        public static void SetConfigDirectoryEnvironmentVariable(IDictionary<string, string> environmentVars, string workingDirectory)
+        {
+            environmentVars.Add("AZURE_CONFIG_DIR", Path.Combine(workingDirectory, "azure-cli"));
         }
     }
 }
