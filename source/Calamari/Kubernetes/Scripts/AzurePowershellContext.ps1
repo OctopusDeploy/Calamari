@@ -37,10 +37,6 @@ function Get-RunningInPowershellCore
 
 function Initialize-AzureRmContext
 {
-    # Authenticate via Service Principal
-    $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
-    $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-
     # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
     Write-Host "##octopus[stdout-verbose]"
     Disable-AzureRMContextAutosave -Scope Process
@@ -64,6 +60,10 @@ function Initialize-AzureRmContext
             Write-Host "##octopus[stdout-default]"
     }
     else {
+        # Authenticate via Service Principal
+        $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
+        $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
+
         Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
 
         # Force any output generated to be verbose in Octopus logs.
@@ -76,10 +76,6 @@ function Initialize-AzureRmContext
 
 function Initialize-AzContext
 {
-    # Authenticate via Service Principal
-    $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
-    $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-
     $tempWarningPreference = $WarningPreference
     $WarningPreference = 'SilentlyContinue'
     if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
@@ -114,6 +110,10 @@ function Initialize-AzContext
         Write-Host "##octopus[stdout-default]"
     }
     else {
+        # Authenticate via Service Principal
+        $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
+        $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
+
         Write-Verbose "Az Modules: Authenticating with Service Principal"
 
         # Force any output generated to be verbose in Octopus logs.

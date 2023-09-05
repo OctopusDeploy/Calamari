@@ -23,7 +23,6 @@ namespace Calamari.AzureScripting
         {
             yield return typeof(RunScriptCommand).Assembly;
             yield return typeof(AzureContextScriptWrapper).Assembly;
-            yield return typeof(Program).Assembly;
         }
     }
 }
