@@ -89,12 +89,12 @@ function Initialize-AzureRmContext {
 
     If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
             Write-Verbose "AzureRM Modules: Authenticating with OpenID Connect Access Token"
-        
+
             $accessToken = ConvertTo-SecureString $OctopusAzureAccessToken -AsPlainText -Force
             # Force any output generated to be verbose in Octopus logs.
             Write-Host "##octopus[stdout-verbose]"
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusAzureAccessToken
+            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $accessToken
             Write-Host "##octopus[stdout-default]"
     }
     else {
@@ -143,7 +143,7 @@ function Initialize-AzContext {
         $accessToken = ConvertTo-SecureString $OctopusAzureAccessToken -AsPlainText -Force
         # Force any output generated to be verbose in Octopus logs.
         Write-Host "##octopus[stdout-verbose]"
-        Connect-AzAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusAzureAccessToken
+        Connect-AzAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $accessToken
         Write-Host "##octopus[stdout-default]"
     }
     else {
@@ -225,11 +225,12 @@ Execute-WithRetry{
 
                     If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
                         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
-                        $loginArgs += @("$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureAccessToken)))");
-                        $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
+                        loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
+                        loginArgs += @("--tenant==$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
+                        $loginArgs += @("--federated-token $(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureAccessToken)))");
 
-                        Write-Host "az login --federated-token $loginArgs"
-                        az login $loginArgs
+                        Write-Host "az login --service-principal $loginArgs"
+                        az login --service-principal $loginArgs
                     }
                     else {
                         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
