@@ -224,7 +224,7 @@ Execute-WithRetry{
                     If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
                         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
                         $loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
-                        $loginArgs += @("--tenant==$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
+                        $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
                         $loginArgs += @("--federated-token $(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureAccessToken)))");
 
                         Write-Host "az login --service-principal $loginArgs"
