@@ -22,6 +22,7 @@ namespace Calamari.AzureScripting
         protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()
         {
             yield return typeof(RunScriptCommand).Assembly;
+            yield return typeof(AzureContextScriptWrapper).Assembly;
             yield return typeof(Program).Assembly;
         }
     }
