@@ -32,7 +32,7 @@ namespace Calamari.AzureAppService
                                                                                                                                            {
                                                                                                                                                if (ctx.TryGetValue(ContextKeys.Log, out var logObj) && logObj is ILog log)
                                                                                                                                                {
-                                                                                                                                                   log.Verbose($"Zip deployment not completed. Received HTTP {(int)response.Result.StatusCode}. Next check in {timeout}.");
+                                                                                                                                                   log.Verbose($"Zip deployment not completed. Received HTTP {(int)response.Result.StatusCode}. Next attempt in {timeout}.");
                                                                                                                                                }
                                                                                                                                            });
     }
