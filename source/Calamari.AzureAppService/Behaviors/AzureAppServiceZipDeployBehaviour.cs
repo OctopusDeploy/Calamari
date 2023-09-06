@@ -33,12 +33,9 @@ namespace Calamari.AzureAppService.Behaviors
         public AzureAppServiceZipDeployBehaviour(ILog log)
         {
             Log = log;
-            Archive = new ZipPackageProvider();
         }
 
         private ILog Log { get; }
-
-        private IPackageProvider Archive { get; set; }
 
         public bool IsEnabled(RunningDeployment context) => FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
 
@@ -100,20 +97,13 @@ namespace Calamari.AzureAppService.Behaviors
 
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
 
-            switch (packageFileInfo.Extension)
-            {
-                case ".zip":
-                    Archive = new ZipPackageProvider();
-                    break;
-                case ".nupkg":
-                    Archive = new NugetPackageProvider();
-                    break;
-                case ".war":
-                    Archive = new WarPackageProvider(Log, variables, context);
-                    break;
-                default:
-                    throw new Exception("Unsupported archive type");
-            }
+            IPackageProvider packageProvider = packageFileInfo.Extension switch
+                                  {
+                                      ".zip" => new ZipPackageProvider(),
+                                      ".nupkg" => new NugetPackageProvider(),
+                                      ".war" => new WarPackageProvider(Log, variables, context),
+                                      _ => throw new Exception("Unsupported archive type")
+                                  };
 
             // Let's process our archive while the slot is spun up. We will await it later before we try to upload to it.
             Task<WebSiteSlotResource>? slotCreateTask = null;
@@ -133,9 +123,9 @@ namespace Calamari.AzureAppService.Behaviors
              */
             var uploadPath = string.Empty;
             if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
-                uploadPath = (await Archive.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
+                uploadPath = (await packageProvider.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
             else
-                uploadPath = (await Archive.ConvertToAzureSupportedFile(packageFileInfo)).FullName;
+                uploadPath = (await packageProvider.ConvertToAzureSupportedFile(packageFileInfo)).FullName;
 
             if (uploadPath == null)
                 throw new Exception("Package File Path must be specified");
@@ -152,13 +142,13 @@ namespace Calamari.AzureAppService.Behaviors
 
             Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
 
-            if (FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.IsEnabled(context.Variables))
+            if (packageProvider.SupportsAsynchronousDeployment && FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.IsEnabled(context.Variables))
             {
-                await UploadZipAndPollAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot);
+                await UploadZipAndPollAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
             }
             else
             {
-                await UploadZipAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot);
+                await UploadZipAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
             }
         }
 
@@ -184,7 +174,8 @@ namespace Calamari.AzureAppService.Behaviors
 
         private async Task UploadZipAsync(PublishingProfile publishingProfile,
                                           string uploadZipPath,
-                                          string targetSite)
+                                          string targetSite,
+                                          IPackageProvider packageProvider)
         {
             Log.Verbose($"Path to upload: {uploadZipPath}");
             Log.Verbose($"Target Site: {targetSite}");
@@ -192,7 +183,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (!new FileInfo(uploadZipPath).Exists)
                 throw new FileNotFoundException(uploadZipPath);
 
-            var zipUploadUrl = $"{publishingProfile.PublishUrl}{Archive.UploadUrlPath}";
+            var zipUploadUrl = $"{publishingProfile.PublishUrl}{packageProvider.UploadUrlPath}";
             Log.Verbose($@"Publishing {uploadZipPath} to {zipUploadUrl}");
 
             using var httpClient = new HttpClient(new HttpClientHandler
@@ -237,7 +228,8 @@ namespace Calamari.AzureAppService.Behaviors
 
         private async Task UploadZipAndPollAsync(PublishingProfile publishingProfile,
                                                  string uploadZipPath,
-                                                 string targetSite)
+                                                 string targetSite,
+                                                 IPackageProvider packageProvider)
         {
             Log.Verbose($"Path to upload: {uploadZipPath}");
             Log.Verbose($"Target Site: {targetSite}");
@@ -245,7 +237,7 @@ namespace Calamari.AzureAppService.Behaviors
             if (!new FileInfo(uploadZipPath).Exists)
                 throw new FileNotFoundException(uploadZipPath);
 
-            var zipUploadUrl = $"{publishingProfile.PublishUrl}{Archive.UploadUrlPath}?isAsync=true";
+            var zipUploadUrl = $"{publishingProfile.PublishUrl}{packageProvider.UploadUrlPath}?isAsync=true";
             Log.Verbose($"Publishing {uploadZipPath} to {zipUploadUrl} and checking for deployment");
 
             using var httpClient = new HttpClient(new HttpClientHandler

@@ -135,44 +135,37 @@ namespace Calamari.AzureAppService.Tests
             [Test]
             public async Task CanDeployNugetPackage()
             {
-                (string packagePath, string packageName, string packageVersion) packageinfo;
-                greeting = "nuget";
-
-                var tempPath = TemporaryDirectory.Create();
-                new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
-
-                var doc = new XDocument(new XElement("package",
-                                                     new XAttribute("xmlns", @"http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd"),
-                                                     new XElement("metadata",
-                                                                  new XElement("id", "AzureZipDeployPackage"),
-                                                                  new XElement("version", "1.0.0"),
-                                                                  new XElement("title", "AzureZipDeployPackage"),
-                                                                  new XElement("authors", "Chris Thomas"),
-                                                                  new XElement("description", "Test Package used to test nuget package deployments")
-                                                                 )
-                                                    ));
-
-                await Task.Run(() => File.WriteAllText(
-                                                       Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
-                                                       "Hello #{Greeting}"));
-
-                using (var writer = new XmlTextWriter(
-                                                      Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "AzureZipDeployPackage.nuspec"),
-                                                      Encoding.UTF8))
-                {
-                    doc.Save(writer);
-                }
-
-                packageinfo.packagePath = $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.nupkg";
-                packageinfo.packageVersion = "1.0.0";
-                packageinfo.packageName = "AzureZipDeployPackage";
-                ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
+                var packageInfo = await PrepareNugetPackage();
 
                 await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
                                         .WithArrange(context =>
                                                      {
-                                                         context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
+                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
                                                          AddVariables(context);
+                                                     })
+                                        .Execute();
+
+                //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
+            }
+
+            [Test]
+            public async Task CanDeployNugetPackage_WithAsyncDeploymentAndPolling()
+            {
+                var packageInfo = await PrepareNugetPackage();
+
+                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
+                                        .WithArrange(context =>
+                                                     {
+                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
+                                                         AddVariables(context);
+
+                                                         var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
+                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                                                                      existingFeatureToggles.Concat(new[]
+                                                                                      {
+                                                                                          FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.ToString()
+                                                                                      }));
                                                      })
                                         .Execute();
 
@@ -284,6 +277,45 @@ namespace Calamari.AzureAppService.Tests
                 ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
                 return packageinfo;
             }
+
+
+            async Task<(string packagePath, string packageName, string packageVersion)> PrepareNugetPackage()
+            {
+                (string packagePath, string packageName, string packageVersion) packageinfo;
+                greeting = "nuget";
+
+                var tempPath = TemporaryDirectory.Create();
+                new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
+
+                var doc = new XDocument(new XElement("package",
+                                                     new XAttribute("xmlns", @"http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd"),
+                                                     new XElement("metadata",
+                                                                  new XElement("id", "AzureZipDeployPackage"),
+                                                                  new XElement("version", "1.0.0"),
+                                                                  new XElement("title", "AzureZipDeployPackage"),
+                                                                  new XElement("authors", "Chris Thomas"),
+                                                                  new XElement("description", "Test Package used to test nuget package deployments")
+                                                                 )
+                                                    ));
+
+                await Task.Run(() => File.WriteAllText(
+                                                       Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
+                                                       "Hello #{Greeting}"));
+
+                using (var writer = new XmlTextWriter(
+                                                      Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "AzureZipDeployPackage.nuspec"),
+                                                      Encoding.UTF8))
+                {
+                    doc.Save(writer);
+                }
+
+                packageinfo.packagePath = $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.nupkg";
+                packageinfo.packageVersion = "1.0.0";
+                packageinfo.packageName = "AzureZipDeployPackage";
+                ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
+                return packageinfo;
+            }
+
 
             private static (string packagePath, string packageName, string packageVersion) PrepareFunctionAppZipPackage()
             {
