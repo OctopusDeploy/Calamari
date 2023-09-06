@@ -10,6 +10,7 @@
         KubernetesAksKubeloginFeatureToggle,
         GlobPathsGroupSupportFeatureToggle,
         ModernAzureAppServiceSdkFeatureToggle,
-        OidcAccountsFeatureToggle
+        OidcAccountsFeatureToggle,
+        AsynchronousAzureZipDeployFeatureToggle
     }
 }

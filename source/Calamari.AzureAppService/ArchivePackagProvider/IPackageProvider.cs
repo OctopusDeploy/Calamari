@@ -7,6 +7,8 @@ namespace Calamari.AzureAppService
     {
         string UploadUrlPath { get; }
 
+        bool SupportsAsynchronousDeployment { get; }
+
         Task<FileInfo> PackageArchive(string sourceDirectory, string targetDirectory);
 
         Task<FileInfo> ConvertToAzureSupportedFile(FileInfo sourceFile);
