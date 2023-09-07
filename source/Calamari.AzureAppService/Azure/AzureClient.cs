@@ -1,10 +1,13 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Identity;
 using Azure.ResourceManager;
+using Azure.ResourceManager.AppService;
 using Calamari.CloudAccounts;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
@@ -55,10 +58,15 @@ namespace Calamari.AzureAppService.Azure
         /// <returns></returns>
         public static ArmClient CreateArmClient(this IAzureAccount azureAccount, Action<RetryOptions> retryOptionsSetter = null)
         {
+            if (azureAccount.AccountType == AccountType.AzureOidc)
+            {
+                var oidcAccount = (AzureOidcAccount)azureAccount;
+                var (clientOptions, _) = GetArmClientOptions(azureAccount, retryOptionsSetter);
+                var clientAssertionCreds = new ClientAssertionCredential(oidcAccount.TenantId, oidcAccount.ClientId, () => oidcAccount.GetCredentials);
+                return new ArmClient(clientAssertionCreds, defaultSubscriptionId: azureAccount.SubscriptionNumber, clientOptions);
+            }
             string clientSecret;
-            clientSecret = azureAccount.AccountType == AccountType.AzureOidc
-                ? ((AzureOidcAccount)azureAccount).GetAuthorizationToken().GetAwaiter().GetResult()
-                : azureAccount.GetCredentials;
+            clientSecret = azureAccount.GetCredentials;
             
             var (armClientOptions, tokenCredentialOptions) = GetArmClientOptions(azureAccount, retryOptionsSetter);
             var credential = new ClientSecretCredential(azureAccount.TenantId, azureAccount.ClientId, clientSecret, tokenCredentialOptions);
