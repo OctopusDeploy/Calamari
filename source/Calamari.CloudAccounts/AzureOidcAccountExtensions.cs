@@ -21,7 +21,7 @@ namespace Calamari.CloudAccounts
 
         public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint)
         {
-            var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
+            var authContext = GetOidcContextUri("https://login.microsoftonline.com/", tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
 
             var app = ConfidentialClientApplicationBuilder.Create(applicationId)
@@ -30,7 +30,7 @@ namespace Calamari.CloudAccounts
                                                           .Build();
 
             var result = await app.AcquireTokenForClient(
-                                                         new[] { $"{managementEndPoint}/.default" })
+                                                         new[] { $"https://management.azure.com/.default" })
                                   .WithTenantId(tenantId)
                                   .ExecuteAsync()
                                   .ConfigureAwait(false);

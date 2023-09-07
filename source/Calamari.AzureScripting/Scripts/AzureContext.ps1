@@ -225,8 +225,7 @@ Execute-WithRetry{
                         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
                         $loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
                         $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
-                        $plainAccessToken = $OctopusAzureAccessToken -AsPlainText -Force
-                        $loginArgs += @("--federated-token $(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($plainAccessToken)))");
+                        $loginArgs += @("--federated-token=$(ConvertTo-QuotedString($OctopusAzureAccessToken))");
 
                         Write-Host "az login --service-principal $loginArgs"
                         az login --service-principal $loginArgs

@@ -47,10 +47,11 @@ function setup_context {
 
         if [ $Octopus_Azure_OctopusUseOidc ]
         then
-          loginArgs+=("$Octopus_Azure_AccessToken")
+          loginArgs+=("--username=$Octopus_Azure_ADClientId")
           loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
-          echo az login --federated-token ${loginArgs[@]}
-          az login --federated-token "${loginArgs[@]}"
+          loginArgs+=("--federated-token=$Octopus_Azure_AccessToken")
+          echo az login --service-principal "${loginArgs[@]}"
+          az login --service-principal "${loginArgs[@]}"
         else
           loginArgs+=("--username=$Octopus_Azure_ADClientId")
           loginArgs+=("--password=$Octopus_Azure_ADPassword")

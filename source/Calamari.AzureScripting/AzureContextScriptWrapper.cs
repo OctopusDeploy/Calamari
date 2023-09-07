@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
@@ -48,14 +46,6 @@ namespace Calamari.AzureScripting
                                            ICommandLineRunner commandLineRunner,
                                            Dictionary<string, string>? environmentVars)
         {
-            using var proc = Process.GetCurrentProcess();
-            Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
-
-            while (!Debugger.IsAttached)
-            {
-                Thread.Sleep(1000);
-            }
-
             var workingDirectory = Path.GetDirectoryName(script.File)!;
             variables.Set("OctopusAzureTargetScript", script.File);
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
