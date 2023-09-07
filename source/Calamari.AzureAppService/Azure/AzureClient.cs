@@ -61,9 +61,9 @@ namespace Calamari.AzureAppService.Azure
             if (azureAccount.AccountType == AccountType.AzureOidc)
             {
                 var oidcAccount = (AzureOidcAccount)azureAccount;
-                var (clientOptions, _) = GetArmClientOptions(azureAccount, retryOptionsSetter);
+                //var (clientOptions, _) = GetArmClientOptions(azureAccount, retryOptionsSetter);
                 var clientAssertionCreds = new ClientAssertionCredential(oidcAccount.TenantId, oidcAccount.ClientId, () => oidcAccount.GetCredentials);
-                return new ArmClient(clientAssertionCreds, defaultSubscriptionId: azureAccount.SubscriptionNumber, clientOptions);
+                return new ArmClient(clientAssertionCreds, defaultSubscriptionId: azureAccount.SubscriptionNumber);
             }
             string clientSecret;
             clientSecret = azureAccount.GetCredentials;
