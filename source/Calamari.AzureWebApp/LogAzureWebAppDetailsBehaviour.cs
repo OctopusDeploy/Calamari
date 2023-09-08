@@ -41,8 +41,8 @@ namespace Calamari.AzureWebApp
                 var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
 
                 WebSiteManagementClient client;
-                var hasAccessToken = !variables.Get(AzureAccountVariables.AssertionToken).IsNullOrEmpty();
-                if (hasAccessToken)
+                var hasJwt = !variables.Get(AzureAccountVariables.Jwt).IsNullOrEmpty();
+                if (hasJwt)
                 {
                     var account = new AzureOidcAccount(variables);
                     client = await account.CreateWebSiteManagementClient();

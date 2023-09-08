@@ -25,8 +25,8 @@ namespace Calamari.AzureAppService.Behaviors
         public async Task Execute(RunningDeployment context)
         {
             var variables = context.Variables;
-            var hasAccessToken = !variables.Get(AccountVariables.AssertionToken).IsNullOrEmpty();
-            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
+            var hasJwt = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
+            var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
 
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);

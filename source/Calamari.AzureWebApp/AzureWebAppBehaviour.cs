@@ -127,8 +127,8 @@ namespace Calamari.AzureWebApp
 
         Task<WebDeployPublishSettings> GetPublishProfile(IVariables variables)
         {
-            var hasAccessToken = !variables.Get(AzureAccountVariables.AssertionToken).IsNullOrEmpty();
-            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
+            var hasJwt = !variables.Get(AzureAccountVariables.Jwt).IsNullOrEmpty();
+            var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
 
             var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);

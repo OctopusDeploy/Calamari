@@ -31,8 +31,8 @@ namespace Calamari.AzureAppService.Behaviors
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
 
-            var hasAccessToken = !variables.Get(AccountVariables.AssertionToken).IsNullOrEmpty();
-            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
+            var hasJwt = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
+            var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
 
             var token = await Auth.GetAuthTokenAsync(account);
             var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token))

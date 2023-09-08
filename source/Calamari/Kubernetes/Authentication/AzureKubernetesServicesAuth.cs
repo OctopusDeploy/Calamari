@@ -50,13 +50,13 @@ namespace Calamari.Kubernetes.Authentication
                 var tenantId = deploymentVariables.Get("Octopus.Action.Azure.TenantId");
                 var clientId = deploymentVariables.Get("Octopus.Action.Azure.ClientId");
                 var password = deploymentVariables.Get("Octopus.Action.Azure.Password");
-                var assertionToken = deploymentVariables.Get("Octopus.Action.Azure.AssertionToken");
+                var jwt = deploymentVariables.Get("Octopus.OpenIdConnect.Jwt");
 
-                var isOidc = !assertionToken.IsNullOrEmpty();
+                var isOidc = !jwt.IsNullOrEmpty();
 #if !NET40
                 var resourceManagementEndpointBaseUri = deploymentVariables.Get("Octopus.Action.Azure.ResourceManagementEndPoint", "https://graph.microsoft.com/");
                 var activeDirectoryEndpointBaseUri = deploymentVariables.Get("Octopus.Action.Azure.ActiveDirectoryEndPoint", "https://login.microsoftonline.com/");
-                var token = isOidc ? GetAuthorizationToken(tenantId, clientId, assertionToken, resourceManagementEndpointBaseUri, activeDirectoryEndpointBaseUri).GetAwaiter().GetResult() : password;
+                var token = isOidc ? GetAuthorizationToken(tenantId, clientId, jwt, resourceManagementEndpointBaseUri, activeDirectoryEndpointBaseUri).GetAwaiter().GetResult() : password;
 #else
                 var token = password;
 #endif

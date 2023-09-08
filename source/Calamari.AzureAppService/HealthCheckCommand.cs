@@ -31,8 +31,8 @@ namespace Calamari.AzureAppService
 
         public Task Execute(RunningDeployment context)
         {
-            var hasAssertionToken = !context.Variables.Get(AccountVariables.AssertionToken).IsNullOrEmpty();
-            var account = hasAssertionToken ? (IAzureAccount)new AzureOidcAccount(context.Variables) : new AzureServicePrincipalAccount(context.Variables);
+            var hasJwt = !context.Variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
+            var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(context.Variables) : new AzureServicePrincipalAccount(context.Variables);
 
             var resourceGroupName = context.Variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             var webAppName = context.Variables.Get(SpecialVariables.Action.Azure.WebAppName);

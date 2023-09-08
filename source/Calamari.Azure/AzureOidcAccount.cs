@@ -17,7 +17,7 @@ namespace Calamari.Azure
             string subscriptionNumber,
             string clientId,
             string tenantId,
-            string assertionToken,
+            string jwtToken,
             string azureEnvironment,
             string resourceManagementEndpointBaseUri,
             string activeDirectoryEndpointBaseUri)
@@ -25,7 +25,7 @@ namespace Calamari.Azure
             SubscriptionNumber = subscriptionNumber;
             ClientId = clientId;
             TenantId = tenantId;
-            AssertionToken = assertionToken;
+            Jwt = jwtToken;
             AzureEnvironment = azureEnvironment;
             ResourceManagementEndpointBaseUri = resourceManagementEndpointBaseUri;
             ActiveDirectoryEndpointBaseUri = activeDirectoryEndpointBaseUri;
@@ -34,11 +34,11 @@ namespace Calamari.Azure
         public string SubscriptionNumber { get;  }
         public string ClientId { get; }
         public string TenantId { get; }
-        string AssertionToken { get; }
+        string Jwt { get; }
         public string AzureEnvironment { get; }
         public string ResourceManagementEndpointBaseUri { get; }
         public string ActiveDirectoryEndpointBaseUri { get; }
-        public string GetCredentials() => AssertionToken;
+        public string GetCredentials() => Jwt;
 
         public IAzure CreateAzureClient()
         {
@@ -47,7 +47,7 @@ namespace Calamari.Azure
                 : AzureEnvironmentEnum.FromName(AzureEnvironment) ??
                 throw new InvalidOperationException($"Unknown environment name {AzureEnvironment}");
 
-            var accessToken = GetAuthorizationToken(TenantId, ClientId, AssertionToken, ResourceManagementEndpointBaseUri, ActiveDirectoryEndpointBaseUri).GetAwaiter().GetResult();
+            var accessToken = GetAuthorizationToken(TenantId, ClientId, Jwt, ResourceManagementEndpointBaseUri, ActiveDirectoryEndpointBaseUri).GetAwaiter().GetResult();
             var credentials = new AzureCredentials(
                                                    new TokenCredentials(accessToken),
                                                    new TokenCredentials(accessToken),

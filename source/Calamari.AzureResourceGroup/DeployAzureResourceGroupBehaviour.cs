@@ -43,7 +43,7 @@ namespace Calamari.AzureResourceGroup
             var tenantId = variables[AzureAccountVariables.TenantId];
             var clientId = variables[AzureAccountVariables.ClientId];
             var password = variables[AzureAccountVariables.Password];
-            var assertionToken = variables[AzureAccountVariables.AssertionToken];
+            var jwt = variables[AzureAccountVariables.Jwt];
 
             var templateFile = variables.Get(SpecialVariables.Action.Azure.Template, "template.json");
             var templateParametersFile = variables.Get(SpecialVariables.Action.Azure.TemplateParameters, "parameters.json");
@@ -77,7 +77,7 @@ namespace Calamari.AzureResourceGroup
             // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
             Func<Task<IResourceManagementClient>> createArmClient = async () =>
                                                               {
-                                                                  var token = !assertionToken.IsNullOrEmpty()
+                                                                  var token = !jwt.IsNullOrEmpty()
                                                                       ? await new AzureOidcAccount(variables).Credentials()
                                                                       : await new AzureServicePrincipalAccount(variables).Credentials();
                                                                   

@@ -44,8 +44,8 @@ namespace Calamari.AzureAppService.Behaviors
 
             var variables = context.Variables;
             
-            var hasAccessToken = !variables.Get(AccountVariables.AssertionToken).IsNullOrEmpty();
-            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
+            var hasJwt = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
+            var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
             Log.Verbose($"Using Azure Tenant '{account.TenantId}'");
             Log.Verbose($"Using Azure Subscription '{account.SubscriptionNumber}'");
             Log.Verbose($"Using Azure ServicePrincipal AppId/ClientId '{account.ClientId}'");

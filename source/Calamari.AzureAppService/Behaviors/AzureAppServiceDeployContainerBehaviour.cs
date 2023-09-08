@@ -26,7 +26,7 @@ namespace Calamari.AzureAppService.Behaviors
         {
             var variables = context.Variables;
 
-            var hasAccessToken = !variables.Get(AccountVariables.AssertionToken).IsNullOrEmpty();
+            var hasAccessToken = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
             var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
 
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
