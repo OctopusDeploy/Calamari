@@ -32,7 +32,7 @@ namespace Calamari.CloudAccounts
             TenantId = variables.Get(AccountVariables.TenantId);
             Jwt = variables.Get(AccountVariables.Jwt);
             AzureEnvironment = variables.Get(AccountVariables.Environment);
-            ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.GraphManagementEndpoint);
+            ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, GetDefaultScope(AzureEnvironment));
             ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.OidcAuthContextUri);
         }
 
@@ -45,5 +45,25 @@ namespace Calamari.CloudAccounts
         public string AzureEnvironment { get; }
         public string ResourceManagementEndpointBaseUri { get; }
         public string ActiveDirectoryEndpointBaseUri { get; }
+        
+
+        internal static string GetDefaultScope(string environmentName)
+        {
+            switch (environmentName)
+            {
+
+                case "AzureChinaCloud":
+                    return "https://management.chinacloudapi.cn/.default";
+                case "AzureGermanCloud":
+                    return "https://management.microsoftazure.de/.default";
+                case "AzureUSGovernment":
+                    return "https://management.usgovcloudapi.net/.default";
+                case "AzureGlobalCloud":
+                case "AzureCloud":
+                default:
+                    // The double slash is intentional for public cloud.
+                    return "https://management.azure.com//.default";
+            }
+        }
     }
 }

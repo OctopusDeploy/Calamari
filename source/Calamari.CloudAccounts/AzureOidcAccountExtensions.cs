@@ -30,7 +30,8 @@ namespace Calamari.CloudAccounts
                                                           .Build();
 
             var result = await app.AcquireTokenForClient(
-                                                         new[] { $"https://management.azure.com/.default" })
+                                                         // Default values set on a per cloud basis on AzureOidcAccount, if managementEndPoint is set on the account /.default is required.
+                                                         new[] { managementEndPoint })
                                   .WithTenantId(tenantId)
                                   .ExecuteAsync()
                                   .ConfigureAwait(false);

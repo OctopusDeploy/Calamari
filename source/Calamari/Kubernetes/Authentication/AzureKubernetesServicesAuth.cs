@@ -54,8 +54,9 @@ namespace Calamari.Kubernetes.Authentication
 
                 var isOidc = !jwt.IsNullOrEmpty();
 #if !NET40
-                var resourceManagementEndpointBaseUri = deploymentVariables.Get("Octopus.Action.Azure.ResourceManagementEndPoint", "https://graph.microsoft.com/");
+                var resourceManagementEndpointBaseUri = deploymentVariables.Get("Octopus.Action.Azure.ResourceManagementEndPoint", GetDefaultScope(azEnvironment));
                 var activeDirectoryEndpointBaseUri = deploymentVariables.Get("Octopus.Action.Azure.ActiveDirectoryEndPoint", "https://login.microsoftonline.com/");
+
                 var token = isOidc ? GetAuthorizationToken(tenantId, clientId, jwt, resourceManagementEndpointBaseUri, activeDirectoryEndpointBaseUri).GetAwaiter().GetResult() : password;
 #else
                 var token = password;
@@ -75,6 +76,25 @@ namespace Calamari.Kubernetes.Authentication
 
             return true;
         }
+
+        static string GetDefaultScope(string environmentName)
+        {
+            switch (environmentName)
+            {
+
+                case "AzureChinaCloud":
+                    return "https://management.chinacloudapi.cn/.default";
+                case "AzureGermanCloud":
+                    return "https://management.microsoftazure.de/.default";
+                case "AzureUSGovernment":
+                    return "https://management.usgovcloudapi.net/.default";
+                case "AzureGlobalCloud":
+                case "AzureCloud":
+                default:
+                    // The double slash is intentional for public cloud.
+                    return "https://management.azure.com//.default";
+            }
+        }
         
 #if !NET40
         public static async Task<string> GetAuthorizationToken(string tenantId,
@@ -83,7 +103,7 @@ namespace Calamari.Kubernetes.Authentication
                                                                string managementEndPoint,
                                                                string activeDirectoryEndPoint)
         {
-            var authContext = GetOidcContextUri("https://login.microsoftonline.com/", tenantId);
+            var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
 
             var app = ConfidentialClientApplicationBuilder.Create(applicationId)
@@ -92,7 +112,7 @@ namespace Calamari.Kubernetes.Authentication
                                                           .Build();
 
             var result = await app.AcquireTokenForClient(
-                                                         new[] { $"https://management.azure.com/.default" })
+                                                         new[] { managementEndPoint })
                                   .WithTenantId(tenantId)
                                   .ExecuteAsync()
                                   .ConfigureAwait(false);

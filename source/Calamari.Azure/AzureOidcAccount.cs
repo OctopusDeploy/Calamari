@@ -37,7 +37,13 @@ namespace Calamari.Azure
         string Jwt { get; }
         public string AzureEnvironment { get; }
         public string ResourceManagementEndpointBaseUri { get; }
+        string ResourceManagementEndpointBaseUriOrDefault => !string.IsNullOrWhiteSpace(ResourceManagementEndpointBaseUri)
+            ? ResourceManagementEndpointBaseUri
+            : GetDefaultScope(AzureEnvironment ?? "AzureCloud");
         public string ActiveDirectoryEndpointBaseUri { get; }
+        string ActiveDirectoryEndpointBaseUriOrDefault => !string.IsNullOrWhiteSpace(ActiveDirectoryEndpointBaseUri)
+            ? ActiveDirectoryEndpointBaseUri
+            : "https://login.microsoftonline.com/";
         public string GetCredentials() => Jwt;
 
         public IAzure CreateAzureClient()
@@ -47,7 +53,7 @@ namespace Calamari.Azure
                 : AzureEnvironmentEnum.FromName(AzureEnvironment) ??
                 throw new InvalidOperationException($"Unknown environment name {AzureEnvironment}");
 
-            var accessToken = GetAuthorizationToken(TenantId, ClientId, Jwt, ResourceManagementEndpointBaseUri, ActiveDirectoryEndpointBaseUri).GetAwaiter().GetResult();
+            var accessToken = GetAuthorizationToken(TenantId, ClientId, Jwt, ResourceManagementEndpointBaseUriOrDefault, ActiveDirectoryEndpointBaseUriOrDefault).GetAwaiter().GetResult();
             var credentials = new AzureCredentials(
                                                    new TokenCredentials(accessToken),
                                                    new TokenCredentials(accessToken),
@@ -63,9 +69,28 @@ namespace Calamari.Azure
                             .WithSubscription(SubscriptionNumber);
         }
 
+        static string GetDefaultScope(string environmentName)
+        {
+            switch (environmentName)
+            {
+
+                case "AzureChinaCloud":
+                    return "https://management.chinacloudapi.cn/.default";
+                case "AzureGermanCloud":
+                    return "https://management.microsoftazure.de/.default";
+                case "AzureUSGovernment":
+                    return "https://management.usgovcloudapi.net/.default";
+                case "AzureGlobalCloud":
+                case "AzureCloud":
+                default:
+                    // The double slash is intentional for public cloud.
+                    return "https://management.azure.com//.default";
+            }
+        }
+
         public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint)
         {
-            var authContext = GetOidcContextUri("https://login.microsoftonline.com/", tenantId);
+            var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
 
             var app = ConfidentialClientApplicationBuilder.Create(applicationId)
@@ -74,7 +99,7 @@ namespace Calamari.Azure
                                                           .Build();
 
             var result = await app.AcquireTokenForClient(
-                                                         new[] { $"https://management.azure.com/.default" })
+                                                         new[] { managementEndPoint })
                                   .WithTenantId(tenantId)
                                   .ExecuteAsync()
                                   .ConfigureAwait(false);
