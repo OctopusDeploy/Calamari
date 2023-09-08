@@ -51,7 +51,6 @@ namespace Calamari.CloudAccounts
         {
             switch (environmentName)
             {
-
                 case "AzureChinaCloud":
                     return "https://management.chinacloudapi.cn/.default";
                 case "AzureGermanCloud":

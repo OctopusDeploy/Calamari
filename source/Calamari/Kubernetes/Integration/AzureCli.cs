@@ -46,11 +46,12 @@ namespace Calamari.Kubernetes.Integration
                                           "--name",
                                           azEnvironment);
 
-            log.Verbose("Azure CLI: Authenticating with Service Principal");
+            
 
             // Use the full argument with an '=' because of https://github.com/Azure/azure-cli/issues/12105
             if (isOidc)
             {
+                log.Verbose("Azure CLI: Authenticating with OpenID Connect Access Token");
                 ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation,
                                                                      "login",
                                                                      "--federated-token",
@@ -59,6 +60,7 @@ namespace Calamari.Kubernetes.Integration
             }
             else
             {
+                log.Verbose("Azure CLI: Authenticating with Service Principal");
                 ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation,
                                                                      "login",
                                                                      "--service-principal",
