@@ -45,7 +45,6 @@ namespace Calamari.CloudAccounts
         public string AzureEnvironment { get; }
         public string ResourceManagementEndpointBaseUri { get; }
         public string ActiveDirectoryEndpointBaseUri { get; }
-        
 
         internal static string GetDefaultScope(string environmentName)
         {
