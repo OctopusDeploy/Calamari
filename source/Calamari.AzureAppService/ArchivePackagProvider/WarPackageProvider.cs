@@ -12,6 +12,7 @@ namespace Calamari.AzureAppService
 {
     public class WarPackageProvider : IPackageProvider
     {
+        public bool SupportsAsynchronousDeployment => false;
         private ILog Log { get; }
         private IVariables Variables { get; }
         private RunningDeployment Deployment { get; }
@@ -31,7 +32,7 @@ namespace Calamari.AzureAppService
             var jarTool = new JarTool(cmdLineRunner, Log, Variables);
 
             var packageMetadata = PackageName.FromFile(Deployment.PackageFilePath);
-            
+
             var customPackageFileName = Variables.Get(PackageVariables.CustomPackageFileName);
 
             if (!string.IsNullOrWhiteSpace(customPackageFileName))

@@ -65,6 +65,11 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private void SendServiceMessage(Resource resource, bool removed, int checkCount)
         {
+            if (string.IsNullOrEmpty(resource.Namespace))
+            {
+                return;
+            }
+            
             var actionNumber = variables.Get("Octopus.Action.Number", string.Empty);
             var stepNumber = variables.Get("Octopus.Step.Number");
             var stepName = variables.Get("Octopus.Step.Name");

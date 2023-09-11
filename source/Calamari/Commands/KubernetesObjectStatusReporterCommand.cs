@@ -13,7 +13,7 @@ using Calamari.Kubernetes.ResourceStatus;
 namespace Calamari.Commands
 {
     [Command("kubernetes-object-status")]
-    public class KubernetesObjectStatusReporterCommand: Command<KubernetesObjectStatusReporterCommandInput>
+    public class KubernetesObjectStatusReporterCommand : Command<KubernetesObjectStatusReporterCommandInput>
     {
         private readonly ILog log;
         private readonly IVariables variables;
@@ -31,20 +31,22 @@ namespace Calamari.Commands
             this.statusReportExecutor = statusReportExecutor;
             this.kubectl = kubectl;
         }
-        
+
         protected override void Execute(KubernetesObjectStatusReporterCommandInput inputs)
         {
+            var runningDeployment = new RunningDeployment(variables);
+
             if (!inputs.Enabled)
             {
                 log.Info("Kubernetes Object Status reporting has been skipped.");
                 return;
             }
-            
+
             try
             {
                 log.Info("Starting Kubernetes Object Status reporting.");
-                
-                ConfigureKubectl();
+
+                ConfigureKubectl(runningDeployment.CurrentDirectory);
 
                 var manifestPath = variables.Get(SpecialVariables.KustomizeManifest);
                 var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
@@ -55,10 +57,12 @@ namespace Calamari.Commands
                 }
 
                 var resources =
-                    KubernetesYaml.GetDefinedResources(new[] {File.ReadAllText(manifestPath)}, defaultNamespace);
-                
-                var statusResult = statusReportExecutor.Start(inputs.Timeout, inputs.WaitForJobs, resources).WaitForCompletionOrTimeout()
-                    .GetAwaiter().GetResult();
+                    KubernetesYaml.GetDefinedResources(new[] { File.ReadAllText(manifestPath) }, defaultNamespace);
+
+                var statusResult = statusReportExecutor.Start(inputs.Timeout, inputs.WaitForJobs, resources)
+                                                       .WaitForCompletionOrTimeout()
+                                                       .GetAwaiter()
+                                                       .GetResult();
                 if (!statusResult)
                 {
                     throw new CommandException("Unable to complete Kubernetes Report Status.");
@@ -70,10 +74,16 @@ namespace Calamari.Commands
             }
         }
 
-        private void ConfigureKubectl()
+        private void ConfigureKubectl(string workingDirectory)
         {
             var kubeConfig = variables.Get(SpecialVariables.KubeConfig);
-            var environmentVars = new Dictionary<string, string> {{"KUBECONFIG", kubeConfig}};
+            var environmentVars = new Dictionary<string, string>
+            {
+                ["KUBECONFIG"] = kubeConfig
+            };
+
+            AzureCli.SetConfigDirectoryEnvironmentVariable(environmentVars, workingDirectory);
+
             foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
             {
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;

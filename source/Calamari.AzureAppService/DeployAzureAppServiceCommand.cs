@@ -32,7 +32,7 @@ namespace Calamari.AzureAppService
             yield return resolver.Create<LegacyAzureAppServiceBehaviour>();
 
             //Modern behaviour
-            yield return resolver.Create<AzureAppServiceBehaviour>();
+            yield return resolver.Create<AzureAppServiceZipDeployBehaviour>();
         }
     }
 }

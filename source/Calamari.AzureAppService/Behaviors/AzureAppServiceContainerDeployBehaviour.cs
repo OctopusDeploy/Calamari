@@ -11,11 +11,11 @@ using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Behaviors
 {
-    class AzureAppServiceDeployContainerBehaviour : IDeployBehaviour
+    class AzureAppServiceContainerDeployBehaviour : IDeployBehaviour
     {
         private ILog Log { get; }
 
-        public AzureAppServiceDeployContainerBehaviour(ILog log)
+        public AzureAppServiceContainerDeployBehaviour(ILog log)
         {
             Log = log;
         }
