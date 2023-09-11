@@ -41,18 +41,19 @@ function setup_context {
 
         az cloud set --name ${Octopus_Azure_Environment:-"AzureCloud"} 2>null 3>null
 
-        echo "Azure CLI: Authenticating with Service Principal"
         loginArgs=()
         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
 
         if [ $Octopus_Azure_OctopusUseOidc ]
         then
+          echo "Azure CLI: Authenticating with OpenID Connect Access Token"
           loginArgs+=("--username=$Octopus_Azure_ADClientId")
           loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
           loginArgs+=("--federated-token=$Octopus_Azure_AccessToken")
           echo az login --service-principal "${loginArgs[@]}"
           az login --service-principal "${loginArgs[@]}"
         else
+          echo "Azure CLI: Authenticating with Service Principal"
           loginArgs+=("--username=$Octopus_Azure_ADClientId")
           loginArgs+=("--password=$Octopus_Azure_ADPassword")
           loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
