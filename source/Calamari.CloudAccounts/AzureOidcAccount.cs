@@ -40,7 +40,7 @@ namespace Calamari.CloudAccounts
             TenantId = variables.Get(AccountVariables.TenantId);
             Jwt = variables.Get(AccountVariables.Jwt);
             AzureEnvironment = variables.Get(AccountVariables.Environment);
-            ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, GetDefaultScope(AzureEnvironment));
+            ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
             ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.OidcAuthContextUri);
         }
 

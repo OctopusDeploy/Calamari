@@ -41,6 +41,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                                                                                account.GetCredentials,
                                                                                account.ResourceManagementEndpointBaseUri,
                                                                                account.ActiveDirectoryEndpointBaseUri,
+                                                                               account.AzureEnvironment,
                                                                                CancellationToken.None)
                 : await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(account.TenantId,
                                                                                      account.ClientId,

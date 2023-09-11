@@ -17,10 +17,10 @@ namespace Calamari.CloudAccounts
         public static Task<string> GetAuthorizationToken(this AzureOidcAccount account, CancellationToken cancellationToken)
         {
             return GetAuthorizationToken(account.TenantId, account.ClientId, account.GetCredentials,
-                                                   account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri, cancellationToken);
+                                                   account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri, account.AzureEnvironment, cancellationToken);
         }
 
-        public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint, CancellationToken cancellationToken)
+        public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint, string aureEnvironment, CancellationToken cancellationToken)
         {
             var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
@@ -32,7 +32,7 @@ namespace Calamari.CloudAccounts
 
             var result = await app.AcquireTokenForClient(
                                                          // Default values set on a per cloud basis on AzureOidcAccount, if managementEndPoint is set on the account /.default is required.
-                                                         new[] { managementEndPoint.EndsWith(".default") ? managementEndPoint : $"{managementEndPoint}/.default" })
+                                                         new[] { managementEndPoint == DefaultVariables.ResourceManagementEndpoint ? AzureOidcAccount.GetDefaultScope(aureEnvironment) : managementEndPoint.EndsWith(".default") ? managementEndPoint : $"{managementEndPoint}/.default" })
                                   .WithTenantId(tenantId)
                                   .ExecuteAsync(cancellationToken)
                                   .ConfigureAwait(false);
