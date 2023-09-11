@@ -54,15 +54,12 @@ namespace Calamari.Kubernetes.Authentication
 
                 var isOidc = !jwt.IsNullOrEmpty();
 #if !NET40
-                var resourceManagementEndpointBaseUri = deploymentVariables.Get("Octopus.Action.Azure.ResourceManagementEndPoint", GetDefaultScope(azEnvironment));
-                var activeDirectoryEndpointBaseUri = deploymentVariables.Get("Octopus.Action.Azure.ActiveDirectoryEndPoint", "https://login.microsoftonline.com/");
-
-                var token = isOidc ? GetAuthorizationToken(tenantId, clientId, jwt, resourceManagementEndpointBaseUri, activeDirectoryEndpointBaseUri).GetAwaiter().GetResult() : password;
+                var credential = isOidc ? jwt : password;
 #else
-                var token = password;
+                var credential = password;
 #endif
 
-                azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, token, azEnvironment, isOidc);
+                azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, credential, azEnvironment, isOidc);
 
                 var azureResourceGroup = deploymentVariables.Get("Octopus.Action.Kubernetes.AksClusterResourceGroup");
                 var azureCluster = deploymentVariables.Get(SpecialVariables.AksClusterName);
@@ -95,39 +92,5 @@ namespace Calamari.Kubernetes.Authentication
                     return "https://management.azure.com//.default";
             }
         }
-        
-#if !NET40
-        public static async Task<string> GetAuthorizationToken(string tenantId,
-                                                               string applicationId,
-                                                               string token,
-                                                               string managementEndPoint,
-                                                               string activeDirectoryEndPoint)
-        {
-            var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
-            Log.Verbose($"Authentication Context: {authContext}");
-
-            var app = ConfidentialClientApplicationBuilder.Create(applicationId)
-                                                          .WithClientAssertion(token)
-                                                          .WithAuthority(authContext)
-                                                          .Build();
-
-            var result = await app.AcquireTokenForClient(
-                                                         new[] { managementEndPoint })
-                                  .WithTenantId(tenantId)
-                                  .ExecuteAsync()
-                                  .ConfigureAwait(false);
-            return result.AccessToken;
-        }
-
-        static string GetOidcContextUri(string activeDirectoryEndPoint, string tenantId)
-        {
-            if (!activeDirectoryEndPoint.EndsWith("/"))
-            {
-                return $"{activeDirectoryEndPoint}/{tenantId}/v2.0";
-            }
-
-            return $"{activeDirectoryEndPoint}{tenantId}/v2.0";
-        }
-#endif
     }
 }
