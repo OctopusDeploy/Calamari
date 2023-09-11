@@ -60,16 +60,16 @@ namespace Calamari.CloudAccounts
             switch (environmentName)
             {
                 case "AzureChinaCloud":
-                    return "https://management.chinacloudapi.cn/.default";
+                    return "https://management.chinacloudapi.cn";
                 case "AzureGermanCloud":
-                    return "https://management.microsoftazure.de/.default";
+                    return "https://management.microsoftazure.de";
                 case "AzureUSGovernment":
-                    return "https://management.usgovcloudapi.net/.default";
+                    return "https://management.usgovcloudapi.net";
                 case "AzureGlobalCloud":
                 case "AzureCloud":
                 default:
-                    // The double slash is intentional for public cloud.
-                    return "https://management.azure.com//.default";
+                    // The double slash this results in is intentional for public cloud.
+                    return "https://management.azure.com/";
             }
         }
 
