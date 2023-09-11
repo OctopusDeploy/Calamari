@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using Calamari.CloudAccounts;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Rest.Azure;
@@ -11,7 +12,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.Azure.Kubernetes.Discovery
 {
-    using AzureTargetDiscoveryContext = TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>;
+    using AzureTargetDiscoveryContext = TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>;
 
     public class AzureKubernetesDiscoverer : KubernetesDiscovererBase
     {
@@ -42,7 +43,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
             }
             else
             {
-                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(contextJson, out var servicePrincipalAuthenticationDetails, out _))
+                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>(contextJson, out var servicePrincipalAuthenticationDetails, out _))
                     return Enumerable.Empty<KubernetesCluster>();
                 accountId = servicePrincipalAuthenticationDetails.AccountId;
                 account = servicePrincipalAuthenticationDetails.AccountDetails;

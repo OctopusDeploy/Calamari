@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
@@ -78,7 +79,7 @@ namespace Calamari.AzureResourceGroup
             Func<Task<IResourceManagementClient>> createArmClient = async () =>
                                                               {
                                                                   var token = !jwt.IsNullOrEmpty()
-                                                                      ? await new AzureOidcAccount(variables).Credentials()
+                                                                      ? await new AzureOidcAccount(variables).Credentials(CancellationToken.None)
                                                                       : await new AzureServicePrincipalAccount(variables).Credentials();
                                                                   
                                                                   var resourcesClient = new ResourceManagementClient(token)

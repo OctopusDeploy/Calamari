@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
@@ -22,7 +23,7 @@ namespace Calamari.AzureAppService
         {
             if (azureAccount.AccountType == AccountType.AzureOidc)
             {
-                return await ((AzureOidcAccount)azureAccount).GetAuthorizationToken();
+                return await ((AzureOidcAccount)azureAccount).GetAuthorizationToken(CancellationToken.None);
             }
 
             return await ((AzureServicePrincipalAccount)azureAccount).GetAuthorizationToken();

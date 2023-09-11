@@ -32,7 +32,7 @@ namespace Calamari.AzureAppService.Azure
             }
             else
             {
-                var accessToken = ((AzureOidcAccount)azureAccount).GetAuthorizationToken().GetAwaiter().GetResult();
+                var accessToken = ((AzureOidcAccount)azureAccount).GetAuthorizationToken(CancellationToken.None).GetAwaiter().GetResult();
                 credentials = new AzureCredentials(new TokenCredentials(accessToken),
                                                 new TokenCredentials(accessToken),
                                                 azureAccount.TenantId,
