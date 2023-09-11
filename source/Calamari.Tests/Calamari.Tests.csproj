@@ -24,7 +24,8 @@
     <DefineConstants>$(DefineConstants);NETFX;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;WINDOWS_USER_ACCOUNT_SUPPORT;WINDOWS_REGISTRY_SUPPORT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="XPath2" Version="1.0.12" />
+    <PackageReference Include="WireMock.Net" Version="1.5.35" />
+    <PackageReference Include="XPath2" Version="1.1.3" />
     <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0" />

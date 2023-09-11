@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Microsoft.Identity.Client;
 using Microsoft.Rest;
 
@@ -12,22 +13,41 @@ namespace Calamari.CloudAccounts
         {
             return new TokenCredentials(await GetAuthorizationToken(account));
         }
-        
+
         public static Task<string> GetAuthorizationToken(this AzureOidcAccount account)
         {
-            return GetAuthorizationToken(account.TenantId, account.ClientId, account.GetCredentials,
-                                                   account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri);
+            return GetAuthorizationToken(account.TenantId,
+                                         account.ClientId,
+                                         account.GetCredentials,
+                                         account.ResourceManagementEndpointBaseUri,
+                                         account.ActiveDirectoryEndpointBaseUri);
         }
 
-        public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint)
+        public static async Task<string> GetAuthorizationToken(string tenantId,
+                                                               string applicationId,
+                                                               string token,
+                                                               string managementEndPoint,
+                                                               string activeDirectoryEndPoint)
         {
-            var authContext = GetOidcContextUri("https://login.microsoftonline.com/", tenantId);
+            var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
 
-            var app = ConfidentialClientApplicationBuilder.Create(applicationId)
-                                                          .WithClientAssertion(token)
-                                                          .WithAuthority(authContext)
-                                                          .Build();
+            var builder = ConfidentialClientApplicationBuilder.Create(applicationId)
+                                                              .WithClientAssertion(token);
+
+            var inTest = activeDirectoryEndPoint.Contains("localhost");
+            
+            if (inTest)
+            {
+                builder = builder.WithInstanceDiscoveryMetadata(new Uri($"{activeDirectoryEndPoint}/discovery"))
+                                 .WithAuthority(authContext, false);
+            }
+            else
+            {
+                builder = builder.WithAuthority(authContext);
+            }
+
+            var app = builder.Build();
 
             var result = await app.AcquireTokenForClient(
                                                          // Default values set on a per cloud basis on AzureOidcAccount, if managementEndPoint is set on the account /.default is required.
@@ -44,6 +64,7 @@ namespace Calamari.CloudAccounts
             {
                 return $"{activeDirectoryEndPoint}/{tenantId}/v2.0";
             }
+
             return $"{activeDirectoryEndPoint}{tenantId}/v2.0";
         }
     }
