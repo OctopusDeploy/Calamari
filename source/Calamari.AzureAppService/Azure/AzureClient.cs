@@ -18,38 +18,6 @@ namespace Calamari.AzureAppService.Azure
 {
     internal static class AzureClient
     {
-        public static IAzure CreateAzureClient(this IAzureAccount azureAccount)
-        {
-            var environment = new AzureKnownEnvironment(azureAccount.AzureEnvironment).AsAzureSDKEnvironment();
-
-            AzureCredentials credentials;
-            if (azureAccount.AccountType == AccountType.AzureServicePrincipal)
-            {
-                credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(azureAccount.ClientId,
-                                                                              azureAccount.GetCredentials,
-                                                                              azureAccount.TenantId,
-                                                                              environment);
-            }
-            else
-            {
-                var accessToken = ((AzureOidcAccount)azureAccount).GetAuthorizationToken(CancellationToken.None).GetAwaiter().GetResult();
-                credentials = new AzureCredentials(new TokenCredentials(accessToken),
-                                                new TokenCredentials(accessToken),
-                                                azureAccount.TenantId,
-                                                environment);
-            }
-
-            // Note: This is a tactical fix to ensure this Sashimi uses the appropriate web proxy
-#pragma warning disable DE0003
-            var client = new HttpClient(new HttpClientHandler { Proxy = WebRequest.DefaultWebProxy });
-#pragma warning restore DE0003
-
-            return Microsoft.Azure.Management.Fluent.Azure.Configure()
-                            .WithHttpClient(client)
-                            .Authenticate(credentials)
-                            .WithSubscription(azureAccount.SubscriptionNumber);
-        }
-
         /// <summary>
         /// Creates an ArmClient for the new Azure SDK, which replaces the older fluent libraries.
         /// We should migrate to this SDK once it stabilises.
@@ -61,13 +29,13 @@ namespace Calamari.AzureAppService.Azure
             if (azureAccount.AccountType == AccountType.AzureOidc)
             {
                 var oidcAccount = (AzureOidcAccount)azureAccount;
-                //var (clientOptions, _) = GetArmClientOptions(azureAccount, retryOptionsSetter);
+                var (clientOptions, _) = GetArmClientOptions(azureAccount, retryOptionsSetter);
                 var clientAssertionCreds = new ClientAssertionCredential(oidcAccount.TenantId, oidcAccount.ClientId, () => oidcAccount.GetCredentials);
-                return new ArmClient(clientAssertionCreds, defaultSubscriptionId: azureAccount.SubscriptionNumber);
+                return new ArmClient(clientAssertionCreds, defaultSubscriptionId: azureAccount.SubscriptionNumber, clientOptions);
             }
             string clientSecret;
             clientSecret = azureAccount.GetCredentials;
-            
+
             var (armClientOptions, tokenCredentialOptions) = GetArmClientOptions(azureAccount, retryOptionsSetter);
             var credential = new ClientSecretCredential(azureAccount.TenantId, azureAccount.ClientId, clientSecret, tokenCredentialOptions);
             return new ArmClient(credential, defaultSubscriptionId: azureAccount.SubscriptionNumber, armClientOptions);

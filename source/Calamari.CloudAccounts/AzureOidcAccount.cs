@@ -8,6 +8,7 @@ using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Rest;
 using Newtonsoft.Json;
+using NetWebRequest = System.Net.WebRequest;
 using AzureEnvironmentEnum = Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment;
 
 namespace Calamari.CloudAccounts
@@ -87,7 +88,7 @@ namespace Calamari.CloudAccounts
                                                    environment);
 
             // to ensure the Azure API uses the appropriate web proxy
-            var client = new HttpClient(new HttpClientHandler {Proxy = WebRequest.DefaultWebProxy});
+            var client = new HttpClient(new HttpClientHandler {Proxy = NetWebRequest.DefaultWebProxy});
 
             return Microsoft.Azure.Management.Fluent.Azure.Configure()
                             .WithHttpClient(client)
