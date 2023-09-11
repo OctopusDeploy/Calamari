@@ -53,9 +53,10 @@ namespace Calamari.Kubernetes.Integration
             {
                 ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation,
                                                                      "login",
-                                                                     "--federated-token",
-                                                                     $"\"{credential}\"",
-                                                                     $"--tenant=\"{tenantId}\""));
+                                                                     "--service-principal",
+                                                                     $"--username=\"{clientId}\"",
+                                                                     $"--tenant=\"{tenantId}\"",
+                                                                     $"--federated-token=\"{credential}\""));
             }
             else
             {
