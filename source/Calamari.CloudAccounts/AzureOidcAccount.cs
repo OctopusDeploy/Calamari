@@ -50,7 +50,7 @@ namespace Calamari.CloudAccounts
         public string SubscriptionNumber { get;  }
         public string ClientId { get; }
         public string TenantId { get; }
-        private string Jwt { get; }
+        public string Jwt { get; }
         public string AzureEnvironment { get; }
         public string ResourceManagementEndpointBaseUri { get; }
         public string ActiveDirectoryEndpointBaseUri { get; }

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Net;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
@@ -48,7 +46,8 @@ namespace Calamari.CloudAccounts
         public string SubscriptionNumber { get;  }
         public string ClientId { get; }
         public string TenantId { get; }
-        private string Password { get; }
+        // Public for JsonDeserialization
+        public string Password { get; }
         public string AzureEnvironment { get; }
         public string ResourceManagementEndpointBaseUri { get; }
         public string ActiveDirectoryEndpointBaseUri { get; }
