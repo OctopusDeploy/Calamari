@@ -24,11 +24,21 @@ namespace Calamari.CloudAccounts
         {
             var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
+            
+            var builder = ConfidentialClientApplicationBuilder.Create(applicationId)
+                                                              .WithClientAssertion(token);
 
-            var app = ConfidentialClientApplicationBuilder.Create(applicationId)
-                                                          .WithClientAssertion(token)
-                                                          .WithAuthority(authContext)
-                                                          .Build();
+            if (activeDirectoryEndPoint.Contains("localhost"))
+            {
+                builder = builder.WithInstanceDiscoveryMetadata(new Uri($"{activeDirectoryEndPoint}/discovery"))
+                                 .WithAuthority(authContext, false);
+            }
+            else
+            {
+                builder = builder.WithAuthority(authContext);
+            }
+
+            var app = builder.Build();
 
             var result = await app.AcquireTokenForClient(
                                                          // Default values set on a per cloud basis on AzureOidcAccount, if managementEndPoint is set on the account /.default is required.
